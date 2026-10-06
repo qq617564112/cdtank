@@ -123,3 +123,13 @@ Func19的12501/12502/12503 domain、history/account与真实World来源冻结已
 本批普通输入、消费、期限、目标、快照、Web表现和CPU接线已登记实现；本批一次集中gpt-5.6走查覆盖伪装、空袭与Func22/23，已修复发射边界恢复、普通输入快照先于事件发送，以及Func22/23的query options参数位、direct命中后效复用与Func23端点一致性三项真实问题。光学迷彩与建筑工具既有范围的集中走查与Castle重连稳态及修复事务共用损伤绘声清理保持原范围。确认已有库存的配置/自然施放、光学迷彩到期与死亡/结束/再战、建筑工具实际修复、双端绘声及库存重启恢复仍需实际验收；原未知字段、全部技能分派、五模式完整规则和M8-05不因这一合同关闭。FUNC-22/23只登记当前有限查询/射程执行器及采用的百分比政策，未执行实际玩家授予、取得或对局证据，不把source计算等同原server分派。
 
 账户统计与九奖章本批已接battle/account/UI/支出producer与消费者：真实每局统计、终局评奖与奖分、账户累计奖章、RoleProfile查询、称号selector producer及迷彩/交易真实扣费收据均已实现，旧窗口缺值记unknown、不完整窗口不下比例或少于阈值结论。以上均为实现登记，未在原Windows对照，也未执行实际对局、双网页、高清、持久重启或真实交易验收；本批统计/九奖章/支出唯一集中gpt-5.6走查已完成，be4ffce修复真实fire计shots顺序、medical owner type、真参赛零奖awards[]旧记录unknown；静态走查不替代这些实测，M2-11/M5-06/M5-09/M6-05父项及UI-19/37/38保持未勾。
+
+## 玩家公开资料
+
+对应M5-13/M6-09/UI-41、UI-42、UI-43。原来源事实包括`playerlist.xml` 9控件、`playerlist_playerinfo.xml` 35控件和`playerlist_QQ_number.xml` 3控件，共47个源控件；原`playerlist_QQ_number.xml`只证明151×59小页、28,26..142,54九块框和36,32..135,48居中白字，原`btnQQ`、打开调用、外部URI/联系人动作和QQ号producer未取得。当前实现不展示QQ空小页，不把accountId/name/登录名/token当QQ，也不打开外链。
+
+采用规则：新增`PlayerProfile` API57作为目标账户只读公开资料查询。请求只含`targetAccountId`；认证连接经`registerPlayerProfileApi`校验，目标不存在映射为`PLAYER_PROFILE_TARGET_NOT_FOUND`，未认证为`ACCOUNT_REQUIRED`。`AccountStore.playerProfile`只组合`displayName/currentTitle/statistics/awardCounts`、已持久`account_growth`，缺typed growth row时仅读已存原`role_profiles` summary的score/originality/tech；不使用`DEFAULT_GROWTH`补0，level未知保持空。统计与奖章沿既有history aggregate：真实aggregate 0可显示0，旧行缺可选`roundStats`时shots/hits/damage/killCombo保持空，缺awards时奖章保持unknown。该查询不授称号、不改钱包/库存/关系/房间，不返回raw bytes、strings、token、好友黑名单关系或聊天内容；共享schema当前为112。
+
+Web消费为`AccountConnection.playerProfile→Battle.playerProfile`薄代理。`LobbySocialView`只传稳定查询函数，`PlayerInfoSession`按目标维护generation、pending和迟到响应清理；错误保当前目标和response并可局部重试，pending禁好友/黑名单/交易写，Close/原生Escape与原player row焦点恢复保持。35控件几何不改，family、个人介绍、level icon和原公开role icon继续明确未知。两统计radio读取所选目标response并挂接既有`myhome_playerpage_battlesummary.xml`/`myhome_playerpage_awardsummary.xml`原图片和文字控件；这是明确Web父容器附着，不复用owner history RPC fallback，也不声称原统计子页附着恢复。summary自身用`prepareSourceUi([suffix])`准备真实图片decode，失败保目标并局部retry，只重准备该页资源，不重发`PlayerProfile`。
+
+本次未实测目标generation、error retry和resource处理；真实页面、真实联机、持久重启、高清和原QQ/原统计附着继续开放，M5-13/M6-09/UI-41/UI-42/UI-43完整父项不勾。

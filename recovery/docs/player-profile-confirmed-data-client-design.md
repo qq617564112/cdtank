@@ -43,8 +43,8 @@
 | 7 | `heseditu` | 原灰底。 |
 | 8 | `picLowerPanel` | 原下框九块图，根可见区到 405。 |
 | 9 | `xiaotiaoditu` | 原按钮底纹。 |
-| 10 | `rdoBattleSummary` | 原战斗统计 radio。数据源已存在，附着/弹窗仍未恢复；不得改变控件位置。 |
-| 11 | `rdoAwardSummary` | 原获奖统计 radio。九奖章计数已存在，附着/弹窗仍未恢复。 |
+| 10 | `rdoBattleSummary` | 原战斗统计 radio。当前以 Web 父容器伴随页挂接 `myhome_playerpage_battlesummary.xml` 原页图片与文字控件，消费所选目标 `PlayerProfile.statistics`；原资料页内统计子页附着/偏移仍未取得。 |
+| 11 | `rdoAwardSummary` | 原获奖统计 radio。当前以同一 Web 父伴随页挂接 `myhome_playerpage_awardsummary.xml` 原页图片与九计数文字控件，消费所选目标 `PlayerProfile.awards`；原统计附着仍未取得。 |
 | 12 | `xiaochaditu` | 原 Close 父框。 |
 | 13 | `btnClose` | 原三态 Close；当前关闭资料并返回原 player row，保留原生 Escape 与焦点规则。 |
 | 14 | `shangmianditu` | 原资料背景。 |
@@ -85,7 +85,7 @@
 
 现有 `RoleProfile` 是认证 owner 的账户操作，读取 raw `profile`/`playerSummary/growth/titles/statistics/awards`，不能直接用于查看其他玩家。现有 `LobbyPlayers`、`Friends`、`Blacklist` 只安全公开 `{accountId,name,title?}` 和关系/在线/房间状态。
 
-新增一个窄的客户端到 server 查询，名称为 `PlayerProfile`：
+当前实现登记一个窄的客户端到 server 查询，名称为 `PlayerProfile`：
 
 ```ts
 export interface ReqPlayerProfile {
@@ -114,7 +114,7 @@ export interface ResPlayerProfile {
 }
 ```
 
-请求只含目标账户 ID。返回字段都是已确认的公开业务字段；未知字段省略，UI 显示空，不补 0。`name` 沿 `AccountStore.displayName`，`title` 沿 `AccountStore.currentTitle`，`level/score/originality/tech` 沿目标真实 `AccountGrowth` 或既有确认 `playerSummary`，`statistics/awards` 沿 `AccountStore.statistics/awardCounts`。查询不返回认证 token、密码、私有 raw profile bytes、`profile.strings`、好友/黑名单关系或聊天内容。
+请求只含目标账户 ID。返回字段都是已确认的公开业务字段；未知字段省略，UI 显示空，不补 0。`name` 沿 `AccountStore.displayName`，`title` 沿 `AccountStore.currentTitle`，`level/score/originality/tech` 沿目标真实持久 `account_growth`；没有 typed growth row 时只读已存原 `role_profiles` summary 的 score/originality/tech，不用 `DEFAULT_GROWTH` 补 0，level 保持空。`statistics/awards` 沿 `AccountStore.statistics/awardCounts` 的历史聚合，真实 aggregate 0 可显示 0，旧行缺可选 `roundStats` 或 awards 时对应字段保持空。查询不返回认证 token、密码、私有 raw profile bytes、`profile.strings`、好友/黑名单关系或聊天内容。当前共享 schema 版本为 112。
 
 `PlayerProfile` 只读目标已经持久化的账户资料。它不得调用 `selectTitle`、授予称号、改钱包、改库存、改关系、建房或触发结算。目标账户必须已存在；不存在返回 `PLAYER_PROFILE_TARGET_NOT_FOUND`。未认证返回 `ACCOUNT_REQUIRED`。自己可读自己，沿用同一确认字段，不授予额外权限。
 
@@ -122,15 +122,17 @@ export interface ResPlayerProfile {
 
 | 文件 | 责任 |
 | --- | --- |
-| `apps/shared/protocols/PtlPlayerProfile.ts` | 手工声明上述 request/response 类型。 |
-| `apps/shared/protocols/index.ts` | 手工新增导出。 |
-| `apps/shared/protocols/serviceProto.ts` | 手工在 API 表与类型表增加 `PlayerProfile`；不运行生成器。 |
+| `apps/shared/protocols/PtlPlayerProfile.ts` | 声明 request/response 窄公开字段。 |
+| `apps/shared/protocols/index.ts` | 导出 `PtlPlayerProfile`。 |
+| `apps/shared/protocols/serviceProto.ts` | API 表与类型表登记 `PlayerProfile`，service id 57。 |
+| `apps/server/src/accounts/player-profile.ts` | 读取 typed `account_growth`，缺 row 时只读已存原 summary 三字段。 |
+| `apps/server/src/account-store.ts` | `playerProfile(targetAccountId)` 组合 display name/current title/growth/statistics/awards 窄 reader，不暴露 payload。 |
 | `apps/server/src/social/player-profile.ts` | 注册查询；从认证连接取 owner，验证 target 存在，组装窄字段。 |
 | `apps/server/src/index.ts` | 在现有 social API 注册区调用。 |
-| `apps/server/src/account-store.ts` | 只新增/复用窄 reader：`displayName/currentTitle/accountGrowth/statistics/awardCounts`，以及确认 profile summary 的 target 读取；不暴露 payload。 |
-| `apps/web/src/network/player-profile.ts` | 管理查询代次、pending、迟到响应丢弃和断线清理。 |
+| `apps/web/src/network/accounts.ts` | 薄认证 transport：`playerProfile(targetAccountId)` 调用 API `PlayerProfile`。 |
 | `apps/web/src/match/battle.ts` | 暴露薄公开方法，供资料页读取一个目标。 |
-| `apps/web/src/interface/lobby/player-info.tsx` | 接受确认资料 props/查询结果，绑定现有 35 控件中的真实字段。 |
+| `apps/web/src/interface/lobby/player-info.tsx` | 管理目标 generation、pending、迟到响应清理和资料查询重试，绑定现有 35 控件中的真实字段。 |
+| `apps/web/src/interface/lobby/player-info-summary.tsx` | 消费同一目标 response，挂接两张 Home 原统计页图片与文字控件，并管理本页资源重试。 |
 
 `PlayerProfile` 不替代 `Friends`、`Blacklist`、`FriendChat`、`LobbyWhisper` 或 `Trade`。好友/屏蔽 Add/Remove、密语和交易 server 业务保持现状。
 
@@ -141,20 +143,22 @@ export interface ResPlayerProfile {
 | 姓名 | 公开身份行或 `PlayerProfile.name` | 空 |
 | 在线/房间状态 | 现有 presence/friend/blacklist 公开行 | 离线状态文字 |
 | 称号 | 公开行 worn title 或 `PlayerProfile.title` | 空 |
-| level | 目标确认 growth | 空 |
+| level | 目标确认 growth | 空；当前只作 Web summary caption，不伪造 `picLevelIcon` |
 | score | 目标确认 growth rankPoints，回退确认 playerSummary score | 空 |
 | originality | 目标确认 growth，回退确认 playerSummary | 空 |
 | tech | 目标确认 growth，回退确认 playerSummary | 空 |
 | 战斗统计 | 目标确认 `statistics` | 空；不填 0 |
 | 获奖统计 | 目标确认 `awards` | 空；真实 0 才显示 0 |
 
-`rdoBattleSummary` 和 `rdoAwardSummary` 只在来源附着已确认时挂接。已有 `AccountStatistics` 和 `AwardCounts` 的结构可直接复用，但它们的当前 server owner 是本账户；目标查询必须返回同样的已确认子集，不改变既有 Home 页面消费者。
+`rdoBattleSummary` 和 `rdoAwardSummary` 在当前实现中打开 Web 父容器伴随页，读取所选目标的 `PlayerProfile.statistics/awards` 响应；两页只复用既有 Home 统计页的原图片、文字控件和内部几何，不请求 owner history fallback，也不声称恢复原资料页内统计子页附着。已有 `AccountStatistics` 和 `AwardCounts` 结构可直接复用，但当前 server owner 为本账户；目标查询返回同样的已确认子集，不改变既有 Home 页面消费者。
 
 ## 生命周期与选择
 
-打开资料页时，root 固定 `{accountId,name}`。UI 先显示公开身份和关系状态，再发起一次 `PlayerProfile`。每次打开或 target 变化增加查询代次；关闭、切到好友页、进入房间或断线使旧代次失效，迟到响应不得写入新资料。pending 时禁用好友/屏蔽/交易写按钮，避免陈旧确认覆盖当前目标。
+打开资料页时，root 固定 `{accountId,name}`。UI 先显示公开身份和关系状态，再发起一次 `PlayerProfile`。`LobbySocialView` 传入稳定的 `battle.playerProfile` 查询函数；每次打开或 target 变化增加查询代次；关闭、切到好友页、进入房间、交易接管、断线或卸载使旧代次失效，迟到成功和迟到失败都不得写入新资料。pending 时禁用好友/屏蔽/交易写按钮，避免陈旧确认覆盖当前目标，既有关系状态保持不变。
 
-`PlayerProfile` 失败不影响既有好友/屏蔽状态。资料页仍可关闭；错误在现有 `player-info-status` 或资源失败反馈范围内显示。资源加载失败继续使用既有 `PlayerInfoResourceFeedback`，不因资料查询失败伪造原布局成功。
+`PlayerProfile` 失败不影响既有好友/屏蔽状态。资料页仍可关闭；失败保当前目标与已有响应，并由资料页局部重试重新查询。原资料 sheet 资源加载失败继续使用既有 `PlayerInfoResourceFeedback`；summary 资源失败在伴随页内局部显示并可重试，不因任一资源失败伪造原布局成功。
+
+summary 只准备所选统计页实际需要的 `/ui.json` 图片：`prepareSourceUi([suffix])` 等待真实图片 decode 后再发布布局；图片请求或 decode 失败进入 summary 局部错误与重试。summary retry 只重准备该页资源，保留当前目标和已确认 `PlayerProfile`，不重发资料查询，也不请求 owner history。
 
 关闭资料页沿用现有语义：Close/原生 Escape 返回打开它的实际 player row；若该行不存在则在可用的原列表根上恢复焦点。好友/屏蔽操作确认后仍在各自原位恢复焦点。
 
@@ -172,12 +176,12 @@ export interface ResPlayerProfile {
 
 来源事实：三份 XML/`ui.json` 控件与几何；现有 `PtlFriends`、`PtlBlacklist`、`PtlLobbyPlayers`、`PtlRoleProfile` 字段；`AccountStore` 的 display name/title/growth/statistics/awards reader；现有资料页、目录页、好友/屏蔽/交易消费者。
 
-采用政策：新增 `PlayerProfile` 作为目标账户只读公开资料查询；未知字段省略且不填 0；QQ 3 控件在缺原绑定/producer 时保持 source-only；`rdoBattleSummary`/`rdoAwardSummary` 只在确认统计附着后启用；迟到响应按代次隔离。以上政策不声称恢复原 server 资料查询、原 QQ 行为或原统计子页附着。
+采用政策：`PlayerProfile` 作为目标账户只读公开资料查询，未知字段省略且不填 0；QQ 3 控件在缺原绑定/producer 时保持 source-only；`rdoBattleSummary`/`rdoAwardSummary` 通过 Web 父容器伴随页挂接既有 Home 原统计页并消费所选目标 response，不请求 owner history；迟到响应按代次隔离。以上政策不声称恢复原 server 资料查询、原 QQ 行为或原统计子页附着。
 
 ## 未完成与未实测
 
 - 原 `btnQQ`、QQ 打开动作、外部 URI、联系人动作和目标 QQ 号 producer 未取得。
 - 原 family、描述、房号、宠物/坦克公开图标和 level icon producer 未取得。
 - 原统计子页在资料页的附着/偏移未取得；当前只有既有统计与奖章页面消费者。
-- 新增 `PlayerProfile`、真实资料页字段显示、QQ popup、三分辨率、真实联机和持久重启尚未实现或实测。
+- `PlayerProfile`、目标字段显示、统计伴随页和局部 resource retry 已实现；真实页面、QQ popup、三分辨率、真实联机和持久重启仍未实测。
 - UI-41、UI-42、UI-43、M5-13 父项不得因本文关闭。
