@@ -27,7 +27,7 @@ export function modeInfo(snapshot: MsgRoomSnapshot, playerId: string): HudModeIn
     if ((team !== 0 && team !== 1) || snapshot.teamScores.length !== 2
         || snapshot.teamScores.some(value => !Number.isFinite(value))) return;
     return {...base, self: String(Math.trunc(snapshot.teamScores[team])), enemy: String(Math.trunc(snapshot.teamScores[1 - team])),
-      binding: 'teamScores', label: '占领分'};
+      binding: 'teamScores', label: '城堡伤害'};
   }
   if (snapshot.mode === 3) {
     if (team !== 0 && team !== 1) return;
@@ -47,7 +47,7 @@ export function modeInfo(snapshot: MsgRoomSnapshot, playerId: string): HudModeIn
     const destroys = objectives.filter(objective => objective.kind === 'DESTROY');
     if (!destroys.length) return;
     return {...base, info: String(destroys.filter(objective => objective.hp > 0).length),
-      binding: 'destroyObjectivesRemaining', label: '剩余目标'};
+      binding: 'destroyObjectivesRemaining', label: '完好目标'};
   }
   return;
 }

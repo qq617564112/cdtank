@@ -1,7 +1,10 @@
 import {Color3, Mesh, MeshBuilder, Scene, StandardMaterial} from '@babylonjs/core';
 import type {MsgRoomSnapshot} from '../../../shared/protocols';
 
-/** Gameplay markers for rebuilt objectives; independent of original effects. */
+/** Gameplay markers that have no original scene model to render them. Mode 2
+ * Castle and mode 5 Breach identity come from source placements and are drawn
+ * by the scene renderer; this class never invents placeholder geometry for them.
+ */
 export class BattleTargets {
   private readonly markers = new Map<string, {mesh: Mesh; material: StandardMaterial}>();
 
@@ -9,32 +12,6 @@ export class BattleTargets {
 
   update(snapshot: MsgRoomSnapshot): void {
     const present = new Set<string>();
-    for (const objective of snapshot.match?.objectives ?? []) {
-      if (objective.sourcePlacementId !== undefined) continue;
-      if (objective.kind === 'DESTROY' && objective.hp <= 0) continue;
-      present.add(objective.id);
-      let marker = this.markers.get(objective.id);
-      if (!marker) {
-        const mesh = objective.kind === 'CAPTURE'
-          ? MeshBuilder.CreateCylinder(`objective-${objective.id}`, {
-            height: 1, diameter: objective.radius * 2, tessellation: 48,
-          }, this.scene)
-          : MeshBuilder.CreateSphere(`objective-${objective.id}`, {
-            diameter: objective.radius * 2, segments: 12,
-          }, this.scene);
-        const material = new StandardMaterial(`objective-material-${objective.id}`, this.scene);
-        material.alpha = objective.kind === 'CAPTURE' ? 0.45 : 1;
-        mesh.material = material;
-        mesh.isPickable = false;
-        marker = {mesh, material};
-        this.markers.set(objective.id, marker);
-      }
-      marker.mesh.position.set(-objective.x, objective.y + (objective.kind === 'CAPTURE' ? 1 : 20), objective.z);
-      marker.material.diffuseColor = objective.contested ? new Color3(1, 0.2, 0.2)
-        : objective.ownerTeam === 0 ? new Color3(0.3, 0.7, 1)
-        : objective.ownerTeam === 1 ? new Color3(1, 0.5, 0.2) : new Color3(1, 0.8, 0.2);
-      marker.material.emissiveColor = marker.material.diffuseColor.scale(0.35);
-    }
     for (const player of snapshot.players.filter(value => value.isVIP && value.alive)) {
       const id = `VIP-${player.id}`;
       present.add(id);

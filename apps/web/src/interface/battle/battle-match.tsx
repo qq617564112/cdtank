@@ -187,18 +187,29 @@ export class BattleMatch {
         case 1:
           objective = `击毁敌方消耗出击次数。猫队 ${match.teamLives[0]} · 狗队 ${match.teamLives[1]}；先耗尽的一方落败。`;
           break;
-        case 2:
-          objective = `驶入占领圈，独占累计 ${match.targetScore} 秒获胜。猫队 ${snapshot.teamScores[0].toFixed(1)} · 狗队 ${snapshot.teamScores[1].toFixed(1)}；双方进入时暂停计时。${this.direction}`;
+        case 2: {
+          const team = local?.team;
+          const castles = (match.objectives ?? []).filter(value => value.kind === 'CAPTURE');
+          const enemy = team === undefined ? undefined
+            : castles.find(value => value.ownerTeam === (team === 0 ? 1 : 0));
+          const progress = enemy ? `敌方城堡 ${Math.max(0, Math.trunc(enemy.hp))}/${Math.trunc(enemy.maxHp)}。` : '';
+          const damage = team === undefined ? ''
+            : `本队伤害 ${Math.trunc(snapshot.teamScores[team] ?? 0)} · 对方伤害 ${Math.trunc(snapshot.teamScores[1 - team] ?? 0)}。`;
+          objective = `击毁敌方城堡，先将其生命降到 0 者获胜。时间结束时，对敌方城堡累计伤害高的一方获胜，相等则平局。${progress}${damage}${this.direction}`;
           break;
+        }
         case 3:
           objective = `保护本队的王，击毁敌方的王获胜。${snapshot.players.filter(player => player.isVIP).map(player => `${player.team === 0 ? '猫队' : '狗队'}王 ${player.name} ${player.hp}/${player.maxHp}`).join(' · ')}`;
           break;
         case 4:
-          objective = `每人独立作战，先击毁 ${match.targetScore} 辆获胜；时间到时比较击毁数与战斗得分。`;
+          objective = `每人独立作战；时间结束时击毁数最多者获胜，击毁数相同则比较战斗得分，完全相等为平局。你的击毁数 ${local?.kills ?? 0}。`;
           break;
-        case 5:
-          objective = `射击场景物件，摧毁最多者获胜。剩余 ${match.objectives.filter(value => value.hp > 0).length}/${match.objectives.length}；你的摧毁数 ${local?.objectivesDestroyed ?? 0}。${this.direction}`;
+        case 5: {
+          const total = match.objectives.length;
+          const remaining = match.objectives.filter(value => value.hp > 0).length;
+          objective = `射击场景物件，全部破坏、生命归零时立即获胜；时间结束时摧毁最多者获胜，相等则平局。完好目标 ${remaining}/${total}；你的摧毁数 ${local?.objectivesDestroyed ?? 0}。被毁目标按原位置重生。${this.direction}`;
           break;
+        }
       }
     }
     const result = snapshot.phase === 'FINISHED' ? match.result : undefined;
@@ -291,13 +302,18 @@ export class BattleMatch {
 
   private targetDirection(snapshot: MsgRoomSnapshot, playerId: string): string {
     const player = snapshot.players.find(value => value.id === playerId);
-    const targets = snapshot.match!.objectives.filter(value => value.kind === 'CAPTURE' || value.hp > 0);
+    const objectives = snapshot.match!.objectives;
+    const targets = snapshot.mode === 2
+      ? objectives.filter(value => value.kind === 'CAPTURE'
+        && value.ownerTeam === (player?.team === 0 ? 1 : 0))
+      : objectives.filter(value => value.kind === 'CAPTURE' || value.hp > 0);
     if (!player || !targets.length) return '';
     const distance = (target: {x: number; z: number}): number => Math.hypot(target.x - player.x, target.z - player.z);
     const target = [...targets].sort((a, b) => distance(a) - distance(b))[0];
     const angle = Math.atan2(target.x - player.x, target.z - player.z) - player.yaw;
     const turn = Math.atan2(Math.sin(angle), Math.cos(angle));
-    return `最近目标 ${target.id} 距离 ${Math.round(distance(target))}，${Math.abs(turn) < 0.2 ? '在正前方' : turn > 0 ? '向右转' : '向左转'}。`;
+    const name = snapshot.mode === 2 ? '敌方城堡' : '最近目标';
+    return `${name} 距离 ${Math.round(distance(target))}，${Math.abs(turn) < 0.2 ? '在正前方' : turn > 0 ? '向右转' : '向左转'}。`;
   }
 
   clear(): void {
