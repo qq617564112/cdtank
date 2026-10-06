@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import type {MsgRoomEvent} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
+import {isTreasureItem} from '../../../../shared/combat/treasure-items';
 import {combatItems} from '../catalog';
 import {selectDropVisual} from './drop-item-catalog';
 
@@ -138,6 +139,15 @@ function battleUseMax(itemTableId: number): number {
   return Math.max(0, combatItems.get(itemTableId)?.battleUseMax ?? 0);
 }
 
+/** Adopted usable-count policy shared with initializeBattleQuantities: the two Func20
+ * treasures (source BattleUseMax0) expose the real remaining owned count; others keep
+ * max(0, BattleUseMax - roundUse). */
+function remainingBattleQuantity(itemTableId: number, owned: number, used: number): number {
+  if (isTreasureItem(itemTableId)) return owned >>> 0;
+  const cap = battleUseMax(itemTableId);
+  return Math.max(0, Math.min(owned >>> 0, Math.max(0, cap - used)));
+}
+
 function hotkeyContains(player: GroundItemRoomPlayer, instanceId: number): boolean {
   const hotkeys = player.combat.record?.arrays.get(0);
   if (!hotkeys) return false;
@@ -172,20 +182,17 @@ function replaceInventoryRecord(player: GroundItemRoomPlayer, record: InventoryW
 function applyDiscardedRecord(player: GroundItemRoomPlayer, record: InventoryWireRecord,
     callbacks: AcquireDiscardCallbacks): void {
   const owned = record.ownedQuantity >>> 0;
-  const cap = battleUseMax(record.itemTableId);
   const assigned = hotkeyContains(player, record.instanceId);
   const used = Math.max(0, callbacks.roundUse?.(player.id, record.itemTableId) ?? 0);
   const next = {...record, ownedQuantity: owned,
-    battleQuantity: assigned ? Math.max(0, Math.min(owned, Math.max(0, cap - used))) : 0};
+    battleQuantity: assigned ? remainingBattleQuantity(record.itemTableId, owned, used) : 0};
   replaceInventoryRecord(player, next);
 }
 
 function acquiredBattleQuantity(player: GroundItemRoomPlayer, instanceId: number,
     itemTableId: number, newOwned: number, used: number): number {
-  const cap = battleUseMax(itemTableId);
-  if (!cap) return 0;
   if (!hotkeyContains(player, instanceId)) return 0;
-  return Math.max(0, Math.min(newOwned >>> 0, Math.max(0, cap - used)));
+  return remainingBattleQuantity(itemTableId, newOwned, used);
 }
 
 function applyAcquiredRecord(player: GroundItemRoomPlayer, record: InventoryWireRecord,

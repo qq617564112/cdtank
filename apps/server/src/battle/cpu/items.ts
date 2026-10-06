@@ -7,6 +7,7 @@ import {calculateFoodHealing} from '../roles/food-healing';
 import type {TrapRestraintState} from '../items/trap-restraint';
 import type {OpticalCamouflageState} from '../items/optical-camouflage';
 import type {RoleDisguiseState} from '../items/role-disguise';
+import {isTreasureItem} from '../../../../shared/combat/treasure-items';
 
 interface ItemActor {
   alive: boolean;
@@ -71,6 +72,21 @@ export function healingHotkey(actor: ItemActor): number {
       actor.attributesReady ? actor.combat?.roleFloatFields?.get(0x8c) : undefined);
     if (healing > 0 && actor.hp < actor.maxHp
         && (actor.maxHp - actor.hp >= healing || actor.hp / actor.maxHp < .35)) return slot;
+  }
+  return 0;
+}
+
+/** Rebuilt policy: spend the Func20 treasures (item20001/20002) through the same ordinary
+ * input when missing life, matching their ItemSkill2 skill30005 HP effect. */
+export function treasureHotkey(actor: ItemActor): number {
+  if (!actor.alive || actor.combat?.status !== 2
+      || actor.hp === undefined || actor.maxHp === undefined
+      || !(actor.hp > 0) || !(actor.maxHp > 0) || actor.hp >= actor.maxHp) return 0;
+  for (const {slot, item} of usableItems(actor)) {
+    if (!isTreasureItem(item.itemTableId)) continue;
+    const healing = calculateFoodHealing(30,
+      actor.attributesReady ? actor.combat?.roleFloatFields?.get(0x8c) : undefined);
+    if (healing > 0 && (actor.maxHp - actor.hp >= healing || actor.hp / actor.maxHp < .35)) return slot;
   }
   return 0;
 }

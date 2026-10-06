@@ -2,6 +2,7 @@ import type {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import type {CombatItemDefinition} from '../../../shared/combat/catalog';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
+import {isTreasureItem} from '../../../shared/combat/treasure-items';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
 import {webAssetPath} from '../runtime/content-paths';
 
@@ -119,8 +120,11 @@ export class GroundItemAccountRuntime {
           .get(accountId, stack.instanceId);
         if (assigned) {
           const useMax = itemDefinitions().get(itemTableId)?.battleUseMax ?? 0;
-          granted.battleQuantity = Math.max(stack.record.battleQuantity,
-            Math.min(granted.ownedQuantity, useMax >>> 0));
+          // The two Func20 treasures have source BattleUseMax0; adopted ordinary use exposes
+          // the real remaining owned count instead of fabricating a per-round cap.
+          granted.battleQuantity = isTreasureItem(itemTableId)
+            ? granted.ownedQuantity
+            : Math.max(stack.record.battleQuantity, Math.min(granted.ownedQuantity, useMax >>> 0));
         }
         this.database.prepare('UPDATE inventory SET record = ? WHERE account_id = ? AND instance_id = ?')
           .run(JSON.stringify(granted), accountId, stack.instanceId);

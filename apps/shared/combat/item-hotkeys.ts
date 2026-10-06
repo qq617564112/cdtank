@@ -1,3 +1,5 @@
+import {isTreasureItem} from './treasure-items';
+
 export interface BattleItemRecord {
   instanceId: number;
   itemTableId: number;
@@ -47,6 +49,12 @@ export function initializeBattleQuantities(hotkeys: ArrayLike<number>, records: 
     const id = hotkeys[slot] >>> 0;
     if (!id) continue;
     const record = records.find(record => (record.instanceId >>> 0) === id);
-    if (record) record.battleQuantity = Math.min(record.ownedQuantity >>> 0, battleUseMax(record.itemTableId) >>> 0);
+    if (!record) continue;
+    // The two Func20 treasures have source BattleUseMax0; adopted ordinary use allows the
+    // real remaining owned count without inventing a per-round cap. Everything else keeps
+    // the original min(owned, BattleUseMax) formula.
+    record.battleQuantity = isTreasureItem(record.itemTableId)
+      ? record.ownedQuantity >>> 0
+      : Math.min(record.ownedQuantity >>> 0, battleUseMax(record.itemTableId) >>> 0);
   }
 }

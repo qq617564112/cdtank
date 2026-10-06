@@ -17,7 +17,7 @@ import type {TrapRestraintState} from '../items/trap-restraint';
 import type {OpticalCamouflageState} from '../items/optical-camouflage';
 import type {RoleDisguiseState} from '../items/role-disguise';
 import {isHiddenByOpticalCamouflage} from '../../../../shared/combat/optical-camouflage';
-import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, roleDisguiseHotkey, turnDrinkHotkey, teamLifeHotkey, airstrikeHotkey, type TeamLifeContext} from './items';
+import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, treasureHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, roleDisguiseHotkey, turnDrinkHotkey, teamLifeHotkey, airstrikeHotkey, type TeamLifeContext} from './items';
 
 export interface BotActor extends Point {
   id: string;
@@ -94,6 +94,7 @@ export class BotController {
     }
     if (actor.roleDisguise) input.fire = false;
     input.useItem = healingHotkey(actor) || input.useItem;
+    input.useItem = treasureHotkey(actor) || input.useItem;
     const reach = (start: Point, end: Point) => actor.movement
       ? actor.movement.navigation.reachable(start, end) : field.move(start, end, 20);
     const distance = (point: Point) => Math.hypot(point.x - actor.x, point.z - actor.z);

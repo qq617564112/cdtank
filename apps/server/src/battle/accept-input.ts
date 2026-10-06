@@ -4,6 +4,7 @@ import type {MsgPlayerInput, MsgRoomEvent} from '../../../shared/protocols';
 import {dispatchItemHotkey} from './items/item-request-dispatch';
 import type {PlayerState} from './player-state';
 import {applyHealingItem} from './healing';
+import {applyTreasureItemUse} from './items/treasure-item-use';
 import {applyAttackDrink, advanceAttackDrink} from './items/attack-drink';
 import {applyDefenseDrink, advanceDefenseDrink} from './items/defense-drink';
 import {recomputeBattleAttributes} from './attributes';
@@ -51,6 +52,7 @@ export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'round' | 'ph
         requests.push({roomId, type: 'itemRequest', message: '', playerId: player.id,
           targetId: '', value: 0, x: 0, y: 0, z: 0, skillId: undefined, itemUseRequest: request});
         applyHealingItem(roomId, player, request, maxHp, consumeItem, requests);
+        applyTreasureItemUse(roomId, player, request, maxHp, consumeItem, requests);
         applyDefenseDrink(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applyAttackDrink(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applyInvincibility(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);

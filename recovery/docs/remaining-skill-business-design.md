@@ -129,7 +129,9 @@ item20001/20002 是类别 6、`ItemType=13`，`ItemMoney/ItemCoin/GGet/Durable=0
 
 拾取只在 PLAYING、存活、距离有效、对象存在且归属未改变时进行。同一 `BEGIN IMMEDIATE` 中写入库存与收据，成功后移除场景物件；失败回滚并保留物件，不伪造成功。已有同定义堆叠则数量加一，否则创建一个类别 6 记录。
 
-Func20 只处理数量加一。HP 是否增加由 skill30005 的独立 Func2 effect 决定；在该效果实现前，数量事务不得顺带修改 HP 或把 item 文案 15、技能 HP30 之一当作最终治疗。价格为 0 不构成免费购买资格，类别 7 全量出售不属于本合同。后续消费使用现有库存事务。
+Func20（ItemSkill1）只处理数量加一，是真实 ground 拾取的唯一写入者；HP 由 ItemSkill2 skill30005 的独立 Func2 决定。skill30005 实读 `Trigger1/Target1/Func2/HP30`，采用 30 为普通自用治疗量；item 文案 15 保持字面描述，不替代技能值。价格为 0 不构成免费购买资格，类别 7 全量出售不属于本合同。
+
+普通自用采用入口 `battle/items/treasure-item-use.ts` 只放行 item20001/20002：已配置快捷槽、存活 status2、自用、缺失生命时先经持久 CAS 扣一份，再按 skill30005 治疗并 clamp 到当前玩法上限，发一次原技能通知；拒绝、满血或保存失败不改 HP、不扣量。该入口不执行 Func20 加一，不复制拾取、不开放整类别，也不改写原分类 1/2 的 `requestItemUse` 判据。两件物品原表 `BattleUseMax=0`，本重建按真实剩余 owned 初始化本局可用数与拾取/reconcile 同步，不发明每局上限、不称原行为。
 
 完整 ground 合同由独立的 ground 业务合同继续维护；本合同的库存加一是类别 6 消费者，不声称现有 ground trap/ground item 已完整实施或替代其 producer。
 
