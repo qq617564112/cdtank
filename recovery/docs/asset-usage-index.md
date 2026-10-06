@@ -2,11 +2,11 @@
 
 `asset-usage-index.json`以`catalog/inventory.json`的4665个路径为闭集，逐条保存原selected、versions、selectionBasis和patchPending。所有4665条均有当前唯一已解码来源；32份下载补丁与当前归档内容相同的结论沿用来源清单，不重新选择补丁文件。
 
-现有发布元数据明确关联3789条资产，876条未匹配。共26419个来源/产物引用，另有2487个不在闭集的引用、涉及352个不同key，单独列于outsideReferences。未匹配表示本次元数据范围尚无引用，不表示原游戏不会加载。
+现有发布元数据明确关联3851条资产，814条未匹配。共26605个来源/产物引用，另有2489个不在闭集的引用、涉及353个不同key，单独列于outsideReferences。未匹配表示本次元数据范围尚无引用，不表示原游戏不会加载。
 
 索引覆盖POL/MV3/CVD转换、25场景与battlefields、战车动作/INI、UI布局/图集/字库、声音、ELK/效果库/效果模型/路径/挂点，以及24张解码表与combat-catalog。每个引用保留metadata文件、JSON Pointer、原字符串、规范化路径、关联产物和用途。`loadingCode`一次扫描apps的`.ts`与`.tsx`源码，实际包含metadata文件名时记录文件、行号和原代码；Home、等待房间、结算及设置等正式React页面的加载入口纳入相同索引。这个入口是代码引用证据，不是单个资产已加载证据。没有代码引用的转换清单保持空数组。
 
-React加载入口覆盖已完成导出器实现，当前未重新生成全量索引或运行测试；上述4665闭集和数量引用既有产物范围，更新产物前不将新增入口算作已发布或运行验收。
+React加载入口已随导出器写入当前全量索引；Home、等待房间、结算、设置、商城和交易页面的明确`ui.json`/`combat-catalog.json`加载入口均记录在对应引用的`loadingCode`中。该入口只是代码引用证据，不把`ui.json`或目录的加载算作其中任一资产的浏览器实载或原表现验收。
 
 明确source→output/asset映射将glb/png使用反向关联源POL/MV3/CVD/DDS；战车动作file相对component.ini目录解析；UI裁切区域关联Imagefile原图集纹理，region名字不是同名独立TGA文件。场景OBJ/CAS/BOX、地形POL/出生RPT/NAV、城堡INI、effect.sav与combat三张源表由导出器明确构造源路径，记录sourceConstruction的代码文件、行号和语句，保留与直接元数据引用的区别。
 
@@ -32,7 +32,7 @@ recovery/.venv/bin/python tests/asset-usage-index.py > recovery/output/asset-usa
 
 4381个材质纹理引用实际对应GLB image的bufferView内嵌PNG；本批GLB不使用image URI。每次关联均比较内嵌PNG字节与转换器同相对目录输出的PNG字节，记录原模型key、原纹理字符串、材质/image索引、PNG路径、GLB路径与转换器代码证据。该比较验证实际产物来源，避免仅凭产物名称关联；不证明原纹理显示行为或浏览器已解码。
 
-964原模型4381处GLB嵌入纹理按同目录唯一来源与PNG字节核对；迷彩目录另关联711条记录/680个精确DDS请求的1361条source/asset引用。当前未匹配DDS395项。44处GLB纹理问题仍单列textureIssues，角色运行覆盖不修改静态引用来源。验证逐原字段核对同目录候选、内嵌PNG、选定DDS像素、JSON Pointer及代码行（owned-textures-asset-usage.log）。未匹配资源用途和全部原加载入口仍待恢复。
+964原模型4381处GLB嵌入纹理按同目录唯一来源与PNG字节核对；迷彩目录另关联711条记录/680个精确DDS请求的1361条source/asset引用。当前未匹配DDS363项。44处GLB纹理问题仍单列textureIssues，角色运行覆盖不修改静态引用来源。验证逐原字段核对同目录候选、内嵌PNG、选定DDS像素、JSON Pointer及代码行（owned-textures-asset-usage.log）。未匹配资源用途和全部原加载入口仍待恢复。
 
 ## 0021环境声音运行证据
 
