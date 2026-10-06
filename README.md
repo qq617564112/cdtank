@@ -4,19 +4,17 @@
 
 ## 运行资源查看器
 
-需Python 3、Node.js 22和本地 `CDTank/` 原资源。
+需Python 3、Node.js 24.16或更高版本、本地 `CDTank/` 原资源及用户附件字体。
 
 ```bash
 python3 -m venv recovery/.venv
 recovery/.venv/bin/python -m pip install -r recovery/requirements.txt
 npm ci
-recovery/.venv/bin/python recovery/inspect_assets.py --out recovery/output/verified
-npm run assets
-npm run assets:catalog
+npm run assets:rebuild -- --font /path/to/XiangJiaoKuanMaoShuaLingGanTi-2.ttf
 npm run dev
 ```
 
-访问 `http://localhost:5173`。已存在verified目录时复用解包结果；提取器要求新的目标目录，防止覆盖原结果。缺少ensurepip的环境可用 `python3 -m venv --without-pip recovery/.venv`，再通过 `python3 -m pip --python recovery/.venv/bin/python install -r recovery/requirements.txt` 安装。
+访问 `http://localhost:5173`。已存在verified目录时给重建命令添加 `--reuse-verified`；提取器要求新的目标目录，防止覆盖原结果。已有发布附件字体时可省略 `--font`。资源、协议与生产构建步骤见 [从原客户端重建资源](recovery/docs/reproducible-assets.md)。缺少ensurepip的环境可用 `python3 -m venv --without-pip recovery/.venv`，再通过 `python3 -m pip --python recovery/.venv/bin/python install -r recovery/requirements.txt` 安装。
 
 地图下拉框可组合原地形与已匹配的静态物件和原版城堡（25张地图，动态状态与原导航/动态碰撞待还原）。
 

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "npm run build:web",
+    "assets:rebuild": "node scripts/rebuild-assets.mjs",
     "assets": "npm run assets:mv3 && npm run assets:pol && npm run assets:cvd && npm run assets:scenes && npm run assets:battlefields && npm run assets:tanks && npm run assets:ui && npm run assets:audio && npm run assets:effects && npm run assets:combat && npm run assets:tank-textures",
     "assets:catalog": "recovery/.venv/bin/python recovery/catalog_assets.py",
     "assets:ui": "npm run assets:catalog && recovery/.venv/bin/python recovery/export_ui.py && recovery/.venv/bin/python recovery/export_ui_fonts.py && recovery/.venv/bin/python recovery/export_chat_emote_sequences.py",
