@@ -5,6 +5,7 @@ import configparser
 from pathlib import Path
 from scene import read_scene
 from scene_breach import decode_breach_tail
+from export_scene_ambient import export as export_scene_ambient
 from export_scene_animation_0007 import export as export_scene_animation
 from export_scene_animation_0010 import export as export_scene_animation_0010
 from export_scene_animation_0018 import export as export_scene_animation_0018
@@ -21,24 +22,11 @@ from export_scene_breach05 import export as export_scene_breach05
 from export_scene_breach06 import export as export_scene_breach06
 from export_scene_breach10 import export as export_scene_breach10
 from export_scene_breach11 import export as export_scene_breach11
-from export_scene_environment_sound21 import export as export_scene_environment_sound
-from export_scene_environment_sound20 import export as export_scene_environment_sound20
-from export_scene_environment_sound22 import export as export_scene_environment_sound22
-from export_scene_environment_sound10 import export as export_scene_environment_sound10
-from export_scene_environment_sound11 import export as export_scene_environment_sound11
-from export_scene_environment_sound04 import export as export_scene_environment_sound04
-from export_scene_environment_sound05 import export as export_scene_environment_sound05
-from export_scene_environment_sound02 import export as export_scene_environment_sound02
-from export_scene_environment_sound07 import export as export_scene_environment_sound07
-from export_scene_environment_sound06 import export as export_scene_environment_sound06
-from export_scene_environment_sound14 import export as export_scene_environment_sound14
-from export_scene_environment_sound17 import export as export_scene_environment_sound17
 from export_scene_castle02 import export as export_scene_castle02
 from export_scene_castle06 import export as export_scene_castle06
 from export_scene_castle05 import export as export_scene_castle05
 from export_scene_castle10 import export as export_scene_castle10
 from export_scene_castle11 import export as export_scene_castle11
-from export_scene_effect05_042 import export as export_scene_effect05_042
 from export_scene_water02 import export as export_scene_water02
 from export_scene_plant02 import export as export_scene_plant02
 from export_scene_plant04 import export as export_scene_plant04
@@ -67,6 +55,7 @@ models = json.loads((out / 'pol-conversion.json').read_text())
 lookup = {Path(entry['path']).stem.lower(): entry['output'] for entry in models}
 animated = {entry['path'].lower(): entry['output']
     for entry in json.loads((out / 'mv3-conversion.json').read_text())}
+export_scene_ambient()
 export_scene_animation()
 export_scene_animation_0010()
 export_scene_animation_0018()
@@ -83,24 +72,11 @@ export_scene_breach05()
 export_scene_breach06()
 export_scene_breach10()
 export_scene_breach11()
-export_scene_environment_sound()
-export_scene_environment_sound20()
-export_scene_environment_sound22()
-export_scene_environment_sound10()
-export_scene_environment_sound11()
-export_scene_environment_sound04()
-export_scene_environment_sound05()
-export_scene_environment_sound02()
-export_scene_environment_sound07()
-export_scene_environment_sound06()
-export_scene_environment_sound14()
-export_scene_environment_sound17()
 export_scene_castle02()
 export_scene_castle06()
 export_scene_castle05()
 export_scene_castle10()
 export_scene_castle11()
-export_scene_effect05_042()
 export_scene_water02()
 export_scene_plant02()
 export_scene_plant04()
