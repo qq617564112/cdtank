@@ -181,10 +181,10 @@ CPU 走同一接触扫描与资格：普通移动真接触，沿同资格在本�
 
 拾取把 owned 写入后必须让本局可用数可达，不能只持久 add 而 `battleQuantity` 永远为 0：
 
-- 已有实例：`ownedQuantity += quantity`，若该实例已在本角色七槽中且本轮
-  `battleQuantity < BattleUseMax`，按现 `initializeBattleQuantities` 语义把
-  `battleQuantity` 提升到 `min(ownedQuantity, max(0, BattleUseMax - roundUse))`；已消费的
-  本局数量由 `roundUse` 计入，`ownedQuantity` 已反映真实扣量，本局可用数不再二次扣减。
+- 已有实例：`ownedQuantity += quantity`，保留该行原 `state/slots/float/字段`。两贵重品
+  `20001/20002` 在本角色七槽中时按采用规则取真实剩余 `ownedQuantity` 作为本局可用数；
+  其它原物件仍按 `min(ownedQuantity, max(0, BattleUseMax - roundUse))`，已消费的本局数量
+  由 `roundUse` 计入，`ownedQuantity` 已反映真实扣量，本局可用数不再二次扣减。
 - 新实例：按现未用 uint32 语义分配 instanceId 建 owned 记录，不自动改用户槽位；玩家
   正常配置槽位或再战时通过既有 Kitbag/再战流程选择。
 - 同账户多连接：用现 `refreshAccountTitle` 同型机制把 owned/本局量广播给该 account 的
@@ -193,8 +193,9 @@ CPU 走同一接触扫描与资格：普通移动真接触，沿同资格在本�
 ### 效用
 
 - 拾取一律写 owned 库存，是唯一取得作者，不在拾取时写 HP。
-- HP/治疗等效果由该物件已恢复的普通使用路径产生（类别 1 走 `applyHealingItem`；类别 6
-  按物品技能链），沿用现 `dispatchItemHotkey`/`apply*` 事务与数量消耗。
+- HP/治疗等效果由该物件已恢复的普通使用路径产生（类别 1 走 `applyHealingItem`；
+  `20001/20002` 的 Func20 只做拾取数量入账，普通 use 走 `ItemSkill2=30005`），沿用现
+  `dispatchItemHotkey`/`apply*` 事务与数量消耗。
 - 类别 6 贵重品不进入 0x58 treasure 记录映射；其入账只走 known itemTableId + 现 schema。
 
 ### 生命周期与终局顺序
@@ -274,7 +275,8 @@ metadata 带 `groundItemId`/`sourceModel`；`reconcile(snapshot.match?.groundIte
 
 - 原服务端掉落概率未证；0.5、池 `{1,2,20001,20002}`、dropitem 档位解释（含边界取首行）
   均为采用规则。
-- 类别 6 的拾取入账无原来源，采用持久加一；后续普通使用按既有规则消耗，非免费 Shop。
+- 两贵重品 `20001/20002` 的拾取入账无原服务端 writer，采用 Func20 持久加一；
+  普通 use 不再加一，`ItemSkill2=30005` 只做一次 CAS 后治疗并各减一，非免费 Shop。
 - 3c96/3ca0 只部分反汇编确认字段与节点删除/生成调用；3caa 0x58 记录未映射任何 owned 字段。
 - 接触半径40、CPU 本地拾取、同账户多连接库存广播与前端贴图变体均已实现；实际对局、
   双端、持久与高清验收未做，M2-10 未完成。

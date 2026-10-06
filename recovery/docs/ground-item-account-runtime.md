@@ -67,16 +67,18 @@ discardOwnedItem(accountId, context): GroundItemDiscardResult | undefined;
 按 `ORDER BY instance_id` 取稳定最低、同 `itemTableId` 的实例：
 
 - 已存在同定义实例：`ownedQuantity += quantity`，保留该行原 `state/slots/float/字段`；若该
-  实例占着快捷槽，按现 `initializeBattleQuantities` 语义把本局可用数抬到
-  `min(ownedQuantity, BattleUseMax)`，不回退已有值。
+  实例占着快捷槽，两贵重品 `20001/20002` 按采用规则把本局可用数抬到真实剩余
+  `ownedQuantity` 且不回退已有值；其它原物件仍抬到 `min(ownedQuantity, BattleUseMax)`。
 - 无实例：按现 `shop`/`trade` 同样的「跨 `inventory`+`role_records` 取首个未用正 uint32」
   分配 `instanceId`，建类别 1..6 合法 `InventoryWireRecord`：`ownedQuantity=quantity`、
   `battleQuantity=0`、`state=0`、`field8/float*` 取该类型构造器的默认值。这是本项目已采用的
   owned schema，不冒充原记录来源，也不把未知 float 反推成取证事实。
 
-类别 6（20001 鱼骨 / 20002 骨头，Func20 的 `T1/T2`、`X1`、`Y20001/20002`）只做数量加一：
-不写 HP、不写 tech points、无 skill30005 副效；0 价格不构成免费 Shop。类别 1/2 走同一入口，
-效用仍由既有 healing/item-use 事务在普通使用路径产生。
+20001 鱼骨 / 20002 骨头的 Func20（`T1/T2`、`X1`、`Y20001/20002`）只做数量加一：
+本身不写 HP、不写 tech points；普通 use 不再加一，`ItemSkill2=30005` 改由
+`battle/items/treasure-item-use.ts` 在普通请求、存活、缺失生命及真实 skill 定义门禁后
+先 CAS 再治疗并各减一；0 价格不构成免费 Shop。类别 1/2 走同一入口，效用仍由既有
+healing/item-use 事务在普通使用路径产生。
 
 ### discard（丢出地面）
 

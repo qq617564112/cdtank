@@ -4,6 +4,14 @@
 
 普通使用43d4dc的存活status2、实例查找及本局数量门禁提供请求前置条件；3c9e只发请求，3c92独立确认扣量。当前服务端据此采用成功事务先保存、再改变本局数量与角色状态的顺序。重发普通输入由既有sequence门禁拒绝，失败保持库存与角色状态。是否成功由服务端完成作用及保存决定。
 
+## 贵重品
+
+对应M2-10、M4-02/FUNC-20、M4-10及treasure-item-client-configuration.md。原item表20001鱼骨/20002骨头为类别6、`ItemType=13`、`ItemMoney/ItemCoin/GGet/Durable=0`、`BattleUseMax=0`，`ItemSkill1`分别为20001/20002，`ItemSkill2=30005`；skill20001/20002为Trigger1/Target1/Func20，参数`T1/T2`、`X1`、`Y20001/20002`；skill30005为Trigger1/Target1/Func2、HP30、Effect11、GA15。物件说明写恢复15，与skill字段30冲突；当前采用规则使用skill字段30，文档保留15的源差异，不把说明文字当执行值。
+
+Func20只负责地面拾取数量入账：服务端沿既有ground acquire账户事务把精确`itemTableId`的owned数量加一，不写HP，不增加tech points，也不在普通use再次加一。普通use由已配置快捷槽进入既有普通请求，仅精确20001/20002、存活status2、自用、真实skill定义、owned/本局量正数且存在生命缺口时执行；先经既有CAS消费一份，成功后再按HP30治疗并clamp到当前上限，owned与本局量各减一；满血、拒绝或保存失败不改HP、不扣量。槽4..7对应Battle5..8。
+
+两件贵重品源的`BattleUseMax=0`保持原字段；采用规则按已配置实例的真实owned初始化可用量，不放宽到category6全类，不开放免费shop/gift，不做客户端预测。其它原物件仍按`min(owned, max(0, cap - roundUse))`。原服务端writer、真实双端、持久重启及高清验收仍未执行。
+
 ## 光学迷彩
 
 对应M4-10-I09、FUNC-07及M6-06。原物件9关联skill9、BattleUseMax=2；技能Target1、TriggerType1、FuncType7、T10且Effect/Sound均为0。普通使用请求没有可确认的目标或持续时间字段，服务端按请求者自用和原表10秒执行，不从客户端接收生命、期限、技能或效果参数。
@@ -82,7 +90,7 @@
 
 对应M6-05-A、M6-02及相关称号消费条件。直接来源事实：原`shop_purchases`/`tank_purchases`/`pet_purchases`/`part_maintenance`/`tank_maintenance`/`trade_receipts`收据表未冻结稳定原付款额。采用规则：新增`account_spending_ledger`在purchase/maintenance/trade各自的既有`BEGIN IMMEDIATE`事务内按实际提交金额记账，key为`(account_id,source,receipt_id)`，重放命中原receipt不重记、失败整体回滚；战车迷彩`configureTankTextures`在真实扣费时于同事务写新的`tank-texture` UUID收据，无变化或请求未发送不记。`readAccountSpending`仅在该账户至少有一条账本receipt时返回求和，否则`spentMoney`/`spentTokens`保持undefined表示unknown而非0。旧窗口不回填，也不按当前catalog价格反推历史成交额；Trade只记本账户outgoing money，收到金钱及originality/skillPoints不计。范围见`account-spending-runtime.md`。
 
-Func19的12501/12502/12503 domain、history/account与真实World来源冻结已接（main 9f6620f/9d632fc），离场清技能前冻结；商城取得入口fea0765与商城UI d2c3a66已接，Home MARKER装配后profile0x13c三mark实例按owned实例解析ItemSkill1进入selectedSkills，snapshot与World冻结共同消费（a40e38d）；OP唯一集中静态走查已完成，实际验收待做。Func6的domain 6b05507与P life 73ae1a2（source d14852e）已集成；统一shot/DOT/direct/trap/airstrike免伤predicate已接，死亡和respawn清旧保护，World桥88b726a已接真实复活完成后授予5秒、首次spawn不授、真实时钟推进到期及死亡/Leave/finish/round/loading清理；实际验收待做，FUNC-06保持未勾。Func21纯关系规则aeafb02及当前小地图消费已接，13111 jammer/13112 detector读取真实selected来源；本人/同队可见、敌对仅detector解radar jam且不破解optical invisibility；本批范围仅13111/13112关系读取、无新grant，合法取得链与验收待做。Func17已有真实受害者被动一次复制与每生命清理，沿`pet-copy-skill-policy.md`保留范围，不假造完整原writer完成。Func20类别6拾取数量入账已随ground acquire账户事务与World桥真接，30005普通使用效果未实现（下批worker），实际验收待做。地面掉落O的shared/schema106 83f138f与account事务be579f9保持已接，domain fda9ebb（source 49b9ce6）已集成，World桥88b726a与UI呈现fc83778已集成；OP批次唯一集中静态走查已完成，四项finding均已交付集成：服务器O-S01/P-S01修复a40e38d、UI丢弃候选缓存刷新与FINISHED先到拾取声修复main8b70bfe（source 8bdafe1d），掉落拾取合同见`ground-item-business-design.md`，30005治疗未实现、不记为完成。
+Func19的12501/12502/12503 domain、history/account与真实World来源冻结已接（main 9f6620f/9d632fc），离场清技能前冻结；商城取得入口fea0765与商城UI d2c3a66已接，Home MARKER装配后profile0x13c三mark实例按owned实例解析ItemSkill1进入selectedSkills，snapshot与World冻结共同消费（a40e38d）；OP唯一集中静态走查已完成，实际验收待做。Func6的domain 6b05507与P life 73ae1a2（source d14852e）已集成；统一shot/DOT/direct/trap/airstrike免伤predicate已接，死亡和respawn清旧保护，World桥88b726a已接真实复活完成后授予5秒、首次spawn不授、真实时钟推进到期及死亡/Leave/finish/round/loading清理；实际验收待做，FUNC-06保持未勾。Func21纯关系规则aeafb02及当前小地图消费已接，13111 jammer/13112 detector读取真实selected来源；本人/同队可见、敌对仅detector解radar jam且不破解optical invisibility；本批范围仅13111/13112关系读取、无新grant，合法取得链与验收待做。Func17已有真实受害者被动一次复制与每生命清理，沿`pet-copy-skill-policy.md`保留范围，不假造完整原writer完成。Func20的20001/20002拾取数量入账已随ground acquire账户事务与World桥真接；普通use不再加一，ItemSkill2=30005按普通request→既有CAS→治疗clamp→两量单减接入，失败不扣，实际验收待做。地面掉落O的shared/schema106 83f138f与account事务be579f9保持已接，domain fda9ebb（source 49b9ce6）已集成，World桥88b726a与UI呈现fc83778已集成；OP批次唯一集中静态走查已完成，四项finding均已交付集成：服务器O-S01/P-S01修复a40e38d、UI丢弃候选缓存刷新与FINISHED先到拾取声修复main8b70bfe（source 8bdafe1d），掉落拾取合同见`ground-item-business-design.md`。
 
 ## 未完成范围
 

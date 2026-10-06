@@ -1,26 +1,32 @@
-# Treasure item client configuration
+# 贵重品客户端配置入口
 
-This note records the client-side configuration range for the two recovered treasure items:
+本文记录 20001 鱼骨、20002 骨头两件贵重品的客户端配置终态。原 item 表两行均为
+类别 6、`ItemType=13`、`ItemMoney=0`、`ItemCoin=0`、`GGet=0`、`Durable=0`、
+`BattleUseMax=0`；`ItemSkill1` 分别为 20001/20002，`ItemSkill2=30005`。
 
 | ItemTableID | Name | Inventory category | ItemType | BattleUseMax | ItemSkill1 | ItemSkill2 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | 20001 | 鱼骨 | 6 | 13 | 0 | 20001 | 30005 |
 | 20002 | 骨头 | 6 | 13 | 0 | 20002 | 30005 |
 
-The source item rows keep `ItemMoney=0`, `ItemCoin=0`, `GGet=0` and `Durable=0`. The two rows are not generalized into a free shop path, a gift path, or a category-6 open inventory page.
+## 配置入口
 
-## Player configuration path
+`HomeInventoryView` 保持原 Weapon / Item / Valuable 页及原布局。Item 页继续显示
+正常类别 1 记录，并额外显示账号查询确认为 owned 且 `itemTableId` 精确为
+`20001` 或 `20002` 的两条记录；Valuable 页继续使用原 category6 列表、行内容、
+计数与出售入口，保持原布局。
 
-`HomeInventoryView` keeps the original Weapon / Item / Valuable tabs and their source layouts. The Item page continues to show normal category-1 records, and also includes only owned records whose `itemTableId` is exactly `20001` or `20002`. The Valuable page continues to show category-6 records with its original list, row content and confirmed quantity label.
+用户可在 Item 页选择或拖入这两条记录，经既有 `ASSIGN` 请求保存确认；当前
+槽 4..7 对应战斗键 5..8。取消与清空沿用既有 `CANCEL` 路径。客户端不创建 owned
+记录，零数量不显示；权威来源仍是账号查询返回的 `Inventory`。
 
-Selecting or dragging one of these two records on the Item page uses the existing `ASSIGN` request path. The current slot numbering maps Item slots 4-7 to battle keys 5-8, and the server kitbag authority accepts `1..4000` or `20001..21000`. Cancellation and clearing use the same existing `CANCEL` path.
+两件贵重品源 `BattleUseMax=0`；采用规则按确认 owned 初始化可用量，不放宽到
+category6 全类，不开放免费 shop/gift，不做客户端预测。普通 use 经既有请求进入
+`ItemSkill2=30005` 链路：存活、自用、缺失生命、真实 skill 定义通过后，先持久 CAS
+成功，再按 HP30 治疗并 clamp 到当前上限，owned/本局量各减一；满血、拒绝或保存失败
+不改 HP、不扣量。
 
-The client does not create owned records. Only confirmed `Inventory` rows returned by the account query are rendered, and zero-quantity rows remain hidden. The existing account query refresh remains the ownership source.
+## Known Issues
 
-The adopted configured-hotkey policy for these two items treats the usable count as the confirmed owned quantity when their source `BattleUseMax` is zero. The server-side policy and `ItemSkill2` execution are outside this UI slice.
-
-## Known gaps
-
-The original `ItemSkill2=30005` effect is not implemented by this client configuration change. The item description says 15 HP while the recovered skill row says HP30; this note does not pick either value as the final runtime result.
-
-No browser acceptance, type check, build, or actual battle verification was run for this slice.
+本片未运行浏览器验收、类型检查、构建或实际战斗验证。原服务端 writer、真实双端、
+持久重启与高清表现仍待验收。
