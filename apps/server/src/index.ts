@@ -37,6 +37,7 @@ const TICK_RATE = runtime.tickRate;
 const world = new World(Date.now, {
   minPlayers: runtime.minPlayers,
   timeLimitSeconds: runtime.timeLimitSeconds,
+  resolveAccount: connectionId => accountByConnection.get(connectionId),
   onMatchCommitted: match => history.committed(match),
   consumeItem: (playerId, instanceId, expectedOwned, itemTableId) => consumeAccountBattleItem(
     accounts, accountByConnection, sessionByConnection, playerId, instanceId, expectedOwned, itemTableId),
@@ -89,7 +90,7 @@ registerFriendsApi(server, accounts, accountByConnection, sessionByConnection);
 registerBlacklistApi(server, accounts, accountByConnection, sessionByConnection);
 registerFriendChatApi(server, accounts, world, accountByConnection, sessionByConnection);
 registerLobbyPresenceApi(server, accountByConnection, sessionByConnection, accountId => accounts.displayName(accountId));
-startWorldTicks(world, TICK_RATE, transport, history.flush);
+startWorldTicks(world, TICK_RATE, transport, () => world.publishReceipts(history.flush()));
 
 server.start().catch((error: unknown) => {
   console.error(error);

@@ -27,7 +27,7 @@
 | 地图/模式 | `m001.dat`–`m005.dat` 实读共 26 组合（mode1×7、mode2×5、mode3×7、mode4×4、mode5×3）。每行含 `HitScore/DestroyScore/BrokenScore/WinScore/LoseScore/DrawScore/TimeScore`、`Time`、`PlayerMin/PlayerMax`，以及 `Perfect/MVP/Savage/Console/Brave/Kind/Crafty/Shy/Greedy` 奖励列。 |
 | 现有结算 | `settlement/match-result.ts` 冻结 `ResultPlayer{team,rank,name,kills,deaths,objectivesDestroyed,combatScore,outcomeBonus,totalScore,outcome}`；`combatScore`=本局地图事件分（取整），`outcomeBonus`=地图 Win/Lose/Draw 分，`totalScore`=两者之和。 |
 | 现有事务键 | `accounts/history.ts`：`settled_matches(match_id,round)` 唯一门 + `match_history(account_id,match_id,round)`；`matchId=`${runId}:${roomId}`，`runId=randomUUID()` 每次进程启动新值。 |
-| 生命周期 | `World.finishRoom`→`onMatchCommitted`，在 `accountByConnection` 删除前冻结；CPU 经 `accounts.get(connectionId)` 取不到 accountId 被排除；`rooms/reconnection.ts` 断线先 `pauseDisconnectedPlayer`，窗口内重连 `restore`，否则窗口到期 `leave`→FORFEIT 结算。 |
+| 生命周期 | `World.finishRoom`→`onMatchCommitted`，在 `accountByConnection` 删除前冻结；普通中途离场在删除与账号映射清理前由 `room.departedParticipants` 冻结统计与 `accountId`，终局与现 `players` 合并；CPU 经 `accounts.get(connectionId)` 取不到 accountId 被排除；`rooms/reconnection.ts` 断线先 `pauseDisconnectedPlayer`，窗口内重连 `restore`，否则窗口到期 `leave`→FORFEIT 结算。 |
 | 地面掉落 | `dropitem.dat` 实读 14 行，列 `ItemType/Min/Max/ItemID/ItemTexture/SoundFile/EffectFile`，`ItemID` 为场景 `obj05001–obj05011`。这是掉落物**场景表现/类别→模型**表，不产出账户货币/经验。 |
 | 称号 | `title.dat` 实读 158 行，列 `称号ID/称号名称/说明/FunctionType/FunctionX/FunctionY/FunctionZ/a/b/c`；FunctionType 计数 {1:79,2:6,5:15,6:42,7:13,8:1,9:1,10:1}，条件为累计统计（连胜/连败、命中率、击毁/被击毁、总时长、造成伤害、获奖次数、消费等），非货币。 |
 
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS account_reward_ledger (
 
 - 首次：在 `settled_matches` 与 `match_history` 写入的同一 `BEGIN IMMEDIATE` 内，判 ledger 无记录→写 `account_growth`（money 写 profile `0x70`，orig/tech/积分/等级写 `account_growth`）→写 `account_reward_ledger` receipt，一并 COMMIT。
 - 重复（重连/重复 finish/重启后再报）：ledger 已有 `(account_id, match_id, round)` 时直接返回同 receipt，**不重复加钱/经验/等级**。
-- 任一账户缺失、冲突或写失败：整场回滚，`settled_matches` 不留假成功；沿既有 pending 队列固定 tick 重试，连接身份删除不影响重试。
+- 任一账户缺失、冲突或写失败：整场回滚，`settled_matches` 不留假成功；沿既有 pending 队列固定 tick 重试，连接身份删除不影响重试。重试成功后 `flush` 返回本次收据，`World.publishReceipts` 仅对仍存在、同 `roomId`/`round` 且 `FINISHED` 的房间补附 `ResultPlayer.award`，下个常规 snapshot 即带 late award；房间已释放只落库，new round 不受影响。
 - 多连接隔离：奖励按 `accountId` 键。同一账户两条连接参加同场，第二条落到同 ledger 键→replay 只记一次，即「一账户每场一奖」，不重复不串号。
 - CPU 不写真实账户（无 accountId，跳过）。
 
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS account_reward_ledger (
 ## 生命周期
 
 - 正常终局（TIME_LIMIT/OBJECTIVE）：`finishRound` 提交一次→奖励一次→receipt 持久。
-- 真实离房：`Leave`→`leaveRoomPlayer` 删除玩家前先冻结实际参与者（含离场人）→FORFEIT 结算，离场人按 LOSE、留场人按 WIN 结算；同一 `(matchId,round)` 只写一次。离场人已从 `room.players` 删除也按冻结记录纳入本局一次 receipt。
+- 真实离房：`Leave`→`leaveRoomPlayer`；`forfeitOutcome` 命中时删除玩家前先冻结实际参与者（含离场人）→FORFEIT 结算，离场人按 LOSE、留场人按 WIN，同一 `(matchId,round)` 只写一次。普通离房但留人继续（个人战剩多人等）在删除与账号映射清理前冻结参赛者统计与真实 `accountId`，不提前写奖/历史；终局与现实际 `players` 合并，按现最终 outcome 一次结算，离场人已从 `room.players` 删除也按冻结记录纳入本局一次 receipt。`startRoom`/再战与真正删房清本 round roster，失败载荷跨 release 仍在 pending 中可落库。
 - 断线：`pauseDisconnectedPlayer` 保留参与者；窗口内 `restore` 不结算不发奖；窗口到期 `leave`→FORFEIT 才结算一次。断线期间若对局自然终局，冻结名单已含该暂停玩家，按正常结算一次。
 - 再战：`round++` 产生新 `(matchId, round)`，独立领奖；旧 receipt 保留。
 - 重启：已提交 receipt 落 SQLite，服务重启后同库可读；`runId` 换新避免复用旧房号/round 造成重复或误丢弃。
@@ -193,8 +193,8 @@ CREATE TABLE IF NOT EXISTS account_reward_ledger (
 
 - 服务端：普通真实账户 mode≤5 各自然终局一次，冻结结果与快照 `award` 一致，重复 finish/重连/重启不重复加钱加成。
 - 账户：money 写 profile `0x70`，积分/等级/创意/技能点写 `account_growth`；同库真实服务重启后余额/积分/等级保持；CPU/旁观空；多连接同场只记一次。
-- 离房/断线/再战：真实 Leave 判负一次，冻结名单纳入离场人；断线窗口内重连不发奖、窗口到期一次；再战 round 独立领奖。
-- UI：UI-19 三分辨率整页显冻结结果 + 等级/经验；UI-20 award 子页显本次四值奖励；重开/重连值不变。
+- 离房/断线/再战：真实 Leave 判负一次，FORFEIT 冻结名单纳入离场人；普通中途离场不提前结算、终局合并纳入离场人一次；断线窗口内重连不发奖、窗口到期一次；再战 round 独立领奖。
+- UI：UI-19 三分辨率整页显冻结结果 + 等级/经验；UI-20 award 子页显本次四值奖励；重开/重连值不变。UI 由独立 UI worker 负责，本批唯一集中走查登记关闭奖励弹层焦点回源 `btnClose`、成长带与既有状态文字重叠两处待修，root 最终集成 UI3/4 修复，未声称真实页面验收通过。
 - 上述真实网络/双网页/HD/持久重启/原 reward producer 验收本轮均未执行；不勾完整父，不改 `progress.md`。
 
 ## 剩余源授权/实测缺口

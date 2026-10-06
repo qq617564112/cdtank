@@ -8,13 +8,21 @@ export interface CommittedMatch {
   mode: number;
   mapId: number;
   result: MatchResult;
-  participants: {playerId: string; connectionId: string; cpu: boolean}[];
+  /** Departed participants carry the already-resolved `accountId` captured before removal. */
+  participants: {playerId: string; connectionId: string; cpu: boolean; accountId?: string}[];
 }
 
 interface PendingPayload {
-  match: {matchId: string; round: number; mode: number; mapId: number;
+  match: {matchId: string; roomId: string; round: number; mode: number; mapId: number;
     endedAt: number; reason: MatchResult['reason']};
-  participants: {accountId: string; result: MatchResult['players'][number]}[]};
+  participants: {accountId: string; result: MatchResult['players'][number]; playerIds: string[]}[]};
+
+/** Receipts for a payload that just committed; World publishes these on the still-live room. */
+export interface CommittedReceipt {
+  roomId: string;
+  round: number;
+  awards: ReadonlyMap<string, ResultAward>;
+}
 
 /** Empty award set; participants without a committed receipt keep an absent snapshot award. */
 const NO_AWARDS: ReadonlyMap<string, ResultAward> = new Map();
@@ -35,26 +43,44 @@ export function accountMatchHistory(store: AccountStore,
     store.recordMatchHistory(payload.match, payload.participants,
       (accountId, result) => store.grantMatchReward(accountId, payload.match.matchId, payload.match.round, result));
   };
-  const flush = (): void => {
+  const receipts = (payload: PendingPayload): Map<string, ResultAward> => {
+    const byPlayer = new Map<string, ResultAward>();
+    for (const participant of payload.participants) {
+      const award = store.rewardReceipt(participant.accountId, payload.match.matchId, payload.match.round);
+      if (!award) continue;
+      for (const playerId of participant.playerIds) byPlayer.set(playerId, award);
+    }
+    return byPlayer;
+  };
+  /** Retry failed payloads; a successful retry returns its receipt so World can late-attach award. */
+  const flush = (): CommittedReceipt[] => {
+    const committed: CommittedReceipt[] = [];
     for (const [key, payload] of pending) {
       try {
         commit(payload);
         pending.delete(key);
         reported.delete(key);
+        committed.push({roomId: payload.match.roomId, round: payload.match.round, awards: receipts(payload)});
       } catch (error) {
         if (!reported.has(key)) {reported.add(key); report(error);}
       }
     }
+    return committed;
   };
   return {
     committed(match: CommittedMatch): ReadonlyMap<string, ResultAward> {
       const matchId = `${runId}:${match.roomId}`;
       const key = `${matchId}:${match.result.round}`;
-      if (pending.has(key)) {flush(); return NO_AWARDS;}
+      if (pending.has(key)) {
+        const retried = flush().find(receipt => receipt.roomId === match.roomId
+          && receipt.round === match.result.round);
+        return retried?.awards ?? NO_AWARDS;
+      }
       // One account settles once per round even with two participant connections.
       const byAccount = new Map<string, {playerIds: string[]; result: MatchResult['players'][number]}>();
       for (const participant of match.participants) {
-        const accountId = participant.cpu ? undefined : accounts.get(participant.connectionId);
+        const accountId = participant.accountId
+          ?? (participant.cpu ? undefined : accounts.get(participant.connectionId));
         const result = match.result.players.find(player => player.id === participant.playerId);
         if (!accountId || !result) continue;
         const existing = byAccount.get(accountId);
@@ -62,9 +88,10 @@ export function accountMatchHistory(store: AccountStore,
         else byAccount.set(accountId, {playerIds: [result.id], result: {...result}});
       }
       if (!byAccount.size) return NO_AWARDS;
-      const payload: PendingPayload = {match: {matchId, round: match.result.round,
+      const payload: PendingPayload = {match: {matchId, roomId: match.roomId, round: match.result.round,
         mode: match.mode, mapId: match.mapId, endedAt: match.result.endedAt, reason: match.result.reason},
-        participants: [...byAccount].map(([accountId, entry]) => ({accountId, result: entry.result}))};
+        participants: [...byAccount].map(([accountId, entry]) =>
+          ({accountId, result: entry.result, playerIds: entry.playerIds}))};
       try {
         commit(payload);
       } catch (error) {
@@ -72,13 +99,7 @@ export function accountMatchHistory(store: AccountStore,
         if (!reported.has(key)) {reported.add(key); report(error);}
         return NO_AWARDS;
       }
-      const byPlayer = new Map<string, ResultAward>();
-      for (const [accountId, entry] of byAccount) {
-        const award = store.rewardReceipt(accountId, matchId, match.result.round);
-        if (!award) continue;
-        for (const playerId of entry.playerIds) byPlayer.set(playerId, award);
-      }
-      return byPlayer;
+      return receipts(payload);
     },
     flush,
     get pendingCount(): number {return pending.size;},

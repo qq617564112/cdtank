@@ -9,7 +9,8 @@
 1. 冻结：`World.finishRoom` 经 `settlement/finish-round.ts` 以当前 `room.players` 冻结
    `ResultPlayer` 名单（`id/team/rank/kills/deaths/objectivesDestroyed/combatScore/outcomeBonus/
    totalScore/outcome` 语义不变），在参与者离开前捕获真实 `accountId`，把名单与连接身份交给
-   `onMatchCommitted`。CPU、旁观无账户映射，直接跳过。
+   `onMatchCommitted`；普通中途离场者已并入冻结名单（见「FORFEIT」），胜者判定仍只看终局实际
+   `players`。CPU、旁观无账户映射，直接跳过。
 2. 算法：`apps/server/src/settlement/reward.ts`（纯深模块）。`base = max(0, round(combatScore))`；
    各项读 `datascale.dat` 对应结果的百分比（money 31/35/39、coin 32/36/40、tech 33/37/41、
    originality 34/38/42），
@@ -24,8 +25,11 @@
    `account_growth` 明确类型列，本局收据写 `account_reward_ledger`。任一步抛错整场回滚，
    `settled_matches` 不留假成功。
 4. 重试：`settlement/history.ts` 沿既有 `pending` 队列保存失败冻结载荷，由世界 tick 的
-   `flush` 重试；即使房间已释放、连接身份已删除，冻结载荷仍能落库。成功提交后才把返回的收据
-   附到冻结 `ResultPlayer.award`；失败或重放不附 award。`grant` 失败绝不发 award。
+   `flush` 重试；即使房间已释放、连接身份已删除，冻结载荷仍能落库。`flush` 成功后返回本次
+   提交的 `roomId/round/收据`，`index.ts` 立刻交 `World.publishReceipts`；World 只在房间仍存在、
+   同一 `roomId`/`round`、`FINISHED` 且结果仍有同 player 映射时把收据附到冻结 `ResultPlayer.award`，
+   下个常规 snapshot 即带 late award。失败或重放不附 award，`grant` 失败绝不发 award；已释放房间
+   只落库不再附快照，new round 不污染旧结果。
 
 ## exactly-once / 去重
 
@@ -37,9 +41,13 @@
 
 ## FORFEIT
 
-- 真实离房经 `leaveRoomPlayer` 删除玩家**之前**先冻结全部实际参与者（含离场人），
-  `forfeitOutcome` 判负离场人、留场人判胜，按各自冻结结果结算一次。
-- 普通离房（留人未终局）不提前结算、不发免费钱；结局时只按记录与实际 outcome 结算。
+- 真实离房经 `leaveRoomPlayer`：`forfeitOutcome` 命中（剩人不足/擒王离场等）时在删除玩家**之前**
+  冻结全部实际参与者（含离场人），判负离场人、留场人判胜，按各自冻结结果结算一次。
+- 普通离房但留人继续（`forfeitOutcome` 未命中，含个人战剩多人）在删除玩家与账号映射清理**之前**
+  冻结该 round 参赛者统计与真实 `accountId`（CPU/无账户跳过）。离场人不提前写奖、不写历史；
+  终局时与当前实际 `players` 合并冻结名单，按现最终 outcome 一次结算，同账户由既有去重统一。
+- `startRoom`/再战进入新 round、真正删除房间时清本 round departed roster；失败冻结载荷已在
+  history `pending` 中，跨房间释放仍能落库。
 - 断线窗口内 `pauseDisconnectedPlayer` 保留参与者，重连不发奖；窗口到期 `leave`→FORFEIT
   才结算一次。迟于旧局 `FINISHED` 加入者不在该局冻结名单，不纳入旧 award。
 

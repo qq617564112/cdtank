@@ -12,6 +12,8 @@ import {resetSceneObjectCollision} from '../battle/environment';
 export function leaveRoomPlayer(rooms: Map<string, RoomState>, room: RoomState,
   player: PlayerState, minPlayers: number, actions: {
     finish(outcome: ModeOutcome): void;
+    /** Freeze an ordinary mid-round participant before removal; not called for immediate FORFEIT. */
+    departed(player: PlayerState): void;
     create(mode: number): void;
     start(): void;
     rematch(): void;
@@ -25,6 +27,8 @@ export function leaveRoomPlayer(rooms: Map<string, RoomState>, room: RoomState,
     events.push({roomId: room.roomId, type: 'finish',
       message: matchFinishMessage(room.result, room.winnerTeam), playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0, skillId: undefined});
+  } else if (room.phase === 'PLAYING') {
+    actions.departed(player);
   }
   player.boundGear = undefined;
   player.lastStand = undefined;

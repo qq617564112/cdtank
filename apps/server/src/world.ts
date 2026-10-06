@@ -73,12 +73,19 @@ import type {RoleProfilePayload} from './accounts/profile/payload';
 import type {KitbagAssignmentResult, KitbagCancellationResult} from './accounts/kitbag-configuration';
 import {matchFinishMessage} from './settlement/match-result';
 import {finishRound} from './settlement/finish-round';
-import type {CommittedMatch} from './settlement/history';
+import type {MatchResultInput} from './settlement/match-result';
+import type {CommittedMatch, CommittedReceipt} from './settlement/history';
 import type {ResultAward} from '../../shared/protocols/MsgRoomSnapshot';
 
 export type WorldEvent = MsgRoomEvent;
 
 export type {JoinResult} from './rooms/state';
+
+/** A participant removed while the round continued; frozen for the final settlement. */
+interface DepartedParticipant {
+  player: MatchResultInput['players'][number];
+  accountId?: string;
+}
 
 // Body radius and speed conversion remain prototype rules in native map units.
 const BODY_RADIUS = 20;
@@ -101,10 +108,13 @@ export class World {
   private nextBulletId = 1;
   /** Real configured tick interval, captured from the running world step. */
   private lastTickMs = 0;
+  /** Mid-round ordinary departures, keyed by room then retired participant id; cleared at round end. */
+  private readonly departedParticipants = new Map<string, Map<string, DepartedParticipant>>();
 
   constructor(private readonly now: () => number = Date.now,
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
                 consumeItem?: (playerId: string, instanceId: number, expectedOwned: number, itemTableId: number) => boolean;
+                resolveAccount?: (connectionId: string) => string | undefined;
                 onMatchCommitted?: (match: CommittedMatch) =>
                   ReadonlyMap<string, ResultAward> | void} = {}) {
     this.ensureDefaultRooms();
@@ -230,11 +240,49 @@ export class World {
     events.push(...leaveRoomPlayer(this.rooms, room, player, this.minPlayers(room), {
       finish: outcome => this.finishRoom(room, this.now(), 'FORFEIT',
         outcome.winnerTeam, outcome.winnerPlayerId, events),
+      departed: departed => this.captureDeparted(room, departed),
       create: mode => {this.createRoom(mode);},
       start: () => this.startRoom(room),
       rematch: () => this.tryRematch(room),
     }));
+    if (!this.rooms.has(room.roomId)) this.departedParticipants.delete(room.roomId);
     return events;
+  }
+
+  /** Freeze a mid-round ordinary leaver's statistics and real account before removal. */
+  private captureDeparted(room: RoomState, player: PlayerState): void {
+    if (player.cpu) return;
+    const accountId = this.options.resolveAccount?.(player.clientId);
+    const frozen = {id: player.id, name: player.name, team: player.team, score: player.score,
+      kills: player.kills, deaths: player.deaths, objectivesDestroyed: player.objectivesDestroyed};
+    room.departedParticipants ??= new Map();
+    room.departedParticipants.set(player.id, frozen);
+    const byRoom = this.departedParticipants.get(room.roomId) ?? new Map();
+    byRoom.set(player.id, {player: frozen, accountId});
+    this.departedParticipants.set(room.roomId, byRoom);
+  }
+
+  /** Attach committed receipts to the still-live frozen result, by player id. */
+  private attachResultAwards(room: RoomState, round: number, awards: ReadonlyMap<string, ResultAward>): void {
+    if (room.phase !== 'FINISHED' || room.round !== round || !room.result) return;
+    for (const player of room.result.players) {
+      const award = awards.get(player.id);
+      if (award) player.award = award;
+    }
+  }
+
+  /** Publish successful retry receipts to any still-existing room; released rooms stay persisted only. */
+  publishReceipts(receipts: readonly CommittedReceipt[]): void {
+    for (const receipt of receipts) {
+      const room = this.rooms.get(receipt.roomId);
+      if (room) this.attachResultAwards(room, receipt.round, receipt.awards);
+    }
+  }
+
+  /** Retired participants are settled once; drop their frozen bookkeeping when the round ends. */
+  private releaseRoundFrozen(room: RoomState): void {
+    room.departedParticipants = undefined;
+    this.departedParticipants.delete(room.roomId);
   }
 
   /** Transport loss releases controls without changing the participant or round. */
@@ -652,6 +700,7 @@ export class World {
     const assignVip = initializeModeRound(room);
     room.winnerTeam = -1;
     room.result = undefined;
+    this.releaseRoundFrozen(room);
     room.bullets = [];
     room.rematch.clear();
     initializeBattleParticipants(room.battlefield, room.players.values(), DEFAULT_INPUT,
@@ -687,16 +736,15 @@ export class World {
       }
       const committed = this.options.onMatchCommitted?.({roomId: room.roomId, mode: room.mode, mapId: room.map.mapId,
         result: {...room.result!, players: room.result!.players.map(player => ({...player}))},
-        participants: [...room.players.values()].map(player => ({playerId: player.id,
-          connectionId: player.clientId, cpu: !!player.cpu}))});
+        participants: [
+          ...[...room.players.values()].map(player => ({playerId: player.id,
+            connectionId: player.clientId, cpu: !!player.cpu})),
+          ...[...this.departedParticipants.get(room.roomId)?.values() ?? []].map(departed =>
+            ({playerId: departed.player.id, connectionId: '', cpu: false, accountId: departed.accountId})),
+        ]});
       // Attach the authoritative receipt only after the same-transaction write commits;
       // a failed or replayed commit leaves the frozen award absent.
-      if (committed) {
-        for (const player of room.result!.players) {
-          const award = committed.get(player.id);
-          if (award) player.award = award;
-        }
-      }
+      if (committed) this.attachResultAwards(room, room.round, committed);
       for (const player of room.players.values()) clearDefenseDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearAttackDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearInvincibility(player, () => recomputeBattleAttributes(player));
@@ -707,6 +755,7 @@ export class World {
       for (const player of room.players.values()) clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearTurnDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearAmmoSlow(player, () => recomputeBattleAttributes(player));
+      this.releaseRoundFrozen(room);
       this.ensureAvailableRoom(room.mode);
     }
   }

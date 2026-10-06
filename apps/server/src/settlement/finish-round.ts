@@ -5,6 +5,7 @@ import {computeMatchResult, type MatchResultInput} from './match-result';
 interface FinishingRoom {
   phase: 'WAITING' | 'PLAYING' | 'FINISHED';
   players: ReadonlyMap<string, MatchResultInput['players'][number] & {input: MsgPlayerInput}>;
+  departedParticipants?: ReadonlyMap<string, MatchResultInput['players'][number]>;
   mode: number;
   map: MatchResultInput['bonuses'];
   teamLives: number[];
@@ -21,7 +22,8 @@ export function finishRound(room: FinishingRoom, now: number, reason: MatchResul
   defaultInput: MsgPlayerInput, winnerTeam?: number, winnerPlayerId?: string): boolean {
   if (room.phase !== 'PLAYING') return false;
   const players = [...room.players.values()];
-  const result = computeMatchResult({players, mode: room.mode, bonuses: room.map,
+  const departedPlayers = [...room.departedParticipants?.values() ?? []];
+  const result = computeMatchResult({players, departedPlayers, mode: room.mode, bonuses: room.map,
     teamLives: room.teamLives, teamScores: room.teamScores, round: room.round,
     endedAt: now, reason, winnerTeam, winnerPlayerId});
   room.phase = 'FINISHED';

@@ -3,6 +3,7 @@ import type {Battlefield} from '../battlefield';
 import type {PlayerState} from '../battle/player-state';
 import type {BulletState} from '../battle/projectiles';
 import type {ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot, MatchResult} from '../../../shared/protocols';
+import type {MatchResultInput} from '../settlement/match-result';
 
 /** Server-only in-flight item13 cast; never enters MsgRoomSnapshot. */
 export interface PendingAirstrike {
@@ -43,6 +44,8 @@ export interface RoomState {
   airstrikes: PendingAirstrike[];
   targetScore: number;
   result?: MatchResult;
+  /** Frozen mid-round ordinary departures, merged into this round's final settlement. */
+  departedParticipants?: Map<string, MatchResultInput['players'][number]>;
   creatorClientId?: string;
   creationKey?: string;
   passwordSalt?: Buffer;

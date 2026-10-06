@@ -12,6 +12,8 @@ interface SettlementPlayer {
 
 export interface MatchResultInput {
   readonly players: readonly SettlementPlayer[];
+  /** Participants removed mid-round; merged into the frozen list without affecting the winner. */
+  readonly departedPlayers?: readonly SettlementPlayer[];
   readonly mode: number;
   readonly bonuses: {readonly drawScore: number; readonly winScore: number; readonly loseScore: number};
   readonly teamLives: readonly number[];
@@ -29,7 +31,9 @@ export interface MatchResultInput {
 export function computeMatchResult(input: MatchResultInput): MatchResult {
   const metric = (player: SettlementPlayer): number => input.mode === 5
     ? player.objectivesDestroyed : player.kills;
-  const sorted = [...input.players].sort((a, b) => metric(b) - metric(a) || b.score - a.score);
+  const compare = (a: SettlementPlayer, b: SettlementPlayer): number =>
+    metric(b) - metric(a) || b.score - a.score;
+  const active = [...input.players].sort(compare);
   let {winnerTeam, winnerPlayerId} = input;
   if (winnerTeam === undefined) {
     if (input.mode === 1) {
@@ -41,11 +45,13 @@ export function computeMatchResult(input: MatchResultInput): MatchResult {
     }
   }
   if (winnerPlayerId === undefined && input.mode >= 4) {
-    const [first, second] = sorted;
+    const [first, second] = active;
     winnerPlayerId = first && (!second || metric(first) > metric(second)
       || (metric(first) === metric(second) && first.score > second.score)) ? first.id : '';
   }
   winnerPlayerId ??= '';
+  // Departed participants join the frozen list for ranking and outcome, never the winner decision.
+  const sorted = [...input.players, ...input.departedPlayers ?? []].sort(compare);
   const players: ResultPlayer[] = sorted.map((player, index) => {
     const draw = winnerTeam < 0 && !winnerPlayerId;
     const won = input.mode <= 3 ? player.team === winnerTeam : player.id === winnerPlayerId;
