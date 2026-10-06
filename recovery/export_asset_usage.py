@@ -49,6 +49,18 @@ def consumers(filenames):
                 if filename in line:
                     result[filename].append(dict(file=path.relative_to(ROOT).as_posix(), line=number,
                                                  entry='metadata-reference', code=line.strip()))
+    # The scene owners construct these exact filenames from the original map ID.
+    for prefix, file, token in [
+        ('scene-effects-', 'apps/web/src/assets/scenes/map-scene-effects.ts',
+         'fetch(`/scene-effects-'),
+        ('scene-environment-sound-', 'apps/web/src/audio/map-environment-sound.ts',
+         'this.json<EnvironmentSoundMap>(`/scene-environment-sound-'),
+    ]:
+        evidence = code_evidence(file, token)
+        for filename, entries in result.items():
+            match = re.fullmatch(re.escape(prefix) + r'(\d{4})\.json', filename)
+            if match and 1 <= int(match[1]) <= 25:
+                entries.append(dict(**evidence, entry='map-id-metadata-reference'))
     return result
 
 def original_material_textures(path):
