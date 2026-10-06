@@ -48,7 +48,7 @@ export function advanceActors<Player extends CombatActor>(room: {
   roomId: string;
   readonly phase: string;
   mode: number;
-  map: {mapId: number; tankLimit: number};
+  map: {mapId: number; tankLimit: number; bunkerHp: number};
   teamLives: number[];
   startedAt: number;
   players: ReadonlyMap<string, Player>;

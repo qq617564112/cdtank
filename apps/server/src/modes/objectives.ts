@@ -1,7 +1,13 @@
 import type {ObjectiveSnapshot, MsgRoomEvent} from '../../../shared/protocols';
 import type {ModeMapConfig} from '../config';
 import {getSceneBreakables, getSceneCastles} from '../scene-objects';
-import {castleSceneObjects} from '../battle/environment';
+import {castleSceneObjects, damageSceneObject} from '../battle/environment';
+
+type SceneTarget = ObjectiveSnapshot & {sourcePlacementId: string; sourceModel: string};
+
+function isSceneTarget(target: ObjectiveSnapshot): target is SceneTarget {
+  return target.sourcePlacementId !== undefined && target.sourceModel !== undefined;
+}
 
 interface ObjectiveRoom {
   mode: number;
@@ -40,16 +46,41 @@ function breachStateStore(room: {round?: number; mode: number; map: {mapId: numb
   return value;
 }
 
+/** Live objective end; mode2 resolves from the destroyed source Castle owner. */
+export function objectiveEnd(room: {
+  mode: number;
+  map: {mapId: number};
+  objectives: readonly ObjectiveSnapshot[];
+}): ObjectiveEnd | undefined {
+  if (room.mode === 2) {
+    for (const target of room.objectives) {
+      if (!isCastleObjective(target) || target.hp > 0) continue;
+      const castle = getSceneCastles(room.map.mapId)
+        .find(source => source.id === target.sourcePlacementId);
+      if (!castle) continue;
+      return {winnerTeam: castle.affiliation === 1 ? 1 : castle.affiliation === 2 ? 0 : -1};
+    }
+    return undefined;
+  }
+  return room.mode === 5 && room.objectives.length > 0
+    && room.objectives.every(target => target.hp <= 0) ? {winnerTeam: -1} : undefined;
+}
+
 /**
  * Apply one accepted hit to a mode2 Castle or mode5 Breach objective.
  * A destroyed target absorbs no further hit or score until it is realive;
  * mode5 hit/destroy scores come from the source map row.
  */
 export function damageObjective(room: {
-  roomId: string; mode: number; map: {mapId: number; hitScore: number; destroyScore: number};
+  roomId: string; phase: string; mode: number;
+  map: {mapId: number; hitScore: number; destroyScore: number};
   teamScores?: number[];
 }, owner: {id: string; name: string; team: number; score: number; objectivesDestroyed: number},
   target: ObjectiveSnapshot, bulletDamage: number, now: number, events: MsgRoomEvent[]): void {
+  if (room.mode === 2 && target.id.startsWith('CASTLE:') && isSceneTarget(target)) {
+    damageSceneObject(room, owner, target, bulletDamage, now, events);
+    return;
+  }
   if (!Number.isFinite(bulletDamage) || bulletDamage <= 0 || target.hp <= 0) return;
   const damage = Math.min(target.hp, bulletDamage);
   target.hp -= damage;
@@ -110,7 +141,7 @@ export function isCastleObjective(objective: Pick<ObjectiveSnapshot, 'id'>): boo
 
 /**
  * Advance objective rules using the server clock in real milliseconds.
- * Returns `true` only for a true rule end:
+ * Returns a rule end only when:
  *  - mode2: some enemy Castle is at rule HP 0 (cumulative damage alone never wins).
  *  - mode5: every current Breach is simultaneously at HP 0 at that instant;
  *    targets reborn earlier in this call are already back above 0 and do not count.
@@ -122,18 +153,7 @@ export function advanceObjectives(room: {
   map: {mapId: number; buttReborn: number; buttRebornTime: number};
   objectives: ObjectiveSnapshot[];
 }, now: number): ObjectiveEnd | undefined {
-  if (room.mode === 2) {
-    // Rule ending reads real Castle HP, never the cumulative damage counter.
-    // A repaired Castle stays alive and cannot be won by accumulated points.
-    for (const objective of room.objectives) {
-      if (!isCastleObjective(objective) || objective.hp > 0) continue;
-      const castle = getSceneCastles(room.map.mapId)
-        .find(source => source.id === objective.sourcePlacementId);
-      if (!castle) continue;
-      return {winnerTeam: castle.affiliation === 1 ? 1 : castle.affiliation === 2 ? 0 : -1};
-    }
-    return undefined;
-  }
+  if (room.mode === 2) return objectiveEnd(room);
   if (room.mode !== 5) return undefined;
   const {states} = breachStateStore(room);
   for (const objective of room.objectives) {
@@ -152,6 +172,5 @@ export function advanceObjectives(room: {
       states.delete(objective.id);
     }
   }
-  return room.objectives.length > 0 && room.objectives.every(objective => objective.hp <= 0)
-    ? {winnerTeam: -1} : undefined;
+  return objectiveEnd(room);
 }

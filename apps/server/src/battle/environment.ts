@@ -1,13 +1,18 @@
 import type {MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot} from '../../../shared/protocols';
 import type {Battlefield} from '../battlefield';
 import {getSceneBreakables, getSceneCastles, getSceneCrushes} from '../scene-objects';
+import type {RoundStatsCarrier} from './round-statistics';
+
+type BunkerDamageCarrier = RoundStatsCarrier & {
+  roundStats?: NonNullable<RoundStatsCarrier['roundStats']> & {bunkerDamage?: number};
+};
 
 const active = new WeakMap<Battlefield, Set<string>>();
 const castleTargets = new WeakMap<object, {round: number; mode: number; mapId: number; objects: CastleTargetSnapshot[]}>();
 
 /** One Castle instance serves both the mode2 rule target and the rendered scene entity. */
 export interface CastleTargetSnapshot extends SceneObjectSnapshot, ObjectiveSnapshot {
-  kind: 'DESTROY';
+  kind: 'CAPTURE' | 'DESTROY';
 }
 
 interface CastleRoom {
@@ -33,7 +38,8 @@ export function castleSceneObjects(room: CastleRoom): CastleTargetSnapshot[] {
     const hp = room.mode === 2 ? room.map.bunkerHp ?? source.hp : source.hp;
     return {id: `CASTLE:${source.id}`, sourcePlacementId: source.id, sourceModel: source.model,
       x: source.matrix[12], y: source.matrix[13], z: source.matrix[14], hp, maxHp: hp,
-      kind: 'DESTROY' as const, radius: Math.max(...source.dimensions) / 2,
+      kind: room.mode === 2 ? 'CAPTURE' as const : 'DESTROY' as const,
+      radius: Math.max(...source.dimensions) / 2,
       ownerTeam: source.affiliation - 1, contested: false};
   });
   castleTargets.set(room, {round, mode: room.mode, mapId: room.map.mapId, objects});
@@ -68,7 +74,7 @@ export function createSceneObjects(room: CastleRoom): SceneObjectSnapshot[] {
  */
 export function damageSceneObject(room: {roomId: string; phase: string; mode: number;
   map: {mapId: number}; teamScores?: number[]},
-  owner: {id: string; name: string; team: number}, target: SceneObjectSnapshot,
+  owner: BunkerDamageCarrier & {id: string; name: string; team: number}, target: SceneObjectSnapshot,
   damage: number, now: number, events: MsgRoomEvent[]): void {
   if (room.phase !== 'PLAYING' || !Number.isFinite(damage) || damage <= 0 || target.hp <= 0) return;
   const previousHp = target.hp;
@@ -78,9 +84,11 @@ export function damageSceneObject(room: {roomId: string; phase: string; mode: nu
     const castle = getSceneCastles(room.map.mapId).find(source => source.id === target.sourcePlacementId);
     if (castle && (castle.affiliation === 1 || castle.affiliation === 2)
         && (owner.team === 0 || owner.team === 1)
-        && castle.affiliation !== owner.team + 1
-        && room.teamScores) {
-      room.teamScores[owner.team] = (room.teamScores[owner.team] ?? 0) + dealt;
+        && castle.affiliation !== owner.team + 1) {
+      if (room.teamScores) room.teamScores[owner.team] = (room.teamScores[owner.team] ?? 0) + dealt;
+      if (owner.roundStats) {
+        owner.roundStats.bunkerDamage = (owner.roundStats.bunkerDamage ?? 0) + dealt;
+      }
     }
   }
   events.push({roomId: room.roomId, type: 'sceneObjectHit', message: `${owner.name}命中场景物件`,

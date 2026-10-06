@@ -14,6 +14,7 @@ World 路由、共享 schema、UI 与结算由各自 bridge 子项继续接入�
 interface ObjectiveEnd { winnerTeam: number; winnerPlayerId?: string; }
 
 createObjectives(room: ObjectiveRoom): ObjectiveSnapshot[]
+objectiveEnd(room: ObjectiveEndRoom): ObjectiveEnd | undefined
 advanceObjectives(room: ObjectiveRoomClock, now: number): ObjectiveEnd | undefined
 damageObjective(room: DamageObjectiveRoom, owner: DamageObjectiveOwner,
   target: ObjectiveSnapshot, bulletDamage: number, now: number, events: MsgRoomEvent[]): void
@@ -27,7 +28,11 @@ isCastleObjective(objective: Pick<ObjectiveSnapshot, 'id'>): boolean
 `apps/server/src/battle/environment.ts`
 
 ```ts
-interface CastleTargetSnapshot extends SceneObjectSnapshot, ObjectiveSnapshot { kind: 'DESTROY'; }
+interface CastleTargetSnapshot extends SceneObjectSnapshot, ObjectiveSnapshot {
+  kind: 'CAPTURE' | 'DESTROY';
+  sourcePlacementId: string;
+  sourceModel: string;
+}
 
 castleSceneObjects(room: CastleRoom): CastleTargetSnapshot[]
 createSceneObjects(room: CastleRoom): SceneObjectSnapshot[]
@@ -54,18 +59,23 @@ resetBreachCollision(field: Battlefield): void
 **采用政策**
 
 - `createObjectives` 的模式 2 分支直接返回 `castleSceneObjects(room)`，与
-  `createSceneObjects` 使用同一 per-room 记忆实例。`room.objectives` 的 Castle 元素与
-  `room.sceneObjects` 的 Castle 元素是同一对象引用：规则 HP、渲染 HP、`destroyedAt`
-  与销毁生命周期不会分裂成“视觉 2000 / 规则 5000”两份实体。
+  `createSceneObjects` 使用同一 per-room 记忆实例。模式 2 Castle 使用 `CAPTURE`
+  供 CPU、HP 与 UI 消费，模式 1 Castle 保持 `DESTROY` 环境身份。
+  `room.objectives` 的 Castle 元素与 `room.sceneObjects` 的 Castle 元素是同一对象引用：
+  规则 HP、渲染 HP、`destroyedAt` 与销毁生命周期不会分裂成“视觉 2000 / 规则 5000”
+  两份实体。
 - 目标 HP 初始化为 `map.bunkerHp`（5000）；`targetScore` 仍是该上限，仅用于显示，
   胜负只读真实 Castle HP。
 - `damageSceneObject` 只对真实敌方 Castle 的 HP 减少累计到攻击方 `teamScores`；己方
   Castle 受伤仍扣同一实例 HP，但不产生友方正分。命中事件仍带
-  `castleDamage{castleId,currentHP,maxHP,delta}`。
+  `castleDamage{castleId,currentHP,maxHP,delta}`，真实敌方伤害同时进入
+  `roundStats.bunkerDamage`。
 - `damageObjective` 作为同一 Castle 的备用入口也按同一 `teamScores` 规则累计，保证两条
   命中路由不会产生分叉。只有真实 HP 减少才计数；对已摧毁实例的命中被拒绝。
-- `advanceObjectives` 模式 2 只在该 Castle HP 为 0 时返回攻击方队伍胜。累计伤害到
-  `targetScore` 不构成胜利，被修复（HP>0）的 Castle 依然存活。
+- `objectiveEnd` 与 `advanceObjectives` 的模式 2 终点都只在该 Castle HP 为 0 时返回
+  源 Castle 归属方的对手队伍胜；World 在每次有效命中形成完整事件后立即调用，不按源
+  数组后置项改判。累计伤害到 `targetScore` 不构成胜利，被修复（HP>0）的 Castle
+  依然存活。
 - 既有 `buildingTool`（item502/skill502）按 `CASTLE:<id>` 的同一实例恢复 HP，
   模式 1 的修复政策与 CPU 选择链不变；模式 2 复用同一真实实体，不新增第二条修复路径。
 
@@ -97,8 +107,9 @@ resetBreachCollision(field: Battlefield): void
   共享 schema。`advanceObjectives` 在 `now >= destroyedAt + buttRebornTime*1000` 时把
   HP 重置为 `buttReborn`、清空 `destroyedAt`。客户端只需观察 `hp/destroyedAt`。
 - 全清判定为同一时刻全部当前 Breach `hp<=0`。已在本 tick 重生的目标 HP>0，
-  因此不构成全清；否则返回 `{winnerTeam:-1}`，由结算/超时按累计 `objectivesDestroyed`
-  与战斗分排序。
+  因此不构成全清；否则返回 `{winnerTeam:-1}`，World 当场按累计
+  `objectivesDestroyed`、战斗分确定 `winnerPlayerId`，完全并列时为空，现有 phase
+  门禁随即停止后续射击、玩家命中、修复与库存消费。
 - 每 2 秒淡出窗口内保留动态 NAV/碰撞盒，隐藏后释放；重生时按同一 `sourcePlacementId`
   重新加入，不新增其它物体碰撞。`resetBreachCollision` 在换局/离房释放全部 owned 盒。
 
@@ -115,14 +126,18 @@ resetBreachCollision(field: Battlefield): void
    模式 5 目标与场景盒子共享 placement。随后 `syncSceneObjectCollision(room, now)`、
    `syncBreachCollision(room, now)` 用同一 `now`。
 2. 命中：模式 2 Castle 走 `hitSceneObject`（`segmentBox(getSceneCastles)`），调用
-   `damageSceneObject`，同一实例同步渲染与规则 HP；若桥接改为走 `hitObjective`，
-   必须传同一 `teamScores`，不得同时再走第二条路径造成重复扣血/计分。
+   `damageSceneObject`；World 在该次 hit/destroy/stat 事件形成后立即调用
+   `objectiveEnd`，终局时同步 `finishRoom`。若桥接改为走 `hitObjective`，入口仍写同一
+   实例的 `castleDamage`/伤害统计且 `CAPTURE` 不进入 Breach 查询；不得同时再走第二条
+   路径造成重复扣血/计分。
    模式 5 Breach 走 `hitObjective`（`segmentBox(getSceneBreakables)`），调用
-   `damageObjective`。
-3. 每 tick 战斗后：先 `advanceObjectives(room, now)` 处理重生与规则终局，再
-   `syncBreachCollision(room, now)`、`syncSceneObjectCollision(room, now)` 同步碰撞/NAV。
-   若返回终局，`winnerTeam>=0` 直接把该队伍交给 `finishRoom(..., 'OBJECTIVE', ...)`；
-   `winnerTeam<0` 交给现有超时/结算排序链按 `objectivesDestroyed`、战斗分决定个人胜者。
+   `damageObjective`，同样在本次完整事件后立即检查并同步终局。
+3. 每 tick 在自然时限门禁通过后、CPU 决策/移动/射击/弹丸查询之前，先检查已有终局，
+   再调用 `advanceObjectives(room, now)` 处理到期重生，并以 `syncBreachCollision`、
+   `syncSceneObjectCollision` 用同一 `now` 恢复 HP/NAV；若返回终局，`winnerTeam>=0`
+   直接把该队伍交给 `finishRoom(..., 'OBJECTIVE', ...)`；`winnerTeam<0` 当场按
+   `objectivesDestroyed`、战斗分决定个人胜者，完全并列时为空。末 tick 的同步终局
+   helper 同样处理零全清，不把重生或终局推迟到全帧之后。
 4. 时限：模式 2 比较 `teamScores`（累计真实敌方 Castle 伤害）高者胜，相等平局；
    模式 5 交由 `timeLimitOutcome` 按累计摧毁数与战斗分。
 

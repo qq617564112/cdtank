@@ -58,7 +58,7 @@ import {setReady, changeWaitingTeam, voteRematch, prepareRematch, readyCpus} fro
 import {advanceProjectiles} from './battle/projectiles';
 import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSceneObjectCollision} from './battle/environment';
 import {attachProjectileSceneResult} from './battle/projectile-scene-result';
-import {createObjectives, advanceObjectives, damageObjective} from './modes/objectives';
+import {createObjectives, advanceObjectives, damageObjective, objectiveEnd} from './modes/objectives';
 import {resetBreachCollision, syncBreachCollision} from './battle/breach-collision';
 import {roomSnapshot, playerSnapshot} from './rooms/snapshot';
 import type {MsgRoomEvent} from '../../shared/protocols/MsgRoomEvent';
@@ -584,6 +584,11 @@ export class World {
   }
 
   private simulateRoom(room: RoomState, dt: number, now: number, events: WorldEvent[]): void {
+    const existingEnd = objectiveEnd(room);
+    if (existingEnd) {
+      this.finishObjective(room, now, existingEnd, events);
+      return;
+    }
     for (const player of room.players.values()) {
       if (room.phase !== 'PLAYING') return;
       const death = advanceLastStandDeath(room, player,
@@ -605,8 +610,14 @@ export class World {
     advanceContactMines(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
     advanceGroundTraps(room, now, events);
+    if (room.phase !== 'PLAYING') return;
+    const rebirth = advanceObjectives(room, now);
     syncBreachCollision(room, now);
     syncSceneObjectCollision(room, now);
+    if (rebirth) {
+      this.finishObjective(room, now, rebirth, events);
+      return;
+    }
     for (const player of room.players.values()) {
       advancePetHitSpeed(player, now, () => recomputeBattleAttributes(player));
       advanceDefenseDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
@@ -689,12 +700,20 @@ export class World {
         const target = room.sceneObjects.find(object => object.id === targetId && object.hp > 0);
         if (target) {
           damageSceneObject(room, owner, target, damage, now, events);
+          if (room.phase === 'PLAYING') {
+            const end = objectiveEnd(room);
+            if (end) this.finishObjective(room, now, end, events);
+          }
           this.attachShotItemResult(events, firstEvent, owner.id, ammoItemId);
           return true;
         }
         const objective = room.objectives.find(object => object.id === targetId && object.kind === 'DESTROY' && object.hp > 0);
         if (!objective) return false;
         damageObjective(room, owner, objective, damage, now, events);
+        if (room.phase === 'PLAYING') {
+          const end = objectiveEnd(room);
+          if (end) this.finishObjective(room, now, end, events);
+        }
         this.attachShotItemResult(events, firstEvent, owner.id, ammoItemId);
         return true;
       },
@@ -705,6 +724,7 @@ export class World {
           {x: owner.x - target.x, z: owner.z - target.z});
       },
     });
+    if (room.phase !== 'PLAYING') return;
     advanceProjectiles(room, dt, BODY_RADIUS, {
       hitPlayer: (owner, target, damage, ammoItemId, bearing, shotId) => {
         resolveShotPlayerHit(owner, target, damage, ammoItemId, shotId, bearing);
@@ -713,16 +733,25 @@ export class World {
         if (ammoItemId === MEDICAL_AMMO_ID) return;
         const firstEvent = events.length;
         damageObjective(room, owner, target, damage, now, events);
+        if (room.phase === 'PLAYING') {
+          const end = objectiveEnd(room);
+          if (end) this.finishObjective(room, now, end, events);
+        }
         attachProjectileSceneResult(events, firstEvent, owner.id, ammoItemId);
       },
       hitSceneObject: (owner, target, damage, ammoItemId) => {
         if (ammoItemId === MEDICAL_AMMO_ID) return;
         const firstEvent = events.length;
         damageSceneObject(room, owner, target, damage, now, events);
+        if (room.phase === 'PLAYING') {
+          const end = objectiveEnd(room);
+          if (end) this.finishObjective(room, now, end, events);
+        }
         attachProjectileSceneResult(events, firstEvent, owner.id, ammoItemId);
       },
       terrainHit: value => events.push(value),
     });
+    if (room.phase !== 'PLAYING') return;
     advanceContactMines(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
     advanceGroundTraps(room, now, events);
@@ -731,20 +760,15 @@ export class World {
       advanceEquipmentSupply(room.roomId, room.phase, player, now,
         player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), events);
     }
-    // Rebirth and rule end read the same real server clock as snapshots; collision
-    // and NAV then follow the post-advance objective HP so a reborn Breach's box is
-    // re-added in the same tick rather than a full second later.
-    const objectiveEnd = advanceObjectives(room, now);
-    syncBreachCollision(room, now);
-    syncSceneObjectCollision(room, now);
-    if (objectiveEnd) {
-      // Mode2 carries the winning team directly; mode5 ends with winnerTeam -1 and
-      // the accumulated objectivesDestroyed/score ranking picks the individual winner.
-      const winnerPlayerId = objectiveEnd.winnerTeam < 0
-        ? timeLimitOutcome(room).winnerPlayerId : objectiveEnd.winnerPlayerId;
-      this.finishRoom(room, now, 'OBJECTIVE', objectiveEnd.winnerTeam, winnerPlayerId, events);
-      events.push(event(room.roomId, 'finish', this.finishMessage(room), ''));
-    }
+  }
+
+  /** Freeze an objective terminal at the exact hit/rebirth boundary. */
+  private finishObjective(room: RoomState, now: number, end: import('./modes/objectives').ObjectiveEnd,
+    events: MsgRoomEvent[]): void {
+    const winnerPlayerId = end.winnerTeam < 0
+      ? timeLimitOutcome(room).winnerPlayerId : end.winnerPlayerId;
+    this.finishRoom(room, now, 'OBJECTIVE', end.winnerTeam, winnerPlayerId, events);
+    events.push(event(room.roomId, 'finish', this.finishMessage(room), ''));
   }
 
   /** Source result display only follows the accepted scene shot which caused destruction. */
