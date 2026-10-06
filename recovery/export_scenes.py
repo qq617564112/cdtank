@@ -22,6 +22,7 @@ from export_scene_breach05 import export as export_scene_breach05
 from export_scene_breach06 import export as export_scene_breach06
 from export_scene_breach10 import export as export_scene_breach10
 from export_scene_breach11 import export as export_scene_breach11
+from export_scene_breach_catalog import export as export_scene_breach_catalog
 from export_scene_castle02 import export as export_scene_castle02
 from export_scene_castle06 import export as export_scene_castle06
 from export_scene_castle05 import export as export_scene_castle05
@@ -133,6 +134,7 @@ for path in sorted((root / 'Data/scn').rglob('*.obj')):
         records=records, castles=castles, collisionBoxes=collision_boxes,
         resolved=sum(bool(r.get('asset') or r.get('animation')) for r in records + castles))
     scenes.append(entry)
+export_scene_breach_catalog(scenes, root, out)
 (out / 'scene-placements.json').write_text(json.dumps(scenes,ensure_ascii=False,indent=2),encoding='utf-8')
 print(f'{len(scenes)} scenes, {sum(len(s["records"]) for s in scenes)} records, {sum(s["resolved"] for s in scenes)} static model references resolved')
 print(f'{sum(len(s["castles"]) for s in scenes)} castles, {sum(len(s["collisionBoxes"]) for s in scenes)} virtual boxes preserved')

@@ -75,25 +75,29 @@ def consumers(documents):
             if match and match[1] in map_ids:
                 entries.append(dict(**evidence, entry='map-id-metadata-reference',
                                     mapScope=scope))
-    # Placement animation libraries are read by the same scene load that owns
-    # their placements; their filenames need not appear literally in TypeScript.
+    # Placement libraries are read by the same scene load that owns their
+    # placements; their filenames need not appear literally in TypeScript.
     placements = documents.get('scene-placements.json', [])
     scene_entries = result.get('scene-placements.json', [])
     animation_loader = code_evidence('apps/web/src/assets/scenes/scene-cvd-animation.ts',
                                     'fetch(`/${path}`)')
+    destruction_loader = code_evidence('apps/web/src/assets/scenes/scene-breach-visual.ts',
+                                      'fetch(this.libraryAsset)')
     for scene_index, scene in enumerate(placements):
         for group in ['records', 'castles']:
             for placement_index, placement in enumerate(scene.get(group, [])):
-                animation = placement.get('animation')
-                if not animation or animation.get('library') not in result:
-                    continue
-                filename = animation['library']
-                result[filename].append(dict(**animation_loader,
-                    entry='placement-animation-library-reference',
-                    metadata='recovery/output/web-assets/scene-placements.json',
-                    pointer=f'/{scene_index}/{group}/{placement_index}/animation/library',
-                    placementId=placement['id'], mapId=scene['id'],
-                    loadingCode=scene_entries))
+                for field, loader in [('animation', animation_loader),
+                                      ('destruction', destruction_loader)]:
+                    binding = placement.get(field)
+                    if not binding or binding.get('library') not in result:
+                        continue
+                    filename = binding['library']
+                    result[filename].append(dict(**loader,
+                        entry=f'placement-{field}-library-reference',
+                        metadata='recovery/output/web-assets/scene-placements.json',
+                        pointer=f'/{scene_index}/{group}/{placement_index}/{field}/library',
+                        placementId=placement['id'], mapId=scene['id'],
+                        loadingCode=scene_entries))
     return result
 
 def original_material_textures(path):
