@@ -192,7 +192,7 @@ export class Battle {
           this.battlefield.crush(event.sceneCrush.placementId);
         }
         if (this.mapLoaded && !this.reconnecting &&
-            event.type === 'sceneObjectHit' && event.castleDamage) {
+            (event.type === 'sceneObjectHit' || event.type === 'sceneObjectHealed') && event.castleDamage) {
           this.battlefield.damageCastle(event.castleDamage);
         }
         if (this.mapLoaded && !this.reconnecting &&

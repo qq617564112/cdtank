@@ -8,6 +8,8 @@ import {vipEvasion} from './vip-evasion';
 import {getSceneBreakables, type SceneBreakable} from '../../scene-objects';
 import {aimTurnRate} from '../roles/aim-turn';
 import {roleMovementElapsed} from '../roles/movement-time';
+import {combatCatalog} from '../catalog';
+import {buildingToolHotkey} from './building-tool';
 import type {BattleItemRecord} from '../../../../shared/combat/item-hotkeys';
 import type {AmmoBurnState} from '../items/ammo-burn';
 import type {AmmoSlowState} from '../items/ammo-slow';
@@ -70,7 +72,7 @@ export class BotController {
 
   input(actor: BotActor, actors: readonly BotActor[], objectives: readonly ObjectiveSnapshot[],
     field: Battlefield, mode: number, now: number, dt: number,
-    teamLife?: TeamLifeContext): MsgPlayerInput {
+    teamLife?: TeamLifeContext, buildingToolRoom?: Parameters<typeof buildingToolHotkey>[3]): MsgPlayerInput {
     if (this.navigationRevision !== field.navigationRevision) {
       this.navigationRevision = field.navigationRevision;
       this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
@@ -132,6 +134,9 @@ export class BotController {
         if (input.useItem === 0) input.useItem = defenseDrinkHotkey(actor,
           enemies.some(enemy => distance(enemy) <= 500));
         if (input.useItem === 0) input.useItem = teamLifeHotkey(actor, teamLife);
+        if (input.useItem === 0 && buildingToolRoom) {
+          input.useItem = buildingToolHotkey(combatCatalog, actor.inventory, actor, buildingToolRoom);
+        }
         if (input.useItem === 0) input.useItem = attackDrinkHotkey(actor, input.fire && actor.fireReady === true);
         if (input.useItem === 0 && input.move !== 0 && actor.movementReady === true) {
           const predicted = actor.movement?.predict(input);

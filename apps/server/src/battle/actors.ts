@@ -1,4 +1,4 @@
-import type {MsgPlayerInput, MsgRoomEvent, ObjectiveSnapshot} from '../../../shared/protocols';
+import type {MsgPlayerInput, MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot} from '../../../shared/protocols';
 import {originalMovementParameters, commitBattleMovement, type BattleMovementState} from './movement';
 import {predictControlledBattleMovement} from './dynamic-movement';
 import type {RoleMovementMathInput} from './roles/movement-math';
@@ -42,11 +42,12 @@ export function advanceActors<Player extends CombatActor>(room: {
   roomId: string;
   readonly phase: string;
   mode: number;
-  map: {tankLimit: number};
+  map: {mapId: number; tankLimit: number};
   teamLives: number[];
   startedAt: number;
   players: ReadonlyMap<string, Player>;
   objectives: ObjectiveSnapshot[];
+  sceneObjects: SceneObjectSnapshot[];
   battlefield: Battlefield;
   bullets: BulletState[];
 }, dt: number, now: number, bodyRadius: number, moveScale: number, events: MsgRoomEvent[], handlers: {
@@ -87,7 +88,7 @@ export function advanceActors<Player extends CombatActor>(room: {
           },
         } : undefined}, [...room.players.values()], room.objectives,
         room.battlefield, room.mode, now, dt, {mode: room.mode, team: player.team,
-          initialLives: room.map.tankLimit, lives: room.teamLives}), !!player.autopilot));
+          initialLives: room.map.tankLimit, lives: room.teamLives}, room), !!player.autopilot));
     }
     const input = player.input;
     const currentSeconds = (now - room.startedAt) / 1000;

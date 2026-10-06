@@ -24,8 +24,8 @@ export interface BuildingToolParticipant {
   inventory: InventoryWireRecord[];
 }
 
-/** Original FuncType18 x2 has no target payload; source Target1/Range0 selects the
- *  first own damaged living Castle in source placement order. */
+/** Rebuilt Target1/Range0 policy selects the first own damaged living Castle
+ *  in source placement order without adding a client target payload. */
 export function selectBuildingToolTarget(mapId: number, sceneObjects: readonly SceneObjectSnapshot[],
   team: number): SceneObjectSnapshot | undefined {
   if (team !== 0 && team !== 1) return undefined;

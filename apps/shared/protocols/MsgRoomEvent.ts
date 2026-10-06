@@ -47,11 +47,11 @@ export interface MsgRoomEvent {
   shotPlayerResult?: {itemId: number; critical?: boolean};
   /** Source scene result display; server destruction eligibility and endpoint mapping are rebuilt. */
   shotItemResult?: ShotDisplayMessage;
-  /** One accepted Castle damage transaction; source presentation is not snapshot-driven. */
   /** Accepted original ShotItem Crush branch; snapshots never replay its effect. */
   sceneCrush?: {placementId: string};
   /** Original static type100 Plant hide; no shot feedback or optional effect replay. */
   scenePlant?: {placementId: string};
+  /** Accepted Castle HP transaction; negative delta restores HP through rebuilt item502. */
   castleDamage?: {castleId: string; currentHP: number; maxHP: number; delta: number};
   /** Permitted shortcut request; does not confirm casting or quantity consumption. */
   itemUseRequest?: ItemUseRequest;

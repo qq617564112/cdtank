@@ -12,11 +12,12 @@ import {applySpeedDrink, advanceSpeedDrink} from './items/speed-drink';
 import {applyInvincibility, advanceInvincibility} from './items/invincibility';
 import {applyOpticalCamouflage, advanceOpticalCamouflage} from './items/optical-camouflage';
 import {applyTeamLifeItem} from './items/team-life';
+import {applyBuildingTool} from './items/building-tool';
 import type {RoomState} from '../rooms/state';
 import {confirmAcceptedAmmoSelection} from './items/ammo-confirmation';
 
 /** Accept ordinary human/CPU inputs or the participant's separate autopilot lane. */
-export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mode' | 'teamLives' | 'groundTraps'>, player: PlayerState,
+export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mode' | 'map' | 'teamLives' | 'groundTraps' | 'sceneObjects'>, player: PlayerState,
   input: MsgPlayerInput, autonomous: boolean, maxHp: () => number,
   consumeItem: Parameters<typeof applyHealingItem>[4], now: number): MsgRoomEvent[] {
   const {roomId, phase} = room;
@@ -51,6 +52,7 @@ export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mo
         applySpeedDrink(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applyTurnDrink(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applyTeamLifeItem(room, player, request, consumeItem, requests);
+        applyBuildingTool(room, player, request, consumeItem, requests);
         applyPetInjection(roomId, player, request, consumeItem, requests, () => recomputeBattleAttributes(player));
         applyTrapSweep(room, player, request, now, consumeItem, requests);
       });
