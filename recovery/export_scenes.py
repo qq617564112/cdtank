@@ -20,6 +20,7 @@ from export_scene_breach04 import export as export_scene_breach04
 from export_scene_breach05 import export as export_scene_breach05
 from export_scene_breach06 import export as export_scene_breach06
 from export_scene_breach10 import export as export_scene_breach10
+from export_scene_breach11 import export as export_scene_breach11
 from export_scene_environment_sound21 import export as export_scene_environment_sound
 from export_scene_environment_sound20 import export as export_scene_environment_sound20
 from export_scene_environment_sound22 import export as export_scene_environment_sound22
@@ -81,6 +82,7 @@ export_scene_breach04()
 export_scene_breach05()
 export_scene_breach06()
 export_scene_breach10()
+export_scene_breach11()
 export_scene_environment_sound()
 export_scene_environment_sound20()
 export_scene_environment_sound22()
