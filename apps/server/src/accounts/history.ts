@@ -1,9 +1,11 @@
 import type {DatabaseSync} from 'node:sqlite';
 import type {MatchHistoryRecord, ResHistory} from '../../../shared/protocols/PtlHistory';
-import type {ResultPlayer} from '../../../shared/protocols/MsgRoomSnapshot';
+import type {ResultAward, ResultPlayer} from '../../../shared/protocols/MsgRoomSnapshot';
 
 export type HistoryMatch = Omit<MatchHistoryRecord, 'result'>;
 export interface HistoryParticipant {accountId: string; result: ResultPlayer;}
+/** Persists one participant's award inside the caller's transaction; a throw rolls the whole match back. */
+export type RewardGrant = (accountId: string, result: ResultPlayer) => ResultAward | undefined;
 
 /** Rebuilt persistence stores existing settlement scores without assigning rewards. */
 export class AccountHistory {
@@ -18,7 +20,8 @@ export class AccountHistory {
     `);
   }
 
-  record(match: HistoryMatch, participants: readonly HistoryParticipant[]): boolean {
+  record(match: HistoryMatch, participants: readonly HistoryParticipant[],
+      grant?: RewardGrant): boolean {
     this.database.exec('BEGIN IMMEDIATE');
     try {
       const existing = this.database.prepare(
@@ -33,7 +36,9 @@ export class AccountHistory {
       const insert = this.database.prepare('INSERT INTO match_history VALUES (?, ?, ?, ?, ?)');
       for (const participant of participants) {
         if (!account.get(participant.accountId)) throw new Error('对局账户不存在');
-        const record: MatchHistoryRecord = {...match, result: participant.result};
+        const award = grant?.(participant.accountId, participant.result);
+        const record: MatchHistoryRecord = {...match,
+          result: award ? {...participant.result, award} : participant.result};
         insert.run(participant.accountId, match.matchId, match.round, match.endedAt, JSON.stringify(record));
       }
       this.database.exec('COMMIT');

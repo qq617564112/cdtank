@@ -74,6 +74,7 @@ import type {KitbagAssignmentResult, KitbagCancellationResult} from './accounts/
 import {matchFinishMessage} from './settlement/match-result';
 import {finishRound} from './settlement/finish-round';
 import type {CommittedMatch} from './settlement/history';
+import type {ResultAward} from '../../shared/protocols/MsgRoomSnapshot';
 
 export type WorldEvent = MsgRoomEvent;
 
@@ -104,7 +105,8 @@ export class World {
   constructor(private readonly now: () => number = Date.now,
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
                 consumeItem?: (playerId: string, instanceId: number, expectedOwned: number, itemTableId: number) => boolean;
-                onMatchCommitted?: (match: CommittedMatch) => void} = {}) {
+                onMatchCommitted?: (match: CommittedMatch) =>
+                  ReadonlyMap<string, ResultAward> | void} = {}) {
     this.ensureDefaultRooms();
   }
 
@@ -683,10 +685,18 @@ export class World {
         player.equipmentSupply = undefined;
         player.lastStand = undefined;
       }
-      this.options.onMatchCommitted?.({roomId: room.roomId, mode: room.mode, mapId: room.map.mapId,
+      const committed = this.options.onMatchCommitted?.({roomId: room.roomId, mode: room.mode, mapId: room.map.mapId,
         result: {...room.result!, players: room.result!.players.map(player => ({...player}))},
         participants: [...room.players.values()].map(player => ({playerId: player.id,
           connectionId: player.clientId, cpu: !!player.cpu}))});
+      // Attach the authoritative receipt only after the same-transaction write commits;
+      // a failed or replayed commit leaves the frozen award absent.
+      if (committed) {
+        for (const player of room.result!.players) {
+          const award = committed.get(player.id);
+          if (award) player.award = award;
+        }
+      }
       for (const player of room.players.values()) clearDefenseDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearAttackDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearInvincibility(player, () => recomputeBattleAttributes(player));

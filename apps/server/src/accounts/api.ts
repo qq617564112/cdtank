@@ -98,7 +98,8 @@ export function registerAccountApis(
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const profile = accounts.roleProfile(accountId);
     await call.succ(profile ? {profile: {bytes: [...profile.bytes], strings: profile.strings},
-      playerSummary: readRoleProfilePlayerSummary(profile)} : {});
+      playerSummary: readRoleProfilePlayerSummary(profile), growth: accounts.accountGrowth(accountId)}
+      : {growth: accounts.accountGrowth(accountId)});
   });
 
   server.implementApi('SelectRole', async call => {

@@ -28,6 +28,9 @@ import type {ReqBlacklist} from '../../shared/protocols/PtlBlacklist';
 import type {ReqFriends} from '../../shared/protocols/PtlFriends';
 import type {ReqShop, ResShop, ShopItem} from '../../shared/protocols/PtlShop';
 import type {HistoryMatch, HistoryParticipant} from './accounts/history';
+import type {RewardGrant} from './accounts/history';
+import {AccountReward} from './accounts/reward';
+import type {AccountGrowth, ResultAward, ResultPlayer} from '../../shared/protocols/MsgRoomSnapshot';
 import type {ResHistory} from '../../shared/protocols/PtlHistory';
 import {randomBytes} from 'node:crypto';
 import type {InventoryWireRecord} from '../../shared/protocols/PtlInventory';
@@ -63,6 +66,7 @@ export interface AccountRoleRecords {
 export class AccountStore {
   private readonly database: DatabaseSync;
   private readonly matchHistory: AccountHistory;
+  private readonly matchReward: AccountReward;
   private readonly accountShop: AccountShop;
   private readonly accountTankShop: AccountTankShop;
   private readonly accountStackItemSale: AccountStackItemSale;
@@ -93,6 +97,7 @@ export class AccountStore {
         payload BLOB NOT NULL, strings TEXT NOT NULL);
     `);
     this.matchHistory = new AccountHistory(this.database);
+    this.matchReward = new AccountReward(this.database);
     this.accountShop = new AccountShop(this.database);
     this.accountTankShop = new AccountTankShop(this.database);
     this.accountStackItemSale = new AccountStackItemSale(this.database);
@@ -177,12 +182,28 @@ export class AccountStore {
     return this.accountPetShop.request(accountId, request);
   }
 
-  recordMatchHistory(match: HistoryMatch, participants: readonly HistoryParticipant[]): boolean {
-    return this.matchHistory.record(match, participants);
+  recordMatchHistory(match: HistoryMatch, participants: readonly HistoryParticipant[],
+      grant?: RewardGrant): boolean {
+    return this.matchHistory.record(match, participants, grant);
   }
 
   history(accountId: string, offset = 0, limit = 20): ResHistory {
     return this.matchHistory.query(accountId, offset, limit);
+  }
+
+  /** Apply one round's award inside the caller's existing match-history transaction. */
+  grantMatchReward(accountId: string, matchId: string, round: number,
+      result: Pick<ResultPlayer, 'combatScore' | 'totalScore' | 'outcome'>): ResultAward {
+    return this.matchReward.apply(accountId, matchId, round, result);
+  }
+
+  /** Authoritative growth for the RoleProfile reply; independent typed columns, never raw profile. */
+  accountGrowth(accountId: string): AccountGrowth {
+    return this.matchReward.growth(accountId);
+  }
+
+  rewardReceipt(accountId: string, matchId: string, round: number): ResultAward | undefined {
+    return this.matchReward.receipt(accountId, matchId, round);
   }
 
   open(token?: string): AccountSession {

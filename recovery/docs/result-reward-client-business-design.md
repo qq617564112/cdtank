@@ -54,9 +54,9 @@
 对本局每个**真实非 CPU** 账户参与者：
 
 1. `rate` = 结果对应 `datascale.dat` 增加百分比（WIN +50、DRAW −20、LOSE −50）。
-2. `base` = 本局地图来源积分 `clamp(round(ResultPlayer.combatScore), 0, 500)`（仅作有界基数输入，不显示为奖励）。
-3. `adjusted = round(base * (1 + rate / 100))`，钳 `[0, 1000]`。
-4. `money = adjusted`，`originality = round(adjusted / 5)`，`tech = round(adjusted / 10)`，`coin = 0`。
+2. `base = max(0, round(ResultPlayer.combatScore))`（每局非负四舍五入地图 combatScore，仅作「重建奖励基数」，不显示为奖励）。
+3. 各值读对应原 DataScale outcome 百分比：money 31/35/39、coin 32/36/40、tech 33/37/41、originality 34/38/42；`moneyBase = base`、`originalityBase = base/5`、`techBase = base/10`、`coinBase = 0`。
+4. `money = round(base*(1+rateMoney/100))`，`originality = round((base/5)*(1+rateOriginality/100))`，`tech = round((base/10)*(1+rateTech/100))`，`coin = 0`；只保留自然非负语义，不施加无源 500/1000 上限，不引入风控/scoretables。
 
 `coin=0` 采用理由：`datascale` 确有星币百分比，但基数 producer 未知，且现库从不免费发星币；不冒然发放溢价货币。tradeoff：原版可能小额发星币，本轮保留为 0 并单独记录。
 
@@ -70,34 +70,26 @@
 ### 称号/奖励列
 
 - `m00x` 的 `Perfect/MVP/Savage/...` 及 `title.dat` FunctionType 条件为 M6-05 授予范围。本片只持久化其所需累计统计（见下），**不授予称号**。
-- 结果页 `picAward*`/`picShowPrize` 只在有权威 award 时点亮；无 producer 保持原空白，不用胜负/击杀冒充。
+- 结果页 `picAward*`/`picShowPrize` 只在有权威 award 时点亮；`pic*award*` 奖章无 producer 时保持原空白，不用胜负/击杀冒充。
 
-## 服务端奖励算法（可实施）
+## 服务端奖励算法（已实现）
 
 新增深模块 `apps/server/src/settlement/reward.ts`（纯函数 + 一次 receipt 输入），不依赖 World 内部可变态，输入是冻结结果：
 
 ```ts
-export interface RewardInput {
-  mode: number; mapId: number;
-  player: ResultPlayer; // 冻结值，唯一输入，禁止重算
-}
+// 共享合同（MsgRoomSnapshot.ts），server/UI 同源
 export interface ResultAward {
   money: number; coin: number; originality: number; tech: number;
-  rankPoints: number;         // 结算后累计积分
-  level: number; levelBefore: number; levelAfter: number;
-  expPercent: number;         // 0..100
-  levelUp: boolean; levelDown: boolean;
-  outcome: 'WIN' | 'LOSE' | 'DRAW';
+  rankPoints: number; levelBefore: number; levelAfter: number; expPercent: number;
 }
 ```
 
 算法步骤：
 
-1. `rate = outcomeRate(player.outcome)`（真 DataScale：+50/−20/−50）。
-2. `base = clamp(Math.round(player.combatScore), 0, 500)`；`adjusted = clamp(Math.round(base*(1+rate/100)), 0, 1000)`。
-3. `money=adjusted, originality=Math.round(adjusted/5), tech=Math.round(adjusted/10), coin=0`。
-4. `rankPoints = max(0, prevRankPoints + player.totalScore)`（`player.totalScore` 为地图积分和）。
-5. `levelBefore/levelAfter = levelFor(rankPoints)`，`levelUp/levelDown` 由二者比较；`expPercent` 由原阈值区间求。
+1. `base = max(0, round(player.combatScore))`；各 rate 取对应 DataScale 结果行。
+2. 四值按上式分别 `round(base_i*(1+rate_i/100))`；`coin=0` 为无基数授权政策。
+3. `rankPoints = max(0, prevRankPoints + player.totalScore)`（`player.totalScore` 为地图积分和，冻结值）。
+4. `levelBefore/levelAfter = levelFor(...)`（原 `level.dat` 真阈值，`>=` 边界）；`expPercent` 由原阈值区间求。UI 从 `levelBefore/After` 推 Up/Down，不加重复布尔字段；`receipt` key 只存 server ledger。
 
 调用点：仅由已提交的 `finishRound` 结果触发；在 `World.finishRoom` 内、`onMatchCommitted` 之后、`accountByConnection` 删除前，对冻结名单逐人求值。CPU 与旁观无 accountId 直接跳过。禁止从实时 World 状态、客户端包或 `m_iHP` 重算。
 
@@ -106,18 +98,22 @@ export interface ResultAward {
 保留 `ResultPlayer` 既有字段语义，只**追加**可选奖励字段，不改动既有字段含义：
 
 ```ts
-export interface ResultAward { /* 同上 */ }
+export interface AccountGrowth {rankPoints: number; level: number; originality: number; tech: number;}
+export interface ResultAward {
+  money: number; coin: number; originality: number; tech: number;
+  rankPoints: number; levelBefore: number; levelAfter: number; expPercent: number;
+}
 export interface ResultPlayer {
   /* ...既有 id/name/team/rank/kills/deaths/objectivesDestroyed/
      combatScore/outcomeBonus/totalScore/outcome 全部不变... */
   award?: ResultAward; // 新可选字段；无奖励（CPU/旁观）保持缺省
 }
+// PtlRoleProfile.ResRoleProfile 追加 growth?: AccountGrowth
 ```
 
-- 协议文件 `apps/shared/protocols/MsgRoomSnapshot.ts` 增 `ResultAward` 与 `ResultPlayer.award?`。
-- `serviceProto.ts` 需同步（`npm run protocol:generate` 或按既有手工追加约定补可选 `award`）；本轮不执行生成器。
+- 协议文件 `apps/shared/protocols/MsgRoomSnapshot.ts` 增 `AccountGrowth/ResultAward` 与 `ResultPlayer.award?`；`PtlRoleProfile.ts` 增 `growth?`；`serviceProto.ts` 由专用 shared worker 手工追加，不执行生成器。
 - 结果消息 `+c0/+c4/+c8/+cc` 的身份映射到 `award.money/coin/originality/tech`；`+d4` 映射到既有 `outcome`。UI 只渲染这两个权威来源，不从 local 推算。
-- 快照 `MatchResult.player.award` 就是统一 authority：首次结算产生、写入 receipt、随快照发布；重连/刷新/再战只读同一冻结结果。
+- 快照 `MatchResult.player.award` 就是统一 authority：首次结算产生、写入 receipt、随快照发布；重连/刷新/再战只读同一冻结结果。不加重复 `level/outcome/levelUp/down/receiptID` 字段。
 
 ## 账户 store 事务（exactly-once + 持久）
 
@@ -150,12 +146,13 @@ CREATE TABLE IF NOT EXISTS account_reward_ledger (
 
 - money：复用现有权威可花费字段 profile `0x70`（Shop/出售已写该字段）。
 - tokens：不写（`coin=0`，premium 不铸造）。
-- originality/skill 点/积分/等级：写 `account_growth` 明确类型列，**不覆写 raw RoleProfile 的 `0x5c/0x9c/0xa0/0x80`**，规避未证明的原写链。
+- 积分 `rankPoints`/等级 `level`/创意 `originality`/技能点 `tech`：写 `account_growth` 明确类型列，**不覆写 raw RoleProfile 的 `0x5c/0x9c/0xa0/0x80`**；尤其 `tech` 不写 pet learning 的 `0x80`。正价可花 money 复用现 profile `0x70` 赋值 helpers，不挪代币。
+- 权威查询：`RoleProfile` 回复可选附带 `growth`；历史 receipt 与结果快照能恢复已授成长。初始账本若无原积分来源，从 0 开始，不伪造 earned；不用未证明 raw 字段当写链，不新增 account API/poll。
 
 ## 生命周期
 
 - 正常终局（TIME_LIMIT/OBJECTIVE）：`finishRound` 提交一次→奖励一次→receipt 持久。
-- 真实离房：`Leave`→`leaveRoomPlayer`→FORFEIT 结算，离场人按 LOSE、留场人按 WIN 结算；同一 `(matchId,round)` 只写一次。
+- 真实离房：`Leave`→`leaveRoomPlayer` 删除玩家前先冻结实际参与者（含离场人）→FORFEIT 结算，离场人按 LOSE、留场人按 WIN 结算；同一 `(matchId,round)` 只写一次。离场人已从 `room.players` 删除也按冻结记录纳入本局一次 receipt。
 - 断线：`pauseDisconnectedPlayer` 保留参与者；窗口内 `restore` 不结算不发奖；窗口到期 `leave`→FORFEIT 才结算一次。断线期间若对局自然终局，冻结名单已含该暂停玩家，按正常结算一次。
 - 再战：`round++` 产生新 `(matchId, round)`，独立领奖；旧 receipt 保留。
 - 重启：已提交 receipt 落 SQLite，服务重启后同库可读；`runId` 换新避免复用旧房号/round 造成重复或误丢弃。
@@ -183,10 +180,10 @@ CREATE TABLE IF NOT EXISTS account_reward_ledger (
 
 | 层 | 文件 | 责任 |
 | --- | --- | --- |
-| shared | `apps/shared/protocols/MsgRoomSnapshot.ts`、`serviceProto.ts` | 新增 `ResultAward` + `ResultPlayer.award?` 可选字段 |
+| shared | `apps/shared/protocols/MsgRoomSnapshot.ts`、`PtlRoleProfile.ts`、`serviceProto.ts`（shared worker） | `AccountGrowth`/`ResultAward`、`ResultPlayer.award?`、`ResRoleProfile.growth?` |
 | server 算法 | `apps/server/src/settlement/reward.ts`（新） | 纯奖励/等级函数，输入冻结结果 |
 | server 事务 | `apps/server/src/accounts/reward.ts`（新）、`account-store.ts`、`accounts/history.ts` | `account_growth`/`account_reward_ledger`、与历史同事务 exactly-once |
-| server 接线 | `apps/server/src/world.ts`、`index.ts` | finishRoom 冻结后逐人求奖、receipt 提交、快照带 award |
+| server 接线 | `apps/server/src/world.ts`、`settlement/history.ts`、`accounts/api.ts` | finishRoom 冻结后逐人求奖、receipt 提交、快照带 award、RoleProfile 带 growth |
 | UI-19 | `apps/web/src/interface/battle/battle-summary-page.tsx`/`.css`（UI 线） | 等级/经验条/奖励图/整页 |
 | UI-19 桥 | `apps/web/src/interface/battle/battle-match.tsx`（主线） | FINISHED 语义桥、suffix、子页挂载 |
 | UI-20 | `apps/web/src/interface/battle/battle-summary-award-page.tsx`/`.css`（UI 线，新） | award 13 控件子页 |
@@ -195,10 +192,10 @@ CREATE TABLE IF NOT EXISTS account_reward_ledger (
 ## 验收（沿既有范围，不新增 unit test/浏览器/build/type/lint）
 
 - 服务端：普通真实账户 mode≤5 各自然终局一次，冻结结果与快照 `award` 一致，重复 finish/重连/重启不重复加钱加成。
-- 账户：money 写 profile `0x70`、原积分/等级/技能点写 `account_growth`；同库真实服务重启后余额/积分/等级/技能点保持；CPU/旁观空；多连接同场只记一次。
-- 离房/断线/再战：真实 Leave 判负一次、断线窗口内重连不发奖、窗口到期一次、再战 round 独立领奖。
+- 账户：money 写 profile `0x70`，积分/等级/创意/技能点写 `account_growth`；同库真实服务重启后余额/积分/等级保持；CPU/旁观空；多连接同场只记一次。
+- 离房/断线/再战：真实 Leave 判负一次，冻结名单纳入离场人；断线窗口内重连不发奖、窗口到期一次；再战 round 独立领奖。
 - UI：UI-19 三分辨率整页显冻结结果 + 等级/经验；UI-20 award 子页显本次四值奖励；重开/重连值不变。
-- 复用：既有 `account-history-*`、`engineering-settlement`、`battle-summary-page-accepted`、`home-award-summary-*` 证据；不重跑与本次改动无关的既有 PASS。
+- 上述真实网络/双网页/HD/持久重启/原 reward producer 验收本轮均未执行；不勾完整父，不改 `progress.md`。
 
 ## 剩余源授权/实测缺口
 
