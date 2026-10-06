@@ -13,6 +13,14 @@ import type {TradeAccount, TradeOffer} from '../../shared/protocols/PtlTrade';
 import {DatabaseSync} from 'node:sqlite';
 import {AccountHistory} from './accounts/history';
 import {AccountTitle} from './accounts/title';
+import {
+  readAccountAwardCounts,
+  readAccountStatistics,
+} from './accounts/statistics';
+import {
+  initializeAccountSpending,
+  recordAccountSpending,
+} from './accounts/spending';
 import {AccountShop} from './accounts/shop';
 import {AccountTankShop} from './accounts/tank-shop';
 import {AccountTankMaintenance} from './accounts/tank-maintenance';
@@ -33,7 +41,7 @@ import type {RewardGrant} from './accounts/history';
 import {AccountReward} from './accounts/reward';
 import type {AccountGrowth, ResultAward, ResultPlayer} from '../../shared/protocols/MsgRoomSnapshot';
 import type {ResHistory} from '../../shared/protocols/PtlHistory';
-import {randomBytes} from 'node:crypto';
+import {randomBytes, randomUUID} from 'node:crypto';
 import type {InventoryWireRecord} from '../../shared/protocols/PtlInventory';
 import type {KitbagAssignmentResult, KitbagCancellationResult} from './accounts/kitbag-configuration';
 import {applyInventoryQuery} from '../../shared/combat/inventory-query';
@@ -55,7 +63,11 @@ import type {OwnedTankTextures} from '../../shared/combat/role-owned-textures';
 import {readOwnedTankTextures} from '../../shared/combat/role-owned-textures';
 import type {RoleTankTextureConfirmation} from '../../shared/contracts/tank-textures';
 import {applyRoleTankTextureConfirmation, evaluateRoleTankTextureRequest} from './accounts/tank-texture-change';
-import type {AccountTitles} from '../../shared/protocols/PtlRoleProfile';
+import type {
+  AccountStatistics,
+  AccountTitles,
+  AwardCounts,
+} from '../../shared/protocols/PtlRoleProfile';
 import type {PlayerTitle} from '../../shared/protocols/MsgRoomSnapshot';
 
 export interface AccountSession {accountId: string; token: string;}
@@ -101,6 +113,7 @@ export class AccountStore {
         payload BLOB NOT NULL, strings TEXT NOT NULL);
     `);
     this.matchHistory = new AccountHistory(this.database);
+    initializeAccountSpending(this.database);
     this.accountTitle = new AccountTitle(this.database);
     this.matchReward = new AccountReward(this.database);
     this.accountShop = new AccountShop(this.database);
@@ -197,6 +210,16 @@ export class AccountStore {
   /** Authoritative owned title catalog and worn selection for the RoleProfile reply. */
   titles(accountId: string): AccountTitles {
     return this.accountTitle.titles(accountId);
+  }
+
+  /** Authoritative lifetime statistics for the RoleProfile reply. */
+  statistics(accountId: string): AccountStatistics {
+    return readAccountStatistics(this.database, accountId);
+  }
+
+  /** Complete nine-award counts from every history row carrying the real award producer. */
+  awardCounts(accountId: string): AwardCounts | undefined {
+    return readAccountAwardCounts(this.database, accountId);
   }
 
   /** Current worn badge for other-player projections; never exposes private profile data. */
@@ -377,6 +400,8 @@ export class AccountStore {
         view.setUint32(0x70, profileFields.get(0x70)!, true);
         this.database.prepare('UPDATE role_profiles SET payload = ? WHERE account_id = ?')
           .run(profile.bytes, accountId);
+        recordAccountSpending(this.database, accountId, 'tank-texture', randomUUID(),
+          decision.moneyCost, decision.tokenCost);
       }
       this.database.exec('COMMIT');
       return confirmation;

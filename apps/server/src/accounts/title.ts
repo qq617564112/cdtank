@@ -1,7 +1,8 @@
 import type {DatabaseSync} from 'node:sqlite';
 import type {AccountTitles} from '../../../shared/protocols/PtlRoleProfile';
-import type {PlayerTitle, ResultPlayer} from '../../../shared/protocols/MsgRoomSnapshot';
-import {TITLE_DEFINITIONS, evaluateTitleGrants, type TitleStats} from '../settlement/title';
+import type {PlayerTitle} from '../../../shared/protocols/MsgRoomSnapshot';
+import {TITLE_DEFINITIONS, evaluateTitleGrants} from '../settlement/title';
+import {readTitleStats} from './statistics';
 
 const TITLE_BY_ID = new Map(TITLE_DEFINITIONS.map(title => [title.id, title]));
 
@@ -36,7 +37,7 @@ export class AccountTitle {
         .run(accountId, matchId, round, Math.round(elapsedSeconds));
     }
     const owned = this.ownedIds(accountId);
-    const granted = evaluateTitleGrants(this.stats(accountId), owned);
+    const granted = evaluateTitleGrants(readTitleStats(this.database, accountId), owned);
     if (!granted.length) return;
     const insert = this.database.prepare(
       'INSERT OR IGNORE INTO account_titles VALUES (?, ?, ?, ?, ?)');
@@ -81,27 +82,5 @@ export class AccountTitle {
   private ownedIds(accountId: string): number[] {
     return this.database.prepare('SELECT title_id FROM account_titles WHERE account_id = ? ORDER BY title_id')
       .all(accountId).map(row => Number(row.title_id));
-  }
-
-  /** Real cumulative statistics: every stored history row plus the captured play time. */
-  private stats(accountId: string): TitleStats {
-    const rows = this.database.prepare(`SELECT record FROM match_history WHERE account_id = ?
-      ORDER BY ended_at ASC, match_id ASC, round ASC`).all(accountId);
-    let wins = 0, losses = 0, draws = 0, kills = 0, deaths = 0;
-    let currentWins = 0, currentLosses = 0, winStreak = 0, loseStreak = 0;
-    for (const row of rows) {
-      const {result} = JSON.parse(String(row.record)) as {result: ResultPlayer};
-      if (result.outcome === 'WIN') {wins++; currentWins++; currentLosses = 0;}
-      else if (result.outcome === 'LOSE') {losses++; currentLosses++; currentWins = 0;}
-      else {draws++; currentWins = 0; currentLosses = 0;}
-      winStreak = Math.max(winStreak, currentWins);
-      loseStreak = Math.max(loseStreak, currentLosses);
-      kills += result.kills;
-      deaths += result.deaths;
-    }
-    const battleSeconds = Number(this.database.prepare(
-      'SELECT COALESCE(SUM(seconds), 0) AS total FROM account_title_playtime WHERE account_id = ?',
-    ).get(accountId)!.total);
-    return {wins, losses, draws, winStreak, loseStreak, kills, deaths, battleSeconds};
   }
 }

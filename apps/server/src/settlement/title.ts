@@ -24,14 +24,18 @@ export interface TitleStats {
   readonly kills: number;
   readonly deaths: number;
   readonly battleSeconds: number;
-  /** Producers that are not wired yet stay absent; undefined never satisfies a predicate. */
+  /** Producer-backed fields stay absent until the account has a real recorded value. */
   readonly hits?: number;
   readonly shots?: number;
   readonly damage?: number;
   readonly killCombo?: number;
   readonly spentMoney?: number;
   readonly spentTokens?: number;
-  readonly awardCounts?: Partial<Record<AwardKind, number>>;
+  readonly awardCounts?: Readonly<Record<AwardKind, number>>;
+  /** False when legacy history rows lack awards; less-than predicates then stay unavailable. */
+  readonly awardCountsComplete?: boolean;
+  /** False when legacy history rows lack shots; shot/hit ratio predicates stay unavailable. */
+  readonly roundStatsComplete?: boolean;
 }
 
 export type TitleCondition =
@@ -66,13 +70,15 @@ const AWARD_SELECTORS: Readonly<Record<number, AwardKind>> = {
   20: 'kind', 21: 'crafty', 22: 'shy', 23: 'greedy',
 };
 
-const CURRENT_STAT_SELECTORS = new Set([1, 2, 3, 4, 5, 6, 7, 8]);
+const CURRENT_STAT_SELECTORS = new Set([
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+]);
 
 function knownNumber(value: number | undefined): value is number {
   return value !== undefined && Number.isFinite(value);
 }
 
-function conditionFor(row: TitleTableRow): TitleCondition {
+function conditionFor(row: TitleTableRow, id: number): TitleCondition {
   const type = Number(row.FunctionType);
   const x = Number(row.FunctionX);
   const y = Number(row.FunctionY);
@@ -82,7 +88,7 @@ function conditionFor(row: TitleTableRow): TitleCondition {
   const c = Number(row.c);
   switch (type) {
     case 1:
-      return {kind: 'threshold', selector: x, threshold: a};
+      return {kind: 'threshold', selector: id >= 152 && id <= 154 && x === 13 ? 14 : x, threshold: a};
     case 2:
       return {kind: 'ratio', selector: x, denominator: z, threshold: a, percent: b, constant: c};
     case 5:
@@ -108,13 +114,17 @@ function selectorAvailable(selector: number): boolean {
   return CURRENT_STAT_SELECTORS.has(selector);
 }
 
+function selectorComplete(selector: number, stats: TitleStats): boolean {
+  if (selector === 9 || selector === 10) return stats.roundStatsComplete !== false;
+  return AWARD_SELECTORS[selector] === undefined || stats.awardCountsComplete !== false;
+}
+
 function conditionAvailable(condition: TitleCondition): boolean {
   switch (condition.kind) {
     case 'threshold':
       return selectorAvailable(condition.selector);
     case 'ratio':
-      return selectorAvailable(condition.selector) && selectorAvailable(condition.denominator)
-        && selectorAvailable(9) && selectorAvailable(10);
+      return selectorAvailable(condition.selector) && selectorAvailable(condition.denominator);
     case 'sumBelowAndGreater':
       return selectorAvailable(condition.left) && selectorAvailable(condition.right)
         && selectorAvailable(condition.greater);
@@ -126,15 +136,16 @@ function conditionAvailable(condition: TitleCondition): boolean {
       return true;
     case 'maxAward':
     case 'allAwards':
+      return true;
     case 'sourceUnavailable':
       return false;
   }
 }
 
 function maxAward(stats: TitleStats): number | undefined {
-  const counts = AWARD_KINDS.map(kind => stats.awardCounts?.[kind])
-    .filter((count): count is number => knownNumber(count));
-  return counts.length === 0 ? undefined : Math.max(...counts);
+  const counts = AWARD_KINDS.map(kind => stats.awardCounts?.[kind]);
+  if (counts.some(count => !knownNumber(count))) return undefined;
+  return Math.max(...counts.filter((count): count is number => knownNumber(count)));
 }
 
 function minAward(stats: TitleStats): number | undefined {
@@ -145,7 +156,7 @@ function minAward(stats: TitleStats): number | undefined {
 
 function readTitleDefinition(row: TitleTableRow): TitleDefinition {
   const id = Number(row['称号ID']);
-  const condition = conditionFor(row);
+  const condition = conditionFor(row, id);
   return {
     id,
     name: row['称号名称'],
@@ -196,6 +207,7 @@ function conditionMatches(condition: TitleCondition, stats: TitleStats, ownedTit
       const value = statValue(condition.selector, stats);
       const denominator = statValue(condition.denominator, stats);
       return knownNumber(value) && knownNumber(denominator)
+        && selectorComplete(condition.selector, stats) && selectorComplete(condition.denominator, stats)
         && value > condition.threshold && value * 100 > denominator * condition.percent;
     }
     case 'sumBelowAndGreater': {
@@ -203,12 +215,13 @@ function conditionMatches(condition: TitleCondition, stats: TitleStats, ownedTit
       const right = statValue(condition.right, stats);
       const greater = statValue(condition.greater, stats);
       return knownNumber(left) && knownNumber(right) && knownNumber(greater)
+        && selectorComplete(condition.left, stats) && selectorComplete(condition.right, stats)
         && left + right < condition.threshold && greater > condition.greaterThreshold;
     }
     case 'greaterAndLess': {
       const greater = statValue(condition.greater, stats);
       const less = statValue(condition.less, stats);
-      return knownNumber(greater) && knownNumber(less)
+      return knownNumber(greater) && knownNumber(less) && selectorComplete(condition.less, stats)
         && greater > condition.greaterThreshold && less < condition.lessThreshold;
     }
     case 'bothGreater': {

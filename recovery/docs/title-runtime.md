@@ -15,10 +15,11 @@
 - `account_title_playtime(account_id, match_id, round, seconds)`，每局真实冻结 PLAYING 时长，
   主键 `(account_id, match_id, round)`。
 
-累计 `wins/losses/draws/kills/deaths` 与 `winStreak/loseStreak` 在每次授予时从该账户的
-**全部** `match_history` 记录重算（不只 history 首页），按 `ended_at, match_id, round` 升序取历史
-最大连段。`battleSeconds` 只来自 `account_title_playtime` 的真实结算时长；既有历史没有时长记录，
-记为 unknown，不套用地图 `timeLimit`。
+累计 `wins/losses/draws/kills/deaths` 与 `winStreak/loseStreak` 在每次授予时经
+`accounts/statistics.ts` 从该账户的 **全部** `match_history` 记录重算（不只 history 首页），
+按 `ended_at, match_id, round` 升序取历史最大连段。`battleSeconds` 只来自
+`account_title_playtime` 的真实结算时长；既有历史没有时长记录，记为 unknown，不套用地图
+`timeLimit`。`shots/hits/damage/killCombo`、九奖项与 spending 采用同一聚合窗口。
 
 ## 事务与 exactly-once
 
@@ -33,10 +34,11 @@ finish、queue retry、重启后再报时直接命中已存在结算，不重复
 `elapsedSeconds` 取本 round 该账户真实最长一份，避免 double count。CPU/无账号参与者跳过。
 
 授予评估调 `settlement/title.ts` 的 `evaluateTitleGrants(stats, ownedIds)`：从真实已拥有 ID
-出发，每轮加入真实可判定新 ID，并以当前 owned+granted 数重新检查 158 号固定点。缺 producer 的
-统计（hits/shots/damage/killCombo/九奖项/spend）保持 `undefined`，不按 0 冒领；本批可达的是
-56 条 wins/losses/draws/streaks/kills/deaths/battleSeconds 条件，以及真实 owned 累计超过 50 时
-固定点追加的 158 号。
+出发，每轮加入真实可判定新 ID，并以当前 owned+granted 数重新检查 158 号固定点。统计 1–23
+已由真实 producer 接入：1–8 覆盖全部历史，9–12 与 spending 13/14 覆盖有真实记录的行，
+15–23 读取完整九奖项计数。旧 history 缺 `roundStats/awards` 时不出现 fake zero；涉及
+shots/hits ratio 或奖项 `<` 条件在窗口不完整时保持不可授予。真实 owned 累计超过 50 时，
+158 号继续走固定点追加。
 
 ## 时长来源
 

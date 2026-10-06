@@ -113,10 +113,13 @@ export function registerAccountApis(
       return;
     }
     const profile = accounts.roleProfile(accountId);
+    const statistics = accounts.statistics(accountId);
+    const awards = accounts.awardCounts(accountId);
     await call.succ(profile ? {profile: {bytes: [...profile.bytes], strings: profile.strings},
       playerSummary: readRoleProfilePlayerSummary(profile), growth: accounts.accountGrowth(accountId),
-      titles: accounts.titles(accountId)}
-      : {growth: accounts.accountGrowth(accountId), titles: accounts.titles(accountId)});
+      titles: accounts.titles(accountId), statistics, ...(awards ? {awards} : {})}
+      : {growth: accounts.accountGrowth(accountId), titles: accounts.titles(accountId),
+        statistics, ...(awards ? {awards} : {})});
   });
 
   server.implementApi('SelectRole', async call => {
