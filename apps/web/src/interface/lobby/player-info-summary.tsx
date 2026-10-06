@@ -4,6 +4,7 @@ import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceStaticText} from '../resources/source-static-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
+import {prepareSourceUi} from '../resources/source-ui-resources';
 
 const BATTLE_SUFFIX = 'myhome_playerpage_battlesummary.xml';
 const AWARD_SUFFIX = 'myhome_playerpage_awardsummary.xml';
@@ -56,10 +57,7 @@ function useSummaryUi(suffix: string) {
     let active = true;
     setUi(undefined);
     setError('');
-    void fetch('/ui.json').then(async response => {
-      if (!response.ok) throw new Error(`界面资源 ${response.status}`);
-      const next = await response.json() as HomeSourceUi;
-      if (!next.layouts.some(layout => layout.path.endsWith(suffix))) throw new Error(`统计布局缺失：${suffix}`);
+    void prepareSourceUi([suffix]).then(next => {
       if (active) setUi(next);
     }).catch(reason => {
       if (active) setError(reason instanceof Error ? reason.message : String(reason));
