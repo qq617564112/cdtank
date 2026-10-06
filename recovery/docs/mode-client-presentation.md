@@ -22,7 +22,7 @@
 
 ## 小地图
 
-正式小地图在 `battle-minimap-renderer.ts` 中按 `match.objectives` 投影 `diaobao.tga` 标记。模式 2 的标记为源城堡位置，标题写明城堡并带有该城堡的源身份，不再表示为占领圈；标记只按权威 `ownerTeam`/`hp` 着色，不依据本机客户端状态推算胜局。
+正式小地图由 `battle-minimap-renderer.ts` 按 `match.objectives` 与源坐标投影 `diaobao.tga` 标记。模式 2 的标记来自源 `SYcCastle` 位置，其身份即 `sourcePlacementId`/`sourceModel`，标记位置、`ownerTeam` 与 `hp` 全部取权威快照，不依据本机客户端状态推算胜局。旧 `hud-minimap-view.tsx` 的 DOM“占领点”文字随该组件一同移除，新渲染器不再输出占领圈文案；`battle-minimap-renderer.ts` 属当前用户未跟踪文件，本项不改动它，也不复活删除的旧组件。
 
 ## 未完成范围
 
