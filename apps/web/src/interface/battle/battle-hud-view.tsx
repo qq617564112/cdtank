@@ -73,7 +73,7 @@ function HudLayout({source, data, state, hud, filterId, scale, mode}: {
   source: SourceLayout; data: SourceUi; state: HudSnapshot; hud: BattleHud; filterId: string; scale: number; mode?: number;
 }) {
   const selected = new Set(['SheetWindow', 'all', 'prgLife', 'prgCrossbar', 'picBattleInfoPanel', 'edtBattleInfo', 'txtCountdown']);
-  for (let slot = 0; slot < 12; slot++) for (const prefix of ['picPlayer', 'picPlayerPanel', 'picPlayerIconBg', 'picPlayerIcon', 'txtPlayerName', 'prgPlayerLife']) selected.add(`${prefix}${slot}`);
+  for (let slot = 0; slot < 12; slot++) for (const prefix of ['picPlayer', 'picPlayerPanel', 'picPlayerIconBg', 'picPlayerIcon', 'txtPlayerName', 'txtPlayerTitle', 'prgPlayerLife']) selected.add(`${prefix}${slot}`);
   const controls = source.windows.filter(control => mode ? true : selected.has(control.name));
   const names = new Set(controls.map(control => control.name));
   const tree = (parent: string | null): React.ReactNode => controls.filter(control => parent === null
@@ -90,6 +90,10 @@ function HudLayout({source, data, state, hud, filterId, scale, mode}: {
         role: player ? 'img' : undefined, 'aria-label': player ? `${player.name}宠物头像` : undefined};
     }
     if (/^txtPlayerName\d+$/.test(name)) content = player?.name ?? '';
+    if (/^txtPlayerTitle\d+$/.test(name)) {
+      content = player?.title ?? '';
+      extra = {'data-source-title-binding': player && player.title ? 'confirmed-title' : 'no-confirmed-title'};
+    }
     if (name === 'edtBattleInfo') {
       content = state.messages;
       extra = {onMouseEnter: () => hud.battleInfoHover(true), onMouseLeave: () => hud.battleInfoHover(false)};

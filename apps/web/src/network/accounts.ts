@@ -72,9 +72,9 @@ export class AccountConnection {
     return result.res;
   }
 
-  async roleProfile(): Promise<ResRoleProfile> {
+  async roleProfile(selectTitleId?: number): Promise<ResRoleProfile> {
     await this.ensureConnected();
-    const result = await this.client.callApi('RoleProfile', {});
+    const result = await this.client.callApi('RoleProfile', selectTitleId === undefined ? {} : {selectTitleId});
     if (!result.isSucc) throw new Error(result.err.message);
     return result.res;
   }

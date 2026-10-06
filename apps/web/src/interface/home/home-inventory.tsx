@@ -7,11 +7,12 @@ import {HomeInventorySourceList} from './home-inventory-source-list';
 import {HomeNameSourceDialog} from './home-name-source-dialog';
 import {HomeBattleSummarySourcePage} from './home-battle-summary-source-page';
 import {HomeAwardSummarySourcePage} from './home-award-summary-source-page';
+import {HomeTitleSummarySourcePage} from './home-title-summary-source-page';
 import {SourceButton} from '../resources/source-button';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
-import type {ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
+import type {AccountTitles, ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
 import type {ReqKitbag} from '../../../../shared/protocols/PtlKitbag';
 import type {Battle} from '../../match/battle';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
@@ -72,10 +73,13 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
   const [profile, setProfile] = useState<ResRoleProfile['profile']>();
   const [playerSummary, setPlayerSummary] = useState<ResRoleProfile['playerSummary']>();
   const [growth, setGrowth] = useState<ResRoleProfile['growth']>();
+  const [titles, setTitles] = useState<AccountTitles>();
+  const [titleStatus, setTitleStatus] = useState('');
+  const [titlePending, setTitlePending] = useState(false);
   const [balanceError, setBalanceError] = useState('');
   const [name, setName] = useState('');
   const [nameOpen, setNameOpen] = useState(false);
-  const [summaryTab, setSummaryTab] = useState<'battle' | 'award'>('battle');
+  const [summaryTab, setSummaryTab] = useState<'battle' | 'title' | 'award'>('battle');
   const [selected, setSelected] = useState(0);
   const requestFocus = useRef<HTMLElement | null>(null);
   const [busy, setBusy] = useState(false);
@@ -103,12 +107,14 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
     setResourceError(undefined);
     setResources(undefined); setInventory(undefined); setSelected(0); setName('');
     setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined); setBalanceError('');
+    setTitles(undefined); setTitleStatus(''); setTitlePending(false);
     setBusy(true); setStatus('载入物品…');
     void battle.roleProfile().then(confirmed => {
       if (current.active) {
         setProfile(confirmed.profile);
         setPlayerSummary(confirmed.playerSummary);
         setGrowth(confirmed.growth);
+        setTitles(confirmed.titles);
       }
     }).catch(error => {if (current.active) setBalanceError(String(error));});
     void (async () => {
@@ -155,6 +161,7 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
   const category = page === 'valuable' ? 6 : page === 'weapon' ? 2 : 1;
   const categoryRecords = inventory?.records.filter(record => classifyInventoryCategory(record.itemTableId) === category) ?? [];
   const records = categoryRecords.filter(record => record.ownedQuantity > 0);
+  const selectedTitleName = titles?.owned.find(title => title.id === titles.selectedTitleId)?.name;
   const control = (name: string) => resources!.controls.find(value => value.name === name)!;
   const slotNumber = (index: number) => page === 'weapon' ? index : index + 4;
 
@@ -187,6 +194,22 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
     if (slot && inventory?.hotkeys[slot - 1]) void mutate({operation: 'CANCEL', slot});
   }
 
+  async function selectTitle(titleId: number) {
+    const current = session.current;
+    if (!current.active || current.pending || !titles) return;
+    current.pending = true; setBusy(true); setTitlePending(true); setTitleStatus('保存称号佩戴…');
+    try {
+      const confirmed = await battle.roleProfile(titleId);
+      if (!current.active) return;
+      setTitles(confirmed.titles);
+      setTitleStatus(titleId === 0 ? '已清空称号' : '已佩戴称号');
+    } catch (error) {
+      if (current.active) setTitleStatus(`称号保存失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      if (current.active) {current.pending = false; setBusy(false); setTitlePending(false);}
+    }
+  }
+
   return <dialog ref={dialog} id="home-inventory" aria-label="我的家：物品与快捷槽" aria-busy={busy || (!resources && !resourceError)}
     style={{zoom: scale}} onCancel={event => {event.preventDefault(); requestClose();}}
     onKeyDown={event => {
@@ -206,6 +229,7 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
           selectPage={kind => {if (kind !== 'player') onRolePage?.(kind);}}
           close={requestClose} closeAttribute="data-home-close" />
         <HomePlayerSourcePage ui={resources.ui} name={name} playerSummary={playerSummary} growth={growth}
+          title={selectedTitleName}
           money={profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0x70, true) : undefined}
           tokens={profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0x74, true) : undefined}
           itemQuantity={inventory ? categoryRecords.length : undefined} valuableMode={page === 'valuable'}
@@ -216,11 +240,17 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
         <div data-home-summary-battle-slot="" hidden={summaryTab !== 'battle'} style={{position: 'static'}}>
           <HomeBattleSummarySourcePage ui={resources.ui} source={battle} />
         </div>
+        {summaryTab === 'title' && <HomeTitleSummarySourcePage ui={resources.ui} titles={titles} pending={titlePending}
+          status={titleStatus} select={titleId => void selectTitle(titleId)} />}
         {summaryTab === 'award' && <HomeAwardSummarySourcePage ui={resources.ui} />}
         <SourceButton ui={resources.ui} layout={new HomeSourceLayout(resources.ui, 'myhome_playerpage.xml')}
           suffix="myhome_playerpage.xml" source="rdoBattleSummary" selected={summaryTab === 'battle'} aria-pressed={summaryTab === 'battle'}
           aria-label="已保存对局统计" data-home-saved-summary-tab="" disabled={busy}
           onClick={() => setSummaryTab('battle')} />
+        <SourceButton ui={resources.ui} layout={new HomeSourceLayout(resources.ui, 'myhome_playerpage.xml')}
+          suffix="myhome_playerpage.xml" source="rdoTitleSummary" selected={summaryTab === 'title'} aria-pressed={summaryTab === 'title'}
+          aria-label="拥有称号" data-home-title-summary-tab="" disabled={busy}
+          onClick={() => setSummaryTab('title')} />
         <SourceButton ui={resources.ui} layout={new HomeSourceLayout(resources.ui, 'myhome_playerpage.xml')}
           suffix="myhome_playerpage.xml" source="rdoAwardSummary" selected={summaryTab === 'award'} aria-pressed={summaryTab === 'award'}
           aria-label="奖章" data-home-award-summary-tab="" disabled={busy}

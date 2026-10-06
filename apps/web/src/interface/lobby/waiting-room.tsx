@@ -256,7 +256,7 @@ function WaitingRoomSession({formal = false, management, snapshot, playerId, ext
                 {image(`picReady${index}`, match.readyPlayerIds.includes(player.id))}
                 <SourceImage ui={ui} name={`picPlayerTank${index}`} reference={waitingTankReference(player.tankId)}
                   aria-label={`战车 ${player.tankId}`} text={sourceAsset(ui, waitingTankReference(player.tankId)) ? undefined : String(player.tankId)} />
-                {image(`txtPlayerTitle${index}`, true, player.isCpu ? 'CPU' : player.isAutopilot ? '托管' : player.id === playerId ? '你' : '')}
+                {image(`txtPlayerTitle${index}`, true, player.title?.name ?? '')}
               </> : image(`picNA${index}`)}
             </Fragment>)}
             <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source={ready ? 'btnCancel' : 'btnReady'} data-waiting-control="ready" aria-label={ready ? '取消准备' : '准备'} title={ready ? '取消准备' : '准备'}

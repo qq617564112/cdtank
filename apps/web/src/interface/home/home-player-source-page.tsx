@@ -4,10 +4,10 @@ import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 
 /** Original player sheet regions around the confirmed inventory and account name. */
-export function HomePlayerSourcePage({ui, name, money, tokens, itemQuantity, playerSummary, growth, valuableMode = false, valuableQuantity}: {
+export function HomePlayerSourcePage({ui, name, money, tokens, itemQuantity, playerSummary, growth, valuableMode = false, valuableQuantity, title}: {
   ui: HomeSourceUi; name: string; money?: number; tokens?: number; itemQuantity?: number; playerSummary?: ResRoleProfile['playerSummary'];
   growth?: ResRoleProfile['growth'];
-  valuableMode?: boolean; valuableQuantity?: number;
+  valuableMode?: boolean; valuableQuantity?: number; title?: string;
 }) {
   const suffix = 'myhome_playerpage.xml';
   const layout = new HomeSourceLayout(ui, suffix);
@@ -21,6 +21,8 @@ export function HomePlayerSourcePage({ui, name, money, tokens, itemQuantity, pla
     {pictures.filter(source => !valuableMode || !['heseditu', 'shuliangditu', 'zhutu'].includes(source)).map(source => <SourceStaticImage key={source} ui={ui} layout={layout}
       suffix={suffix} name={source} className="home-player-source-picture" aria-hidden="true" />)}
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtPlayerName" text={name} />
+    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtPlayerTitle" text={title ?? ''}
+      data-home-player-title={title ?? ''} data-source-title-binding={title ? 'confirmed-title' : 'no-confirmed-title'} />
     {([['score', 'rankPoints', 'txtPlayerScore'], ['originality', 'originality', 'txtPlayerOriginality'], ['tech', 'tech', 'txtPlayerTech']] as const).map(([field, growthField, source]) => {
       const value = growth === undefined ? playerSummary?.[field] : growth[growthField];
       const binding = growth === undefined ? playerSummary === undefined ? 'unavailable' : 'confirmed-role-profile' : 'confirmed-account-growth';

@@ -26,7 +26,7 @@ export interface SourceUi {
 
 export interface HudPlayer {
   id: string; name: string; tankId: number; petId?: number; alive: boolean; hp: number; maxHp: number;
-  expression: string; asset?: string | null;
+  expression: string; asset?: string | null; title?: string;
 }
 export interface HudSnapshot {
   data?: SourceUi; visible: boolean; mode: number;
@@ -138,7 +138,7 @@ export class BattleHud {
       const asset = expression === 'dead' ? data.portraitDeath[slot === 0 ? 'local' : 'remote']
         : slot !== 0 ? portrait?.remoteAsset : expression === 'normal' ? portrait?.asset : portrait?.expressions[expression];
       slots.push({id: player.id, name: player.name, tankId: player.tankId, petId: player.petId, alive: player.alive,
-        hp: player.hp, maxHp: player.maxHp, expression, asset});
+        hp: player.hp, maxHp: player.maxHp, expression, asset, title: player.title?.name});
     }
     const round = snapshot.match?.round;
     if (round !== this.reloadRound || !local?.alive || snapshot.phase !== 'PLAYING') this.reloadProgress.reset();

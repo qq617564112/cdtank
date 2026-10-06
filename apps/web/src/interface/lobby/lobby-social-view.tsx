@@ -35,6 +35,7 @@ export function LobbySocialView({battle}: {battle: Battle}) {
   const relation = friends.friends.find(player => player.accountId === selected?.accountId);
   const onlinePlayer = presence.players.find(player => player.accountId === selected?.accountId);
   const profile = selected ? {accountId: selected.accountId, name: relation?.name ?? onlinePlayer?.name ?? selected.name,
+    title: relation?.title?.name ?? onlinePlayer?.title?.name ?? blacklist.blocked.find(player => player.accountId === selected.accountId)?.title?.name,
     isBlocked: blacklist.blocked.some(player => player.accountId === selected.accountId),
     isFriend: !!relation, online: relation?.online ?? !!onlinePlayer, inRoom: relation?.inRoom ?? false} : null;
   function chooseTarget(player: {accountId: string; name: string}): void {

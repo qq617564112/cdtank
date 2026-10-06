@@ -11,6 +11,7 @@ import {PlayerInfoResourceFeedback} from './player-info-resource-feedback';
 export interface PlayerInfoPlayer {
   accountId: string;
   name: string;
+  title?: string;
   isFriend: boolean;
   isBlocked: boolean;
   online: boolean;
@@ -72,7 +73,8 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
   }, [pending, player.isFriend, player.isBlocked]);
   const friendSource = player.isFriend ? 'btnRemoveFriend' : 'btnAddFriend';
   const knownText = (name: string) => name === 'txtPlayerName' ? player.name : name === 'txtPlayerStatus'
-    ? player.online ? player.inRoom ? '房间中' : '在线' : '离线' : '';
+    ? player.online ? player.inRoom ? '房间中' : '在线' : '离线'
+    : name === 'txtPlayerTitle' ? player.title ?? '' : '';
   return <dialog ref={dialog} data-player-info="" data-player-info-account={player.accountId}
     aria-label={`玩家资料：${player.name}`} aria-busy={pending} style={{zoom: scale}}
     onCancel={event => {event.preventDefault(); onClose();}}

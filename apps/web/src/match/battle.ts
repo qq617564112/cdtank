@@ -282,8 +282,8 @@ export class Battle {
     return this.accounts.ownedRoles();
   }
 
-  async roleProfile(): Promise<ResRoleProfile> {
-    return this.accounts.roleProfile();
+  async roleProfile(selectTitleId?: number): Promise<ResRoleProfile> {
+    return this.accounts.roleProfile(selectTitleId);
   }
 
   async selectRole(request: ReqSelectRole): Promise<ResSelectRole> {
