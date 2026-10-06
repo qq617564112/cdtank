@@ -13,7 +13,7 @@ interface PlantContactRoom {
 
 /** Enabled Plant participation is rebuilt; original type100 hides without blocking. */
 export function createScenePlants(room: {mode: number; map: {mapId: number}}): ScenePlantSnapshot[] {
-  const supported = [2, 5].includes(room.map.mapId) && [1, 2, 3].includes(room.mode) ||
+  const supported = [2, 5, 6].includes(room.map.mapId) && [1, 2, 3].includes(room.mode) ||
     room.map.mapId === 4 && [1, 3].includes(room.mode);
   if (!supported) return [];
   return getScenePlants(room.map.mapId).map(source => ({

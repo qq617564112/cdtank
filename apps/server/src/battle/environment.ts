@@ -13,6 +13,7 @@ export function createSceneObjects(room: {mode: number; map: {mapId: number}}): 
       hp: source.hp, maxHp: source.hp})) : [];
   const models = room.mode === 1 && room.map.mapId === 2 ? ['obj05428', 'obj05427', 'obj05425', 'obj05426', 'obj05422']
     : room.mode === 1 && room.map.mapId === 5 ? ['obj05425', 'obj05426', 'obj05432']
+    : room.mode === 1 && room.map.mapId === 6 ? ['obj05421', 'obj05423', 'obj05443', 'obj05433', 'obj05432']
     : room.mode === 1 && room.map.mapId === 10 ? ['obj05425']
     : room.mode === 1 && room.map.mapId === 4 ? ['obj05466', 'obj05422']
     : room.mode === 4 && room.map.mapId === 14 ? ['obj05425', 'obj05426', 'obj05428']
