@@ -6,6 +6,7 @@ import {createRoleCombatState} from './roles/combat-state';
 import {RoleAttributeState} from './roles/attribute-state';
 import {BattleRoleSources} from '../battle-role-sources';
 import type {PlayerState} from './player-state';
+import {resetRoundStatistics} from './round-statistics';
 
 /** Existing fallback for participants without complete owned attribute sources. */
 export function baseTankMaxHp(tank: TankConfig): number {
@@ -33,5 +34,6 @@ export function createBattlePlayer(id: string, clientId: string, name: string,
     vip: false, objectivesDestroyed: 0,
   };
   setBattleHealth(player, player.hp);
+  resetRoundStatistics(player);
   return player;
 }

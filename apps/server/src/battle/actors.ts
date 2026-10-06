@@ -61,11 +61,13 @@ export function advanceActors<Player extends CombatActor>(room: {
   maxHp(player: Player): number;
   input(playerId: string, input: MsgPlayerInput, autonomous: boolean): MsgRoomEvent[];
   allocateBulletId(): string;
+  allocateShotId(): string;
   staticObjects?(player: Player): Iterable<RoleStaticCollider>;
   beforeFire?(player: Player): boolean;
   afterFire?(player: Player): void;
   hitSceneObject?(owner: Player, targetId: string, damage: number, ammoItemId: number): boolean;
-  hitPlayer?(owner: Player, targetId: string, damage: number, ammoItemId: number): void;
+  hitPlayer?(owner: Player, targetId: string, damage: number, ammoItemId: number,
+    shotId: string | undefined): void;
 }): void {
   // Original415da6 advances the callback queue before the scene's actors.
   for (const player of room.players.values()) {
@@ -81,11 +83,12 @@ export function advanceActors<Player extends CombatActor>(room: {
     // Original4046a5 invokes once when the remaining f32 time fits this step.
     if (pendingShot.remainingSeconds <= elapsed) {
       player.combat.pendingShot = undefined;
+      const shotId = handlers.allocateShotId();
       fireProjectile(room, player, (now - room.startedAt) / 1000,
         handlers.allocateBulletId, events, bodyRadius,
         (targetId, damage, ammoItemId) => handlers.hitSceneObject?.(player, targetId, damage, ammoItemId) ?? false,
-        (targetId, damage, ammoItemId) => handlers.hitPlayer?.(player, targetId, damage, ammoItemId),
-        pendingShot.ammoItemId);
+        (targetId, damage, ammoItemId) => handlers.hitPlayer?.(player, targetId, damage, ammoItemId, shotId),
+        pendingShot.ammoItemId, shotId);
       handlers.afterFire?.(player);
     } else {
       pendingShot.remainingSeconds = Math.fround(pendingShot.remainingSeconds - elapsed);

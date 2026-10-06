@@ -29,7 +29,7 @@ import {leaveRoomPlayer} from './rooms/departure';
 import {ensureDefaultRooms, ensureWaitingRoom} from './rooms/availability';
 import {quickMatchRoom} from './rooms/quick-match';
 import type {PlayerState} from './battle/player-state';
-import type {RoomState, JoinResult} from './rooms/state';
+import type {RoomState, JoinResult, DepartedParticipantRecord} from './rooms/state';
 import {createWaitingRoom} from './rooms/create';
 import {createAndJoinRoom, admitRoomPlayer} from './rooms/admission';
 import {damagePlayer, damagePlayerDirectly, respawnPlayer, advanceLastStandDeath} from './battle/life';
@@ -76,9 +76,9 @@ import type {RoleProfilePayload} from './accounts/profile/payload';
 import type {KitbagAssignmentResult, KitbagCancellationResult} from './accounts/kitbag-configuration';
 import {matchFinishMessage} from './settlement/match-result';
 import {finishRound} from './settlement/finish-round';
-import type {MatchResultInput} from './settlement/match-result';
 import type {CommittedMatch, CommittedReceipt} from './settlement/history';
 import type {ResultAward} from '../../shared/protocols/MsgRoomSnapshot';
+import {countShot} from './battle/round-statistics';
 
 export type WorldEvent = MsgRoomEvent;
 
@@ -86,7 +86,7 @@ export type {JoinResult} from './rooms/state';
 
 /** A participant removed while the round continued; frozen for the final settlement. */
 interface DepartedParticipant {
-  player: MatchResultInput['players'][number];
+  player: DepartedParticipantRecord;
   accountId?: string;
   /** Real frozen PLAYING time before this participant left; never extended by the surviving round. */
   elapsedSeconds?: number;
@@ -111,6 +111,7 @@ export class World {
   private nextPlayerId = 1;
   private nextRoomId = 1;
   private nextBulletId = 1;
+  private nextShotId = 1;
   /** Real configured tick interval, captured from the running world step. */
   private lastTickMs = 0;
   /** Mid-round ordinary departures, keyed by room then retired participant id; cleared at round end. */
@@ -298,12 +299,14 @@ export class World {
     if (player.cpu) return;
     const accountId = this.options.resolveAccount?.(player.clientId);
     const frozen = {id: player.id, name: player.name, team: player.team, score: player.score,
-      kills: player.kills, deaths: player.deaths, objectivesDestroyed: player.objectivesDestroyed};
+      kills: player.kills, deaths: player.deaths, objectivesDestroyed: player.objectivesDestroyed,
+      roundStats: player.roundStats ? {...player.roundStats} : undefined,
+      playedSeconds: Math.max(0, (this.now() - room.startedAt) / 1000)};
     room.departedParticipants ??= new Map();
     room.departedParticipants.set(player.id, frozen);
     const byRoom = this.departedParticipants.get(room.roomId) ?? new Map();
     byRoom.set(player.id, {player: frozen, accountId,
-      elapsedSeconds: Math.max(0, (this.now() - room.startedAt) / 1000)});
+      elapsedSeconds: frozen.playedSeconds});
     this.departedParticipants.set(room.roomId, byRoom);
   }
 
@@ -585,12 +588,12 @@ export class World {
     }
     if (room.phase !== 'PLAYING') return;
     const resolveShotPlayerHit = (owner: PlayerState, target: PlayerState, damage: number,
-      ammoItemId: number | undefined, bearing?: {x: number; z: number}) => {
+      ammoItemId: number | undefined, shotId?: string, bearing?: {x: number; z: number}) => {
       if (!target.alive || room.phase !== 'PLAYING') return;
       const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);
       const previousHp = target.hp;
       this.applyPlayerDamage(room, owner, target, damage, events, selector, undefined, ammoItemId,
-        bearing ? {bodyYaw: target.bodyYaw ?? target.yaw, bearing} : undefined);
+        bearing ? {bodyYaw: target.bodyYaw ?? target.yaw, bearing} : undefined, shotId);
       if (room.phase === 'PLAYING' && ammoItemId === 2007 && target.alive && target.hp < previousHp) {
         startAmmoBurn(target, owner.id, now);
       }
@@ -617,6 +620,7 @@ export class World {
       maxHp: player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player),
       input: (id, input, autonomous) => this.updateInput(id, input, autonomous),
       allocateBulletId: () => `B${this.nextBulletId++}`,
+      allocateShotId: () => `S${this.nextShotId++}`,
       staticObjects: player => plantContactColliders(room, player.id, events),
       beforeFire: player => {
         const accepted = consumeConfirmedAmmo(room.roomId, player, this.consumeItem, events);
@@ -628,6 +632,7 @@ export class World {
         return accepted;
       },
       afterFire: player => {
+        countShot(player);
         restoreRoleDisguiseAfterAcceptedFire(room.roomId, player,
           () => recomputeBattleAttributes(player), events);
       },
@@ -652,16 +657,16 @@ export class World {
         this.attachShotItemResult(events, firstEvent, owner.id, ammoItemId);
         return true;
       },
-      hitPlayer: (owner, targetId, damage, ammoItemId) => {
+      hitPlayer: (owner, targetId, damage, ammoItemId, shotId) => {
         const target = room.players.get(targetId);
         if (!target) return;
-        resolveShotPlayerHit(owner, target, damage, ammoItemId,
+        resolveShotPlayerHit(owner, target, damage, ammoItemId, shotId,
           {x: owner.x - target.x, z: owner.z - target.z});
       },
     });
     advanceProjectiles(room, dt, BODY_RADIUS, {
-      hitPlayer: (owner, target, damage, ammoItemId, bearing) => {
-        resolveShotPlayerHit(owner, target, damage, ammoItemId, bearing);
+      hitPlayer: (owner, target, damage, ammoItemId, bearing, shotId) => {
+        resolveShotPlayerHit(owner, target, damage, ammoItemId, shotId, bearing);
       },
       hitObjective: (owner, target, damage, ammoItemId) => {
         if (ammoItemId === MEDICAL_AMMO_ID) return;
@@ -712,12 +717,14 @@ export class World {
   /** One authority for shot and rebuilt periodic damage, including mode termination. */
   private applyPlayerDamage(room: RoomState, owner: PlayerState, target: PlayerState, damage: number,
     events: MsgRoomEvent[], selector?: number, skillId?: number, ammoItemId?: number,
-    incidence?: {bodyYaw: number; bearing: {x: number; z: number}}): void {
-    if (resolveMedicalAmmo(room.roomId, owner, target, ammoItemId, events)) return;
+    incidence?: {bodyYaw: number; bearing: {x: number; z: number}}, shotId?: string): void {
+    if (resolveMedicalAmmo(room.roomId, owner, target, ammoItemId, events,
+        this.isAlly(room, owner, target))) return;
     const wasAlive = target.alive;
     const hpBefore = target.hp;
     const firstEvent = events.length;
-    const outcome = damagePlayer(room, owner, target, damage, this.now, events, selector, ammoItemId, incidence);
+    const outcome = damagePlayer(room, owner, target, damage, this.now, events, selector, ammoItemId,
+      incidence, shotId);
     applyPetHitSpeed(target, owner, room.mode, hpBefore, this.now(), () => recomputeBattleAttributes(target));
     if (skillId !== undefined) {
       for (const notice of events.slice(firstEvent)) if (notice.type === 'hit') notice.skillId = skillId;
@@ -728,6 +735,12 @@ export class World {
       }
     }
     if (wasAlive && !target.alive) this.commitPlayerDeath(room, target, owner.id, outcome, events);
+  }
+
+  /** Real teams in modes1-3; modes4/5 are individual, so no other participant is an ally. */
+  private isAlly(room: RoomState, owner: Pick<PlayerState, 'id' | 'team'>,
+    target: Pick<PlayerState, 'id' | 'team'>): boolean {
+    return room.mode <= 3 && owner.id !== target.id && owner.team === target.team;
   }
 
   private commitPlayerDeath(room: RoomState, target: PlayerState, attackerId: string,
@@ -827,7 +840,9 @@ export class World {
         player.lastStand = undefined;
       }
       const committed = this.options.onMatchCommitted?.({roomId: room.roomId, mode: room.mode, mapId: room.map.mapId,
-        result: {...room.result!, players: room.result!.players.map(player => ({...player}))},
+        result: {...room.result!, players: room.result!.players.map(player => ({...player,
+          roundStats: player.roundStats ? {...player.roundStats} : undefined,
+          awards: player.awards?.map(award => ({...award}))}))},
         participants: [
           ...[...room.players.values()].map(player => ({playerId: player.id,
             connectionId: player.clientId, cpu: !!player.cpu,

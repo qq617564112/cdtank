@@ -3,7 +3,21 @@ import type {Battlefield} from '../battlefield';
 import type {PlayerState} from '../battle/player-state';
 import type {BulletState} from '../battle/projectiles';
 import type {ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot, MatchResult} from '../../../shared/protocols';
-import type {MatchResultInput} from '../settlement/match-result';
+import type {RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
+
+export interface DepartedParticipantRecord {
+  id: string;
+  name: string;
+  team: number;
+  score: number;
+  kills: number;
+  deaths: number;
+  objectivesDestroyed: number;
+  /** Deep clone frozen before removal, so a later round cannot mutate it. */
+  roundStats?: RoundStats;
+  /** Real PLAYING seconds up to the departure. */
+  playedSeconds?: number;
+}
 
 /** Server-only in-flight item13 cast; never enters MsgRoomSnapshot. */
 export interface PendingAirstrike {
@@ -46,7 +60,7 @@ export interface RoomState {
   targetScore: number;
   result?: MatchResult;
   /** Frozen mid-round ordinary departures, merged into this round's final settlement. */
-  departedParticipants?: Map<string, MatchResultInput['players'][number]>;
+  departedParticipants?: Map<string, DepartedParticipantRecord>;
   creatorClientId?: string;
   creationKey?: string;
   passwordSalt?: Buffer;

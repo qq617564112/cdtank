@@ -23,8 +23,9 @@ import {clearRoleDisguise, type RoleDisguiseState} from './items/role-disguise';
 import {resetConfirmedAmmo} from './items/ammo-confirmation';
 import {clearCopiedRoleSkill} from './passive-skill-copy';
 import {clearPetHitSpeed, type PetHitSpeedState} from './pet-hit-speed';
+import {resetRoundStatistics, type RoundStatsCarrier} from './round-statistics';
 
-interface StartingParticipant {
+interface StartingParticipant extends RoundStatsCarrier {
   name: string;
   x: number; y: number; z: number; yaw: number; aim: number;
   team: number; vip: boolean; hp: number; alive: boolean;
@@ -100,6 +101,7 @@ export function initializeBattleParticipants<Player extends StartingParticipant>
     player.kills = 0;
     player.deaths = 0;
     player.objectivesDestroyed = 0;
+    resetRoundStatistics(player);
     player.respawnAt = 0;
     player.cancellationsSpent = 0;
     if (player.cpu) player.cpu = new BotController();

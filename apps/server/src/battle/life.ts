@@ -15,8 +15,18 @@ import type {RoleCombatState} from './roles/combat-state';
 import type {MsgPlayerInput, MsgRoomEvent} from '../../../shared/protocols';
 import type {Battlefield, SpawnPoint} from '../battlefield';
 import {applyFriendlyKill, applyModeKill, type ModeOutcome} from '../modes/outcomes';
+import {
+  countHit,
+  recordDamageTaken,
+  recordEnemyDamage,
+  recordEnemyKill,
+  recordFriendlyFireDamage,
+  recordPlayerDeath,
+  recordRearDamage,
+  type RoundStatsCarrier,
+} from './round-statistics';
 
-interface LifePlayer extends HealthParticipant {
+interface LifePlayer extends HealthParticipant, RoundStatsCarrier {
   id: string; name: string; team: number; x: number; y: number; z: number;
   hp: number; alive: boolean; score: number; deaths: number; kills: number;
   respawnAt: number; vip: boolean;
@@ -41,7 +51,8 @@ export function damagePlayer(room: {
   teamScores: number[]; teamLives: number[];
 }, attacker: LifePlayer, target: LifePlayer, damage: number, now: () => number,
   events: MsgRoomEvent[], hurtSelector?: number, ammoItemId?: number,
-  incidence?: {bodyYaw: number; bearing: {x: number; z: number}}): ModeOutcome | undefined {
+  incidence?: {bodyYaw: number; bearing: {x: number; z: number}},
+  shotId?: string): ModeOutcome | undefined {
   const friendly = room.mode <= 3 && attacker.team === target.team;
   if (friendly && !room.friendlyFire) {
     attacker.score += room.map.brokenScore;
@@ -75,6 +86,15 @@ export function damagePlayer(room: {
   damage += resolveShotBackCriticalBonus(attacker, shotCritical?.critical === true, facet);
   const previousHp = target.hp;
   setBattleHealth(target, Math.max(0, previousHp - damage));
+  const applied = Math.max(0, previousHp - target.hp);
+  if (friendly) {
+    recordFriendlyFireDamage(attacker, applied);
+  } else if (attacker.id !== target.id) {
+    recordEnemyDamage(attacker, applied);
+    recordDamageTaken(target, applied);
+    if (facet === 'BACK') recordRearDamage(attacker, applied);
+    if (applied > 0 && ammoItemId !== undefined) countHit(attacker, shotId);
+  }
   attacker.score += friendly ? room.map.brokenScore : room.map.hitScore;
   if (friendly) events.push({roomId: room.roomId, type: 'friendlyFire', message: `${attacker.name}误伤队友`,
     playerId: attacker.id, targetId: target.id, value: damage,
@@ -103,7 +123,11 @@ export function damagePlayerDirectly(room: Parameters<typeof damagePlayer>[0],
       x: target.x, y: target.y, z: target.z, skillId: 8});
     return;
   }
-  setBattleHealth(target, Math.max(0, target.hp - damage));
+  const previousHp = target.hp;
+  setBattleHealth(target, Math.max(0, previousHp - damage));
+  const applied = Math.max(0, previousHp - target.hp);
+  recordEnemyDamage(attacker, applied);
+  recordDamageTaken(target, applied);
   attacker.score += room.map.hitScore;
   events.push({roomId: room.roomId, type: 'hit', message: `${attacker.name}命中${target.name}`,
     playerId: attacker.id, targetId: target.id, value: damage,
@@ -146,9 +170,11 @@ function finalizePlayerDeath(room: Parameters<typeof damagePlayer>[0],
   clearAmmoBurn(target);
   target.combat.setStatus(3);
   target.deaths += 1;
+  recordPlayerDeath(target);
   target.respawnAt = now + room.map.respawnTime * 1000;
   if (!friendly && attacker) {
     attacker.kills += 1;
+    recordEnemyKill(attacker);
     attacker.score += room.map.destroyScore;
   }
   const outcome = friendly || !attacker ? applyFriendlyKill(room, target) : applyModeKill(room, attacker, target);

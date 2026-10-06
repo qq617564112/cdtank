@@ -1,4 +1,4 @@
-import type {MatchResult, ResultPlayer} from '../../../shared/protocols';
+import type {MatchResult, ResultPlayer, RoundStats} from '../../../shared/protocols';
 
 interface SettlementPlayer {
   readonly id: string;
@@ -8,6 +8,10 @@ interface SettlementPlayer {
   readonly kills: number;
   readonly deaths: number;
   readonly objectivesDestroyed: number;
+  /** Real per-round producers; absent on legacy fixtures without a battle path. */
+  readonly roundStats?: RoundStats;
+  /** Real frozen PLAYING seconds; used by awards, not part of the public result. */
+  readonly playedSeconds?: number;
 }
 
 export interface MatchResultInput {
@@ -64,7 +68,8 @@ export function computeMatchResult(input: MatchResultInput): MatchResult {
     return {id: player.id, name: player.name, team: player.team, rank,
       kills: player.kills, deaths: player.deaths, objectivesDestroyed: player.objectivesDestroyed,
       combatScore: Math.round(player.score), outcomeBonus: bonus,
-      totalScore: Math.round(player.score) + bonus, outcome};
+      totalScore: Math.round(player.score) + bonus, outcome,
+      roundStats: player.roundStats ? {...player.roundStats} : undefined};
   });
   return {round: input.round, endedAt: input.endedAt, reason: input.reason,
     winnerTeam, winnerPlayerId, players};

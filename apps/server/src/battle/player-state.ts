@@ -25,7 +25,7 @@ import type {OpticalCamouflageState} from './items/optical-camouflage';
 import type {RoleDisguiseState} from './items/role-disguise';
 import type {PetHitSpeedState} from './pet-hit-speed';
 import type {ShotModifiers} from './roles/shot-modifiers';
-import type {PlayerTitle} from '../../../shared/protocols/MsgRoomSnapshot';
+import type {PlayerTitle, RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
 
 export interface PlayerState {
   id: string;
@@ -80,6 +80,12 @@ export interface PlayerState {
   input: MsgPlayerInput;
   vip: boolean;
   objectivesDestroyed: number;
+  /** Real per-round producers; absent only on legacy fixtures without a battle path. */
+  roundStats?: RoundStats;
+  /** Current no-death kill streak during the round; the frozen maximum lives on roundStats. */
+  roundCurrentKillCombo?: number;
+  /** Shot identities already charged to hits, so one shot credits at most one hit. */
+  roundHitShotIds?: Set<string>;
   cpu?: BotController;
   autopilot?: BotController;
   autopilotInputSequence?: number;

@@ -41,8 +41,8 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
   sceneObjects?: SceneObjectSnapshot[];
   battlefield: Battlefield;
 }, dt: number, bodyRadius: number, handlers: {
-  hitPlayer(owner: Player, target: Player, damage: number, ammoItemId?: number,
-    bearing?: {x: number; z: number}): void;
+  hitPlayer(owner: Player, target: Player, damage: number, ammoItemId: number | undefined,
+    bearing?: {x: number; z: number}, shotId?: string): void;
   hitObjective(owner: Player, target: ObjectiveSnapshot, damage: number, ammoItemId?: number): void;
   hitSceneObject?(owner: Player, target: SceneObjectSnapshot, damage: number, ammoItemId?: number): void;
   terrainHit(event: MsgRoomEvent): void;
@@ -105,7 +105,7 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
       const owner = room.players.get(bullet.ownerId);
       if (hitPlayer && owner) {
         handlers.hitPlayer(owner, hitPlayer, bullet.damage, bullet.ammoItemId,
-          {x: -bullet.vx, z: -bullet.vz});
+          {x: -bullet.vx, z: -bullet.vz}, bullet.id);
       } else if (hitObjective && owner) {
         handlers.hitObjective(owner, hitObjective, bullet.damage, bullet.ammoItemId);
       } else if (hitSceneObject && owner) {
@@ -154,8 +154,8 @@ export function fireProjectile(room: {
   combat: {specialFlag12: number; currentAmmoTableId: number};
 }, currentSeconds: number, allocateId: () => string, events: MsgRoomEvent[], bodyRadius: number,
   hitSceneObject?: (targetId: string, damage: number, ammoItemId: number) => boolean,
-  hitPlayer?: (targetId: string, damage: number, ammoItemId: number) => void,
-  itemId = player.combat.currentAmmoTableId): void {
+  hitPlayer?: (targetId: string, damage: number, ammoItemId: number, shotId?: string) => void,
+  itemId = player.combat.currentAmmoTableId, shotId?: string): void {
   const speed = 360;
   const angle = player.yaw + player.aim;
   const aim = createRoleFreeAim(player, {x: Math.sin(angle), y: 0, z: Math.cos(angle)}, currentSeconds);
@@ -185,7 +185,7 @@ export function fireProjectile(room: {
   // Ordinary2001 and FuncType22 resolve one selected target during the accepted
   // query boundary; query geometry and server damage are rebuilt.
   if (itemId === 2001 || penetratesObstacles) {
-    if (target.kind === 'PLAYER') hitPlayer?.(target.targetId, damage, itemId);
+    if (target.kind === 'PLAYER') hitPlayer?.(target.targetId, damage, itemId, shotId);
     else if (target.kind === 'SCENE' && !hitSceneObject?.(target.targetId, damage, itemId)) {
       // Original type2 receives remote result feedback without a damage transaction.
       // Source BOX identity and server notification eligibility are reconstructed.
