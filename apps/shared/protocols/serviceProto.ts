@@ -242,7 +242,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 94,
+    "version": 95,
     "services": [
         {
             "id": 0,
@@ -2202,6 +2202,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "target": "MsgRoomSnapshot/RoleDisguiseSnapshot"
                     },
                     "optional": true
+                },
+                {
+                    "id": 42,
+                    "name": "title",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/PlayerTitle"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -3981,6 +3990,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Boolean"
                     }
+                },
+                {
+                    "id": 4,
+                    "name": "title",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/PlayerTitle"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -4734,6 +4752,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Boolean"
                     }
+                },
+                {
+                    "id": 4,
+                    "name": "title",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/PlayerTitle"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -5154,6 +5181,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                     "type": {
                                         "type": "String"
                                     }
+                                },
+                                {
+                                    "id": 2,
+                                    "name": "title",
+                                    "type": {
+                                        "type": "Reference",
+                                        "target": "MsgRoomSnapshot/PlayerTitle"
+                                    },
+                                    "optional": true
                                 }
                             ]
                         }
@@ -6686,7 +6722,17 @@ export const serviceProto: ServiceProto<ServiceType> = {
             ]
         },
         "PtlRoleProfile/ReqRoleProfile": {
-            "type": "Interface"
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "selectTitleId",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
         },
         "PtlRoleProfile/ResRoleProfile": {
             "type": "Interface",
@@ -6763,6 +6809,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Reference",
                         "target": "MsgRoomSnapshot/AccountGrowth"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "titles",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlRoleProfile/AccountTitles"
                     },
                     "optional": true
                 }
@@ -8166,6 +8221,69 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "type": "Number"
                     },
                     "optional": true
+                }
+            ]
+        },
+        "MsgRoomSnapshot/PlayerTitle": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "id",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlRoleProfile/OwnedTitle": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/PlayerTitle"
+                    }
+                }
+            ],
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "description",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlRoleProfile/AccountTitles": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "owned",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "PtlRoleProfile/OwnedTitle"
+                        }
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "selectedTitleId",
+                    "type": {
+                        "type": "Number"
+                    }
                 }
             ]
         },

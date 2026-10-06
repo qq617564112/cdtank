@@ -82,6 +82,13 @@ export interface PlayerSnapshot {
    * Durations retain their original-normal or rebuilt source.
    */
   reload?: {duration: number; remaining: number; startedAt: number; source: 'original-normal' | 'rebuilt'};
+  /** Worn title, present only when the account has an equipped title. */
+  title?: PlayerTitle;
+}
+
+export interface PlayerTitle {
+  id: number;
+  name: string;
 }
 
 export interface ObjectiveSnapshot {
