@@ -1,6 +1,6 @@
 # FuncType15 爆炸技能业务与实现合同
 
-FUNC-15 共六条源技能：3007、3008、3009、3013、4004、13151。本文固定这六条的真实来源、已接实现和可直接并行落地的 shared/server/UI 合同。3009 与 3013 的既有正式实现保持不变；3007/3008 因没有真实 caller 保持 source-only；4004 与 13151 按本批可确认的真实来源推进。
+FUNC-15 共六条源技能：3007、3008、3009、3013、4004、13151。本文登记这六条的原表事实、当前正式 consumer/API、真实接线路径和限制。3009 与 3013 沿用既有正式实现；3007/3008 因没有真实 caller 保持 source-only；4004 与 13151 已接入当前正式 server/UI 普通全链。
 
 ## 原表事实
 
@@ -13,7 +13,7 @@ FUNC-15 共六条源技能：3007、3008、3009、3013、4004、13151。本文�
 | 4004 爆发弹B | 8/1/150 | T0/X0/Y19/Z0 | 9/SE32/tag0/m3 | 19 HP-100 | item2005，`ItemSkill1=2005`、`ItemSkill2=4004`。 |
 | 13151 自爆炸弹 | 6/1/150 | T0/X0/Y19/Z0 | 9/sound0/tag0/m3 | 19 HP-100 | item17051，`ItemSkill1=13151`，ItemType12、部件分类12。 |
 
-末端 19/3010/3011/3012 均为 `Trigger1/Target1/Range0`、`Func2 T0`，HP 分别为 -100/-100/-200/-300，无 Effect/Sound 字段。19 是 4004 和 13151 的共同末端技能，但两条来源互不等价：4004 是普通 2005 的命中后爆风，13151 是被打死时由已装备 17051 产生的自身爆炸。
+末端 19 为 `Trigger1/Target1/Range1`、`Func2 T0`、HP-100、Effect0/Sound0、首槽 method3；3010/3011/3012 为 `Trigger1/Target1/Range0`、`Func2 T0`，HP 分别为 -100/-200/-300，无 Effect/Sound 字段。19 是 4004 和 13151 的共同末端技能，但两条来源互不等价：4004 是普通 2005 的命中后爆风，13151 是被打死时由已装备 17051 产生的自身爆炸。
 
 ## 既有实现
 
@@ -49,11 +49,13 @@ FUNC-15 共六条源技能：3007、3008、3009、3013、4004、13151。本文�
 
 ### 事件与表现
 
-4004 范围结算只复用现有 `MsgRoomEvent.type` 普通 string、`playSkillEffect` 和 `hit` 字段，不新增 schema/msg field，不运行 generator。每个目标命中沿 `damagePlayerDirectly` 产生既有 `hit(skillId=19, value=100)`；世界表现以 roleId0 `playSkillEffect={skillId:4004,effectIndex:0}` 消费原 Effect9/SE32。skill19 自身无 Effect/Sound，保持 silent。若原 009/SE32 资源缺失，记录 source gap，不用同类资源替代。
+4004 范围结算只复用现有 `MsgRoomEvent.type` 普通 string、`playSkillEffect` 和 `hit` 字段，不新增 schema/msg field，不运行 generator。每个目标命中沿 `damagePlayerDirectly` 产生既有 `hit(skillId=19, value=100)`；世界表现以 roleId0 `playSkillEffect={skillId:4004,effectIndex:0}` 消费原 Effect9。正式 `explosiveAmmoBlast` 事件在事件 XYZ 播放一次原 SE32 世界 WAV；2005 hit 呈现分支不再让旧附着 4004 图声重复消费。skill19 自身 Effect0/Sound0，保持 silent。原 Effect9/SE32 已发布时直接消费，缺失时只记录 source gap，不用同类资源替代。
 
 ### 时序与消费
 
-4004 不再次消费库存。item2005 的普通射击、CAS 和弹药扣量仍由现有前段负责；4004 只在前段真实命中确认后做一次范围结算。前段被拒绝、miss、terrain 或没有确认命中时不触发额外伤害。前段致死已经可能结束 room；范围结算必须检查 phase，并按“死亡目标不复伤、周围合法目标仍按冻结中心一次判定”的顺序执行。
+4004 不再次消费库存。item2005 的普通射击、CAS 和弹药扣量仍由现有前段负责；4004 只在前段真实玩家命中确认后做一次范围结算。前段被拒绝、miss、terrain 或没有确认命中时不触发额外伤害。2005 sceneResult/其它 ammo/raw 通知不改变。基础命中先保留原 baseDamage、Critical、facet、hurt、伤害数字图和 `shotPlayerResult.itemId=2005`；随后从冻结的目标权威 XZ 执行一次爆风。前段致死已经可能结束 room；范围结算必须检查 phase，并按“死亡目标不复伤、周围合法目标仍按冻结中心一次判定”的顺序执行。
+
+所有爆风命中和由其触发的连锁死亡完成后，终局只按最终 room 状态执行一次既有 mode 判胜与 settlement 冻结；不缓存或采用动作中途某次内部死亡算出的 `ModeOutcome` winner。mode1 最终双方生命相同时按既有 `teamLives` 比较规则平局，例如最终 `[0,0]` 为 draw。
 
 ### CPU
 
@@ -80,23 +82,24 @@ item17051 是真实拥有部件：原表价格 1500 money/150 token，ItemType12
 
 ### 事件、表现与来源记录
 
-13151 不新增通用 trigger framework。死亡触发使用现有普通事件/伤害/死亡链；世界表现复用 roleId0 世界 Effect9；原 sound0 保持 silent。skill19 的 `hit(skillId=19, value=100)` 已存在，没有新 Effect/Sound。若原 009 资源缺失，只记录真实 009 source gap；不造替代资源。死亡 credit 仍沿现有真实 kill/death credit policy，由范围命中的 `damagePlayerDirectly` 归属 dead owner，不新增伪字段或虚假 source。
+13151 不新增通用 trigger framework。死亡触发使用现有普通事件/伤害/死亡链；正式 `selfDestructBlast` 事件复用 roleId0 世界 Effect9，原 sound0 保持 silent，不接世界 WAV。skill19 的 `hit(skillId=19, value=100)` 已存在且 Effect0/Sound0，没有新 Effect/Sound。若原 Effect9 资源缺失，只记录真实 source gap；不造替代资源。死亡 credit 仍沿现有真实 kill/death credit policy，由范围命中的 `damagePlayerDirectly` 归属 dead owner，不新增伪字段或虚假 source。
 
 ### CPU
 
 CPU 仅在现真实 owned/equipment source 已给出 17051 时获得该被动来源并沿真实死亡点触发；没有直接写库存、没有 gift、没有新主动输入、没有为 CPU 单独开放购买或装备策略。
 
-## 并行实现边界
+## 当前 consumer 与实现边界
 
 ### Shared/server
 
-| 文件 | 责任 |
+| 文件 | 当前接线 |
 | --- | --- |
-| `apps/server/src/battle/items/explosive-ammo.ts`（new） | 读取 item2005 -> skill4004 -> skill19 的精确字段；导出 `readExplosiveAmmoRule()`、`resolveExplosiveAmmoBlast(room, owner, center, now, events, hit)` 和 roleId0 Effect9 helper。只处理 4004 一次范围/direct 100。 |
-| `apps/server/src/battle/items/self-destruct.ts`（new） | 读取 item17051 -> skill13151、owned/equipment selected source 和 terminal19；导出 `hasSelectedSelfDestruct(player)`、`resolveSelfDestructDeath(room, deadOwner, now, events, hit)`。只处理死亡触发一次范围/direct 100。 |
-| `apps/server/src/battle/projectiles.ts` 或 `world.ts` 的现有 2005 player-hit 交接点 | 冻结真实 player hit XZ 并调用 4004 blast；不改前段 ammo damage、scene result 或 miss。 |
-| `apps/server/src/world.ts` | 把 4004 blast 接在真实 2005 player hit 后；把 13151 接在 `commitPlayerDeath` 的真实死亡 commit 点，每个死亡最多一次。复用现有 `damagePlayerDirectly`。 |
-| `apps/server/src/accounts/equipment/request.ts`、`account-store.ts`、`battle-role-sources.ts`、`battle/projection.ts`、`battle/roles/skills.ts` | 只复用现有 owned/Equipment/RoleSkillSources/selectRoleSkills 通路；除非 17051 的精确 source gap 已验证，否则不改。 |
+| `apps/server/src/battle/items/explosive-ammo.ts`（new） | 读取 item2005 -> skill4004 -> skill19 的精确字段，导出 `readExplosiveAmmoRule()`、`resolveExplosiveAmmoBlast(room, owner, center, now, events, hit)` 和 roleId0 Effect9 helper；只处理 4004 一次范围/direct 100。 |
+| `apps/server/src/battle/items/self-destruct.ts`（new） | 读取 item17051 -> skill13151、owned/equipment selected source 和 terminal19，导出 `hasSelectedSelfDestruct(player)`、`resolveSelfDestructDeath(room, deadOwner, now, events, hit)`；只处理死亡触发一次范围/direct 100。 |
+| `apps/server/src/world.ts` | 在真实 2005 player hit 交接点冻结命中 XZ 并调用 4004 blast；在 `commitPlayerDeath` 真实死亡 commit 点调用 13151，每个死亡最多一次。复用 `damagePlayerDirectly`。当前动作内爆风与连锁死亡全部完成后按最终 room 状态执行一次既有 mode 终局判断，不缓存中途 winner。 |
+| `apps/server/src/battle/projectiles.ts` | 现有连续弹丸玩家命中进入同一 `resolveShotPlayerHit` 边界；不改前段 ammo damage、scene result 或 miss。 |
+| `apps/server/src/battle/catalog.ts` | 正式目录读取 exact item/skill 来源；不扩 Shop、不开放隐藏库存。 |
+| `apps/server/src/accounts/equipment/request.ts`、`account-store.ts`、`battle-role-sources.ts`、`battle/projection.ts`、`battle/roles/skills.ts` | 复用现有 owned/Equipment/RoleSkillSources/selectRoleSkills 通路；17051 class12 已由现普通部件 Shop/Equip 源范围合格。 |
 
 ### Shared protocol
 
@@ -106,18 +109,18 @@ CPU 仅在现真实 owned/equipment source 已给出 17051 时获得该被动来
 
 | 文件 | 责任 |
 | --- | --- |
-| `apps/web/src/match/skills/battle-skill-effects.ts` | 对 4004/13151 的 roleId0 `playSkillEffect` 复用已有 world consumer；只按事件来源与 skillId 选择原 Effect9 world tree，不把 scene result event 当伤害来源。 |
-| `apps/web/src/match/skills/skill-effect-notifications.ts` | skill19 silent 行为保持；不要给 19 添加 Effect/Sound，不为 4004/13151 造新声音。 |
-| `apps/web/src/match/battle.ts` | 已有 hit/playSkillEffect 转发顺序保持；只有 server 已发权威 range hit 时才显示生命反馈，不在本地预测。 |
-| UI resource | 原 Effect9/SE32 已发布则直接消费；缺失时列 source gap。没有已确认 UI world consumer 时先在对应 event 分支复用现 roleId0 通路，不新增独立场景协议。 |
+| `apps/web/src/match/battle.ts` | 现有事件回调把正式 `MsgRoomEvent` 交给 `BattleSkillEffects.event`；2005 hit 呈现分支仅抑制旧 4004 附着 `showPlayerResult` 图声，保留 hurt/Critical/原伤害数字和 `shotPlayerResult.itemId=2005`，其它 ammo/scene result 不改。 |
+| `apps/web/src/match/skills/battle-skill-effects.ts` | `explosiveAmmoBlast`/`selfDestructBlast` 的 roleId0 `playSkillEffect` 复用已有 world consumer；4004 在事件 XYZ 接一次原 SE32 世界 WAV，13151 sound0 静默，skill19/raw role0 静默。 |
+| `apps/web/src/match/skills/skill-effect-notifications.ts` | skill19 silent 行为保持；不给 19 添加 Effect/Sound，不为 13151 造声音。 |
+| UI resource | 原 Effect9 与 SE32 已发布时直接消费真实路径；缺失时才记录 source gap，不用同类资源替代。 |
 
 ## 顺序与边界
 
-4004 顺序：真实 2005 ammo 前段 direct/普通 damage -> 判定原玩家目标是否命中 -> 冻结命中的目标权威 XZ -> 前段死亡可先 commit -> 4004 检查 phase -> 从冻结点一次 150 闭方形 -> 对每个仍合法目标一次 skill19 direct 100 -> 命中后沿统一死亡。
+4004 顺序：真实 2005 ammo 前段 direct/普通 damage -> 判定原玩家目标是否命中 -> 冻结命中的目标权威 XZ -> 前段死亡可先 commit -> 4004 检查 phase -> 从冻结点一次 150 闭方形 -> 对每个仍合法目标一次 skill19 direct 100 -> 命中后沿统一死亡 -> 所有爆风与连锁结束后按最终 room 状态一次 mode 终局判断。
 
 13151 顺序：真实 death commit -> 冻结死亡者 XZ -> 确认 selected owned 17051/13151 -> 一次 150 闭方形 -> 对每个仍合法目标一次 skill19 direct 100 -> 其死亡照常进入新的真实 commit，但每个 commit 最多触发自身 13151 一次。
 
-共同规则：不重复消费、不对同一次来源重复范围结算、不因 scene 呈现事件补伤害、不因资源存在就赋予技能、不用同类资产替代缺 source。CPU 与网页只消费真实 owned/selected source。
+共同规则：不重复消费、不对同一次来源重复范围结算、不因 scene 呈现事件补伤害、不因资源存在就赋予技能、不用同类资产替代缺 source。CPU 与网页只消费真实 owned/selected source；终局不采用动作中途 `ModeOutcome` winner。
 
 ## 限制
 

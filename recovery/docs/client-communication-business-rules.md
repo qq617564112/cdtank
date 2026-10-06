@@ -58,6 +58,18 @@ Func20只负责地面拾取数量入账：服务端沿既有ground acquire账户
 
 施放本身在CAS成功后即消费，命中/未命中均不退款；施放者自然死亡不取消已排定轰炸，离房只删本人ownerId在途记录，终局/新局清空且不重放历史伤害。CPU只从房主已配置的有限item13库存沿普通快捷输入申请，不直接写库存、不赠送、也不扩item12/501策略。以上购买、配置、消费、中心、范围、伤害、寿命及CPU资格均为采用规则；原server来源缺口、全部FUNC-15/16函数、实际双端对局/免伤/死亡/再战/重启/高清仍未验证，I13与两个函数父项保持未勾。
 
+## 爆发弹与自爆部件
+
+对应FUNC-15、M4-10-I2005及M4-10-P17051。原`item2005`为普通弹药，`ItemSkill1=2005`、`ItemSkill2=4004`；`skill4004`为Trigger8/Target1/Range150、FuncType15 Y19、首槽Effect9/SE32/tag0/method3。原`item17051`为ItemType12部件、价格1500 money/150 token、`ItemSkill1=13151`、BattleUseMax0；`skill13151`为Trigger6/Target1/Range150、FuncType15 Y19、首槽Effect9/sound0/tag0/method3。两者共同末端`skill19`为Trigger1/Target1/Range1、Func2 HP-100、Effect0/Sound0、首槽method3；`3010/3011/3012`才为Range0。
+
+普通2005射击沿现有确认ammo、CAS消费、炮弹飞行/即时命中、原始baseDamage、Critical、facet、hurt、伤害数字图和`shotPlayerResult.itemId=2005`。在真实玩家命中交接点，服务端冻结目标权威XZ；基础命中后执行一次4004爆风，以150全宽闭方形`abs(dx)<=75 && abs(dz)<=75`选择同房、alive、status2、非本人、mode<=3非同队目标，每个目标调用一次`damagePlayerDirectly(owner,target,100,now,19,events)`。爆风不再次消费库存、不加ammo armor/Critical、不生成`shotPlayerResult`，不因sceneResult、terrain、miss或raw通知补造中心。
+
+13151只在真实最终死亡commit触发。服务端确认所选owned/equipped 17051实例、state2、ownedQuantity正数及部件数组2含17051后，冻结死亡XZ并执行一次同形150闭方形；每个合法周围目标一次skill19 direct HP-100。laststand仍alive0HP不触发，forfeit/leave不是战斗死；shot与direct death均沿现有真实死亡链。连锁死亡可依次进入真实commit，每名死亡最多触发自身13151一次；复活后可再次触发，新round按真实来源重建。
+
+4004与13151复用现有`MsgRoomEvent.type`普通string、`hit`与`playSkillEffect`字段，无新API/schema/Msgfield或生成器。`explosiveAmmoBlast`携skillId4004、真实施放者id、空target、value0、冻结命中XYZ和roleId0 Effect9；`selfDestructBlast`携skillId13151、真实死亡owner、空target、value0、冻结死亡XYZ和roleId0 Effect9。原2005 player-hit呈现分支只抑制旧4004附着图声，保留hurt/Critical/伤害数字与来源字段；权威4004事件接一次原SE32世界WAV，13151 sound0、terminal19及raw role0静默。当前动作的base hit、爆风与连锁死亡全部完成后，终局按最终room状态执行既有mode/settlement比较冻结一次，不采用中途死亡结果；mode1最终同Lives为draw。
+
+CPU仅从真实owned/equipped/selected 2005/17051来源消费同一普通链，不新增直接施放、gift、隐藏库存、同名映射或免费取得。17051已由现普通class12部件Shop/Equip/Unload范围合格，不扩Shop、不新库存。原server producer/dispatcher、精确source剩余项、真实对局、双端图声、持久、重启和HD仍未实测；I2005/P17051及完整FUNC-15/M4-10父项保持未勾。
+
 ## 粒子炮弹与火箭炮弹
 
 对应FUNC-22/FUNC-23。原`item.dat`的204行没有item2022/2023，ItemSkill1/2/3也不引用这两个技能；它们不是商品或真实弹药，当前不新建item、价格、库存、局内上限、商城入口或CPU配置。直接源事实与百分比采用政策分别见`special-ammo-2022-2023-business-design.md`，服务端接线见`special-shot-modifiers-runtime.md`。
