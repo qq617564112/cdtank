@@ -134,7 +134,7 @@ A 变体是 `obj05014A.png`，不存在 `obj05008A.png`；`obj05006` A/B 为
 - 触发：模式 5 DESTROY 目标 HP>0 转 0 的既存 `objectiveDestroyed` 权威事件。
 - 概率：每次摧毁从服务端 RNG 取 `[0,1)` 均匀值，小于 `0.5` 时掉落；原服务端概率未取得，
   0.5 是采用值，不猜原概率。
-- 池：`{itemTableId 1, itemTableId 2, itemTableId 20001, itemTableId 20002}`，各 quantity 1，
+- 池：`{itemTableId 1, itemTableId 2, itemTableId 2010, itemTableId 20001, itemTableId 20002}`，各 quantity 1，
   等概率。类别 1/2 已有持久 schema 与普通使用/治疗闭环（`healing-item-runtime.md`）；
   类别 6 是贵重品，拾取写 owned 库存，效用由物品自身技能链在普通使用路径产生。
 - 目标 HP 与生命来源仍取自 mode 合同（`DefaultButt`/`ButtReborn`），掉落在 HP 归零的
@@ -279,7 +279,7 @@ metadata 带 `groundItemId`/`sourceModel`；`reconcile(snapshot.match?.groundIte
 
 ## Known Issues
 
-- 原服务端掉落概率未证；0.5、池 `{1,2,20001,20002}`、dropitem 档位解释（含边界取首行）
+- 原服务端掉落概率未证；0.5、池 `{1,2,2010,20001,20002}`、dropitem 档位解释（含边界取首行）
   均为采用规则。
 - 两贵重品 `20001/20002` 的拾取入账无原服务端 writer，采用 Func20 持久加一；
   采用规则对两精确 ID 按真实 owned 暴露可用量，不扩展 category6 全类；普通 use 不再

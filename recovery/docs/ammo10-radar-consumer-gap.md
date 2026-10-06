@@ -1,7 +1,23 @@
-# 2010/4008雷达消费者缺口
+# 2010/4008 雷达干扰弹消费者
 
-M2-02/M4-10仅候选来源记录，不新增业务完成项。原item2010的价格Money/Coin均0、BattleUseMax15、技能2010/4008；2010提供Delay23/MaxBullet4/LoadTime100，4008 Trigger8/Target1/FuncType1/T15/RadarA/B/C各999、首13/SE14。当前发布combat-catalog保留这些原字段。
+M2-02/M4-10 的 2010 玩家业务链见
+[ammo10-radar-runtime.md](ammo10-radar-runtime.md)。本文保留 2010/4008 的原表来源事实，
+并记录旧缺口文件被当前采用规则取代后的边界。
 
-已证通用源调用链是原43acf2–43af5c技能列loader→SkillTable记录→433466/432951合成。完整原432951既有342源合同明确不写RadarA/B/C、HP或PartSlot，不能把其999列直接累加到运动/攻防或当作小地图资格。原4008实际施加Radar字段的写地址和期限writer均尚未取得，正式服务端battle/cpu与角色重算无Radar consumer；下一待查入口为Trigger8命中对4008的原Func1执行器，以及小地图读取Radar字段/期限的原callsite。当前没有这一执行器的已确认调用链，不把receiver效果通知当业务授权。
+## 来源事实
 
-正式Shop当前没有2010取得路径，零价item不自行变成免费starter或库存fixture。需要分别恢复取得producer和原Radar消费入口；不会以表字段存在制定新的隐藏目标policy。本轮无原客户端行为测量、原native复跑、正式对局或生产修改，候选保持来源不足。
+- 原 `item2010` 雷达干扰弹：`MoneyPrice/TokenPrice` 均 0、`GetMethod` 0、`BattleUseMax` 15、
+  `ItemType` 3、`skillIds` 2010/4008、首效果 53/GA08。
+- 原 `skill2010` 干扰果酱：Trigger0/Target1/Range0，`Delay` 23、`MaxBullet` 4、`LoadTime` 100，
+  RadarA/B/C 均 0，FuncType1 T0。
+- 原 `skill4008` 干扰果酱B：Trigger8/Target1/Range1，RadarA/B/C 均 999，首效果 13/SE14，
+  FuncType1 T15。
+- 完整原 432951 既有合同不把 RadarA/B/C 作为属性被动或小地图资格写入；原 4008 施加
+  Radar 字段的写地址和期限 writer 尚未取得。
+
+## 采用与限制
+
+2010 不进入免费 Shop 或 gift。普通取得使用 mode5 既有 BREACH 掉落链，池内精确新增
+`item2010`；普通命中使用独立实服务器 15 秒期限和快照布尔，不把 4008 的 999 列作为属性。
+
+原客户端行为测量、原 native 复跑和实际对局验收尚未执行。

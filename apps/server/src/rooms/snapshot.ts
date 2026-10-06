@@ -5,6 +5,7 @@ import type {OwnedRoleBaseRecord} from '../../../shared/contracts/owned-base';
 import {queuedPartSkillIds} from '../battle/passive-part-effects';
 import {roomMaxPlayers} from './player-limits';
 import type {DefenseBoostState} from '../battle/items/defense-drink';
+import type {AmmoRadarJamState} from '../battle/items/ammo-radar-jam';
 import type {RoleDisguiseState} from '../battle/items/role-disguise';
 import type {MsgRoomSnapshot, PlayerSnapshot, MatchResult, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot, GroundItemSnapshot} from '../../../shared/protocols';
 import type {PlayerTitle} from '../../../shared/protocols/MsgRoomSnapshot';
@@ -36,6 +37,7 @@ interface SnapshotPlayer extends MovingParticipant {
   trapTurnRestraint?: {skillId: 4002; expiresAt: number};
   trapFireRestraint?: {skillId: 4003; expiresAt: number};
   burn?: {startedAt: number};
+  radarJam?: AmmoRadarJamState;
   title?: PlayerTitle;
 }
 
@@ -54,12 +56,12 @@ interface SnapshotRoom {
 
 /** Project authoritative state onto the existing wire format without advancing the world. */
 export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSeconds = 0,
-  battleActive = true): PlayerSnapshot {
+  battleActive = true, now = Date.now()): PlayerSnapshot {
   const sources = player.ownedRoles.snapshot();
   const owned = sources.equipment;
   const skills = battleSkillSources(player);
   const movement = originalMovementParameters(player);
-  return {trapFireRestraint: player.trapFireRestraint ? {...player.trapFireRestraint,
+  const snapshot: PlayerSnapshot & {radarJammed?: boolean} = {trapFireRestraint: player.trapFireRestraint ? {...player.trapFireRestraint,
     firePermissionCount: player.combat.record!.flags![11]} : undefined, trapTurnRestraint: player.trapTurnRestraint ? {...player.trapTurnRestraint,
     turnPermissionCount: player.combat.record!.flags![10]} : undefined, trapRestraint: player.trapRestraint ? {...player.trapRestraint,
     movePermissionCount: player.combat.record!.flags![9]} : undefined, id: player.id, name: player.name, tankId: player.tank.id,
@@ -104,11 +106,13 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
     respawnProtection: player.respawnProtection ? {...player.respawnProtection} : undefined,
     opticalCamouflage: player.opticalCamouflage ? {...player.opticalCamouflage} : undefined,
     roleDisguise: player.roleDisguise ? {...player.roleDisguise} : undefined,
+    radarJammed: player.alive && player.radarJam !== undefined && now < player.radarJam.expiresAt,
     ammoBurn: player.alive && player.burn ? {itemId: 2007, skillId: 4005,
       startedAt: player.burn.startedAt, expiresAt: player.burn.startedAt + 9000} : undefined,
     title: player.title ? {...player.title} : undefined,
     reload: {duration: player.combat.reloadDuration, startedAt: player.combat.reloadStartedAt, source: player.combat.reloadSource,
       remaining: player.alive ? Math.max(0, player.combat.nextAvailableSeconds - Math.fround(currentSeconds)) : 0}};
+  return snapshot;
 }
 
 /** World supplies its configured timing and validated player HP policy. */

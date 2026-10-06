@@ -21,6 +21,7 @@ import {createScenePlants, plantContactColliders} from './battle/scene-plant-con
 import {MEDICAL_AMMO_ID, resolveMedicalAmmo} from './battle/items/medical-ammo';
 import {advanceAmmoBurn, clearAmmoBurn, startAmmoBurn} from './battle/items/ammo-burn';
 import {advanceAmmoSlow, clearAmmoSlow, startAmmoSlow} from './battle/items/ammo-slow';
+import {advanceAmmoRadarJam, clearAmmoRadarJam, startAmmoRadarJam} from './battle/items/ammo-radar-jam';
 import {roomMaxPlayers, roomMinPlayers} from './rooms/player-limits';
 import {findAvailableTankSpawn} from './battle/spawn-position';
 import {battleAttributes, battlePartSources, battleSkillSources, battleInventory} from './battle/projection';
@@ -310,6 +311,7 @@ export class World {
     const rewardModifiers = this.freezeRewardModifiers(room.players.values());
     clearRespawnProtection(player);
     this.clearPlayerRoundState(playerId);
+    clearAmmoRadarJam(player);
     clearCopiedRoleSkill(player.combat);
     clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
     clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
@@ -855,6 +857,7 @@ export class World {
       advanceSpeedDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceTurnDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceAmmoSlow(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
+      advanceAmmoRadarJam(room.roomId, player, now, events);
     }
     for (const target of room.players.values()) {
       if (room.phase !== 'PLAYING') break;
@@ -877,6 +880,11 @@ export class World {
       if (room.phase === 'PLAYING' && ammoItemId === 2008 && target.alive && target.hp < previousHp) {
         startAmmoSlow(room.roomId, target, now, () => recomputeBattleAttributes(target), events);
       }
+      if (room.phase === 'PLAYING' && ammoItemId === 2010 && target.alive && target.hp > 0
+          && target.hp < previousHp
+          && owner.id !== target.id && !this.isAlly(room, owner, target)) {
+        startAmmoRadarJam(room.roomId, target, now, events);
+      }
     };
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {
       respawn: player => {
@@ -886,6 +894,7 @@ export class World {
         clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
         clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
         clearRoleDisguise(player, () => recomputeBattleAttributes(player));
+        clearAmmoRadarJam(player);
         clearRespawnProtection(player);
         resetTrapRestraint(player);
         resetTrapTurnRestraint(player);
@@ -1052,6 +1061,7 @@ export class World {
     outcome: import('./modes/outcomes').ModeOutcome | undefined, events: MsgRoomEvent[]): void {
     const attacker = room.players.get(attackerId);
     clearRespawnProtection(target);
+    clearAmmoRadarJam(target);
     clearPetHitSpeed(target, () => recomputeBattleAttributes(target));
     if (attacker) healPetAfterKill(room.roomId, attacker, target, room.mode, events);
     if (attacker && copyPassiveSkillAfterKill(attacker, target, room.mode)) recomputeBattleAttributes(attacker);
@@ -1101,6 +1111,7 @@ export class World {
     initializeBattleParticipants(room.battlefield, room.players.values(), DEFAULT_INPUT,
       assignVip, player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), this.now);
     for (const player of room.players.values()) {
+      clearAmmoRadarJam(player);
       const accountId = !player.cpu ? this.options.resolveAccount?.(player.clientId) : undefined;
       player.title = accountId ? this.options.currentTitle?.(accountId) : undefined;
       resetEquipmentSupply(player, room.startedAt);
@@ -1130,6 +1141,7 @@ export class World {
     for (const player of room.players.values()) {
       this.clearPlayerRoundState(player.id);
       clearRespawnProtection(player);
+      clearAmmoRadarJam(player);
       player.input = {...DEFAULT_INPUT};
       if (player.cpu) room.loaded.add(player.id);
     }
@@ -1151,6 +1163,7 @@ export class World {
         player.combat.pendingShot = undefined;
         player.combat.specialFlag12 = 0;
         clearAmmoBurn(player);
+        clearAmmoRadarJam(player);
         player.equipmentSupply = undefined;
         player.lastStand = undefined;
       }
@@ -1197,7 +1210,7 @@ export class World {
     return roomSnapshot(room, now, this.timeLimit(room), this.minPlayers(room),
       [...room.players.values()].map(player => playerSnapshot(player,
         player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player),
-        (combatTime - room.startedAt) / 1000, battleActive)));
+        (combatTime - room.startedAt) / 1000, battleActive, now)));
   }
 
 }

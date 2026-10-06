@@ -109,7 +109,7 @@ export interface AcquireDiscardCallbacks {
 }
 
 const RUN_ID = randomUUID();
-const BREACH_POOL = [1, 2, 20001, 20002] as const;
+const BREACH_POOL = [1, 2, 2010, 20001, 20002] as const;
 const groundCounters = new Map<string, number>();
 const breachDropKeys = new Map<string, Set<string>>();
 
@@ -247,7 +247,7 @@ function acquireLocally(player: GroundItemRoomPlayer, ground: GroundItemState):
 /**
  * One real Breach destruction creates at most one ground item. The source
  * placement, not the attacker, owns the position. A single uniform roll both
- * gates at 0.5 and selects one of the four equally likely pool entries.
+ * gates at 0.5 and selects one of the five equally likely pool entries.
  */
 export function createBreachDrop(room: GroundItemRoom, source: BreachDropSource,
     ownerId: string, now: number, random: () => number,

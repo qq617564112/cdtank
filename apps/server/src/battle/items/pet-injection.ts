@@ -6,6 +6,7 @@ import type {RoleCombatState} from '../roles/combat-state';
 import {combatItems, combatSkills} from '../catalog';
 import {clearAmmoBurn, type AmmoBurnState} from './ammo-burn';
 import {clearAmmoSlow, type AmmoSlowState} from './ammo-slow';
+import {clearAmmoRadarJam, type AmmoRadarJamState} from './ammo-radar-jam';
 import {clearTrapRestraint, type TrapRestraintState} from './trap-restraint';
 
 export interface PetInjectionParticipant {
@@ -19,6 +20,7 @@ export interface PetInjectionParticipant {
   inventory: InventoryWireRecord[];
   burn?: AmmoBurnState;
   ammoSlow?: AmmoSlowState;
+  radarJam?: AmmoRadarJamState;
   trapRestraint?: TrapRestraintState;
   trapTurnRestraint?: TrapTurnRestraintState;
   trapFireRestraint?: TrapFireRestraintState;
@@ -40,7 +42,8 @@ export function applyPetInjection(roomId: string, player: PetInjectionParticipan
     events.push({roomId, type: 'itemRejected', message, playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0});
   };
-  if (!player.burn && !player.ammoSlow && !player.trapRestraint && !player.trapTurnRestraint && !player.trapFireRestraint) {
+  if (!player.burn && !player.ammoSlow && !player.radarJam
+      && !player.trapRestraint && !player.trapTurnRestraint && !player.trapFireRestraint) {
     reject('没有需要解除的异常状态');
     return;
   }
@@ -57,6 +60,7 @@ export function applyPetInjection(roomId: string, player: PetInjectionParticipan
   item.battleQuantity -= 1;
   clearAmmoBurn(player);
   clearAmmoSlow(player, recompute);
+  clearAmmoRadarJam(player);
   const trap = clearTrapRestraint(player, {
     readMovePermissionCount: () => player.combat.record?.flags[9],
     writeMovePermissionCount: count => player.combat.writeMovePermissionCount(count),

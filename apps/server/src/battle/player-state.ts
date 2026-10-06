@@ -7,6 +7,7 @@ import type {TrapRestraintState} from './items/trap-restraint';
 import type {recomputeQualifiedRoleArmor} from './roles/recompute-armor';
 import type {AmmoBurnState} from './items/ammo-burn';
 import type {AmmoSlowState} from './items/ammo-slow';
+import type {AmmoRadarJamState} from './items/ammo-radar-jam';
 import type {DefenseBoostState} from './items/defense-drink';
 import type {RoleMovementMathInput} from './roles/movement-math';
 import type {BattleMovementState} from './movement';
@@ -71,6 +72,8 @@ export interface PlayerState {
   trapFireRestraint?: TrapFireRestraintState;
   burn?: AmmoBurnState;
   ammoSlow?: AmmoSlowState;
+  /** Adopted ordinary2010 hit state; independent real server deadline. */
+  radarJam?: AmmoRadarJamState;
   invincibility?: InvincibilityState;
   /** Independent real-respawn immunity authority; absent outside a protected life. */
   respawnProtection?: RespawnProtectionState;
