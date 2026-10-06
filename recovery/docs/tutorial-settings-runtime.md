@@ -12,10 +12,12 @@
 
 ## 生命周期与来源边界
 
-入口只在正式大厅 `LobbyView`（实现位于 `interface/lobby/room-controls.tsx`）目录态挂载：`LobbySourcePage` 的 `headerContent` 仅当 `!inBattle && !waiting` 传入并渲染，Login/Channel/等待房间/Loading/Playing/Finished 均不渲染，隐藏或离场即卸载并释放 `useSourceUi` pending 资源。房间可见性取自 `LobbyView` 自身 `inBattle`/`waiting` 状态，未新增全局监听副本。`tut_settings.xml` 已存在于现 `ui.json`，无需新增 catalog 或生成器。
+入口只在正式大厅 `LobbyView`（实现位于 `interface/lobby/room-controls.tsx`）无房间目录态挂载：`LobbySourcePage` 的 `headerContent` 仅当 `!inBattle && !waiting` 传入并渲染，Login/Channel/等待房间/Loading/Playing/Finished 均不渲染，隐藏或离场即卸载并释放 `useSourceUi` pending 资源。房间可见性取自 `LobbyView` 自身 `inBattle`/`waiting` 状态，未新增全局监听副本。`tut_settings.xml` 已存在于现 `ui.json`，无需新增 catalog 或生成器。
+
+顶栏自身消费现 `useSourceUi` 的 loading/error：未就绪显示可读载入状态，失败显示本页错误与局部 `重试` 按钮。`重试`只以局部 key 重挂载 `tut_settings` 准备，不触发全页 reload，也不改全局资源 hook。普通初次成功不主动抢焦点；失败时焦点移到重试按钮，重试成功后焦点回到首个原教程按钮。进入房间、等待态或离场时顶栏随父页卸载，不恢复或抢房间焦点。
 
 ## 限制
 
-- 外部说明页未做浏览器/内容验收，仅按原表 URL 打开。
+- 外部说明页的可达性与正文未验收，仅按原表 URL 打开。
 - 设置页完整 107 控件与未知图形/循环原业务仍属 UI-50/M5-14 未完成范围，本片不扩大。
-- 本次未运行测试/构建/类型检查/浏览器验收；按任务约定只做静态实现。
+- 顶栏 loading/失败/重试的实际 pointer/keyboard/焦点、资源恢复，以及退出/重开时序均未验收；本片不以此支持 UI-64/M5-14 父项勾选。
