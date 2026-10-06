@@ -16,6 +16,7 @@ import {registerTankUpgradeApi} from './tank-upgrade-api';
 import {registerTankMaintenanceApi} from './tank-maintenance-api';
 import {registerPetSkillLearningApi} from './pet-skill-learning-api';
 import {registerOwnedRoleSaleApi} from './owned-role-sale-api';
+import {registerValuableItemSaleApi} from './valuable-item-sale-api';
 import {registerPetShopApi} from './pet-shop-api';
 import {readRoleProfilePlayerSummary} from './profile/player-summary';
 
@@ -33,6 +34,7 @@ export function registerAccountApis(
   broadcastRoomState: (roomId: string) => void,
   ownedTank: (accountId: string, instanceId: number) => TankConfig,
   restoreRoom: (accountId: string, connectionId: string) => void,
+  assertTradeAvailable: (accountId: string) => void,
 ): void {
   const combatCatalog = JSON.parse(readFileSync(webAssetPath('combat-catalog.json'), 'utf8')) as CombatCatalog;
 
@@ -45,6 +47,8 @@ export function registerAccountApis(
   registerTankMaintenanceApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection, broadcastRoomState);
   registerPetSkillLearningApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection, broadcastRoomState);
   registerOwnedRoleSaleApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection);
+  registerValuableItemSaleApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection,
+    broadcastRoomState, assertTradeAvailable);
   registerPetShopApi(server, accounts, world, accountByConnection, sessionByConnection);
 
   server.implementApi('History', async call => {

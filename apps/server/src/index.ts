@@ -66,10 +66,10 @@ const reconnections = new RoomReconnections(world, accountByConnection, sessionB
   for (const event of world.leave(session.playerId)) broadcastEvent(event);
   broadcastRoomState(session.roomId);
 });
-registerAccountApis(server, accounts, world, accountByConnection, sessionByConnection, broadcastRoomState,
-  ownedTank, (accountId, connectionId) => reconnections.restore(accountId, connectionId));
-
 const trades = registerTradeApi(server, accounts, accountByConnection, sessionByConnection);
+registerAccountApis(server, accounts, world, accountByConnection, sessionByConnection, broadcastRoomState,
+  ownedTank, (accountId, connectionId) => reconnections.restore(accountId, connectionId),
+  accountId => trades.assertLobbyAvailable(accountId));
 
 registerDisplayNameApi(server, accounts, accountByConnection, sessionByConnection);
 registerRoomApis(server, world, sessionByConnection, roomTankId, bindAccountState, broadcastRoomState,

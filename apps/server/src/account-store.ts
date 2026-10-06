@@ -73,6 +73,8 @@ import type {
   AwardCounts,
 } from '../../shared/protocols/PtlRoleProfile';
 import type {PlayerTitle} from '../../shared/protocols/MsgRoomSnapshot';
+import {AccountValuableItemSale} from './accounts/valuable-item-sale';
+import type {ReqValuableItemSale, ResValuableItemSale} from '../../shared/protocols/PtlValuableItemSale';
 import {
   GroundItemAccountRuntime,
   type GroundItemAcquireContext,
@@ -104,6 +106,7 @@ export class AccountStore {
   private readonly accountPetSkillLearning: AccountPetSkillLearning;
   private readonly accountTrade: AccountTrade;
   private readonly accountOwnedRoleSale: AccountOwnedRoleSale;
+  private readonly accountValuableItemSale: AccountValuableItemSale;
   private readonly accountPetShop: AccountPetShop;
   private readonly accountDisplayName: AccountDisplayName;
   private readonly accountFriends: AccountFriends;
@@ -139,6 +142,7 @@ export class AccountStore {
     this.accountPetSkillLearning = new AccountPetSkillLearning(this.database);
     this.accountTrade = new AccountTrade(this.database);
     this.accountOwnedRoleSale = new AccountOwnedRoleSale(this.database);
+    this.accountValuableItemSale = new AccountValuableItemSale(this.database);
     this.accountPetShop = new AccountPetShop(this.database);
     this.accountDisplayName = new AccountDisplayName(this.database);
     this.accountFriends = new AccountFriends(this.database);
@@ -199,6 +203,10 @@ export class AccountStore {
 
   ownedRoleSale(accountId: string, request: ReqOwnedRoleSale, catalog: CombatCatalog): ResOwnedRoleSale {
     return this.accountOwnedRoleSale.request(accountId, request, catalog);
+  }
+
+  valuableItemSale(accountId: string, request: ReqValuableItemSale, catalog: CombatCatalog): ResValuableItemSale {
+    return this.accountValuableItemSale.request(accountId, request, catalog);
   }
 
   tradeAccount(accountId: string): TradeAccount {return this.accountTrade.account(accountId);}

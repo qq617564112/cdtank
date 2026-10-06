@@ -57,6 +57,7 @@ import { ReqTankShop, ResTankShop } from './PtlTankShop';
 import { ReqTankUpgrade, ResTankUpgrade } from './PtlTankUpgrade';
 import { ReqTankTextures, ResTankTextures } from './PtlTankTextures';
 import { ReqTrade, ResTrade } from './PtlTrade';
+import { ReqValuableItemSale, ResValuableItemSale } from './PtlValuableItemSale';
 
 export interface ServiceType {
     api: {
@@ -243,6 +244,10 @@ export interface ServiceType {
         "Trade": {
             req: ReqTrade,
             res: ResTrade
+        },
+        "ValuableItemSale": {
+            req: ReqValuableItemSale,
+            res: ResValuableItemSale
         }
     },
     msg: {
@@ -262,7 +267,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 109,
+    "version": 114,
     "services": [
         {
             "id": 55,
@@ -552,6 +557,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
         {
             "id": 48,
             "name": "Trade",
+            "type": "api"
+        },
+        {
+            "id": 58,
+            "name": "ValuableItemSale",
             "type": "api"
         }
     ],
@@ -9910,6 +9920,215 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Number"
                     }
+                }
+            ]
+        },
+        "PtlValuableItemSale/ReqValuableItemSale": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "operation",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "QUERY"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "SELL"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 2,
+                    "name": "quantity",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "requestId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlValuableItemSale/ResValuableItemSale": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "quotes",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Interface",
+                            "properties": [
+                                {
+                                    "id": 0,
+                                    "name": "instanceId",
+                                    "type": {
+                                        "type": "Number"
+                                    }
+                                },
+                                {
+                                    "id": 1,
+                                    "name": "itemTableId",
+                                    "type": {
+                                        "type": "Number"
+                                    }
+                                },
+                                {
+                                    "id": 2,
+                                    "name": "ownedQuantity",
+                                    "type": {
+                                        "type": "Number"
+                                    }
+                                },
+                                {
+                                    "id": 3,
+                                    "name": "unitPrice",
+                                    "type": {
+                                        "type": "Number"
+                                    }
+                                },
+                                {
+                                    "id": 4,
+                                    "name": "canSell",
+                                    "type": {
+                                        "type": "Boolean"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "inventory",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlInventory/ResInventory"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "money",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "profile",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "bytes",
+                                "type": {
+                                    "type": "Array",
+                                    "elementType": {
+                                        "type": "Number"
+                                    }
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "strings",
+                                "type": {
+                                    "type": "Tuple",
+                                    "elementTypes": [
+                                        {
+                                            "type": "String"
+                                        },
+                                        {
+                                            "type": "String"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 4,
+                    "name": "sold",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "instanceId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "itemTableId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "quantity",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 3,
+                                "name": "price",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 4,
+                                "name": "result",
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 2
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 5,
+                    "name": "replayed",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
                 }
             ]
         }
