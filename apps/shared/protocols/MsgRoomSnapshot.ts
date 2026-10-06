@@ -183,6 +183,24 @@ export interface ResultAward {
   expPercent: number;
 }
 
+export type AwardType = 'perfect' | 'mvp' | 'savage' | 'console' | 'brave' | 'kind' | 'crafty' | 'shy' | 'greedy';
+
+export interface RoundStats {
+  shots: number;
+  hits: number;
+  damage: number;
+  damageTaken: number;
+  killCombo: number;
+  friendlyFireDamage: number;
+  healing: number;
+  rearDamage: number;
+}
+
+export interface RoundAward {
+  type: AwardType;
+  score: number;
+}
+
 export interface ResultPlayer {
   id: string;
   name: string;
@@ -196,6 +214,8 @@ export interface ResultPlayer {
   totalScore: number;
   outcome: 'WIN' | 'LOSE' | 'DRAW';
   award?: ResultAward;
+  roundStats?: RoundStats;
+  awards?: RoundAward[];
 }
 
 export interface MatchResult {

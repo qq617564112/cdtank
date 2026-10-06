@@ -252,7 +252,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 100,
+    "version": 101,
     "services": [
         {
             "id": 55,
@@ -3238,6 +3238,27 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Reference",
                         "target": "MsgRoomSnapshot/ResultAward"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 12,
+                    "name": "roundStats",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/RoundStats"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 13,
+                    "name": "awards",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "MsgRoomSnapshot/RoundAward"
+                        }
                     },
                     "optional": true
                 }
@@ -7115,6 +7136,24 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "target": "PtlRoleProfile/AccountTitles"
                     },
                     "optional": true
+                },
+                {
+                    "id": 4,
+                    "name": "statistics",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlRoleProfile/AccountStatistics"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 5,
+                    "name": "awards",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlRoleProfile/AwardCounts"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -8756,6 +8795,332 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 7,
                     "name": "expPercent",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/AwardType": {
+            "type": "Union",
+            "members": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "perfect"
+                    }
+                },
+                {
+                    "id": 1,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "mvp"
+                    }
+                },
+                {
+                    "id": 2,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "savage"
+                    }
+                },
+                {
+                    "id": 3,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "console"
+                    }
+                },
+                {
+                    "id": 4,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "brave"
+                    }
+                },
+                {
+                    "id": 5,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "kind"
+                    }
+                },
+                {
+                    "id": 6,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "crafty"
+                    }
+                },
+                {
+                    "id": 7,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "shy"
+                    }
+                },
+                {
+                    "id": 8,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "greedy"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/RoundStats": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "shots",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "hits",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "damage",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "damageTaken",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "killCombo",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "friendlyFireDamage",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "healing",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "rearDamage",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/RoundAward": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "type",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/AwardType"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "score",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "PtlRoleProfile/AccountStatistics": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "wins",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "losses",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "draws",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "winStreak",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "loseStreak",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "battleSeconds",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "kills",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "deaths",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "shots",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "hits",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 10,
+                    "name": "damage",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 11,
+                    "name": "killCombo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 12,
+                    "name": "spentMoney",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 13,
+                    "name": "spentTokens",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlRoleProfile/AwardCounts": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "perfect",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "mvp",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "savage",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "console",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "brave",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "kind",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "crafty",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "shy",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "greedy",
                     "type": {
                         "type": "Number"
                     }
