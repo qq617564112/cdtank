@@ -149,7 +149,7 @@ function KeySettingsSession({close, battle, initial, onSaved}: Omit<KeySettingsV
         {optionalPrimary(action) ? <button type="button" data-clear-primary={action} disabled={!draft[action]}
           aria-label={`清除“${ACTION_LABELS[action]}”主键`} onClick={() => {
             const next = cloneKeyBindings(draft);
-            next[action] = '';
+            delete (next as Partial<Record<InputAction, string>>)[action];
             replaceDraft(next);
             setStatus(`已清除“${ACTION_LABELS[action]}”主键草稿，点击保存后生效。`);
           }}>清除主键</button> : <span className="key-settings-empty" aria-hidden="true" />}
