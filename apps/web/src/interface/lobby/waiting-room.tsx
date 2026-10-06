@@ -65,6 +65,13 @@ function waitingScale(formal = false): number {
   return Math.max(.25, Math.min((innerWidth - 64) / 615, (innerHeight - 180) / 391, 2));
 }
 
+const MODE_NAMES = ['未知', '团队', '占领', '擒王', '混战', '破坏'];
+
+function waitingTeamName(mode: number, team: number): string {
+  if (mode > 3) return '个人战';
+  return team === 0 ? '猫队' : team === 1 ? '狗队' : `队伍 ${team}`;
+}
+
 /** The room and round own the waiting dialog's requests and presentation state. */
 export function WaitingRoomView(props: WaitingRoomViewProps) {
   return <WaitingRoomSession key={`${props.snapshot.roomId}:${props.snapshot.match?.round}:${props.snapshot.phase}`}
@@ -79,6 +86,7 @@ function WaitingRoomSession({formal = false, management, snapshot, playerId, ext
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [operation, setOperation] = useState('');
   const [inviteUntil, setInviteUntil] = useState(0);
   const [scale, setScale] = useState(() => waitingScale(formal));
   const generation = useRef(0);
@@ -145,10 +153,10 @@ function WaitingRoomSession({formal = false, management, snapshot, playerId, ext
     (previous && !previous.disabled ? previous : ready)?.focus();
   }, [open, disabled, ui]);
 
-  async function request(action: () => Promise<void>): Promise<void> {
+  async function request(action: () => Promise<void>, nextOperation: string): Promise<void> {
     if (pending.current || externalBusy || !available) return;
     const current = generation.current;
-    pending.current = true; setBusy(true); setError('');
+    pending.current = true; setBusy(true); setError(''); setOperation(nextOperation);
     try {await action();} catch (cause) {
       if (current === generation.current) {
         const message = cause instanceof Error ? cause.message : String(cause);
@@ -156,7 +164,7 @@ function WaitingRoomSession({formal = false, management, snapshot, playerId, ext
         await notice.show(message);
       }
     } finally {
-      if (current === generation.current) {pending.current = false; setBusy(false);}
+      if (current === generation.current) {pending.current = false; setBusy(false); setOperation('');}
     }
   }
 
@@ -176,18 +184,38 @@ function WaitingRoomSession({formal = false, management, snapshot, playerId, ext
   const ready = !!match?.readyPlayerIds.includes(playerId);
   const info = waitingRoomInfo(snapshot);
   const {slots, overflow} = waitingRoomSlots(snapshot);
+  const cpuPlayers = snapshot.players.filter(player => player.isCpu);
+  const canManageCpu = !!match?.cpuManagerId && match.cpuManagerId === playerId;
+  const teamCounts = [0, 1].map(team => snapshot.players.filter(player => player.team === team).length);
+  const operationLabel = operation === 'leave' ? '正在退出房间…' : operation === 'ready' ? '正在提交准备状态…'
+    : operation === 'team' ? '正在换队…' : operation === 'invite' ? '正在发送邀请…' : '';
   const image = (name: string, shown = true, text?: string) => ui &&
     <SourceImage key={name} ui={ui} name={name} hidden={!shown} text={text} />;
   const layout = ui ? new HomeSourceLayout(ui, 'room_main.xml') : undefined;
   const controlProps = {disabled, onFocus: (event: SyntheticEvent<HTMLButtonElement>) => {
     focusedControl.current = event.currentTarget.dataset.waitingControl;
   }};
+  const statusState = loadError ? 'error' : !ui ? 'loading' : error ? 'error' : disabled ? 'pending'
+    : invited ? 'confirmation' : 'normal';
+  const statusText = loadError || (!ui ? '正在载入原等待房间…' : error || (disabled
+    ? operationLabel || '正在提交，请等待服务器确认…' : invited ? '邀请已发送给大厅玩家，30秒后可再次邀请'
+    : `${snapshot.roomId} · 已准备 ${match?.readyPlayerIds.length ?? 0}/${snapshot.players.length}`));
+  const status = <output role="status" data-waiting-room-status="" data-waiting-room-operation={operation || undefined}
+    data-waiting-room-status-state={statusState} aria-busy={disabled}>{statusText}</output>;
+  const overflowList = <ul data-waiting-room-overflow="" className="waiting-room-overflow-list" hidden={overflow.length === 0}>
+    {overflow.map(player => <li key={player.id}>
+      <span>{player.name}</span>
+      <span>{waitingTeamName(snapshot.mode, player.team)} · 战车 {player.tankId} · {match?.readyPlayerIds.includes(player.id) ? '已准备' : '未准备'}{player.isCpu ? ' · CPU' : ''}</span>
+    </li>)}
+  </ul>;
 
   return <>
     {!formal && <button ref={opener} type="button" data-open-waiting-room="" hidden={!available}
       disabled={externalBusy} onClick={() => setOpen(true)}>查看原等待房间</button>}
     <dialog ref={dialog} data-waiting-room="" aria-label="等待房间"
       data-waiting-room-formal={formal || undefined}
+      data-waiting-room-operation={operation || undefined}
+      aria-busy={disabled}
       onCancel={event => {event.preventDefault(); close();}}
       onKeyDown={isolateKeyboard} onKeyUp={isolateKeyboard}
       onMouseDown={event => event.stopPropagation()} onMouseUp={event => event.stopPropagation()}
@@ -195,7 +223,7 @@ function WaitingRoomSession({formal = false, management, snapshot, playerId, ext
       <div className="waiting-room-viewport" style={{width: (formal ? 800 : 615) * scale, height: (formal ? 600 : 400) * scale}}>
         <div data-waiting-room-stage="" className="waiting-room-stage" style={{transform: `scale(${scale})`}}>
           {!ui && loadError && <WaitingRoomResourceFeedback error={loadError} pending={disabled}
-            leave={() => {void request(() => actions.leave());}} />}
+            leave={() => {void request(() => actions.leave(), 'leave');}} />}
           {open && ui && match && available && <SourceImageScale value={scale}>
             {['ditu', 'maogouditu', 'maogouditu2', 'zhongjianditu', 'fenhongdi1', 'fenhongdi2', 'tiao2', 'tiao', 'kuang', 'dituguize', 'renshu', 'daos', 'meijushijian', 'sec'].map(name => image(name))}
             {image('txtRoomNumber', true, snapshot.roomId)}
@@ -216,24 +244,24 @@ function WaitingRoomSession({formal = false, management, snapshot, playerId, ext
               <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source={`btn${name}Team`} data-waiting-control={`team${team}`} selected={local?.team === team} aria-label={`加入${team === 0 ? '猫' : '狗'}队`} title={`加入${team === 0 ? '猫' : '狗'}队`}
                 {...controlProps} disabled={disabled || ready || local?.team === team || !local}
                 data-waiting-team={String(team)} aria-pressed={local?.team === team}
-                onClick={() => {void request(() => actions.team(team));}} />
+                onClick={() => {void request(() => actions.team(team), 'team');}} />
             </Fragment>)}
             {slots.map((player, index) => <Fragment key={index}>
               <SourceImage ui={ui} name={`PlayerPanel${index}`} data-waiting-source-player={player?.id}
                 data-team={player ? String(player.team) : undefined}
                 data-waiting-player-ready={player ? String(match.readyPlayerIds.includes(player.id)) : undefined}
-                aria-label={player ? `${player.name} · ${match.readyPlayerIds.includes(player.id) ? '已准备' : '未准备'}` : undefined} />
+                aria-label={player ? `${player.name} · ${waitingTeamName(snapshot.mode, player.team)} · ${match.readyPlayerIds.includes(player.id) ? '已准备' : '未准备'}${player.isCpu ? ' · CPU' : player.isAutopilot ? ' · AI托管' : ''}` : undefined} />
               {player ? <>
                 {image(`txtPlayerName${index}`, true, player.name)}
                 {image(`picReady${index}`, match.readyPlayerIds.includes(player.id))}
                 <SourceImage ui={ui} name={`picPlayerTank${index}`} reference={waitingTankReference(player.tankId)}
                   aria-label={`战车 ${player.tankId}`} text={sourceAsset(ui, waitingTankReference(player.tankId)) ? undefined : String(player.tankId)} />
-                {image(`txtPlayerTitle${index}`, true, player.id === playerId ? '你' : '')}
+                {image(`txtPlayerTitle${index}`, true, player.isCpu ? 'CPU' : player.isAutopilot ? '托管' : player.id === playerId ? '你' : '')}
               </> : image(`picNA${index}`)}
             </Fragment>)}
             <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source={ready ? 'btnCancel' : 'btnReady'} data-waiting-control="ready" aria-label={ready ? '取消准备' : '准备'} title={ready ? '取消准备' : '准备'}
               {...controlProps} disabled={disabled || !local || !readyAvailable} data-waiting-ready="" aria-pressed={ready}
-              onClick={() => {void request(() => actions.ready(!ready));}} />
+              onClick={() => {void request(() => actions.ready(!ready), 'ready');}} />
             <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source="btnInvite" data-waiting-control="invite" aria-label="邀请大厅玩家加入房间" title="邀请大厅玩家加入房间"
               {...controlProps} disabled={disabled || invited || snapshot.players.length >= (match.maxPlayers ?? 12)}
               data-waiting-invite="" onClick={() => {
@@ -241,23 +269,53 @@ function WaitingRoomSession({formal = false, management, snapshot, playerId, ext
                 void request(async () => {
                   const expiresAt = await actions.invite();
                   if (current === generation.current) setInviteUntil(expiresAt);
-                });
+                }, 'invite');
               }} />
             <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source="btnClose" data-waiting-control="close" aria-label="退出房间" title="退出房间" {...controlProps}
-              data-waiting-close="" onClick={() => {void request(() => actions.leave());}} />
+              data-waiting-close="" onClick={() => {void request(() => actions.leave(), 'leave');}} />
           </SourceImageScale>}
         </div>
       </div>
-      <output role="status" data-waiting-room-status=""
-        style={formal ? {position: 'absolute', left: 615 * scale, top: 400 * scale, width: 185 * scale, maxHeight: 200 * scale,
-          fontSize: 12 * scale, boxSizing: 'border-box', overflow: 'auto', pointerEvents: 'auto'} : undefined}
-        data-waiting-room-status-state={loadError ? 'error' : !ui ? 'loading' : error ? 'error' : disabled ? 'pending' : invited ? 'confirmation' : 'normal'}>{loadError || (!ui ? '正在载入原等待房间…' : error ||
-        (disabled ? '正在提交，请等待服务器确认…' : invited ? '邀请已发送给大厅玩家，30秒后可再次邀请' :
-          `${snapshot.roomId} · 已准备 ${match?.readyPlayerIds.length ?? 0}/${snapshot.players.length}`))}</output>
-      <ul data-waiting-room-overflow="" style={formal ? {position: 'absolute', left: 615 * scale, top: 400 * scale,
-        width: 185, maxHeight: 200, transform: `scale(${scale})`, transformOrigin: 'top left', overflow: 'auto', pointerEvents: 'auto'} : undefined} hidden={overflow.length === 0}>{overflow.map(player =>
-        <li key={player.id}>{player.name} · 战车 {player.tankId} · {match?.readyPlayerIds.includes(player.id) ? '已准备' : '未准备'}</li>)}</ul>
-      {formal && management && <div data-waiting-management="" className="waiting-room-management" style={{left: 615 * scale, top: 0, transform: `scale(${scale})`}}>{management}</div>}
+      {formal && <aside className="waiting-room-console" data-waiting-room-console=""
+        style={{left: 615 * scale, top: 0, transform: `scale(${scale})`}}>
+        {status}
+        <section className="waiting-room-console-section" data-waiting-room-info="">
+          <h3>房间信息</h3>
+          <dl>
+            <dt>房名</dt><dd title={info.name}>{info.name}</dd>
+            <dt>房间</dt><dd title={snapshot.roomId}>{snapshot.roomId}</dd>
+            <dt>模式</dt><dd>{MODE_NAMES[snapshot.mode] ?? `模式 ${snapshot.mode}`}</dd>
+            <dt>地图</dt><dd title={info.mapName}>{info.mapName}</dd>
+            <dt>时限</dt><dd>{info.time === '—' ? '资料不可用' : `${info.time} 秒`}</dd>
+            <dt>人数</dt><dd>{snapshot.players.length}/{match?.maxPlayers ?? '—'} · 最低 {match?.minPlayers ?? '—'}</dd>
+            <dt>准备</dt><dd>{match?.readyPlayerIds.length ?? 0}/{snapshot.players.length}</dd>
+            <dt>房间锁</dt><dd>{info.locked ? '密码保护' : '公开'}</dd>
+            {snapshot.mode <= 3 && <><dt>队伍</dt><dd>猫队 {teamCounts[0]} · 狗队 {teamCounts[1]}</dd>
+              <dt>友伤</dt><dd>{match?.friendlyFire ? '开启' : '关闭'}</dd></>}
+          </dl>
+        </section>
+        {overflow.length > 0 && <section className="waiting-room-console-section" data-waiting-room-overflow-section="">
+          <h3>名单外成员</h3>
+          {overflowList}
+        </section>}
+        <section className="waiting-room-console-section" data-waiting-room-cpu-management="">
+          <h3>CPU 管理</h3>
+          <p className="waiting-room-cpu-summary">{cpuPlayers.length ? `已加入 ${cpuPlayers.length} 名 CPU` : '暂无 CPU'}</p>
+          {cpuPlayers.length > 0 && <ul className="waiting-room-cpu-list">
+            {cpuPlayers.map(player => {
+              const configured = player.cpuLoadout?.filter(item => item.quantity > 0).length ?? 0;
+              return <li key={player.id} data-waiting-cpu-player={player.id}>
+                <span title={player.name}>{player.name}</span>
+                <span>{configured > 0 ? `配给 ${configured} 槽` : '未配置配给'}</span>
+              </li>;
+            })}
+          </ul>}
+          {management ? <div data-waiting-management="" className="waiting-room-management">{management}</div>
+            : <p className="waiting-room-empty">{canManageCpu ? 'CPU 管理入口不可用' : '仅房主可管理 CPU'}</p>}
+        </section>
+      </aside>}
+      {!formal && status}
+      {!formal && overflowList}
     </dialog>
     <SourceNoticeView notice={notice} />
   </>;

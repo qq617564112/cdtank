@@ -92,32 +92,72 @@
 
 .waiting-room-management {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.5rem;
-  padding-top: 0.5rem;
+  min-width: 0;
 }
 
 .waiting-room-management button {
   margin: 0;
-  padding: 0.25rem 0.5rem;
+  padding: 0.3rem 0.45rem;
   border: 1px solid #fff8da;
   color: #fff8da;
   background: #263b49;
   font: 12px 'CDTank-SIMSUN', serif;
+  cursor: pointer;
 }
 
-[data-waiting-room-formal] [data-waiting-room-status]:not([data-waiting-room-status-state="normal"]) {
-  position: static;
-  box-sizing: border-box;
+.waiting-room-management > button {
+  width: 100%;
+}
+
+.waiting-room-management button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.waiting-room-management button:disabled {
+  cursor: wait;
+  opacity: .65;
 }
 
 .waiting-room-management [data-waiting-management-status] {
-  flex-basis: 100%;
   margin: 0;
-  text-align: center;
+  color: #bcc8cf;
   font-size: 12px;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.waiting-room-management .cpu-loadout,
+.waiting-room-management .cpu-loadout form {
+  width: 100%;
+}
+
+.waiting-room-management .cpu-loadout {
+  min-width: 0;
+}
+
+.waiting-room-management .cpu-loadout form {
+  padding: 0.4rem;
+}
+
+.waiting-room-management .cpu-loadout summary {
+  overflow-wrap: anywhere;
+}
+
+.waiting-room-management .cpu-loadout-slots {
+  overflow-x: hidden;
+}
+
+.waiting-room-management .cpu-loadout-slots > div {
+  grid-template-columns: minmax(0, 1fr) 54px;
+}
+
+.waiting-room-management .cpu-loadout select,
+.waiting-room-management .cpu-loadout input {
+  min-width: 0;
 }
 
 [data-waiting-room-formal] {
@@ -139,14 +179,140 @@
   pointer-events: auto;
 }
 
-[data-waiting-room-formal] .waiting-room-management {
+.waiting-room-console {
   position: absolute;
   width: 185px;
-  height: 400px;
+  height: 600px;
   box-sizing: border-box;
   overflow: auto;
   margin: 0;
-  padding: 8px;
+  padding: 10px 8px;
+  color: #fff8da;
+  background: #172a38;
+  border-left: 1px solid #fff8da;
+  font-family: 'CDTank-SIMSUN', serif;
+  font-size: 12px;
+  line-height: 16px;
   transform-origin: top left;
   pointer-events: auto;
+  scrollbar-color: #fff8da #172a38;
+}
+
+.waiting-room-console *,
+.waiting-room-console *::before,
+.waiting-room-console *::after {
+  box-sizing: border-box;
+}
+
+.waiting-room-console-section {
+  min-width: 0;
+  margin: 0 0 10px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid #58717c;
+}
+
+.waiting-room-console-section:last-child {
+  border-bottom: 0;
+}
+
+.waiting-room-console h3 {
+  margin: 0 0 6px;
+  color: #ffdc6d;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.waiting-room-console dl {
+  display: grid;
+  grid-template-columns: minmax(52px, auto) minmax(0, 1fr);
+  gap: 2px 6px;
+  margin: 0;
+}
+
+.waiting-room-console dt {
+  color: #bcc8cf;
+}
+
+.waiting-room-console dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.waiting-room-console [data-waiting-room-status] {
+  position: static;
+  inset: auto;
+  width: auto;
+  height: auto;
+  max-height: none;
+  margin: 0 0 10px;
+  padding: 6px;
+  color: #fff8da;
+  background: #263b49;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+  clip-path: none;
+}
+
+.waiting-room-console [data-waiting-room-status-state="normal"] {
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.waiting-room-console [data-waiting-room-status-state="error"],
+.waiting-room-console [data-waiting-room-status-state="pending"],
+.waiting-room-console [data-waiting-room-status-state="confirmation"] {
+  border: 1px solid #fff8da;
+}
+
+.waiting-room-cpu-list,
+.waiting-room-overflow-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.waiting-room-cpu-list li {
+  display: grid;
+  gap: 1px;
+  padding: 5px 0;
+  border-bottom: 1px solid #344e5b;
+}
+
+.waiting-room-cpu-list li:last-child {
+  border-bottom: 0;
+}
+
+.waiting-room-console-section > ul > li + li {
+  margin-top: 4px;
+}
+
+.waiting-room-cpu-summary,
+.waiting-room-empty {
+  margin: 0 0 6px;
+  color: #bcc8cf;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.waiting-room-console .waiting-room-overflow-list li {
+  padding: 4px 0;
+  border-bottom: 1px solid #344e5b;
+}
+
+.waiting-room-console .waiting-room-overflow-list li:last-child {
+  border-bottom: 0;
+}
+
+.waiting-room-console .waiting-room-overflow-list li span {
+  display: block;
+}
+
+.waiting-room-console .waiting-room-overflow-list li span:last-child {
+  color: #bcc8cf;
 }
