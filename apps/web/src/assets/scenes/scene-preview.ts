@@ -336,8 +336,8 @@ export class ScenePreview {
           libraryAsset = '/scene-breach-0006.json';
         } else if (id === '0005' && ['obj05425', 'obj05426', 'obj05432'].includes(placement.model)) {
           libraryAsset = '/scene-breach-0005.json';
-        } else if (id === '0010' && placement.model === 'obj05425') {
-          libraryAsset = '/scene-breach-0014.json';
+        } else if (id === '0010' && ['obj05425', 'obj05426', 'obj05427', 'obj05428', 'obj05429'].includes(placement.model)) {
+          libraryAsset = '/scene-breach-0010.json';
         } else if (id === '0002' && placement.model === 'obj05427') {
           libraryAsset = '/scene-breach-0002-05427.json';
         } else if (id === '0002' && placement.model === 'obj05422') {
