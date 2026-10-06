@@ -4,12 +4,14 @@ import {classifyInventoryCategory} from '../../../shared/combat/inventory-query'
 import type {TradeAccount, TradeOffer, TradeRecordView} from '../../../shared/protocols/PtlTrade';
 import type {OwnedRoleRecordData} from '../../../shared/protocols/PtlOwnedRoles';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
+import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 export interface PreparedTradeOffer {offer: TradeOffer; records: TradeRecordView[];}
 
 /** Web settlement authority preserves the recovered full-record and scalar transfer contracts. */
 export class AccountTrade {
   constructor(private readonly database: DatabaseSync) {
+    initializeAccountSpending(database);
     database.exec(`CREATE TABLE IF NOT EXISTS trade_receipts (
       session_id TEXT PRIMARY KEY, account_a TEXT NOT NULL, account_b TEXT NOT NULL,
       offers TEXT NOT NULL, receipt TEXT NOT NULL);`);
@@ -152,6 +154,9 @@ export class AccountTrade {
       }
       for (let index = 0; index < 2; index++) this.database.prepare('UPDATE role_profiles SET payload = ? WHERE account_id = ?').run(profiles[index], accountIds[index]);
       this.database.prepare('INSERT INTO trade_receipts VALUES (?, ?, ?, ?, ?)').run(sessionId, ...accountIds, JSON.stringify(prepared), JSON.stringify(received));
+      for (let index = 0; index < 2; index++) {
+        recordAccountSpending(this.database, accountIds[index], 'trade', sessionId, prepared[index].offer.money, 0);
+      }
       this.database.exec('COMMIT');
     } catch (error) {this.database.exec('ROLLBACK'); throw error;}
   }

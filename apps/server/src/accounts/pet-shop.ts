@@ -2,10 +2,12 @@ import type {DatabaseSync} from 'node:sqlite';
 import type {ReqPetShop, ResPetShop} from '../../../shared/protocols/PtlPetShop';
 import type {OwnedRoleRecordData} from '../../../shared/protocols/PtlOwnedRoles';
 import {petShopCatalog} from './pet-shop-catalog';
+import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 /** Rebuilt atomic purchase creates a complete owned base record and a replay receipt. */
 export class AccountPetShop {
   constructor(private readonly database: DatabaseSync) {
+    initializeAccountSpending(database);
     database.exec(`CREATE TABLE IF NOT EXISTS pet_purchases (
       account_id TEXT NOT NULL, request_id TEXT NOT NULL, pet_id INTEGER NOT NULL,
       currency TEXT NOT NULL, receipt TEXT NOT NULL, PRIMARY KEY(account_id, request_id));`);
@@ -72,6 +74,7 @@ export class AccountPetShop {
       this.database.prepare('INSERT INTO role_records VALUES (?, ?, ?, ?)').run(accountId, 'base', instanceId, JSON.stringify(purchased));
       this.database.prepare('INSERT INTO pet_purchases VALUES (?, ?, ?, ?, ?)')
         .run(accountId, request.requestId, definition.product.petId, request.currency, JSON.stringify(purchased));
+      recordAccountSpending(this.database, accountId, 'pet-shop', request.requestId, cost, 0);
       this.database.exec('COMMIT');
       return {pets, money: money - cost, tokens, purchased, replayed: false};
     } catch (error) {

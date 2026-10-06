@@ -3,10 +3,12 @@ import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {calculateTankMaintenanceCost, formatTankMaintenanceCost} from '../../../shared/combat/tank-maintenance';
 import type {ReqTankMaintenance, ResTankMaintenance, TankMaintenanceQuote} from '../../../shared/protocols/PtlTankMaintenance';
 import type {OwnedRoleRecordData} from '../../../shared/protocols/PtlOwnedRoles';
+import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 /** Rebuilt atomic account settlement; original495612 adds days*1440 to owned+34. */
 export class AccountTankMaintenance {
   constructor(private readonly database: DatabaseSync) {
+    initializeAccountSpending(database);
     database.exec(`CREATE TABLE IF NOT EXISTS tank_maintenance (
       account_id TEXT NOT NULL, request_id TEXT NOT NULL, instance_id INTEGER NOT NULL,
       days INTEGER NOT NULL, currency INTEGER NOT NULL, receipt TEXT NOT NULL,
@@ -79,6 +81,8 @@ export class AccountTankMaintenance {
       const maintained = {instanceId: request.instanceId!, remainingMinutes, cost: quote.cost, currency: request.currency, days: request.days!};
       this.database.prepare('INSERT INTO tank_maintenance VALUES (?, ?, ?, ?, ?, ?)')
         .run(accountId, request.requestId, request.instanceId!, request.days!, request.currency, JSON.stringify(maintained));
+      recordAccountSpending(this.database, accountId, 'tank-maintenance', request.requestId,
+        request.currency === 1 ? quote.cost : 0, request.currency === 0 ? quote.cost : 0);
       const result = response(maintained, false);
       this.database.exec('COMMIT');
       return result;

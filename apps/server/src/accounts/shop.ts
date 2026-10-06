@@ -1,10 +1,12 @@
 import type {DatabaseSync} from 'node:sqlite';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
 import type {ReqShop, ResShop, ShopItem} from '../../../shared/protocols/PtlShop';
+import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 /** Rebuilt purchase authority; the caller supplies the bounded source catalog. */
 export class AccountShop {
   constructor(private readonly database: DatabaseSync) {
+    initializeAccountSpending(database);
     database.exec(`CREATE TABLE IF NOT EXISTS shop_purchases (
       account_id TEXT NOT NULL, request_id TEXT NOT NULL, item_table_id INTEGER NOT NULL,
       quantity INTEGER NOT NULL, currency TEXT NOT NULL, receipt TEXT NOT NULL,
@@ -73,6 +75,8 @@ export class AccountShop {
       this.database.prepare('INSERT INTO inventory VALUES (?, ?, ?)').run(accountId, instanceId, JSON.stringify(purchased));
       this.database.prepare('INSERT INTO shop_purchases VALUES (?, ?, ?, ?, ?, ?)')
         .run(accountId, requestId, itemTableId!, quantity!, currency, JSON.stringify(purchased));
+      recordAccountSpending(this.database, accountId, 'shop', requestId,
+        currency === 'MONEY' ? cost : 0, currency === 'TOKENS' ? cost : 0);
       this.database.exec('COMMIT');
       return {items: [...items], money: nextMoney, tokens: nextTokens, purchased, replayed: false};
     } catch (error) {

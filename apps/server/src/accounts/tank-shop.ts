@@ -2,10 +2,12 @@ import type {DatabaseSync} from 'node:sqlite';
 import type {ReqTankShop, ResTankShop} from '../../../shared/protocols/PtlTankShop';
 import type {OwnedRoleRecordData} from '../../../shared/protocols/PtlOwnedRoles';
 import {tankShopCatalog} from './tank-shop-catalog';
+import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 /** Rebuilt atomic purchase creates owned equipment, independent of item inventory. */
 export class AccountTankShop {
   constructor(private readonly database: DatabaseSync) {
+    initializeAccountSpending(database);
     database.exec(`CREATE TABLE IF NOT EXISTS tank_purchases (
       account_id TEXT NOT NULL, request_id TEXT NOT NULL, tank_id INTEGER NOT NULL,
       currency TEXT NOT NULL, receipt TEXT NOT NULL, PRIMARY KEY(account_id, request_id));`);
@@ -66,6 +68,7 @@ export class AccountTankShop {
       this.database.prepare('INSERT INTO role_records VALUES (?, ?, ?, ?)').run(accountId, 'equipment', instanceId, JSON.stringify(purchased));
       this.database.prepare('INSERT INTO tank_purchases VALUES (?, ?, ?, ?, ?)')
         .run(accountId, request.requestId, definition.product.tankId, request.currency, JSON.stringify(purchased));
+      recordAccountSpending(this.database, accountId, 'tank-shop', request.requestId, cost, 0);
       this.database.exec('COMMIT');
       return {tanks, money: money - cost, tokens, purchased, replayed: false};
     } catch (error) {

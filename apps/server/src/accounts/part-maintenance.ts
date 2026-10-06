@@ -4,10 +4,12 @@ import {classifyItemId} from '../../../shared/combat/item-hotkeys';
 import {calculatePartMaintenanceCost, formatPartMaintenanceCost} from '../../../shared/combat/part-maintenance';
 import type {ReqPartMaintenance, ResPartMaintenance, PartMaintenanceQuote} from '../../../shared/protocols/PtlPartMaintenance';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
+import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 /** Rebuilt atomic authority; original49569f adds minutes to the durable item's +10. */
 export class AccountPartMaintenance {
   constructor(private readonly database: DatabaseSync) {
+    initializeAccountSpending(database);
     database.exec(`CREATE TABLE IF NOT EXISTS part_maintenance (
       account_id TEXT NOT NULL, request_id TEXT NOT NULL, instance_id INTEGER NOT NULL,
       days INTEGER NOT NULL, currency INTEGER NOT NULL, receipt TEXT NOT NULL,
@@ -79,6 +81,8 @@ export class AccountPartMaintenance {
       const maintained = {instanceId: request.instanceId!, remainingMinutes, cost: quote.cost, currency: request.currency, days: request.days!};
       this.database.prepare('INSERT INTO part_maintenance VALUES (?, ?, ?, ?, ?, ?)')
         .run(accountId, request.requestId, request.instanceId!, request.days!, request.currency, JSON.stringify(maintained));
+      recordAccountSpending(this.database, accountId, 'part-maintenance', request.requestId,
+        request.currency === 1 ? quote.cost : 0, request.currency === 0 ? quote.cost : 0);
       const result = response(maintained, false);
       this.database.exec('COMMIT'); return result;
     } catch (error) {this.database.exec('ROLLBACK'); throw error;}
