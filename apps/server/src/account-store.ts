@@ -43,6 +43,7 @@ import type {RewardGrant} from './accounts/history';
 import {AccountReward} from './accounts/reward';
 import type {AccountGrowth, ResultAward, ResultPlayer} from '../../shared/protocols/MsgRoomSnapshot';
 import type {ResHistory} from '../../shared/protocols/PtlHistory';
+import type {ResPlayerProfile} from '../../shared/protocols/PtlPlayerProfile';
 import {randomBytes, randomUUID} from 'node:crypto';
 import type {InventoryWireRecord} from '../../shared/protocols/PtlInventory';
 import type {KitbagAssignmentResult, KitbagCancellationResult} from './accounts/kitbag-configuration';
@@ -78,6 +79,7 @@ import {
   type GroundItemDiscardContext,
   type GroundItemDiscardResult,
 } from './accounts/ground-items';
+import {readPersistedAccountGrowth, readPersistedPlayerSummary} from './accounts/player-profile';
 
 export interface AccountSession {accountId: string; token: string;}
 export interface AccountInventory {records: InventoryWireRecord[]; hotkeys: number[];}
@@ -237,6 +239,27 @@ export class AccountStore {
   /** Complete nine-award counts from every history row carrying the real award producer. */
   awardCounts(accountId: string): AwardCounts | undefined {
     return readAccountAwardCounts(this.database, accountId);
+  }
+
+  /** Narrow public target profile; absent target throws for the social handler to map. */
+  playerProfile(targetAccountId: string): ResPlayerProfile {
+    if (!this.database.prepare('SELECT id FROM accounts WHERE id = ?').get(targetAccountId)) {
+      throw new Error('目标账户不存在');
+    }
+    const growth = readPersistedAccountGrowth(this.database, targetAccountId);
+    const summary = growth ? undefined : readPersistedPlayerSummary(this.database, targetAccountId);
+    const title = this.currentTitle(targetAccountId);
+    const awards = this.awardCounts(targetAccountId);
+    return {
+      accountId: targetAccountId,
+      name: this.displayName(targetAccountId),
+      ...(growth ? {level: growth.level, score: growth.rankPoints,
+        originality: growth.originality, tech: growth.tech}
+        : summary ? {score: summary.score, originality: summary.originality, tech: summary.tech} : {}),
+      ...(title ? {title} : {}),
+      statistics: this.statistics(targetAccountId),
+      ...(awards ? {awards} : {}),
+    };
   }
 
   /** Current worn badge for other-player projections; never exposes private profile data. */

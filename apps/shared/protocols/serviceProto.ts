@@ -40,6 +40,7 @@ import { ReqPartMaintenance, ResPartMaintenance } from './PtlPartMaintenance';
 import { ReqPartSale, ResPartSale } from './PtlPartSale';
 import { ReqPetShop, ResPetShop } from './PtlPetShop';
 import { ReqPetSkillLearning, ResPetSkillLearning } from './PtlPetSkillLearning';
+import { ReqPlayerProfile, ResPlayerProfile } from './PtlPlayerProfile';
 import { ReqQuickMatch, ResQuickMatch } from './PtlQuickMatch';
 import { ReqReady, ResReady } from './PtlReady';
 import { ReqRematch, ResRematch } from './PtlRematch';
@@ -175,6 +176,10 @@ export interface ServiceType {
             req: ReqPetSkillLearning,
             res: ResPetSkillLearning
         },
+        "PlayerProfile": {
+            req: ReqPlayerProfile,
+            res: ResPlayerProfile
+        },
         "QuickMatch": {
             req: ReqQuickMatch,
             res: ResQuickMatch
@@ -257,7 +262,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 108,
+    "version": 109,
     "services": [
         {
             "id": 55,
@@ -532,6 +537,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
         {
             "id": 56,
             "name": "TankUpgrade",
+            "type": "api"
+        },
+        {
+            "id": 57,
+            "name": "PlayerProfile",
             "type": "api"
         },
         {
@@ -7417,6 +7427,96 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 },
                 {
                     "id": 5,
+                    "name": "awards",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlRoleProfile/AwardCounts"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlPlayerProfile/ReqPlayerProfile": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "targetAccountId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlPlayerProfile/ResPlayerProfile": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "accountId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "level",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "score",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 4,
+                    "name": "originality",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 5,
+                    "name": "tech",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 6,
+                    "name": "title",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/PlayerTitle"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 7,
+                    "name": "statistics",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlRoleProfile/AccountStatistics"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 8,
                     "name": "awards",
                     "type": {
                         "type": "Reference",
