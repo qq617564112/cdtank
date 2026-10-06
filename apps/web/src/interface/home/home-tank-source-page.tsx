@@ -54,7 +54,8 @@ export function HomeTankDescription({ui, description}: {ui: HomeSourceUi; descri
   const suffix = 'myhome_panzerpage.xml';
   const layout = new HomeSourceLayout(ui, suffix);
   return <div {...sourceProps(ui, layout, suffix, 'edtTankDesc')} className="home-tank-description"
-    data-home-tank-description="" data-description-source={description === undefined ? 'unavailable' : 'confirmed-tank-shop'}
+    role="region" aria-label="战车介绍" tabIndex={description ? 0 : -1}
+    data-home-tank-description="" data-description-source={description === undefined ? 'unavailable' : 'original-tank-table'}
     data-presentation-colour="web-readable">{description ?? ''}</div>;
 }
 

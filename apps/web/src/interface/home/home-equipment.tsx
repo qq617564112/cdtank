@@ -7,7 +7,6 @@ import type {ReqEquipment, ResEquipment} from '../../../../shared/protocols/PtlE
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {ResOwnedRoles} from '../../../../shared/protocols/PtlOwnedRoles';
-import type {TankShopProduct} from '../../../../shared/protocols/PtlTankShop';
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import {loadSourceUiFonts} from '../resources/source-ui-fonts';
 import type {HomeSourceControl, HomeSourceUi} from './home-source-layout';
@@ -19,6 +18,7 @@ import {SourceButton} from '../resources/source-button';
 import {SourceStaticText} from '../resources/source-static-text';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {HomeTankDescription, HomeTankOwnedAttributes, HomeTankSourceRegions} from './home-tank-source-page';
+import {sourceTankDescription} from '../resources/role-source-descriptions';
 
 type EquipmentTarget = 'PART' | 'DECORATION' | 'MARK';
 interface Resources {ui: HomeSourceUi; controls: HomeSourceControl[]; catalog: CombatCatalog;}
@@ -64,7 +64,6 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
   const [inventory, setInventory] = useState<ResInventory>();
   const [equipment, setEquipment] = useState<ResEquipment>();
   const [owned, setOwned] = useState<ResOwnedRoles>();
-  const [tankProducts, setTankProducts] = useState<TankShopProduct[]>([]);
   const [page, setPage] = useState<EquipmentTarget>('PART');
   const [candidate, setCandidate] = useState<number>();
   const [busy, setBusy] = useState(false);
@@ -91,11 +90,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
     const controller = new AbortController();
     setResourceError(undefined);
     setResources(undefined); setInventory(undefined); setEquipment(undefined); setOwned(undefined);
-    setTankProducts([]);
     setPage('PART'); setCandidate(undefined); setBusy(true); setStatus('载入部件…');
-    void battle.tankShop({operation: 'QUERY'}).then(result => {
-      if (current.active) setTankProducts(result.tanks);
-    }).catch(() => {if (current.active) setTankProducts([]);});
     void (async () => {
       const [uiResponse, catalogResponse] = await Promise.all([
         fetch('/ui.json', {signal: controller.signal}), fetch('/combat-catalog.json', {signal: controller.signal}),
@@ -216,7 +211,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
           }} />
         <HomeTankSourceRegions ui={resources.ui} />
         <HomeTankDescription ui={resources.ui}
-          description={tankProducts.find(product => product.tankId === fields?.get(0x24))?.info} />
+          description={sourceTankDescription(fields?.get(0x24))} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtMoney"
           text={equipment ? String(new DataView(Uint8Array.from(equipment.profile.bytes).buffer).getUint32(0x70, true)) : ''} />
         <SourceButton ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" source="rdoTank"

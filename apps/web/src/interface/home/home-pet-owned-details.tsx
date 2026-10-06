@@ -54,7 +54,9 @@ export function HomePetOwnedDetails({ui, record, catalog, description, quotes, p
       </span>;
     })}
     <div {...sourceProps(ui, layout, suffix, 'edtPetDesc')} className="home-pet-owned-description"
-      data-home-pet-owned-description="" role="region" aria-label="拥有宠物介绍"
+      data-home-pet-owned-description=""
+      data-description-source={description === undefined ? 'unavailable' : 'original-pet-table'}
+      role="region" aria-label="拥有宠物介绍"
       tabIndex={description ? 0 : -1}>{description ?? ''}</div>
     {selectedSkill && selectedLevel !== undefined && <PetSkillSourceView ui={ui} skill={selectedSkill}
       level={selectedLevel} quote={quote} nextSkill={nextSkill} busy={busy} status={status}

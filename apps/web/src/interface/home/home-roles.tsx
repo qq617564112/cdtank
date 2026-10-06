@@ -1,5 +1,4 @@
 import type {ResPetSkillLearning} from '../../../../shared/protocols/PtlPetSkillLearning';
-import type {TankShopProduct} from '../../../../shared/protocols/PtlTankShop';
 import {HomeResourceFeedback} from './home-resource-feedback';
 import './home.css';
 import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
@@ -16,8 +15,8 @@ import type {HomeSourceControl, HomeSourceUi} from './home-source-layout';
 import {HomeEquipmentPreview} from './home-equipment-preview';
 import {PetModelPreview} from '../resources/pet-model-preview';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
-import type {PetShopProduct} from '../../../../shared/protocols/PtlPetShop';
 import {HomePetOwnedDetails} from './home-pet-owned-details';
+import {sourcePetDescription, sourceTankDescription} from '../resources/role-source-descriptions';
 import {HomeOwnedRoleSourceList} from './home-owned-role-source-list';
 
 type RoleKind = 'tank' | 'pet';
@@ -61,8 +60,6 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const focusAfterCommit = useRef<HTMLButtonElement | null>(null);
   const [ui, setUi] = useState<HomeSourceUi>();
   const [owned, setOwned] = useState<ResOwnedRoles>();
-  const [tankProducts, setTankProducts] = useState<TankShopProduct[]>([]);
-  const [petProducts, setPetProducts] = useState<PetShopProduct[]>([]);
   const [roleCatalog, setRoleCatalog] = useState<CombatCatalog>();
   const [profile, setProfile] = useState<ResRoleProfile['profile']>();
   const [selected, setSelected] = useState<number>();
@@ -161,26 +158,6 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   }
 
   useEffect(() => {
-    if (kind !== 'tank') return;
-    let live = true;
-    setTankProducts([]);
-    void battle.tankShop({operation: 'QUERY'}).then(result => {
-      if (live) setTankProducts(result.tanks);
-    }).catch(() => {if (live) setTankProducts([]);});
-    return () => {live = false;};
-  }, [battle, kind]);
-
-  useEffect(() => {
-    if (kind !== 'pet') return;
-    let active = true;
-    setPetProducts([]);
-    void battle.petShop({operation: 'QUERY'}).then(result => {
-      if (active) setPetProducts(result.pets);
-    }).catch(() => {});
-    return () => {active = false;};
-  }, [battle, kind]);
-
-  useEffect(() => {
     let active = true;
     const controller = new AbortController();
     void fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
@@ -265,7 +242,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
             }} />
           {kind === 'tank' ? <HomeTankSourcePage ui={ui} name={displayed?.name ?? ''} busy={busy} record={displayed}
             money={profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0x70, true) : undefined}
-            quantity={owned?.equipment.length} description={tankProducts.find(product => product.tankId === fields?.get(0x24))?.info}
+            quantity={owned?.equipment.length} description={sourceTankDescription(fields?.get(0x24))}
             selectedInstance={currentId} alreadyUsed={!!displayed && currentId === id(displayed)}
             canUse={!busy && !learningBusy && !!profile && selected !== undefined && currentId !== selected}
             use={event => {void save(event.currentTarget);}} openEquipment={onEquipmentPage} />
@@ -277,7 +254,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
           {kind === 'pet' && <HomePetOwnedDetails ui={ui} record={displayed} catalog={roleCatalog}
             quotes={learning?.quotes} points={learning?.points} busy={busy || learningBusy}
             status={status} learn={(instanceId, slot) => {void learnPetSkill(instanceId, slot);}}
-            description={petProducts.find(product => product.petId === fields?.get(8))?.info} />}
+            description={sourcePetDescription(fields?.get(8))} />}
           <HomeOwnedRoleSourceList ui={ui} kind={kind} selected={selected}
             current={currentId} busy={busy || learningBusy} select={instanceId => {setSelected(instanceId); setStatus('');}}
             entries={records.map(record => {
