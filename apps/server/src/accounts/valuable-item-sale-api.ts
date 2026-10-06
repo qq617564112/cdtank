@@ -11,22 +11,29 @@ export function registerValuableItemSaleApi(server: WsServer<ServiceType>, accou
   server.implementApi('ValuableItemSale', async call => {
     const accountId = identities.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
-    const session = sessions.get(call.conn.id);
+    const accountSessions = [...identities]
+      .filter(([, id]) => id === accountId)
+      .flatMap(([connectionId]) => sessions.get(connectionId) ? [sessions.get(connectionId)!] : []);
     if (call.req.operation === 'SELL') {
       try {
         assertTradeAvailable(accountId);
       } catch (error) {
         return call.error(error instanceof Error ? error.message : '请先结束交易', {code: 'VALUABLE_ITEM_SALE_REJECTED'});
       }
-      if (session && !world.canConfigureInventory(session.playerId)) {
+      if (accountSessions.some(session => !world.canConfigureInventory(session.playerId))) {
         return call.error('请在准备阶段出售贵重品', {code: 'VALUABLE_ITEM_SALE_REJECTED'});
       }
     }
     try {
       const result = accounts.valuableItemSale(accountId, call.req, catalog);
-      if (session && result.sold && !result.replayed) {
-        world.bindInventory(session.playerId, accounts.inventory(accountId), true);
-        broadcast(session.roomId);
+      if (accountSessions.length && result.sold && !result.replayed) {
+        const inventory = accounts.inventory(accountId);
+        const rooms = new Set<string>();
+        for (const session of accountSessions) {
+          world.bindInventory(session.playerId, inventory, true);
+          rooms.add(session.roomId);
+        }
+        for (const roomId of rooms) broadcast(roomId);
       }
       await call.succ(result);
     } catch (error) {
