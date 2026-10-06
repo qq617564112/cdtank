@@ -13,6 +13,13 @@ mode 4/5 的其他参与者按敌对处理。只有敌目标的 `jammer` 为真�
 没有敌目标干扰、同队或本人 marker 不受 detector 限制。该谓词不包含生存和光学隐身判断，
 也不改变世界模型、CPU 目标选择、伤害、碰撞或 actor 绘制。
 
+2010 雷达干扰弹命中写入的 15 秒期限是 13111 静态 jammer 之外的第二个敌对来源：观察者本机
+`PlayerSnapshot.radarJammed` 为真且没有 13112 detector 时，敌对 tactical marker 隐藏。该布尔
+是可选第四参默认源，签名 `canObserveRadarMarker(observer, target, mode,
+radarJammed = observer.radarJammed === true)`；13112 detector 同时抵消 2010 与 13111 jammer，
+本人与 mode1..3 同队 marker 始终可见。这个关系不把 2010 的 Func1 映射为 Func21 grant，
+RadarA/B/C=999 保持字面。
+
 光学隐身继续由 `isHiddenByOpticalCamouflage` 独立过滤。雷达 detector 不能解除光学隐身，
 雷达 jammer 也不能替代光学隐身判断。
 
@@ -20,8 +27,9 @@ mode 4/5 的其他参与者按敌对处理。只有敌目标的 `jammer` 为真�
 
 正式消费者是 `apps/web/src/render/battle-minimap-renderer.ts` 的 tactical marker 循环。
 每个 player marker 继续先执行原有的非本人死亡和光学隐身过滤，再调用
-`canObserveRadarMarker(local, player, snapshot.mode)`。本人死亡 marker 仍由原 LOCAL 分支绘制灰色；
-友方/敌方/VIP 颜色、屏幕 quad、UV、朝向、宽度缩放、actor pose 插值和队伍映射不变。
+三参数 `canObserveRadarMarker(local, player, snapshot.mode)`，默认读取本机 `radarJammed`。
+本人死亡 marker 仍由原 LOCAL 分支绘制灰色；友方/敌方/VIP 颜色、屏幕 quad、UV、朝向、宽度缩放、
+actor pose 插值和队伍映射不变。
 
 ## 来源缺口与验证边界
 

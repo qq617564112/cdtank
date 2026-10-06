@@ -39,6 +39,8 @@ TriggerType现存0/1/2/3/4/5/6/7/8/9/11/12/13/14，Target现存1–6。coverage.
 
 每个FUNC子项按函数/目标/参数/持续的具体来源接入权威状态；原服务端入口缺失时按客户端请求、接收确认和表参数采用明确业务规则，详client-communication-business-rules.md。随后仍须用真人或CPU普通输入验收成功、失败、数量及真实事件。原432b29被动筛选和角色重算已有独立模块证据；不作为FuncType1主动施放完成证据。342技能及204道具的全量业务验收继续由M4-10追踪。
 
+FuncType1的2010雷达干扰弹登记：`skill2010`为`Trigger0/Target1/Range0`Func1`T0`，`skill4008`为`Trigger8/Target1/Range1`Func1`T15`、RadarA/B/C均999、首槽Effect13/SE14。命中后的15秒雷达干扰是独立服务端期限与状态，不是FuncType1全量执行器完成；Radar列保持字面、不相加为被动属性，也不把4008的Func1映射为其它FuncType。取得、期限、marker与注射解除采用规则见client-communication-business-rules.md及ammo10-radar-*.md，FUNC-01保持未勾选。
+
 FuncType2恢复前置已新增原生命赋值合同：433250 selector15先通过record通知12标记属性待同步，再按signed32限制0..record+58，最后按最终变化触发旧生命回调。共享role-health.ts与120次完整原setter/getter及Life调试格式执行一致（test:combat:health、role-health-native.json）。这不证明FuncType2会调用此setter，也不提供未恢复的目标、增量、授权或消耗条件；FUNC-02保持未勾选。详细字段及顺序见combat-field-inventory.md。
 
 角色原属性注册另证明index12=m_iHP、index13=m_iMaxHP，数值type5绑定record+54/+58。原545d40属性写入直接复制signed32值、不经过433250的限制；applyRoleHealthProperty与20例原写读一致。完整34项注册与绑定均由原构造和元数据引擎执行（role-properties-native.json）；网络外层和函数分派仍未完成，不把属性更新等同于技能成功。

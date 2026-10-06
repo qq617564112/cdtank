@@ -66,6 +66,16 @@ Func20只负责地面拾取数量入账：服务端沿既有ground acquire账户
 
 修饰不改变确认后的真实弹药ID、消耗/装填时序或第二条400ms队列，不生成item2022/2023结果，也不新增效果、声音、资源或第二条400ms队列；战斗伤害数字继续使用既有原图片。每次权威重算先清除再由当前来源重建，离开已选来源后恢复普通行为。原server分派、原始X单位及完整玩家授予/取得链仍未恢复，保持FUNC-22/23未勾。
 
+## 雷达干扰弹
+
+对应M2-02/M4-10及FUNC-01/FUNC-10/FUNC-21。原`item2010`为`ItemType`3、`ItemMoney/ItemCoin/GGet`均0、`BattleUseMax`15、`skillIds`2010/4008；`skill2010`为`Trigger0/Target1/Range0`Func1`T0`，`skill4008`为`Trigger8/Target1/Range1`Func1`T15`、RadarA/B/C均999、首槽Effect13/SE14。原完整432951既有合同不把RadarA/B/C相加为被动属性，原4008施加Radar字段的写地址与期限writer未取得；Radar列保持字面，不用它证明原列单位，也不把4008的Func1映射为Func21 grant。
+
+取得与消费采用明确重建规则：mode5现权威BREACH链在`BREACH_POOL`精确加入`item2010`（`[1,2,2010,20001,20002]`），保持总体掉落概率0.5、池内uniform、每项无条件概率0.1；`dropitem`类别2数量1档为`021`/`obj05008`/`A`/`GA21`/`44`。不开放免费Shop或gift。普通pickup只入owned；初次未装槽`battleQuantity=0`，玩家正常退出/等待后经Home weapon槽1..3配置为Battle键2..4，15上限沿用原`BattleUseMax`，沿既有beforeFire/CAS单一路径消费，失败不改库存、不新增第二消费路径。
+
+命中与期限：合法普通2010命中存活敌对目标且实际HP下降被接纳后，写入目标独立`{skillId:4008, expiresAt: now+15000}`；重复命中只刷新期限不叠倍，未命中、免伤、死亡、同队或非2010不作用。期限只影响战术小地图敌对player marker，不改世界/3D可见性、CPU观察、移动、瞄准或开火。快照以真实server clock投影可选Boolean`radarJammed`（schema107/id45，不新结束时间payload）；expiry/death/respawn/Leave/finish/round/loading清状态。普通`item3`在`acceptBattleInput`物品分派前以同一真实`now`推进雷达期限：到期对象先清除，仅剩到期异常时走无异常拒绝且不扣量；未到期状态保留到注射剂CAS成功后才解除，不改正面饮料或无敌。
+
+观察关系：`canObserveRadarMarker`本人和mode1..3同队始终可见，mode4/5其余参与者按敌对；敌对marker在观察者本机`radarJammed`为真且无selected 13112 detector时隐藏，13112同时抵消2010与13111 jammer且不解除光学隐身。实际调用方`battle-minimap-renderer.ts`以三参数调用、默认读取本机布尔。合格2010命中携同受害者roleId的4008首槽`playSkillEffect`时只沿既`SkillNotifications`呈现一份Effect13/SE14，`radarJammed`状态事件只报告状态、不携效果；无该通知的普通2010命中仍走旧`showPlayerResult`。13111/13112合法取得仍无source。原Windows对照、真实双端对局、声画、高清与重启未实测，本批仅一次集中静态走查，M2-02/M4-10及FUNC-01/FUNC-10/FUNC-21父项保持未勾。
+
 ## 结算奖励与账户成长
 
 对应M2-11、M6-02及UI-19/UI-20。原客户端结果接收回调按消息`+c0/+c4/+c8/+cc`读出金钱/星币/创意点/技能点signed整数，`+d4`在同控制器给出WIN/LOSE/DRAW；`439184`读结果对应DataScale率只决定该行显不显示，不对消息值再乘比例。原`datascale.dat`31–34胜利、35–38平局、39–42失败分别给出金钱/星币/技能点/创意点增加百分比+50/−20/−50。原`level.dat`1–20按累计积分阈值0/300/…/399000；21–27为排行榜百分比/名次、98/99为最高女性/男性，均依赖全服排名。

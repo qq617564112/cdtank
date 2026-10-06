@@ -178,6 +178,8 @@ radar = {
 
 光学隐身仍是独立判断，与雷达纯组合：雷达 filter 不能解除 optical camouflage，optical camouflage 也不能自动移除 tactical marker 关系。雷达只过滤 marker，不隐藏 world/CPU actor，不改变伤害、AI 目标选择或世界模型。
 
+2010 雷达干扰弹的 15 秒期限是这一关系的第二个敌对来源：合格命中接纳后目标获得独立 `radarJam` 状态，观察者本机 `PlayerSnapshot.radarJammed` 为真且无 13112 detector 时，敌对 tactical marker 隐藏。它是服务端命中的独立期限，不是 13111 来源，也不把 skill4008 的 `Func1` 当作 Func21 grant；原表 RadarA/B/C=999 保持字面，不相加为被动属性，也不证明原列单位。
+
 ### 消费者 API
 
 ```ts
@@ -188,6 +190,8 @@ canObserveRadarMarker(observer: PlayerSnapshot, target: PlayerSnapshot,
 ```
 
 `canObserveRadarMarker` 先应用本人/队伍关系，再应用敌目标 jammer 与 observer detector 的组合。`selectedSkillIds` 是唯一来源；不读取全局 catalog，不读取 RadarA/B/C。
+
+`canObserveRadarMarker(observer, target, mode, radarJammed = observer.radarJammed === true)` 的第四参是可选 jam 状态；省略时读取观察者本机 `radarJammed`，13112 detector 同时抵消 2010 与 13111 jammer。
 
 当前正式 UI 消费者是 `apps/web/src/render/battle-minimap-renderer.ts`；雷达 marker 的过滤在该 renderer 的正式 tactical marker 消费链中执行。
 
