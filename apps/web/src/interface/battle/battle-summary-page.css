@@ -10,6 +10,11 @@
 .battle-summary-objective { left: 182px; top: 61px; width: 436px; margin: 0; text-align: center; line-height: 17px; }
 .battle-summary-extra-heading { top: 100px; width: 70px; text-align: center; line-height: 18px; }
 .battle-summary-status { left: 64px; top: 506px; width: 711px; font-size: 11px; line-height: 16px; }
+.battle-summary-exp { overflow: hidden; }
+.battle-summary-exp-fill { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-repeat: no-repeat; background-size: 100% 100%; }
+.battle-summary-exp-percent { text-align: center; }
+.battle-summary-level { pointer-events: none; }
+.battle-summary-level-change { pointer-events: none; }
 .battle-summary-rematch { left: 74px; top: 555px; width: 150px; height: 28px; border: 1px solid #8faac7; background: #203c5c; color: #fff; font: inherit; }
 .battle-summary-rematch:disabled { opacity: .6; }
 .battle-summary-stage button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }

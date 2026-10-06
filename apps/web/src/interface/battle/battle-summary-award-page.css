@@ -1,0 +1,54 @@
+[data-summary-award] {
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  max-width: none;
+  max-height: none;
+  background: transparent;
+  color: #fff;
+}
+
+.battle-summary-award-stage {
+  position: relative;
+  width: 800px;
+  height: 600px;
+}
+
+.battle-summary-award-stage [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.battle-summary-award-picture {
+  pointer-events: none;
+}
+
+.battle-summary-award-label {
+  color: #fff;
+}
+
+.battle-summary-award-number {
+  justify-content: flex-end;
+  color: #fff;
+}
+
+.battle-summary-award-close {
+  position: absolute;
+  left: 292px;
+  top: 322px;
+  width: 150px;
+  height: 24px;
+  border: 1px solid #8faac7;
+  background: #203c5c;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.battle-summary-award-close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}

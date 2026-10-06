@@ -1,8 +1,10 @@
 import './battle-summary-page.css';
-import {useEffect, useState} from 'react';
-import type {ResultPlayer} from '../../../../shared/protocols';
+import {useEffect, useRef, useState} from 'react';
+import type {ResultAward, ResultPlayer} from '../../../../shared/protocols';
+import {BattleSummaryAwardPage} from './battle-summary-award-page';
 import {SourceButton} from '../resources/source-button';
 import {SourceStaticImage, SourceImageScale} from '../resources/source-static-image';
+import {SourceStaticText} from '../resources/source-static-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {loadSourceUiFonts} from '../resources/source-ui-fonts';
@@ -26,11 +28,53 @@ const PICTURES = ['shangbuditu', 'daditu1', 'lantiao', 'picCatTeam', 'picCatScor
   'shangbuditu2', 'daditu2', 'lantiao2', 'picDogTeam', 'picDogScore',
   'shangbutiao', 'lantiao3', 'lantiao4', 'xiaobufenditu', 'jiejitubiaoditu', 'xiabuditu1'];
 
+/** Source result icons come from jiejitubiao; every level beyond the catalog stays blank. */
+function levelReference(ui: HomeSourceUi, level: number): string | undefined {
+  const name = `data\\ui\\jiejitubiao\\lv${String(level).padStart(2, '0')}.tga`;
+  const present = ui.imagesets.some(set => set.attributes.Name === 'jiejitubiao0'
+    && set.images.some(image => image.Name === name));
+  return present ? `set:jiejitubiao0 image:${name}` : undefined;
+}
+
+/** Original prgExp bar: the source background plus the ProgressImage clipped to authority percent. */
+function SummaryExp({ui, layout, expPercent}: {ui: HomeSourceUi; layout: HomeSourceLayout; expPercent: number}) {
+  const properties = layout.control('prgExp').properties;
+  const bounds = sourceProps(ui, layout, SUFFIX, 'prgExp', properties.BackgroundImage);
+  const fill = sourceProps(ui, layout, SUFFIX, 'prgExp', properties.ProgressImage);
+  const percent = Math.max(0, Math.min(100, expPercent));
+  return <span {...bounds} className="battle-summary-exp" role="progressbar" aria-label="成长进度"
+    aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} data-summary-exp={expPercent}>
+    <i className="battle-summary-exp-fill" data-source-asset={fill['data-source-asset']}
+      style={{backgroundImage: fill.style.backgroundImage, clipPath: `inset(0 ${100 - percent}% 0 0)`}} />
+  </span>;
+}
+
+/** UI-19 growth band; level change direction and tile are derived from the authoritative before/after levels. */
+function SummaryGrowth({ui, layout, award}: {ui: HomeSourceUi; layout: HomeSourceLayout; award: ResultAward}) {
+  const tile = levelReference(ui, award.levelAfter);
+  return <>
+    <SummaryExp ui={ui} layout={layout} expPercent={award.expPercent} />
+    <SourceStaticText ui={ui} layout={layout} suffix={SUFFIX} name="txtExpPercent"
+      className="battle-summary-exp-percent" text={`${award.expPercent}%`}
+      data-summary-exp-percent={award.expPercent} />
+    {tile && <SourceStaticImage ui={ui} layout={layout} suffix={SUFFIX} name="picLv"
+      reference={tile} className="battle-summary-level" aria-hidden="true"
+      data-summary-level={award.levelAfter} />}
+    {award.levelAfter > award.levelBefore && <SourceStaticImage ui={ui} layout={layout} suffix={SUFFIX}
+      name="picLevelUp" className="battle-summary-level-change" aria-hidden="true" data-summary-level-up="" />}
+    {award.levelAfter < award.levelBefore && <SourceStaticImage ui={ui} layout={layout} suffix={SUFFIX}
+      name="picLevelDown" className="battle-summary-level-change" aria-hidden="true" data-summary-level-down="" />}
+  </>;
+}
+
 /** Original two-team sheet; live match results remain current Web score projections. */
 export function BattleSummaryPage(props: BattleSummaryPageProps) {
+  const stage = useRef<HTMLDivElement>(null);
   const [ui, setUi] = useState<HomeSourceUi>();
   const [error, setError] = useState('');
   const [page, setPage] = useState(0);
+  const [awardOpen, setAwardOpen] = useState(false);
+  const awardShownRound = useRef<number | null>(null);
   const individual = props.mode > 3;
   const ranked = [...props.results].sort((a, b) => a.rank - b.rank);
   const pageCount = individual ? Math.ceil(ranked.length / 12) : Math.max(...[0, 1].map(team => Math.ceil(ranked.filter(p => p.team === team).length / 6)), 1);
@@ -49,7 +93,17 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
     return () => {live = false; controller.abort(); window.removeEventListener('resize', resize);};
   }, []);
   const layout = ui ? new HomeSourceLayout(ui, SUFFIX) : undefined;
+  const award = props.results.find(player => player.id === props.playerId)?.award;
+  useEffect(() => {
+    if (!award || awardShownRound.current === props.round) return;
+    awardShownRound.current = props.round;
+    setAwardOpen(true);
+  }, [award, props.round]);
   const place = (source: string) => sourceProps(ui!, layout!, SUFFIX, source);
+  const closeAward = () => {
+    setAwardOpen(false);
+    stage.current?.querySelector<HTMLButtonElement>('[data-summary-leave]')?.focus();
+  };
   const rowPlace = (source: string, row: string) => {
     const child = place(source), parent = place(row);
     return {...child, style: {...child.style, left: Number(child.style.left) - Number(parent.style.left),
@@ -57,7 +111,7 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
   };
   return <section className="battle-summary-viewport" aria-label="对局结算"
     onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}>
-    <SourceImageScale value={scale}><div className="battle-summary-stage" style={{zoom: scale}}
+    <SourceImageScale value={scale}><div ref={stage} className="battle-summary-stage" style={{zoom: scale}}
       data-battle-summary-page="" data-summary-round={props.round} aria-busy={!ui}>
       {ui && <>
         {PICTURES.filter(name => !individual || !['picCatTeam', 'picDogTeam'].includes(name)).map(name => <SourceStaticImage key={name} ui={ui} layout={layout!} suffix={SUFFIX}
@@ -86,6 +140,7 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
             </div>;
           });
         })}
+        {award && <SummaryGrowth ui={ui} layout={layout!} award={award} />}
         <SourceButton ui={ui} layout={layout!} suffix={SUFFIX} source="btnClose" disabled={props.pending}
           aria-label="退出房间返回大厅" data-summary-leave="" onClick={props.leave} />
       </>}
@@ -106,5 +161,6 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
       </button>
       {!ui && <button type="button" className="battle-summary-loading-leave" onClick={props.leave}>返回大厅</button>}
     </div></SourceImageScale>
+    {ui && award && awardOpen && <BattleSummaryAwardPage ui={ui} award={award} close={closeAward} />}
   </section>;
 }
