@@ -12,7 +12,7 @@ import {SourceButton} from '../resources/source-button';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
-import type {AccountTitles, ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
+import type {AccountStatistics, AccountTitles, AwardCounts, ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
 import type {ReqKitbag} from '../../../../shared/protocols/PtlKitbag';
 import type {Battle} from '../../match/battle';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
@@ -74,6 +74,8 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
   const [playerSummary, setPlayerSummary] = useState<ResRoleProfile['playerSummary']>();
   const [growth, setGrowth] = useState<ResRoleProfile['growth']>();
   const [titles, setTitles] = useState<AccountTitles>();
+  const [statistics, setStatistics] = useState<AccountStatistics>();
+  const [awards, setAwards] = useState<AwardCounts>();
   const [titleStatus, setTitleStatus] = useState('');
   const [titlePending, setTitlePending] = useState(false);
   const [balanceError, setBalanceError] = useState('');
@@ -108,6 +110,7 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
     setResources(undefined); setInventory(undefined); setSelected(0); setName('');
     setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined); setBalanceError('');
     setTitles(undefined); setTitleStatus(''); setTitlePending(false);
+    setStatistics(undefined); setAwards(undefined);
     setBusy(true); setStatus('载入物品…');
     void battle.roleProfile().then(confirmed => {
       if (current.active) {
@@ -115,6 +118,8 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
         setPlayerSummary(confirmed.playerSummary);
         setGrowth(confirmed.growth);
         setTitles(confirmed.titles);
+        setStatistics(confirmed.statistics);
+        setAwards(confirmed.awards);
       }
     }).catch(error => {if (current.active) setBalanceError(String(error));});
     void (async () => {
@@ -240,11 +245,11 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
           suffix="myhome_playerpage.xml" source="xiugainicheng" aria-label="修改昵称"
           data-home-name-open="" disabled={busy || !inventory} onClick={() => setNameOpen(true)} />
         <div data-home-summary-battle-slot="" hidden={summaryTab !== 'battle'} style={{position: 'static'}}>
-          <HomeBattleSummarySourcePage ui={resources.ui} source={battle} />
+          <HomeBattleSummarySourcePage ui={resources.ui} source={battle} statistics={statistics} />
         </div>
         {summaryTab === 'title' && <HomeTitleSummarySourcePage ui={resources.ui} titles={titles} pending={titlePending}
           status={titleStatus} select={titleId => void selectTitle(titleId)} />}
-        {summaryTab === 'award' && <HomeAwardSummarySourcePage ui={resources.ui} />}
+        {summaryTab === 'award' && <HomeAwardSummarySourcePage ui={resources.ui} awards={awards} />}
         <SourceButton ui={resources.ui} layout={new HomeSourceLayout(resources.ui, 'myhome_playerpage.xml')}
           suffix="myhome_playerpage.xml" source="rdoBattleSummary" selected={summaryTab === 'battle'} aria-pressed={summaryTab === 'battle'}
           aria-label="已保存对局统计" data-home-saved-summary-tab="" disabled={busy}

@@ -16,6 +16,7 @@
 .battle-summary-exp-percent { text-align: center; }
 .battle-summary-level { pointer-events: none; }
 .battle-summary-level-change { pointer-events: none; }
+.battle-summary-award { pointer-events: none; }
 .battle-summary-rematch { left: 74px; top: 555px; width: 150px; height: 28px; border: 1px solid #8faac7; background: #203c5c; color: #fff; font: inherit; }
 .battle-summary-rematch:disabled { opacity: .6; }
 .battle-summary-stage button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }

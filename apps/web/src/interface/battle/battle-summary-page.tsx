@@ -1,6 +1,6 @@
 import './battle-summary-page.css';
 import {useEffect, useRef, useState} from 'react';
-import type {ResultAward, ResultPlayer} from '../../../../shared/protocols';
+import type {AwardType, ResultAward, ResultPlayer} from '../../../../shared/protocols';
 import {BattleSummaryAwardPage} from './battle-summary-award-page';
 import {SourceButton} from '../resources/source-button';
 import {SourceStaticImage, SourceImageScale} from '../resources/source-static-image';
@@ -27,6 +27,19 @@ const SUFFIX = 'game_summary.xml';
 const PICTURES = ['shangbuditu', 'daditu1', 'lantiao', 'picCatTeam', 'picCatScore',
   'shangbuditu2', 'daditu2', 'lantiao2', 'picDogTeam', 'picDogScore',
   'shangbutiao', 'lantiao3', 'lantiao4', 'xiaobufenditu', 'jiejitubiaoditu', 'xiabuditu1'];
+/** Stable source order for the five per-row award cells; names drive the accessible label. */
+const AWARDS: readonly {type: AwardType; icon: string; name: string}[] = [
+  {type: 'perfect', icon: 'perfect.tga', name: '完美'},
+  {type: 'mvp', icon: 'mvp.tga', name: '优秀'},
+  {type: 'savage', icon: 'savage.tga', name: '残酷'},
+  {type: 'console', icon: 'console.tga', name: '悲情'},
+  {type: 'brave', icon: 'brave.tga', name: '勇猛'},
+  {type: 'kind', icon: 'kind.tga', name: '慈悲'},
+  {type: 'crafty', icon: 'crafty.tga', name: '狡猾'},
+  {type: 'shy', icon: 'shy.tga', name: '腼腆'},
+  {type: 'greedy', icon: 'greedy.tga', name: '贪婪'},
+];
+const awardIcon = (icon: string) => `set:fenshujiesuan0 image:data\\ui\\fenshujiesuan\\${icon}`;
 
 /** Source result icons come from jiejitubiao; every level beyond the catalog stays blank. */
 function levelReference(ui: HomeSourceUi, level: number): string | undefined {
@@ -133,6 +146,12 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
                 <span className="battle-summary-stats" data-summary-total={player.totalScore}>
                   第{player.rank}名 · 总分 {player.totalScore}<br/>击毁 {player.kills} / 死亡 {player.deaths}<br/>目标 {player.objectivesDestroyed}
                 </span>
+                {AWARDS.filter(award => player.awards?.some(entry => entry.type === award.type)).slice(0, 5)
+                  .map((award, cell) => <SourceStaticImage key={award.type} ui={ui} layout={layout!} suffix={SUFFIX}
+                    name={`pic${teamName}Award${row}_${cell}`} reference={awardIcon(award.icon)}
+                    offsetX={-Number(place(name).style.left)} offsetY={-Number(place(name).style.top)}
+                    className="battle-summary-award" role="img" title={award.name} aria-label={`奖章：${award.name}`}
+                    data-summary-award={award.type} />)}
               </>}
             </div>;
           });
