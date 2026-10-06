@@ -1,0 +1,63 @@
+.source-keyboard {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.source-keyboard-frame {
+  position: absolute;
+  pointer-events: none;
+}
+.source-keyboard-picture {
+  position: absolute;
+  pointer-events: none;
+}
+.source-keyboard .source-keyboard-key,
+.source-keyboard .source-keyboard-check {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+.source-keyboard .source-keyboard-check i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+.source-keyboard .source-keyboard-key:focus-visible,
+.source-keyboard .source-keyboard-check:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.source-keyboard .source-keyboard-key:disabled,
+.source-keyboard .source-keyboard-check:disabled {
+  cursor: default;
+}
+.source-keyboard-status {
+  position: absolute;
+  left: 401px;
+  top: 86px;
+  width: 392px;
+  margin: 0;
+  padding: 4px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 12px;
+  pointer-events: auto;
+}
+.source-keyboard-retry {
+  padding: 2px 10px;
+  border: 1px solid #fff;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+}

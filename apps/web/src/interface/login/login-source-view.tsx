@@ -1,10 +1,12 @@
 import {SourceButton} from '../resources/source-button';
-import {useRef, useState} from 'react';
+import {useLayoutEffect, useRef, useState} from 'react';
 import {SourceStaticImage} from '../resources/source-static-image';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceUi} from '../lobby/source-react';
 import {useRoomInputLimit} from '../lobby/room-input-limit';
+import {roomInputLength} from '../../../../shared/room-input';
 import {SourceEntryPictures, SourceEntrySheet} from './source-entry-sheet';
+import {SourceCharacterKeyboard} from './source-character-keyboard';
 
 export interface LoginSourceViewProps {
   busy: boolean;
@@ -27,12 +29,45 @@ export function LoginSourceView(props: LoginSourceViewProps) {
   const [account, setAccount] = useState(props.savedAccount), [password, setPassword] = useState('');
   const accountInput = useRef<HTMLInputElement>(null), passwordInput = useRef<HTMLInputElement>(null);
   const composing = useRef(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const suppressOpen = useRef(false), pendingCaret = useRef<number | null>(null);
   const accountEvents = useRoomInputLimit(accountInput, 20, setAccount, !!ui);
   const passwordEvents = useRoomInputLimit(passwordInput, 20, setPassword, !!ui);
   const withinLimit = Array.from(account).length <= 20 && Array.from(password).length <= 20;
   const credentials = withinLimit && account.length > 0 && password.length > 0;
   const canLogin = !props.busy && withinLimit && (credentials || (props.hasSavedIdentity && account === props.savedAccount && password === ''));
   const login = () => {if (canLogin && !composing.current) props.onLogin(account, password);};
+  // Keyboard insertion replaces the live selection, rejecting overflow without touching the value.
+  useLayoutEffect(() => {
+    const caret = pendingCaret.current;
+    if (caret === null) return;
+    pendingCaret.current = null;
+    passwordInput.current?.setSelectionRange(caret, caret);
+  }, [password]);
+  function insertCharacter(character: string): void {
+    const element = passwordInput.current;
+    if (!element || props.busy || composing.current) return;
+    const start = element.selectionStart ?? element.value.length, end = element.selectionEnd ?? start;
+    if (document.activeElement !== element) element.focus({preventScroll: true});
+    element.setSelectionRange(start, end);
+    const next = element.value.slice(0, start) + character + element.value.slice(end);
+    if (roomInputLength(next) > 20) return;
+    pendingCaret.current = start + character.length;
+    setPassword(next);
+  }
+  function openKeyboard(): void {
+    if (props.busy) return;
+    suppressOpen.current = false;
+    setKeyboardOpen(true);
+  }
+  function closeKeyboard(returnToPassword: boolean): void {
+    setKeyboardOpen(false);
+    const element = passwordInput.current;
+    if (returnToPassword && element && !props.busy && document.activeElement !== element) {
+      suppressOpen.current = true;
+      element.focus({preventScroll: true});
+    }
+  }
   return <SourceEntrySheet page="login" ui={ui} error={error} busy={props.busy} status={props.status}>
     {ui && layout && <form className="source-entry-form" onSubmit={event => {event.preventDefault(); login();}}
       onCompositionStartCapture={() => {composing.current = true;}}
@@ -50,7 +85,9 @@ export function LoginSourceView(props: LoginSourceViewProps) {
         disabled={props.busy} spellCheck={false} autoCapitalize="none"/>
       <input ref={passwordInput} {...sourceProps(ui, layout, 'login.xml', 'edtPassword')} {...passwordEvents}
         className="source-entry-input" aria-label="密码" type="password" autoComplete="off"
-        value={password} disabled={props.busy}/>
+        value={password} disabled={props.busy}
+        onFocus={() => {if (suppressOpen.current) {suppressOpen.current = false; return;} openKeyboard();}}
+        onPointerDown={() => {suppressOpen.current = false; openKeyboard();}}/>
       <SourceStaticImage ui={ui} layout={layout} suffix="login.xml" name="chkSaveAccount"
         reference={layout.control('chkSaveAccount').properties[props.saveAccount ? 'CheckMarkImage' : 'NormalImage']}
         className="source-entry-picture" aria-hidden="true"/>
@@ -69,6 +106,8 @@ export function LoginSourceView(props: LoginSourceViewProps) {
         disabled={props.busy} onClick={props.onHistoryIntro}/>
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnPaypal" aria-label="充值" disabled/>
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnBuyCoinQ" aria-label="购买代币" disabled/>
+      {ui && layout && <SourceCharacterKeyboard open={keyboardOpen} busy={props.busy} passwordInput={passwordInput}
+        onCharacter={insertCharacter} onClose={closeKeyboard}/>}
     </form>}
   </SourceEntrySheet>;
 }
