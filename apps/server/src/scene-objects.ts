@@ -40,13 +40,14 @@ export function getSceneBreakables(mapId: number): readonly SceneBreakable[] {
   return entries;
 }
 
-/** Original CAS placement and initial HP; attack permission is battle policy. */
-export function getSceneCastles(mapId: number): readonly (SceneBreakable & {hp: number})[] {
+/** Original CAS placement, initial HP and source affiliation; attack permission is battle policy. */
+export function getSceneCastles(mapId: number): readonly (SceneBreakable & {hp: number; affiliation: number})[] {
   const scene = scenes.find(scene => Number(scene.id) === mapId);
   if (!scene) throw new Error(`缺少地图${mapId}的原场景记录`);
   return scene.castles.map(source => ({id: source.id, model: source.model,
     matrix: source.matrix, dimensions: source.bounds,
-    hp: Buffer.from(source.tail!, 'hex').readUInt32LE(4)}));
+    hp: Buffer.from(source.tail!, 'hex').readUInt32LE(4),
+    affiliation: Buffer.from(source.tail!, 'hex').readUInt32LE(8)}));
 }
 
 /** Original Crush identity, enabled bit and OBB, separate from its effect parent. */
