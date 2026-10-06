@@ -31,7 +31,7 @@
 
 0x411c88替换字面反斜线n，0x4c3b27调用原setText，随后0x4c3b31将正文光标位置归零。正文使用原保存字符串原样，不补全源数据的截断结尾、引号或姓名。它们是介绍内容，与账户对局记录无关。
 
-[可复现来源证据](../output/history-intro-content-source.json)保存四份文本、布局、原订阅和完整回调。七个生产组件已接入独立validation入口，整合Web类型检查通过，四份原文、三种分辨率完整页面、自然纵栏、选项重置及关闭焦点已实际验证。原Login入口尚未恢复。缺口为正式原入口的父分派、完整页面滚动及字体/高清实际精度；UI-23/M5-15父项仍未完成。
+[可复现来源证据](../output/history-intro-content-source.json)保存四份文本、布局、原订阅和完整回调。七个生产组件现由普通 Login 页正式入口接入：`login-source-view.tsx` 的 `btnHistory` 调用 `onHistoryIntro`，`app.tsx` 在非 validation 的 login 分支传入 `setHistoryIntroOpen(true)` 并挂载 `HistoryIntroSourceView`。该 Web 入口是当前正式消费者，不代表原认证频道、完整 native 父分派或 QQ 还原。原 `/validation.html` 诊断入口仍保留；validation 整页、自然纵栏、选项重置及关闭焦点证据仍只覆盖该入口，不能移作正式 Login 按钮、Close 焦点、键盘或高清新验收。完整页面滚动及字体/高清实际精度仍未验收，UI-23/M5-15 父项保持未完成。
 
 ## 原纵栏合同
 
@@ -41,6 +41,6 @@
 
 ## 页面实际范围
 
-入口为明确的 `/validation.html` 验证页按钮 `[data-open-history-intro]`，不计为原Login导航。四原页在800×600、1920×1080、3840×2160保原800×600几何；只读正文与gamestring737–740逐字一致，选项互斥，切换后正文滚动及caret归零。完整页面与返回按钮位于可用视口内，窗口打开时隐藏宿主滚动条，关闭后恢复宿主原overflow及严格opener焦点。Escape在down记录、up关闭。
+当前正式入口为普通 Login 页的 `btnHistory`；`/validation.html` 的 `[data-open-history-intro]` 继续作为诊断入口。两条路径挂载同一 `HistoryIntroSourceView`。四原页在800×600、1920×1080、3840×2160保原800×600几何；只读正文与gamestring737–740逐字一致，选项互斥，切换后正文滚动及caret归零。完整页面与返回按钮位于可用视口内，窗口打开时隐藏宿主滚动条，关闭后恢复宿主原overflow及严格opener焦点。Escape在down记录、up关闭。该 validation 证据仅覆盖原范围，不构成正式 Login 按钮、Close 焦点、键盘和 HD 新验收；正式入口实际网页尚未测试。
 
-[实际证据](../output/history-intro-source-page-accepted.json)关联12张完整画面、原纵栏操作、网络只读请求及进程清理。原登录认证/频道、正式Login入口及完整字体精度保持独立缺口；现AccountHistory、Settings及Key业务未改。
+[实际证据](../output/history-intro-source-page-accepted.json)关联12张完整画面、原纵栏操作、网络只读请求及进程清理。原登录认证/频道、完整 native 父分派、QQ 还原及完整字体精度保持独立缺口；现 AccountHistory、Settings 及 Key 业务未改。
