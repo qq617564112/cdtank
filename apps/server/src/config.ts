@@ -16,6 +16,26 @@ export interface TankConfig {
   backDefense: number;
 }
 
+/** Original per-map award enable/score columns and the four source threshold pairs. */
+export interface ModeAwardConfig {
+  enable: number;
+  score: number;
+  damage?: number;
+  damagePlus?: number;
+}
+
+export interface ModeAwardsConfig {
+  perfect: ModeAwardConfig;
+  mvp: ModeAwardConfig;
+  savage: ModeAwardConfig;
+  console: ModeAwardConfig;
+  brave: ModeAwardConfig;
+  kind: ModeAwardConfig;
+  crafty: ModeAwardConfig;
+  shy: ModeAwardConfig;
+  greedy: ModeAwardConfig;
+}
+
 export interface ModeMapConfig {
   description?: string;
   mapId: number;
@@ -36,6 +56,7 @@ export interface ModeMapConfig {
   loseScore: number;
   drawScore: number;
   timeScore: number;
+  awards: ModeAwardsConfig;
 }
 
 interface SourceTable {
@@ -70,6 +91,21 @@ export const MAPS: ModeMapConfig[] = [1, 2, 3, 4, 5].flatMap(mode =>
     brokenScore: Number(row.BrokenScore), winScore: Number(row.WinScore),
     loseScore: Number(row.LoseScore), drawScore: Number(row.DrawScore),
     timeScore: Number(row.TimeScore),
+    awards: {
+      perfect: {enable: Number(row.Perfect), score: Number(row.PerfectScore)},
+      mvp: {enable: Number(row.MVP), score: Number(row.MVPScore)},
+      savage: {enable: Number(row.Savage), score: Number(row.SavageScore),
+        damage: Number(row.SavageDamage), damagePlus: Number(row.SavageDamagePlus)},
+      console: {enable: Number(row.Console), score: Number(row.ConsoleScore),
+        damage: Number(row.ConsoleDamage), damagePlus: Number(row.ConsoleDamagePlus)},
+      brave: {enable: Number(row.Brave), score: Number(row.BraveScore)},
+      kind: {enable: Number(row.Kind), score: Number(row.KindScore),
+        damage: Number(row.KindDamage), damagePlus: Number(row.KindDamagePlus)},
+      crafty: {enable: Number(row.Crafty), score: Number(row.CraftyScore),
+        damage: Number(row.CraftyDamage), damagePlus: Number(row.CraftyDamagePlus)},
+      shy: {enable: Number(row.Shy), score: Number(row.ShyScore)},
+      greedy: {enable: Number(row.Greedy), score: Number(row.GreedyScore)},
+    },
   })));
 
 export const TITLE_TABLE = readTable('title');

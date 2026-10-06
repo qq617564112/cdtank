@@ -1,216 +1,222 @@
 # 账户统计与九奖章正式业务设计（M6-05 / M2-11 剩余统计与奖项）
 
-本文在缺原服务器程序的前提下，从已发布 `title.dat`/`m001..m005.dat` 列、源客户端结果/奖项显示与既有真实战斗、结算、账户事务链，给出可直接接线的统计与九奖章业务规则。原事实与采用规则分列；未取得原 producer 的字段用明确采用政策补齐，绝不写成原事实，也不从缺失 raw 字段（含字段0）造奖。奖励货币本身不在本文范围，仍由 M6-02 `settlement/reward.ts` 负责。
+本文定义账户统计、九奖章、结算冻结和下一批 battle/account/UI 的接口。来源分为两类：`title.dat`、`m001..m005.dat` 已验证表和源客户端结果/显示链的直接事实；原 server writer 未取得而由本项目明确采用的判定政策。采用政策不写成原事实，也不从缺失字段或默认零值造奖。
 
-依赖既有 `World.finishRoom → settlement/history.accountMatchHistory → AccountStore.recordMatchHistory → accounts/history.record` 同一 SQLite 事务；统计与奖项复用 `settled_matches(match_id,round)`/`match_history(account_id,match_id,round)`/`account_reward_ledger` 的 exactly-once 门，不新增独立结算入口。
-
-## 交付范围
-
-- 真实 producer：`shots`、`hits`、`damage`（含真实 HP 减少的异常/场景路径归属）、`killCombo`、`spentMoney`、`spentTokens`。
-- 九奖章 `Perfect/MVP/Savage/Console/Brave/Kind/Crafty/Shy/Greedy` 的判定与每局冻结、账户累计。
-- 依赖这些统计的 `title.dat` 剩余称号（命中/发射/伤害/连杀/奖项/花费）与 `m00x` 九奖章 `FunctionType 8/9/10` 正式 producer。
-- 本机 Home 战绩统计、Home 九奖章计数、`game_summary` 每局奖章图标三个显示消费者接权威数据。
-
-不关闭：原 `game_summary.xml` 185 控件 1:1、原 Windows 对照、完整字体/像素、原奖章图标选取事件的 1:1 还原。
+奖励货币和账户成长仍由 M6-02 `settlement/reward.ts` 负责。统计、奖项、称号与冻结战绩复用既有 `World.finishRoom → settlement/history.accountMatchHistory → AccountStore.recordMatchHistory → accounts/history.record` 链和 `settled_matches(match_id,round)`/`match_history(account_id,match_id,round)` 的 exactly-once 门，不新增独立结算入口。
 
 ## 原来源事实
 
-| 范围 | 原来源事实（已发布可读） |
+| 范围 | 已发布直接来源 |
 | --- | --- |
-| 称号表 | `CDTank/Data/table/title.dat` 实读 158 行，列 `称号ID/称号名称/说明/FunctionType/FunctionX/FunctionY/FunctionZ/a/b/c`（`recovery/output/verified/tables/title.csv`）。 |
-| 统计选择器 | `FunctionX/Y/Z`：1 获胜、2 失败、3 打和、4 连胜、5 连败、6 战斗总时间(秒)、7 击毁、8 被击毁、9 发射总数、10 命中总数、11 连续击毁、12 造成伤害总数、13 花费总数、15 完美、16 优秀(MVP)、17 残酷(Savage)、18 悲情(Console)、19 勇猛(Brave)、20 慈悲(Kind)、21 狡猾(Crafty)、22 腼腆(Shy)、23 贪婪(Greedy)。 |
-| 九奖章列 | `m001.dat`–`m005.dat` 实读 26 行组合，每行含 `Perfect/PerfectScore`、`MVP/MVPScore`、`Savage/SavageDamage/SavageDamagePlus/SavageScore`、`Console/ConsoleDamage/ConsoleDamagePlus/ConsoleScore`、`Brave/BraveScore`、`Kind/KindDamage/KindDamagePlus/KindScore`、`Crafty/CraftyDamage/CraftyDamagePlus/CraftyScore`、`Shy/ShyScore`、`Greedy/GreedyScore`（列序见 `recovery/output/verified/tables/m00*.json`）。`datascale.dat` 无奖章行，只有胜负/平局的金钱/星币/技能点/创意点百分比（ID 31–42），不是奖章来源。 |
-| 奖章标志 | 26 行实际值：`Perfect/MVP/Savage/Console/Brave/Kind/Crafty/Shy/Greedy` 全部为 1（该模式启用），无 0 行；`SavageDamage=200`、`ConsoleDamage=100`、`KindDamage=100`（模式4为50）、`CraftyDamage=100`（模式4为50）及其 `DamagePlus` 为原始列值。 |
-| 结果奖励显示 | `result-reward-display-native.json`：回调 `0x4ac736` 读取本局结果消息 `+c0→txtMoney/+c4→txtCoin/+c8→txtOriginality/+cc→txtTech`，signed int32 `%d` 直接显示；与本机 `ResultPlayer.award` 一一对应。 |
-| 普通射击链 | 源 4288fe 自由瞄准分支即时调用 423956→489ba8（item2001→skill4020→Effect7/SE30）；玩家实体命中链为本机/远端 3aa3 到 424614，trigger8 经 4886aa 提交受害者 selector。现 Web 对应 `apps/server/src/battle/actors.ts` 的 `beforeFire`→`fireProjectile` 与 `apps/server/src/world.ts` 的 `resolveShotPlayerHit`→`applyPlayerDamage`。 |
-| 射击结果字段 | `apps/shared/protocols/MsgRoomEvent.ts`：`hit` 事件携带真实 `value`(damage) 与可选 `shotPlayerResult:{itemId,critical}`；另有 `friendlyFire`/`immuneHit` 不减少 HP。免伤/抵消/友伤当前走独立分支，不产生真实 HP 减少。 |
-| 结算链 | `World.finishRoom`（world.ts:726）冻结 `ResultPlayer{team,rank,name,kills,deaths,objectivesDestroyed,combatScore,outcomeBonus,totalScore,outcome}`；`settlement/history.ts:accountMatchHistory.committed` 按账户去重后交给 `accounts/history.record` 的 `BEGIN IMMEDIATE`，经 `RewardGrant` 在同一事务内写奖励。 |
-| 消费收据表 | `shop_purchases`、`tank_purchases`、`pet_purchases`、`part_maintenance`、`tank_maintenance`、`trade_receipts`，均以 `(account_id,request_id)` 或 `session_id` 主键；出售/退款在独立的 `stack_item_sales/part_sales/owned_role_sales`。 |
-| 账户字段 | `role_profiles`：金钱 `0x70`、星币 `0x74`、积分 `0x5c`、原始 `0x9c`、技能点 `0xa0`；Home 统计/奖章控件来自 `myhome_playerpage_battlesummary.xml`/`myhome_playerpage_awardsummary.xml`，结算奖章格来自 `game_summary.xml` 的 `picCatAward{i}_{0..4}/picDogAward{i}_{0..4}`（每队每玩家5格，共60控件）。 |
-| 缺失 | 原服务器奖章判定 writer、`shots/hits/damage/killCombo/spend` writer、原奖章图标选取事件与 `m00x` 原始消费点均未取得。 |
+| 称号目录 | `CDTank/Data/table/title.dat` 的158行及 `称号ID/称号名称/说明/FunctionType/FunctionX/FunctionY/FunctionZ/a/b/c` 列，已验证副本为 `recovery/output/verified/tables/title.json`。 |
+| 统计选择器 | `FunctionX/Y/Z`：1获胜、2失败、3打和、4连胜、5连败、6战斗总时间(秒)、7击毁、8被击毁、9发射总数、10命中总数、11连续击毁、12造成伤害总数、13花费总数、15完美、16优秀(MVP)、17残酷(Savage)、18悲情(Console)、19勇猛(Brave)、20慈悲(Kind)、21狡猾(Crafty)、22腼腆(Shy)、23贪婪(Greedy)。 |
+| 九奖章列 | `m001.dat`–`m005.dat` 共26行，每行包含 `Perfect/PerfectScore`、`MVP/MVPScore`、`Savage/SavageDamage/SavageDamagePlus/SavageScore`、`Console/ConsoleDamage/ConsoleDamagePlus/ConsoleScore`、`Brave/BraveScore`、`Kind/KindDamage/KindDamagePlus/KindScore`、`Crafty/CraftyDamage/CraftyDamagePlus/CraftyScore`、`Shy/ShyScore`、`Greedy/GreedyScore`，已验证副本为 `recovery/output/verified/tables/m00*.json`。 |
+| 奖章表值 | 26行的九个enable列均为1；`SavageDamage=200`、`ConsoleDamage=100`；`KindDamage`和`CraftyDamage`为100，mode4为50；对应 `DamagePlus` 为30，mode4为15。各 `*Score` 直接取原行值。 |
+| 结果显示 | `result-reward-display-native.json` 的回调 `0x4ac736` 读取本局结果消息并显示货币/成长数量；`game_summary` 每名玩家的奖章格只有5个，源类型显示顺序为 Perfect、MVP、Savage、Console、Brave、Kind、Crafty、Shy、Greedy。 |
+| 射击链 | 源4288fe自由瞄准分支即时调用423956→489ba8；本机对应 `actors.ts` 的 `beforeFire`→`fireProjectile`，玩家命中对应 `world.ts` 的 `resolveShotPlayerHit`→`applyPlayerDamage`。 |
+| 命中事件 | `MsgRoomEvent` 的 `hit` 携带真实 `value` 和可选 `shotPlayerResult:{itemId,critical}`；`friendlyFire`/`immuneHit` 当前走独立分支。 |
+| 结算冻结 | `World.finishRoom` 冻结 `ResultPlayer{team,rank,name,kills,deaths,objectivesDestroyed,combatScore,outcomeBonus,totalScore,outcome}`；账户回执在 `settlement/history.ts` 按账户去重后与战绩同事务提交。 |
+| 消费收据 | `shop_purchases`、`tank_purchases`、`pet_purchases`、`part_maintenance`、`tank_maintenance`、`trade_receipts` 以 `(account_id,request_id)` 或 `session_id` 去重；出售/退款在独立的 `*_sales` 表。 |
 
-## 采用规则
+## 统计合同
 
-以下条件均由本局/本账户真实可算数据判定，选择明确且可逆；不冒称原判定等价。
+### 每局字段
 
-### 真实 producer 归属
-
-| 统计 | 真实边界（采用） | 计入 / 不计入 |
-| --- | --- | --- |
-| `shots` | `apps/server/src/battle/actors.ts` `advanceActors` 中 `handlers.beforeFire` 返回真、`fireProjectile` 之前的同一接受点。 | 只计普通 2001 接受开火一次；装填未就绪、弹匣/库存 CAS 拒绝、`beforeFire` 拒绝、选弹/技能施放不计。 |
-| `hits` | `apps/server/src/world.ts` `resolveShotPlayerHit`：普通接受射击真实命中敌方角色且 `hpAfter < hpBefore`。 | 一次接受射击对一个真实敌方角色计一次；免疫 `immuneHit`、抵消、友伤（不减少 HP）不计；DoT/burn、空袭、地雷、直接技能不冒充普通命中，不计入 `hits`。 |
-| `damage` | `apps/server/src/world.ts` `applyPlayerDamage` 与直接伤害入口 `hitGroundSkill`（旧炸弹/空袭/地雷→`damagePlayerDirectly`）：按 `hpBefore-hpAfter` 的真实 HP 减少累加。 | 计对敌方角色的真实 HP 减少，含普通射击、burn、空袭、地雷、直接技能；友伤、免伤、抵消、场景物件/目标破坏不计（非角色 HP）。受击方 `damageTaken` 同步累加。 |
-| `killCombo` | `apps/server/src/world.ts` `commitPlayerDeath` 在敌方角色被真实击毁时对攻击者递增当前连段并更新本局最大；被击毁玩家自身连段清零。 | 只在真实击毁（`finalizePlayerDeath` 已递增 `attacker.kills` 的敌方）递增；友伤击毁不增；玩家自身死亡清零；`startRoom` 新 round 初始化清零。 |
-| `spentMoney`/`spentTokens` | 结算时对已 COMMIT 的 `shop_purchases`/`tank_purchases`/`pet_purchases`/`part_maintenance`/`tank_maintenance`/`trade_receipts` 求和，按原表价格或收据 `cost`/`offers.money` 还原实际支付。 | 买与数量按原价（`unitPrice×quantity`）算实际支付，不是余额差；出售/退款（`*_sales`）、失败回滚、未 COMMIT 请求不计；同 `(account_id,request_id)` 重放是主键 replay、不新增行，不重复计。宠物技能学习用技能点(`0x80`)不是金钱/星币，不计；战车迷彩无请求收据表，暂不计入。交易只贡献给方 `offers.money`（金钱），星币不在交易报价内。 |
-
-### 九奖章采用条件
-
-`score` 恒为该地图行的 `*Score` 列字面值作为本局加分（不是达成阈值）；`*Damage`/`*DamagePlus` 才是阈值列。奖章判定按冻结的本局 `RoundStats` 与冻结结果计算，每局每人每类型至多一次。
-
-| 奖章 | 采用条件（本局真实判定） | 唯一性 / tie | 模式资格 |
-| --- | --- | --- | --- |
-| Perfect | `deaths==0` 且 `kills+objectivesDestroyed>=1` | 达标者都可获得 | 该行 `Perfect==1` |
-| MVP | 本局最高 `totalScore` | 每队1名（mode1–3），mode4/5全局1名；平手依次比 `kills`、`objectivesDestroyed`、较小 `playerId` | 该行 `MVP==1` |
-| Savage | `damage>=SavageDamage`（含 `DamagePlus` 阶梯只影响列值，不额外多发） | 达标者都可获得 | 该行 `Savage==1` |
-| Console | `damageTaken>=ConsoleDamage` 且 `deaths>=1` | 达标者都可获得 | 该行 `Console==1` |
-| Brave | `deaths>=1` 且 `kills>=1`（阵亡前有击毁） | 达标者都可获得 | 该行 `Brave==1` |
-| Kind | mode≤3 且 `kills==0` 且 `friendlyFireDamage==0` | 达标者都可获得 | 该行 `Kind==1` |
-| Crafty | `deaths==0` 且 `damageTaken>=CraftyDamage` | 达标者都可获得 | 该行 `Crafty==1` |
-| Shy | `shots==0`（本局未发射） | 达标者都可获得 | 该行 `Shy==1` |
-| Greedy | 本局最高 `damage` | mode4/5全局1名；平手比 `kills`、较小 `playerId` | 该行 `Greedy==1` |
-
-规则说明：
-
-1. `awards[].score` 求和后加入该玩家本局 `combatScore`（一次性冻结），随既有 `totalScore`/reward 链走；不改变 `outcomeBonus` 语义。`coin` 仍无基础授权保持 0。
-2. 奖章是**本局成就**、计入账户累计次数；不是默认赠送，不是胜负/击杀冒充。CPU 与旁观无 accountId 不写账户。
-3. 只有该地图行对应标志为 1 才判定该奖章；标志为 0 不判定。
-
-### 称号补齐采用
-
-新增 producer 后，`title.dat` 剩余条件按既有 `FunctionType` 逐条判定（表列值为准，`说明` 文本仅参考）：
-
-- `FunctionType 2`（36–41）：`hits/shots` 命中率 `X*100 > Z*b`，`X` 为命中/发射选择器。
-- `FunctionType 1/6/7` 涉及 `damage`（68–72）、`hits`（145–148）、`killCombo`（42–46）：按新增累计列判定。
-- 花费（149–154）：`spent_money`/`spent_tokens` 按 `说明` 的金钱/代币分别映射到选择器 13 的两个 typed 列；同选择器不再混用。
-- 奖项（73–144、155）：选择器 15–23 读 `account_award_stats` 九计数。
-- `156 一技之长`（`FunctionType 8`）= `max(awardCounts)>=a`；`157 大满贯`（`FunctionType 9`）= `min(awardCounts)>=a`；`158 奇货可居`（`FunctionType 10`）= `ownedTitleCount>a`，`ownedTitleCount` 取 `account_titles` 实际行数。
-- 任一所需统计未产出/为未知时该称号不授予；不因缺字段0填默认值造奖，不新增取数 API/poll。
-
-## 最小共享合同
-
-只扩既有 `MsgRoomSnapshot`/`PtlRoleProfile`/`PtlHistory` 可选字段，不新增 API、不新增 poll。
+`MsgRoomSnapshot` 的正式 shared 合同为：
 
 ```ts
-// apps/shared/protocols/MsgRoomSnapshot.ts
 export type AwardType = 'perfect' | 'mvp' | 'savage' | 'console' | 'brave'
   | 'kind' | 'crafty' | 'shy' | 'greedy';
 
 export interface RoundStats {
-  shots: number; hits: number; damage: number; damageTaken: number;
-  killCombo: number;            // 本局最大连续击毁
+  shots: number;
+  hits: number;
+  damage: number;
+  damageTaken: number;
+  killCombo: number;
   friendlyFireDamage: number;
+  healing: number;
+  rearDamage: number;
 }
 
-export interface RoundAward {type: AwardType; score: number;}
+export interface RoundAward {
+  type: AwardType;
+  score: number;
+}
 
 export interface ResultPlayer {
-  /* 既有字段不变 */
+  // 既有字段保持不变。
   roundStats?: RoundStats;
   awards?: RoundAward[];
-  award?: ResultAward;          // 既有本局货币/成长 receipt
-  awardCounts?: Partial<Record<AwardType, number>>;  // 本局九奖章各计1
 }
 ```
+
+每局次数由真实 unique `awards` 列表推导，每种奖项每人每局至多一次；`ResultPlayer.award` 仍保留既有货币/成长回执。
+
+### Producer 语义
+
+| 字段 | 真实 producer 规则 |
+| --- | --- |
+| `shots` | 不限2001：真实已接受并实际发射的普通当前ammo每次一。Func22/23只是modifier，不额外加一次；CAS拒绝、0.4 pending取消、尚未真正fire不计。 |
+| `hits` | 同一ordinary ammo链在成功、非healing、敌对角色HP真实减少时，每shot至多一；DOT/direct airstrike/trap不冒充shot。自然保持 `shots >= hits`。 |
+| `damage` | 敌对role真实HP减少，按实际减少量并在overkill时clamp；包含burn/airstrike/trap，不含scene HP。 |
+| `damageTaken` | 敌方造成的自身role真实HP减少；友伤只进入独立的 `friendlyFireDamage`。 |
+| `friendlyFireDamage` | 友方实际造成HP减少时另计，不把全项目友伤描述为永不掉HP。 |
+| `healing` | 真实恢复非自己友方HP，沿实际medical ammo链，clamp到目标max HP。 |
+| `rearDamage` | 实际背面分类造成的敌对HP减少，沿既有damage facet/bearing来源；纯domain不猜selector。 |
+| `killCombo` | 本人无死亡期间最大真实enemy kill；死亡和新的round清零。 |
+
+敌我判定复用实际mode规则。mode4/5不能因同team数字当友军；battle producer必须给出真实敌对/友方分类。`healing` 与 `rearDamage` 由下一battle worker生产，纯awards模块只读取冻结stats；即使值为0，也按真实比较参与阈值，是否实际参赛仍由 `playedSeconds > 0` 和对应实际contribution资格决定。
+
+### 账户字段
 
 ```ts
-// apps/shared/protocols/PtlRoleProfile.ts
-export interface AccountStatistics extends RoundStats {
-  wins: number; losses: number; draws: number;
-  winStreak: number; loseStreak: number; battleSeconds: number;
-  kills: number; deaths: number;
-  spentMoney: number; spentTokens: number;
+export interface AccountStatistics {
+  wins: number;
+  losses: number;
+  draws: number;
+  winStreak: number;
+  loseStreak: number;
+  battleSeconds: number;
+  kills: number;
+  deaths: number;
+  shots?: number;
+  hits?: number;
+  damage?: number;
+  killCombo?: number;
+  spentMoney?: number;
+  spentTokens?: number;
 }
+
+export interface AwardCounts {
+  perfect: number;
+  mvp: number;
+  savage: number;
+  console: number;
+  brave: number;
+  kind: number;
+  crafty: number;
+  shy: number;
+  greedy: number;
+}
+
 export interface ResRoleProfile {
-  /* 既有 playerSummary/profile/growth/titles 不变 */
+  // 既有 playerSummary/profile/growth/titles 保持不变。
   statistics?: AccountStatistics;
-  awards?: Partial<Record<AwardType, number>>;
+  awards?: AwardCounts;
 }
 ```
 
-`PtlHistory.MatchHistoryRecord.result` 复用同一 `ResultPlayer`，因此 `roundStats/awards` 随战绩查询免费返回，Home 统计消费者无需新请求。
+历史缺统计不猜0，新增optional字段只在真实producer/ledger存在时附值。`battleSeconds` 沿当前title已记录的seconds窗口；旧history缺秒不猜 `timeLimit`。累计awards按真实unique `awards[].type` 计数，不按UI可见的5格裁掉。
 
-## 持久结构
+## 九奖章采用政策
 
-沿既有 `AccountStore`/`AccountHistory` 的 SQLite，用项目正常 `CREATE TABLE IF NOT EXISTS`，不建 migration/feature flag/hash。`account_title_stats`/`account_titles`/`account_title_selection` 沿用 title-client-business-design 定义的表（该批尚未接线时首次创建），保留主键与 exactly-once 语义，并新增明确类型列：
+九奖章的enable、threshold和score都从对应map行的原列读取；没有cap，也不建立另一张评分表。
 
-```sql
-ALTER TABLE account_title_stats ADD COLUMN shots INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE account_title_stats ADD COLUMN hits INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE account_title_stats ADD COLUMN damage INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE account_title_stats ADD COLUMN kill_combo INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE account_title_stats ADD COLUMN spent_money INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE account_title_stats ADD COLUMN spent_tokens INTEGER NOT NULL DEFAULT 0;
+### Config 合同
 
-CREATE TABLE IF NOT EXISTS account_award_stats (
-  account_id TEXT PRIMARY KEY,
-  perfect INTEGER NOT NULL DEFAULT 0, mvp INTEGER NOT NULL DEFAULT 0,
-  savage INTEGER NOT NULL DEFAULT 0, console INTEGER NOT NULL DEFAULT 0,
-  brave INTEGER NOT NULL DEFAULT 0, kind INTEGER NOT NULL DEFAULT 0,
-  crafty INTEGER NOT NULL DEFAULT 0, shy INTEGER NOT NULL DEFAULT 0,
-  greedy INTEGER NOT NULL DEFAULT 0);
+```ts
+export interface ModeAwardConfig {
+  enable: number;
+  score: number;
+  damage?: number;
+  damagePlus?: number;
+}
+
+export interface ModeAwardsConfig {
+  perfect: ModeAwardConfig;
+  mvp: ModeAwardConfig;
+  savage: ModeAwardConfig;
+  console: ModeAwardConfig;
+  brave: ModeAwardConfig;
+  kind: ModeAwardConfig;
+  crafty: ModeAwardConfig;
+  shy: ModeAwardConfig;
+  greedy: ModeAwardConfig;
+}
+
+export interface ModeMapConfig {
+  // 既有map字段保持不变。
+  awards: ModeAwardsConfig;
+}
 ```
 
-`account_title_stats`/`account_award_stats` 由统计/称号模块拥有；`rank_points/level/originality/tech` 仍归 M6-02 `account_growth`，两表互不覆写。新增列只承载真实 producer；未产出字段保持默认且不参与授予。
+`MAPS` 逐map把九个原enable/score列，以及Savage/Console/Kind/Crafty的原始Damage/DamagePlus列写入 `awards`。`*Score` 按字面值使用，包括Kind 0、Crafty/Shy负分和mode5较低的Savage/Brave分；enable非1不授。
 
-## 最小接口
+### 共同资格
 
-| 接口 | 归属 | 责任 |
-| --- | --- | --- |
-| `actorHandlers.onAcceptedShot?()` | battle | `advanceActors` 在 `beforeFire` 通过后、`fireProjectile` 前调用；World 累加 `shots`。 |
-| `recordRoundDamage(owner,target,beforeHp)` | battle | 单一 HP 差分累加点，用于 `applyPlayerDamage` 与直接伤害入口；`hits` 仅由 `resolveShotPlayerHit` 在真实命中时追加。 |
-| `settleAwards(mapRow, players)` | battle（新 `settlement/awards.ts` 纯函数） | 依上表返回每人 `RoundAward[]`；不依赖 World 可变态。 |
-| `AccountStatistics.applyMatch(accountId, result, match)` | account（新 `accounts/statistics.ts`） | 在既有 `BEGIN IMMEDIATE` 内用冻结 `RoundStats/RoundAward` 累加 `account_title_stats`/`account_award_stats`；同 `(account,match,round)` 由 `settled_matches` 门保证一次。 |
-| `AccountStatistics.spending(accountId, catalogs)` | account | 读既有消费收据表求和；纯查询，不新增购买 hook。 |
-| `evaluateTitleGrants(defs, stats, awards, ownedCount)` | account（新 `settlement/title.ts`） | 同事务内评估并插入 `account_titles`；缺统计不授予。 |
+- 参与者必须在本局实际 `playedSeconds > 0`。旁观和未形成真实参赛stats的玩家跳过。
+- 每名玩家每类型至多产生一个 `RoundAward`。
+- `awards[].score` 在冻结结算时只加入一次 `combatScore`，`outcomeBonus` 不变。
+- 所有真实获奖记录都保留，最多9项；UI只显示每行固定顺序的前5项，不删除其余记录或账户计数。
+- CPU有真实本局stats时可以取得本局显示奖章，但账户层按account身份跳过；没有accountId不写累计。
 
-## 按文件实施归属
+### 判定
 
-### Lane A：battle perroundstats + award frozen receipt
-
-| 文件 | 改动 |
+| 奖章 | 采用条件 |
 | --- | --- |
-| `apps/shared/protocols/MsgRoomSnapshot.ts` | 新增 `AwardType/RoundStats/RoundAward` 与 `ResultPlayer.roundStats/awards/awardCounts?` 可选字段。 |
-| `apps/server/src/battle/player-state.ts` | `PlayerState.roundStats` 初始化；`startRoom` 每 round 清零。 |
-| `apps/server/src/battle/actors.ts` | 新增 `onAcceptedShot` 边界调用，唯一 `shots++` 点。 |
-| `apps/server/src/world.ts` | `beforeFire`/新 handler 累加 `shots`；`resolveShotPlayerHit` 在真实 HP 减少时 `hits++`；`applyPlayerDamage`/`hitGroundSkill`/burn/airstrike 按 HP 差分累加 `damage`/`damageTaken`；`commitPlayerDeath` 维护 `killCombo` 与死亡清零。 |
-| `apps/server/src/settlement/awards.ts`（新） | 纯函数 `settleAwards`；`*Score` 作为加分，`*Damage` 作为阈值。 |
-| `apps/server/src/settlement/match-result.ts` | 冻结时写入每人 `roundStats`、`awards`、`awardCounts`，并把奖章分并入 `combatScore`。 |
+| Perfect | `deaths === 0` 且 `kills + objectivesDestroyed >= 1`。 |
+| MVP | 使用加奖分前的冻结 `totalScore`；mode1–3每team一名，mode4/5全局一名。只有kills、damage、objectivesDestroyed至少一项有实际贡献的玩家入选；并列依次比较kills、objectivesDestroyed、较小playerId。 |
+| Savage | 对敌真实damage达到Savage阈值。 |
+| Console | `deaths >= 1` 且对敌真实damageTaken达到Console阈值。 |
+| Brave | `deaths >= 1` 且 `kills >= 1`。 |
+| Kind | 真实ally healing达到Kind阈值。 |
+| Crafty | 真实rear damage达到Crafty阈值。 |
+| Shy | `shots === 0` 且 `damageTaken > 0`，即实际参赛并受击。 |
+| Greedy | mode4/5中damage最高且 `damage > 0`；并列依次比较kills、较小playerId。没有正damage producer时不授。 |
 
-### Lane B：account ledger stats/spending aggregation
+Savage、Console、Kind、Crafty的采用阈值为：
 
-| 文件 | 改动 |
+```text
+原Damage + 原DamagePlus * max(0, 敌对参赛者数量 - 1)
+```
+
+这是按人数增加阈值的采用单位政策，不是原source证明。敌对参赛者数量在mode1–3按 `differentTeam`，mode4/5按其他玩家；源DamagePlus不被忽略。Kind/Crafty在mode4直接保留原Damage 50和DamagePlus 15。
+
+### 纯Domain API
+
+`apps/server/src/settlement/awards.ts` 提供 `computeRoundAwards`，并导出同签名别名 `settleAwards`：
+
+```ts
+interface AwardParticipant {
+  playerId: string;
+  team: number;
+  playedSeconds: number;
+  roundStats: RoundStats;
+  kills: number;
+  deaths: number;
+  objectivesDestroyed: number;
+  combatScore: number;
+  outcomeBonus: number;
+  totalScore: number;
+}
+
+function computeRoundAwards(
+  map: ModeMapConfig,
+  participants: readonly AwardParticipant[],
+): Map<string, RoundAward[]>;
+```
+
+纯函数只读取传入的map和冻结participant，不读取World状态、不访问DB、不改输入。返回的数组按源显示顺序排列：Perfect、MVP、Savage、Console、Brave、Kind、Crafty、Shy、Greedy。MVP的 `totalScore` 输入必须是加奖分前冻结值，调用方不得把awards score回灌后再调用。
+
+## 结算与账户接口
+
+| 下一接口 | 责任 |
 | --- | --- |
-| `apps/shared/protocols/PtlRoleProfile.ts` | 新增 `AccountStatistics` 与 `ResRoleProfile.statistics/awards?`。 |
-| `apps/shared/protocols/PtlHistory.ts` | 复用 `ResultPlayer`，无需新字段。 |
-| `apps/server/src/accounts/statistics.ts`（新） | `account_title_stats`/`account_award_stats` upsert、`spending` 只读聚合、`readStatistics`。 |
-| `apps/server/src/account-store.ts` | 薄转发 `recordAccountStatistics`/`accountStatistics`/`accountAwardCounts`，不堆业务。 |
-| `apps/server/src/accounts/history.ts` | `RewardGrant` 同事务扩展为统计/奖项/称号一次写；仍由 `settled_matches`+`match_history` 主键 exactly-once。 |
-| `apps/server/src/settlement/history.ts` | `accountMatchHistory.committed` 把冻结 `result.roundStats/awards` 一并交给账户事务；retry/departed/same-account 语义沿 k1006。 |
-| `apps/server/src/settlement/title.ts`（新） | `decodeTitlePredicate`/`evaluateTitleGrants`；读统计+九计数+`account_titles` 行数。 |
-| `apps/server/src/accounts/title.ts`（新） | `account_title_stats` 更新、`account_titles` 幂等插入、`account_title_selection` 保持。 |
-| `apps/server/src/accounts/api.ts` | `RoleProfile` 回包在既有 profile/growth/titles 上附 `statistics/awards`；不新增 API。 |
+| battle `roundStats` freeze | 在真实battle路径累计上述字段；冻结 `playedSeconds`、结果、team和奖分前分数后调用 `computeRoundAwards`。 |
+| battle combat freeze | 把 `awards[].score` 求和一次加入 `combatScore`，保持 `outcomeBonus`，然后生成既有 `totalScore` 和结果快照。 |
+| account `applyMatch` | 在既有 `BEGIN IMMEDIATE` 内按真实account合并同一场连接，累计 `AccountStatistics` 和九个 `AwardCounts`；CPU、旁观和无真实producer字段不写猜测值。 |
+| account spending | 只读已COMMIT消费收据的真实price/cost求和。历史price未冻结时保留unknown，不用当前catalog杜撰原paid额，也不重复hook。收据字段保留真实price/cost备查。 |
+| account title/transaction | 与history、reward、title和award计数同事务提交；重复 `(match_id,round)` 不重复授予。 |
+| UI result | `ResultPlayer.awards` 取前5项点亮固定顺序的奖章格，缺少数据保持空白。 |
+| UI account | `ResRoleProfile.statistics/awards` 显示累计值；历史缺字段保持空白，不填零。 |
 
-### Lane C：dedicated UI 原奖章和统计显示
+九奖章与统计的账户写入必须与 `match_history`、`account_growth`、`account_reward_ledger` 和称号写入共同COMMIT。任一步抛错整场ROLLBACK，沿既有pending history重试。普通中途离场在删除account映射前冻结真实stats；FORFEIT离场人并入同一结算。不新增API/poll。
 
-| 文件 | 改动 |
-| --- | --- |
-| `apps/web/src/interface/home/home-award-summary-source-page.tsx` | 九个 `txt{Perfect,MVP,Savage,Console,Brave,Kind,Crafty,Shy,Greedy}` 绑 `ResRoleProfile.awards` 计数；缺数据保持空白，不填零/模板。 |
-| `apps/web/src/interface/home/home-battle-summary-source-page.tsx` | `txtHitCount/txtShootCount/txtTotalDamage/txtMaxComboCount/txtComboWinCount/txtComboLoseCount/txtTotalDays/txtTotalTime/txtHitRate` 绑 `ResRoleProfile.statistics`（无则保留现有 History 五字段）。 |
-| `apps/web/src/interface/battle/battle-summary-page.tsx` | 每玩家 `picCatAward{i}_{0..4}/picDogAward{i}_{0..4}` 按本局 `ResultPlayer.awards` 取前5个类型点亮对应图标；无 `awards` 保持空白，不点亮无 producer 奖章。 |
-| `apps/web/src/interface/battle/battle-summary-award-page.tsx` | 已消费 `local.award`；保持不改。 |
-| title 显示消费者（`home-player-source-page.tsx` 等） | 沿既有 `m_iNowTitle`/`titles` 方案，缺数据空白。 |
+`title.dat` 的剩余称号沿现有title domain的真实a/b/c单位判定。selector 13的149–151按原说明采用为money、152–154采用为tokens的split；该split是明确采用政策，不声称原列能单独区分货币。其它selector只在对应真实producer存在时启用。`FunctionType 2` 使用现有domain已解码的单位。缺少统计或为unknown时不授予，不把缺失字段补0。
 
-## 事务、幂等与边界
+## 真实未验范围
 
-- 统计/奖项/称号与 `match_history`、`account_growth`、`account_reward_ledger` 同一 `BEGIN IMMEDIATE` COMMIT；任一步抛错整场 ROLLBACK，沿既有 pending history 重试。
-- exactly-once 由 `settled_matches(match_id,round)` 唯一门 + `match_history`/`account_reward_ledger`/`account_award_stats` 主键保证；重复 finish/重连/重启不重复计数或授予。
-- 同账户多连接参加同场在 `settlement/history.ts` 按 `accountId` 合并为一个 `result`、一次统计与一次授予；CPU/旁观无 accountId 跳过。
-- 普通中途离场在 `captureDeparted`（world.ts:253）删除账号映射前冻结 `roundStats`/真实 accountId；FORFEIT 离场人并入同一结算。断线窗口内重连不发统计，窗口到期一次。
-- 花费聚合只读已 COMMIT 收据表，事务失败无行、replay 无新行，故不重复计；出售/退款表不参与。
-- 不新增 API/poll；`RoleProfile`/`History`/结果快照是唯一查询面。
+本设计中的统计生产、账户持久化、title接线和UI消费者由后续battle/account/UI workers实现。本批只完成config原始奖章列、纯awards domain和合同文档；没有把纯模块描述成已接真正shots、healing、rearDamage、ledger或页面。
 
-## 验收（本次未执行，沿既有范围）
-
-- 服务端：普通真实账户 mode≤5 各自然终局一次，冻结 `roundStats/awards` 与快照、`match_history`、`account_title_stats`、`account_award_stats` 一致；重复 finish/重连/重启不重复。
-- 统计语义：`shots/hits` 只随普通2001接受射击与其真实命中变化；burn/空袭/地雷/直接技能只进 `damage`；友伤/免伤/抵消不计 `hits`；`killCombo` 在死亡与新 round 清零。
-- 花费：正常 BUY/保养/交易后 `spentMoney/spentTokens` 等于原价×数量或收据 cost/offers.money；同 requestId 重放、出售/退款、失败请求不增加。
-- 奖章：九类型按上表在自然局触发，`awards[].score` 一次性并入本局分；CPU/旁观空；Home 与 summary 显示权威计数/图标。
-- 称号：36–46、68–72、145–158 在满足累计条件时落地，缺统计不授予。
-- 未取得：原服务器奖章/统计 writer、原奖章图标选取事件、原 Windows 对照、完整 1:1 字体像素；本文不新增 unit test/浏览器/build/type/lint，真实网络/双网页/HD/持久重启验收均未执行。
-
-## 限制与已知问题
-
-- 九奖章与统计均为采用规则，非原服务器执行等价；`*Damage` 作为阈值、`*Score` 作为加分，`datascale` 不参与奖章。
-- 原奖章判定 writer、`shots/hits/damage/killCombo/spend` writer 未取得；采用规则可由本局真实统计判定，取得原始来源后可替换。
-- 战车迷彩无请求收据表，暂不计入花费；交易星币/创意/技能点不是金钱/星币花费来源。
-- 未取得 `m00x` 原始消费点、原奖章图标选取与 `game_summary` 185 控件 1:1；Home/summary 消费者在缺权威数据时保持空白。
+未执行unit test、browser、build、typecheck、lint、exporter、native或autovalidation。未验证普通账户各mode自然终局、双端结算、重连/重启、CPU账户跳过、消费历史回填、完整奖章图标显示和原Windows像素/字体1:1。原server奖章/统计writer、完整 `game_summary` 185控件和原Windows对照仍未取得。
