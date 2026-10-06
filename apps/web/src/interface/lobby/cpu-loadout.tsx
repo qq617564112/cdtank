@@ -34,7 +34,8 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
       if (!response.ok) throw new Error(`道具目录读取失败：${response.status}`);
       const catalog: CombatCatalog = await response.json();
       if (generation.current === current) {
-        setItems(catalog.items.filter(item => CPU_LOADOUT_ITEM_IDS.includes(item.itemTableId)));
+        setItems(catalog.items.filter(item => CPU_LOADOUT_ITEM_IDS.includes(item.itemTableId)
+          || item.itemTableId === 13));
       }
     }).catch(error => {
       if (!controller.signal.aborted && generation.current === current) {
@@ -45,7 +46,8 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
   }, []);
   const allowed = (slot: number) => items?.filter(item => slot <= 4
     ? item.itemTableId === 2007 || item.itemTableId === 2011
-    : (item.itemTableId >= 1 && item.itemTableId <= 11) || item.itemTableId === 502) ?? [];
+    : (item.itemTableId >= 1 && item.itemTableId <= 11) || item.itemTableId === 502
+      || item.itemTableId === 13) ?? [];
   async function save() {
     if (busy || requestPending.current || !items) return;
     const loadout: CpuLoadoutItem[] = [];
