@@ -40,6 +40,16 @@
 
 本批一次集中gpt-5.6代码走查已执行，修复真实发射边界恢复与普通输入快照先于事件发送两项；实际双端施放/恢复、自然到期、合法与被拒开火、死亡/再战、高清、账户库存保存及真实重启仍待验收。FUNC-08及M4-10-I10/I11保持未完成。
 
+## 空袭
+
+对应FUNC-16/FUNC-15及M4-10-I13、M6-06-I13。原物件13“救命啊”通讯器关联skill13，每局上限1，两个正价40金币/20软星币，GGet2；skill13为Trigger1/Target1/Range200、FuncType16 T0/X20/Y3013/Z0、首槽Effect10/SE02/Tag0/Method3。skill3013为Target4/Range200、FuncType15 T0/X0/Y3012/Z0、首槽Effect60/SE32/Tag0/Method1；3012为FuncType2 HP-300且无效果/声音。原表引用链 `item13 ItemSkill1 -> skill13 Func16 -> skill3013 Func15 -> skill3012` 及表loader槽步长是直接来源；原416f接收器486a09只消费消息+c技能、+10效果槽和+14 float32 XZ点数组，经向零截断提交world采样Y=0，不读FuncType、不扣库存、不写目标生命。
+
+原416f sender及点vector位置/数量来源、Func16/15权威分派、3013→3012实际调用、3012 HP writer及X20单位/数量/调度未恢复。当前服务端按客户端请求、接收确认和原表参数采用：正式商城Item分类按原价开放普通QUERY/BUY，不因GGet2免费，不预置库存；Home配置槽5–8、战斗普通输入5–8；请求只带拥有实例，服务端以请求者权威角色XYZ为爆发中心（XZ用于范围选择，事件携带XYZ）。成功时先账户CAS持久扣量，再扣本局量并发布一次`itemUsed`；`resolvesAt=now+20*实际configured tickMs`，表示20个服务器tick且一次结算，不解释成20次/20发/20波。到期对center做一次skill3013的200×200闭方形范围选择（`abs(dx)<=100 && abs(dz)<=100`），合法目标为同房、alive、status2、非施放者且mode<=3时非同队，随后对每个目标调用一次skill3012 direct HP-300，走统一死亡/mode结算和免伤链，不生成`shotPlayerResult`。
+
+表现复用既有`playSkillEffect`事件与roleId0世界分支：skill13 Effect10和skill3013 Effect60均已发布，消费者按`_root\online\{effectId:03d}`和`[worldX,0,worldZ]`启动世界树。原raw世界通知handler不播放技能声音；UI采用业务政策在正式`itemUsed`/`airstrikeImpact`事件中按原first-slot soundId各接一次空间WAV，`roleId0`世界树自身的空声音容器保持原静默边界，不泛改raw世界通知。`MsgRoomEvent.type`仍是普通string字段，不新增schema union/effect字段，也不改生成器。
+
+施放本身在CAS成功后即消费，命中/未命中均不退款；施放者自然死亡不取消已排定轰炸，离房只删本人ownerId在途记录，终局/新局清空且不重放历史伤害。CPU只从房主已配置的有限item13库存沿普通快捷输入申请，不直接写库存、不赠送、也不扩item12/501策略。以上购买、配置、消费、中心、范围、伤害、寿命及CPU资格均为采用规则；原server来源缺口、全部FUNC-15/16函数、实际双端对局/免伤/死亡/再战/重启/高清仍未验证，I13与两个函数父项保持未勾。
+
 ## 未完成范围
 
 本批普通输入、消费、期限、目标、快照、Web表现和CPU接线已登记实现；本批一次集中gpt-5.6走查已执行并修复真实发射边界恢复与普通输入快照先于事件发送。光学迷彩与建筑工具既有范围的集中走查与Castle重连稳态及修复事务共用损伤绘声清理保持原范围。确认已有库存的配置/自然施放、光学迷彩到期与死亡/结束/再战、建筑工具实际修复、双端绘声及库存重启恢复仍需实际验收；原未知字段、全部技能分派、五模式完整规则和M8-05不因这一合同关闭。
