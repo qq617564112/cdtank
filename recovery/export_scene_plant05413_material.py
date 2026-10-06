@@ -10,7 +10,7 @@ from pol import read_pol
 
 def export():
     models = []
-    for name in ('obj05413', 'obj05401', 'obj05403', 'obj05405'):
+    for name in ('obj05413', 'obj05401', 'obj05403', 'obj05405', 'obj05416'):
         source = read_pol(ROOT / f'recovery/output/verified/assets/data/Data/scnobj/{name}/{name}.POL')
         mesh = source['meshes'][0]
         part = mesh['parts'][0]

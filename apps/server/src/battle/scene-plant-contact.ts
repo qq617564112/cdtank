@@ -16,7 +16,9 @@ export function createScenePlants(room: {mode: number; map: {mapId: number}}): S
   const supported = [2, 5, 6].includes(room.map.mapId) && [1, 2, 3].includes(room.mode) ||
     room.map.mapId === 4 && [1, 3].includes(room.mode) ||
     room.map.mapId === 17 && room.mode === 4 ||
-    room.map.mapId === 21 && room.mode === 5;
+    room.map.mapId === 21 && room.mode === 5 ||
+    [1, 3, 8, 12, 13, 23].includes(room.map.mapId) && [1, 2, 3, 4, 5].includes(room.mode) ||
+    [9, 15, 16, 19, 24, 25].includes(room.map.mapId) && [1, 3, 4, 5].includes(room.mode);
   if (!supported) return [];
   return getScenePlants(room.map.mapId).map(source => ({
     id: `PLANT:${source.id}`, sourcePlacementId: source.id, sourceModel: source.model,

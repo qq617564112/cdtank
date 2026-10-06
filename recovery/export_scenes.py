@@ -36,6 +36,7 @@ from export_scene_plant06 import export as export_scene_plant06
 from export_scene_plant17 import export as export_scene_plant17
 from export_scene_plant21 import export as export_scene_plant21
 from export_scene_plant05413_material import export as export_scene_plant05413_material
+from export_scene_remaining_maps import export as export_scene_remaining_maps
 from export_scene_terrain02_material import export as export_scene_terrain02_material
 from export_scene_terrain18_material import export as export_scene_terrain18_material
 from export_scene_terrain11_material import export as export_scene_terrain11_material
@@ -86,6 +87,7 @@ export_scene_plant06()
 export_scene_plant17()
 export_scene_plant21()
 export_scene_plant05413_material()
+export_scene_remaining_maps()
 export_scene_terrain02_material()
 export_scene_terrain18_material()
 export_scene_terrain11_material()

@@ -9,6 +9,7 @@ type BunkerDamageCarrier = RoundStatsCarrier & {
 
 const active = new WeakMap<Battlefield, Set<string>>();
 const castleTargets = new WeakMap<object, {round: number; mode: number; mapId: number; objects: CastleTargetSnapshot[]}>();
+const remainingBreachMapIds = [1, 3, 8, 9, 12, 13, 15, 16, 19, 23, 24, 25];
 
 /** One Castle instance serves both the mode2 rule target and the rendered scene entity. */
 export interface CastleTargetSnapshot extends SceneObjectSnapshot, ObjectiveSnapshot {
@@ -28,7 +29,7 @@ interface CastleRoom {
  * Mode1 keeps the CAS record HP; mode2 uses the source BunkerHP rule value.
  */
 export function castleSceneObjects(room: CastleRoom): CastleTargetSnapshot[] {
-  if ((room.mode !== 1 && room.mode !== 2) || ![2, 5, 6, 10, 11].includes(room.map.mapId)) return [];
+  if (room.mode !== 1 && room.mode !== 2) return [];
   const round = room.round ?? 0;
   const cached = castleTargets.get(room);
   if (cached && cached.round === round && cached.mode === room.mode && cached.mapId === room.map.mapId) {
@@ -49,7 +50,8 @@ export function castleSceneObjects(room: CastleRoom): CastleTargetSnapshot[] {
 /** Castle rule instances plus the existing rebuilt ordinary breakables. */
 export function createSceneObjects(room: CastleRoom): SceneObjectSnapshot[] {
   const castles = castleSceneObjects(room);
-  const models = room.mode === 1 && room.map.mapId === 2 ? ['obj05428', 'obj05427', 'obj05425', 'obj05426', 'obj05422']
+  const models = [1, 3, 4].includes(room.mode) && remainingBreachMapIds.includes(room.map.mapId) ? undefined
+    : room.mode === 1 && room.map.mapId === 2 ? ['obj05428', 'obj05427', 'obj05425', 'obj05426', 'obj05422']
     : room.mode === 1 && room.map.mapId === 5 ? ['obj05425', 'obj05426', 'obj05432']
     : room.mode === 1 && room.map.mapId === 6 ? ['obj05421', 'obj05423', 'obj05443', 'obj05433', 'obj05432']
     : room.mode === 1 && room.map.mapId === 10 ? ['obj05425', 'obj05426', 'obj05427', 'obj05428', 'obj05429']
@@ -60,8 +62,10 @@ export function createSceneObjects(room: CastleRoom): SceneObjectSnapshot[] {
     : room.mode === 4 && room.map.mapId === 18 ? ['obj05424', 'obj05442']
     : [1, 3].includes(room.mode) && room.map.mapId === 7 ? ['obj05466', 'obj05467', 'obj05468', 'obj05462', 'obj05423', 'obj05445']
     : [];
-  if (!models.length) return castles;
-  return [...castles, ...getSceneBreakables(room.map.mapId).filter(source => models.includes(source.model))
+  const sources = models === undefined ? getSceneBreakables(room.map.mapId)
+    : getSceneBreakables(room.map.mapId).filter(source => models.includes(source.model));
+  if (!sources.length) return castles;
+  return [...castles, ...sources
     .map(source => ({id: `ENV:${source.id}`, sourcePlacementId: source.id, sourceModel: source.model,
       x: source.matrix[12], y: source.matrix[13], z: source.matrix[14], hp: 200, maxHp: 200}))];
 }

@@ -3,6 +3,7 @@ import {resolve} from 'node:path';
 import {webAssetPath} from './runtime/content-paths';
 import {CollisionMesh} from './collision-mesh';
 import {loadGlbTriangles, loadCvdTriangles, placedCollisionMesh} from './render-collision-assets';
+import {castleResourceFile} from '../../shared/maps/castle-resources';
 
 export interface SceneBreakable {
   id: string;
@@ -29,7 +30,7 @@ interface SourcePlacement {
 interface SourceScene {id: string; terrain: string; records: SourcePlacement[]; castles: SourcePlacement[];}
 interface SceneCollider extends SceneBreakable {mesh: CollisionMesh; placementId: string;}
 interface CastleResource {
-  sourcePlacementId: string; matrix: number[]; position: number[];
+  sourcePlacementId: string; model: string; matrix: number[]; position: number[];
   actions: {name: string; asset: string; available: boolean}[];
 }
 
@@ -52,17 +53,17 @@ function collider(scene: SourceScene, source: SourcePlacement): SceneCollider {
   const cached = colliders.get(key);
   if (cached) return cached;
   let asset = source.asset, matrix = source.matrix, position = source.position;
-  if (source.className === 'SYcCastle' && [2, 5, 6, 10, 11].includes(Number(scene.id))) {
+  if (source.className === 'SYcCastle') {
     let resources = castleResources.get(Number(scene.id));
     if (!resources) {
-      resources = (JSON.parse(readFileSync(webAssetPath(`scene-castle-${scene.id}.json`), 'utf8')) as
+      resources = (JSON.parse(readFileSync(webAssetPath(castleResourceFile(Number(scene.id))), 'utf8')) as
         {castles: CastleResource[]}).castles;
       castleResources.set(Number(scene.id), resources);
     }
-    const resource = resources.find(value => value.sourcePlacementId === source.id);
+    const resource = resources.find(value => value.model === source.model);
     const action = resource?.actions.find(value => value.name === 'n1' && value.available);
     if (!resource || !action) throw new Error(`缺少城堡初始渲染模型：${scene.id}/${source.id}`);
-    asset = action.asset; matrix = resource.matrix; position = resource.position;
+    asset = action.asset;
   }
   if (matrix.length !== 16 || position.length !== 3 || ![...matrix, ...position].every(Number.isFinite)) {
     throw new Error(`场景物件放置变换无效：${scene.id}/${source.id}`);

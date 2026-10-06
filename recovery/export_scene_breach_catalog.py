@@ -14,8 +14,12 @@ def export(scenes, source_root: Path, web_root: Path):
         for record in scene['records']:
             if record['className'] != 'SYcScnObjBreach':
                 continue
-            reference = f"Data/scnobj/{record['model']}/c9.CVD"
-            if not (source_root / reference).is_file():
+            directory = source_root / f"Data/scnobj/{record['model']}"
+            reference = next((f"Data/scnobj/{record['model']}/{name}"
+                               for name in ('c9.CVD', 'C9.CVD')
+                               if (directory / name).is_file()), None)
+            if reference is None:
+                reference = f"Data/scnobj/{record['model']}/c9.CVD"
                 missing.setdefault(reference, []).append(dict(
                     mapId=scene['id'], sourcePlacementId=record['id']))
                 continue
