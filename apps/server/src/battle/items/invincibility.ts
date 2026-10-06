@@ -1,6 +1,7 @@
 import type {MsgRoomEvent} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
 import type {RoleCombatState} from '../roles/combat-state';
+import type {RespawnProtectionState} from '../respawn-protection';
 import {combatItems, combatSkills} from '../catalog';
 
 export interface InvincibilityState {
@@ -18,6 +19,18 @@ export interface InvincibilityParticipant {
   combat: RoleCombatState;
   inventory: InventoryWireRecord[];
   invincibility?: InvincibilityState;
+}
+
+/** Shared damage-entry view for the two independent authoritative immunity states. */
+export interface BattleInvincibilityParticipant {
+  invincibility?: {expiresAt: number};
+  respawnProtection?: Pick<RespawnProtectionState, 'expiresAt'>;
+}
+
+/** Item8 and real-respawn protection are independent timers; either active state blocks damage. */
+export function isBattleInvincible(player: BattleInvincibilityParticipant, now: number): boolean {
+  return (player.invincibility !== undefined && now < player.invincibility.expiresAt) ||
+    (player.respawnProtection !== undefined && now < player.respawnProtection.expiresAt);
 }
 
 /** Rebuilt self-target authority; source skill8 supplies the effect duration. */

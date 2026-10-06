@@ -21,6 +21,7 @@ import type {AttackBoostState} from './items/attack-drink';
 import type {TurnBoostState} from './items/turn-drink';
 import type {SpeedBoostState} from './items/speed-drink';
 import type {InvincibilityState} from './items/invincibility';
+import type {RespawnProtectionState} from './respawn-protection';
 import type {OpticalCamouflageState} from './items/optical-camouflage';
 import type {RoleDisguiseState} from './items/role-disguise';
 import type {PetHitSpeedState} from './pet-hit-speed';
@@ -71,6 +72,8 @@ export interface PlayerState {
   burn?: AmmoBurnState;
   ammoSlow?: AmmoSlowState;
   invincibility?: InvincibilityState;
+  /** Independent real-respawn immunity authority; absent outside a protected life. */
+  respawnProtection?: RespawnProtectionState;
   opticalCamouflage?: OpticalCamouflageState;
   roleDisguise?: RoleDisguiseState;
   speedBoost?: SpeedBoostState;
