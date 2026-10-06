@@ -196,6 +196,12 @@ CPU 走同一接触扫描与资格：普通移动真接触，沿同资格在本�
 - HP/治疗等效果由该物件已恢复的普通使用路径产生（类别 1 走 `applyHealingItem`；
   `20001/20002` 的 Func20 只做拾取数量入账，普通 use 走 `ItemSkill2=30005`），沿用现
   `dispatchItemHotkey`/`apply*` 事务与数量消耗。
+- `20001/20002` 成功普通使用先在同一 AccountStore CAS 事务按真实 owned 消费一份，再治疗并
+  各减一；最后一份归零时同事务删空实例及所有引用快捷槽，成功后清当前角色零量记录、
+  七快捷槽与数组 0 权威。其它物件保持原零量 UPDATE 行为。成功 `itemUsed` 带
+  `definition.name` 沿现 HUD。
+- CPU 真实 CONFIGURE 只接受精确 `20001/20002` 到消耗槽 5..8；源 `BattleUseMax=0` 保持，
+  正有限 uint32 是库存表示界而非每轮上限，不自动分配、不赠送未配置实例。
 - 类别 6 贵重品不进入 0x58 treasure 记录映射；其入账只走 known itemTableId + 现 schema。
 
 ### 生命周期与终局顺序
@@ -276,7 +282,10 @@ metadata 带 `groundItemId`/`sourceModel`；`reconcile(snapshot.match?.groundIte
 - 原服务端掉落概率未证；0.5、池 `{1,2,20001,20002}`、dropitem 档位解释（含边界取首行）
   均为采用规则。
 - 两贵重品 `20001/20002` 的拾取入账无原服务端 writer，采用 Func20 持久加一；
-  普通 use 不再加一，`ItemSkill2=30005` 只做一次 CAS 后治疗并各减一，非免费 Shop。
+  采用规则对两精确 ID 按真实 owned 暴露可用量，不扩展 category6 全类；普通 use 不再
+  加一，`ItemSkill2=30005` 只做一次 AccountStore CAS 后治疗并各减一，最后一份同事务
+  删实例与引用快捷槽，非免费 Shop。CPU 配置只对这两个精确 ID 走 CONFIGURE 消耗槽
+  5..8，数量界沿用正有限 uint32，不新增每轮上限。
 - 3c96/3ca0 只部分反汇编确认字段与节点删除/生成调用；3caa 0x58 记录未映射任何 owned 字段。
 - 接触半径40、CPU 本地拾取、同账户多连接库存广播与前端贴图变体均已实现；实际对局、
   双端、持久与高清验收未做，M2-10 未完成。

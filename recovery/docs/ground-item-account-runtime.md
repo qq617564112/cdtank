@@ -77,7 +77,10 @@ discardOwnedItem(accountId, context): GroundItemDiscardResult | undefined;
 20001 鱼骨 / 20002 骨头的 Func20（`T1/T2`、`X1`、`Y20001/20002`）只做数量加一：
 本身不写 HP、不写 tech points；普通 use 不再加一，`ItemSkill2=30005` 改由
 `battle/items/treasure-item-use.ts` 在普通请求、存活、缺失生命及真实 skill 定义门禁后
-先 CAS 再治疗并各减一；0 价格不构成免费 Shop。类别 1/2 走同一入口，效用仍由既有
+先 CAS 再治疗并各减一；0 价格不构成免费 Shop。最后一份成功消费在同一 AccountStore CAS
+事务删空实例与所有引用快捷槽，成功后清当前角色零量记录、七快捷槽与数组 0 权威；其它
+物件保持原零量 UPDATE。CPU 真实 CONFIGURE 只接受这两个精确 ID 到消耗槽 5..8，正有限
+uint32 是库存表示界而非每轮上限，不自动分配或赠送。类别 1/2 走同一入口，效用仍由既有
 healing/item-use 事务在普通使用路径产生。
 
 ### discard（丢出地面）

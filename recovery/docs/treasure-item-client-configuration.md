@@ -24,7 +24,11 @@
 category6 全类，不开放免费 shop/gift，不做客户端预测。普通 use 经既有请求进入
 `ItemSkill2=30005` 链路：存活、自用、缺失生命、真实 skill 定义通过后，先持久 CAS
 成功，再按 HP30 治疗并 clamp 到当前上限，owned/本局量各减一；满血、拒绝或保存失败
-不改 HP、不扣量。
+不改 HP、不扣量。成功 `itemUsed` 带 `definition.name` 沿现 HUD；最后一份在同一
+AccountStore CAS 事务删空实例与所有引用快捷槽，当前角色零量记录与七快捷槽/数组 0 清。
+CPU 配置走 [treasure-cpu-client-configuration.md](treasure-cpu-client-configuration.md)
+的精确 20001/20002 消耗槽 5..8 合同，运行时治疗与清理链见
+[treasure-item-use-runtime.md](treasure-item-use-runtime.md)。
 
 ## Known Issues
 

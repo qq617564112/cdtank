@@ -8,9 +8,9 @@
 
 对应M2-10、M4-02/FUNC-20、M4-10及treasure-item-client-configuration.md。原item表20001鱼骨/20002骨头为类别6、`ItemType=13`、`ItemMoney/ItemCoin/GGet/Durable=0`、`BattleUseMax=0`，`ItemSkill1`分别为20001/20002，`ItemSkill2=30005`；skill20001/20002为Trigger1/Target1/Func20，参数`T1/T2`、`X1`、`Y20001/20002`；skill30005为Trigger1/Target1/Func2、HP30、Effect11、GA15。物件说明写恢复15，与skill字段30冲突；当前采用规则使用skill字段30，文档保留15的源差异，不把说明文字当执行值。
 
-Func20只负责地面拾取数量入账：服务端沿既有ground acquire账户事务把精确`itemTableId`的owned数量加一，不写HP，不增加tech points，也不在普通use再次加一。普通use由已配置快捷槽进入既有普通请求，仅精确20001/20002、存活status2、自用、真实skill定义、owned/本局量正数且存在生命缺口时执行；先经既有CAS消费一份，成功后再按HP30治疗并clamp到当前上限，owned与本局量各减一；满血、拒绝或保存失败不改HP、不扣量。槽4..7对应Battle5..8。
+Func20只负责地面拾取数量入账：服务端沿既有ground acquire账户事务把精确`itemTableId`的owned数量加一，不写HP，不增加tech points，也不在普通use再次加一。普通use由已配置快捷槽进入既有普通请求，仅精确20001/20002、存活status2、自用、真实skill定义、owned/本局量正数且存在生命缺口时执行；先经既有CAS消费一份，成功后再按HP30治疗并clamp到当前上限，owned与本局量各减一；满血、拒绝或保存失败不改HP、不扣量。成功itemUsed带definition.name沿现HUD。槽4..7对应Battle5..8；CPU真实CONFIGURE只接受精确20001/20002到消耗槽5..8，正有限uint32为库存表示界而非每轮上限，无autoassign/gift。
 
-两件贵重品源的`BattleUseMax=0`保持原字段；采用规则按已配置实例的真实owned初始化可用量，不放宽到category6全类，不开放免费shop/gift，不做客户端预测。其它原物件仍按`min(owned, max(0, cap - roundUse))`。原服务端writer、真实双端、持久重启及高清验收仍未执行。
+两件贵重品源的`BattleUseMax=0`保持原字段；采用规则按已配置实例的真实owned初始化可用量，不放宽到category6全类，不开放免费shop/gift，不做客户端预测。最后一份在同一AccountStore CAS事务删空实例与所有引用快捷槽，当前角色零量记录及七快捷槽/数组0清；其它物件保持原零量UPDATE。其它原物件仍按`min(owned, max(0, cap - roundUse))`。原服务端writer、真实双端、持久重启及高清验收仍未执行。
 
 ## 光学迷彩
 
