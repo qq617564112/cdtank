@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {sourceTablePath} from '../runtime/content-paths';
 import type {AccountGrowth, ResultAward, ResultPlayer} from '../../../shared/protocols/MsgRoomSnapshot';
+import type {FrozenRewardResult, ResultRewardModifiers} from './reward-modifiers';
 
 /** Original level.dat 积分要求 for 阶级ID 1..20; ranked/rank-98/99 tiers stay unearned. */
 const LEVEL_THRESHOLDS = [0, 300, 1200, 3000, 6000, 10500, 16800, 25200, 36000, 49500,
@@ -58,23 +59,39 @@ function rewardValue(base: number, ratePercent: number): number {
   return Math.max(0, Math.round(base * (1 + ratePercent / 100)));
 }
 
+/** Frozen Func19 multiplier; a negative or non-finite percentage is refused and keeps the DataScale result. */
+function skillMultiplier(percent: number | undefined): number {
+  if (percent === undefined || !Number.isFinite(percent) || percent <= 0) return 1;
+  return 1 + percent / 100;
+}
+
+/** Server-only reward player: frozen Func19 modifiers travel with the result and stay out of the protocol. */
+type ServerRewardPlayer =
+  Pick<FrozenRewardResult, 'combatScore' | 'totalScore' | 'outcome' | 'rewardModifiers'>;
+
 export interface RewardInput {
-  player: Pick<ResultPlayer, 'combatScore' | 'totalScore' | 'outcome'>;
+  player: ServerRewardPlayer;
   previous: Pick<AccountGrowth, 'rankPoints'>;
   rates: ResultRewardRates;
+  modifiers?: ResultRewardModifiers;
 }
 
 /** Rebuild this round's award from the frozen result and the account ledger's prior growth.
  * `base` is the non-negative rounded map combatScore; no unsourced upper clamp is applied.
- * coin stays 0 because no base authorization exists for the premium currency.
+ * Frozen Func19 modifiers multiply each of money/originality/tech once, then round once; the
+ * DataScale outcome rate is applied first. coin stays 0 because no premium-currency base exists.
  */
-export function computeResultAward({player, previous, rates}: RewardInput): ResultAward {
+export function computeResultAward({player, previous, rates, modifiers}: RewardInput): ResultAward {
   const rate = rates[player.outcome];
   const base = Math.max(0, Math.round(player.combatScore));
-  const money = rewardValue(base, rate.money);
+  const frozen = modifiers ?? player.rewardModifiers;
+  const money = Math.max(0, Math.round(base
+    * (1 + rate.money / 100) * skillMultiplier(frozen?.moneyPercent)));
   const coin = rewardValue(0, rate.coin);
-  const originality = rewardValue(base / 5, rate.originality);
-  const tech = rewardValue(base / 10, rate.tech);
+  const originality = Math.max(0, Math.round(base / 5
+    * (1 + rate.originality / 100) * skillMultiplier(frozen?.originalityPercent)));
+  const tech = Math.max(0, Math.round(base / 10
+    * (1 + rate.tech / 100) * skillMultiplier(frozen?.techPercent)));
   const rankPoints = Math.max(0, previous.rankPoints + player.totalScore);
   return {money, coin, originality, tech, rankPoints,
     levelBefore: levelFor(previous.rankPoints), levelAfter: levelFor(rankPoints),

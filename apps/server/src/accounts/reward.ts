@@ -1,6 +1,7 @@
 import type {DatabaseSync} from 'node:sqlite';
 import type {AccountGrowth, ResultAward, ResultPlayer} from '../../../shared/protocols/MsgRoomSnapshot';
 import {computeResultAward, readResultRewardRates, type ResultRewardRates} from '../settlement/reward';
+import type {ResultRewardModifiers} from '../settlement/reward-modifiers';
 
 /** Original MyPlayer money field; existing shop/sale helpers already write this balance. */
 const MONEY_OFFSET = 0x70;
@@ -52,7 +53,8 @@ export class AccountReward {
    * money to the existing profile, advances the typed growth columns and writes the receipt.
    */
   apply(accountId: string, matchId: string, round: number,
-      result: Pick<ResultPlayer, 'combatScore' | 'totalScore' | 'outcome'>): ResultAward {
+      result: Pick<ResultPlayer, 'combatScore' | 'totalScore' | 'outcome'>
+        & {rewardModifiers?: ResultRewardModifiers}): ResultAward {
     const previous = this.growth(accountId);
     const computed = computeResultAward({player: result, previous, rates: this.resultRewardRates()});
     const money = this.creditMoney(accountId, computed.money);

@@ -1,6 +1,8 @@
 import type {MatchResult} from '../../../shared/protocols';
 import type {ResultAward} from '../../../shared/protocols/MsgRoomSnapshot';
 import type {AccountStore} from '../account-store';
+import {mergeResultRewardModifiers} from './reward-modifiers';
+import type {ResultRewardModifiers} from './reward-modifiers';
 import {randomUUID} from 'node:crypto';
 
 export interface CommittedMatch {
@@ -11,16 +13,18 @@ export interface CommittedMatch {
   /** Departed participants carry the already-resolved `accountId` captured before removal.
    * `elapsedSeconds` is the real frozen PLAYING duration for that participant (full round for
    * participants present at finish, leave time for mid-round departures, absent when uncaptured).
+   * `rewardModifiers` is the participant's real Func19 selection frozen at the finish boundary and
+   * carried into the pending payload; it never enters the public history record.
    */
   participants: {playerId: string; connectionId: string; cpu: boolean; accountId?: string;
-    elapsedSeconds?: number}[];
+    elapsedSeconds?: number; rewardModifiers?: ResultRewardModifiers}[];
 }
 
 interface PendingPayload {
   match: {matchId: string; roomId: string; round: number; mode: number; mapId: number;
     endedAt: number; reason: MatchResult['reason']};
   participants: {accountId: string; result: MatchResult['players'][number];
-    playerIds: string[]; elapsedSeconds?: number}[]};
+    playerIds: string[]; elapsedSeconds?: number; rewardModifiers?: ResultRewardModifiers}[]};
 
 /** Receipts for a payload that just committed; World publishes these on the still-live room. */
 export interface CommittedReceipt {
@@ -45,8 +49,16 @@ export function accountMatchHistory(store: AccountStore,
   const commit = (payload: PendingPayload): void => {
     // Award persistence shares the settled-match/history transaction; a thrown
     // grant rolls the whole match back and leaves no fake success.
+    const modifiersByAccount = new Map(payload.participants.map(participant =>
+      [participant.accountId, participant.rewardModifiers]));
     store.recordMatchHistory(payload.match, payload.participants,
-      (accountId, result) => store.grantMatchReward(accountId, payload.match.matchId, payload.match.round, result));
+      (accountId, result) => {
+        const rewardModifiers = modifiersByAccount.get(accountId);
+        // Hand the frozen multiplier to the reward transaction on a private copy; the persisted
+        // history record spreads `result` without it, so the public MatchHistoryRecord stays clean.
+        const carried = rewardModifiers ? {...result, rewardModifiers} : result;
+        return store.grantMatchReward(accountId, payload.match.matchId, payload.match.round, carried);
+      });
   };
   const receipts = (payload: PendingPayload): Map<string, ResultAward> => {
     const byPlayer = new Map<string, ResultAward>();
@@ -84,7 +96,7 @@ export function accountMatchHistory(store: AccountStore,
       // One account settles once per round even with two participant connections; keep the
       // longest real captured duration so a second connection cannot shorten or double-count it.
       const byAccount = new Map<string, {playerIds: string[]; result: MatchResult['players'][number];
-        elapsedSeconds?: number}>();
+        elapsedSeconds?: number; rewardModifiers?: ResultRewardModifiers}>();
       for (const participant of match.participants) {
         const accountId = participant.accountId
           ?? (participant.cpu ? undefined : accounts.get(participant.connectionId));
@@ -93,6 +105,8 @@ export function accountMatchHistory(store: AccountStore,
         const existing = byAccount.get(accountId);
         if (existing) {
           existing.playerIds.push(result.id);
+          existing.rewardModifiers = mergeResultRewardModifiers(
+            [existing.rewardModifiers, participant.rewardModifiers]);
           if (participant.elapsedSeconds !== undefined
               && (existing.elapsedSeconds === undefined
                 || participant.elapsedSeconds > existing.elapsedSeconds)) {
@@ -100,7 +114,7 @@ export function accountMatchHistory(store: AccountStore,
           }
         } else {
           byAccount.set(accountId, {playerIds: [result.id], result: {...result},
-            elapsedSeconds: participant.elapsedSeconds});
+            elapsedSeconds: participant.elapsedSeconds, rewardModifiers: participant.rewardModifiers});
         }
       }
       if (!byAccount.size) return NO_AWARDS;
@@ -108,7 +122,7 @@ export function accountMatchHistory(store: AccountStore,
         mode: match.mode, mapId: match.mapId, endedAt: match.result.endedAt, reason: match.result.reason},
         participants: [...byAccount].map(([accountId, entry]) =>
           ({accountId, result: entry.result, playerIds: entry.playerIds,
-            elapsedSeconds: entry.elapsedSeconds}))};
+            elapsedSeconds: entry.elapsedSeconds, rewardModifiers: entry.rewardModifiers}))};
       try {
         commit(payload);
       } catch (error) {
