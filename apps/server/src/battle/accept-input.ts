@@ -18,6 +18,7 @@ import {applyBuildingTool} from './items/building-tool';
 import {applyAirstrike} from './items/airstrike';
 import type {RoomState} from '../rooms/state';
 import {confirmAcceptedAmmoSelection} from './items/ammo-confirmation';
+import {advanceAmmoRadarJam} from './items/ammo-radar-jam';
 import {acceptClientTankPose} from './client-movement';
 
 /** Accept ordinary human/CPU inputs or the participant's separate autopilot lane. */
@@ -43,6 +44,7 @@ export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'round' | 'ph
   advanceRoleDisguise(roomId, player, now, () => recomputeBattleAttributes(player), requests);
   advanceSpeedDrink(roomId, player, now, () => recomputeBattleAttributes(player), requests);
   advanceTurnDrink(roomId, player, now, () => recomputeBattleAttributes(player), requests);
+  advanceAmmoRadarJam(roomId, player, now, requests);
   if (player.alive && player.input.useItem !== 0) {
     // Original request gates precede this rebuilt server selection/confirmation policy.
     dispatchItemHotkey(player.input.useItem, player.combat, player.inventory,

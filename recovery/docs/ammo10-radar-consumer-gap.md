@@ -20,4 +20,9 @@ M2-02/M4-10 的 2010 玩家业务链见
 2010 不进入免费 Shop 或 gift。普通取得使用 mode5 既有 BREACH 掉落链，池内精确新增
 `item2010`；普通命中使用独立实服务器 15 秒期限和快照布尔，不把 4008 的 999 列作为属性。
 
+被接纳命中的 4008 Effect13/SE14 只消费一次：`hit` 同时携带
+`shotPlayerResult.itemId=2010` 和 `playSkillEffect.skillId=4008`，消费方在该次命中只走
+SkillNotification 一路，`radarJammed` 不再另发 4008 效果。到期资格以真实 server clock 为准：
+`now >= expiresAt` 的对象已在输入/item3 分派前清除，仅剩到期异常不构成可消费的异常状态。
+
 原客户端行为测量、原 native 复跑和实际对局验收尚未执行。

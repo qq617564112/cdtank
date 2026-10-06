@@ -29,6 +29,9 @@
 - 到期、真实 death/respawn、Leave、finish、new round、loading 清理该状态。普通 `item3`
   宠物注射剂在现 CAS 消费成功后才清 2010 干扰；保存失败或无异常时不消费，也不清正面饮料或
   无敌状态。
+- 被接纳命中的一次绘声只由该次 `hit` 事件承载：`hit` 携带
+  `shotPlayerResult.itemId=2010` 与 `playSkillEffect.skillId=4008`，消费者据此走一次
+  SkillNotification Effect13/SE14；`radarJammed` 只通知状态，不另发第二条 4008 效果。
 - 取得只走 mode5 现权威 BREACH“目标毁灭→普通 contact40→AccountAcquire receipt”链：
   既有 `BREACH_POOL` 明确加入精确 `item2010`，总体 drop probability 0.5 保持，池内各项
   uniform 作为新增采用规则。拾取只入 owned；初次未装槽 `battleQuantity=0`，玩家正常退出/
@@ -38,9 +41,12 @@
 ## 生产链
 
 `World.simulateRoom` 在现有 `resolveShotPlayerHit` 后处理 2010：只有普通伤害接纳后目标仍
-`alive/hp>0` 且非友方才 `startAmmoRadarJam`。`advanceAmmoRadarJam` 在每 tick 现有状态
-推进中清除到期；respawn、`commitPlayerDeath`、Leave、`startRoom`、`beginRoomLoading`、
-`finishRoom` 均清状态。`applyPetInjection` 在 CAS 成功后才清该状态。
+`alive/hp>0` 且非友方才 `startAmmoRadarJam`，并把 4008 一次性效果挂到本次真实伤害产生的
+`hit` 上。`advanceAmmoRadarJam` 在每 tick 现有状态推进中清除到期；respawn、
+`commitPlayerDeath`、Leave、`startRoom`、`beginRoomLoading`、`finishRoom` 均清状态。
+`acceptBattleInput` 在物品分派前用同一次真实 `now` 推进雷达期限：已到期对象先清除，仅剩到期
+异常时 `item3` 走无异常拒绝且不扣量；未到期状态保留到注射剂 CAS 成功后才清。
+`applyPetInjection` 在 CAS 成功后才清该状态。
 
 `rooms/snapshot.ts` 只把当前 `radarJam.expiresAt` 与真实 `now` 比较后投影布尔
 `radarJammed`，不编造 clock 或 clientTime。shared/UI 由独立 worker 手工追加可选 Boolean 并在

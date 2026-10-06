@@ -21,7 +21,7 @@ import {createScenePlants, plantContactColliders} from './battle/scene-plant-con
 import {MEDICAL_AMMO_ID, resolveMedicalAmmo} from './battle/items/medical-ammo';
 import {advanceAmmoBurn, clearAmmoBurn, startAmmoBurn} from './battle/items/ammo-burn';
 import {advanceAmmoSlow, clearAmmoSlow, startAmmoSlow} from './battle/items/ammo-slow';
-import {advanceAmmoRadarJam, clearAmmoRadarJam, startAmmoRadarJam} from './battle/items/ammo-radar-jam';
+import {advanceAmmoRadarJam, ammoRadarJamSkillEffect, clearAmmoRadarJam, startAmmoRadarJam} from './battle/items/ammo-radar-jam';
 import {roomMaxPlayers, roomMinPlayers} from './rooms/player-limits';
 import {findAvailableTankSpawn} from './battle/spawn-position';
 import {battleAttributes, battlePartSources, battleSkillSources, battleInventory} from './battle/projection';
@@ -872,6 +872,7 @@ export class World {
       if (!target.alive || room.phase !== 'PLAYING') return;
       const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);
       const previousHp = target.hp;
+      const firstEvent = events.length;
       this.applyPlayerDamage(room, owner, target, damage, events, selector, undefined, ammoItemId,
         bearing ? {bodyYaw: target.bodyYaw ?? target.yaw, bearing} : undefined, shotId);
       if (room.phase === 'PLAYING' && ammoItemId === 2007 && target.alive && target.hp < previousHp) {
@@ -883,7 +884,11 @@ export class World {
       if (room.phase === 'PLAYING' && ammoItemId === 2010 && target.alive && target.hp > 0
           && target.hp < previousHp
           && owner.id !== target.id && !this.isAlly(room, owner, target)) {
-        startAmmoRadarJam(room.roomId, target, now, events);
+        if (startAmmoRadarJam(room.roomId, target, now, events)) {
+          for (const notice of events.slice(firstEvent)) {
+            if (notice.type === 'hit') {notice.playSkillEffect = ammoRadarJamSkillEffect(target);}
+          }
+        }
       }
     };
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {

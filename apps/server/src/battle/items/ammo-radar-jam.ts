@@ -1,4 +1,4 @@
-import type {MsgRoomEvent} from '../../../../shared/protocols';
+import type {MsgRoomEvent, PlaySkillEffectMessage} from '../../../../shared/protocols';
 
 const RADAR_JAM_SKILL_ID = 4008;
 const RADAR_JAM_SECONDS = 15;
@@ -24,6 +24,12 @@ function roleId(playerId: string): number {
   return Number.isFinite(id) ? id : 0;
 }
 
+/** The accepted hit owns this one-shot4008 notification; the radarJammed event stays state-only. */
+export function ammoRadarJamSkillEffect(target: AmmoRadarJamParticipant): PlaySkillEffectMessage {
+  return {skillId: RADAR_JAM_SKILL_ID, effectIndex: 0, duration: RADAR_JAM_SECONDS,
+    roleId: roleId(target.id), xBits: 0, zBits: 0};
+}
+
 /** Adopted2010 policy: an accepted hostile hit refreshes one real15-second marker-jam deadline. */
 export function startAmmoRadarJam(roomId: string, target: AmmoRadarJamParticipant,
   now: number, events: MsgRoomEvent[]): boolean {
@@ -31,9 +37,7 @@ export function startAmmoRadarJam(roomId: string, target: AmmoRadarJamParticipan
   target.radarJam = {skillId: RADAR_JAM_SKILL_ID, expiresAt: now + RADAR_JAM_DURATION_MS};
   events.push({roomId, type: 'radarJammed', message: '雷达干扰弹生效15秒',
     playerId: target.id, targetId: target.id, value: RADAR_JAM_SECONDS,
-    x: target.x, y: target.y, z: target.z, skillId: RADAR_JAM_SKILL_ID,
-    playSkillEffect: {skillId: RADAR_JAM_SKILL_ID, effectIndex: 0,
-      duration: RADAR_JAM_SECONDS, roleId: roleId(target.id), xBits: 0, zBits: 0}});
+    x: target.x, y: target.y, z: target.z, skillId: RADAR_JAM_SKILL_ID});
   return true;
 }
 
