@@ -6,7 +6,7 @@
 
 键盘消费者`SourceCharacterKeyboard`位于登录stage内，与Login共用现`SourceImageScale`/`scale`。以`useSourceUi(true, ['keyboard.xml'])`独立加载，根`all`在401,86–793,224，继承stage一次缩放，不二次叠加401/86父offset。资源loading/error以局部状态/重试呈现，仅键盘重挂载，不重置账号、密码或登录phase，不阻塞其它Login按钮。
 
-打开：密码框focus或pointer按下时置open。关闭：账号/登录外pointer、键盘失焦到外部、Escape或Login卸载时关闭，并清除Shift/Caps（状态随会话组件卸载）。键盘内部焦点移动不关闭。Escape回password目标并用一次性抑制位避免立即onFocus复开；密码框重新focus可再次打开。
+打开：密码框focus或pointer按下时置open。密码框与键盘为一个焦点组，键盘紧随密码框进入Tab顺序；密码框经Tab/Shift+Tab离开到账号或保存账号、账号/登录外pointer、键盘失焦到外部、Escape、busy或Login卸载时关闭，并清除Shift/Caps（状态随会话组件卸载）。键盘内部焦点移动不关闭。实际登录/注册及其余离开动作（设置/游戏介绍/退出）前主动关闭会话。Escape回password目标并用一次性抑制位避免立即onFocus复开；密码框重新focus可再次打开。资源error时局部retry仅在会话/密码仍持有焦点时取得焦点，不改已变化的焦点。
 
 ## 47键映射与状态
 
@@ -14,7 +14,7 @@
 
 ## 输入目标
 
-点击字符先恢复该Login实例passwordInput焦点，沿当前selectionStart/End替换选区后推进caret；沿用现`useRoomInputLimit`的20 codepoint规则，字符点击溢出拒绝且保当前文本与选择。物理键输入、剪贴板、浏览器composition继续现输入路径。不向账号/聊天输入，不submit/login/register，不写localStorage/日志/报告密码。保存与认证仍唯一经父`onLogin`/`onRegister`。
+点击字符先恢复该Login实例passwordInput焦点，沿当前selectionStart/End替换选区后推进caret；选中字符替换为相同字符时直接折叠caret至start+字符长度，无值变更不依赖提交effect。沿用现`useRoomInputLimit`的20 codepoint规则，字符点击溢出拒绝且保当前文本与选择。物理键输入、剪贴板、浏览器composition继续现输入路径。不向账号/聊天输入，不submit/login/register，不写localStorage/日志/报告密码。保存与认证仍唯一经父`onLogin`/`onRegister`。
 
 键盘Tab/Enter/Space可激活源按钮；字符按钮非submit类型，父form Enter不从按钮重复提交。
 

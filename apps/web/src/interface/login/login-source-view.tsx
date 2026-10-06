@@ -1,5 +1,5 @@
 import {SourceButton} from '../resources/source-button';
-import {useLayoutEffect, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {SourceStaticImage} from '../resources/source-static-image';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceUi} from '../lobby/source-react';
@@ -31,12 +31,20 @@ export function LoginSourceView(props: LoginSourceViewProps) {
   const composing = useRef(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const suppressOpen = useRef(false), pendingCaret = useRef<number | null>(null);
+  useEffect(() => {if (props.busy) setKeyboardOpen(false);}, [props.busy]);
   const accountEvents = useRoomInputLimit(accountInput, 20, setAccount, !!ui);
   const passwordEvents = useRoomInputLimit(passwordInput, 20, setPassword, !!ui);
   const withinLimit = Array.from(account).length <= 20 && Array.from(password).length <= 20;
   const credentials = withinLimit && account.length > 0 && password.length > 0;
   const canLogin = !props.busy && withinLimit && (credentials || (props.hasSavedIdentity && account === props.savedAccount && password === ''));
-  const login = () => {if (canLogin && !composing.current) props.onLogin(account, password);};
+  const login = () => {
+    if (!canLogin || composing.current) return;
+    setKeyboardOpen(false);
+    props.onLogin(account, password);
+  };
+  const dismissKeyboard = () => setKeyboardOpen(false);
+  const inKeyboard = (target: EventTarget | null) =>
+    target instanceof Element && target.closest('.source-keyboard') !== null;
   // Keyboard insertion replaces the live selection, rejecting overflow without touching the value.
   useLayoutEffect(() => {
     const caret = pendingCaret.current;
@@ -52,6 +60,12 @@ export function LoginSourceView(props: LoginSourceViewProps) {
     element.setSelectionRange(start, end);
     const next = element.value.slice(0, start) + character + element.value.slice(end);
     if (roomInputLength(next) > 20) return;
+    // Replacing a selection with the same character leaves value unchanged, so no commit effect runs.
+    if (next === element.value) {
+      pendingCaret.current = null;
+      element.setSelectionRange(start + character.length, start + character.length);
+      return;
+    }
     pendingCaret.current = start + character.length;
     setPassword(next);
   }
@@ -86,8 +100,11 @@ export function LoginSourceView(props: LoginSourceViewProps) {
       <input ref={passwordInput} {...sourceProps(ui, layout, 'login.xml', 'edtPassword')} {...passwordEvents}
         className="source-entry-input" aria-label="密码" type="password" autoComplete="off"
         value={password} disabled={props.busy}
+        onBlur={event => {if (!inKeyboard(event.relatedTarget)) setKeyboardOpen(false);}}
         onFocus={() => {if (suppressOpen.current) {suppressOpen.current = false; return;} openKeyboard();}}
         onPointerDown={() => {suppressOpen.current = false; openKeyboard();}}/>
+      {ui && layout && <SourceCharacterKeyboard open={keyboardOpen} busy={props.busy} passwordInput={passwordInput}
+        onCharacter={insertCharacter} onClose={closeKeyboard}/>}
       <SourceStaticImage ui={ui} layout={layout} suffix="login.xml" name="chkSaveAccount"
         reference={layout.control('chkSaveAccount').properties[props.saveAccount ? 'CheckMarkImage' : 'NormalImage']}
         className="source-entry-picture" aria-hidden="true"/>
@@ -97,17 +114,18 @@ export function LoginSourceView(props: LoginSourceViewProps) {
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnLogin" aria-label="登录"
         disabled={!canLogin} onClick={login}/>
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnRegister" aria-label="注册"
-        disabled={props.busy || !credentials} onClick={() => {if (!composing.current) props.onRegister(account, password);}}/>
+        disabled={props.busy || !credentials} onClick={() => {
+          dismissKeyboard();
+          if (!composing.current) props.onRegister(account, password);
+        }}/>
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnExit" aria-label="退出"
-        disabled={props.busy} onClick={props.onExit}/>
+        disabled={props.busy} onClick={() => {dismissKeyboard(); props.onExit();}}/>
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnSettings" aria-label="系统设置"
-        disabled={props.busy} onClick={props.onSettings}/>
+        disabled={props.busy} onClick={() => {dismissKeyboard(); props.onSettings();}}/>
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnHistory" aria-label="游戏介绍"
-        disabled={props.busy} onClick={props.onHistoryIntro}/>
+        disabled={props.busy} onClick={() => {dismissKeyboard(); props.onHistoryIntro();}}/>
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnPaypal" aria-label="充值" disabled/>
       <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnBuyCoinQ" aria-label="购买代币" disabled/>
-      {ui && layout && <SourceCharacterKeyboard open={keyboardOpen} busy={props.busy} passwordInput={passwordInput}
-        onCharacter={insertCharacter} onClose={closeKeyboard}/>}
     </form>}
   </SourceEntrySheet>;
 }

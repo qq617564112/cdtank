@@ -31,8 +31,13 @@ function SourceCharacterKeyboardSession({busy, passwordInput, onCharacter, onClo
   const [shift, setShift] = useState(false), [caps, setCaps] = useState(false);
   const container = useRef<HTMLDivElement>(null), retryButton = useRef<HTMLButtonElement>(null);
   const {ui, error} = useSourceUi(true, ['keyboard.xml']);
-  // A failed load parks focus on retry; a successful retry returns it to the source target.
-  useEffect(() => {if (!ui && error) retryButton.current?.focus();}, [ui, error]);
+  // A failed load parks focus on retry only while this session still owns focus.
+  useEffect(() => {
+    const active = document.activeElement;
+    const ownsFocus = active === null || active === document.body || active === passwordInput.current
+      || container.current?.contains(active);
+    if (!ui && error && ownsFocus) retryButton.current?.focus();
+  }, [ui, error, passwordInput]);
   useEffect(() => {
     const element = passwordInput.current;
     if (retried && ui && element && !element.disabled) element.focus({preventScroll: true});
