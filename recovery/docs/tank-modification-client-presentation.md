@@ -2,7 +2,7 @@
 
 本片接通 Home 战车详情的原两个改装入口与 `myhome_panzerpage_modify.xml` 的 24 控件弹窗。原 `myhome_panzerpage.xml` 中 `btnModifyFire` 为 action 1，使用 owned `+38` 资格和 `+44` 等级；`btnModifyPanzer` 为 action 2，使用 owned `+48` 资格和 `+54` 等级。两个按钮都保留 `tankeshengjiqu` 父级和原矩形，等级文本保留 `txtAttackLevel` / `txtPanzerLevel` 的 `94,5,112,21` 原坐标。资格为 0 时入口按 source flag 禁用，不在页面载入、选择或打开弹窗时补写。
 
-`HomeTankUpgradeDialog` 消费原布局的全部 24 个控件：根 `all`、九切片 `kuang`、等级与当前值文本、下一等级上下限、成功/无效果/失败字面值与概率、两条费用底图和图标、`btnModifyTank` 与 `btnClose`。弹窗按 800x599 原几何定位，复用 `SourceStaticImage`、`SourceStaticText`、`SourceButton` 的用户字体与图片状态消费者；关闭按钮和 Escape 返回实际 Home 入口，焦点在打开前元素仍可连接时恢复。
+`HomeTankUpgradeDialog` 消费原布局的全部 24 个控件：根 `all`、九切片 `kuang`、等级与当前值文本、下一等级上下限、成功/无效果/失败字面值与概率、两条费用底图和图标、`btnModifyTank` 与 `btnClose`。弹窗按 800x599 原几何定位，复用 `SourceStaticImage`、`SourceStaticText`、`SourceButton` 的用户字体与图片状态消费者。打开时按该布局引用的全部图片和按钮状态资源逐项准备；任一资源失败时保留原弹窗、显示可读错误，并提供同实例资源重试。资源未就绪时确认不可提交，重试只重新准备资源，不发送提交、不改变 requestId、不重挂查询或覆盖当前报价和草稿。关闭按钮和 Escape 保持返回实际 Home 入口，焦点在打开前元素仍可连接时恢复。
 
 打开弹窗先发送只读 `TankUpgrade QUERY`，报价的等级、费用、字面成功率/失败率/无效果余量、当前属性与四项下一等级候选边界全部取服务端返回。确认按钮在报价不可执行时禁用并显示具名原因；资源读取失败时保留弹窗并提供同实例局部重试。提交使用当前 `instanceId` 与 action，每次新提交生成一个 `requestId`；网络失败后同一 `requestId` 原样重试，成功确认后才完成该 attempt，不产生第二次扣费。
 
@@ -16,4 +16,4 @@
 
 ## 未实测与边界
 
-本片没有运行类型检查、构建、浏览器、双端、保存重启、HD 或 1:1 精度验收。真实账户无房间/WATTING 提交、LOADING/PLAYING/FINISHED 拒绝、同 requestId 网络重试、历史 replay 与 Ready 广播、升级后战斗属性重算仍需后续正式验收。现有旧 owned/导入记录的资格 0 不自动迁移；原完整 Home 93 控件父项、原服务器未知 producer 和 M6-03/UI-33 父项保持未完成。
+本片没有运行类型检查、构建、浏览器、双端、保存重启、HD 或 1:1 精度验收。真实账户无房间/WAITING 提交、LOADING/PLAYING/FINISHED 拒绝、同 requestId 网络重试、历史 replay 与 Ready 广播、升级后战斗属性重算仍需后续正式验收。现有旧 owned/导入记录的资格 0 不自动迁移；原完整 Home 93 控件父项、原服务器未知 producer 和 M6-03/UI-33 父项保持未完成。

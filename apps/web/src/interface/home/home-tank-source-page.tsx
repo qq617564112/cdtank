@@ -29,6 +29,26 @@ interface HomeTankSourcePageProps {
   equippedItemIds?: readonly number[];
 }
 
+function HomeTankUpgradeLevel({ui, layout, suffix, name, text, offset, value}: {
+  ui: HomeSourceUi; layout: HomeSourceLayout; suffix: string; name: string; text: string; offset: number;
+  value?: number;
+}) {
+  const props = sourceProps(ui, layout, suffix, name, undefined, 0, 0, true);
+  const properties = layout.control(name).properties;
+  const horizontal = properties.HorzFormatting ?? 'LeftAligned';
+  const vertical = properties.VertFormatting ?? 'VertCentred';
+  return <span {...props} className="source-static-text home-tank-upgrade-entry-level"
+    data-source-font="xiangjiao-brush" data-source-font-viewport="800,600" data-source-text-colour="FFFFFFFF"
+    data-source-horz-format={horizontal} data-source-vert-format={vertical} data-source-text-clip="text-area-intersect-window"
+    data-home-tank-owned-field={offset} data-owned-value={value}
+    style={{...props.style, display: 'flex', overflow: 'hidden', whiteSpace: 'nowrap', fontSize: 12,
+      lineHeight: '15px', color: '#fff',
+      justifyContent: horizontal === 'HorzCentred' ? 'center' : horizontal === 'RightAligned' ? 'flex-end' : 'flex-start',
+      alignItems: vertical === 'TopAligned' ? 'flex-start' : vertical === 'BottomAligned' ? 'flex-end' : 'center'}}>
+    <span data-source-text-content="" style={{textShadow: 'none'}}>{text}</span>
+  </span>;
+}
+
 /** The owned tank sheet keeps its original attribute, parameter and balance regions. */
 export function HomeTankSourceRegions({ui}: {ui: HomeSourceUi}) {
   const suffix = 'myhome_panzerpage.xml';
@@ -57,7 +77,6 @@ function HomeTankUpgradeEntries({ui, record, busy, openUpgrade}: Pick<HomeTankSo
     const action = index + 1 as 1 | 2;
     const enabled = !!openUpgrade && instanceId !== undefined && (fields?.get(action === 1 ? 0x38 : 0x48) ?? 0) !== 0;
     const level = action === 1 ? 'txtAttackLevel' : 'txtPanzerLevel';
-    const levelBox = layout.control(level).properties.AbsoluteRect.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
     const levelOffset = action === 1 ? 0x44 : 0x54;
     return <Fragment key={source}>
       <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name={source}
@@ -66,10 +85,8 @@ function HomeTankUpgradeEntries({ui, record, busy, openUpgrade}: Pick<HomeTankSo
       <SourceButton ui={ui} layout={layout} suffix={suffix} source={source} disabled={busy || !enabled}
         data-home-tank-modify-action={action} aria-label={action === 1 ? '火力改装' : '装甲改装'}
         onClick={() => {if (enabled && instanceId !== undefined) openUpgrade?.(instanceId, action);}}>
-        <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={level}
-          style={{left: levelBox[0], top: levelBox[1]}} className="home-tank-upgrade-entry-level"
-          text={fields?.has(levelOffset) ? String(fields.get(levelOffset)) : ''}
-          data-home-tank-owned-field={levelOffset} data-owned-value={fields?.get(levelOffset)} />
+        <HomeTankUpgradeLevel ui={ui} layout={layout} suffix={suffix} name={level} offset={levelOffset}
+          value={fields?.get(levelOffset)} text={fields?.has(levelOffset) ? String(fields.get(levelOffset)) : ''} />
       </SourceButton>
     </Fragment>;
   })}</>;

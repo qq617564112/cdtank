@@ -15,6 +15,40 @@ const viewportScale = () => Math.min(innerWidth / 800, innerHeight / 599);
 type UpgradeAction = 1 | 2;
 type PendingAttempt = {instanceId: number; action: UpgradeAction; requestId: string; completed: boolean};
 
+function sourceAsset(ui: HomeSourceUi, reference: string) {
+  const match = /^set:(\S+) image:(.+)$/.exec(reference);
+  if (!match) return undefined;
+  const sets = ui.imagesets.filter(set => set.attributes.Name === match[1]);
+  const set = sets.find(value => value.path.includes('imagesets_dds/')) ?? sets[0];
+  return set?.images.find(image => image.Name === match[2])?.asset;
+}
+
+async function prepareTankUpgradeAssets(ui: HomeSourceUi) {
+  const references = new Set<string>();
+  const layoutUi = ui.layouts.find(value => value.path.endsWith(suffix));
+  if (!layoutUi) throw new Error('改装弹窗布局缺失');
+  for (const control of layoutUi?.windows ?? []) for (const value of Object.values(control.properties)) {
+    if (/^set:(\S+) image:(.+)$/.test(value)) references.add(value);
+  }
+  const assets = [...references].map(reference => sourceAsset(ui, reference));
+  if (assets.includes(undefined)) throw new Error('改装弹窗图片资源缺失');
+  await Promise.all([...new Set(assets as string[])].map(async asset => {
+    const image = new Image();
+    image.src = `/${asset}`;
+    try {
+      if (image.complete && image.naturalWidth === 0) {
+        const source = image.src;
+        image.src = '';
+        image.src = source;
+      }
+      await image.decode();
+    } catch {
+      image.src = '';
+      throw new Error(`改装弹窗图片读取失败：${asset}`);
+    }
+  }));
+}
+
 function reasonText(quote?: TankUpgradeQuote) {
   if (!quote) return '改装信息读取失败';
   if (quote.canUpgrade) return '';
@@ -39,12 +73,16 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const owner = useRef({active: false, pending: false, generation: 0});
+  const resourceGeneration = useRef(0);
   const attempt = useRef<PendingAttempt | undefined>(undefined);
   const escapePending = useRef(false);
   const composing = useRef(false);
   const [response, setResponse] = useState<ResTankUpgrade>();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
+  const [resourceError, setResourceError] = useState('');
+  const [resourcePending, setResourcePending] = useState(false);
+  const [resourcesReady, setResourcesReady] = useState(false);
   const [status, setStatus] = useState('');
   const [scale, setScale] = useState(viewportScale);
   const layout = new HomeSourceLayout(ui, suffix);
@@ -74,13 +112,26 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
     }
   }
 
+  function prepareResources() {
+    const generation = ++resourceGeneration.current;
+    setResourcePending(true); setResourceError(''); setResourcesReady(false);
+    void prepareTankUpgradeAssets(ui).then(() => {
+      if (resourceGeneration.current !== generation) return;
+      setResourcesReady(true);
+    }).catch(reason => {
+      if (resourceGeneration.current === generation) {
+        setResourceError(reason instanceof Error ? reason.message : String(reason));
+      }
+    }).finally(() => {
+      if (resourceGeneration.current === generation) setResourcePending(false);
+    });
+  }
+
   async function submit() {
     const current = owner.current;
-    if (!current.active || current.pending) return;
-    if (!response || !quote) {
-      await query();
-      return;
-    }
+    if (!current.active || current.pending || resourcePending) return;
+    if (!resourcesReady) return;
+    if (!response || !quote) {query(); return;}
     if (!quote.canUpgrade) {
       setStatus(reasonText(quote));
       return;
@@ -126,15 +177,21 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
   useEffect(() => {
     const current = owner.current;
     current.active = true;
+    prepareResources();
     void query();
-    return () => {current.active = false; current.generation++;};
+    return () => {
+      current.active = false;
+      current.generation++;
+      resourceGeneration.current++;
+    };
   }, [battle, instanceId, action]);
 
   const disabled = pending;
   const retry = (!response && !!error) || (!!response && !quote);
+  const resourceRetry = !!resourceError && !resourcesReady && !resourcePending;
   return createPortal(<dialog ref={dialog} data-home-tank-upgrade-dialog=""
     data-tank-upgrade-instance={instanceId} data-tank-upgrade-action={action} aria-label={action === 1 ? '火力改装' : '装甲改装'}
-    aria-busy={pending} style={{width: 800 * scale, height: 599 * scale}}
+    aria-busy={pending || resourcePending} style={{width: 800 * scale, height: 599 * scale}}
     onCancel={event => {event.preventDefault(); if (!composing.current) close();}}
     onKeyDown={event => {
       event.stopPropagation();
@@ -181,14 +238,18 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
             text={quote ? String(quote.moneyCost) : ''} />
         </SourceImageScale>
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnModifyTank"
-          data-tank-upgrade-submit="" aria-label={retry ? '重试读取改装信息' : '确认改装'}
-          disabled={disabled || (!retry && quote?.canUpgrade !== true)}
-          onClick={() => {void submit();}} />
+          data-tank-upgrade-submit="" aria-label={resourceRetry ? '重试准备改装弹窗资源'
+            : retry ? '重试读取改装信息' : '确认改装'}
+          disabled={disabled || resourcePending || (!resourcesReady && !resourceRetry)
+            || (resourcesReady && !retry && quote?.canUpgrade !== true)}
+          onClick={() => {if (resourceRetry) {prepareResources();}
+            else void submit();}} />
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnClose"
           data-tank-upgrade-close="" aria-label="关闭改装" onClick={close} />
         <output className="home-tank-upgrade-status" aria-live="polite">
-          {status || (pending ? '正在读取改装信息…' : error
-            ? `改装信息读取失败：${error}。点击确认按钮重试` : reasonText(quote))}
+          {resourceError ? `改装弹窗资源读取失败：${resourceError}。请重试资源。`
+            : resourcePending ? '正在准备改装弹窗资源…' : status || (pending ? '正在读取改装信息…' : error
+              ? `改装信息读取失败：${error}。点击确认按钮重试` : reasonText(quote))}
         </output>
       </SourceImageScale>
     </div>
