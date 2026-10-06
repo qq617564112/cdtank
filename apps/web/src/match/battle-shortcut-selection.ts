@@ -48,26 +48,88 @@ export function stepCandidate(slots: readonly number[], current: number | undefi
   return slots[(index + direction + slots.length) % slots.length];
 }
 
-/** Transient weapon-cycle intent. Advanced by each accepted keydown so rapid
- * presses walk the input order without a pending/acknowledgement layer. The
- * baseline follows the server-confirmed ammo slot whenever that authority value
- * changes; lifecycle resets clear it outright. */
+/** An accepted cycle keypress that the server confirmation has not caught up
+ * with yet, remembered with the real ammo record that made it meaningful. */
+interface PendingAmmoRequest {
+  slot: number;
+  itemTableId: number;
+  quantity: number;
+}
+
+/** Transient weapon-cycle intent for useItem slots1–4. Each accepted keydown
+ * walks the input order and records its requested slot together with the real
+ * confirmed ammo record behind it. A confirmation only advances the cursor once
+ * it catches up with that in-order list, so an older acknowledgement never drags
+ * a still-newer keypress back. An ordinary `itemRejected`, a send failure, an
+ * outstanding slot whose confirmed quantity or table changed, a vanished
+ * candidate, a direct pick, or any lifecycle reset returns to the current
+ * confirmed baseline. HUD still reads the server value only. */
 export class WeaponCycleSelection {
   private desired?: number;
-  private server?: number;
+  private server = 1;
+  private pending: PendingAmmoRequest[] = [];
+  private ammo: readonly AmmoSlotSnapshot[] = [];
 
-  sync(selectedAmmoSlot: number | undefined): void {
-    if (selectedAmmoSlot === this.server) return;
-    this.server = selectedAmmoSlot;
-    this.desired = selectedAmmoSlot === 2 || selectedAmmoSlot === 3 || selectedAmmoSlot === 4
+  /** Adopt the confirmed authority value and reconcile the request list against
+   * the current confirmed ammo state. Requests the confirmation has passed are
+   * settled; if any outstanding request's real slot disappeared or its quantity
+   * or table moved, the whole intent returns to the confirmed source. */
+  sync(selectedAmmoSlot: number | undefined, ammoSlots: readonly AmmoSlotSnapshot[]): void {
+    const server = selectedAmmoSlot === 2 || selectedAmmoSlot === 3 || selectedAmmoSlot === 4
       ? selectedAmmoSlot : 1;
+    if (server !== this.server) {
+      this.server = server;
+      const confirmed = this.pending.findIndex(request => request.slot === server);
+      if (confirmed >= 0) this.pending = this.pending.slice(confirmed + 1);
+      else this.pending = [];
+    }
+    if (this.pending.some(request => !this.stillValid(request, ammoSlots))) this.pending = [];
+    this.ammo = ammoSlots;
+    this.desired = this.pending.length ? this.pending[this.pending.length - 1].slot : server;
   }
 
-  reset(): void {this.desired = undefined; this.server = undefined;}
+  /** A rejected ordinary weapon request (business rejection or send failure)
+   * drops its intent and returns to the real confirmed selection; the authority
+   * value itself is never set here. */
+  reject(): void {
+    this.pending = [];
+    this.desired = this.server;
+  }
+
+  /** Drop cycling intent for a direct number/HUD pick and return to the current
+   * confirmed baseline; the pick itself is confirmed by the server, not here. */
+  returnToConfirmed(): void {
+    this.reject();
+  }
+
+  reset(): void {this.desired = undefined; this.server = 1; this.pending = []; this.ammo = [];}
 
   next(slots: readonly number[], direction: CycleDirection): number | undefined {
+    if (this.pending.length && (this.desired === undefined || !slots.includes(this.desired))) {
+      this.reject();
+    }
     const next = stepCandidate(slots, this.desired, direction);
-    if (next !== undefined) this.desired = next;
+    if (next === undefined) return undefined;
+    this.desired = next;
+    this.pending.push(this.record(next));
     return next;
+  }
+
+  /** Real confirmed ammo record for the requested slot at request time; slot1 is
+   * the always-available default. */
+  private record(slot: number): PendingAmmoRequest {
+    if (slot === 1) return {slot: 1, itemTableId: 2001, quantity: 1};
+    const ammo = this.ammo.find(value => value.slot === slot);
+    return {slot, itemTableId: ammo?.itemTableId ?? 0, quantity: ammo?.quantity ?? 0};
+  }
+
+  /** A request stays outstanding while its confirmed record still offers the
+   * same usable slot with the same table and quantity. */
+  private stillValid(request: PendingAmmoRequest, ammoSlots: readonly AmmoSlotSnapshot[]): boolean {
+    if (request.slot === 1) return true;
+    const ammo = ammoSlots.find(value => value.slot === request.slot);
+    if (ammo === undefined) return false;
+    if ((ammo.quantity >>> 0) === 0 || classifyItemId(ammo.itemTableId) !== 3) return false;
+    return request.itemTableId === ammo.itemTableId && request.quantity === ammo.quantity;
   }
 }

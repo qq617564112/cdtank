@@ -16,8 +16,8 @@ const PRESS_ACTIONS = ['useItem', 'prevWeapon', 'nextWeapon', 'prevItem', 'nextI
 const HELD_ACTIONS = ['forward', 'backward', 'turnLeft', 'turnRight', 'aimLeft', 'aimRight', 'fire'] as const;
 
 interface BattleInputShortcuts {
-  /** Reflect a direct Battle slot5–8 press: select its discard candidate and
-   * move the local item cursor. The request itself is sent by the caller. */
+  /** Reflect a direct Battle slot1–8 press: move the local item/weapon cursor
+   * and select the discard candidate. The request itself is sent by the caller. */
   itemSlot(slot: number): void;
   /** Selected local item slot for the ordinary useItem key, if any. */
   currentItemSlot(): number | undefined;
@@ -57,12 +57,16 @@ export class BattleInput {
       if (shortcut !== undefined) {
         event.preventDefault();
         if (!event.repeat) {
-          if (shortcut >= 5) this.shortcuts.itemSlot(shortcut);
+          this.shortcuts.itemSlot(shortcut);
           this.send(shortcut);
         }
         return;
       }
-      const press = PRESS_ACTIONS.find(action => bindingCodes(this.bindings, action).includes(event.code));
+      // The five new shortcut actions refuse Shift combinations. This gate is
+      // scoped to them so the original fifteen keys keep their existing held,
+      // motion and number semantics, including Shift-assisted combos.
+      const press = event.shiftKey ? undefined
+        : PRESS_ACTIONS.find(action => bindingCodes(this.bindings, action).includes(event.code));
       if (press !== undefined) {
         event.preventDefault();
         if (event.repeat) return;

@@ -53,9 +53,11 @@ export class BattleItemInventory {
   }
 
   /** Move the local item cursor to a Battle slot5–8; only legal item slots are
-   * accepted. Returns whether the cursor changed. */
+   * accepted. A slot with no confirmed usable instance (unbound, unknown or
+   * exhausted) is never written as the cursor. Returns whether it changed. */
   setSelectedItemSlot(slot: number): boolean {
     if (slot < 5 || slot > 8 || slot === this.state.selectedItemSlot) return false;
+    if (!itemCandidateSlots(this.state.inventory).includes(slot)) return false;
     this.publish({...this.state, selectedItemSlot: slot});
     return true;
   }

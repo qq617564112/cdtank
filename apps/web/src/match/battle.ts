@@ -99,12 +99,21 @@ export class Battle {
       autopilot: local?.isAutopilot ?? false,
     };
   }, message => {
-    void this.client.sendMsg('PlayerInput', {...message, pose: this.localMotion.reportedPose});
+    const useItem = message.useItem;
+    void this.client.sendMsg('PlayerInput', {...message, pose: this.localMotion.reportedPose})
+      .then(result => {
+        // A transport-level failure means the server never saw this request, so
+        // any weapon-cycle intent it carried returns to the confirmed selection.
+        if (!result.isSucc && useItem >= 1 && useItem <= 4) this.weaponCycle.reject();
+      }, () => {
+        if (useItem >= 1 && useItem <= 4) this.weaponCycle.reject();
+      });
   }, {
     itemSlot: slot => this.useItemSlot(slot),
-    currentItemSlot: () => this.itemInventory.getSnapshot().selectedItemSlot,
+    currentItemSlot: () => this.currentItemSlot(),
     cycleWeapon: direction => this.cycleWeapon(direction),
     cycleItem: direction => this.cycleItem(direction),
+    clearIntent: () => this.weaponCycle.returnToConfirmed(),
   });
   private readonly weaponCycle = new WeaponCycleSelection();
   private readonly localMotion = new LocalTankMotion();
@@ -213,6 +222,11 @@ export class Battle {
         this.itemInventory.event(event);
         this.originalHud.event(event);
         this.skillEffects?.event(event);
+        // Ammo rejection carries the selected ammo table id; other itemRejected
+        // reasons omit it. Drop any outstanding weapon-cycle intent so the next
+        // cycle resumes from the real confirmed selection.
+        if (event.type === 'itemRejected' && event.playerId === this.playerId
+            && event.skillId !== undefined) this.weaponCycle.reject();
         if (event.type === 'chat') this.chat.message(event.message);
         if (snapshot && this.playerId) this.sound.event(event, snapshot, this.playerId);
         if (event.groundItemDropped || event.groundItemPickedUp || event.groundItemRemoved) {
@@ -748,15 +762,26 @@ export class Battle {
     this.input.send(slot);
   };
 
-  /** Reflect a direct Battle slot5–8 press: select the confirmed discard
-   * candidate for item slots and follow the ordinary request with the local
-   * cursor. The immediate send stays in the caller. */
+  /** Reflect a direct Battle slot1–8 press. Item slots move the local cursor
+   * only when the slot is a confirmed usable instance; weapon slots drop any
+   * cycling intent and follow the server-confirmed baseline. The immediate
+   * request stays in the caller. */
   private useItemSlot(slot: number): void {
+    if (slot >= 5) this.itemInventory.setSelectedItemSlot(slot);
+    else if (slot >= 1 && slot <= 4) this.weaponCycle.returnToConfirmed();
     const instanceId = slot >= 2 ? this.itemInventory.getSnapshot().inventory?.hotkeys[slot - 2] : undefined;
     if (instanceId && this.discardCandidates().some(candidate => candidate.instanceId === instanceId)) {
       this.discardSelection = instanceId;
     }
-    if (slot >= 5) this.itemInventory.setSelectedItemSlot(slot);
+  }
+
+  /** Cursor for the ordinary useItem key, resolved against the current confirmed
+   * candidates so an unbound, unknown or exhausted slot never sends a request. */
+  private currentItemSlot(): number | undefined {
+    const {inventory, selectedItemSlot} = this.itemInventory.getSnapshot();
+    const slots = itemCandidateSlots(inventory);
+    return selectedItemSlot !== undefined && slots.includes(selectedItemSlot)
+      ? selectedItemSlot : undefined;
   }
 
   /** Ordinary weapon cycle over confirmed class3 ammo slots; selects only, no
@@ -938,7 +963,8 @@ export class Battle {
     }
     if (this.playerId) this.itemInventory.update(snapshot, this.playerId);
     const localPlayer = this.playerId ? snapshot.players.find(player => player.id === this.playerId) : undefined;
-    this.weaponCycle.sync(localPlayer?.selectedAmmoSlot);
+    this.weaponCycle.sync(localPlayer?.selectedAmmoSlot,
+      localPlayer?.ammoSlots ?? []);
     if (this.active && this.mapId !== undefined) {
       const result = snapshot.phase === 'FINISHED' ? snapshot.match?.result : undefined;
       const own = this.playerId ? result?.players.find(player => player.id === this.playerId) : undefined;
