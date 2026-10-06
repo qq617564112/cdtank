@@ -139,7 +139,7 @@ CPU现在会绕开队友挡住的射击线，并在路径失败后尝试其他�
 
 `npm run test:combat:effect-battle`验证实际TSRPC Play/Stop通知传输、战斗通知组件的30Hz倒计时、复活队列与角色/回合清理。Battle已接入生产特效backend；正式World的库存授权施放与技能通知产生仍待实现。Web帧时钟与原Sleep时钟的差异见[技能效果消息](recovery/docs/skill-effect-message.md)。
 
-`npm run test:accounts`验证持久账户、库存隔离、七槽配置、服务端重启恢复与普通网络弹药选择。Web连接自动创建或恢复空账户；默认SQLite位于recovery/output/accounts.sqlite，ACCOUNT_DB_PATH可覆盖。`npm run inventory:import -- <accountId> <records.json>`导入明确所有权记录，不从物品表授予库存。原登录界面、库存配置UI和实际消耗/技能仍待完成，见[账户库存](recovery/docs/account-inventory.md)。
+`npm run test:accounts`验证持久账户、库存隔离、七槽配置、服务端重启恢复与普通网络弹药选择。正式登录页可恢复已保存token身份、注册账号绑定当前未绑定账户，或用账号和密码登录同一持久账户；保存账号只保留账号名，不保存密码。默认SQLite位于recovery/output/accounts.sqlite，ACCOUNT_DB_PATH可覆盖。`npm run inventory:import -- <accountId> <records.json>`导入明确所有权记录，不从物品表授予库存。正式库存配置与已接通道具消费的范围见[任务清单](recovery/docs/tasklist.md)，账户来源见[账户库存](recovery/docs/account-inventory.md)。
 
 `npm run test:combat:effect-clock`执行原406154连续调用与帧调度模块对照。Battle现使用非阻塞poll与真实秒数queue计时；原Sleep差异见技能消息文档。
 
