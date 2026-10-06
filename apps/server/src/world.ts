@@ -4,6 +4,7 @@ import {resetTrapTurnRestraint} from './battle/items/trap-turn-restraint';
 import {placeGroundTrap, advanceGroundTraps, clearGroundTraps} from './battle/items/ground-traps';
 import {advanceOldBombs} from './battle/items/old-bomb';
 import {advanceContactMines} from './battle/items/contact-mine';
+import {advanceAirstrikes} from './battle/items/airstrike';
 import {resetTrapRestraint} from './battle/items/trap-restraint';
 import {createSceneCrushes, acceptSceneCrush} from './battle/scene-crush';
 import {createScenePlants, plantContactColliders} from './battle/scene-plant-contact';
@@ -97,6 +98,8 @@ export class World {
   private nextPlayerId = 1;
   private nextRoomId = 1;
   private nextBulletId = 1;
+  /** Real configured tick interval, captured from the running world step. */
+  private lastTickMs = 0;
 
   constructor(private readonly now: () => number = Date.now,
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
@@ -218,6 +221,7 @@ export class World {
     const events: WorldEvent[] = [];
     clearRoleDisguise(player, () => recomputeBattleAttributes(player), room.roomId, events);
     room.groundTraps = room.groundTraps.filter(trap => trap.ownerId !== playerId);
+    room.airstrikes = room.airstrikes.filter(pending => pending.ownerId !== playerId);
     resetTrapRestraint(player);
     resetTrapTurnRestraint(player);
     resetTrapFireRestraint(player);
@@ -341,7 +345,7 @@ export class World {
     if (!found) return [];
     const events = acceptBattleInput(found.room, found.player, input, autonomous,
       () => found.player.vip ? Math.max(1, found.room.map.vipHp) : this.playerMaxHp(found.player),
-      this.consumeItem, this.now());
+      this.consumeItem, this.now(), this.lastTickMs);
     for (const notice of [...events]) if (notice.itemUseRequest) {
       placeGroundTrap(found.room, found.player, notice.itemUseRequest, this.now(),
         () => `${found.room.roomId}:${found.room.round}:T${++this.nextGroundTrapId}`, this.consumeItem, events);
@@ -371,6 +375,7 @@ export class World {
     const snapshots: MsgRoomSnapshot[] = [];
     const events: WorldEvent[] = [];
     const now = this.now();
+    this.lastTickMs = deltaMs;
     for (const room of this.rooms.values()) {
       if (room.phase === 'PLAYING') {
         room.tick += 1;
@@ -428,6 +433,8 @@ export class World {
       if (wasAlive && !target.alive) this.commitPlayerDeath(room, target, owner.id, outcome, events);
     };
     advanceOldBombs(room, now, events, hitGroundSkill);
+    if (room.phase !== 'PLAYING') return;
+    advanceAirstrikes(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
     advanceContactMines(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
@@ -629,6 +636,7 @@ export class World {
 
   private startRoom(room: RoomState): void {
     clearGroundTraps(room);
+    room.airstrikes = [];
     resetBreachCollision(room.battlefield);
     resetSceneObjectCollision(room.battlefield);
     room.phase = 'PLAYING';
@@ -665,6 +673,7 @@ export class World {
                      events: MsgRoomEvent[] = []): void {
     if (finishRound(room, now, reason, DEFAULT_INPUT, winnerTeam, winnerPlayerId)) {
       clearGroundTraps(room);
+      room.airstrikes = [];
       for (const player of room.players.values()) {
         clearAmmoBurn(player);
         player.equipmentSupply = undefined;

@@ -153,3 +153,9 @@ export function finiteAmmoHotkey(actor: ItemActor, firing: boolean): number {
   }
   return 0;
 }
+
+/** Rebuilt airstrike policy: spend delivered item13 only on a nearby enemy the CPU is not already firing at. */
+export function airstrikeHotkey(actor: ItemActor, threatened: boolean, firing: boolean): number {
+  if (!actor.alive || actor.combat?.status !== 2 || firing || !threatened) return 0;
+  return usableItems(actor).find(row => row.item.itemTableId === 13)?.slot ?? 0;
+}

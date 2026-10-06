@@ -14,13 +14,14 @@ import {applyOpticalCamouflage, advanceOpticalCamouflage} from './items/optical-
 import {applyRoleDisguise, advanceRoleDisguise} from './items/role-disguise';
 import {applyTeamLifeItem} from './items/team-life';
 import {applyBuildingTool} from './items/building-tool';
+import {applyAirstrike} from './items/airstrike';
 import type {RoomState} from '../rooms/state';
 import {confirmAcceptedAmmoSelection} from './items/ammo-confirmation';
 
 /** Accept ordinary human/CPU inputs or the participant's separate autopilot lane. */
-export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mode' | 'map' | 'teamLives' | 'groundTraps' | 'sceneObjects'>, player: PlayerState,
+export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mode' | 'map' | 'teamLives' | 'groundTraps' | 'sceneObjects' | 'airstrikes'>, player: PlayerState,
   input: MsgPlayerInput, autonomous: boolean, maxHp: () => number,
-  consumeItem: Parameters<typeof applyHealingItem>[4], now: number): MsgRoomEvent[] {
+  consumeItem: Parameters<typeof applyHealingItem>[4], now: number, tickMs: number): MsgRoomEvent[] {
   const {roomId, phase} = room;
   if (phase !== 'PLAYING' || !Number.isSafeInteger(input.sequence)
       || autonomous !== !!player.autopilot
@@ -58,6 +59,7 @@ export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mo
         applyBuildingTool(room, player, request, consumeItem, requests);
         applyPetInjection(roomId, player, request, consumeItem, requests, () => recomputeBattleAttributes(player));
         applyTrapSweep(room, player, request, now, consumeItem, requests);
+        applyAirstrike(room, player, request, now, tickMs, consumeItem, requests);
       });
   }
   return requests;

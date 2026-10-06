@@ -17,7 +17,7 @@ import type {TrapRestraintState} from '../items/trap-restraint';
 import type {OpticalCamouflageState} from '../items/optical-camouflage';
 import type {RoleDisguiseState} from '../items/role-disguise';
 import {isHiddenByOpticalCamouflage} from '../../../../shared/combat/optical-camouflage';
-import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, roleDisguiseHotkey, turnDrinkHotkey, teamLifeHotkey, type TeamLifeContext} from './items';
+import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, roleDisguiseHotkey, turnDrinkHotkey, teamLifeHotkey, airstrikeHotkey, type TeamLifeContext} from './items';
 
 export interface BotActor extends Point {
   id: string;
@@ -142,6 +142,12 @@ export class BotController {
         if (input.useItem === 0) input.useItem = teamLifeHotkey(actor, teamLife);
         if (input.useItem === 0 && buildingToolRoom) {
           input.useItem = buildingToolHotkey(combatCatalog, actor.inventory, actor, buildingToolRoom);
+        }
+        // Only a legal visible enemy inside the 200x200 blast centre qualifies.
+        if (input.useItem === 0) {
+          const airstrikeThreat = enemies.some(enemy => enemy.combat?.status === 2 &&
+            Math.abs(enemy.x - actor.x) <= 100 && Math.abs(enemy.z - actor.z) <= 100);
+          input.useItem = airstrikeHotkey(actor, airstrikeThreat, input.fire);
         }
         if (input.useItem === 0) input.useItem = attackDrinkHotkey(actor, input.fire && actor.fireReady === true);
         if (input.useItem === 0 && input.move !== 0 && actor.movementReady === true) {

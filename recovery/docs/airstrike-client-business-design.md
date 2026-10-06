@@ -1,6 +1,6 @@
-# 道具13空袭正式客户端业务设计与下一批实现合同
+# 道具13空袭正式客户端业务设计与服务端实现合同
 
-FUNC-16/FUNC-15/item13。本文从已保存的 item/skill 原表、原 `UMsgSkBomb` 接收器、已发布 combat 目录、现有 world effect consumer，以及现有目标、生命、房间事件和库存模块拟定下一批正式实现合同。原服务端权威执行入口仍缺，因此本文明确区分直接源事实与采用的 Web 业务规则。它不声称原客户端执行等价，也不把未知字段补成已恢复语义。
+FUNC-16/FUNC-15/item13。本文从已保存的 item/skill 原表、原 `UMsgSkBomb` 接收器、已发布 combat 目录、现有 world effect consumer，以及现有目标、生命、房间事件和库存模块建立正式实现合同。原服务端权威执行入口仍缺，因此本文明确区分直接源事实与采用的 Web 业务规则。它不声称原客户端执行等价，也不把未知字段补成已恢复语义。
 
 ## 直接源事实
 
@@ -16,7 +16,7 @@ FUNC-16/FUNC-15/item13。本文从已保存的 item/skill 原表、原 `UMsgSkBo
 | 已有消费者 | skill13 首槽 roleId0 已由正式通知消费者表达为原 Effect10 world 树；原 010 八绘制节点、视锥外不创建、独立 world 生命周期及显式停止清理已有验证。 |
 | 原缺口 | 416f 发送者及 `+14` point vector 的位置/数量来源未确认；Func16/Func15 权威分派、3013→3012 的实际调用和 3012 HP writer 未确认；X20 的单位、数量与时序未确认。 |
 
-以上字段保持原值。已发布 `combat-catalog.json` 已包含 item13 与 skill13/3013/3012；下一批实现只读取，不改目录字段。
+以上字段保持原值。已发布 `combat-catalog.json` 已包含 item13 与 skill13/3013/3012；实现只读取，不改目录字段。
 
 ## 采用业务规则
 
@@ -32,13 +32,13 @@ FUNC-16/FUNC-15/item13。本文从已保存的 item/skill 原表、原 `UMsgSkBo
 
 ### 目标坐标采用政策
 
-普通请求没有 vector。下一批采用“请求者的权威角色 XZ 为轰炸中心”，不回传客户端坐标，不从炮口或 look 增加偏移。
+普通请求没有 vector。采用“请求者的权威角色 XZ 为轰炸中心”，不回传客户端坐标，不从炮口或 look 增加偏移。
 
 该选择与已知合同相容：skill13 为 Target1，请求者是权威作用对象；已恢复的 416f 接收器只消费整数 scene XZ 世界点，尚不能证明原 sender 如何把角色位置/方向转成 point vector。采用请求者 XZ 可避免把未确认的 forward 距离或炮口偏移写成原规则。若后续找到原 sender，可只替换 center 计算而不改事件、范围、伤害和生命周期合同。
 
 ### 3013/3012 与范围、伤害
 
-下一批采用以下一次性区域结算：
+采用以下一次性区域结算：
 
 1. skill13 的 X20 解释为“普通施放确认后等待 20 个服务器 tick”。默认 `TICK_RATE=20` 时为约 1 秒；实现保存 `resolvesAt = now + 20 * tickMs`，不以客户端时间触发。
 2. 该选择只采用 X20 的一个可实施时间单位，不把 X20 解释为 20 次、20 发、20 个炸弹或 20 波。原 X20 未证前，`20` 不直接作为固定毫秒数，也不循环。
@@ -52,39 +52,28 @@ FUNC-16/FUNC-15/item13。本文从已保存的 item/skill 原表、原 `UMsgSkBo
 
 ### 表现、事件与生命周期
 
-1. 成功施放立即发布一次普通 `itemUsed`。若下一批同时发布 skill13 首槽 world effect，使用 `roleId=0`、`effectIndex=0`、`duration=0` 与中心 XZ 的 float32 bits；复用现有 010 consumer，不新增资源。
+1. 成功施放立即发布一次普通 `itemUsed`，并同时发布 skill13 首槽 world effect，使用 `roleId=0`、`effectIndex=0`、`duration=0` 与中心 XZ 的 float32 bits；复用现有 010 consumer，不新增资源。
 2. 到期范围结算发布一次正式 `airstrikeImpact` 事件，`skillId=3013`、中心 XYZ 与 `playSkillEffect={skillId:3013,effectIndex:0,roleId:0,xBits,zBits}`。该事件复用现有通知 consumer 与已发布 Effect60；若目录没有可确认的 060 发布资源，则不伪造资源，也不宣称实际绘制。
 3. 3012 是末端直接伤害，不额外产生第二效果或声音；命中事件只记录 skillId/value。
 4. 不新增 `SkillEffect` 类型、不造 `xBits/zBits` 新协议字段、不把 `MsgRoomEvent` 扩成通用调度框架。复用现有 `playSkillEffect` 与 room event 广播。
 5. 重连和重开页面不从 snapshot 重放已经发生的 010/060 瞬时效果，也不从 snapshot 重发伤害。活动时序只保存在服务端房间状态并继续推进；重连玩家恢复权威生命、库存和后续事件，不新增 `MatchSnapshot` 活动时序字段。短暂视觉在断线期间不可见是明确 tradeoff，不把历史效果当权威状态重放。
 
-## 下一批实现归属
+## 服务端接线
 
-### Server ownership
+服务端按以下归属完成本功能；普通 Shop、Kitbag、World、Life、RoomEvent 的既有事务顺序保持不变，combat catalog 的字段值未改。
 
-`root` owns 以下共享接线：
+- `apps/server/src/accounts/shop-catalog.ts`：item13 进入普通消耗品出售白名单；继续使用原正价、GGet 展示字段和现有 Shop 事务，无免费路径。
+- `apps/server/src/accounts/kitbag-configuration.ts` 与 `apps/server/src/battle/preparation.ts`：item13 类别1可配置槽 5–8，确认后只更新现有 hotkeys。
+- `apps/server/src/battle/items/item-request-dispatch.ts` 与 `apps/server/src/battle/accept-input.ts`：普通 `useItem(13)` 接到 airstrike 入口；仍由实例查找、status、battleQuantity 和 sequence 门禁决定请求资格。
+- `apps/server/src/battle/items/airstrike.ts`：独占 item13 规则读取、X20→20 tick 采用、中心、单次范围选择、3012 伤害调用与 airstrike 专用事件构造。
+- `apps/server/src/rooms/state.ts`：仅增加本房间内部的最小在途数组 `airstrikes`；不进入 `MsgRoomSnapshot`，不新增共享协议字段。
+- `apps/shared/protocols/MsgRoomEvent.ts`、`apps/server/src/world.ts`：复用现有 `MsgRoomEvent`/`playSkillEffect`；World 在现有 step 中调用 `advanceAirstrikes`，并把 3012 交给现有 `damagePlayerDirectly`。
 
-- `apps/server/src/accounts/shop-catalog.ts`：将 item13 加入普通消耗品出售白名单；继续使用原正价、GGet 展示字段和现有 Shop 事务，不新增免费路径。
-- `apps/server/src/accounts/kitbag-configuration.ts` 与 `apps/server/src/battle/preparation.ts`：确认 item13 可配置槽 5–8，确认后只更新现有 hotkeys。
-- `apps/server/src/battle/items/item-request-dispatch.ts` 与 `apps/server/src/battle/accept-input.ts`：把普通 `useItem(13)` 接到新 airstrike 入口；仍由实例查找、status、battleQuantity 和 sequence 门禁决定请求资格。
-- `apps/server/src/battle/items/airstrike.ts`（新增）：独占 item13 规则读取、X20→20 tick 采用、中心、单次范围选择、3012 伤害调用与 airstrike 专用事件构造。
-- `apps/server/src/rooms/state.ts`：仅增加本房间内部的最小在途数组 `airstrikes`；不进入 `MsgRoomSnapshot`，不新增共享协议。
-- `apps/shared/protocols/MsgRoomEvent.ts`、`apps/server/src/world.ts`：复用现有 `MsgRoomEvent`/`playSkillEffect`，只添加本功能必要的事件接线；World 在现有 step 中调用 `advanceAirstrikes`，并把 3012 交给现有 `damagePlayerDirectly`。
-
-`root` 还必须保持现有普通 Shop、Kitbag、World、Life、RoomEvent 事务顺序；不得修改 combat catalog 的原字段值。
-
-### UI ownership
-
-`UI` owns 以下独立页面/消费者文件：
-
-- `apps/web/src/interface/account/shop-item-category.ts` 与 Shop 页面：确认 item13 作为 Item 分类正常出现，复用现有 BUY 控件、余额和确认显示；不添加新的购买 API。
-- `apps/web/src/interface/home/home-inventory.tsx` 与 `home-inventory-source-list.tsx`：确认物品页槽 5–8 的原槽位显示、选择 item13、ASSIGN/CANCEL 和数量显示；不添加新的库存状态。
-- `apps/web/src/match/battle.ts`、`apps/web/src/match/room-feed.ts` 与现有 skill effect consumers：接收 `itemUsed`、`airstrikeImpact`、`hit` 和可选 `playSkillEffect`；010/060 仍走现有 world 分支，不重放历史命中。
-- `apps/web/src/render/effects/...`、`apps/web/src/assets/scenes/...` 与 `apps/web/src/audio/...`：不为本功能新增资源；只消费已发布 010/060 或明确存在的原资源。若资源缺失，保留资源缺口，不以通用图形替代。
+运行时接线与范围记录见 `airstrike-runtime.md`。
 
 ## 必需字段与接线摘要
 
-| 层 | 字段/入口 | 下一批行为 |
+| 层 | 字段/入口 | 实现行为 |
 | --- | --- | --- |
 | Item | `itemTableId=13` | 正常 Shop BUY、拥有实例、可配置槽 5–8；`battleUseMax=1`。 |
 | Request | `ItemUseRequest.kind='useItem'`, `instanceId` | 只传拥有实例；服务端求目标。 |
@@ -103,9 +92,9 @@ FUNC-16/FUNC-15/item13。本文从已保存的 item/skill 原表、原 `UMsgSkBo
 | 416f sender 的点数组与位置来源 | 请求者权威 XZ；不推断 look/炮口偏移。 | 可能缺少原前向落点，但可由替换 center 计算修正。 |
 | Func15/3012 权威调用与 HP writer | 到期一次直接 3012 伤害；`-300` 转 `damage=300`。 | 不声称原执行器等价，但复用现有统一生命链。 |
 | Target4/Range200 几何 | 沿同字段 3009 的 Web 政策采用 200×200 闭方形。 | 原目标查询未恢复，可能不是通用圆形选择。 |
-| 3013 首槽 Effect60/SE32 资源与时序 | 复用现有 consumer；缺失资源保持缺失，不造模型/声音。 | 可能只完成伤害而无原 060 绘制。 |
+| 3013 首槽 Effect60/SE32 资源与时序 | 复用现有 consumer；已发布资源直接消费，不造模型/声音。 | 时序仍沿采用政策，可能只完成一次 060 绘制与命中。 |
 | 重连历史瞬时效果 | 不扩 snapshot 保存时序，不重放历史 010/060/命中；只恢复生命/库存及后续事件。 | 断线期间短暂视觉不可见，但在途结算仍由服务端完成。 |
 
-## 不进入本批
+## 范围边界
 
-不新增 unit test、不运行 tests/浏览器/构建/类型/lint/exporter/native/协议生成器；不在本批修改生产代码。不新增通用技能调度框架、哈希、防护层、兼容包装或免费取得路径。若实现时发现某个已发布资源确实不存在，只保留该资源缺口，不用替代资源掩盖。
+不新增 unit test、不运行 tests/浏览器/构建/类型/lint/exporter/native/协议生成器。不新增通用技能调度框架、哈希、防护层、兼容包装或免费取得路径。已发布资源存在时不造替代；缺失时只保留资源缺口，不用替代资源掩盖。

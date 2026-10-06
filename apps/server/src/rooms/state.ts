@@ -4,6 +4,17 @@ import type {PlayerState} from '../battle/player-state';
 import type {BulletState} from '../battle/projectiles';
 import type {ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot, MatchResult} from '../../../shared/protocols';
 
+/** Server-only in-flight item13 cast; never enters MsgRoomSnapshot. */
+export interface PendingAirstrike {
+  ownerId: string;
+  team: number;
+  x: number;
+  y: number;
+  z: number;
+  resolvesAt: number;
+  sourceSkillId: number;
+}
+
 export interface RoomState {
   roomId: string;
   roomName: string;
@@ -29,6 +40,7 @@ export interface RoomState {
   sceneCrushes: SceneCrushSnapshot[];
   scenePlants?: ScenePlantSnapshot[];
   groundTraps: GroundTrapSnapshot[];
+  airstrikes: PendingAirstrike[];
   targetScore: number;
   result?: MatchResult;
   creatorClientId?: string;
