@@ -14,8 +14,9 @@
 
 - 我的家 `myhome_playerpage.xml` 的 `txtPlayerTitle` 显示 `owned` 中当前 `selectedTitleId` 对应的名称；无选中称号保持空白，不填模板或 `0` 名称。
 - 原 `rdoTitleSummary` 页签打开原 `myhome_playerpage_titlesummary.xml` 的 `lstTitles` 几何，逐项列出拥有称号名称与原始描述，空清单保持空列表。
-- 选择一条称号经 `battle.roleProfile(selectedId)` 提交；服务端确认返回新的 `titles` 后才更新列表高亮、正文与当前称号。`0` 主动清空通过列表外的“清空称号”动作触发。
-- 请求进行中或遭拒绝时保留当前选择，错误信息沿我的家既有反馈区展示；焦点在确认后仍留在原控件。
+- 选择一条称号经 `battle.roleProfile(selectedId)` 提交；服务端确认返回新的 `titles` 后才更新列表高亮、正文与当前称号。`0` 主动清空通过列表外的“清空称号”动作触发。客户端本地状态只消费已确认的 `titles`，不本地授予或推算；`selectedTitleId` 为 `0` 时清空当前佩戴并保持列表清单不变。
+- 每个称号请求在发起时记录触发控件为请求焦点 owner（清空按钮或列表行），请求期间 `pending` 使控件禁用并可能移出焦点。请求在 `finally` 收尾、`pending` 复位且控件重新启用后，于 layout 时序优先把焦点交回原 owner，再退回既有的关闭按钮空焦点兜底。
+- 确认成功与拒绝都在同一收尾路径上恢复同一 owner；请求进行中或遭拒绝时保留当前选择，错误信息沿我的家既有反馈区展示。
 
 ## 其他消费者
 

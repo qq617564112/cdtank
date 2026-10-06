@@ -139,19 +139,19 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
   }, [battle]);
 
   useLayoutEffect(() => {
-    if (!resources || busy) return;
-    if (document.activeElement === document.body || document.activeElement === dialog.current) {
-      dialog.current?.querySelector<HTMLButtonElement>('[data-home-close]')?.focus();
-    }
-  }, [resources, busy]);
-
-  useLayoutEffect(() => {
     if (busy || !requestFocus.current) return;
     const target = requestFocus.current;
     requestFocus.current = null;
     if (target.isConnected && (document.activeElement === document.body
         || document.activeElement === dialog.current || document.activeElement === target)) target.focus();
   }, [busy]);
+
+  useLayoutEffect(() => {
+    if (!resources || busy) return;
+    if (document.activeElement === document.body || document.activeElement === dialog.current) {
+      dialog.current?.querySelector<HTMLButtonElement>('[data-home-close]')?.focus();
+    }
+  }, [resources, busy]);
 
   const requestClose = () => {
     if (!session.current.active) return;
@@ -197,6 +197,8 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
   async function selectTitle(titleId: number) {
     const current = session.current;
     if (!current.active || current.pending || !titles) return;
+    const focused = document.activeElement;
+    requestFocus.current = focused instanceof HTMLElement && dialog.current?.contains(focused) ? focused : null;
     current.pending = true; setBusy(true); setTitlePending(true); setTitleStatus('保存称号佩戴…');
     try {
       const confirmed = await battle.roleProfile(titleId);
