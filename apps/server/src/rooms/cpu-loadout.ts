@@ -23,7 +23,7 @@ export function configureRoomCpuLoadout(room: RoomState, owner: PlayerState,
     const definition = combatItems.get(itemTableId);
     if (!Number.isInteger(slot) || slot < 2 || slot > 8 || slots.has(slot)
         || !CPU_LOADOUT_ITEM_IDS.includes(itemTableId) || !definition
-        || (slot <= 4 ? classifyItemId(itemTableId) !== 3 : itemTableId < 1 || itemTableId > 8)
+        || (slot <= 4 ? classifyItemId(itemTableId) !== 3 : itemTableId < 1 || itemTableId > 9)
         || !Number.isInteger(quantity) || quantity < 1 || quantity > definition.battleUseMax) {
       throw new Error('CPU配置物品或数量无效');
     }

@@ -46,6 +46,7 @@ import {recomputeBattleAttributes} from './battle/attributes';
 import {advanceTurnDrink, clearTurnDrink} from './battle/items/turn-drink';
 import {advanceSpeedDrink, clearSpeedDrink} from './battle/items/speed-drink';
 import {advanceInvincibility, clearInvincibility} from './battle/items/invincibility';
+import {advanceOpticalCamouflage, clearOpticalCamouflage} from './battle/items/optical-camouflage';
 import {setReady, changeWaitingTeam, voteRematch, prepareRematch} from './rooms/preparation';
 import {advanceProjectiles} from './battle/projectiles';
 import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSceneObjectCollision} from './battle/environment';
@@ -212,6 +213,7 @@ export class World {
     const {room, player} = found;
     clearCopiedRoleSkill(player.combat);
     clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
+    clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
     room.groundTraps = room.groundTraps.filter(trap => trap.ownerId !== playerId);
     resetTrapRestraint(player);
     resetTrapTurnRestraint(player);
@@ -432,6 +434,7 @@ export class World {
       advanceDefenseDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceAttackDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceInvincibility(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
+      advanceOpticalCamouflage(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceSpeedDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceTurnDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceAmmoSlow(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
@@ -448,6 +451,7 @@ export class World {
       respawn: player => {
         clearCopiedRoleSkill(player.combat);
         clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
+        clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
         resetTrapRestraint(player);
         resetTrapTurnRestraint(player);
         resetTrapFireRestraint(player);
@@ -589,6 +593,7 @@ export class World {
     clearDefenseDrink(target, () => recomputeBattleAttributes(target));
     clearAttackDrink(target, () => recomputeBattleAttributes(target));
     clearInvincibility(target, () => recomputeBattleAttributes(target));
+    clearOpticalCamouflage(target, () => recomputeBattleAttributes(target));
     clearSpeedDrink(target, () => recomputeBattleAttributes(target));
     clearTurnDrink(target, () => recomputeBattleAttributes(target));
     clearAmmoSlow(target, () => recomputeBattleAttributes(target));
@@ -655,6 +660,7 @@ export class World {
       for (const player of room.players.values()) clearDefenseDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearAttackDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearInvincibility(player, () => recomputeBattleAttributes(player));
+      for (const player of room.players.values()) clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearSpeedDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearTurnDrink(player, () => recomputeBattleAttributes(player));

@@ -31,7 +31,8 @@ export function applyOpticalCamouflage(roomId: string, player: OpticalCamouflage
   const definition = combatItems.get(9);
   const skill = definition ? combatSkills.get(definition.skillIds[0]) : undefined;
   if (!skill || skill.skillId !== 9 || skill.target !== 1 || skill.triggerType !== 1
-      || skill.functions[0]?.type !== 7) return;
+      || skill.functions[0]?.type !== 7 || !Number.isFinite(skill.functions[0].t)
+      || skill.functions[0].t <= 0) return;
   const reject = (message: string): void => {
     events.push({roomId, type: 'itemRejected', message, playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0});

@@ -1,13 +1,21 @@
 # M4-10-I09 光学迷彩
 
-目标是普通账户库存、快捷槽与输入成功施放后，真正进入来源支持的隐身显示/目标状态，消费保存后10秒恢复，死亡、结算和再战不残留。原物件9每局2；技能9 Target1/Trigger1/FuncType7 t10；三槽Effect/Sound全0，不添加虚构的声音或效果。
+原物件9「光学迷彩」关联skill9，BattleUseMax2；原技能9为Target1、TriggerType1、FuncType7、T10，三个Effect/Sound槽均为0。物件金钱价和软星币价均为0，GGet0，因此商城不增加物品9，也不发放免费初始库存。玩家路径从显式拥有的库存实例开始，CPU路径只使用房主配置的有限临时配给。
 
-当前已准备battle/items/optical-camouflage.ts：原表门禁、普通useItem、存活status2、真实技能栏、非叠加、持久CAS先行、库存消费、临时技能9、精确期限以及仅该临时技能清理。资格、自用、消费、期限生产与非叠加均为重建规则，不把本模块称原Func7实现。该模块尚未导入正式消费入口，暂不允许玩家扣库存后产生未落实的“隐身”。
+## 当前生产路径
 
-规则专项optical-camouflage.cts已PASS（optical-camouflage-rules.log）：拒绝与CAS失败/异常不改变库存技能、成功先提交后作用、技能栏满与15个其他技能保持、期限边界/重复清理/死亡撤槽、不产生Play或Stop声音效果通知、原表不变。此专项仅模块范围，不能关闭玩家业务。
+普通Digit5至Digit8输入经43d4dc重建门禁进入`acceptBattleInput`和`optical-camouflage.ts`。成功路径先用既有消费确认保存拥有数量，再从确认实例扣一份、加入临时skill9，并在`PlayerSnapshot.opticalCamouflage={skillId:9,expiresAt}`暴露服务器期限。拒绝重复、无空技能槽、库存量变化和保存失败时，不改变库存或角色状态。技能时长必须来自原表正数T；当前资料为10秒。普通开火不取消隐身。
 
-唯一待核对的最小来源是角色隐身状态到原actor显示提交和角色目标选择的入口。尤其不能从文字推定自己透明0.3、队友可见/敌人消失、伤害免疫或开火取消。限定来源结果由optical-camouflage-source.md保存；没有关键依据则保留未完成并暂停，不反复扩大至伪装/雷达/其他技能。
+到期在普通输入接收前和每个World步推进；死亡、复活、结算、首次开局、再战和正常离房只清理本模块建立的skill9与`opticalCamouflage`，不影响其它技能或输入sequence。死亡及FINISHED后不再发送带该状态的玩家snapshot。
 
-后续真实接线须涵盖accept-input、World每tick及死亡/结算/start清理、snapshot协议、客户端渲染/原HUD和必要CPU观察。验收以普通输入和自然CPU两局、真实联机、双正常高清网页、库存账户保存及实际服务重启证明实际作用。仅来源/模块准备阶段不重复五模式两局、两端发行和重启。
+观察规则由共享`isHiddenByOpticalCamouflage`统一：存活隐身目标对本机可见，团队模式1至3同队可见，团队模式敌对队伍及模式4至5的所有其它玩家均视为敌对观察者而隐藏。CPU敌人选择和威胁判断使用同一helper，目标变为隐藏时现有目标/路径重选；碰撞和手动弹丸命中不变，不提供碰撞免疫或伤害免疫。原Effect/Sound为0，不新增PlaySkillEffect或StopSkillEffect内容。
 
-限定原检查已完成：optical-camouflage-source.json 48组完整43535e/43538e资格及真实状态/队伍getter对照PASS，填16动作标记不改变结果；这不证明真实配置或外围是否另有隐身过滤。原Effect/Sound0元数据通过。精确缺失入口已保存，来源agent停止。全仓类型optical-camouflage-types.log通过。本业务仍未勾选，没有新增可玩的隐身功能。
+CPU可在槽5至8配置有限item9；`opticalCamouflageHotkey`只在存活status2、附近有可见敌人、HP不高于半血、技能槽有效且skill9未生效时返回普通输入槽。该输入仍由World普通权威门禁、消费事务和期限处理，不直接写world。
+
+## 来源边界
+
+普通请求只证明43d4dc的存活status2、实例查找和本局数量前置；3c9e不携目标或期限，3c92独立确认扣量。原43535e/43538e只给出存活与队伍目标判断，原Func7到actor的实际字段、原controller完整配置和原actor绘制可见入口未取得。当前隐身自用、确认顺序、期限、生命周期和观察规则是依据客户端通信及原表参数补全的服务端业务，不宣称为原Windows分支逐字段执行。详细推断链见`optical-camouflage-client-derived-server.md`，限定原证据见`optical-camouflage-source.md`。
+
+## 未执行验收
+
+当前交付为代码路径与文档走查。未执行普通玩家或CPU自然施放、到期/死亡/结算/再战真实对局、双网页高清显示、目标/路径实际行为、账户库存保存或服务重启恢复。上述运行验收与完整购买/配置链仍保持未完成；M6-06不因零价不售而免费发放，FUNC-07也不因本物件路径完成而关闭全部FuncType7。

@@ -5,6 +5,7 @@ import type {AmmoBurnState} from '../items/ammo-burn';
 import type {AmmoSlowState} from '../items/ammo-slow';
 import {calculateFoodHealing} from '../roles/food-healing';
 import type {TrapRestraintState} from '../items/trap-restraint';
+import type {OpticalCamouflageState} from '../items/optical-camouflage';
 
 interface ItemActor {
   alive: boolean;
@@ -17,6 +18,7 @@ interface ItemActor {
   trapRestraint?: TrapRestraintState;
   trapTurnRestraint?: TrapTurnRestraintState;
   trapFireRestraint?: TrapFireRestraintState;
+  opticalCamouflage?: OpticalCamouflageState;
   inventory?: readonly BattleItemRecord[];
   combat?: {status?: number; currentAmmoTableId?: number;
     roleFloatFields?: ReadonlyMap<number, number>; record?: {arrays: Map<number, Int32Array>}};
@@ -94,6 +96,16 @@ export function invincibilityHotkey(actor: ItemActor, threatened: boolean): numb
       || !(actor.hp > 0) || !(actor.maxHp > 0) || actor.hp > actor.maxHp * .5
       || !skills || skills.length !== 16 || skills.includes(8) || !skills.includes(0)) return 0;
   return usableItems(actor).find(row => row.item.itemTableId === 8)?.slot ?? 0;
+}
+
+/** Rebuilt defensive policy: conceal the same finite threat window as invincibility. */
+export function opticalCamouflageHotkey(actor: ItemActor, threatened: boolean): number {
+  const skills = actor.combat?.record?.arrays.get(4);
+  if (!actor.alive || actor.combat?.status !== 2 || actor.opticalCamouflage || !threatened
+      || actor.hp === undefined || actor.maxHp === undefined
+      || !(actor.hp > 0) || !(actor.maxHp > 0) || actor.hp > actor.maxHp * .5
+      || !skills || skills.length !== 16 || skills.includes(9) || !skills.includes(0)) return 0;
+  return usableItems(actor).find(row => row.item.itemTableId === 9)?.slot ?? 0;
 }
 
 /** Rebuilt strategy: finite armor is reserved for a nearby enemy after injury. */

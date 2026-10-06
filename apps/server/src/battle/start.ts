@@ -18,6 +18,7 @@ import {clearDefenseDrink, type DefenseBoostState} from './items/defense-drink';
 import {clearTurnDrink, type TurnBoostState} from './items/turn-drink';
 import {clearSpeedDrink, type SpeedBoostState} from './items/speed-drink';
 import {clearInvincibility, type InvincibilityState} from './items/invincibility';
+import {clearOpticalCamouflage, type OpticalCamouflageState} from './items/optical-camouflage';
 import {resetConfirmedAmmo} from './items/ammo-confirmation';
 import {clearCopiedRoleSkill} from './passive-skill-copy';
 import {clearPetHitSpeed, type PetHitSpeedState} from './pet-hit-speed';
@@ -49,6 +50,7 @@ interface StartingParticipant {
   burn?: AmmoBurnState;
   ammoSlow?: AmmoSlowState;
   invincibility?: InvincibilityState;
+  opticalCamouflage?: OpticalCamouflageState;
   speedBoost?: SpeedBoostState;
   turnBoost?: TurnBoostState;
   petHitSpeed?: PetHitSpeedState;
@@ -74,6 +76,7 @@ export function initializeBattleParticipants<Player extends StartingParticipant>
     clearDefenseDrink(player, () => recomputeBattleAttributes(player));
     clearAttackDrink(player, () => recomputeBattleAttributes(player));
     clearInvincibility(player, () => recomputeBattleAttributes(player));
+    clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
     clearSpeedDrink(player, () => recomputeBattleAttributes(player));
     clearTurnDrink(player, () => recomputeBattleAttributes(player));
     Object.assign(player, battlefield.spawn(index));

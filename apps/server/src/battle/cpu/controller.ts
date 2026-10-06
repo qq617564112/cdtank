@@ -12,7 +12,9 @@ import type {BattleItemRecord} from '../../../../shared/combat/item-hotkeys';
 import type {AmmoBurnState} from '../items/ammo-burn';
 import type {AmmoSlowState} from '../items/ammo-slow';
 import type {TrapRestraintState} from '../items/trap-restraint';
-import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, turnDrinkHotkey, teamLifeHotkey, type TeamLifeContext} from './items';
+import type {OpticalCamouflageState} from '../items/optical-camouflage';
+import {isHiddenByOpticalCamouflage} from '../../../../shared/combat/optical-camouflage';
+import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, turnDrinkHotkey, teamLifeHotkey, type TeamLifeContext} from './items';
 
 export interface BotActor extends Point {
   id: string;
@@ -35,6 +37,7 @@ export interface BotActor extends Point {
   trapRestraint?: TrapRestraintState;
   trapTurnRestraint?: TrapTurnRestraintState;
   trapFireRestraint?: TrapFireRestraintState;
+  opticalCamouflage?: OpticalCamouflageState;
   inventory?: readonly BattleItemRecord[];
   combat?: {status?: number; currentAmmoTableId?: number;
     roleFloatFields?: ReadonlyMap<number, number>; record?: {arrays: Map<number, Int32Array>}};
@@ -90,7 +93,8 @@ export class BotController {
       ? actor.movement.navigation.reachable(start, end) : field.move(start, end, 20);
     const distance = (point: Point) => Math.hypot(point.x - actor.x, point.z - actor.z);
     const enemies = actors.filter(other => other.alive && other.id !== actor.id
-      && (mode >= 4 || other.team !== actor.team));
+      && (mode >= 4 || other.team !== actor.team)
+      && !isHiddenByOpticalCamouflage(other, actor, mode));
     enemies.sort((a, b) => (mode === 3 ? Number(b.vip) - Number(a.vip) : 0) || distance(a) - distance(b));
     const claimed = new Set(actors.filter(other => other.id !== actor.id && other.alive
       && other.team === actor.team).map(other => (other.cpu ?? other.autopilot)?.objectiveTargetId));
@@ -122,6 +126,8 @@ export class BotController {
       const finishItems = (): MsgPlayerInput => {
         if (input.useItem === 0) input.useItem = petInjectionHotkey(actor);
         if (input.useItem === 0) input.useItem = invincibilityHotkey(actor,
+          enemies.some(enemy => distance(enemy) <= 300));
+        if (input.useItem === 0) input.useItem = opticalCamouflageHotkey(actor,
           enemies.some(enemy => distance(enemy) <= 300));
         if (input.useItem === 0) input.useItem = defenseDrinkHotkey(actor,
           enemies.some(enemy => distance(enemy) <= 500));

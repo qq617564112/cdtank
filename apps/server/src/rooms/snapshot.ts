@@ -28,6 +28,7 @@ interface SnapshotPlayer {
   turnBoost?: {skillId: number; expiresAt: number; turnBonus: number};
   speedBoost?: {skillId: number; expiresAt: number; moveBonus: number};
   invincibility?: {skillId: number; expiresAt: number};
+  opticalCamouflage?: {skillId: 9; expiresAt: number};
   trapRestraint?: {skillId: 4001; expiresAt: number};
   trapTurnRestraint?: {skillId: 4002; expiresAt: number};
   trapFireRestraint?: {skillId: 4003; expiresAt: number};
@@ -87,6 +88,7 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
     turnBoost: player.turnBoost ? {...player.turnBoost} : undefined,
     speedBoost: player.speedBoost ? {...player.speedBoost} : undefined,
     invincibility: player.invincibility ? {...player.invincibility} : undefined,
+    opticalCamouflage: player.opticalCamouflage ? {...player.opticalCamouflage} : undefined,
     ammoBurn: player.alive && player.burn ? {itemId: 2007, skillId: 4005,
       startedAt: player.burn.startedAt, expiresAt: player.burn.startedAt + 9000} : undefined,
     reload: {duration: player.combat.reloadDuration, startedAt: player.combat.reloadStartedAt, source: player.combat.reloadSource,
