@@ -458,7 +458,12 @@ export class EffectRuntime {
       mesh.alphaIndex = this.scene.meshes.indexOf(mesh);
     }
     if (node.particle) draw.particle!.update(this.camera, node.particle.pool.particles);
-    if (node.overlay) draw.overlay!.update(draw.overlayRectangle!.draw(node.overlay.color, overlayControl!.textured, grid.uvFrames[node.overlay.frame]));
+    if (node.overlay) {
+      const engine = this.scene.getEngine();
+      draw.overlayRectangle!.resize(engine.getRenderWidth(), engine.getRenderHeight());
+      draw.overlay!.update(draw.overlayRectangle!.draw(node.overlay.color,
+        overlayControl!.textured, grid.uvFrames[node.overlay.frame]));
+    }
     if (node.bolt) {
       const eye = this.camera.globalPosition;
       draw.sprite!.updateTriangleStrip(effectBoltDrawVertices(node.bolt.worldSegments,

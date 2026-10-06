@@ -1,6 +1,7 @@
 import type {Battle} from '../../match/battle';
 import {cloneKeyBindings, DEFAULT_KEY_BINDINGS, validateKeyBindings} from '../../match/input-bindings';
 import {readAudioPreferences} from './audio-preferences';
+import {applyDisplayPreferences, readDisplayPreferences} from './display-preferences';
 import {readQuickChatPreferences} from './quick-chat-preferences';
 
 export const KEY_BINDINGS_STORAGE_KEY = 'cdtank.key-bindings.v1';
@@ -8,6 +9,8 @@ export const KEY_BINDINGS_STORAGE_KEY = 'cdtank.key-bindings.v1';
 /** Restore consumers before React can expose room entry or playback controls. */
 export function initializeSettings(battle: Pick<Battle, 'setKeyBindings' | 'setQuickChats' | 'setMusicVolume' | 'setSoundVolume'>) {
   const storage = {getItem: (key: string) => window.localStorage.getItem(key)};
+  const display = readDisplayPreferences(storage);
+  applyDisplayPreferences(display.preferences);
   const audio = readAudioPreferences(storage, {music: 0.5, sound: 0.5});
   const quickChat = readQuickChatPreferences(storage);
   let bindings = cloneKeyBindings(DEFAULT_KEY_BINDINGS);
@@ -26,7 +29,7 @@ export function initializeSettings(battle: Pick<Battle, 'setKeyBindings' | 'setQ
   battle.setQuickChats(quickChat.preferences);
   battle.setMusicVolume(audio.preferences.music);
   battle.setSoundVolume(audio.preferences.sound);
-  return {keys: {bindings, loadMessage}, quickChat, audio};
+  return {keys: {bindings, loadMessage}, quickChat, audio, display};
 }
 
 export type InitialSettings = ReturnType<typeof initializeSettings>;

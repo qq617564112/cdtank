@@ -22,7 +22,12 @@ export interface EffectOverlayRectangle {
 export class EffectOverlayDrawState {
   private uv: readonly [number, number, number, number] = [0, 0, 1, 1];
 
-  constructor(private readonly width: number, private readonly height: number) {}
+  constructor(private width: number, private height: number) {}
+
+  resize(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+  }
 
   draw(color: EffectColor, textured: boolean,
     frameUv: readonly [number, number, number, number]): EffectOverlayRectangle {
