@@ -56,15 +56,20 @@ export class MapEnvironmentSound {
       this.json<SkillSoundCatalog>('/audio.json'),
     ]);
     if (revision !== this.revision) return;
-    if (!map.sounds.some(placement => placement.enabled)) return;
+    const assets = new Map<string, string>();
+    for (const placement of map.sounds) {
+      if (!placement.enabled) continue;
+      const asset = catalog.sounds.find(sound => sound.name === placement.name)?.asset;
+      if (asset) assets.set(placement.id, asset);
+    }
+    if (!assets.size) return;
     this.map = map;
     this.master = this.context.createGain();
     this.master.gain.value = this.volume ?? catalog.defaultSoundVolume;
     this.master.connect(this.context.destination);
     for (const placement of map.sounds) {
-      if (!placement.enabled) continue;
-      const asset = catalog.sounds.find(sound => sound.name === placement.name)?.asset;
-      if (!asset) throw new Error(`Missing environment sound ${placement.name}`);
+      const asset = assets.get(placement.id);
+      if (!asset) continue;
       const audio = new Audio(`/${asset}`);
       audio.loop = placement.selector === -1;
       const source = this.context.createMediaElementSource(audio);
