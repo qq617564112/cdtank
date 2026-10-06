@@ -103,9 +103,8 @@ export function registerAccountApis(
       }
       try {
         const titles = accounts.selectTitle(accountId, call.req.selectTitleId);
-        if (session) {
-          world.bindTitle(session.playerId, accounts.currentTitle(accountId));
-          broadcastRoomState(session.roomId);
+        for (const roomId of world.refreshAccountTitle(accountId, accounts.currentTitle(accountId))) {
+          broadcastRoomState(roomId);
         }
         await call.succ({titles});
       } catch (error) {

@@ -391,6 +391,21 @@ export class World {
     player.title = title;
   }
 
+  /** Refresh every live room role belonging to one authenticated account. */
+  refreshAccountTitle(accountId: string, title: PlayerTitle | undefined): string[] {
+    const affectedRooms = new Set<string>();
+    for (const room of this.rooms.values()) {
+      let changed = false;
+      for (const player of room.players.values()) {
+        if (player.cpu || this.options.resolveAccount?.(player.clientId) !== accountId) continue;
+        player.title = title ? {...title} : undefined;
+        changed = true;
+      }
+      if (changed) affectedRooms.add(room.roomId);
+    }
+    return [...affectedRooms];
+  }
+
   roleAttributes(playerId: string): ReturnType<typeof battleAttributes> {
     const player = this.findPlayer(playerId)?.player;
     if (!player) throw new Error('角色不存在');
@@ -765,7 +780,11 @@ export class World {
     room.rematch.clear();
     initializeBattleParticipants(room.battlefield, room.players.values(), DEFAULT_INPUT,
       assignVip, player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), this.now);
-    for (const player of room.players.values()) resetEquipmentSupply(player, room.startedAt);
+    for (const player of room.players.values()) {
+      const accountId = !player.cpu ? this.options.resolveAccount?.(player.clientId) : undefined;
+      player.title = accountId ? this.options.currentTitle?.(accountId) : undefined;
+      resetEquipmentSupply(player, room.startedAt);
+    }
     room.objectives = createObjectives(room, BODY_RADIUS);
     room.sceneObjects = createSceneObjects(room);
     room.sceneCrushes = createSceneCrushes(room);

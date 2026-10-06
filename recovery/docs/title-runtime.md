@@ -58,7 +58,12 @@ finish、queue retry、重启后再报时直接命中已存在结算，不重复
   原有 `profile/playerSummary/growth` 保持。
 
 `world.bindTitle` 在加入/进入房间绑定与结算 receipt 提交后，把当前佩戴投影到
-`PlayerState.title?:PlayerTitle`；`rooms/snapshot.ts` 只读该 badge，`PlayerSnapshot.title` 有值才出现。
+`PlayerState.title?:PlayerTitle`；选择成功后按认证 `accountId` 刷新当前全部有效房间角色，经
+`resolveAccount`/`PlayerState.clientId` 找到同账户的其它连接角色，不按客户端传入的 player/owner
+授权。请求连接自身在 `PLAYING`/`LOADING` 仍拒绝编辑；同账户大厅连接已授权持久选择时，正在
+`PLAYING` 的角色只更新 typed badge，不改 simulation、raw profile、授予或 READY/LOADING 限制。
+`startRoom` 在首次开局与再战的新 round 对每个真人重新读取 `currentTitle` 投影，CPU 与无账号角色
+不造默认称号。`rooms/snapshot.ts` 只读该 badge，`PlayerSnapshot.title` 有值才出现。
 `LobbyPlayers`/`Friends`/`Blacklist` 各既有 reply 的 `title?:PlayerTitle` 通过 `AccountStore.currentTitle`
 查询，offline friend 也能带 badge，不暴露他人私有原资料/growth。原 numeric wire（角色属性 index 2
 `m_iNowTitle`）只作 source fact，本批不改写 raw `RoleProfile` 偏移，生产 transport 为 typed badge。
