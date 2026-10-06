@@ -30,6 +30,9 @@
    同一 `roomId`/`round`、`FINISHED` 且结果仍有同 player 映射时把收据附到冻结 `ResultPlayer.award`，
    下个常规 snapshot 即带 late award。失败或重放不附 award，`grant` 失败绝不发 award；已释放房间
    只落库不再附快照，new round 不污染旧结果。
+5. Func19：skill12501/12502/12503 的奖励倍率在 World 冻结时从真实
+   `selectedSkillIds` 读取，离场清技能前冻结，经 history `pending/retry` 与既有账户事务
+   一次应用；main 9f6620f/9d632fc 已接，实际验收与 P 批次集中走查待做。
 
 ## exactly-once / 去重
 

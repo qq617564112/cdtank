@@ -45,7 +45,8 @@ Target1 将原 Effect12/SE13 映射到施法者，无额外声音/效果。随�
 `apps/server/src/battle/cpu/building-tool.ts` 的 `buildingToolHotkey(catalog, inventory, actor, room)`
 仅在配置了有限 item502 快捷槽 5..8、角色存活且 status2、库存 owned/battle 均 >0，且存在损坏的
 存活实际我方 Castle 时返回该槽，否则返回 0。策略只产生普通输入，不直接写状态；根把该函数加入
-controller/CPU 白名单与配置（item502 槽 5..8、上限 2）。
+controller/CPU 白名单与配置（item502 槽 5..8、上限 2）。真实 Castle CPU/修复接线 b2f0947
+已集成；五模式一次集中静态走查完成后，本文件相关的 M 服务端修复仍待集成。
 
 ## 未执行验收
 

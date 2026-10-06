@@ -82,8 +82,10 @@
 
 对应M6-05-A、M6-02及相关称号消费条件。直接来源事实：原`shop_purchases`/`tank_purchases`/`pet_purchases`/`part_maintenance`/`tank_maintenance`/`trade_receipts`收据表未冻结稳定原付款额。采用规则：新增`account_spending_ledger`在purchase/maintenance/trade各自的既有`BEGIN IMMEDIATE`事务内按实际提交金额记账，key为`(account_id,source,receipt_id)`，重放命中原receipt不重记、失败整体回滚；战车迷彩`configureTankTextures`在真实扣费时于同事务写新的`tank-texture` UUID收据，无变化或请求未发送不记。`readAccountSpending`仅在该账户至少有一条账本receipt时返回求和，否则`spentMoney`/`spentTokens`保持undefined表示unknown而非0。旧窗口不回填，也不按当前catalog价格反推历史成交额；Trade只记本账户outgoing money，收到金钱及originality/skillPoints不计。范围见`account-spending-runtime.md`。
 
+Func19的12501/12502/12503 domain、history/account与真实World来源冻结已接（main 9f6620f/9d632fc），离场清技能前冻结；实际验收与P批次集中走查待做。Func6仅domain 6b05507已接，真实复活/lifecycle/统一免伤World尚待接。Func21纯关系规则aeafb02及当前小地图消费已接，13111 jammer/13112 detector读取真实selected来源；本人/同队可见、敌对仅detector解radar jam且不破解optical invisibility，取得链与验收待做。Func17已有真实受害者被动一次复制与每生命清理，沿`pet-copy-skill-policy.md`保留范围，不假造完整原writer完成。Func20类别6数量producer已接，取得链与实测待做。地面掉落O的shared/schema106 83f138f与account事务be579f9已接，ground domain/UI/World producer bridge未接，掉落拾取合同见`ground-item-business-design.md`；不把30005治疗记为完成。
+
 ## 未完成范围
 
 本批普通输入、消费、期限、目标、快照、Web表现和CPU接线已登记实现；本批一次集中gpt-5.6走查覆盖伪装、空袭与Func22/23，已修复发射边界恢复、普通输入快照先于事件发送，以及Func22/23的query options参数位、direct命中后效复用与Func23端点一致性三项真实问题。光学迷彩与建筑工具既有范围的集中走查与Castle重连稳态及修复事务共用损伤绘声清理保持原范围。确认已有库存的配置/自然施放、光学迷彩到期与死亡/结束/再战、建筑工具实际修复、双端绘声及库存重启恢复仍需实际验收；原未知字段、全部技能分派、五模式完整规则和M8-05不因这一合同关闭。FUNC-22/23只登记当前有限查询/射程执行器及采用的百分比政策，未执行实际玩家授予、取得或对局证据，不把source计算等同原server分派。
 
-账户统计与九奖章本批已接battle/account/UI/支出producer与消费者：真实每局统计、终局评奖与奖分、账户累计奖章、RoleProfile查询、称号selector producer及迷彩/交易真实扣费收据均已实现，旧窗口缺值记unknown、不完整窗口不下比例或少于阈值结论。以上均为实现登记，未在原Windows对照，也未执行实际对局、双网页、高清、持久重启或真实交易验收；本批统计/九奖章/支出唯一集中gpt-5.6走查尚未执行，静态走查不替代这些实测，M2-11/M5-06/M5-09/M6-05父项及UI-19/37/38保持未勾。
+账户统计与九奖章本批已接battle/account/UI/支出producer与消费者：真实每局统计、终局评奖与奖分、账户累计奖章、RoleProfile查询、称号selector producer及迷彩/交易真实扣费收据均已实现，旧窗口缺值记unknown、不完整窗口不下比例或少于阈值结论。以上均为实现登记，未在原Windows对照，也未执行实际对局、双网页、高清、持久重启或真实交易验收；本批统计/九奖章/支出唯一集中gpt-5.6走查已完成，be4ffce修复真实fire计shots顺序、medical owner type、真参赛零奖awards[]旧记录unknown；静态走查不替代这些实测，M2-11/M5-06/M5-09/M6-05父项及UI-19/37/38保持未勾。
