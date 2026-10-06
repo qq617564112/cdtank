@@ -1,4 +1,4 @@
-"""Publish the source obj05466/obj05467/obj05468/obj05462 destruction CVDs consumed by ScenePreview."""
+"""Publish all original map0007 Breach destruction CVDs."""
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -6,7 +6,7 @@ import shutil
 from export_effect_models import export_models
 ROOT=Path(__file__).resolve().parents[1]
 WEB=ROOT/'recovery/output/web-assets'
-REFERENCES=['Data/scnobj/obj05466/c9.CVD','Data/scnobj/obj05467/c9.CVD','Data/scnobj/obj05468/c9.CVD','Data/scnobj/obj05462/c9.CVD']
+REFERENCES=['Data/scnobj/obj05466/c9.CVD','Data/scnobj/obj05467/c9.CVD','Data/scnobj/obj05468/c9.CVD','Data/scnobj/obj05462/c9.CVD','Data/scnobj/obj05423/c9.CVD','Data/scnobj/obj05445/c9.CVD']
 def export():
     with TemporaryDirectory(prefix='cdtank-breach07-') as temporary:
         directory=Path(temporary)

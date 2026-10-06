@@ -19,7 +19,7 @@ export function createSceneObjects(room: {mode: number; map: {mapId: number}}): 
     : room.mode === 4 && room.map.mapId === 14 ? ['obj05425', 'obj05426', 'obj05428']
     : room.mode === 4 && room.map.mapId === 17 ? ['obj05469']
     : room.mode === 4 && room.map.mapId === 18 ? ['obj05424', 'obj05442']
-    : [1, 3].includes(room.mode) && room.map.mapId === 7 ? ['obj05466', 'obj05467', 'obj05468', 'obj05462']
+    : [1, 3].includes(room.mode) && room.map.mapId === 7 ? ['obj05466', 'obj05467', 'obj05468', 'obj05462', 'obj05423', 'obj05445']
     : [];
   if (!models.length) return castles;
   return [...castles, ...getSceneBreakables(room.map.mapId).filter(source => models.includes(source.model))
