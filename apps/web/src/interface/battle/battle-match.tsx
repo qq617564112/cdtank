@@ -42,6 +42,16 @@ interface MatchViewState {
   loading: {progress: number; status: string; error?: string};
   loadedPlayers: number;
   loadingPlayers: number;
+  discardCandidates: {instanceId: number; name: string; quantity: number}[];
+  discardSelection?: number;
+}
+
+export interface BattleDiscardCandidate {instanceId: number; itemTableId: number; name: string; quantity: number;}
+export interface BattleDiscard {
+  candidates(): BattleDiscardCandidate[];
+  selected(): number | undefined;
+  setSelected(instanceId: number | undefined): void;
+  discard(): Promise<void>;
 }
 
 /** Network snapshots publish only the match controls' semantic presentation. */
@@ -89,7 +99,8 @@ export class BattleMatch {
               private readonly configureCpu?: (playerId: string, loadout: CpuLoadoutItem[]) => Promise<void>,
               readonly retryLoading?: () => void,
               editor?: RoomEditor,
-              private readonly kick?: (playerId: string) => Promise<void>) {
+              private readonly kick?: (playerId: string) => Promise<void>,
+              private readonly discard?: BattleDiscard) {
     if (editor) this.roomEditor = {
       listMaps: () => editor.listMaps(),
       save: settings => this.request(() => editor.save(settings), '正在保存房间…'),
@@ -105,6 +116,18 @@ export class BattleMatch {
     }, '正在确认CPU配给…');
   }
   get supportsAutopilot(): boolean {return !!this.autopilot;}
+  get supportsDiscard(): boolean {return !!this.discard;}
+
+  discardSelected(): void {
+    if (!this.discard) return;
+    this.run(() => this.request(() => this.discard!.discard(), '正在请求丢弃…'));
+  }
+
+  setDiscardSelection(instanceId: number | undefined): void {
+    if (!this.discard) return;
+    this.discard.setSelected(instanceId);
+    this.refreshRequest();
+  }
 
   requestReady(): void {
     if (!this.state || !this.state.readyAvailable) return;
@@ -260,7 +283,10 @@ export class BattleMatch {
       results: result?.players.map(player => ({...player})) ?? [], boosts, waiting: waitingSnapshot,
       loading: this.loading, loadedPlayers: snapshot.players.filter(player => !player.isCpu
         && match.loadedPlayerIds?.includes(player.id)).length,
-      loadingPlayers: snapshot.players.filter(player => !player.isCpu).length});
+      loadingPlayers: snapshot.players.filter(player => !player.isCpu).length,
+      discardCandidates: this.discard?.candidates().map(candidate => ({instanceId: candidate.instanceId,
+        name: candidate.name, quantity: candidate.quantity})) ?? [],
+      discardSelection: this.discard?.selected()});
   }
 
   private publish(state?: MatchViewState): void {
@@ -274,7 +300,10 @@ export class BattleMatch {
   private refreshRequest(): void {
     if (!this.state) return;
     this.key = '';
-    this.publish({...this.state, status: this.defaultStatus, pending: this.pending});
+    this.publish({...this.state, status: this.defaultStatus, pending: this.pending,
+      discardCandidates: this.discard?.candidates().map(candidate => ({instanceId: candidate.instanceId,
+        name: candidate.name, quantity: candidate.quantity})) ?? [],
+      discardSelection: this.discard?.selected()});
   }
 
   private async request<T>(action: () => Promise<T>, status: string): Promise<T> {
@@ -360,6 +389,22 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
       {state.ammoSlots.length > 0 && <p data-ammo-stock="" aria-label="本局特殊弹药">
         {state.ammoSlots.map(slot => <span key={slot.slot} data-ammo-slot={slot.slot}
           data-ammo-item={slot.itemTableId} data-ammo-quantity={slot.quantity}>槽{slot.slot}：{slot.quantity}发{' '}</span>)}
+      </p>}
+      {state.discardCandidates.length > 0 && <p data-discard-controls="">
+        <label>所选道具
+          <select data-discard-select="" value={state.discardSelection ?? ''} disabled={state.pending}
+            onChange={event => {
+              const value = Number(event.currentTarget.value);
+              panel.setDiscardSelection(Number.isInteger(value) && value > 0 ? value : undefined);
+            }}>
+            <option value="" disabled>请选择</option>
+            {state.discardCandidates.map(candidate => <option key={candidate.instanceId} value={candidate.instanceId}>
+              {candidate.name}（本局 {candidate.quantity}）
+            </option>)}
+          </select>
+        </label>
+        <button type="button" data-discard-selected="" disabled={state.pending || state.discardSelection === undefined}
+          onClick={() => panel.discardSelected()}>丢弃一份</button>
       </p>}
       {state.boosts.map(boost => <p key={boost.kind}
         {...{[boost.kind === 'invincibility' ? 'data-invincibility-status' : `data-${boost.kind}-boost-status`]: ''}}>{boost.text}</p>)}

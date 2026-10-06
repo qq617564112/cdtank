@@ -4,6 +4,7 @@ import type {ReqPartMaintenance, ResPartMaintenance} from '../../../shared/proto
 import {Trade} from '../network/trade';
 import {ROOM_RECONNECT_WINDOW_MS} from '../../../shared/room-reconnection';
 import {GroundTrapsPresentation} from '../assets/scenes/ground-traps-presentation';
+import {GroundItemsPresentation} from '../assets/scenes/ground-items-presentation';
 import {Blacklist} from '../network/blacklist';
 import type {ReqShop} from '../../../shared/protocols/PtlShop';
 import type {ReqTankShop} from '../../../shared/protocols/PtlTankShop';
@@ -55,6 +56,8 @@ import {BattleItemInventory} from './battle-item-inventory';
 import type {KeyBindings} from './input-bindings';
 import type {QuickChatPreferences} from '../interface/settings/quick-chat-preferences';
 import {battleIsActive} from '../../../shared/combat/battle-start';
+import {GroundItemAction} from '../../../shared/protocols/MsgPlayerAction';
+import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
 
 /** Displays server-owned world state; no local damage or outcome calculation. */
 export class Battle {
@@ -115,6 +118,8 @@ export class Battle {
   private readonly minimap: BattleMinimap;
   private readonly groundTraps: GroundTrapsPresentation;
   private groundTrapError?: string;
+  private readonly groundItems: GroundItemsPresentation;
+  private groundItemError?: string;
   private readonly effects: EffectRuntime;
   private readonly petDeath: TankPetDeathPresentation;
   private readonly sceneEffects: MapSceneEffects;
@@ -125,12 +130,15 @@ export class Battle {
   private shotPlayerResult?: TankShotPlayerResult;
   private shotItemResult?: TankShotItemResult;
   private ammoBurnPresentation?: AmmoBurnPresentation;
+  private combatCatalog?: CombatCatalog;
   readonly matchPanel = new BattleMatch(() => this.rematch(),
     isReady => this.ready(isReady), team => this.changeTeam(team),
     (operation, playerId, team) => this.manageCpu(operation, playerId, team), enabled => this.autopilot(enabled),
     () => this.exitRoom(), () => this.inviteRoom(),
     (playerId, loadout) => this.configureCpuLoadout(playerId, loadout), () => this.retryBattleLoading(),
-    {listMaps: () => this.listMaps(), save: settings => this.editRoom(settings)}, playerId => this.kickRoomPlayer(playerId));
+    {listMaps: () => this.listMaps(), save: settings => this.editRoom(settings)}, playerId => this.kickRoomPlayer(playerId),
+    {candidates: () => this.discardCandidates(), selected: () => this.discardSelectedInstance,
+      setSelected: instanceId => this.setDiscardSelection(instanceId), discard: () => this.discardSelected()});
   private readonly targets: BattleTargets;
   private readonly roomFeed: RoomFeed;
   private playerId?: string;
@@ -154,6 +162,7 @@ export class Battle {
     this.minimap = new BattleMinimap(scene);
     this.groundTraps = new GroundTrapsPresentation(scene);
     this.effects = new EffectRuntime(scene, camera);
+    this.groundItems = new GroundItemsPresentation(scene, this.effects);
     this.petDeath = new TankPetDeathPresentation(this.effects);
     this.sceneEffects = new MapSceneEffects(this.effects);
     this.players = new BattlePlayers(scene, camera, {
@@ -196,6 +205,9 @@ export class Battle {
         this.skillEffects?.event(event);
         if (event.type === 'chat') this.chat.message(event.message);
         if (snapshot && this.playerId) this.sound.event(event, snapshot, this.playerId);
+        if (event.groundItemDropped || event.groundItemPickedUp || event.groundItemRemoved) {
+          this.groundItems.event(event, this.playerId);
+        }
         if (event.roleStyleChanged) {
           this.players.changeRoleStyle(event.roleStyleChanged.roleId, event.roleStyleChanged.style);
         }
@@ -453,6 +465,7 @@ export class Battle {
           role: roleId => this.players.get(`P${roleId}`),
           localRole: () => this.playerId ? this.players.get(this.playerId) : undefined,
         }));
+        this.combatCatalog = catalog;
         this.shotDisplay = new TankShotDisplay(this.effects, catalog);
         this.shotPlayerResult = new TankShotPlayerResult(this.effects, catalog);
         this.shotItemResult = new TankShotItemResult(this.effects, catalog);
@@ -564,6 +577,8 @@ export class Battle {
     this.battlefield.clear();
     this.groundTraps.clear();
     this.groundTrapError = undefined;
+    this.groundItems.clear();
+    this.groundItemError = undefined;
     this.targets.clear();
     this.originalHud.clear();
     this.mapLoaded = false;
@@ -687,6 +702,8 @@ export class Battle {
     this.battlefield.clear();
     this.groundTraps.clear();
     this.groundTrapError = undefined;
+    this.groundItems.clear();
+    this.groundItemError = undefined;
     this.mapLoaded = false;
     this.mapId = undefined;
     this.originalHud.clear();
@@ -707,8 +724,71 @@ export class Battle {
   setKeyBindings(bindings: KeyBindings): void {this.input.setKeyBindings(bindings);}
   readonly useHudSlot = (slot: number): void => {
     const local = this.roomFeed.snapshot?.players.find(player => player.id === this.playerId);
-    if (local?.alive) this.input.send(slot);
+    if (!local?.alive) return;
+    const instanceId = slot >= 2 ? this.itemInventory.getSnapshot().inventory?.hotkeys[slot - 2] : undefined;
+    if (instanceId && this.discardCandidates().some(candidate => candidate.instanceId === instanceId)) {
+      this.discardSelection = instanceId;
+    }
+    this.input.send(slot);
   };
+
+  private actionSequence = 0;
+  private discardSelection?: number;
+
+  /**
+   * Legal stacked instances offered for the ordinary discard entry: the
+   * player's confirmed hotkey bindings intersected with confirmed inventory
+   * (owned and this-round counts positive) and an original drop visual. The
+   * list is advisory only; the authority re-validates ownership and this
+   * round's count, and selecting never sends a use, consumes a count or
+   * changes any local record.
+   */
+  discardCandidates(): {instanceId: number; itemTableId: number; name: string; quantity: number}[] {
+    const inventory = this.itemInventory.getSnapshot().inventory;
+    if (!inventory) return [];
+    const seen = new Set<number>();
+    const candidates: {instanceId: number; itemTableId: number; name: string; quantity: number}[] = [];
+    for (const raw of inventory.hotkeys) {
+      const instanceId = raw >>> 0;
+      if (!instanceId || seen.has(instanceId)) continue;
+      seen.add(instanceId);
+      const record = inventory.records.find(value => (value.instanceId >>> 0) === instanceId);
+      if (!record || ![1, 2].includes(classifyInventoryCategory(record.itemTableId))
+          || (record.ownedQuantity >>> 0) === 0 || (record.battleQuantity >>> 0) === 0) continue;
+      candidates.push({instanceId, itemTableId: record.itemTableId,
+        name: this.combatCatalog?.items.find(item => item.itemTableId === record.itemTableId)?.name
+          ?? String(record.itemTableId), quantity: record.battleQuantity >>> 0});
+    }
+    return candidates;
+  }
+
+  get discardSelectedInstance(): number | undefined {
+    const selection = this.discardSelection;
+    return selection !== undefined && this.discardCandidates().some(candidate => candidate.instanceId === selection)
+      ? selection : undefined;
+  }
+
+  setDiscardSelection(instanceId: number | undefined): void {
+    this.discardSelection = instanceId;
+  }
+
+  /** Current selection resolved against live authority state; the server re-checks on receipt. */
+  private selectedDiscardInstance(): number | undefined {
+    const snapshot = this.roomFeed.snapshot;
+    const local = snapshot?.players.find(player => player.id === this.playerId);
+    if (!snapshot || snapshot.phase !== 'PLAYING' || !local?.alive || local.isAutopilot) return undefined;
+    return this.discardSelectedInstance;
+  }
+
+  async discardSelected(): Promise<void> {
+    const snapshot = this.roomFeed.snapshot;
+    const selection = this.selectedDiscardInstance();
+    if (!snapshot?.match || selection === undefined) throw new Error('当前没有可丢弃的本局堆叠道具');
+    if (!this.client.isConnected) throw new Error('连接已断开');
+    this.client.sendMsg('PlayerAction', {roomId: snapshot.roomId, round: snapshot.match.round,
+      sequence: ++this.actionSequence, action: GroundItemAction.DISCARD, value: selection,
+      clientTime: Date.now()});
+  }
   setQuickChats(preferences: QuickChatPreferences): void {this.chat.setQuickChats(preferences);}
 
   setSoundVolume(volume: number): void {
@@ -796,6 +876,13 @@ export class Battle {
       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`).catch(error => {
       if (session === this.session && this.active) this.groundTrapError = String(error);
     });
+    if (this.active) {
+      const scope = `${snapshot.roomId}:${snapshot.match?.round ?? 0}`;
+      void this.groundItems.reconcile(snapshot.match?.groundItems ?? [], scope, snapshot.phase === 'PLAYING')
+        .catch(error => {
+          if (session === this.session && this.active) this.groundItemError = String(error);
+        });
+    }
     if (this.playerId) this.itemInventory.update(snapshot, this.playerId);
     if (this.active && this.mapId !== undefined) {
       const result = snapshot.phase === 'FINISHED' ? snapshot.match?.result : undefined;
@@ -875,7 +962,7 @@ export class Battle {
       this.originalHud.update(snapshot, this.playerId, performance.now(), now);
     }
     const phase = {WAITING: '等待其他玩家', LOADING: '正在载入对局', PLAYING: '战斗中', FINISHED: '本局结束'}[snapshot.phase] ?? snapshot.phase;
-    this.hud.value = this.groundTrapError || this.players.loadingError || `${phase} · ${snapshot.players.length} 人 · ${snapshot.remaining}s · 生命 ${local?.hp ?? 0}/${local?.maxHp ?? 0} · 得分 ${local?.score ?? 0}`;
+    this.hud.value = this.groundTrapError || this.groundItemError || this.players.loadingError || `${phase} · ${snapshot.players.length} 人 · ${snapshot.remaining}s · 生命 ${local?.hp ?? 0}/${local?.maxHp ?? 0} · 得分 ${local?.score ?? 0}`;
     // DOM world state supports HUD accessibility and browser integration verification.
     this.hud.dataset.world = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,
       mapId: this.mapId, mapLoaded: this.mapLoaded,
