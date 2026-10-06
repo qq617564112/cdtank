@@ -9,7 +9,8 @@
 .battle-summary-title { left: 185px; top: 24px; width: 430px; margin: 0; text-align: center; font-size: 21px; }
 .battle-summary-objective { left: 182px; top: 61px; width: 436px; margin: 0; text-align: center; line-height: 17px; }
 .battle-summary-extra-heading { top: 100px; width: 70px; text-align: center; line-height: 18px; }
-.battle-summary-status { left: 64px; top: 506px; width: 711px; font-size: 11px; line-height: 16px; }
+.battle-summary-status { left: 64px; top: 534px; width: 711px; overflow: hidden; white-space: nowrap;
+  font-size: 11px; line-height: 14px; }
 .battle-summary-exp { overflow: hidden; }
 .battle-summary-exp-fill { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-repeat: no-repeat; background-size: 100% 100%; }
 .battle-summary-exp-percent { text-align: center; }

@@ -20,7 +20,7 @@
 - `picLv`：原控件位置（`jiejitubiaoditu` 内 `15,9` 尺寸 `24×24`）。等级图块从实际 catalog `jiejitubiao0` 目录 `lvNN.tga` 引用，`NN` 取 `award.levelAfter` 两位补零；目录中不存在对应等级区域时该图块留空，不造图。等级 `1..20`、`21..27`、`98/99` 只要目录内存在区域即可显示，不存在则不显示。
 - `picLevelUp` / `picLevelDown`：原控件位置与图片，`levelAfter > levelBefore` 只显示升级图，`levelAfter < levelBefore` 只显示降级图，方向相等都不显示。
 
-原有 Score/Extra/rank/team/name、胜负结果、分页、再战与源 `btnClose` 语义保持不变；damage/Critical 相关动态图字不受本项影响。
+再战/状态文字为 Web 呈现，置于成长带下方的整页既有空带，不覆盖原 `prgExp`/`txtExpPercent`/`picLv`/`picLevelUp`/`picLevelDown` 控件几何，也不改动原成长控件几何与字体。原有 Score/Extra/rank/team/name、胜负结果、分页、再战与源 `btnClose` 语义保持不变；damage/Critical 相关动态图字不受本项影响。
 
 ## UI-20 奖励子页
 
@@ -40,7 +40,7 @@
 交互与焦点（原 `game_summary_award.xml` 无按钮控件，关闭按钮放在对话框底框之外）：
 
 - 采用原生 `<dialog>` modal 焦点捕获；弹层打开时锁定底层整页键盘，中文 IME 合成态（`isComposing`/`keyCode 229`）不触发战斗键。
-- `Tab` 在弹层内循环；`Enter` 或点击关闭按钮或 `Escape` 关闭并回到整页 summary 的源 `btnClose` 焦点。
+- `Tab` 在弹层内循环；点击关闭按钮、`Enter` 或 `Escape` 走同一关闭所有权：先解除 modal 再聚焦整页 summary 的源 `btnClose`，卸载清理不覆盖焦点。
 - 关闭仅收起弹层，不影响服务端 receipt；原整页 Ready/Rematch/pending/votedCancel 语义保留。
 
 ## 未实测

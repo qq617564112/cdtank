@@ -16,7 +16,9 @@ const FIELDS = [
 ] as const;
 
 /** UI-20 sheet: the original award dialog consumes the local account's frozen receipt. */
-export function BattleSummaryAwardPage({ui, award, close}: {ui: HomeSourceUi; award: ResultAward; close(): void}) {
+export function BattleSummaryAwardPage({ui, award, close, origin}: {
+  ui: HomeSourceUi; award: ResultAward; close(): void; origin(): HTMLElement | null;
+}) {
   const layout = new HomeSourceLayout(ui, SUFFIX);
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
@@ -29,13 +31,12 @@ export function BattleSummaryAwardPage({ui, award, close}: {ui: HomeSourceUi; aw
   useEffect(() => {
     const element = dialog.current;
     if (!element) return;
-    const active = document.activeElement;
-    const origin = active instanceof HTMLElement && active !== document.body ? active : null;
     if (!element.open) element.showModal();
     element.querySelector<HTMLButtonElement>('[data-summary-award-close]')?.focus();
     return () => {
       if (element.open) element.close();
-      if (origin?.isConnected) origin.focus();
+      const target = origin();
+      if (target?.isConnected) target.focus();
     };
   }, []);
   const keydown = (event: KeyboardEvent<HTMLDialogElement>) => {

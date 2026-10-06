@@ -100,10 +100,7 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
     setAwardOpen(true);
   }, [award, props.round]);
   const place = (source: string) => sourceProps(ui!, layout!, SUFFIX, source);
-  const closeAward = () => {
-    setAwardOpen(false);
-    stage.current?.querySelector<HTMLButtonElement>('[data-summary-leave]')?.focus();
-  };
+  const closeAward = () => setAwardOpen(false);
   const rowPlace = (source: string, row: string) => {
     const child = place(source), parent = place(row);
     return {...child, style: {...child.style, left: Number(child.style.left) - Number(parent.style.left),
@@ -161,6 +158,7 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
       </button>
       {!ui && <button type="button" className="battle-summary-loading-leave" onClick={props.leave}>返回大厅</button>}
     </div></SourceImageScale>
-    {ui && award && awardOpen && <BattleSummaryAwardPage ui={ui} award={award} close={closeAward} />}
+    {ui && award && awardOpen && <BattleSummaryAwardPage ui={ui} award={award} close={closeAward}
+      origin={() => stage.current?.querySelector<HTMLButtonElement>('[data-summary-leave]') ?? null} />}
   </section>;
 }
