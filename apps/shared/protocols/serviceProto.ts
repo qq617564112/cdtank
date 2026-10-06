@@ -53,6 +53,7 @@ import { ReqShop, ResShop } from './PtlShop';
 import { ReqStackItemSale, ResStackItemSale } from './PtlStackItemSale';
 import { ReqTankMaintenance, ResTankMaintenance } from './PtlTankMaintenance';
 import { ReqTankShop, ResTankShop } from './PtlTankShop';
+import { ReqTankUpgrade, ResTankUpgrade } from './PtlTankUpgrade';
 import { ReqTankTextures, ResTankTextures } from './PtlTankTextures';
 import { ReqTrade, ResTrade } from './PtlTrade';
 
@@ -226,6 +227,10 @@ export interface ServiceType {
             req: ReqTankShop,
             res: ResTankShop
         },
+        "TankUpgrade": {
+            req: ReqTankUpgrade,
+            res: ResTankUpgrade
+        },
         "TankTextures": {
             req: ReqTankTextures,
             res: ResTankTextures
@@ -252,7 +257,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 107,
+    "version": 108,
     "services": [
         {
             "id": 55,
@@ -522,6 +527,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
         {
             "id": 42,
             "name": "TankShop",
+            "type": "api"
+        },
+        {
+            "id": 56,
+            "name": "TankUpgrade",
             "type": "api"
         },
         {
@@ -9380,6 +9390,423 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 8,
                     "name": "greedy",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "PtlTankUpgrade/ReqTankUpgrade": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "operation",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "QUERY"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "UPGRADE"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 2,
+                    "name": "action",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 1
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 2
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "requestId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlTankUpgrade/ResTankUpgrade": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "owned",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlOwnedRoles/ResOwnedRoles"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "profile",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "bytes",
+                                "type": {
+                                    "type": "Array",
+                                    "elementType": {
+                                        "type": "Number"
+                                    }
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "strings",
+                                "type": {
+                                    "type": "Tuple",
+                                    "elementTypes": [
+                                        {
+                                            "type": "String"
+                                        },
+                                        {
+                                            "type": "String"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 2,
+                    "name": "quotes",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "PtlTankUpgrade/TankUpgradeQuote"
+                        }
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "confirmation",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlTankUpgrade/TankUpgradeConfirmation"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 4,
+                    "name": "historicalConfirmation",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlTankUpgrade/TankUpgradeConfirmation"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 5,
+                    "name": "replayed",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlTankUpgrade/TankUpgradeQuote": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "action",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 1
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 2
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "currentLevel",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "nextLevel",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "nextAttributeMin",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "nextAttributeMax",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "nextBonusMin",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "nextBonusMax",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "enabled",
+                    "type": {
+                        "type": "Boolean"
+                    }
+                },
+                {
+                    "id": 9,
+                    "name": "moneyCost",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 10,
+                    "name": "originalityCost",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 11,
+                    "name": "success",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 12,
+                    "name": "fail",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 13,
+                    "name": "noEffect",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 14,
+                    "name": "canUpgrade",
+                    "type": {
+                        "type": "Boolean"
+                    }
+                },
+                {
+                    "id": 15,
+                    "name": "reason",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "UPGRADE_TARGET_UNAVAILABLE"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "UPGRADE_MONEY_REQUIRED"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "UPGRADE_ORIGINALITY_REQUIRED"
+                                }
+                            },
+                            {
+                                "id": 3,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "UPGRADE_DISABLED"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlTankUpgrade/TankUpgradeConfirmation": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "action",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 1
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 2
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "money",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "originality",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "attribute",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "bonus",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "result",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 0
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 1
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 2
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "level",
                     "type": {
                         "type": "Number"
                     }

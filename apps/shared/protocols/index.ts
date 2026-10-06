@@ -26,3 +26,4 @@ export * from './PtlFriends';
 export * from './PtlBlacklist';
 export * from './PtlFriendChat';
 export * from './MsgFriendChat';
+export * from './PtlTankUpgrade';

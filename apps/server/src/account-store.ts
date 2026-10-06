@@ -23,6 +23,8 @@ import {
 } from './accounts/spending';
 import {AccountShop} from './accounts/shop';
 import {AccountTankShop} from './accounts/tank-shop';
+import type {ReqTankUpgrade, ResTankUpgrade} from '../../shared/protocols/PtlTankUpgrade';
+import {AccountTankUpgrade} from './accounts/tank-upgrade';
 import {AccountTankMaintenance} from './accounts/tank-maintenance';
 import type {ReqTankMaintenance, ResTankMaintenance} from '../../shared/protocols/PtlTankMaintenance';
 import {AccountPetSkillLearning} from './accounts/pet-skill-learning';
@@ -92,6 +94,7 @@ export class AccountStore {
   private readonly matchReward: AccountReward;
   private readonly accountShop: AccountShop;
   private readonly accountTankShop: AccountTankShop;
+  private readonly accountTankUpgrade: AccountTankUpgrade;
   private readonly accountStackItemSale: AccountStackItemSale;
   private readonly accountPartSale: AccountPartSale;
   private readonly accountPartMaintenance: AccountPartMaintenance;
@@ -126,6 +129,7 @@ export class AccountStore {
     this.matchReward = new AccountReward(this.database);
     this.accountShop = new AccountShop(this.database);
     this.accountTankShop = new AccountTankShop(this.database);
+    this.accountTankUpgrade = new AccountTankUpgrade(this.database);
     this.accountStackItemSale = new AccountStackItemSale(this.database);
     this.accountPartSale = new AccountPartSale(this.database);
     this.accountPartMaintenance = new AccountPartMaintenance(this.database);
@@ -169,6 +173,10 @@ export class AccountStore {
 
   tankShop(accountId: string, request: ReqTankShop): ResTankShop {
     return this.accountTankShop.request(accountId, request);
+  }
+
+  tankUpgrade(accountId: string, request: ReqTankUpgrade): ResTankUpgrade {
+    return this.accountTankUpgrade.request(accountId, request);
   }
 
   stackItemSale(accountId: string, request: ReqStackItemSale, catalog: CombatCatalog): ResStackItemSale {

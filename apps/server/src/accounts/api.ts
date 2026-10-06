@@ -12,6 +12,7 @@ import {webAssetPath} from '../runtime/content-paths';
 import {registerTankTextureApi} from './tank-textures';
 import {registerShopApi} from './shop-api';
 import {registerTankShopApi} from './tank-shop-api';
+import {registerTankUpgradeApi} from './tank-upgrade-api';
 import {registerTankMaintenanceApi} from './tank-maintenance-api';
 import {registerPetSkillLearningApi} from './pet-skill-learning-api';
 import {registerOwnedRoleSaleApi} from './owned-role-sale-api';
@@ -37,6 +38,7 @@ export function registerAccountApis(
 
   registerShopApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection, broadcastRoomState);
   registerTankShopApi(server, accounts, world, accountByConnection, sessionByConnection, broadcastRoomState);
+  registerTankUpgradeApi(server, accounts, world, accountByConnection, sessionByConnection, broadcastRoomState);
   registerStackItemSaleApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection, broadcastRoomState);
   registerPartSaleApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection, broadcastRoomState);
   registerPartMaintenanceApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection, broadcastRoomState);

@@ -61,6 +61,7 @@ export class AccountTankShop {
         [0x2c, definition.product.textures.M], [0x30, definition.product.textures.XY],
         [0x3c, definition.base.attack], [0x40, definition.base.attackBonus],
         [0x4c, definition.base.defense], [0x50, definition.base.defenseBonus],
+        [0x38, 1], [0x48, 1],
         [0x6c, definition.partCapacity]]) fields.set(offset, value);
       const purchased: OwnedRoleRecordData = {name: definition.product.name, fields: [...fields]};
       view.setUint32(0x70, money - cost, true);
