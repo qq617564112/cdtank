@@ -69,6 +69,12 @@ import type {
   AwardCounts,
 } from '../../shared/protocols/PtlRoleProfile';
 import type {PlayerTitle} from '../../shared/protocols/MsgRoomSnapshot';
+import {
+  GroundItemAccountRuntime,
+  type GroundItemAcquireContext,
+  type GroundItemDiscardContext,
+  type GroundItemDiscardResult,
+} from './accounts/ground-items';
 
 export interface AccountSession {accountId: string; token: string;}
 export interface AccountInventory {records: InventoryWireRecord[]; hotkeys: number[];}
@@ -97,6 +103,7 @@ export class AccountStore {
   private readonly accountFriends: AccountFriends;
   private readonly accountBlacklist: AccountBlacklist;
   private readonly credentials: AccountCredentials;
+  private readonly groundItems: GroundItemAccountRuntime;
   constructor(path: string) {
     this.database = new DatabaseSync(path);
     // Append commits instead of rewriting the rollback journal during concurrent room settlements.
@@ -130,6 +137,7 @@ export class AccountStore {
     this.accountFriends = new AccountFriends(this.database);
     this.accountBlacklist = new AccountBlacklist(this.database);
     this.credentials = new AccountCredentials(this.database, token => this.open(token));
+    this.groundItems = new GroundItemAccountRuntime(this.database);
   }
 
   authenticate(request: ReqAccount): ResAccount {return this.credentials.authenticate(request);}
@@ -296,6 +304,16 @@ export class AccountStore {
       this.database.exec('ROLLBACK');
       throw error;
     }
+  }
+
+  /** Grant one committed ground object's owned quantity, exactly once per ground identity. */
+  acquireOwnedItem(accountId: string, context: GroundItemAcquireContext): InventoryWireRecord | undefined {
+    return this.groundItems.acquireOwnedItem(accountId, context);
+  }
+
+  /** Move one owned unit onto committed ground, exactly once per ground identity. */
+  discardOwnedItem(accountId: string, context: GroundItemDiscardContext): GroundItemDiscardResult | undefined {
+    return this.groundItems.discardOwnedItem(accountId, context);
   }
 
   roleRecords(accountId: string): AccountRoleRecords {
