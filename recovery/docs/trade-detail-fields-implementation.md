@@ -6,7 +6,7 @@
 
 宠物六技能名称按确认的base ID加`max(0, rank−1)`查询原skill目录，名称与rank来自同一拥有记录；base为0或缺失的空槽不显示rank。生命、凶猛、好运和类别沿现确认字段及原PetTable目录。
 
-`trade-detail-descriptions.ts`保存原`Data/table/pet.dat`的10条PetInfo及`Data/table/tank.dat`的21条TankInfo，内容读取现已解码`recovery/output/verified/tables/pet.json`与`tank.json`，仅按确认记录的定义ID选择说明。部件继续读取原ItemInfo。说明不改变拥有资格、购买、技能、战斗属性或账户数据。
+`interface/resources/role-source-descriptions.ts`保存原`Data/table/pet.dat`的10条PetInfo及`Data/table/tank.dat`的21条TankInfo，内容读取现已解码`recovery/output/verified/tables/pet.json`与`tank.json`，仅按确认记录的定义ID选择说明。部件继续读取原ItemInfo。说明不改变拥有资格、购买、技能、战斗属性或账户数据。
 
 原布局中明确的`Text`单位与符号（km/h、sec、%及% +）保留；没有原文本的控件不按名称猜填。三个原详情的控件坐标、图片、与主页面同scale及附件字体沿现实现。说明区支持键盘焦点与滚动，Esc仍沿现组合输入门禁关闭详情并恢复焦点，Web关闭按钮保留在原stage之外。
 

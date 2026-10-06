@@ -10,7 +10,7 @@ import {sourceProps} from '../resources/source-ui-props';
 import {sourceOwnedTankDays} from '../home/home-owned-tank-row-display';
 import {sourcePartOwnedDays, sourcePartOwnedKind} from './part-shop-owned-row-display';
 import {sourcePetKind} from './pet-shop-row-display';
-import {tradePetDescriptions, tradeTankDescriptions} from './trade-detail-descriptions';
+import {sourcePetDescription, sourceTankDescription} from '../resources/role-source-descriptions';
 
 const rectWidth = (value: string | undefined) => Number(value?.match(/r:(-?\d+(?:\.\d+)?)/)?.[1] ?? 0);
 const rectHeight = (value: string | undefined) => Number(value?.match(/b:(-?\d+(?:\.\d+)?)/)?.[1] ?? 0);
@@ -89,7 +89,7 @@ export function TradeSourceDetail({ui, catalog, record, scale, close}: {
   const description = record.item
     ? catalog?.items.find(item => item.itemTableId === record.item!.itemTableId)?.info ?? ''
     : definitionId === undefined ? '' : record.kind === 'pet'
-      ? tradePetDescriptions[definitionId] ?? '' : tradeTankDescriptions[definitionId] ?? '';
+      ? sourcePetDescription(definitionId) ?? '' : sourceTankDescription(definitionId) ?? '';
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
   useLayoutEffect(() => {

@@ -1,5 +1,5 @@
 /** Original Data/table/pet.dat PetInfo; display text only. */
-export const tradePetDescriptions: Readonly<Record<number, string>> = {
+const petDescriptions: Readonly<Record<number, string>> = {
   "1": "名副其实的小狗阿呆，虽然样子有点傻，但是脾气很好，对同样傻傻的毛姐一片痴心。作为玩家的初始狗狗登场。",
   "2": "伟大的大麦殿下！虽然有着骄傲自负、眼高于顶的坏毛病，但是本质并不坏。有个半斤八两的表兄弟名叫大米。",
   "3": "木桶镇上最无忧无虑的狗，整天只想着做好玩的事。大脑记忆体之小为世所罕见，谁也拿它没办法。",
@@ -13,7 +13,7 @@ export const tradePetDescriptions: Readonly<Record<number, string>> = {
 };
 
 /** Original Data/table/tank.dat TankInfo; display text only. */
-export const tradeTankDescriptions: Readonly<Record<number, string>> = {
+const tankDescriptions: Readonly<Record<number, string>> = {
   "1": "陪你南征北讨的第一台坦克！但性能不佳，还是存点钱换掉它吧。",
   "2": "驾驶起来灵活无比！开着它在战场上奔驰是一件很愉快的事喔～",
   "3": "机动性配上不算差的火力，最适合打带跑！是游击战的首选。",
@@ -36,3 +36,11 @@ export const tradeTankDescriptions: Readonly<Record<number, string>> = {
   "157": "拥有铜墙铁壁般的装甲，无视多数坦克的攻击，就是打不死哎～",
   "158": "除了造型之外没有别的特殊之处。改装后的能力也许值得期待？"
 };
+
+export function sourcePetDescription(definitionId?: number): string | undefined {
+  return definitionId === undefined ? undefined : petDescriptions[definitionId];
+}
+
+export function sourceTankDescription(definitionId?: number): string | undefined {
+  return definitionId === undefined ? undefined : tankDescriptions[definitionId];
+}
