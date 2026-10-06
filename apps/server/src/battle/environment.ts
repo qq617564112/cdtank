@@ -1,16 +1,48 @@
-import type {MsgRoomEvent, SceneObjectSnapshot, SceneCrushSnapshot} from '../../../shared/protocols';
+import type {MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot} from '../../../shared/protocols';
 import type {Battlefield} from '../battlefield';
 import {getSceneBreakables, getSceneCastles, getSceneCrushes} from '../scene-objects';
 
 const active = new WeakMap<Battlefield, Set<string>>();
+const castleTargets = new WeakMap<object, {round: number; mode: number; mapId: number; objects: CastleTargetSnapshot[]}>();
 
-/** Breakables use rebuilt 200 HP; Castle initial HP comes from the original CAS. */
-export function createSceneObjects(room: {mode: number; map: {mapId: number}}): SceneObjectSnapshot[] {
-  const castles = room.mode === 1 && [2, 5, 6, 10, 11].includes(room.map.mapId)
-    ? getSceneCastles(room.map.mapId).map(source => ({id: `CASTLE:${source.id}`,
-      sourcePlacementId: source.id, sourceModel: source.model,
-      x: source.matrix[12], y: source.matrix[13], z: source.matrix[14],
-      hp: source.hp, maxHp: source.hp})) : [];
+/** One Castle instance serves both the mode2 rule target and the rendered scene entity. */
+export interface CastleTargetSnapshot extends SceneObjectSnapshot, ObjectiveSnapshot {
+  kind: 'DESTROY';
+}
+
+interface CastleRoom {
+  mode: number;
+  round?: number;
+  map: {mapId: number; bunkerHp?: number};
+}
+
+/**
+ * Original Castle placements as a single entity. The per-room memo keeps
+ * `objectives` and `sceneObjects` pointed at the same objects, so rule HP,
+ * render HP and destruction lifecycle never split into duplicate entities.
+ * Mode1 keeps the CAS record HP; mode2 uses the source BunkerHP rule value.
+ */
+export function castleSceneObjects(room: CastleRoom): CastleTargetSnapshot[] {
+  if ((room.mode !== 1 && room.mode !== 2) || ![2, 5, 6, 10, 11].includes(room.map.mapId)) return [];
+  const round = room.round ?? 0;
+  const cached = castleTargets.get(room);
+  if (cached && cached.round === round && cached.mode === room.mode && cached.mapId === room.map.mapId) {
+    return cached.objects;
+  }
+  const objects = getSceneCastles(room.map.mapId).map(source => {
+    const hp = room.mode === 2 ? room.map.bunkerHp ?? source.hp : source.hp;
+    return {id: `CASTLE:${source.id}`, sourcePlacementId: source.id, sourceModel: source.model,
+      x: source.matrix[12], y: source.matrix[13], z: source.matrix[14], hp, maxHp: hp,
+      kind: 'DESTROY' as const, radius: Math.max(...source.dimensions) / 2,
+      ownerTeam: source.affiliation - 1, contested: false};
+  });
+  castleTargets.set(room, {round, mode: room.mode, mapId: room.map.mapId, objects});
+  return objects;
+}
+
+/** Castle rule instances plus the existing rebuilt ordinary breakables. */
+export function createSceneObjects(room: CastleRoom): SceneObjectSnapshot[] {
+  const castles = castleSceneObjects(room);
   const models = room.mode === 1 && room.map.mapId === 2 ? ['obj05428', 'obj05427', 'obj05425', 'obj05426', 'obj05422']
     : room.mode === 1 && room.map.mapId === 5 ? ['obj05425', 'obj05426', 'obj05432']
     : room.mode === 1 && room.map.mapId === 6 ? ['obj05421', 'obj05423', 'obj05443', 'obj05433', 'obj05432']
@@ -28,16 +60,33 @@ export function createSceneObjects(room: {mode: number; map: {mapId: number}}): 
       x: source.matrix[12], y: source.matrix[13], z: source.matrix[14], hp: 200, maxHp: 200}))];
 }
 
-export function damageSceneObject(room: {roomId: string; phase: string},
-  owner: {id: string; name: string}, target: SceneObjectSnapshot,
+/**
+ * Apply Castle/Breach rule HP. Only a real enemy-Castle HP reduction credits
+ * the attacker's cumulative `teamScores`; own-Castle damage still reduces the
+ * same instance's HP but is never a friendly score. Cumulative damage alone
+ * never wins: victory reads the live Castle HP in `advanceObjectives`.
+ */
+export function damageSceneObject(room: {roomId: string; phase: string; mode: number;
+  map: {mapId: number}; teamScores?: number[]},
+  owner: {id: string; name: string; team: number}, target: SceneObjectSnapshot,
   damage: number, now: number, events: MsgRoomEvent[]): void {
   if (room.phase !== 'PLAYING' || !Number.isFinite(damage) || damage <= 0 || target.hp <= 0) return;
   const previousHp = target.hp;
   target.hp = Math.max(0, previousHp - damage);
+  const dealt = previousHp - target.hp;
+  if (room.mode === 2 && dealt > 0 && target.id.startsWith('CASTLE:')) {
+    const castle = getSceneCastles(room.map.mapId).find(source => source.id === target.sourcePlacementId);
+    if (castle && (castle.affiliation === 1 || castle.affiliation === 2)
+        && (owner.team === 0 || owner.team === 1)
+        && castle.affiliation !== owner.team + 1
+        && room.teamScores) {
+      room.teamScores[owner.team] = (room.teamScores[owner.team] ?? 0) + dealt;
+    }
+  }
   events.push({roomId: room.roomId, type: 'sceneObjectHit', message: `${owner.name}命中场景物件`,
-    playerId: owner.id, targetId: target.id, value: previousHp - target.hp,
+    playerId: owner.id, targetId: target.id, value: dealt,
     castleDamage: target.id.startsWith('CASTLE:') ? {castleId: target.sourcePlacementId,
-      currentHP: target.hp, maxHP: target.maxHp, delta: previousHp - target.hp} : undefined,
+      currentHP: target.hp, maxHP: target.maxHp, delta: dealt} : undefined,
     x: target.x, y: target.y, z: target.z});
   if (target.hp === 0) {
     target.destroyedAt = now;

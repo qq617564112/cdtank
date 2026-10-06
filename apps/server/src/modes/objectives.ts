@@ -1,27 +1,68 @@
 import type {ObjectiveSnapshot, MsgRoomEvent} from '../../../shared/protocols';
 import type {ModeMapConfig} from '../config';
-import type {Battlefield, Point} from '../battlefield';
-import {getSceneBreakables} from '../scene-objects';
-
-interface ObjectivePlayer extends Point {
-  team: number;
-  alive: boolean;
-}
+import {getSceneBreakables, getSceneCastles} from '../scene-objects';
+import {castleSceneObjects} from '../battle/environment';
 
 interface ObjectiveRoom {
   mode: number;
+  round?: number;
   map: ModeMapConfig;
-  battlefield: Battlefield;
-  players: ReadonlyMap<string, ObjectivePlayer>;
 }
 
-/** Apply the existing destruction objective damage and scoring in hit order. */
+/**
+ * Rule-level objective end. `winnerTeam` is authoritative for mode2 (the team
+ * whose enemy Castle reached 0 HP) and `-1` for mode5, where the caller resolves
+ * the individual winner from `objectivesDestroyed`/score.
+ */
+export interface ObjectiveEnd {
+  winnerTeam: number;
+  winnerPlayerId?: string;
+}
+
+/**
+ * Server-side Breach lifecycle. `destroyedAt` is the existing shared scheduling
+ * field; `rebornAt` is the minimal private clock the rules need to know before
+ * a destroyed target is scheduled to return. Nothing here enters the wire schema.
+ */
+interface BreachState {
+  rebornAt?: number;
+}
+
+const breachStates = new WeakMap<object, {round: number; mode: number; mapId: number; states: Map<string, BreachState>}>();
+
+function breachStateStore(room: {round?: number; mode: number; map: {mapId: number}}):
+{round: number; mode: number; mapId: number; states: Map<string, BreachState>} {
+  const round = room.round ?? 0;
+  const cached = breachStates.get(room);
+  if (cached && cached.round === round && cached.mode === room.mode && cached.mapId === room.map.mapId) return cached;
+  const value = {round, mode: room.mode, mapId: room.map.mapId, states: new Map<string, BreachState>()};
+  breachStates.set(room, value);
+  return value;
+}
+
+/**
+ * Apply one accepted hit to a mode2 Castle or mode5 Breach objective.
+ * A destroyed target absorbs no further hit or score until it is realive;
+ * mode5 hit/destroy scores come from the source map row.
+ */
 export function damageObjective(room: {
-  roomId: string; map: {hitScore: number; destroyScore: number};
-}, owner: {id: string; name: string; score: number; objectivesDestroyed: number},
+  roomId: string; mode: number; map: {mapId: number; hitScore: number; destroyScore: number};
+  teamScores?: number[];
+}, owner: {id: string; name: string; team: number; score: number; objectivesDestroyed: number},
   target: ObjectiveSnapshot, bulletDamage: number, now: number, events: MsgRoomEvent[]): void {
+  if (!Number.isFinite(bulletDamage) || bulletDamage <= 0 || target.hp <= 0) return;
   const damage = Math.min(target.hp, bulletDamage);
   target.hp -= damage;
+  // Mode2 Castles share identity with the scene entity; credit the attacker's
+  // cumulative damage only for a real enemy-Castle HP reduction.
+  if (room.mode === 2 && damage > 0 && target.id.startsWith('CASTLE:') && room.teamScores
+      && (owner.team === 0 || owner.team === 1)) {
+    const castle = getSceneCastles(room.map.mapId).find(source => source.id === target.sourcePlacementId);
+    if (castle && (castle.affiliation === 1 || castle.affiliation === 2)
+        && castle.affiliation !== owner.team + 1) {
+      room.teamScores[owner.team] = (room.teamScores[owner.team] ?? 0) + damage;
+    }
+  }
   owner.score += room.map.hitScore;
   events.push({roomId: room.roomId, type: 'objectiveHit', message: `${owner.name}命中破坏目标`,
     playerId: owner.id, targetId: target.id, value: damage,
@@ -36,82 +77,81 @@ export function damageObjective(room: {
   }
 }
 
-// These are the existing rebuilt mode policies; original authority is unresolved.
-export function createObjectives(room: ObjectiveRoom, bodyRadius: number): ObjectiveSnapshot[] {
-  if (room.mode !== 2 && room.mode !== 5) return [];
-  if (room.mode === 5) {
-    // Real Breach placements replace the three guessed spheres. HP/OBB and
-    // all-destroyed outcome remain explicit rebuilt policies, not native rules.
-    return getSceneBreakables(room.map.mapId).map(source => ({
-      id: `SCN:${source.id}`, kind: 'DESTROY', sourcePlacementId: source.id,
-      sourceModel: source.model, x: source.matrix[12], y: source.matrix[13], z: source.matrix[14],
-      radius: Math.max(...source.dimensions) / 2, hp: room.map.bunkerHp || 200,
-      maxHp: room.map.bunkerHp || 200, ownerTeam: -1, contested: false,
-    }));
-  }
-  const count = 1;
-  return Array.from({length: count}, (_, index) => {
-    const spawn = room.battlefield.spawn(index * 2);
-    // Reachable offsets from recovered spawn points; original target placement
-    // is unresolved. No guessed original object or castle identity is used.
-    let point: Point = spawn;
-    if (room.mode === 2) {
-      const players = [...room.players.values()];
-      const first = players.find(player => player.team === 0);
-      const second = players.find(player => player.team === 1);
-      if (first && second) {
-        const x = (first.x + second.x) / 2;
-        const z = (first.z + second.z) / 2;
-        const cell = room.battlefield.navigation.sample(x, z);
-        if (cell?.valid) {
-          const midpoint = {x, y: cell.height, z};
-          const reaches = (player: ObjectivePlayer): boolean => {
-            const moved = room.battlefield.move(player, midpoint, bodyRadius);
-            return Math.hypot(moved.x - x, moved.z - z) < 0.1;
-          };
-          if (reaches(first) && reaches(second)) point = midpoint;
-        }
-      }
-    }
-    // Prefer an equidistant, reachable neutral point for capture. Maps whose
-    // original routes do not permit it retain the explicit offset fallback.
-    if (point !== spawn) {
-      return {id: `O${index + 1}`, kind: 'CAPTURE', ...point, radius: 90,
-        hp: 0, maxHp: 0, ownerTeam: -1, contested: false};
-    }
-    for (let angleIndex = 0; angleIndex < 16; angleIndex++) {
-      const angle = angleIndex * Math.PI / 8;
-      const end = {...spawn, x: spawn.x + Math.sin(angle) * 100,
-        z: spawn.z + Math.cos(angle) * 100};
-      const moved = room.battlefield.move(spawn, end, bodyRadius);
-      if (Math.hypot(moved.x - spawn.x, moved.z - spawn.z) > 95) {
-        point = moved;
-        break;
-      }
-    }
-    return {id: `O${index + 1}`, kind: 'CAPTURE',
-      ...point, radius: 90, hp: 0, maxHp: 0,
-      ownerTeam: -1, contested: false};
-  });
+/** Real source Breach targets: identity/model/matrix/OBB from the CAS record. */
+function breachObjectives(room: ObjectiveRoom): ObjectiveSnapshot[] {
+  const initialHp = room.map.defaultButt;
+  return getSceneBreakables(room.map.mapId).map(source => ({
+    id: `SCN:${source.id}`, kind: 'DESTROY' as const, sourcePlacementId: source.id,
+    sourceModel: source.model, x: source.matrix[12], y: source.matrix[13], z: source.matrix[14],
+    radius: Math.max(...source.dimensions) / 2, hp: initialHp, maxHp: initialHp,
+    ownerTeam: -1, contested: false,
+  }));
 }
 
-/** Advance capture ownership and scores after combat; World commits any finish. */
+/**
+ * Build this round's objectives.
+ * Mode2 returns the exact Castle instances owned by `createSceneObjects`, so
+ * rule HP, rendered HP and destruction lifecycle are one entity. Mode5 returns
+ * every real source Breach at the source DefaultButt HP.
+ */
+export function createObjectives(room: ObjectiveRoom, _bodyRadius?: number): ObjectiveSnapshot[] {
+  if (room.mode === 2) return castleSceneObjects(room);
+  if (room.mode === 5) {
+    breachStateStore(room);
+    return breachObjectives(room);
+  }
+  return [];
+}
+
+/** Existing collision geometry is shared with the goal targets via placement identity. */
+export function isCastleObjective(objective: Pick<ObjectiveSnapshot, 'id'>): boolean {
+  return objective.id.startsWith('CASTLE:');
+}
+
+/**
+ * Advance objective rules using the server clock in real milliseconds.
+ * Returns `true` only for a true rule end:
+ *  - mode2: some enemy Castle is at rule HP 0 (cumulative damage alone never wins).
+ *  - mode5: every current Breach is simultaneously at HP 0 at that instant;
+ *    targets reborn earlier in this call are already back above 0 and do not count.
+ * The bridge must pass the same real server millisecond clock it uses for snapshots.
+ */
 export function advanceObjectives(room: {
   mode: number;
-  players: ReadonlyMap<string, ObjectivePlayer>;
+  round?: number;
+  map: {mapId: number; buttReborn: number; buttRebornTime: number};
   objectives: ObjectiveSnapshot[];
-  teamScores: number[];
-  targetScore: number;
-}, dt: number): boolean {
+}, now: number): ObjectiveEnd | undefined {
   if (room.mode === 2) {
-    const zone = room.objectives[0];
-    const teams = new Set([...room.players.values()].filter(player => player.alive
-      && Math.hypot(player.x - zone.x, player.z - zone.z) <= zone.radius
-      && Math.abs(player.y - zone.y) < 40).map(player => player.team));
-    zone.contested = teams.size > 1;
-    zone.ownerTeam = teams.size === 1 ? [...teams][0] : -1;
-    if (zone.ownerTeam >= 0) room.teamScores[zone.ownerTeam] += dt;
-    return room.teamScores.some(score => score >= room.targetScore);
+    // Rule ending reads real Castle HP, never the cumulative damage counter.
+    // A repaired Castle stays alive and cannot be won by accumulated points.
+    for (const objective of room.objectives) {
+      if (!isCastleObjective(objective) || objective.hp > 0) continue;
+      const castle = getSceneCastles(room.map.mapId)
+        .find(source => source.id === objective.sourcePlacementId);
+      if (!castle) continue;
+      return {winnerTeam: castle.affiliation === 1 ? 1 : castle.affiliation === 2 ? 0 : -1};
+    }
+    return undefined;
   }
-  return room.mode === 5 && room.objectives.every(objective => objective.hp <= 0);
+  if (room.mode !== 5) return undefined;
+  const {states} = breachStateStore(room);
+  for (const objective of room.objectives) {
+    if (objective.hp > 0) {
+      states.delete(objective.id);
+      objective.destroyedAt = undefined;
+      continue;
+    }
+    const state = states.get(objective.id) ?? (states.set(objective.id, {}), states.get(objective.id)!);
+    if (objective.destroyedAt === undefined) objective.destroyedAt = now;
+    state.rebornAt ??= objective.destroyedAt + room.map.buttRebornTime * 1000;
+    if (now >= state.rebornAt) {
+      objective.hp = room.map.buttReborn;
+      objective.maxHp = room.map.buttReborn;
+      objective.destroyedAt = undefined;
+      states.delete(objective.id);
+    }
+  }
+  return room.objectives.length > 0 && room.objectives.every(objective => objective.hp <= 0)
+    ? {winnerTeam: -1} : undefined;
 }

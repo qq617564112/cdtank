@@ -4,7 +4,7 @@ import {getSceneBreakables} from '../scene-objects';
 
 const active = new WeakMap<Battlefield, Set<string>>();
 
-/** Room-owned render mesh: retain the intact geometry during broken fade. */
+/** Room-owned render mesh/NAV: intact geometry is retained through the broken fade. */
 export function syncBreachCollision(room: {mode: number; map: {mapId: number};
   battlefield: Battlefield; objectives: readonly ObjectiveSnapshot[]}, now: number): void {
   if (room.mode !== 5 || ![20, 21, 22].includes(room.map.mapId)) return;
@@ -14,8 +14,8 @@ export function syncBreachCollision(room: {mode: number; map: {mapId: number};
   const present = new Set<string>();
   for (const objective of room.objectives) {
     if (objective.sourcePlacementId === undefined) continue;
-    // Original broken visual fades at0.5/s and hides strictly after alpha0.
-    // Server-time scheduling retains the intact mesh during that fade.
+    // Source broken visual fades at 0.5/s and hides after alpha reaches 0;
+    // the intact mesh and its dynamic NAV box leave at the same server instant.
     if (objective.hp <= 0 && objective.destroyedAt !== undefined && now - objective.destroyedAt > 2000) continue;
     const source = sources.find(source => source.id === objective.sourcePlacementId);
     if (!source) continue;
