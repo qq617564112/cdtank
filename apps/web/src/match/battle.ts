@@ -650,7 +650,7 @@ export class Battle {
         void this.music.playResult(resultFlag).catch(error => console.error('结算音乐载入失败', error));
       }
     }
-    this.players.reconcile(snapshot.players, this.playerId);
+    this.players.reconcile(snapshot.players, this.playerId, snapshot.mode);
     this.ammoBurnPresentation?.reconcile(snapshot.players,
       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`, snapshot.phase === 'PLAYING');
     this.matchPanel.setReadyAvailable(this.mapLoaded && this.players.resourcesReady && !this.players.loadingError);
