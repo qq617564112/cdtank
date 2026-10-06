@@ -2,11 +2,11 @@
 
 ## 范围与来源
 
-M5-08/UI34。HomePetSourcePage 原主要资料区消费当前候选的真实 OwnedRoles base 记录：生命字段 0x2c、凶猛 0x34、好运 0x3c，六组技能 ID 从 0x44 起、等级从 0x5c 起各四字节。原 myhome_petpage.xml 的 txtLife/txtCritical/txtLucky 和 txtSkillName0..5/txtSkillLevel0..5 提供对应位置。技能名称只按实际 ID 查询原 combat-catalog.skills，介绍只按真实宠物定义 ID 匹配现 PetShop QUERY 返回的目录 info。
+M5-08/UI34。HomePetSourcePage 原主要资料区消费当前候选的真实 OwnedRoles base 记录：生命字段 0x2c、凶猛 0x34、好运 0x3c，六组技能 ID 从 0x44 起、等级从 0x5c 起各四字节。原 myhome_petpage.xml 的 txtLife/txtCritical/txtLucky 和 txtSkillName0..5/txtSkillLevel0..5 提供对应位置。技能名称只按实际 ID 查询原 combat-catalog.skills；介绍按确认记录的定义字段8调用共用`sourcePetDescription`，原10条PetInfo均可显示，不受可售目录过滤。完整说明来源和接线见`home-role-original-descriptions.md`。
 
 这些值是当前拥有记录的 Web 投影，原控件 setter 未证。购买建档初值沿现明确重建业务，不宣原成长或当前战斗最终属性。原固定图内的符号不再追加单位或计算公式。未知宠物类型、熟练度、学习费用和奖励不填。
 
-UI owns home-pet-source-page.tsx 的资料呈现、home-roles.tsx 仅只读目录载入与 displayed 候选 props、home.css 专属资料可读样式及独立 source/browser/doc。React 保有候选与状态；不改 App、协议、账户/SelectRole、模型生命周期或 shared catalog 合同。原六技能行图片用原 NormalImage 作为只读背景，不把缺失学习业务伪接成按钮；学习页 UI35 保持未完成。
+home-pet-source-page.tsx负责资料呈现，home-roles.tsx持有确认候选、只读combat-catalog及displayed候选props，home.css提供资料可读样式。React保有候选与状态；App、协议、账户/SelectRole、模型生命周期及shared catalog合同沿既有实现。原六技能行图片用原NormalImage作为只读背景；学习页UI35的完整原业务保持未完成。
 
 原基准800×600，沿现源主要根的等比居中与父链坐标。资料浅底的深色字为明确 Web 可读呈现；原颜色/字形/4K间距未证，完整1:1父项仍开放。
 
@@ -18,7 +18,7 @@ UI owns home-pet-source-page.tsx 的资料呈现、home-roles.tsx 仅只读目�
 
 ## 实际交付与证据
 
-HomePetOwnedDetails 消费确认候选 fields，HomeRoles 独立只读载入 PetShop 目录和 combat-catalog，关闭/切页失活晚返回。原六技能行 NormalImage 只读背景，无新按钮或学习请求。生命/凶猛/好运和技能等级深字用限定 brightness(.15)，介绍 #253740 为 Web 可读映射。原学习业务、费用、熟练度未知值保持空白。
+HomePetOwnedDetails消费确认候选fields，HomeRoles只读载入combat-catalog，关闭/切页失活晚返回。介绍从确认定义ID直接选择原说明，没有独立说明请求。原六技能行NormalImage保持只读背景。生命/凶猛/好运和技能等级深字用限定brightness(.15)，介绍#253740为Web可读映射。原学习业务、费用、熟练度未知值保持空白。
 
 首19-18-47 raw FAIL 是 DOM 仪器表达式 syntax，保留；正常购买取得与确认拥有已在，但不冒整页通过。19-19-18 raw PASS 实际普通 BUY2/103 后查询完整拥有记录，通过普通名单点击两个候选，实际大麦700/20/8、黄金母舰750/10/14，六技能名称/等级按实际字段和 catalog 对齐，介绍按返回目录对齐；0SelectRole、源Close严格Home焦点。账户初始10000金币/1000代币是必要测试资金，未导入拥有或改成长。
 

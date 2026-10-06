@@ -22,7 +22,7 @@ M8-04的原内容闭集来自现解码原表、布局和选定资源目录。本
 
 技能与道具目录全量存在，不等于全部玩法获得权威施放、成功消耗、失败不扣量、原效果、CPU和持久闭环。M1-08至M1-13、M4和附录SKILL/ITEM仍有开放项。21战车与10宠物定义不能替代所有拥有、成长、装备、改装、维修、技能和场景动作业务。
 
-65个原布局已有逐页任务，完整逐控件映射和父页业务尚未全部验收。交易主页面的有限双端与重启证据见`output/trade-root-review.json`；当前详情字段实现范围见`trade-detail-fields-implementation.md`，不借用旧主页面证据关闭新详情。动态文字沿用户附件字体，战斗伤害/治疗/暴击数字沿原图片。
+65个原布局已有逐页任务，完整逐控件映射和父页业务尚未全部验收。交易主页面的有限双端与重启证据见`output/trade-root-review.json`；当前详情字段实现范围见`trade-detail-fields-implementation.md`，不借用旧主页面证据关闭新详情。Home与商城拥有页按确认定义ID显示完整21战车/10宠物原说明，商城拥有Pet生命值和预览沿确认记录，详`home-role-original-descriptions.md`与`shop-owned-role-original-content.md`；新展示范围尚无实际页面验收。动态文字沿用户附件字体，战斗伤害/治疗/暴击数字沿原图片。
 
 独立发行、本机nginx反代和SQLite备份恢复已有各自限定证据：`standalone-release-accepted.json`、`release-proxy-accepted.json`、`account-backup-restore-accepted.json`。全资源干净环境重建、真实独立设备访问、全业务重启恢复和浏览器本地设置范围尚未全部完成，M8-01至M8-03保持原状态。
 
