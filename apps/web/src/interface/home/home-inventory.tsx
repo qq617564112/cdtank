@@ -164,8 +164,12 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
     close();
   };
   const category = page === 'valuable' ? 6 : page === 'weapon' ? 2 : 1;
-  const categoryRecords = inventory?.records.filter(record => classifyInventoryCategory(record.itemTableId) === category) ?? [];
-  const records = categoryRecords.filter(record => record.ownedQuantity > 0);
+  const categoryRecords = inventory?.records.filter(record =>
+    classifyInventoryCategory(record.itemTableId) === category) ?? [];
+  const records = (inventory?.records.filter(record =>
+    record.ownedQuantity > 0 &&
+    (classifyInventoryCategory(record.itemTableId) === category ||
+      (page === 'item' && (record.itemTableId === 20001 || record.itemTableId === 20002)))) ?? []);
   const selectedTitleName = titles?.owned.find(title => title.id === titles.selectedTitleId)?.name;
   const control = (name: string) => resources!.controls.find(value => value.name === name)!;
   const slotNumber = (index: number) => page === 'weapon' ? index : index + 4;
