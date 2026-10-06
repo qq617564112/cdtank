@@ -21,6 +21,8 @@ export interface SkillEffectNotificationBackend<Role, Effect, Sound> {
   world(name: string, position: readonly [number, number, number], sourceFlag: 1): void;
   attached(role: Role, effectId: number, argument2: 3, effectTag: number, oneShot: boolean): Effect;
   sound(role: Role, reference: string, selector: 1 | -1, offset: readonly [number, number, number]): Sound;
+  /** World-position skill WAV; supplied only where the adopted business policy owns one. */
+  worldSound?(reference: string, position: readonly [number, number, number], selector: 1 | -1): void;
   stopEffect(effect: Effect): void;
   stopSound(sound: Sound): void;
   release(record: SkillEffectNotificationRecord<Effect, Sound>): void;
@@ -42,6 +44,18 @@ export class SkillEffectNotifications<Role, Effect, Sound> {
   get queues(): ReadonlyMap<number, readonly Readonly<SkillEffectNotificationRecord<Effect, Sound>>[]> {return this.roleQueues;}
   get updateAccumulator(): number {return this.accumulated;}
   get queueTimers(): ReadonlyMap<number, Readonly<{skillId: number; remaining: number}>> {return this.timers;}
+
+  /**
+   * Airstrike sound adoption: play the source slot WAV once at the authoritative world center
+   * through the existing positional-sound backend. The original roleId0 branch stays silent;
+   * EffectMethodN remains an unconsumed source field, so the world-position consumer is chosen
+   * because these events have no live actor to attach to.
+   */
+  worldSound(skillId: number, effectIndex: number, position: readonly [number, number, number]): void {
+    const slot = this.backend.skill(skillId)?.effects[effectIndex];
+    if (!slot || slot.sound === '' || slot.sound === '0') return;
+    this.backend.worldSound?.(slot.sound, position, 1);
+  }
 
   play(message: PlaySkillEffectMessage): void {
     const skill = this.backend.skill(message.skillId);

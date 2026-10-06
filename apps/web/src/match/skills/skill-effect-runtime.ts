@@ -19,6 +19,7 @@ export function createSkillEffectNotifications(runtime: EffectRuntime, catalog: 
     attached: (role, effectId, _binding, tag, oneShot) =>
       runtime.spawnAttachedEffect(role, effectId, tag, oneShot, roles.localRole()),
     sound: (role, reference, selector) => runtime.playSkillSound(role, reference, selector),
+    worldSound: (reference, position) => {runtime.playSceneSound(reference, [...position], 1);},
     stopEffect: handle => runtime.stopEffect(handle),
     stopSound: handle => runtime.stopSkillSound(handle),
     release: () => {},

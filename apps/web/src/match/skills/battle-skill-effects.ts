@@ -6,6 +6,8 @@ import type {PlaySkillEffectMessage, StopSkillEffectMessage} from '../../../../s
 export interface BattleSkillNotifications {
   play(message: PlaySkillEffectMessage): void;
   stop(message: StopSkillEffectMessage): void;
+  /** World-position source skill WAV; only the airstrike policy below supplies a position. */
+  worldSound?(skillId: number, effectIndex: number, position: readonly [number, number, number]): void;
   revive(roleId: number): void;
   clearRole(roleId: number): void;
   clearQueue(roleId: number): void;
@@ -34,6 +36,20 @@ export class BattleSkillEffects {
   event(event: MsgRoomEvent): void {
     if (event.playSkillEffect) this.play(event.playSkillEffect);
     if (event.stopSkillEffect) this.stop(event.stopSkillEffect);
+    this.airstrikeSound(event);
+  }
+
+  /**
+   * Adopted airstrike policy: a confirmed itemUsed13 cast or airstrikeImpact3013 owns one
+   * one-shot source slot WAV at the event's authoritative world center. Other roleId0
+   * notifications keep their original silent world-effect contract.
+   */
+  private airstrikeSound(event: MsgRoomEvent): void {
+    const play = event.playSkillEffect;
+    if (!play || play.roleId !== 0) return;
+    const source = event.type === 'itemUsed' ? 13 : event.type === 'airstrikeImpact' ? 3013 : undefined;
+    if (source === undefined || play.skillId !== source) return;
+    this.notifications.worldSound?.(play.skillId, play.effectIndex, [event.x, event.y, event.z]);
   }
 
   play(message: PlaySkillEffectMessage): void {this.notifications.play(message);}
