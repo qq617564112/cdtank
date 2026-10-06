@@ -24,8 +24,10 @@
 - `canObserveRadarMarker(observer, target, mode, radarJammed?)` 在原有 Func21 关系前保留旧默认
   行为；省略第四参时读取 `observer.radarJammed`。
 - `hud-minimap-state.ts` 与当前 `battle-minimap-renderer.ts` 的 tactical marker 消费同一 helper。
-- Effect13/SE14 沿既有 `playSkillEffect -> BattleSkillEffects -> SkillEffectNotifications`
-  通道呈现；未新增第二效果、视觉素材、声音或附件字体。
+- 合格 2010 命中携带同受害者 roleId 的 4008 首槽 `playSkillEffect` 时，Effect13/SE14 只沿既有
+  `playSkillEffect -> BattleSkillEffects -> SkillEffectNotifications` 通道呈现一份；该命中不再
+  重复调用旧 2010 `showPlayerResult`。没有该通知的普通 2010 命中仍沿原表现。`radarJammed`
+  状态事件只报告到期状态，不承载技能效果。
 
 ## 未实测
 

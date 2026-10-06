@@ -43,7 +43,7 @@ import type {ReqTankMaintenance, ResTankMaintenance} from '../../../shared/proto
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../shared/protocols/PtlOwnedRoleSale';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {createSkillEffectNotifications} from './skills/skill-effect-runtime';
-import {BattleSkillEffects} from './skills/battle-skill-effects';
+import {battleRoleId, BattleSkillEffects} from './skills/battle-skill-effects';
 import {TankShotDisplay} from '../assets/tanks/shot-display';
 import {TankShotPlayerResult} from '../assets/tanks/shot-player-result';
 import {TankShotItemResult} from '../assets/tanks/shot-item-result';
@@ -228,7 +228,12 @@ export class Battle {
         }
         if (event.type === 'hit' || event.type === 'playerHealed') {
           const victim = this.players.get(event.targetId);
-          if (victim && event.shotPlayerResult) {
+          const hasRadarJamNotification = event.type === 'hit'
+            && event.shotPlayerResult?.itemId === 2010
+            && event.playSkillEffect?.skillId === 4008
+            && event.playSkillEffect.effectIndex === 0
+            && event.playSkillEffect.roleId === battleRoleId(event.targetId);
+          if (victim && event.shotPlayerResult && !hasRadarJamNotification) {
             this.shotPlayerResult?.showPlayerResult(victim, event.shotPlayerResult.itemId,
               this.playerId ? this.players.get(this.playerId) : undefined);
           }
