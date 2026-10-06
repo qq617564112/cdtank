@@ -120,7 +120,7 @@ export class ScenePreview {
     const pendingPlants = this.plantRoots.size === 0 ? [...this.plantSnapshots.values()] : [];
     const pendingPlantRound = this.plantRoots.size === 0 ? this.plantRound : undefined;
     this.clear();
-    if (['0002', '0004'].includes(id) && pendingPlantRound !== undefined) {
+    if (['0002', '0004', '0005'].includes(id) && pendingPlantRound !== undefined) {
       this.reconcilePlants(pendingPlants, pendingPlantRound);
     }
     const revision = this.revision;
@@ -291,7 +291,7 @@ export class ScenePreview {
       root.rotationQuaternion = new Quaternion(rotation.x, -rotation.y, -rotation.z, rotation.w);
       if (placement.className === 'SYcScnObjPlant') {
         this.plants?.register(placement.id, root);
-        if (['0002', '0004'].includes(id)) this.registerPlant(placement.id, root, Boolean(placement.enabled));
+        if (['0002', '0004', '0005'].includes(id)) this.registerPlant(placement.id, root, Boolean(placement.enabled));
       }
       if (id === '0007' && placement.className === 'SYcScnObjCrush' &&
         placement.model === 'obj05420' && runtime) {
@@ -328,8 +328,8 @@ export class ScenePreview {
           libraryAsset = '/scene-breach-0004.json';
         } else if (id === '0004' && placement.model === 'obj05422') {
           libraryAsset = '/scene-breach-0021.json';
-        } else if (id === '0005' && ['obj05425', 'obj05426'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0014.json';
+        } else if (id === '0005' && ['obj05425', 'obj05426', 'obj05432'].includes(placement.model)) {
+          libraryAsset = '/scene-breach-0005.json';
         } else if (id === '0010' && placement.model === 'obj05425') {
           libraryAsset = '/scene-breach-0014.json';
         } else if (id === '0002' && placement.model === 'obj05427') {
