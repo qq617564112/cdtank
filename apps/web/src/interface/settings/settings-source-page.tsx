@@ -28,3 +28,11 @@ export function SettingsSourceButton({ui, source, disabled, ...attributes}: Butt
       data-source-asset={normal['data-source-asset']} style={{backgroundImage: normal.style.backgroundImage}} />}
   </SourceButton>;
 }
+
+/** Checkbox state imagery remains a source draw above the shared button interaction layer. */
+export function SettingsSourceCheckmark({ui, source}: {ui: HomeSourceUi; source: string}) {
+  const layout = new HomeSourceLayout(ui, SETTINGS_LAYOUT);
+  const properties = layout.control(source).properties;
+  return <SourceStaticImage ui={ui} layout={layout} suffix={SETTINGS_LAYOUT} name={source}
+    reference={properties.CheckMarkImage} className="settings-source-checkmark" aria-hidden="true" />;
+}

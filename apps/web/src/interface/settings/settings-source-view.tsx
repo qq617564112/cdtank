@@ -4,10 +4,12 @@ import type {Battle} from '../../match/battle';
 import {cloneKeyBindings, DEFAULT_KEY_BINDINGS, INPUT_ACTIONS, isSupportedKeyCode,
   keyLabel, validateKeyBindings, type InputAction, type KeyBindings} from '../../match/input-bindings';
 import {readAudioPreferences, writeAudioPreferences, type AudioPreferences} from './audio-preferences';
+import {applyDisplayPreferences, DEFAULT_DISPLAY_PREFERENCES, getDisplayPreferences,
+  validateDisplayPreferences, writeDisplayPreferences, type DisplayPreferences} from './display-preferences';
 import {DEFAULT_QUICK_CHAT_PREFERENCES, QUICK_CHAT_KEYS, readQuickChatPreferences,
   validateQuickChatPreferences, writeQuickChatPreferences, type QuickChatPreferences} from './quick-chat-preferences';
 import {KEY_BINDINGS_STORAGE_KEY, type InitialSettings} from './settings-startup';
-import {SettingsSourceButton, SettingsSourcePage, SETTINGS_LAYOUT} from './settings-source-page';
+import {SettingsSourceButton, SettingsSourceCheckmark, SettingsSourcePage, SETTINGS_LAYOUT} from './settings-source-page';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {SourceImageScale} from '../resources/source-static-image';
@@ -29,9 +31,8 @@ const KEY_REGIONS = [
   ['prevItem', 'txtPrevItem', '上一个道具'], ['nextItem', 'txtNextItem', '下一个道具'],
 ] as const;
 const UNSUPPORTED_OPTIONS = [
-  ['rdoLow', '低画质'], ['rdoHigh', '高画质'],
   ['rdo16ColorDepth', '16位色'], ['rdo32ColorDepth', '32位色'], ['chkWaitVSync', '垂直同步'],
-  ['chkSilhouette', '卡通渲染'], ['chkSoftwareCursor', '软件光标'], ['zhandoubiaoqing', '战斗表情'],
+  ['chkSoftwareCursor', '软件光标'], ['zhandoubiaoqing', '战斗表情'],
 ] as const;
 type Capture = {action: InputAction; secondary: boolean};
 const optionalPrimary = (action: InputAction): boolean => action === 'useItem' || action === 'prevWeapon'
@@ -49,11 +50,13 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
   const [bindings, setBindings] = useState(() => cloneKeyBindings(battle.getKeyBindings()));
   const [quickChats, setQuickChats] = useState<QuickChatPreferences>(() => readQuickChatPreferences(localStorage).preferences);
   const [audio, setAudio] = useState<AudioPreferences>(() => readAudioPreferences(localStorage, initial.audio.preferences).preferences);
+  const [display, setDisplay] = useState<DisplayPreferences>(() => ({...getDisplayPreferences()}));
   const [capture, setCapture] = useState<Capture>();
   const composing = useRef(false), escapePending = useRef(false);
   const [fullscreen, setFullscreen] = useState(() => !!document.fullscreenElement);
   const [displayPending, setDisplayPending] = useState(false);
-  const [status, setStatus] = useState(initial.keys.loadMessage);
+  const [status, setStatus] = useState(() =>
+    [initial.keys.loadMessage, initial.display.loadMessage].filter(Boolean).join(' '));
   const current = useRef({bindings, capture});
   current.current = {bindings, capture};
 
@@ -117,7 +120,9 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
 
   function save() {
     const keys = validateKeyBindings(bindings), chats = validateQuickChatPreferences(quickChats);
+    const displayPreferences = validateDisplayPreferences(display);
     if (!keys || !chats) {setStatus('键位无效或快捷聊天超过72字符。'); return;}
+    if (!displayPreferences) {setStatus('显示设置草稿无效，当前显示设置保持不变。'); return;}
     try {localStorage.setItem(KEY_BINDINGS_STORAGE_KEY, JSON.stringify(keys));}
     catch {setStatus('无法保存键位，当前键位保持不变。'); return;}
     battle.setKeyBindings(keys); onKeysSaved(keys);
@@ -125,6 +130,10 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
       setStatus('键位已保存；快捷聊天未保存，原内容保持不变。'); return;
     }
     battle.setQuickChats(chats);
+    if (!writeDisplayPreferences(localStorage, displayPreferences)) {
+      setStatus('键位和快捷聊天已保存；显示设置未保存，草稿保留且仍使用当前显示设置。'); return;
+    }
+    applyDisplayPreferences(displayPreferences);
     close();
   }
 
@@ -220,12 +229,22 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
             aria-busy={displayPending}
             disabled={mode === 'fullscreen' && !document.fullscreenEnabled}
             onClick={event => {void changeDisplayMode(mode === 'fullscreen', event.currentTarget);}} />)}
+        {([['low', 'rdoLow', '低画质', false], ['high', 'rdoHigh', '高画质', true]] as const)
+          .map(([quality, source, label, highPrecision]) => <SettingsSourceButton key={source} ui={ui} source={source}
+            data-settings-display-quality={quality} aria-label={label} aria-pressed={display.highPrecision === highPrecision}
+            selected={display.highPrecision === highPrecision}
+            onClick={() => setDisplay(value => ({...value, highPrecision}))} />)}
+        <SettingsSourceButton ui={ui} source="chkSilhouette"
+          data-settings-display-setting="silhouette" aria-label="卡通渲染" role="checkbox"
+          aria-checked={display.silhouette} selected={display.silhouette}
+          onClick={() => setDisplay(value => ({...value, silhouette: !value.silhouette}))} />
+        {display.silhouette && <SettingsSourceCheckmark ui={ui} source="chkSilhouette" />}
         {UNSUPPORTED_OPTIONS.map(([source, label]) => <SettingsSourceButton key={source} ui={ui} source={source}
           disabled aria-label={label} title="尚未接入" />)}
         <SettingsSourceButton ui={ui} source="btnOK" aria-label="确认设置" data-settings-confirm="" onClick={save} />
         <SettingsSourceButton ui={ui} source="btnDefault" aria-label="恢复默认草稿" data-settings-default=""
           onClick={() => {setBindings(cloneKeyBindings(DEFAULT_KEY_BINDINGS)); setQuickChats({...DEFAULT_QUICK_CHAT_PREFERENCES});
-            setCapture(undefined); setStatus('已恢复默认草稿，确认后生效。');}} />
+            setDisplay({...DEFAULT_DISPLAY_PREFERENCES}); setCapture(undefined); setStatus('已恢复默认草稿，确认后生效。');}} />
         <SettingsSourceButton ui={ui} source="btnCancel" aria-label="取消设置" data-settings-cancel="" onClick={close} />
         <SettingsSourceButton ui={ui} source="btnClose" aria-label="关闭设置" data-settings-close="" onClick={close} />
       </>}
