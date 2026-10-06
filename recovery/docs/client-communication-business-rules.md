@@ -102,6 +102,14 @@ Func20只负责地面拾取数量入账：服务端沿既有ground acquire账户
 
 Func19的12501/12502/12503 domain、history/account与真实World来源冻结已接（main 9f6620f/9d632fc），离场清技能前冻结；商城取得入口fea0765与商城UI d2c3a66已接，Home MARKER装配后profile0x13c三mark实例按owned实例解析ItemSkill1进入selectedSkills，snapshot与World冻结共同消费（a40e38d）；OP唯一集中静态走查已完成，实际验收待做。Func6的domain 6b05507与P life 73ae1a2（source d14852e）已集成；统一shot/DOT/direct/trap/airstrike免伤predicate已接，死亡和respawn清旧保护，World桥88b726a已接真实复活完成后授予5秒、首次spawn不授、真实时钟推进到期及死亡/Leave/finish/round/loading清理；实际验收待做，FUNC-06保持未勾。Func21纯关系规则aeafb02及当前小地图消费已接，13111 jammer/13112 detector读取真实selected来源；本人/同队可见、敌对仅detector解radar jam且不破解optical invisibility；本批范围仅13111/13112关系读取、无新grant，合法取得链与验收待做。Func17已有真实受害者被动一次复制与每生命清理，沿`pet-copy-skill-policy.md`保留范围，不假造完整原writer完成。Func20的20001/20002拾取数量入账已随ground acquire账户事务与World桥真接；普通use不再加一，ItemSkill2=30005按普通request→既有CAS→治疗clamp→两量单减接入，失败不扣，实际验收待做。地面掉落O的shared/schema106 83f138f与account事务be579f9保持已接，domain fda9ebb（source 49b9ce6）已集成，World桥88b726a与UI呈现fc83778已集成；OP批次唯一集中静态走查已完成，四项finding均已交付集成：服务器O-S01/P-S01修复a40e38d、UI丢弃候选缓存刷新与FINISHED先到拾取声修复main8b70bfe（source 8bdafe1d），掉落拾取合同见`ground-item-business-design.md`。
 
+## 快捷循环控制与服务端确认
+
+对应M5-14/UI-50。来源事实：原`SystemSetting.ini`记录UseItem29、PrevBullet199、NextBullet207、PrevItem201、NextItem209，Attached字段均为0；原`settings.xml`对五动作各有主/备用键矩形。原战斗UI对五动作走UI按键事件链（回调`4ce6c4`），槽1直接选默认弹、槽2–4按类别分派到选弹或放陷阱、槽5–8走普通使用`43d4dc`；原索引不跨端点回绕。这些字段证明动作存在，但不含原Windows键位回调、扫描码映射与“当前选择”写入函数。详见 battle-cycle-controls-source.md。
+
+采用政策：Web端在现普通`PlayerInput`链上实现五动作，不新增opcode、snapshot、schema或服务端消费规则，也不给普通message伪造业务回执。武器选择沿用普通`useItem(slot=1..4)`，服务端仍是`selectedAmmoSlot`与HUD权威，客户端只维护按输入次序的未决迭代意图：该玩家携带弹药`skillId`的普通`itemRejected`、`PlayerInput`发送promise的`isSucc:false`或reject、`local.ammoSlots`中未决请求槽消失/数量或`itemTableId`变化、直接数字/HUD选槽与生命周期重置都清意图回当前确认基线。道具侧只有`BattleItemInventorySnapshot.selectedItemSlot`这一本机cursor，写入仅限当前确认可用候选槽5–8，`useItem`读取时再按候选过滤；直接数字/HUD点空槽保留既有的一次普通请求但不写合法cursor；`prevItem`/`nextItem`只移动cursor，不请求、不扣量。原协议与server消费规则不新增。
+
+未验收边界：原服务端键位回调与实际扣量/落点/技能成功结果仍未取得，不能声明为已恢复；上述为客户端采用规则，未做实际对局、双网页、高清或持久重启验收，也不把静态来源与client链等同原server分派。运行期接口见 battle-cycle-controls-runtime.md，设置与消费见 settings-cycle-controls-client.md。
+
 ## 未完成范围
 
 本批普通输入、消费、期限、目标、快照、Web表现和CPU接线已登记实现；本批一次集中gpt-5.6走查覆盖伪装、空袭与Func22/23，已修复发射边界恢复、普通输入快照先于事件发送，以及Func22/23的query options参数位、direct命中后效复用与Func23端点一致性三项真实问题。光学迷彩与建筑工具既有范围的集中走查与Castle重连稳态及修复事务共用损伤绘声清理保持原范围。确认已有库存的配置/自然施放、光学迷彩到期与死亡/结束/再战、建筑工具实际修复、双端绘声及库存重启恢复仍需实际验收；原未知字段、全部技能分派、五模式完整规则和M8-05不因这一合同关闭。FUNC-22/23只登记当前有限查询/射程执行器及采用的百分比政策，未执行实际玩家授予、取得或对局证据，不把source计算等同原server分派。
