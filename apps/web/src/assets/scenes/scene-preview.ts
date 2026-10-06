@@ -366,12 +366,15 @@ export class ScenePreview {
         this.breakables.set(placement.id, value);
         const libraryAsset = sceneBreachLibrary(id, placement.model, placement.destruction);
         if (libraryAsset) {
+          const destructionReference = placement.destruction &&
+            libraryAsset === `/${placement.destruction.library}` ?
+            placement.destruction.reference : undefined;
           const matrix = [...placement.matrix];
           matrix[12] = placement.position[0];
           matrix[13] = placement.position[1];
           matrix[14] = placement.position[2];
           value.broken = new SceneBreachVisual(this.scene, placement.id,
-            matrix as EffectNativeMatrix, placement.model, libraryAsset);
+            matrix as EffectNativeMatrix, placement.model, libraryAsset, destructionReference);
           try {await value.broken.load();} catch (error) {
             if (revision === this.revision) this.clear();
             throw error;

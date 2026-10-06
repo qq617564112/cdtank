@@ -16,14 +16,15 @@ export class SceneBreachVisual {
 
   constructor(private readonly scene: Scene, private readonly placementId: string,
               private readonly matrix: EffectNativeMatrix, readonly model: string,
-              private readonly libraryAsset: string) {}
+              private readonly libraryAsset: string,
+              private readonly reference?: string) {}
 
   async load(): Promise<void> {
     const response = await fetch(this.libraryAsset);
     if (!response.ok) throw new Error('原物件破损资源载入失败');
     const library = await response.json() as EffectModelLibrary;
     if (this.disposed || this.scene.isDisposed) return;
-    const reference = `Data/scnobj/${this.model}/c9.CVD`;
+    const reference = this.reference ?? `Data/scnobj/${this.model}/c9.CVD`;
     const resource = library.resources.find(value => value.reference === reference);
     if (!resource) throw new Error(`缺少原破损模型：${reference}`);
     this.duration = Math.max(0, ...resource.nodes.map(node => node.duration ?? 0));
