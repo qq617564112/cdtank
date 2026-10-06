@@ -193,12 +193,16 @@ export class ScenePreview {
       if (!fontResponse.ok) throw new Error('原字体目录载入失败');
       const fonts = await fontResponse.json() as {fonts: {name: string; attributes: Record<string, string>;
         glyphs?: {codepoint: number; asset: string; width: number; height: number}[]}[]};
+      if (revision !== this.revision) return '';
       const damageFont = fonts.fonts.find(font => font.name === 'Damage' && font.attributes.Type === 'Static');
       if (!damageFont?.glyphs?.length) throw new Error('原Damage字体定义缺失');
       damageRenderer = new SceneCastleDamageTextRenderer(this.scene, damageFont as CastleDamageTextFont);
-      try {await damageRenderer.load();} catch (error) {damageRenderer.dispose(); throw error;}
-      if (revision !== this.revision) {damageRenderer.dispose(); return '';}
       this.castleDamageTextRenderer = damageRenderer;
+      try {await damageRenderer.load();} catch (error) {
+        if (revision === this.revision) this.clear();
+        throw error;
+      }
+      if (revision !== this.revision) return '';
     }
     if (id === '0011' || id === '0006') {
       const model = id === '0011' ? 'obj05431' : 'obj05424';
@@ -278,6 +282,7 @@ export class ScenePreview {
       const instance = asset.instantiateModelsToScene(name => `${placement.id}/${name}`, false,
         {doNotInstantiate: placement.className === 'SYcScnObjBreach'});
       const root = new TransformNode(`placement-${placement.id}`, this.scene);
+      this.disposals.push(() => {instance.dispose(); root.dispose();});
       instance.rootNodes.forEach(node => {node.parent = root;});
       const scale = new Vector3();
       const rotation = new Quaternion();
@@ -300,7 +305,6 @@ export class ScenePreview {
         const matrix = sceneCrushTransform(placement.position as EffectVec3,
           placement.rotation as EffectVec3);
         root.setEnabled(Boolean(placement.enabled));
-        this.disposals.push(() => {instance.dispose(); root.dispose();});
         let handle: number;
         try {handle = await runtime.retainCrushEffect(matrix, placement.id);} catch (error) {
           if (revision === this.revision) this.clear();
@@ -356,14 +360,11 @@ export class ScenePreview {
             matrix as EffectNativeMatrix, placement.model, libraryAsset);
           try {await value.broken.load();} catch (error) {
             if (revision === this.revision) this.clear();
-            instance.dispose();
-            root.dispose();
             throw error;
           }
-          if (revision !== this.revision) {instance.dispose(); root.dispose(); return '';}
+          if (revision !== this.revision) return '';
         }
       }
-      this.disposals.push(() => {instance.dispose(); root.dispose();});
     }
     terrain.rootNodes.forEach(node => {node.setEnabled(true);});
     if (id === '0002') {
