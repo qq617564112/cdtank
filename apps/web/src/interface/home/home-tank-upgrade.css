@@ -1,0 +1,65 @@
+[data-home-tank-upgrade-dialog] {
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  color: #fff;
+  background: transparent;
+}
+
+[data-home-tank-upgrade-dialog]::backdrop {
+  background: transparent;
+}
+
+.home-tank-upgrade-stage {
+  position: relative;
+  width: 800px;
+  height: 599px;
+  transform-origin: top left;
+}
+
+.home-tank-upgrade-stage [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.home-tank-upgrade-picture {
+  pointer-events: none;
+}
+
+.home-tank-upgrade-stage button {
+  background: transparent;
+  cursor: pointer;
+}
+
+.home-tank-upgrade-stage :focus-visible {
+  outline: 1px solid #fff;
+  outline-offset: 1px;
+}
+
+.home-tank-upgrade-stage button:disabled {
+  cursor: default;
+}
+
+.home-tank-upgrade-status {
+  position: absolute;
+  left: 257px;
+  top: 386px;
+  width: 300px;
+  min-height: 18px;
+  margin: 0;
+  color: #fff;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: normal;
+}
+
+.home-tank-upgrade-entry-level {
+  position: absolute;
+  pointer-events: none;
+}

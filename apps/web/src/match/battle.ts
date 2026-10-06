@@ -41,6 +41,7 @@ import type {ReqTankTextures, ResTankTextures} from '../../../shared/protocols/P
 import type {ReqPetSkillLearning, ResPetSkillLearning} from '../../../shared/protocols/PtlPetSkillLearning';
 import type {ReqTankMaintenance, ResTankMaintenance} from '../../../shared/protocols/PtlTankMaintenance';
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../shared/protocols/PtlOwnedRoleSale';
+import type {ReqTankUpgrade, ResTankUpgrade} from '../../../shared/protocols/PtlTankUpgrade';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {createSkillEffectNotifications} from './skills/skill-effect-runtime';
 import {battleRoleId, BattleSkillEffects} from './skills/battle-skill-effects';
@@ -350,6 +351,10 @@ export class Battle {
 
   async tankShop(request: ReqTankShop) {
     return this.accounts.tankShop(request);
+  }
+
+  async tankUpgrade(request: ReqTankUpgrade): Promise<ResTankUpgrade> {
+    return this.accounts.tankUpgrade(request);
   }
 
   async petShop(request: ReqPetShop) {

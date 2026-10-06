@@ -19,6 +19,7 @@ import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {HomePetOwnedDetails} from './home-pet-owned-details';
 import {sourcePetDescription, sourceTankDescription} from '../resources/role-source-descriptions';
 import {HomeOwnedRoleSourceList} from './home-owned-role-source-list';
+import {HomeTankUpgradeDialog} from './home-tank-upgrade-dialog';
 
 type RoleKind = 'tank' | 'pet';
 export interface HomeRolesViewProps {open: boolean; close: () => void; battle: Battle; initialKind?: RoleKind; onPlayerPage?: () => void; onEquipmentPage?: () => void; onTexturePage?: (instanceId: number) => void; initialSelectedInstance?: number;}
@@ -70,6 +71,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const [rolesLoaded, setRolesLoaded] = useState(false);
   const [learning, setLearning] = useState<ResPetSkillLearning>();
   const [learningBusy, setLearningBusy] = useState(false);
+  const [upgrade, setUpgrade] = useState<{instanceId: number; action: 1 | 2}>();
   const learningGeneration = useRef(0);
   const learningPending = useRef(false);
   const [resourceError, setResourceError] = useState<string>();
@@ -259,7 +261,8 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
             quantity={owned?.equipment.length} description={sourceTankDescription(fields?.get(0x24))}
             selectedInstance={currentId} alreadyUsed={!!displayed && currentId === id(displayed)}
             canUse={!busy && !learningBusy && !!profile && selected !== undefined && currentId !== selected}
-            use={event => {void save(event.currentTarget);}} openEquipment={onEquipmentPage} />
+            use={event => {void save(event.currentTarget);}} openEquipment={onEquipmentPage}
+            openUpgrade={(instanceId, action) => {setUpgrade({instanceId, action}); setStatus('');}} />
             : <HomePetSourcePage ui={ui} name={displayed?.name ?? ''} selectedInstance={currentId}
               money={profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0x70, true) : undefined}
               quantity={owned?.base.length} alreadyUsed={!!displayed && currentId === id(displayed)}
@@ -295,6 +298,10 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
       </div>
       <output hidden={!ui} className="home-role-status" aria-live="polite">{status || (!records.length ? '暂无拥有角色' : !profile ? '尚无角色资料' : '选择角色后点击出击')}</output>
       {!ui && <HomeResourceFeedback error={resourceError} close={requestClose} closeAttribute="data-roles-close" />}
+      {ui && upgrade && <HomeTankUpgradeDialog ui={ui} battle={battle} instanceId={upgrade.instanceId}
+        action={upgrade.action} close={() => setUpgrade(undefined)}
+        onState={result => {setOwned(result.owned); if (result.profile) setProfile(result.profile);}}
+        onConfirmed={(message: string) => setStatus(message)} />}
       </div>
       </SourceImageScale>
     </dialog>

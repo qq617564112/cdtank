@@ -1,5 +1,5 @@
 import {sourceProps} from '../resources/source-ui-props';
-import type {MouseEventHandler} from 'react';
+import {Fragment, type MouseEventHandler} from 'react';
 import {SourceButton} from '../resources/source-button';
 import {SourceStaticImage} from '../resources/source-static-image';
 import {SourceStaticText} from '../resources/source-static-text';
@@ -21,6 +21,7 @@ interface HomeTankSourcePageProps {
   canUse: boolean;
   use: MouseEventHandler<HTMLButtonElement>;
   selectedInstance?: number;
+  openUpgrade?: (instanceId: number, action: 1 | 2) => void;
   openEquipment?: () => void;
   record?: OwnedRoleRecordData;
   pet?: OwnedRoleRecordData;
@@ -44,10 +45,34 @@ export function HomeTankSourceRegions({ui}: {ui: HomeSourceUi}) {
   return <>
     {pictures.map(source => <SourceStaticImage key={source} ui={ui} layout={layout}
       suffix={suffix} name={source} className="home-tank-source-picture" aria-hidden="true" />)}
-    {['btnModifyFire', 'btnModifyPanzer'].map(source => <SourceStaticImage key={source} ui={ui} layout={layout}
-      suffix={suffix} name={source} reference={layout.control(source).properties.NormalImage}
-      className="home-tank-source-picture" aria-hidden="true" />)}
   </>;
+}
+
+function HomeTankUpgradeEntries({ui, record, busy, openUpgrade}: Pick<HomeTankSourcePageProps,
+    'ui' | 'record' | 'busy' | 'openUpgrade'>) {
+  const suffix = 'myhome_panzerpage.xml', layout = new HomeSourceLayout(ui, suffix);
+  const fields = record ? new Map(record.fields) : undefined;
+  const instanceId = fields?.get(0x1c);
+  return <>{(['btnModifyFire', 'btnModifyPanzer'] as const).map((source, index) => {
+    const action = index + 1 as 1 | 2;
+    const enabled = !!openUpgrade && instanceId !== undefined && (fields?.get(action === 1 ? 0x38 : 0x48) ?? 0) !== 0;
+    const level = action === 1 ? 'txtAttackLevel' : 'txtPanzerLevel';
+    const levelBox = layout.control(level).properties.AbsoluteRect.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+    const levelOffset = action === 1 ? 0x44 : 0x54;
+    return <Fragment key={source}>
+      <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name={source}
+        reference={layout.control(source).properties.NormalImage} className="home-tank-source-picture"
+        aria-hidden="true" />
+      <SourceButton ui={ui} layout={layout} suffix={suffix} source={source} disabled={busy || !enabled}
+        data-home-tank-modify-action={action} aria-label={action === 1 ? '火力改装' : '装甲改装'}
+        onClick={() => {if (enabled && instanceId !== undefined) openUpgrade?.(instanceId, action);}}>
+        <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={level}
+          style={{left: levelBox[0], top: levelBox[1]}} className="home-tank-upgrade-entry-level"
+          text={fields?.has(levelOffset) ? String(fields.get(levelOffset)) : ''}
+          data-home-tank-owned-field={levelOffset} data-owned-value={fields?.get(levelOffset)} />
+      </SourceButton>
+    </Fragment>;
+  })}</>;
 }
 
 export function HomeTankOwnedAttributes({ui, record}: {ui: HomeSourceUi; record?: OwnedRoleRecordData}) {
@@ -55,8 +80,7 @@ export function HomeTankOwnedAttributes({ui, record}: {ui: HomeSourceUi; record?
   const layout = new HomeSourceLayout(ui, suffix);
   const fields = record ? new Map(record.fields) : undefined;
   const tank = HOME_TANK_PARAMETER_BASES[fields?.get(0x24)!];
-  return <>{([['txtAttack', 0x3c], ['txtAttackExtra', 0x40], ['txtPanzer', 0x4c], ['txtPanzerExtra', 0x50],
-      ['txtAttackLevel', 0x44], ['txtPanzerLevel', 0x54]] as const)
+  return <>{([['txtAttack', 0x3c], ['txtAttackExtra', 0x40], ['txtPanzer', 0x4c], ['txtPanzerExtra', 0x50]] as const)
       .map(([name, offset]) => <SourceStaticText key={name} ui={ui} layout={layout} suffix={suffix} name={name}
         className="home-tank-owned-attribute" text={fields?.has(offset) ? String(fields.get(offset)) : ''}
         data-home-tank-owned-field={offset} data-owned-value={fields?.get(offset)} />)}
@@ -100,11 +124,13 @@ export function HomeTankDescription({ui, description}: {ui: HomeSourceUi; descri
     data-presentation-colour="web-readable">{description ?? ''}</div>;
 }
 
-export function HomeTankSourcePage({ui, name, money, quantity, description, alreadyUsed, busy, canUse, use, selectedInstance, openEquipment, record, pet, catalog, equippedItemIds}: HomeTankSourcePageProps) {
+export function HomeTankSourcePage({ui, name, money, quantity, description, alreadyUsed, busy, canUse, use, selectedInstance,
+  openUpgrade, openEquipment, record, pet, catalog, equippedItemIds}: HomeTankSourcePageProps) {
   const suffix = 'myhome_panzerpage.xml';
   const layout = new HomeSourceLayout(ui, suffix);
   return <>
     <HomeTankSourceRegions ui={ui} />
+    <HomeTankUpgradeEntries ui={ui} record={record} busy={busy} openUpgrade={openUpgrade} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtTankName" text={name} />
     <HomeTankOwnedAttributes ui={ui} record={record} />
     <HomeTankOwnedParameters ui={ui} record={record} pet={pet} catalog={catalog}

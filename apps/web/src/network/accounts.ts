@@ -17,6 +17,7 @@ import type {ReqPetSkillLearning, ResPetSkillLearning} from '../../../shared/pro
 import type {ReqTankMaintenance, ResTankMaintenance} from '../../../shared/protocols/PtlTankMaintenance';
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../shared/protocols/PtlOwnedRoleSale';
 import type {ResHistory} from '../../../shared/protocols/PtlHistory';
+import type {ReqTankUpgrade, ResTankUpgrade} from '../../../shared/protocols/PtlTankUpgrade';
 
 /** Account operations over the authenticated transport owned by GameConnection. */
 export class AccountConnection {
@@ -138,6 +139,13 @@ export class AccountConnection {
   async tankMaintenance(request: ReqTankMaintenance): Promise<ResTankMaintenance> {
     await this.ensureConnected();
     const result = await this.client.callApi('TankMaintenance', request);
+    if (!result.isSucc) throw new Error(result.err.message);
+    return result.res;
+  }
+
+  async tankUpgrade(request: ReqTankUpgrade): Promise<ResTankUpgrade> {
+    await this.ensureConnected();
+    const result = await this.client.callApi('TankUpgrade', request);
     if (!result.isSucc) throw new Error(result.err.message);
     return result.res;
   }
