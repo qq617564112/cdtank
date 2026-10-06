@@ -98,6 +98,7 @@ tests/                  现有资产、规则、联机和页面验收入口
 
 | 内容 | 入口 |
 | --- | --- |
+| 版本变化 | [更新日志](CHANGELOG.md) |
 | 原作背景与参考资料 | [原作介绍](docs/game-background.md) |
 | 图片出处与权利归属 | [素材来源](docs/assets/README.md) |
 | 开发命令、配置与项目范围 | [开发指南](docs/development.md) |
