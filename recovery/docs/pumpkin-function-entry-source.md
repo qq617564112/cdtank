@@ -17,6 +17,6 @@
 
 item10/11沿普通input进入`acceptBattleInput`和`role-disguise.ts`，服务端核对原始Func8表值、自用资格、互斥、16槽及有限库存。成功CAS消费后加入本次临时skill10/11并建立权威`roleDisguise={skillId,style,startedAt,expiresAt,x,y,z}`；style1固定创建原obj05428南瓜，style2固定创建原obj05422木桶，替身固定在施放XYZ并双方可见。首槽Effect3/GA16、到期/死亡/复活/结束/新局/离房清理、合法开火后恢复及CPU有限配置策略均已接入。采用规则与直接来源事实分别见`role-disguise-runtime.md`、`role-disguise-client-presentation.md`及`client-communication-business-rules.md`。
 
-另一实现者补齐`Battle`对`roleStyleChanged`/`roleStyleRestored`的显式转发，以及延迟接受开火后再激活伪装时以真实fire结果恢复当前伪装的合同；本次文档不把该待集成项写成已完成。`serviceProto.ts`的version93、property41和event20/21为手工附加字段，未执行协议生成器。
+`Battle`已显式转发`roleStyleChanged`/`roleStyleRestored`；真实发射边界在`fireProjectile`后立即按当时仍有效的`roleDisguise`恢复，批末不再扫描旧`fire`撤销后续合法施放，普通输入产生伪装状态变更时先广播权威快照再发送事件。`serviceProto.ts`的version93、property41和event20/21为手工附加字段，未执行协议生成器。
 
-来源封装pumpkin-function-entry-source.json保留两技能/两物件完整记录、函数列号、十个指令地址和三段原反汇编。脚本recovery/evidence/skills/pumpkin-function-entry-source.py只做一次静态定位，无新native执行或正式对局。当前仅有实现登记，普通双端施放/拒绝/恢复、自然到期、高清、持久及一次集中gpt-5.6走查仍待root集成后执行；FUNC-08父项保持未勾。
+来源封装pumpkin-function-entry-source.json保留两技能/两物件完整记录、函数列号、十个指令地址和三段原反汇编。脚本recovery/evidence/skills/pumpkin-function-entry-source.py只做一次静态定位，无新native执行或正式对局。本批一次集中gpt-5.6代码走查已执行并修复真实发射边界恢复与普通输入快照先于事件两项；普通双端施放/拒绝/恢复、自然到期、高清及持久仍待实测，FUNC-08父项保持未勾。

@@ -16,8 +16,8 @@
 
 `BattlePlayers`以快照为准呈现双方可见的替身并隐藏战车root；角色位姿、动画、相机、插值和碰撞/命中/伤害/HUD路径不变。非PLAYING、死亡、复活前、新局、离房、reselect和清理都会释放替身并恢复战车。`changeRoleStyle(roleId,style)`/`restoreRoleStyle(roleId)`只做快照身份核对，不合成状态或重放通知。
 
-## 待集成与验收
+## 正式接线与验收
 
-另一实现者补齐`Battle`对`roleStyleChanged`/`roleStyleRestored`的显式转发，以及延迟接受开火后再激活伪装时以真实fire结果恢复当前伪装的合同；本次不把这两项写成已完成。原Func8到4173/4174的server producer、T期限writer及原flag12与显示恢复关系仍未恢复。
+`Battle`已显式转发`roleStyleChanged`/`roleStyleRestored`到`changeRoleStyle`/`restoreRoleStyle`。普通输入产生伪装状态变更时先广播当前权威快照再发送原事件；真实发射边界在`fireProjectile`后立即按当时仍有效的`roleDisguise`恢复，批末不再扫描旧`fire`撤销后续合法施放。原Func8到4173/4174的server producer、T期限writer及原flag12与显示恢复关系仍未恢复。
 
-依据`role-change-style-receiver-source.md`及`role-change-style-receiver-native.json`的9组接收路由/4组draw门禁；codec组合探针未通过，`role-change-style-wire-native-incomplete.json`不作为来源PASS。`recovery/prepared/role-change-style-presentation.ts`保留原回调式消费者来源合同，raw参数2/0未赋予新语义；生产网页按当前状态及资源所有权实现，不把准备模块当作普通玩家验收。当前仅登记实现状态，普通施放/拒绝、双端实际绘制与恢复、自然到期/开火/死亡/再战、高清及库存实际重启仍待实测；一次集中gpt-5.6走查待root集成后执行，FUNC-08及M4-10保持未完成。
+依据`role-change-style-receiver-source.md`及`role-change-style-receiver-native.json`的9组接收路由/4组draw门禁；codec组合探针未通过，`role-change-style-wire-native-incomplete.json`不作为来源PASS。`recovery/prepared/role-change-style-presentation.ts`保留原回调式消费者来源合同，raw参数2/0未赋予新语义；生产网页按当前状态及资源所有权实现，不把准备模块当作普通玩家验收。已执行本批一次集中gpt-5.6代码走查，登记两项修复：真实发射边界恢复伪装，以及普通输入快照先于事件发送。普通施放/拒绝、双端实际绘制与恢复、自然到期/开火/死亡/再战、高清及库存实际重启仍待实测；FUNC-08及M4-10保持未完成。

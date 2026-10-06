@@ -57,6 +57,7 @@ export function advanceActors<Player extends CombatActor>(room: {
   allocateBulletId(): string;
   staticObjects?(player: Player): Iterable<RoleStaticCollider>;
   beforeFire?(player: Player): boolean;
+  afterFire?(player: Player): void;
   hitSceneObject?(owner: Player, targetId: string, damage: number): boolean;
   hitPlayer?(owner: Player, targetId: string, damage: number, ammoItemId: number): void;
 }): void {
@@ -133,6 +134,7 @@ export function advanceActors<Player extends CombatActor>(room: {
       fireProjectile(room, player, currentSeconds, handlers.allocateBulletId, events, bodyRadius,
         (targetId, damage) => handlers.hitSceneObject?.(player, targetId, damage) ?? false,
         (targetId, damage, ammoItemId) => handlers.hitPlayer?.(player, targetId, damage, ammoItemId));
+      handlers.afterFire?.(player);
       consumeDefaultAmmoMagazine(player.combat);
     }
   }

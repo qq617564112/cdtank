@@ -453,7 +453,6 @@ export class World {
       });
     }
     if (room.phase !== 'PLAYING') return;
-    const firstActorEvent = events.length;
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {
       respawn: player => {
         clearCopiedRoleSkill(player.combat);
@@ -481,6 +480,10 @@ export class World {
         }
         if (player.combat.dirty) recomputeBattleAttributes(player);
         return accepted;
+      },
+      afterFire: player => {
+        restoreRoleDisguiseAfterAcceptedFire(room.roomId, player,
+          () => recomputeBattleAttributes(player), events);
       },
       hitSceneObject: (owner, targetId, damage) => {
         if (owner.combat.currentAmmoTableId === MEDICAL_AMMO_ID) return false;
@@ -511,13 +514,6 @@ export class World {
           {bodyYaw: target.bodyYaw ?? target.yaw, bearing: {x: owner.x - target.x, z: owner.z - target.z}});
       },
     });
-    for (const notice of events.slice(firstActorEvent)) {
-      if (notice.type !== 'fire') continue;
-      const owner = room.players.get(notice.playerId);
-      if (!owner?.roleDisguise) continue;
-      restoreRoleDisguiseAfterAcceptedFire(room.roomId, owner,
-        () => recomputeBattleAttributes(owner), events);
-    }
     advanceProjectiles(room, dt, BODY_RADIUS, {
       hitPlayer: (owner, target, damage, ammoItemId, bearing) => {
         const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);

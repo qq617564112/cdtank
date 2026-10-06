@@ -76,7 +76,10 @@ registerRoomApis(server, world, sessionByConnection, roomTankId, bindAccountStat
 registerRoomLeaveApi(server, world, sessionByConnection, transport);
 registerRoomInvitations(server, world, accountByConnection, sessionByConnection);
 
-registerBattleInputs(server, world, sessionByConnection, broadcastEvent);
+registerBattleInputs(server, world, sessionByConnection, broadcastEvent, roomId => {
+  const snapshot = world.snapshot(roomId);
+  if (snapshot) transport.broadcastSnapshot(snapshot);
+});
 
 registerRoomMessages(server, world, accountByConnection, sessionByConnection, transport, reconnections);
 registerLobbyChatApi(server, accounts, accountByConnection, sessionByConnection);

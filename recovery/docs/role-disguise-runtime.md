@@ -8,7 +8,7 @@
 
 `PlayerSnapshot.roleDisguise`复制权威状态，供新进入或晚加载显示使用；没有状态时省略。到期在普通输入接收前和每个World步推进，死亡、复活、终局、首次开局、再战和正常离房只清理本模块安装的skill/state，不改变其它技能或输入sequence。死亡、结束和离房为实际恢复边界发送`roleStyleRestored`；首次开局、再战和迟加入依赖状态缺失。
 
-普通开火只有在弹匣/装填/库存CAS门禁全部通过后才解除伪装；`beforeFire`仅在`consumeConfirmedAmmo`返回真时恢复。已接受开火进入真实发射后，`advanceActors`产生的`fire`事件会按`playerId`回查当前房间角色；若角色在延迟窗口内再次取得`roleDisguise`，同一`restoreRoleDisguiseAfterAcceptedFire`路径会清除状态、重算并发送原`roleStyleRestored`，不改actor/pendingShot/query时序、弹药消费或声音特效。被拒绝的开火保留伪装，普通选弹不解除，原flag12清理不等同模型恢复。伪装只改变显示，不改变碰撞、手动命中、伤害或CPU目标身份。
+普通开火只有在弹匣/装填/库存CAS门禁全部通过后才解除伪装；`beforeFire`仅在`consumeConfirmedAmmo`返回真时恢复。`advanceActors`在真实发射边界`fireProjectile`调用后立即执行`afterFire`，World只清除此时仍存在的`roleDisguise`，重算属性并发送原`roleStyleRestored`；批末不再扫描`fire`，因此发射之后再次合法施放的新伪装不被撤销。该路径不改actor/pendingShot/query时序、弹药消费或声音特效。被拒绝的开火保留伪装，普通选弹不解除，原flag12清理不等同模型恢复。伪装只改变显示，不改变碰撞、手动命中、伤害或CPU目标身份。
 
 光学迷彩互斥使用`roleDisguise`权威状态，而不是raw flag12；item10/11也拒绝skill9及有效光学状态。两种伪装style互不叠加。
 

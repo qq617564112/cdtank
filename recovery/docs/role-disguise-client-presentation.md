@@ -22,7 +22,7 @@ actor 隐藏与替身创建分离：只要当前快照仍在本角色上持有�
 
 ## Root 集成
 
-`BattlePlayers` 暴露 `changeRoleStyle(roleId:number, style:1|2)` 与 `restoreRoleStyle(roleId:number)`：前者仅在当前快照已含匹配 `P{roleId}` 的 roleDisguise 时刷新，后者仅在快照已无该 roleDisguise 时刷新。root 在 `Battle` 中把 `MsgRoomEvent.roleStyleChanged`/`roleStyleRestored` 转到这两个方法，并负责权威 presence、互斥与清理时序。CPU 配置 UI 槽 5–8 现允许 item 1–11 与 502，弹药槽仍限 2007/2011，quantity 上限取 `battleUseMax`（item10/11 为 5）；零价商品不开放免费商城获取，玩家只用已有归属库存，CPU 只用房主配置的有限库存。
+`BattlePlayers` 暴露 `changeRoleStyle(roleId:number, style:1|2)` 与 `restoreRoleStyle(roleId:number)`：前者仅在当前快照已含匹配 `P{roleId}` 的 roleDisguise 时刷新，后者仅在快照已无该 roleDisguise 时刷新。`Battle` 已把 `MsgRoomEvent.roleStyleChanged`/`roleStyleRestored` 转到这两个方法，普通输入产生伪装状态变更时先广播权威快照再发送事件，真实发射边界在 `fireProjectile` 后按当时仍有效的 roleDisguise 恢复，权威 presence、互斥与清理时序归服务端。CPU 配置 UI 槽 5–8 现允许 item 1–11 与 502，弹药槽仍限 2007/2011，quantity 上限取 `battleUseMax`（item10/11 为 5）；零价商品不开放免费商城获取，玩家只用已有归属库存，CPU 只用房主配置的有限库存。
 
 ## 待验收
 

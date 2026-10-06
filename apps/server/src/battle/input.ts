@@ -6,13 +6,18 @@ import type {World, WorldEvent} from '../world';
 /** Route ordinary inputs to their authenticated participant; World decides effects. */
 export function registerBattleInputs(server: WsServer<ServiceType>, world: World,
   sessions: ReadonlyMap<string, {roomId: string; playerId: string}>,
-  broadcastEvent: (event: WorldEvent) => void): void {
+  broadcastEvent: (event: WorldEvent) => void,
+  broadcastRoomSnapshot: (roomId: string) => void): void {
   server.listenMsg('PlayerInput', (call: MsgCall<MsgPlayerInput>) => {
     const session = sessions.get(call.conn.id);
     if (!session) {
       return;
     }
-    for (const event of world.updateInput(session.playerId, call.msg)) {
+    const events = world.updateInput(session.playerId, call.msg);
+    if (events.some(event => event.roleStyleChanged || event.roleStyleRestored)) {
+      broadcastRoomSnapshot(session.roomId);
+    }
+    for (const event of events) {
       broadcastEvent(event);
     }
   });
