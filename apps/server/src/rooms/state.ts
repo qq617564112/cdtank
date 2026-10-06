@@ -2,7 +2,7 @@ import type {ModeMapConfig} from '../config';
 import type {Battlefield} from '../battlefield';
 import type {PlayerState} from '../battle/player-state';
 import type {BulletState} from '../battle/projectiles';
-import type {ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot, MatchResult} from '../../../shared/protocols';
+import type {ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot, GroundItemSnapshot, MatchResult} from '../../../shared/protocols';
 import type {RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
 
 export interface DepartedParticipantRecord {
@@ -56,6 +56,7 @@ export interface RoomState {
   sceneCrushes: SceneCrushSnapshot[];
   scenePlants?: ScenePlantSnapshot[];
   groundTraps: GroundTrapSnapshot[];
+  groundItems: GroundItemSnapshot[];
   airstrikes: PendingAirstrike[];
   targetScore: number;
   result?: MatchResult;

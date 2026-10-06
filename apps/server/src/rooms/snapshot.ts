@@ -6,7 +6,7 @@ import {queuedPartSkillIds} from '../battle/passive-part-effects';
 import {roomMaxPlayers} from './player-limits';
 import type {DefenseBoostState} from '../battle/items/defense-drink';
 import type {RoleDisguiseState} from '../battle/items/role-disguise';
-import type {MsgRoomSnapshot, PlayerSnapshot, MatchResult, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot} from '../../../shared/protocols';
+import type {MsgRoomSnapshot, PlayerSnapshot, MatchResult, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot, GroundItemSnapshot} from '../../../shared/protocols';
 import type {PlayerTitle} from '../../../shared/protocols/MsgRoomSnapshot';
 import {readOwnedTankTextures} from '../../../shared/combat/role-owned-textures';
 import type {RoleOwnedSources} from '../accounts/owned/receive-pair';
@@ -29,6 +29,7 @@ interface SnapshotPlayer extends MovingParticipant {
   turnBoost?: {skillId: number; expiresAt: number; turnBonus: number};
   speedBoost?: {skillId: number; expiresAt: number; moveBonus: number};
   invincibility?: {skillId: number; expiresAt: number};
+  respawnProtection?: {skillId: number; expiresAt: number};
   opticalCamouflage?: {skillId: 9; expiresAt: number};
   roleDisguise?: RoleDisguiseState;
   trapRestraint?: {skillId: 4001; expiresAt: number};
@@ -48,7 +49,7 @@ interface SnapshotRoom {
   round: number; ready: ReadonlySet<string>; rematch: ReadonlySet<string>;
   loaded: ReadonlySet<string>;
   creatorClientId?: string; targetScore: number; teamLives: number[];
-  objectives: ObjectiveSnapshot[]; sceneObjects?: SceneObjectSnapshot[]; sceneCrushes?: SceneCrushSnapshot[]; scenePlants?: ScenePlantSnapshot[]; groundTraps?: GroundTrapSnapshot[]; result?: MatchResult;
+  objectives: ObjectiveSnapshot[]; sceneObjects?: SceneObjectSnapshot[]; sceneCrushes?: SceneCrushSnapshot[]; scenePlants?: ScenePlantSnapshot[]; groundTraps?: GroundTrapSnapshot[]; groundItems?: GroundItemSnapshot[]; result?: MatchResult;
 }
 
 /** Project authoritative state onto the existing wire format without advancing the world. */
@@ -100,6 +101,7 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
     turnBoost: player.turnBoost ? {...player.turnBoost} : undefined,
     speedBoost: player.speedBoost ? {...player.speedBoost} : undefined,
     invincibility: player.invincibility ? {...player.invincibility} : undefined,
+    respawnProtection: player.respawnProtection ? {...player.respawnProtection} : undefined,
     opticalCamouflage: player.opticalCamouflage ? {...player.opticalCamouflage} : undefined,
     roleDisguise: player.roleDisguise ? {...player.roleDisguise} : undefined,
     ammoBurn: player.alive && player.burn ? {itemId: 2007, skillId: 4005,
@@ -125,7 +127,7 @@ export function roomSnapshot(room: SnapshotRoom, now: number, timeLimit: number,
       cpuManagerId: [...room.players.values()].find(player => player.clientId === room.creatorClientId)?.id,
       minPlayers, maxPlayers: roomMaxPlayers(room), friendlyFire: room.friendlyFire ?? false, targetScore: room.targetScore, teamLives: [...room.teamLives],
       objectives: room.objectives.map(objective => ({...objective})),
-      sceneObjects: (room.sceneObjects ?? []).map(object => ({...object})), sceneCrushes: (room.sceneCrushes ?? []).map(object => ({...object})), scenePlants: (room.scenePlants ?? []).map(plant => ({...plant})), groundTraps: (room.groundTraps ?? []).map(trap => ({...trap})), result: room.result}};
+      sceneObjects: (room.sceneObjects ?? []).map(object => ({...object})), sceneCrushes: (room.sceneCrushes ?? []).map(object => ({...object})), scenePlants: (room.scenePlants ?? []).map(plant => ({...plant})), groundTraps: (room.groundTraps ?? []).map(trap => ({...trap})), groundItems: (room.groundItems ?? []).map(item => ({...item})), result: room.result}};
 }
 
 function round(value: number, digits = 2): number {

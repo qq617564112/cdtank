@@ -1,3 +1,5 @@
+import type {GroundItemSnapshot} from './MsgRoomSnapshot';
+
 /** Accepted shortcut request; authority and item consumption belong to the server. */
 export interface ItemUseRequest {
   kind: 'placeTrap' | 'useItem';
@@ -63,4 +65,9 @@ export interface MsgRoomEvent {
   roleStyleChanged?: {roleId: number; style: 1 | 2};
   /** Source4174 display identity; authority owns the restore decision. */
   roleStyleRestored?: {roleId: number};
+  /** Authoritative ground-drop creation; visual fields are projected from the stored entity. */
+  groundItemDropped?: GroundItemSnapshot;
+  /** Successful account/local acquisition; inventory authority commits before this event. */
+  groundItemPickedUp?: {id: string; playerId: string; itemTableId: number; quantity: number};
+  groundItemRemoved?: {id: string};
 }

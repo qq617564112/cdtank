@@ -252,7 +252,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 102,
+    "version": 106,
     "services": [
         {
             "id": 55,
@@ -728,6 +728,20 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Number"
                     }
+                },
+                {
+                    "id": 4,
+                    "name": "roomId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
                 }
             ]
         },
@@ -1137,6 +1151,70 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 "name": "roleId",
                                 "type": {
                                     "type": "Number"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 25,
+                    "name": "groundItemDropped",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/GroundItemSnapshot"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 26,
+                    "name": "groundItemPickedUp",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "id",
+                                "type": {
+                                    "type": "String"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "playerId",
+                                "type": {
+                                    "type": "String"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "itemTableId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 3,
+                                "name": "quantity",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 27,
+                    "name": "groundItemRemoved",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "id",
+                                "type": {
+                                    "type": "String"
                                 }
                             }
                         ]
@@ -2367,6 +2445,30 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "target": "MsgRoomSnapshot/PlayerTitle"
                     },
                     "optional": true
+                },
+                {
+                    "id": 44,
+                    "name": "respawnProtection",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "skillId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "expiresAt",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -2652,6 +2754,18 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "cpuManagerId",
                     "type": {
                         "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 17,
+                    "name": "groundItems",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "MsgRoomSnapshot/GroundItemSnapshot"
+                        }
                     },
                     "optional": true
                 }
@@ -3057,6 +3171,135 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 8,
                     "name": "expiresAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/GroundItemSnapshot": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "id",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "itemTableId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "quantity",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "modelId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "texture",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "A"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "B"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "soundId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "effectId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "x",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "y",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 9,
+                    "name": "z",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 10,
+                    "name": "source",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "BREACH"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "DISCARD"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 11,
+                    "name": "ownerId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 12,
+                    "name": "createdAt",
                     "type": {
                         "type": "Number"
                     }

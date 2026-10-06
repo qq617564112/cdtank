@@ -78,6 +78,8 @@ export interface PlayerSnapshot {
   turnBoost?: {skillId: number; expiresAt: number; turnBonus: number};
   speedBoost?: {skillId: number; expiresAt: number; moveBonus: number};
   invincibility?: {skillId: number; expiresAt: number};
+  /** Rebuilt true-respawn protection; source skill30001 owns a five-second policy lifetime. */
+  respawnProtection?: {skillId: number; expiresAt: number};
   /** Confirmed skill9 lifetime; enemy actor visibility is reconstructed from the client contract. */
   opticalCamouflage?: {skillId: 9; expiresAt: number};
   /** Confirmed disguise presence for new observers and late model loads. */
@@ -165,6 +167,23 @@ export interface GroundTrapSnapshot {
   expiresAt: number;
 }
 
+/** Server-authoritative ground drop; visual identity is selected when the entity is created. */
+export interface GroundItemSnapshot {
+  id: string;
+  itemTableId: number;
+  quantity: number;
+  modelId: string;
+  texture: 'A' | 'B';
+  soundId: string;
+  effectId: string;
+  x: number;
+  y: number;
+  z: number;
+  source: 'BREACH' | 'DISCARD';
+  ownerId?: string;
+  createdAt: number;
+}
+
 export interface AccountGrowth {
   rankPoints: number;
   level: number;
@@ -246,6 +265,7 @@ export interface MatchSnapshot {
   sceneCrushes?: SceneCrushSnapshot[];
   scenePlants?: ScenePlantSnapshot[];
   groundTraps?: GroundTrapSnapshot[];
+  groundItems?: GroundItemSnapshot[];
   result?: MatchResult;
   cpuManagerId?: string;
 }
