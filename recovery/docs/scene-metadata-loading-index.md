@@ -1,6 +1,6 @@
 # 场景元数据加载索引
 
-M3-02/M3-05/M3-07：`export_asset_usage.py` 将原放置的 `animation.library` 关联到 `SceneCvdAnimation.load` 与 `scene-placements.json` 的正式入口。每条关系保存原地图、放置 ID 和 JSON 指针，不要求动画库文件名直接出现在 TypeScript 源码中。
+M3-02/M3-05/M3-07：`export_asset_usage.py` 将原放置的 `animation.library` 关联到 `SceneCvdAnimation.load`，将`destruction.library`关联到`SceneBreachVisual.load`，并保留`scene-placements.json`的正式入口。每条关系保存原地图、放置 ID 和 JSON 指针，不要求资源库文件名直接出现在 TypeScript 源码中。破损绑定由`export_scene_breach_catalog.py`按实际放置和自身c9输出，来源范围见`scene-breach-catalog.md`。
 
 地形与植物目录按对应 owner 的实际 `mapId` 范围关联其动态文件名加载入口。既有全图环境声音与常驻效果目录继续按原四位地图编号关联各自 owner。
 
