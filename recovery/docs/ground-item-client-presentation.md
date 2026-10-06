@@ -8,10 +8,11 @@ M2-10 掉落子项的 Web 消费面。服务器权威实体为 `GroundItemSnapsh
 
 `GroundItemsPresentation` 按快照中的 `id` 增量创建/销毁 `GroundItemVisual`：
 `reconcile(snapshot.match?.groundItems ?? [], scope, phase === 'PLAYING')`。`scope` 是
-`roomId:round`，变化或非 `PLAYING`（含 `FINISHED`、离开）或 `clear()` 时 dispose 全部
-根节点/材质贴图/`AssetContainer`。视觉复用现 `applyCartoonOutlines` 与原生 X 反射
-放置约定，`root.metadata` 带 `groundItemId`/`groundItemModelId`/`groundItemTexture`/
-`sourceModel`。
+`roomId:round`。非 `PLAYING`（含 `FINISHED`）时 dispose 全部根节点/材质贴图/
+`AssetContainer`，但同 scope 保留待消费的掉落声音源，直至 pickup/removal 事件各消费
+一次；scope 变化、离开或 `clear()` 时 source 记录与视觉一起清空。视觉复用现
+`applyCartoonOutlines` 与原生 X 反射放置约定，`root.metadata` 带 `groundItemId`/
+`groundItemModelId`/`groundItemTexture`/`sourceModel`。
 
 几何是按 `modelId` 加载的 `Data/scnobj/<modelId>/<modelId>.glb`；贴图**不是**同目录
 默认 GLB 内建变体，而是显式 `(modelId, texture)` 映射：
@@ -31,16 +32,22 @@ obj05* 几何自带真实 morph 权重动画，掉落时播放一次（源模型
 
 - `groundItemDropped`：记录权威 `sourceId` 的模型/贴图/声音/特效与源位置；`EffectFile`
   是**掉落**提示，`_root\online\044` 经现 `EffectRuntime.spawnWorldEffect` 播放一次，
-  不回放给晚加入快照补建的同名实体。
+  不回放给晚加入快照补建的同名实体，也不为晚到记录补建视觉。
 - `groundItemPickedUp` / `groundItemRemoved`：按 `id` 先取出所拥有记录的源位置与
-  `soundId`，再移除并 dispose 视觉。`GA2x` 声音只在 `playerId` 等于本机玩家时经现
-  `EffectRuntime.playSceneSound` 播放一次，远端领取不重复噪声。移除不改本地库存。
+  `soundId` 并消费记录，再移除并 dispose 视觉。FINISHED 先到时，先发出的 pickup 仍可
+  在已释放视觉后播放一次声音；重复 pickup/removal 不会重播。`GA2x` 声音只在
+  `playerId` 等于本机玩家时经现 `EffectRuntime.playSceneSound` 播放一次，远端领取
+  不重复噪声。移除不改本地库存。
 - `EffectRuntime` 已提供世界特效挂点，未新增假 HP/技能/VFX；`voiceSound0` 不补替资源。
 
 ## 丢弃入口
 
 `Battle.discardCandidates()` 由现确认库存 `hotkeys` 与 owned/battle 正数、类别 1/2 的
 记录求交集给出候选；`BattleMatch` 在正式对局页提供“所选道具”下拉与“丢弃一份”按钮。
+`BattleItemInventory` 在本机 `itemUsed`/`ammoConsumed` 或地面事务提交后的
+`inventoryChanged` 通知上重查 Inventory RPC，并以响应 revision 丢弃过期结果；确认库存
+发布后 `BattleMatch` 立即重发候选与当前选择，已归零或取消 hotkey 的实例消失，拾取恢复
+的已装槽数量立即进入候选。
 选择仅记录客户端当前 `value`，不发 `useItem`、不消耗、不改数量；也可由现 HUD 激活
 热键同步选中，但选择本身即可丢弃，不依赖最后一次激活。
 

@@ -120,6 +120,7 @@ export class Battle {
   private groundTrapError?: string;
   private readonly groundItems: GroundItemsPresentation;
   private groundItemError?: string;
+  private readonly stopInventoryRefresh: () => void;
   private readonly effects: EffectRuntime;
   private readonly petDeath: TankPetDeathPresentation;
   private readonly sceneEffects: MapSceneEffects;
@@ -267,6 +268,7 @@ export class Battle {
         }
       },
     });
+    this.stopInventoryRefresh = this.itemInventory.subscribe(() => this.refreshDiscardSelection());
     this.client.flows.postDisconnectFlow.push(input => {
       this.input.clear();
       if (this.active && !this.recovery) {
@@ -289,6 +291,7 @@ export class Battle {
     });
     scene.onBeforeRenderObservable.add(() => {this.render();});
     scene.onDisposeObservable.addOnce(() => {
+      this.stopInventoryRefresh();
       this.itemInventory.clear();
       if (this.pageMusic) this.pageMusic.dispose();
       else this.music.dispose();
@@ -675,6 +678,7 @@ export class Battle {
     this.resultMusicRound = undefined;
     this.playingMusicRound = undefined;
     this.itemInventory.clear();
+    this.discardSelection = undefined;
     this.ammoBurnPresentation?.clear();
     this.ammoBurnPresentation = undefined;
     this.lobbyChat.setInRoom(false);
@@ -770,6 +774,16 @@ export class Battle {
 
   setDiscardSelection(instanceId: number | undefined): void {
     this.discardSelection = instanceId;
+  }
+
+  private refreshDiscardSelection(): void {
+    if (this.itemInventory.getSnapshot().inventory
+        && this.discardSelection !== undefined
+        && !this.discardCandidates().some(candidate => candidate.instanceId === this.discardSelection)) {
+      this.discardSelection = undefined;
+    }
+    const snapshot = this.roomFeed.snapshot;
+    if (this.active && snapshot && this.playerId) this.matchPanel.update(snapshot, this.playerId);
   }
 
   /** Current selection resolved against live authority state; the server re-checks on receipt. */

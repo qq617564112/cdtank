@@ -4,7 +4,7 @@ import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 
 export interface BattleItemInventorySnapshot {inventory?: ResInventory;}
 
-/** Confirmed room inventory; successful consumption refreshes authority, never predicts stock. */
+/** Confirmed room inventory; committed changes refresh authority, never predict stock. */
 export class BattleItemInventory {
   private state: BattleItemInventorySnapshot = {};
   private context?: {roomId: string; round: number; playerId: string};
@@ -33,7 +33,8 @@ export class BattleItemInventory {
 
   event(event: MsgRoomEvent): void {
     if (event.roomId === this.context?.roomId && event.playerId === this.context.playerId
-        && (event.type === 'itemUsed' || event.type === 'ammoConsumed')) this.refresh();
+        && (event.type === 'itemUsed' || event.type === 'ammoConsumed'
+          || event.type === 'inventoryChanged')) this.refresh();
   }
 
   clear(): void {

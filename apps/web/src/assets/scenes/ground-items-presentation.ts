@@ -34,13 +34,13 @@ export class GroundItemsPresentation {
   constructor(private readonly scene: Scene, private readonly runtime: GroundItemRuntime) {}
 
   async reconcile(sources: readonly GroundItemSnapshot[], scope: string, playing: boolean): Promise<void> {
-    if (!playing) {
-      this.clear();
-      return;
-    }
     if (this.scope !== scope) {
       this.clear();
       this.scope = scope;
+    }
+    if (!playing) {
+      this.disposeVisuals();
+      return;
     }
     const present = new Set(sources.map(source => source.id));
     for (const [id, entry] of this.visuals) {
@@ -108,9 +108,13 @@ export class GroundItemsPresentation {
   }
 
   clear(): void {
-    for (const entry of this.visuals.values()) entry.visual.dispose();
-    this.visuals.clear();
+    this.disposeVisuals();
     this.sources.clear();
     this.scope = undefined;
+  }
+
+  private disposeVisuals(): void {
+    for (const entry of this.visuals.values()) entry.visual.dispose();
+    this.visuals.clear();
   }
 }
