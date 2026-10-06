@@ -12,6 +12,16 @@ interface CpuLoadoutViewProps {
 }
 interface SlotDraft {slot: number; itemTableId: number; quantity: string;}
 const SLOTS = [2, 3, 4, 5, 6, 7, 8];
+const TREASURE_ITEM_IDS = [20001, 20002] as const;
+const TREASURE_QUANTITY_MAX = 0xffffffff;
+
+function isTreasureItemId(itemTableId: number): boolean {
+  return itemTableId === TREASURE_ITEM_IDS[0] || itemTableId === TREASURE_ITEM_IDS[1];
+}
+
+function quantityLimit(item: CombatItemDefinition): number {
+  return isTreasureItemId(item.itemTableId) ? TREASURE_QUANTITY_MAX : item.battleUseMax;
+}
 
 export function CpuLoadoutView(props: CpuLoadoutViewProps) {
   return <CpuLoadoutEditor key={props.player.id} {...props}/>;
@@ -35,7 +45,7 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
       const catalog: CombatCatalog = await response.json();
       if (generation.current === current) {
         setItems(catalog.items.filter(item => CPU_LOADOUT_ITEM_IDS.includes(item.itemTableId)
-          || item.itemTableId === 13));
+          || item.itemTableId === 13 || isTreasureItemId(item.itemTableId)));
       }
     }).catch(error => {
       if (!controller.signal.aborted && generation.current === current) {
@@ -47,7 +57,7 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
   const allowed = (slot: number) => items?.filter(item => slot <= 4
     ? item.itemTableId === 2007 || item.itemTableId === 2011
     : (item.itemTableId >= 1 && item.itemTableId <= 11) || item.itemTableId === 502
-      || item.itemTableId === 13) ?? [];
+      || item.itemTableId === 13 || isTreasureItemId(item.itemTableId)) ?? [];
   async function save() {
     if (busy || requestPending.current || !items) return;
     const loadout: CpuLoadoutItem[] = [];
@@ -55,8 +65,9 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
       if (!row.itemTableId) continue;
       const item = allowed(row.slot).find(value => value.itemTableId === row.itemTableId);
       const quantity = Number(row.quantity);
-      if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > item.battleUseMax) {
-        setStatus(`槽${row.slot}数量须为1到${item?.battleUseMax ?? 0}的整数`);
+      if (!item || !Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1
+        || quantity > quantityLimit(item)) {
+        setStatus(`槽${row.slot}数量须为1到${item ? quantityLimit(item) : 0}的整数`);
         return;
       }
       loadout.push({slot: row.slot, itemTableId: row.itemTableId, quantity});
@@ -93,7 +104,7 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
                 {allowed(row.slot).map(value => <option key={value.itemTableId} value={value.itemTableId}>{value.name}</option>)}
               </select>
             </label>
-            <label>数量<input data-cpu-loadout-quantity="" type="number" min={1} max={item?.battleUseMax}
+            <label>数量<input data-cpu-loadout-quantity="" type="number" min={1} max={item ? quantityLimit(item) : 0}
               step={1} value={row.quantity} disabled={busy || pending || !item}
               onChange={event => {
                 const quantity = event.currentTarget.value;
