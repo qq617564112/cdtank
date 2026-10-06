@@ -1,7 +1,7 @@
 import {Mesh, PBRMaterial, ShaderMaterial} from '@babylonjs/core';
 import {createScenePlantMaterial} from './scene-plant-material';
 
-export type PlantMaterialModel = 'obj05413' | 'obj05401' | 'obj05403' | 'obj05405';
+export type PlantMaterialModel = 'obj05413' | 'obj05416' | 'obj05401' | 'obj05403' | 'obj05405';
 
 /** Named Plant material ownership after independent sway meshes are created. */
 export class ScenePlant05413MaterialOwner {

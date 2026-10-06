@@ -36,7 +36,8 @@ export class ScenePlantSway {
   private readonly materials = new Map<string, PlantMaterialResource>();
 
   async load(mapId: string): Promise<void> {
-    if (!['0002', '0004', '0005', '0006', '0017', '0021'].includes(mapId)) return;
+    if (!['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
+      '0021', '0023', '0024', '0025'].includes(mapId)) return;
     const response = await fetch(`/scene-plant-${mapId}.json`);
     if (!response.ok) throw new Error('原植物摆动资源载入失败');
     const resource = await response.json() as {mapId: number; plants: PlantResource[]};

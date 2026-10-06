@@ -140,7 +140,8 @@ export class ScenePreview {
     const pendingPlants = this.plantRoots.size === 0 ? [...this.plantSnapshots.values()] : [];
     const pendingPlantRound = this.plantRoots.size === 0 ? this.plantRound : undefined;
     this.clear();
-    if (['0002', '0004', '0005', '0006', '0017', '0021'].includes(id) && pendingPlantRound !== undefined) {
+    if (['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
+      '0021', '0023', '0024', '0025'].includes(id) && pendingPlantRound !== undefined) {
       this.reconcilePlants(pendingPlants, pendingPlantRound);
     }
     const revision = this.revision;
@@ -175,7 +176,8 @@ export class ScenePreview {
       }
       if (revision !== this.revision) {owner.dispose(); return '';}
     }
-    if (['0002', '0004', '0005', '0006', '0017', '0021'].includes(id)) {
+    if (['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
+      '0021', '0023', '0024', '0025'].includes(id)) {
       this.plants = new ScenePlantSway();
       await this.plants.load(id);
       if (revision !== this.revision) return '';
@@ -338,7 +340,8 @@ export class ScenePreview {
       }
       if (placement.className === 'SYcScnObjPlant') {
         this.plants?.register(placement.id, root);
-        if (['0002', '0004', '0005', '0006', '0017', '0021'].includes(id)) this.registerPlant(placement.id, root, Boolean(placement.enabled));
+        if (['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
+          '0021', '0023', '0024', '0025'].includes(id)) this.registerPlant(placement.id, root, Boolean(placement.enabled));
       }
       if (id === '0007' && placement.className === 'SYcScnObjCrush' &&
         placement.model === 'obj05420' && runtime) {
