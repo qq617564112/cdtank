@@ -26,6 +26,7 @@ export class SceneCastleState {
   /** Consume one accepted transaction, never a repeated render snapshot. */
   damage(result: CastleDamageResult): CastlePresentationCommand[] {
     const {currentHP: hp, maxHP, delta} = result;
+    if (delta < 0) return this.repair(hp, maxHP);
     const commands: CastlePresentationCommand[] = [
       {kind: 'sound', name: 'GA48', target: 'position', selector: 1},
     ];
@@ -50,17 +51,59 @@ export class SceneCastleState {
     return commands;
   }
 
+  /**
+   * Accepted building-tool restoration. Server prohibits destroyed resurrection, so only a
+   * living positive HP result reaches the steady n1/n2 stage; obsolete fifth-stage cues are
+   * released and their once-entered bits cleared so a later hit re-runs that source stage.
+   */
+  private repair(hp: number, maxHP: number): CastlePresentationCommand[] {
+    const commands: CastlePresentationCommand[] = [];
+    if (hp <= 0 || this.stage === 0) return commands;
+    const stage = this.stageFor(hp, maxHP);
+    this.stage = stage;
+    commands.push(this.stageAction(stage));
+    this.releaseObsoleteSpouts(hp, maxHP, commands);
+    return commands;
+  }
+
   /** Recover current authority without replaying missed hit or collapse transactions. */
   restore({currentHP: hp, maxHP}: CastleRestoreResult): CastlePresentationCommand[] {
     const commands: CastlePresentationCommand[] = [];
-    const stage = hp === 0 ? 0 : hp < Math.trunc(maxHP / 3) ? 1 : 2;
+    const stage = this.stageFor(hp, maxHP);
     if (stage !== this.stage) {
       this.stage = stage;
-      commands.push({kind: 'action', name: stage === 0 ? 'c3' : stage === 1 ? 'n2' : 'n1',
-        mode: stage === 0 ? 0 : 4});
+      commands.push(this.stageAction(stage));
     }
     this.updateSpouts(hp, maxHP, commands);
     return commands;
+  }
+
+  private stageFor(hp: number, maxHP: number): 0 | 1 | 2 {
+    return hp === 0 ? 0 : hp < Math.trunc(maxHP / 3) ? 1 : 2;
+  }
+
+  private stageAction(stage: 0 | 1 | 2): CastlePresentationCommand {
+    return {kind: 'action', name: stage === 0 ? 'c3' : stage === 1 ? 'n2' : 'n1',
+      mode: stage === 0 ? 0 : 4};
+  }
+
+  private damageSlot(hp: number, maxHP: number): 0 | 1 | 2 | 3 | undefined {
+    const fifth = Math.trunc(maxHP / 5);
+    return hp > 0 && hp <= fifth ? 3 :
+      hp > fifth && hp <= 2 * fifth ? 2 :
+      hp > 2 * fifth && hp <= 3 * fifth ? 1 :
+      hp > 3 * fifth && hp <= 4 * fifth ? 0 : undefined;
+  }
+
+  private releaseObsoleteSpouts(hp: number, maxHP: number,
+    commands: CastlePresentationCommand[]): void {
+    const slot = this.damageSlot(hp, maxHP);
+    for (let index = 0; index < 4; index++) {
+      if (!(this.mask & (1 << index))) continue;
+      if (slot !== undefined && index <= slot) continue;
+      this.mask &= ~(1 << index);
+      commands.push({kind: 'stopEffect', slot: index}, {kind: 'stopSound', slot: index});
+    }
   }
 
   private updateSpouts(hp: number, maxHP: number, commands: CastlePresentationCommand[]): void {
@@ -73,10 +116,7 @@ export class SceneCastleState {
       }
       this.stopSounds(commands);
     } else {
-      const slot = hp > 0 && hp <= fifth ? 3 :
-        hp > fifth && hp <= 2 * fifth ? 2 :
-        hp > 2 * fifth && hp <= 3 * fifth ? 1 :
-        hp > 3 * fifth && hp <= 4 * fifth ? 0 : undefined;
+      const slot = this.damageSlot(hp, maxHP);
       if (slot !== undefined && !(this.mask & (1 << slot))) {
         this.mask |= 1 << slot;
         commands.push({kind: 'effect', name: '040', target: slot, slot},

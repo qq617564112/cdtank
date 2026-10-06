@@ -253,7 +253,7 @@ export class BattlePlayers {
   /** Hostile observers hide the alive skill9 actor root; self, teammates and non-playing phases show it. */
   private applyVisibility(view: TankView, player: PlayerSnapshot): void {
     const observer = this.localPlayerId ? this.snapshot?.find(value => value.id === this.localPlayerId) : undefined;
-    view.root.setEnabled(this.playing && !isHiddenByOpticalCamouflage(player, observer, this.mode));
+    view.root.setEnabled(!this.playing || !isHiddenByOpticalCamouflage(player, observer, this.mode));
   }
 
   private actionError(id: string, view: TankView, error: unknown): void {

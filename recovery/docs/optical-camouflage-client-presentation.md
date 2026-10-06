@@ -4,7 +4,7 @@
 
 ## 观察规则
 
-`isHiddenByOpticalCamouflage` 对存活、skill9 生效、且非观察者自身的角色，在观察者为敌对时返回真。本机始终可见；团队模式1–3中同队可见，仅敌对队伍隐藏；混战/破坏模式4–5中其他所有参与者均视为敌对。网页据此对敌对角色的战车 root 调用 `setEnabled(false)`，其他情形保持 root 启用。
+`isHiddenByOpticalCamouflage` 对存活、skill9 生效、且非观察者自身的角色，在观察者为敌对时返回真。本机始终可见；团队模式1–3中同队可见，仅敌对队伍隐藏；混战/破坏模式4–5中其他所有参与者均视为敌对。网页以 `!playing || !isHiddenByOpticalCamouflage(player, observer, mode)` 决定战车 root 启用：仅在 `PLAYING` 且判定隐藏时对该角色 root 调用 `setEnabled(false)`，非 `PLAYING` 阶段与不满足隐藏条件的角色保持 root 启用。
 
 隐藏只作用于该角色的模型 root。相机、选择、位置、插值、动作状态、模型生命周期、现有特效归属及原伤害/收益/暴击图片均不改变：临时隐身不释放或重载战车，也不改变 root 的动作启用状态本身。弹丸、全局 HUD 名册和伤害数字不在此隐藏范围。
 
