@@ -20,7 +20,7 @@ export class BattleInput {
     private readonly sendMessage: (message: MsgPlayerInput) => void) {
     window.addEventListener('keydown', event => {
       const context = this.readContext();
-      if (!context.active || !context.playing
+      if (!context.active || !context.playing || !context.connected || context.autopilot
           || event.isComposing || event.ctrlKey || event.altKey || event.metaKey
           || (event.target instanceof HTMLElement &&
             (event.target.closest('input, select, button, textarea') || event.target.isContentEditable))) {

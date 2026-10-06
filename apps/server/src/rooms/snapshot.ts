@@ -112,11 +112,12 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
 /** World supplies its configured timing and validated player HP policy. */
 export function roomSnapshot(room: SnapshotRoom, now: number, timeLimit: number,
   minPlayers: number, players: PlayerSnapshot[]): MsgRoomSnapshot {
+  const combatTime = room.phase === 'FINISHED' && room.result ? room.result.endedAt : now;
   return {roomId: room.roomId, serverTime: now, mode: room.mode, tick: room.tick,
     roomInfo: {name: room.roomName, mapId: room.map.mapId, mapName: room.map.name,
       mapDescription: room.map.description ?? '', timeLimitSeconds: timeLimit, hasPassword: !!room.passwordHash},
-    remaining: room.phase === 'PLAYING'
-      ? Math.max(0, Math.min(timeLimit, timeLimit - Math.floor((now - room.startedAt) / 1000))) : 0,
+    remaining: room.phase === 'PLAYING' || room.phase === 'FINISHED'
+      ? Math.max(0, Math.min(timeLimit, timeLimit - Math.floor((combatTime - room.startedAt) / 1000))) : 0,
     phase: room.phase, players, bullets: room.bullets.map(bullet => ({...bullet})),
     teamScores: [...room.teamScores], winnerTeam: room.winnerTeam,
     match: {round: room.round, battleStartsAt: room.startedAt,

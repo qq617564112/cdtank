@@ -77,6 +77,7 @@ export class BattleHud {
     this.publish({...this.state, deathCountdown: count});
   });
   private lifecycle?: string;
+  private connected = true;
 
   readonly getSnapshot = (): HudSnapshot => this.state;
   readonly subscribe = (listener: () => void): (() => void) => {this.listeners.add(listener); return () => {this.listeners.delete(listener);};};
@@ -86,6 +87,10 @@ export class BattleHud {
   readonly subscribeCombat = (listener: () => void): (() => void) => {this.combatListeners.add(listener); return () => {this.combatListeners.delete(listener);};};
   readonly getMinimapSnapshot = (): HudMinimapSnapshot => this.minimap;
   readonly subscribeMinimap = (listener: () => void): (() => void) => {this.minimapListeners.add(listener); return () => {this.minimapListeners.delete(listener);};};
+  setConnected(connected: boolean): void {
+    this.connected = connected;
+    if (!connected) this.publishCombat({...this.combat, canUseShortcuts: false});
+  }
   setMinimapImage(mapId: number, imageUrl: string): void {
     this.minimapImage = {mapId, imageUrl};
     if (this.minimap.mapId === mapId) this.publishMinimap({...this.minimap, imageUrl});
@@ -202,7 +207,8 @@ export class BattleHud {
     const visible = !!local?.reload && local.alive && snapshot.phase === 'PLAYING';
     const fraction = local?.reload && visible ? this.reloadProgress.update(local.reload, snapshot.serverTime, seconds) : 1;
     this.publishReload({visible, fraction});
-    this.publishCombat(combatState(snapshot, local, serverNow));
+    const combat = combatState(snapshot, local, serverNow);
+    this.publishCombat({...combat, canUseShortcuts: this.connected && combat.canUseShortcuts});
     const minimap = minimapState(snapshot, playerId);
     this.publishMinimap({...minimap, imageUrl: this.minimapImage?.mapId === minimap.mapId
       ? this.minimapImage.imageUrl : undefined});
@@ -235,6 +241,7 @@ export class BattleHud {
     this.publish({...this.state, messages: this.messages.join('\n')});
   }
   clear(): void {
+    this.connected = true;
     this.minimapImage = undefined;
     this.deathCountdown.clear();
     ++this.loadGeneration; this.abort?.abort(); this.abort = undefined; this.loading = undefined;

@@ -37,6 +37,13 @@ export class LocalTankMotion {
     this.active = active;
   }
 
+  resetPrediction(): void {
+    this.pose = undefined;
+    this.moving = false;
+    this.command = 0;
+    this.active = false;
+  }
+
   synchronize(snapshot: MsgRoomSnapshot, playerId?: string): void {
     const player = snapshot.players.find(value => value.id === playerId);
     const round = snapshot.match?.round ?? 0;
@@ -44,7 +51,8 @@ export class LocalTankMotion {
     if (!player || player.isAutopilot) {
       this.pose = undefined;
       this.moving = false;
-    } else if (!this.pose || round !== this.round || player.alive &&
+    } else if (!this.pose || round !== this.round || !player.alive
+        || snapshot.phase !== 'PLAYING' || player.alive &&
         (!previous?.alive || previous.isAutopilot || previous.deaths !== player.deaths || previous.tankId !== player.tankId
           || snapshot.phase === 'PLAYING' && !this.playing
           || constrainTankPose(poseFromPlayer(player), this.pose, tankObstacles(player.id, snapshot.players)) !== this.pose)) {

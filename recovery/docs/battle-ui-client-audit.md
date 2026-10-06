@@ -30,6 +30,12 @@
 
 控件映射见 `game-main-control-map.md`，状态及五模式映射见 `hud-m505-integration.md`。用户确认规则见 `battle-hud-confirmed-rules.md`，原动态俯视纹理与25图范围见 `hud-minimap-coordinate-source.md`。
 
+## 生命周期状态
+
+死亡及AI托管期间禁用手动键盘输入，死亡、切换控制与换局清除按键缓存。死亡和终局位置按权威快照收敛，FINISHED立即设置最终位置及朝向，并停止移动动作；最后一次快照也清理被击毁目标及已死亡王的标记。提前结算后的模式时钟由冻结的`match.result.endedAt`计算，结算窗口停留期间保持终值。
+
+断线立即禁用八槽操作，恢复原房间后按最新权威快照重置本机运动预测，并保留已载入地图和碰撞资源。死亡数字使用原Countdown图字资源，复活授权取服务端状态。接线范围见`battle-ui-lifecycle.md`，页面表现仍待实测。
+
 ## 附属界面缺项
 
 原 `game_main_chat_shrinked.xml` 有 `btnFamily`/`btnGM`，当前 `source-battle-chat.tsx` 未挂载它们，频道 `rdoGM` 明确禁用；原权限/producer未恢复。原 `game_summary_dialog.xml`（`wndDialog`/`picItem`/`txtMessage`）及 `game_summary_title.xml`（`wndDialog`/`txtMessage`）在当前 `apps/web/src` 没有消费者引用，不把名字推断为确切业务触发；原软键盘 `keyboard.xml` 的55控件也无对应消费者引用。它们是附属界面缺项，不是主 `game_main` 165控件中漏计控件，本任务不顺带实现。

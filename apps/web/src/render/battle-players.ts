@@ -339,8 +339,8 @@ export class BattlePlayers {
       const previousTurretYaw = view.turretYaw;
       const manual = player.id === localPlayerId && !player.isAutopilot && localPose !== undefined;
       const pose = manual ? localPose : player;
-      const poseAlpha = revived || manual ? 1 : alpha;
-      if (revived) view.position(pose.x, pose.y, pose.z);
+      const poseAlpha = revived || manual || !playing ? 1 : alpha;
+      if (revived || !playing) view.position(pose.x, pose.y, pose.z);
       view.trackMovementTarget(pose.x, pose.z);
       view.root.position = Vector3.Lerp(view.root.position, new Vector3(-pose.x, pose.y, pose.z), poseAlpha);
       const bodyYaw = pose.bodyYaw ?? pose.yaw;
@@ -350,7 +350,7 @@ export class BattlePlayers {
         Math.cos(pose.yaw + pose.aim - previousTurretYaw));
       const turretYaw = previousTurretYaw + turretDelta * poseAlpha;
       view.aim(turretYaw + view.root.rotation.y);
-      void view.motion(player.alive && (manual ? localMoving : this.moving.has(player.id))).catch(error => {
+      void view.motion(playing && player.alive && (manual ? localMoving : this.moving.has(player.id))).catch(error => {
         this.actionError(player.id, view, error);
       });
       if (player.id === localPlayerId) {

@@ -85,12 +85,13 @@ export class Battle {
   }
   private readonly input = new BattleInput(() => {
     const snapshot = this.roomFeed.snapshot;
+    const local = snapshot?.players.find(player => player.id === this.playerId);
     return {
       active: this.active,
       playing: this.mapLoaded && this.loadedRound === snapshot?.match?.round
-        && Boolean(snapshot && battleIsActive(snapshot, this.serverNow())),
+        && Boolean(local?.alive && snapshot && battleIsActive(snapshot, this.serverNow())),
       connected: this.client.isConnected && !this.reconnecting,
-      autopilot: snapshot?.players.find(player => player.id === this.playerId)?.isAutopilot ?? false,
+      autopilot: local?.isAutopilot ?? false,
     };
   }, message => {
     void this.client.sendMsg('PlayerInput', {...message, pose: this.localMotion.reportedPose});
@@ -166,7 +167,10 @@ export class Battle {
     this.targets = new BattleTargets(scene);
     this.roomFeed = new RoomFeed(this.client, {
       beforeSnapshot: (snapshot, previous) => {
-        if (snapshot.phase !== 'PLAYING' || snapshot.match?.round !== previous?.match?.round) {
+        const local = snapshot.players.find(player => player.id === this.playerId);
+        const previousLocal = previous?.players.find(player => player.id === this.playerId);
+        if (snapshot.phase !== 'PLAYING' || snapshot.match?.round !== previous?.match?.round
+            || !local?.alive || local.isAutopilot !== previousLocal?.isAutopilot) {
           this.input.clear();
         }
         if (snapshot.match?.round !== previous?.match?.round
@@ -254,6 +258,7 @@ export class Battle {
     this.client.flows.postDisconnectFlow.push(input => {
       this.input.clear();
       if (this.active && !this.recovery) {
+        this.originalHud.setConnected(false);
         this.input.stop();
         const recovery = this.recoverRoom();
         this.recovery = recovery;
@@ -602,11 +607,14 @@ export class Battle {
         this.roomFeed.receive(result.res.snapshot);
         const snapshot = this.roomFeed.snapshot;
         if (snapshot) {
+          this.localMotion.resetPrediction();
+          this.localMotion.synchronize(snapshot, playerId);
           this.battlefield.restoreObjects([
             ...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? []),
           ], snapshot.match?.round ?? 0, snapshot.serverTime);
         }
         this.reconnecting = false;
+        this.originalHud.setConnected(true);
         if (snapshot?.phase === 'LOADING' && snapshot.match?.round === this.loadedRound) {
           await this.confirmResourcesLoaded(this.loadedRound!);
         }
@@ -823,7 +831,8 @@ export class Battle {
       this.loadingRound = snapshot.match.round;
       void this.loadBattleResources(snapshot.match.round);
     }
-    if (snapshot.phase === 'PLAYING' && this.loadedRound === snapshot.match?.round) this.targets.update(snapshot);
+    if ((snapshot.phase === 'PLAYING' || snapshot.phase === 'FINISHED')
+        && this.loadedRound === snapshot.match?.round) this.targets.update(snapshot);
     this.hud.dataset.world = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,
       mapId: this.mapId, mapLoaded: this.mapLoaded,
       phase: snapshot.phase, mode: snapshot.mode, remaining: snapshot.remaining,
