@@ -49,13 +49,14 @@ export class MapEnvironmentSound {
 
   async load(mapId: number): Promise<void> {
     this.clear();
-    if (mapId !== 2 && mapId !== 4 && mapId !== 5 && mapId !== 6 && mapId !== 7 && mapId !== 10 && mapId !== 11 && mapId !== 14 && mapId !== 17 && mapId !== 20 && mapId !== 21 && mapId !== 22) return;
+    if (!Number.isInteger(mapId) || mapId < 1 || mapId > 25) return;
     const revision = this.revision;
     const [map, catalog] = await Promise.all([
       this.json<EnvironmentSoundMap>(`/scene-environment-sound-${String(mapId).padStart(4, '0')}.json`),
       this.json<SkillSoundCatalog>('/audio.json'),
     ]);
     if (revision !== this.revision) return;
+    if (!map.sounds.some(placement => placement.enabled)) return;
     this.map = map;
     this.master = this.context.createGain();
     this.master.gain.value = this.volume ?? catalog.defaultSoundVolume;

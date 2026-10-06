@@ -13,7 +13,7 @@ export class MapSceneEffects {
 
   async load(mapId: number): Promise<void> {
     this.clear();
-    if (mapId !== 5 && mapId !== 20) return;
+    if (!Number.isInteger(mapId) || mapId < 1 || mapId > 25) return;
     const revision = this.revision;
     const response = await fetch(`/scene-effects-${String(mapId).padStart(4, '0')}.json`);
     if (!response.ok) throw new Error(`Unable to load scene effects: ${response.status}`);
