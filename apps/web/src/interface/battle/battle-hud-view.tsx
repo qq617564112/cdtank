@@ -11,6 +11,8 @@ export interface HudItemInventoryStore {
   getSnapshot(): {inventory?: ResInventory};
   subscribe(listener: () => void): () => void;
 }
+/** Original title table ID 1 is the requested fallback for players without a worn title. */
+const DEFAULT_PLAYER_TITLE = '嗷嗷待哺';
 const EMPTY_ITEM_INVENTORY: {inventory?: ResInventory} = {};
 const emptyItemSnapshot = () => EMPTY_ITEM_INVENTORY;
 const emptyItemSubscribe = () => () => {};
@@ -114,16 +116,19 @@ function HudLayout({source, data, state, hud, filterId, scale, mode, intro}: {
     if (name === 'SheetWindow' && mode) hidden = state.mode !== mode
       || (state.phase !== 'PLAYING' && state.phase !== 'FINISHED');
     if (/^picPlayer\d+$/.test(name)) {hidden = !player; extra = {'data-player-id': player?.id, 'data-alive': player ? String(player.alive) : undefined};}
+    const flipImage = control.properties.Orientation === 'FlipHorizontal';
+    const iconStyle: CSSProperties = {};
     if (/^picPlayerIcon\d+$/.test(name)) {
-      hidden = !player?.asset; style.backgroundImage = player?.asset ? `url('/${player.asset}')` : 'none';
-      style.backgroundSize = '100% 100%';
+      hidden = !player?.asset;
+      iconStyle.backgroundImage = player?.asset ? `url('/${player.asset}')` : 'none';
+      iconStyle.backgroundSize = '100% 100%';
       extra = {'data-tank-id': player ? String(player.tankId) : undefined, 'data-pet-id': player?.petId === undefined ? undefined : String(player.petId), 'data-expression': player?.expression,
         role: player ? 'img' : undefined, 'aria-label': player ? `${player.name}宠物头像` : undefined};
     }
     if (/^txtPlayerName\d+$/.test(name)) content = player?.name ?? '';
     if (/^txtPlayerTitle\d+$/.test(name) && mode === undefined) {
-      content = player?.title ?? '';
-      extra = {'data-source-title-binding': player && player.title ? 'confirmed-title' : 'no-confirmed-title'};
+      content = player ? player.title || DEFAULT_PLAYER_TITLE : '';
+      extra = {'data-source-title-binding': player ? player.title ? 'confirmed-title' : 'default-title-1' : undefined};
     }
     if (/^picVIP\d+$/.test(name) && mode === undefined) hidden = state.mode !== 3 || !player?.isVIP;
     if (name === 'edtBattleInfo') {
@@ -181,7 +186,15 @@ function HudLayout({source, data, state, hud, filterId, scale, mode, intro}: {
     if (name === 'picBattleInfoPanel') return <BattleInfoPanel key={name} {...props} style={style} hud={hud}>{tree(name)}</BattleInfoPanel>;
     if (control.type.endsWith('/ProgressBar')) return <HealthControl key={name} {...props} style={style} control={control} data={data}
       player={name === 'prgLife' ? state.localHealth : player} scale={scale} />;
-    return <div key={name} {...props} {...extra} className="source-control" style={style} hidden={hidden}>{content}{tree(name)}</div>;
+    if (flipImage && !/^picPlayerIcon\d+$/.test(name)) {
+      const background = picture(data, control.properties.Image ?? control.properties.BackgroundImage);
+      return <div key={name} {...props} {...extra} className="source-control" style={{...style, backgroundImage: 'none'}} hidden={hidden}>
+        <div className="source-control-image" style={{...background, transform: 'scaleX(-1)'}} />
+        {content}{tree(name)}
+      </div>;
+    }
+    if (flipImage) iconStyle.transform = 'scaleX(-1)';
+    return <div key={name} {...props} {...extra} className="source-control" style={{...style, ...iconStyle}} hidden={hidden}>{content}{tree(name)}</div>;
   });
   return <>{tree(null)}</>;
 }

@@ -30,11 +30,11 @@
   background-repeat: no-repeat;
 }
 
-.hud-minimap-objective[data-objective-team='0'] {
+.hud-minimap-objective[data-objective-side='friend'] {
   filter: drop-shadow(0 0 1px #4db6ff);
 }
 
-.hud-minimap-objective[data-objective-team='1'] {
+.hud-minimap-objective[data-objective-side='enemy'] {
   filter: drop-shadow(0 0 1px #ff6d5b);
 }
 

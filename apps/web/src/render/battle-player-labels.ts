@@ -19,6 +19,8 @@ const SOURCE_WIDTH = 800;
 const SOURCE_HEIGHT = 600;
 const HEAD_OFFSET = 8;
 const FALLBACK_HEAD_Y = 55;
+/** Label box height: 12 title + 2 + 14 name row + 4 bar + 1 + 11 numeric HP row. */
+const LABEL_HEIGHT = 44;
 /** Original title table ID 1 is the requested fallback for players without a worn title. */
 const DEFAULT_PLAYER_TITLE = '嗷嗷待哺';
 
@@ -129,7 +131,7 @@ export class BattlePlayerLabels {
       const screenX = rect.left + point.x * rect.width / renderWidth;
       const screenY = rect.top + point.y * rect.height / renderHeight - 5 * scale;
       entry.root.style.left = `${Math.max(rect.left + halfWidth, Math.min(rect.right - halfWidth, screenX))}px`;
-      entry.root.style.top = `${Math.max(rect.top + 44 * labelScale, screenY)}px`;
+      entry.root.style.top = `${Math.max(rect.top + LABEL_HEIGHT * labelScale, screenY)}px`;
       entry.root.style.transform = `translate(-50%, -100%) scale(${labelScale})`;
       const fraction = player.maxHp > 0 ? Math.max(0, Math.min(1, player.hp / player.maxHp)) : 0;
       entry.fill.style.width = `${fraction * 100}%`;
@@ -185,8 +187,8 @@ export class BattlePlayerLabels {
     fill.dataset.sourceAsset = 'ui/regions/77/128.png';
     const health = document.createElement('span');
     health.className = 'battle-player-label-health';
-    bar.append(fill, health);
-    root.append(title, nameRow, bar);
+    bar.append(fill);
+    root.append(title, nameRow, bar, health);
     this.mountLayer().append(root);
     const entry = {root, title, name, vip, fill, health};
     this.entries.set(id, entry);

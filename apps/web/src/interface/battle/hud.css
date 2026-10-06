@@ -12,6 +12,14 @@
   box-sizing: border-box;
 }
 
+.source-control-image {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  pointer-events: none;
+}
+
 .source-progress-fill {
   position: absolute;
   inset: 0;
