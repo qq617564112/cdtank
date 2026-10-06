@@ -9,6 +9,14 @@ In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the re
 If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
 <!-- CODEGRAPH_END -->
 
+## 当前实现协作
+
+- 仅root创建、调度subagent；subagent不得创建或继续分发给其它subagent。
+- 不联系其它session。仅在当前任务树内向root汇报实现结果。
+- 并行实现使用root分配的独立Git分支和worktree。每个实现者只修改分配文件，提交后向root提供SHA；root在集成分支合并，禁止撤销他人修改。
+- 实现subagent使用gpt-5.2；整批完成后仅由一个gpt-5.6 subagent集中代码走查，禁止频繁走查。
+- 不编写unit test，不运行测试、浏览器验收、构建或类型检查。现有证据按既有范围复用，代码走查不能代替tasklist正文要求的实测或原始来源。
+
 ## HERO — Anti-OverDefense
 
 === SCOPE LIMITS (these bound what you PROPOSE, never what you look for) ===
