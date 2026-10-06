@@ -207,7 +207,7 @@ export class BattleMatch {
         case 5: {
           const total = match.objectives.length;
           const remaining = match.objectives.filter(value => value.hp > 0).length;
-          objective = `射击场景物件，全部破坏、生命归零时立即获胜；时间结束时摧毁最多者获胜，相等则平局。完好目标 ${remaining}/${total}；你的摧毁数 ${local?.objectivesDestroyed ?? 0}。被毁目标按原位置重生。${this.direction}`;
+          objective = `射击场景物件；全部当前目标生命归零时结束。结束时按本局累计摧毁数、再按战斗得分比较，唯一第一名胜，完全同分平局；时间结束同样比较。完好目标 ${remaining}/${total}；你的摧毁数 ${local?.objectivesDestroyed ?? 0}。被毁目标 15 秒后在原位置重生。${this.direction}`;
           break;
         }
       }

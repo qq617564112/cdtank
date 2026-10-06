@@ -588,9 +588,19 @@ export class ScenePreview {
       }
     }
     for (const objective of objectives) {
-      if (objective.sourcePlacementId === undefined || objective.hp > 0) continue;
+      if (objective.sourcePlacementId === undefined) continue;
       const value = this.breakables.get(objective.sourcePlacementId);
-      if (value?.state.destroy() && objective.destroyedAt !== undefined) {
+      if (!value) continue;
+      if (objective.hp > 0) {
+        // A positive HP snapshot after an existing break is the same-round
+        // respawn signal; reset only that source instance, never every frame.
+        if (!value.state.snapshot().fading) continue;
+        value.state.reset();
+        value.broken?.reset();
+        value.soundPlayed = false;
+        continue;
+      }
+      if (value.state.destroy() && objective.destroyedAt !== undefined) {
         // Late joins must not replay a destruction that completed long ago.
         const elapsed = Math.max(0, (serverTime - objective.destroyedAt) / 1000);
         value.state.update(elapsed);

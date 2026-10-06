@@ -14,7 +14,9 @@
 
 ## 模式 5 破坏
 
-目标改为全部源 `SYcScnObjBreach` 放置，初始生命取 `DefaultButt`，被毁后按 `ButtRebornTime` 秒在原位置重生、生命重置为 `ButtReborn`。全部当前目标同一时刻生命为 0 时立即终局；时间结束时按本局累计 `objectivesDestroyed` 再比较战斗分，完全相等为平局。正式目标说明显示完好目标数与已重生的含义，不把“仅剩目标数”表述成一次摧毁即不再回来；`hud-mode-info` 的 `txtInfo` 继续绑定 `match.objectives` 中仍处于完整状态的 `DESTROY` 目标数，即当前权威 `hp > 0` 计数。
+目标改为全部源 `SYcScnObjBreach` 放置，初始生命取 `DefaultButt`，被毁后按 `ButtRebornTime` 秒在原位置重生、生命重置为 `ButtReborn`。全部当前目标同一时刻生命为 0 时结束，最后一击者不直接获胜；结束时按本局累计 `objectivesDestroyed`、再按战斗分比较，唯一第一名胜，完全相等为平局，时间结束使用同一排序。正式目标说明显示完好目标数与 15 秒原位重生含义；`hud-mode-info` 的 `txtInfo` 继续绑定 `match.objectives` 中仍处于完整状态的 `DESTROY` 目标数，即当前权威 `hp > 0` 计数。
+
+服务端到期 producer 把同一目标 `hp`/`maxHp` 重置为 `ButtReborn` 并清除 `destroyedAt`；`ScenePreview.updateObjects` 只在已有破损/淡出状态上收到该源实例 `hp > 0` 时重置 `SceneBreachState`、`SceneBreachVisual` 与声音去重状态一次，随后既有 `advanceBreachVisuals` 恢复完整 root 和完整模型。普通每帧不会因 `hp > 0` 重启动画，重破时进入新的伤害、破损、声音生命周期；载入与重连仍由 `restoreObjects` 按快照恢复，换局仍由既有 round reset/`clear` 释放旧状态。
 
 ## 目标标记
 
@@ -26,4 +28,4 @@
 
 ## 未完成范围
 
-本项未运行单元、浏览器、构建、类型检查、lint 或 native/evidence，未新增或修改 tests，也未实测城堡扣血终局、双方累计伤害比较、破坏目标重生节奏或小地图实际投影。原有伤害/治疗/暴击动态图字与用户字体不受本项影响。
+本范围已完成一次集中静态代码走查；本批六项修复已接入。未运行单元、浏览器、构建、类型检查、lint 或 native/evidence，未新增或修改 tests，也未实测城堡扣血终局、双方累计伤害比较、破坏目标重生节奏或小地图实际投影。原有伤害/治疗/暴击动态图字与用户字体不受本项影响。
