@@ -19,6 +19,7 @@ import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../shared/protocols
 import type {ResHistory} from '../../../shared/protocols/PtlHistory';
 import type {ReqTankUpgrade, ResTankUpgrade} from '../../../shared/protocols/PtlTankUpgrade';
 import type {ResPlayerProfile} from '../../../shared/protocols/PtlPlayerProfile';
+import type {ReqValuableItemSale, ResValuableItemSale} from '../../../shared/protocols/PtlValuableItemSale';
 
 /** Account operations over the authenticated transport owned by GameConnection. */
 export class AccountConnection {
@@ -126,6 +127,13 @@ export class AccountConnection {
   async stackItemSale(request: ReqStackItemSale): Promise<ResStackItemSale> {
     await this.ensureConnected();
     const result = await this.client.callApi('StackItemSale', request);
+    if (!result.isSucc) throw new Error(result.err.message);
+    return result.res;
+  }
+
+  async valuableItemSale(request: ReqValuableItemSale): Promise<ResValuableItemSale> {
+    await this.ensureConnected();
+    const result = await this.client.callApi('ValuableItemSale', request);
     if (!result.isSucc) throw new Error(result.err.message);
     return result.res;
   }

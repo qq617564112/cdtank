@@ -89,7 +89,7 @@ export function StackItemSaleSource({ui, source, instanceId, activation, refresh
     }
   }
   return <>
-    {saleInstance !== undefined && <StackSaleQuantityDialog ui={ui} quantity={quantity} change={setQuantity}
+    {saleInstance !== undefined && <InventorySaleQuantityDialog ui={ui} quantity={quantity} change={setQuantity}
       busy={busy} disabled={disabled || !valid} status={status} confirm={() => void sell()}
       cancel={() => {if (!locked.current) setSaleInstance(undefined);}}/>}
     {saleInstance === undefined && status && <output role="status" data-stack-sale-status=""><SourceFeedbackText text={status}/></output>}
@@ -97,9 +97,10 @@ export function StackItemSaleSource({ui, source, instanceId, activation, refresh
 }
 
 const suffix = 'userinput_dialog.xml';
-function StackSaleQuantityDialog({ui, quantity, change, busy, disabled, status, confirm, cancel}: {
+export function InventorySaleQuantityDialog({ui, quantity, change, busy, disabled, status, confirm, cancel, label = '出售道具数量', dataAttribute = 'data-stack-sale-confirm', inputAttribute = 'data-stack-sale-quantity', okAttribute = 'data-stack-sale-ok', cancelAttribute = 'data-stack-sale-cancel'}: {
   ui: HomeSourceUi; quantity: string; change: (value: string) => void;
-  busy: boolean; disabled: boolean; status: string; confirm: () => void; cancel: () => void;
+  busy: boolean; disabled: boolean; status: string; confirm: () => void; cancel: () => void; label?: string;
+  dataAttribute?: string; inputAttribute?: string; okAttribute?: string; cancelAttribute?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const layout = new HomeSourceLayout(ui, suffix);
@@ -113,7 +114,7 @@ function StackSaleQuantityDialog({ui, quantity, change, busy, disabled, status, 
     const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
     window.addEventListener('resize', resize); return () => window.removeEventListener('resize', resize);
   }, []);
-  return createPortal(<dialog ref={dialog} data-stack-sale-confirm="" aria-label="出售道具数量" aria-busy={busy}
+  return createPortal(<dialog ref={dialog} {...{[dataAttribute]: ''}} aria-label={label} aria-busy={busy}
     style={{width: 307 * scale, height: 120 * scale}} onCancel={event => {event.preventDefault(); if (!busy) cancel();}}
     onKeyDown={event => {event.stopPropagation(); if (event.key === 'Enter') {event.preventDefault(); if (!busy && !disabled) confirm();}}}
     onKeyUp={event => event.stopPropagation()}>
@@ -122,13 +123,13 @@ function StackSaleQuantityDialog({ui, quantity, change, busy, disabled, status, 
         {['SheetWindow', 'picBackgroundMask', 'shangkuang', 'xiakuang', 'shufukuangditu'].map(name =>
           <SourceStaticImage key={name} ui={ui} layout={layout} suffix={suffix} name={name} aria-hidden="true"/>)}
         <div {...sourceProps(ui, layout, suffix, 'txtMessage')} role="document">请输入你想要售出的道具的数量。</div>
-        <input {...sourceProps(ui, layout, suffix, 'edtInput')} aria-label="出售数量" data-stack-sale-quantity=""
+        <input {...sourceProps(ui, layout, suffix, 'edtInput')} aria-label="出售数量" {...{[inputAttribute]: ''}}
           data-feedback-font="xiangjiao-brush"
           inputMode="numeric" value={quantity} disabled={busy} onChange={event => change(event.target.value)}/>
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnOK" aria-label="确认出售"
-          data-stack-sale-ok="" disabled={busy || disabled} onClick={confirm}/>
+          {...{[okAttribute]: ''}} disabled={busy || disabled} onClick={confirm}/>
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnCancel" aria-label="取消出售"
-          data-stack-sale-cancel="" disabled={busy} onClick={cancel}/>
+          {...{[cancelAttribute]: ''}} disabled={busy} onClick={cancel}/>
       </SourceImageScale>
       {status && <output className="stack-sale-status" role="status"><SourceFeedbackText text={status}/></output>}
     </div>

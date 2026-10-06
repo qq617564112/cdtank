@@ -1,4 +1,5 @@
 import type {ReqStackItemSale, ResStackItemSale} from '../../../shared/protocols/PtlStackItemSale';
+import type {ReqValuableItemSale, ResValuableItemSale} from '../../../shared/protocols/PtlValuableItemSale';
 import type {ReqPartSale, ResPartSale} from '../../../shared/protocols/PtlPartSale';
 import type {ReqPartMaintenance, ResPartMaintenance} from '../../../shared/protocols/PtlPartMaintenance';
 import {Trade} from '../network/trade';
@@ -79,14 +80,21 @@ export class Battle {
   private readonly client = this.connection.client;
   private readonly accounts = this.connection.accounts;
   private readonly rooms = this.connection.rooms;
+  private readonly emptyAccountContext = {};
+  private accountIdentity?: import('../../../shared/protocols/PtlAccount').ResAccount;
+  get accountContext(): object {return this.accountIdentity ?? this.emptyAccountContext;}
   get hasSavedIdentity(): boolean {return this.connection.hasSavedIdentity;}
   authenticate(credentials?: import('../../../shared/protocols/PtlAccount').ReqAccount['credentials']) {
     if (this.inRoom) throw new Error('请先离开房间');
-    return this.connection.authenticate(credentials);
+    return this.connection.authenticate(credentials).then(identity => {
+      this.accountIdentity = identity;
+      return identity;
+    });
   }
   channels(channelId?: string) {return this.connection.channels(channelId);}
   disconnectAccount(): Promise<void> {
     if (this.inRoom) throw new Error('请先离开房间');
+    this.accountIdentity = undefined;
     this.lobbyPresence.stop();
     return this.connection.disconnect();
   }
@@ -395,6 +403,10 @@ export class Battle {
 
   async stackItemSale(request: ReqStackItemSale): Promise<ResStackItemSale> {
     return this.accounts.stackItemSale(request);
+  }
+
+  async valuableItemSale(request: ReqValuableItemSale): Promise<ResValuableItemSale> {
+    return this.accounts.valuableItemSale(request);
   }
 
   async partSale(request: ReqPartSale): Promise<ResPartSale> {

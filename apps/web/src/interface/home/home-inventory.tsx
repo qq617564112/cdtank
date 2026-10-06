@@ -15,6 +15,8 @@ import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import type {AccountStatistics, AccountTitles, AwardCounts, ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
 import type {ReqKitbag} from '../../../../shared/protocols/PtlKitbag';
 import type {Battle} from '../../match/battle';
+import type {ResValuableItemSale} from '../../../../shared/protocols/PtlValuableItemSale';
+import {ValuableItemSaleSource, type ValuableItemSaleOwner} from './home-valuable-sale-source';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
 import {loadSourceUiFonts} from '../resources/source-ui-fonts';
 import {SourceImageScale} from '../resources/source-static-image';
@@ -56,15 +58,18 @@ function itemImage(item: CombatCatalog['items'][number]): string {
 /** Each opening owns its inventory requests, selection and confirmed slot state. */
 export function HomeInventoryView({open, close, battle, navigation, onRolePage}: HomeInventoryViewProps) {
   const [page, setPage] = useState<'weapon' | 'item' | 'valuable'>('weapon');
-  return open ? <InventorySession close={close} battle={battle} navigation={navigation} onRolePage={onRolePage} page={page} changePage={setPage} /> : null;
+  const valuableOwner = useRef<ValuableItemSaleOwner>({});
+  return open ? <InventorySession close={close} battle={battle} navigation={navigation} onRolePage={onRolePage}
+    page={page} changePage={setPage} valuableOwner={valuableOwner.current} /> : null;
 }
 
 interface InventorySessionProps extends Omit<HomeInventoryViewProps, 'open'> {
   page: 'weapon' | 'item' | 'valuable';
   changePage: (page: 'weapon' | 'item' | 'valuable') => void;
+  valuableOwner: ValuableItemSaleOwner;
 }
 
-function InventorySession({close, battle, page, changePage, navigation, onRolePage}: InventorySessionProps) {
+function InventorySession({close, battle, page, changePage, navigation, onRolePage, valuableOwner}: InventorySessionProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
   const session = useRef<{active: boolean; pending: boolean}>({active: false, pending: false});
@@ -88,6 +93,8 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
   const [resourceError, setResourceError] = useState<string>();
   const [status, setStatus] = useState('载入物品…');
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [valuableActivation, setValuableActivation] = useState<{instanceId: number; sequence: number}>();
+  const valuableActivationSequence = useRef(0);
 
   useEffect(() => {
     const element = dialog.current!;
@@ -173,6 +180,17 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
   const selectedTitleName = titles?.owned.find(title => title.id === titles.selectedTitleId)?.name;
   const control = (name: string) => resources!.controls.find(value => value.name === name)!;
   const slotNumber = (index: number) => page === 'weapon' ? index : index + 4;
+
+  function installValuableSale(result: ResValuableItemSale) {
+    setInventory(result.inventory);
+    if (result.money !== undefined) {
+      setProfile(value => value ? {...value, bytes: value.bytes.map((byte, index) => {
+        if (index < 0x70 || index >= 0x74) return byte;
+        return (result.money! >>> ((index - 0x70) * 8)) & 0xff;
+      })} : value);
+    }
+    if (result.profile !== undefined) setProfile(result.profile);
+  }
 
   async function mutate(request: ReqKitbag) {
     const current = session.current;
@@ -271,16 +289,21 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
           return <SourceButton key={tab} ui={resources.ui} layout={new HomeSourceLayout(resources.ui, 'myhome_playerpage.xml')}
             suffix="myhome_playerpage.xml" source={name} className="home-tab" aria-label={['武器', '道具', '贵重品'][index]}
             selected={page === tab} aria-pressed={page === tab} disabled={busy || !inventory}
-            onClick={() => {changePage(tab); setSelected(0); setStatus('');}} />;
+            onClick={() => {changePage(tab); setSelected(0); setValuableActivation(undefined); setStatus('');}} />;
         })}
         <HomeInventorySourceList ui={resources.ui} selected={selected} busy={busy} itemRows={page === 'item'}
-          valuableRows={page === 'valuable'} select={setSelected}
+          valuableRows={page === 'valuable'} select={instanceId => {setSelected(instanceId); setValuableActivation(undefined);}}
+          activate={page === 'valuable' && battle.valuableItemSale ? instanceId =>
+            setValuableActivation({instanceId, sequence: ++valuableActivationSequence.current}) : undefined}
           entries={records.map(record => {
             const item = resources.catalog.items.find(value => value.itemTableId === record.itemTableId);
             return {instanceId: record.instanceId, itemTableId: record.itemTableId, name: item?.name ?? String(record.itemTableId),
               info: item?.info ?? '', ownedQuantity: record.ownedQuantity,
               iconId: item?.iconId ?? record.itemTableId};
           })} />
+        {page === 'valuable' && <ValuableItemSaleSource ui={resources.ui} battle={battle} instanceId={selected}
+          activation={valuableActivation} owner={valuableOwner} refreshKey={selected}
+          onConfirmed={installValuableSale} onBusy={setBusy} />}
         {page !== 'valuable' && [0, 1, 2, 3].map(index => {
           const slot = slotNumber(index), instanceId = slot ? inventory?.hotkeys[slot - 1] ?? 0 : 0;
           const record = inventory?.records.find(value => value.instanceId === instanceId);

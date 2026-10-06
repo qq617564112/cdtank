@@ -10,9 +10,10 @@ export interface HomeInventoryListEntry {
 }
 
 /** Source bounds and pictures surround confirmed inventory; selection is local. */
-export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, valuableRows = false, select}: {
+export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, valuableRows = false, select, activate}: {
   ui: HomeSourceUi; entries: readonly HomeInventoryListEntry[]; selected: number;
   busy: boolean; itemRows: boolean; valuableRows?: boolean; select(instanceId: number): void;
+  activate?(instanceId: number): void;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const layout = new HomeSourceLayout(ui, 'myhome_playerpage.xml');
@@ -32,9 +33,13 @@ export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, 
           aria-pressed={selected === entry.instanceId} title={entry.info}
           style={selected === entry.instanceId ? {backgroundImage: selection.style.backgroundImage} : undefined}
           data-source-selection-asset={selected === entry.instanceId ? selection['data-source-asset'] : undefined}
-          onClick={() => select(entry.instanceId)} onDragStart={valuableRows ? undefined : event => {
+          onClick={() => select(entry.instanceId)} onDoubleClick={activate ? () => activate(entry.instanceId) : undefined}
+          onDragStart={valuableRows ? undefined : event => {
             event.dataTransfer.setData('text/plain', String(entry.instanceId)); event.dataTransfer.effectAllowed = 'copy';
           }} onKeyDown={event => {
+            if (event.key === 'Enter' && activate) {
+              event.preventDefault(); event.stopPropagation(); activate(entry.instanceId); return;
+            }
             const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
               : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;
             if (next === undefined) return;
