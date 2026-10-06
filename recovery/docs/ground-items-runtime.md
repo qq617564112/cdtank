@@ -2,8 +2,7 @@
 
 `apps/server/src/battle/items/drop-item-catalog.ts` 与
 `apps/server/src/battle/items/ground-items.ts` 落地 M2-10 的地面物件 domain。
-业务合同见 `ground-item-business-design.md`；本文件记录源码事实、采用规则、当前生产
-接口和尚未接线的层级。
+业务合同见 `ground-item-business-design.md`；本文件记录源码事实、采用规则和当前生产桥。
 
 ## 来源事实
 
@@ -57,6 +56,7 @@ type AcquireGroundItem = (
 interface AcquireDiscardCallbacks {
   acquire?: AcquireGroundItem;
   discard?: DiscardGroundItem;
+  roundUse?: (playerId: string, itemTableId: number) => number;
 }
 ```
 
@@ -83,18 +83,37 @@ SQL、不保存 connection map、不把 receipt 写入库存；持久层在成�
   `(roomId, round, groundId, playerId)` 交给持久层作为 receipt 键。callback 成功后
   domain 才移除实体并生成拾取/删除事件；失败保留实体，不重复 late force-consume。
   同一账户多连接只通过 callback 返回的 `refreshPlayerIds` 刷新已绑定的在房角色。
-- 战斗数量：已有 hotkey 实例按本轮已消费配额扩展：
-  `spent=max(0,min(oldOwned,BattleUseMax)-oldBattle)`，
-  `newBattle=min(newOwned,max(0,BattleUseMax-spent))`。未占 hotkey 的新实例只增加 owned，
-  不自动占槽；普通 WAITING 配置/再战仍走既有流程。
+- 战斗数量：World 以真实成功 `consumeItem` 回调累计本轮每玩家/物品使用量。已占 hotkey
+  的实例按 `battleQuantity=max(0,min(ownedQuantity,BattleUseMax)-roundUse)` 更新；
+  未占 hotkey 的实例只增加 owned，不自动占槽。重置只发生在新 round 或离场，拾取、
+  丢弃和连接刷新不会补回本轮已消耗额度。
 - CPU：没有账户绑定，只在本轮 local inventory 中合并已有堆叠；没有同表记录时分配不与
   旧实例冲突的正 uint32 local instance，并沿用 `InventoryWireRecord` 真实字段构造，
   不从 0x58 Treasure record 或未知 raw 字段推导拥有物。
 
-## 未接线范围
+## 生产桥
 
-本切片只交付两个 domain 源文件。`rooms/state.ts` 的 `groundItems`、`world.ts` 的
-`startRoom` 清理、移动后接触扫描、Breach 归零掉落、`useAction(action=100)` 路由、
-acquire/discard 回调注入，`rooms/snapshot.ts` 投影，shared `GroundItemSnapshot`/事件字段，
-账户 `discardOwnedItem`/`acquireOwnedItem` 事务，以及 UI 模型/贴图表现均由对应 bridge
-继续接入。本文不声称这些层已接线，也不声称网络、持久化、浏览器或构建验收通过。
+`World.startRoom`、`beginRoomLoading` 和终局清理调用 `clearGroundItems`；移动结算后、
+投射物处理前调用 `advanceGroundItems`。mode5 的真实 Breach HP 归零在
+`objectiveEnd`/finish 之前调用 `createBreachDrop`，其它 mode、Castle 和普通 scene
+object 不产生该掉落。真实重生建立新的 `destroyedAt` 时可再次掷骰，旧的同值不会重放。
+
+普通 `PlayerAction` 的 `action=100` 使用 current selected hotkey 中的 instanceId 作为
+`value`。World 在认证参与者、房间、round、intro 后和 PLAYING 门禁内检查普通 sequence
+watermark、hotkey 实例、owned/battle 正量及真实丢弃资格，再调用同一份
+`discardToGround`。一次丢弃固定一份，不新增 action1/2。
+
+`index.ts` 将 `AccountStore.acquireOwnedItem`/`discardOwnedItem` 注入最小
+`AcquireDiscardCallbacks`。acquire 从本 player 的 clientId 解析真实账户，域请求的
+`expectedQuantity` 映射为账户 API 的 `expectedOwned`；只有持久回调成功返回权威记录后
+才移除地面实体。discard 的归零回执转成同实例 `ownedQuantity=0` 记录以清 local hotkey。
+同一账户在其它房间的活跃参与者通过最小 `reconcileGroundItemInventory` 只刷新该实例，
+不重建整个 inventory，也不重置本局已用额度或 `RoleCombatState`。
+
+房间快照继续由既有 `rooms/state.ts`/`rooms/snapshot.ts` 的单一 `groundItems` 列表投影；
+本桥没有新增第二份实体表或 shared 字段。
+
+## 验证边界
+
+本文件记录生产路径接线与领域事实，不声称 tests、浏览器、build、typecheck、lint、原生
+导出、网络多连接或持久化实测已经通过。

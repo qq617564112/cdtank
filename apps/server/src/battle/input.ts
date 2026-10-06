@@ -27,7 +27,17 @@ export function registerBattleInputs(server: WsServer<ServiceType>, world: World
     if (!session) {
       return;
     }
-    for (const event of world.useAction(session.playerId, call.msg.action, call.msg.value)) {
+    const snapshot = world.snapshot(session.roomId);
+    if (call.msg.roomId !== session.roomId || !snapshot || call.msg.round !== snapshot.match?.round) {
+      return;
+    }
+    const result = world.useAction(session.playerId, call.msg);
+    if (!result) return;
+    const affectedRooms = new Set(result.affectedRoomIds);
+    if (affectedRooms.size) {
+      for (const roomId of affectedRooms) broadcastRoomSnapshot(roomId);
+    }
+    for (const event of result.events) {
       broadcastEvent(event);
     }
   });

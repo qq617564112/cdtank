@@ -60,18 +60,25 @@ The snapshot schema (`version 106`) and room projection already carry the option
 role-source, current-skill-slot, or protocol-generator change is part of this domain
 module.
 
-## Pending runtime wiring
+## World lifecycle bridge
 
-The `World` lifecycle bridge has not called these APIs yet:
+`World.simulateRoom` advances respawn protection for every participant before that
+tick's last-stand death, direct-damage, burn, actor, and projectile work. A natural
+expiry therefore cannot protect a later hit in the same tick.
 
-- After a real `respawnPlayer` completes and status2/alive health is restored, call
-  `applyRespawnProtection` once. Do not use it for the initial spawn.
-- Advance the timer from the authoritative room tick.
-- On finish, round reset, and Leave, call `clearRespawnProtection` so no state reaches
-  the next life.
+The real `advanceActors` respawn callback clears stale state, completes
+`respawnPlayer` with restored status2/alive/full HP, recomputes attributes, and then
+calls `applyRespawnProtection` once. The initial room spawn and all other spawn paths
+do not grant it.
+
+`clearRespawnProtection` runs on death commit and Leave. `finishRoom` clears every
+participant, and `beginRoomLoading` clears state before the next round starts. Death
+also clears through the life-domain `finalizePlayerDeath`; the World calls are the
+extra lifecycle boundary for Leave, finish, and round loading.
 
 The original measured acceptance evidence has not been run; this document records
-the implemented wiring and its remaining `World` boundary only.
+the implemented production bridge and its boundaries. It does not claim a measured
+five-second network or browser run.
 
 The source30001 second slot Effect37 is not redefined here. No extra HP restore,
 transparency, attack clearing, sound, composite-skill rewrite, or source ownership

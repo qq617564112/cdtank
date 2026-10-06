@@ -2,6 +2,16 @@ import {resetTrapFireRestraint} from './battle/items/trap-fire-restraint';
 import {advanceEquipmentSupply, resetEquipmentSupply} from './battle/items/equipment-supply';
 import {resetTrapTurnRestraint} from './battle/items/trap-turn-restraint';
 import {placeGroundTrap, advanceGroundTraps, clearGroundTraps} from './battle/items/ground-traps';
+import {
+  advanceGroundItems,
+  clearGroundItems,
+  createBreachDrop,
+  discardToGround,
+  reconcileGroundItemInventory,
+  type AcquireDiscardCallbacks,
+  type AcquireGroundItemRequest,
+  type DiscardGroundItemRequest,
+} from './battle/items/ground-items';
 import {advanceOldBombs} from './battle/items/old-bomb';
 import {advanceContactMines} from './battle/items/contact-mine';
 import {advanceAirstrikes} from './battle/items/airstrike';
@@ -60,6 +70,13 @@ import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSc
 import {attachProjectileSceneResult} from './battle/projectile-scene-result';
 import {createObjectives, advanceObjectives, damageObjective, objectiveEnd} from './modes/objectives';
 import {resetBreachCollision, syncBreachCollision} from './battle/breach-collision';
+import {applyRespawnProtection, advanceRespawnProtection, clearRespawnProtection} from './battle/respawn-protection';
+import type {
+  GroundItemAcquireContext,
+  GroundItemDiscardContext,
+  GroundItemDiscardResult,
+} from './accounts/ground-items';
+import type {MsgPlayerAction} from '../../shared/protocols';
 import {roomSnapshot, playerSnapshot} from './rooms/snapshot';
 import type {MsgRoomEvent} from '../../shared/protocols/MsgRoomEvent';
 import {BATTLE_INTRO_MS} from '../../shared/combat/battle-start';
@@ -124,10 +141,18 @@ export class World {
   private lastTickMs = 0;
   /** Mid-round ordinary departures, keyed by room then retired participant id; cleared at round end. */
   private readonly departedParticipants = new Map<string, Map<string, DepartedParticipant>>();
+  /** Successful item uses for the current round, keyed by player then item table ID. */
+  private readonly roundItemUses = new Map<string, Map<number, number>>();
+  /** Last ordinary discard sequence accepted for the current round. */
+  private readonly lastGroundItemActionSequence = new Map<string, number>();
 
   constructor(private readonly now: () => number = Date.now,
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
                 consumeItem?: (playerId: string, instanceId: number, expectedOwned: number, itemTableId: number) => boolean;
+                acquireOwnedItem?: (accountId: string, context: GroundItemAcquireContext) =>
+                  InventoryWireRecord | undefined;
+                discardOwnedItem?: (accountId: string, context: GroundItemDiscardContext) =>
+                  GroundItemDiscardResult | undefined;
                 resolveAccount?: (connectionId: string) => string | undefined;
                 currentTitle?: (accountId: string) => PlayerTitle | undefined;
                 onMatchCommitted?: (match: CommittedMatch) =>
@@ -281,6 +306,8 @@ export class World {
     if (!found) return [];
     const {room, player} = found;
     const rewardModifiers = this.freezeRewardModifiers(room.players.values());
+    clearRespawnProtection(player);
+    this.clearPlayerRoundState(playerId);
     clearCopiedRoleSkill(player.combat);
     clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
     clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
@@ -299,7 +326,10 @@ export class World {
       start: () => this.beginRoomLoading(room),
       rematch: () => this.tryRematch(room),
     }));
-    if (!this.rooms.has(room.roomId)) this.departedParticipants.delete(room.roomId);
+    if (!this.rooms.has(room.roomId)) {
+      clearGroundItems(room);
+      this.departedParticipants.delete(room.roomId);
+    }
     return events;
   }
 
@@ -396,6 +426,12 @@ export class World {
     const found = this.findPlayer(playerId);
     if (!found) throw new Error('角色不存在');
     bindBattleInventory(found.room, found.player, inventory);
+    const accountId = this.accountForPlayer(playerId);
+    if (accountId) {
+      for (const record of found.player.inventory) {
+        reconcileGroundItemInventory(found.player, record, this.groundItemCallbacks);
+      }
+    }
     if (cancelReady && found.room.phase === 'WAITING') found.room.ready.delete(playerId);
   }
 
@@ -512,13 +548,167 @@ export class World {
 
   private nextGroundTrapId = 0;
 
-  private readonly consumeItem = (playerId: string, instanceId: number,
-    expectedOwned: number, itemTableId: number): boolean => confirmBattleItemConsumption(
-      this.findPlayer(playerId)?.player, instanceId, expectedOwned, itemTableId, this.options.consumeItem);
+  private roundItemUseCount(playerId: string, itemTableId: number): number {
+    return this.roundItemUses.get(playerId)?.get(itemTableId >>> 0) ?? 0;
+  }
 
-  useAction(playerId: string, action: number, value: number): WorldEvent[] {
-    // Item and skill actions require recovered rules before they can affect scores.
-    return [];
+  private recordRoundItemUse(playerId: string, itemTableId: number): void {
+    const id = itemTableId >>> 0;
+    let counts = this.roundItemUses.get(playerId);
+    if (!counts) {
+      counts = new Map();
+      this.roundItemUses.set(playerId, counts);
+    }
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+
+  private clearPlayerRoundState(playerId: string): void {
+    this.roundItemUses.delete(playerId);
+    this.lastGroundItemActionSequence.delete(playerId);
+  }
+
+  private readonly groundItemCallbacks: AcquireDiscardCallbacks = {
+    roundUse: (playerId, itemTableId) => this.roundItemUseCount(playerId, itemTableId),
+    acquire: request => this.acquireGroundItem(request),
+    discard: request => this.discardGroundItem(request),
+  };
+
+  private accountForPlayer(playerId: string): string | undefined {
+    const player = this.findPlayer(playerId)?.player;
+    return player && !player.cpu ? this.options.resolveAccount?.(player.clientId) : undefined;
+  }
+
+  private accountAffectedRooms(accountId: string): string[] {
+    const rooms = new Set<string>();
+    for (const room of this.rooms.values()) {
+      for (const player of room.players.values()) {
+        if (!player.cpu && this.options.resolveAccount?.(player.clientId) === accountId) {
+          rooms.add(room.roomId);
+        }
+      }
+    }
+    return [...rooms];
+  }
+
+  private syncGroundItemRecord(accountId: string, record: InventoryWireRecord): void {
+    for (const playerId of this.accountPlayerIds(accountId)) {
+      const player = this.findPlayer(playerId)?.player;
+      if (player) reconcileGroundItemInventory(player, record, this.groundItemCallbacks);
+    }
+  }
+
+  private accountPlayerIds(accountId: string): string[] {
+    const playerIds: string[] = [];
+    for (const room of this.rooms.values()) {
+      for (const player of room.players.values()) {
+        if (!player.cpu && this.options.resolveAccount?.(player.clientId) === accountId) {
+          playerIds.push(player.id);
+        }
+      }
+    }
+    return playerIds;
+  }
+
+  private acquireGroundItem(request: AcquireGroundItemRequest): {record: InventoryWireRecord} | undefined {
+    const accountId = this.accountForPlayer(request.playerId);
+    if (!accountId || !this.options.acquireOwnedItem) return undefined;
+    const record = this.options.acquireOwnedItem(accountId, {
+      roomId: request.roomId,
+      round: request.round,
+      groundId: request.groundId,
+      itemTableId: request.itemTableId,
+      quantity: request.quantity,
+    });
+    if (!record) return undefined;
+    this.syncGroundItemRecord(accountId, record);
+    return {record};
+  }
+
+  private discardGroundItem(request: DiscardGroundItemRequest): InventoryWireRecord | undefined {
+    const found = this.findPlayer(request.playerId);
+    const accountId = this.accountForPlayer(request.playerId);
+    if (!found || !accountId || !this.options.discardOwnedItem) return undefined;
+    const item = found.player.inventory.find(record =>
+      (record.instanceId >>> 0) === (request.instanceId >>> 0)
+      && (record.itemTableId >>> 0) === (request.itemTableId >>> 0)
+      && (record.ownedQuantity >>> 0) === (request.expectedQuantity >>> 0));
+    if (!item) return undefined;
+    const result = this.options.discardOwnedItem(accountId, {
+      roomId: request.roomId,
+      round: request.round,
+      groundId: request.groundId,
+      instanceId: request.instanceId,
+      expectedOwned: request.expectedQuantity,
+      itemTableId: request.itemTableId,
+      quantity: 1,
+    });
+    if (!result) return undefined;
+    const record = result.deleted ? {...item, ownedQuantity: 0} : result.remaining;
+    if (!record) return undefined;
+    this.syncGroundItemRecord(accountId, record);
+    return record;
+  }
+
+  private readonly consumeItem = (playerId: string, instanceId: number,
+    expectedOwned: number, itemTableId: number): boolean => {
+    const confirmed = confirmBattleItemConsumption(
+      this.findPlayer(playerId)?.player, instanceId, expectedOwned, itemTableId, this.options.consumeItem);
+    if (confirmed) {
+      this.recordRoundItemUse(playerId, itemTableId);
+      this.syncConsumedAccountRecord(playerId, instanceId, expectedOwned, itemTableId);
+    }
+    return confirmed;
+  };
+
+  private syncConsumedAccountRecord(playerId: string, instanceId: number,
+    expectedOwned: number, itemTableId: number): void {
+    const found = this.findPlayer(playerId);
+    const accountId = this.accountForPlayer(playerId);
+    const item = found?.player.inventory.find(record =>
+      (record.instanceId >>> 0) === (instanceId >>> 0)
+      && (record.itemTableId >>> 0) === (itemTableId >>> 0)
+      && (record.ownedQuantity >>> 0) === (expectedOwned >>> 0));
+    if (!accountId || !item || found?.player.cpu) return;
+    const record = {...item, ownedQuantity: Math.max(0, (expectedOwned >>> 0) - 1)};
+    for (const otherId of this.accountPlayerIds(accountId)) {
+      if (otherId === playerId) continue;
+      const other = this.findPlayer(otherId)?.player;
+      if (other) reconcileGroundItemInventory(other, record, this.groundItemCallbacks);
+    }
+  }
+
+  useAction(playerId: string, message: MsgPlayerAction): {events: WorldEvent[]; affectedRoomIds: string[]} | undefined {
+    const found = this.findPlayer(playerId);
+    const accountId = this.accountForPlayer(playerId);
+    if (!found || !accountId || found.room.phase !== 'PLAYING'
+        || message.roomId !== found.room.roomId || message.round !== found.room.round
+        || this.now() < found.room.startedAt || found.player.autopilot) return undefined;
+    if (!Number.isSafeInteger(message.sequence)
+        || message.sequence <= (this.lastGroundItemActionSequence.get(playerId) ?? 0)) return undefined;
+    // The ordinary sequence watermark is shared by all PlayerAction values. A request
+    // that passes here is consumed even when the specific action has no production rule.
+    this.lastGroundItemActionSequence.set(playerId, message.sequence);
+    if (message.action !== 100 || !Number.isSafeInteger(message.value)
+        || message.value <= 0 || message.value > 0xffffffff) {
+      return {events: [], affectedRoomIds: []};
+    }
+    const hotkeys = found.player.combat.record?.arrays.get(0);
+    let selected = false;
+    if (hotkeys) {
+      for (let slot = 0; slot < hotkeys.length; slot++) {
+        if ((hotkeys[slot] >>> 0) === (message.value >>> 0)) {
+          selected = true;
+          break;
+        }
+      }
+    }
+    if (!selected) return {events: [], affectedRoomIds: []};
+    const events: WorldEvent[] = [];
+    const discarded = discardToGround(found.room, found.player, message.value >>> 0,
+      this.now(), this.groundItemCallbacks, events);
+    return discarded
+      ? {events, affectedRoomIds: this.accountAffectedRooms(accountId)}
+      : {events, affectedRoomIds: []};
   }
 
   chat(playerId: string, text: string, channel = 0): WorldEvent[] {
@@ -590,6 +780,9 @@ export class World {
       return;
     }
     for (const player of room.players.values()) {
+      advanceRespawnProtection(room.roomId, player, now, events);
+    }
+    for (const player of room.players.values()) {
       if (room.phase !== 'PLAYING') return;
       const death = advanceLastStandDeath(room, player,
         player.lastStand ? room.players.get(player.lastStand.attackerId) : undefined, now, events);
@@ -602,6 +795,17 @@ export class World {
       const outcome = damagePlayerDirectly(room, owner, target, damage, now, skillId, events);
       applyPetHitSpeed(target, owner, room.mode, hpBefore, now, () => recomputeBattleAttributes(target));
       if (wasAlive && !target.alive) this.commitPlayerDeath(room, target, owner.id, outcome, events);
+    };
+    const breachDropOnDestroy = (owner: PlayerState, target: PlayerState, now: number) => {
+      if (room.mode !== 5) return;
+      createBreachDrop(room, {
+        id: target.sourcePlacementId ?? target.id,
+        hp: target.hp,
+        destroyedAt: target.destroyedAt,
+        x: target.x,
+        y: target.y,
+        z: target.z,
+      }, owner.id, now, Math.random, events);
     };
     advanceOldBombs(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
@@ -659,12 +863,14 @@ export class World {
         clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
         clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
         clearRoleDisguise(player, () => recomputeBattleAttributes(player));
+        clearRespawnProtection(player);
         resetTrapRestraint(player);
         resetTrapTurnRestraint(player);
         resetTrapFireRestraint(player);
         respawnPlayer(room.battlefield, player, this.playerMaxHp(player), DEFAULT_INPUT, spawn);
         recomputeBattleAttributes(player);
         setBattleHealth(player, this.playerMaxHp(player), this.playerMaxHp(player));
+        applyRespawnProtection(room.roomId, player, now, events);
         resetEquipmentSupply(player, now);
       },
       maxHp: player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player),
@@ -710,6 +916,7 @@ export class World {
         const objective = room.objectives.find(object => object.id === targetId && object.kind === 'DESTROY' && object.hp > 0);
         if (!objective) return false;
         damageObjective(room, owner, objective, damage, now, events);
+        breachDropOnDestroy(owner, objective, now);
         if (room.phase === 'PLAYING') {
           const end = objectiveEnd(room);
           if (end) this.finishObjective(room, now, end, events);
@@ -725,6 +932,7 @@ export class World {
       },
     });
     if (room.phase !== 'PLAYING') return;
+    advanceGroundItems(room, now, this.groundItemCallbacks, events);
     advanceProjectiles(room, dt, BODY_RADIUS, {
       hitPlayer: (owner, target, damage, ammoItemId, bearing, shotId) => {
         resolveShotPlayerHit(owner, target, damage, ammoItemId, shotId, bearing);
@@ -733,6 +941,7 @@ export class World {
         if (ammoItemId === MEDICAL_AMMO_ID) return;
         const firstEvent = events.length;
         damageObjective(room, owner, target, damage, now, events);
+        breachDropOnDestroy(owner, target, now);
         if (room.phase === 'PLAYING') {
           const end = objectiveEnd(room);
           if (end) this.finishObjective(room, now, end, events);
@@ -819,6 +1028,7 @@ export class World {
   private commitPlayerDeath(room: RoomState, target: PlayerState, attackerId: string,
     outcome: import('./modes/outcomes').ModeOutcome | undefined, events: MsgRoomEvent[]): void {
     const attacker = room.players.get(attackerId);
+    clearRespawnProtection(target);
     clearPetHitSpeed(target, () => recomputeBattleAttributes(target));
     if (attacker) healPetAfterKill(room.roomId, attacker, target, room.mode, events);
     if (attacker && copyPassiveSkillAfterKill(attacker, target, room.mode)) recomputeBattleAttributes(attacker);
@@ -851,6 +1061,7 @@ export class World {
 
   private startRoom(room: RoomState): void {
     clearGroundTraps(room);
+    clearGroundItems(room);
     room.airstrikes = [];
     resetBreachCollision(room.battlefield);
     resetSceneObjectCollision(room.battlefield);
@@ -891,8 +1102,11 @@ export class World {
   private beginRoomLoading(room: RoomState): void {
     room.phase = 'LOADING';
     room.tick = 0;
+    clearGroundItems(room);
     room.loaded.clear();
     for (const player of room.players.values()) {
+      this.clearPlayerRoundState(player.id);
+      clearRespawnProtection(player);
       player.input = {...DEFAULT_INPUT};
       if (player.cpu) room.loaded.add(player.id);
     }
@@ -907,8 +1121,10 @@ export class World {
       const rewardModifiers = frozenRewardModifiers
         ?? this.freezeRewardModifiers(room.players.values());
       clearGroundTraps(room);
+      clearGroundItems(room);
       room.airstrikes = [];
       for (const player of room.players.values()) {
+        clearRespawnProtection(player);
         player.combat.pendingShot = undefined;
         player.combat.specialFlag12 = 0;
         clearAmmoBurn(player);

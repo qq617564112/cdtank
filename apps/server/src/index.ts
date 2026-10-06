@@ -43,6 +43,8 @@ const world = new World(Date.now, {
   onMatchCommitted: match => history.committed(match),
   consumeItem: (playerId, instanceId, expectedOwned, itemTableId) => consumeAccountBattleItem(
     accounts, accountByConnection, sessionByConnection, playerId, instanceId, expectedOwned, itemTableId),
+  acquireOwnedItem: (accountId, context) => accounts.acquireOwnedItem(accountId, context),
+  discardOwnedItem: (accountId, context) => accounts.discardOwnedItem(accountId, context),
 });
 const server = new WsServer(serviceProto, {
   port: PORT,

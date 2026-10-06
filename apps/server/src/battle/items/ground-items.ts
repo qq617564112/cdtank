@@ -103,6 +103,8 @@ export type AcquireGroundItem = (
 export interface AcquireDiscardCallbacks {
   acquire?: AcquireGroundItem;
   discard?: DiscardGroundItem;
+  /** Successfully consumed quantity for this player/item in the current round. */
+  roundUse?: (playerId: string, itemTableId: number) => number;
 }
 
 const RUN_ID = randomUUID();
@@ -167,36 +169,38 @@ function replaceInventoryRecord(player: GroundItemRoomPlayer, record: InventoryW
   clearRemovedHotkeys(player, record.instanceId);
 }
 
-function applyDiscardedRecord(player: GroundItemRoomPlayer, record: InventoryWireRecord): void {
+function applyDiscardedRecord(player: GroundItemRoomPlayer, record: InventoryWireRecord,
+    callbacks: AcquireDiscardCallbacks): void {
   const owned = record.ownedQuantity >>> 0;
   const cap = battleUseMax(record.itemTableId);
+  const assigned = hotkeyContains(player, record.instanceId);
+  const used = Math.max(0, callbacks.roundUse?.(player.id, record.itemTableId) ?? 0);
   const next = {...record, ownedQuantity: owned,
-    battleQuantity: Math.min(record.battleQuantity >>> 0, owned, cap)};
+    battleQuantity: assigned ? Math.max(0, Math.min(owned, cap) - used) : 0};
   replaceInventoryRecord(player, next);
 }
 
 function acquiredBattleQuantity(player: GroundItemRoomPlayer, instanceId: number,
-    itemTableId: number, newOwned: number): number {
+    itemTableId: number, newOwned: number, used: number): number {
   const cap = battleUseMax(itemTableId);
   if (!cap) return 0;
-  const previous = player.inventory.find(record =>
-    (record.instanceId >>> 0) === (instanceId >>> 0)
-    && (record.itemTableId >>> 0) === (itemTableId >>> 0));
-  const assigned = hotkeyContains(player, instanceId);
-  if (!previous) return assigned ? Math.min(newOwned, cap) : 0;
-  const oldOwned = previous.ownedQuantity >>> 0;
-  const oldBattle = previous.battleQuantity >>> 0;
-  if (!assigned) return Math.min(oldBattle, newOwned, cap);
-  const spent = Math.max(0, Math.min(oldOwned, cap) - oldBattle);
-  return Math.min(newOwned, Math.max(0, cap - spent));
+  if (!hotkeyContains(player, instanceId)) return 0;
+  return Math.max(0, Math.min(newOwned >>> 0, cap) - Math.max(0, used));
 }
 
 function applyAcquiredRecord(player: GroundItemRoomPlayer, record: InventoryWireRecord,
-    itemTableId: number): void {
+    itemTableId: number, callbacks: AcquireDiscardCallbacks): void {
   const owned = record.ownedQuantity >>> 0;
+  const used = Math.max(0, callbacks.roundUse?.(player.id, itemTableId) ?? 0);
   const next = {...record, itemTableId, ownedQuantity: owned,
-    battleQuantity: acquiredBattleQuantity(player, record.instanceId, itemTableId, owned)};
+    battleQuantity: acquiredBattleQuantity(player, record.instanceId, itemTableId, owned, used)};
   replaceInventoryRecord(player, next);
+}
+
+/** Apply one committed canonical inventory update without resetting unrelated combat state. */
+export function reconcileGroundItemInventory(player: GroundItemRoomPlayer,
+    record: InventoryWireRecord, callbacks: AcquireDiscardCallbacks): void {
+  applyAcquiredRecord(player, record, record.itemTableId >>> 0, callbacks);
 }
 
 function firstUnusedInstanceId(player: GroundItemRoomPlayer): number | undefined {
@@ -346,7 +350,7 @@ export function discardToGround(room: GroundItemRoom, player: GroundItemRoomPlay
         || (updated.itemTableId >>> 0) !== itemTableId) {
       return rejectDiscard(normalEvents, player, room.roomId, '物品数量已变化，请重新进入房间');
     }
-    applyDiscardedRecord(player, updated);
+    applyDiscardedRecord(player, updated, callbacks);
   }
 
   const state: GroundItemState = {
@@ -412,10 +416,12 @@ export function pickupGroundItem(room: GroundItemRoom, player: GroundItemRoomPla
   if (!record || !(record.instanceId >>> 0) || !(record.ownedQuantity >>> 0)
       || (record.itemTableId >>> 0) !== (ground.itemTableId >>> 0)) return false;
 
-  applyAcquiredRecord(player, record, ground.itemTableId);
+  applyAcquiredRecord(player, record, ground.itemTableId, callbacks);
   for (const playerId of refreshPlayerIds) {
     const target = room.players.get(playerId);
-    if (target && target.id !== player.id) applyAcquiredRecord(target, record, ground.itemTableId);
+    if (target && target.id !== player.id) {
+      applyAcquiredRecord(target, record, ground.itemTableId, callbacks);
+    }
   }
   room.groundItems = room.groundItems.filter(item => item.id !== ground.id);
   pushGroundItemEvent(normalEvents, {
