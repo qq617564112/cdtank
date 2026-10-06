@@ -7,6 +7,7 @@
 .settings-source-button:disabled { opacity: .55; }
 .settings-source-button:focus-visible, .settings-key:focus-visible, .settings-quick-chat:focus-visible { outline: 1px solid #fff; outline-offset: 1px; }
 .settings-key { border: 0; padding: 0; margin: 0; background: transparent; color: #fff; font: inherit; text-align: center; white-space: nowrap; }
+.settings-key[data-settings-unset] { color: #b8c4c9; font-size: 11px; }
 .settings-key[aria-pressed='true'] { outline: 1px solid #fff; }
 .settings-quick-chat { border: 0; padding: 0; margin: 0; background: transparent; color: #fff; font: inherit; line-height: 14px; }
 .settings-volume { appearance: none; margin: 0; background: transparent; padding: 0; }

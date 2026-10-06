@@ -10,7 +10,11 @@ const ACTION_LABELS: Record<InputAction, string> = {
   aimLeft: '炮塔左转', aimRight: '炮塔右转', fire: '开火',
   slot1: '快捷槽 1', slot2: '快捷槽 2', slot3: '快捷槽 3', slot4: '快捷槽 4',
   slot5: '快捷槽 5', slot6: '快捷槽 6', slot7: '快捷槽 7', slot8: '快捷槽 8',
+  useItem: '使用当前道具', prevWeapon: '上一个武器', nextWeapon: '下一个武器',
+  prevItem: '上一个道具', nextItem: '下一个道具',
 };
+const optionalPrimary = (action: InputAction): boolean => action === 'useItem' || action === 'prevWeapon'
+  || action === 'nextWeapon' || action === 'prevItem' || action === 'nextItem';
 
 type Capture = {action: InputAction; secondary: boolean};
 export interface KeySettingsInitial {bindings: KeyBindings; loadMessage: string;}
@@ -64,8 +68,10 @@ function KeySettingsSession({close, battle, initial, onSaved}: Omit<KeySettingsV
         return;
       }
       event.preventDefault();
-      if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || !isSupportedKeyCode(event.code)) {
-        setStatus('请选择字母、数字、方向键、空格或翻页键，不能使用组合键。');
+      const controlKey = event.code === 'ControlLeft' || event.code === 'ControlRight';
+      const combo = event.altKey || event.metaKey || event.shiftKey || (event.ctrlKey && !controlKey);
+      if (combo || !isSupportedKeyCode(event.code)) {
+        setStatus('请选择字母、数字、方向键、空格、Ctrl 或翻页键，不能使用组合键。');
         return;
       }
       const conflict = INPUT_ACTIONS.find(action =>
@@ -140,6 +146,13 @@ function KeySettingsSession({close, battle, initial, onSaved}: Omit<KeySettingsV
             aria-label={`${ACTION_LABELS[action]} ${text}`} aria-pressed={active}
             onClick={() => beginCapture(action, secondary)}>{text}</button>;
         })}
+        {optionalPrimary(action) ? <button type="button" data-clear-primary={action} disabled={!draft[action]}
+          aria-label={`清除“${ACTION_LABELS[action]}”主键`} onClick={() => {
+            const next = cloneKeyBindings(draft);
+            next[action] = '';
+            replaceDraft(next);
+            setStatus(`已清除“${ACTION_LABELS[action]}”主键草稿，点击保存后生效。`);
+          }}>清除主键</button> : <span className="key-settings-empty" aria-hidden="true" />}
         <button type="button" data-clear-secondary={action} disabled={!draft.secondary?.[action]}
           aria-label={`清除“${ACTION_LABELS[action]}”备用键`} onClick={() => {
             const next = cloneKeyBindings(draft);
@@ -164,9 +177,13 @@ function KeySettingsSession({close, battle, initial, onSaved}: Omit<KeySettingsV
 export function KeyBindingsHint({bindings}: {bindings: KeyBindings}) {
   const describe = (action: InputAction): string => {
     const secondary = bindings.secondary?.[action];
-    return `${keyLabel(bindings[action])}${secondary ? `（备用 ${keyLabel(secondary)}）` : ''}`;
+    const primary = bindings[action] ? keyLabel(bindings[action]) : '未设置';
+    return `${primary}${secondary ? `（备用 ${keyLabel(secondary)}）` : ''}`;
   };
   return <p id="battle-key-hint">{`${describe('forward')}/${describe('backward')} 前后移动 · `
     + `${describe('turnLeft')}/${describe('turnRight')} 转向 · `
-    + `${describe('aimLeft')}/${describe('aimRight')} 炮塔转向 · ${describe('fire')} 开火`}</p>;
+    + `${describe('aimLeft')}/${describe('aimRight')} 炮塔转向 · ${describe('fire')} 开火 · `
+    + `${describe('useItem')} 使用当前道具 · `
+    + `${describe('prevWeapon')}/${describe('nextWeapon')} 循环武器 · `
+    + `${describe('prevItem')}/${describe('nextItem')} 循环道具`}</p>;
 }

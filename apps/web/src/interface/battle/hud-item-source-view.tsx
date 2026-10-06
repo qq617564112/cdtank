@@ -5,8 +5,9 @@ import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import type {HudCombatSnapshot, SourceUi, SourceWindow} from './battle-hud';
 
 /** Original shortcut bar; icon ownership comes only from confirmed inventory. */
-export function HudItemSourceView({data, combat, catalog, inventory, onUseSlot}: {
+export function HudItemSourceView({data, combat, catalog, inventory, selectedItemSlot, onUseSlot}: {
   data: SourceUi; combat: HudCombatSnapshot; catalog: CombatCatalog; inventory?: ResInventory;
+  selectedWeaponSlot?: number; selectedItemSlot?: number;
   onUseSlot: (slot: number) => void;
 }) {
   const layout = data.layouts.find(value => value.path === 'ui/layouts/game_main.xml');
@@ -28,12 +29,23 @@ export function HudItemSourceView({data, combat, catalog, inventory, onUseSlot}:
     return <span data-dynamic-font="xiangjiao-brush" style={{fontSize: size,
       lineHeight: `${size}px`, color: fontName === 'Cheap' ? '#ffdf41' : '#fff'}}>{value}</span>;
   }
+  function instanceForSlot(slot: number): ResInventory['records'][number] | undefined {
+    if (slot < 2 || slot > 8) return;
+    const instanceId = inventory?.hotkeys[slot - 2];
+    return instanceId === undefined ? undefined
+      : inventory?.records.find(value => (value.instanceId >>> 0) === (instanceId >>> 0));
+  }
   function itemTableIdForSlot(slot: number): {itemTableId?: number; instanceId?: number} {
     if (slot === 1) return {itemTableId: 2001};
     const instanceId = inventory?.hotkeys[slot - 2];
-    const record = instanceId === undefined ? undefined : inventory?.records.find(value => value.instanceId === instanceId);
+    const record = instanceForSlot(slot);
     const ammo = slot >= 2 && slot <= 4 ? combat.ammoSlots.find(value => value.slot === slot) : undefined;
     return {itemTableId: ammo?.itemTableId ?? record?.itemTableId, instanceId};
+  }
+  function usableItemSlot(slot: number): boolean {
+    if (slot < 5 || slot > 8) return false;
+    const record = instanceForSlot(slot);
+    return !!record && (record.ownedQuantity >>> 0) > 0 && (record.battleQuantity >>> 0) > 0;
   }
   function quantityForSlot(slot: number): number | 'infinite' | undefined {
     if (slot === 1) return 'infinite';
@@ -81,6 +93,9 @@ export function HudItemSourceView({data, combat, catalog, inventory, onUseSlot}:
       const image = asset(reference);
       const count = name.startsWith('txtItemCount'), cooldown = name.startsWith('lengque'), daoju = name.startsWith('daoju');
       const label = name.startsWith('lblItem') ? control.properties.Text ?? '' : undefined;
+      const ammoSelected = slotFrame && slot <= 4 && slot === reloadSlot
+        && itemTableIdForSlot(slot).itemTableId !== undefined;
+      const itemCursor = slotFrame && slot >= 5 && slot === selectedItemSlot && usableItemSlot(slot);
       let cooldownFraction: number | undefined;
       let cooldownBinding: string | undefined;
       let remainingSeconds: number | undefined;
@@ -110,7 +125,10 @@ export function HudItemSourceView({data, combat, catalog, inventory, onUseSlot}:
         data-item-quantity={quantity} data-item-infinite={infinite ? '' : undefined}
         data-item-cooldown-binding={cooldown ? cooldownBinding ?? 'unbound' : undefined}
         data-item-cooldown-fraction={cooldownFraction}
-        data-item-selected={slotFrame && slot === reloadSlot && itemTableIdForSlot(slot).itemTableId !== undefined ? '' : undefined}
+        data-item-selected={ammoSelected ? '' : undefined}
+        data-item-cursor={itemCursor ? '' : undefined}
+        data-item-selection-binding={slotFrame && slot <= 4 ? 'ammo-authority' : undefined}
+        data-item-cursor-binding={slotFrame && slot >= 5 ? 'local-item-cursor' : undefined}
         data-item-remaining-seconds={remainingSeconds}
         hidden={cooldown && cooldownFraction === undefined}
         title={remainingSeconds === undefined ? itemName ?? boundItem?.name

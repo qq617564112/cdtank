@@ -24,7 +24,9 @@ export interface SettingsSourceViewProps {
 const KEY_REGIONS = [
   ['forward', 'txtUp', '前进'], ['backward', 'txtDown', '后退'],
   ['turnLeft', 'txtLeft', '车体左转'], ['turnRight', 'txtRight', '车体右转'],
-  ['fire', 'txtFire', '开火'],
+  ['fire', 'txtFire', '开火'], ['useItem', 'txtUseItem', '使用当前道具'],
+  ['prevWeapon', 'txtPrevWeapon', '上一个武器'], ['nextWeapon', 'txtNextWeapon', '下一个武器'],
+  ['prevItem', 'txtPrevItem', '上一个道具'], ['nextItem', 'txtNextItem', '下一个道具'],
 ] as const;
 const UNSUPPORTED_OPTIONS = [
   ['rdoLow', '低画质'], ['rdoHigh', '高画质'],
@@ -32,6 +34,8 @@ const UNSUPPORTED_OPTIONS = [
   ['chkSilhouette', '卡通渲染'], ['chkSoftwareCursor', '软件光标'], ['zhandoubiaoqing', '战斗表情'],
 ] as const;
 type Capture = {action: InputAction; secondary: boolean};
+const optionalPrimary = (action: InputAction): boolean => action === 'useItem' || action === 'prevWeapon'
+  || action === 'nextWeapon' || action === 'prevItem' || action === 'nextItem';
 
 export function SettingsSourceView({open, ...props}: SettingsSourceViewProps) {
   return open ? <SettingsSession {...props} /> : null;
@@ -138,7 +142,9 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
     if (event.code === 'Tab') {setCapture(undefined); return;}
     event.preventDefault();
     if (event.repeat) return;
-    if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey || !isSupportedKeyCode(event.code)) {
+    const controlKey = event.code === 'ControlLeft' || event.code === 'ControlRight';
+    if (event.altKey || event.metaKey || event.shiftKey || (event.ctrlKey && !controlKey)
+        || !isSupportedKeyCode(event.code)) {
       setStatus('请选择支持的按键，不能使用组合键。'); return;
     }
     const conflict = INPUT_ACTIONS.some(action =>
@@ -184,14 +190,18 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
         {KEY_REGIONS.flatMap(([action, region, label]) => [false, true].map(secondary => {
           const active = capture?.action === action && capture.secondary === secondary;
           const code = secondary ? bindings.secondary?.[action] : bindings[action];
+          const unsetOptionalPrimary = !secondary && optionalPrimary(action) && !code;
           return <button key={region + Number(secondary)} {...props(region + Number(secondary))} type="button"
             className="settings-key" data-settings-key={action} data-settings-secondary={String(secondary)}
-            aria-label={`${label}${secondary ? '备用键' : '主键'}`} aria-pressed={active}
+            data-settings-unset={unsetOptionalPrimary ? '' : undefined}
+            title={unsetOptionalPrimary ? '未设置' : undefined}
+            aria-label={`${label}${secondary ? '备用键' : '主键'}${unsetOptionalPrimary ? '，未设置' : ''}`}
+            aria-pressed={active}
             onClick={() => {current.current.capture = {action, secondary}; setCapture({action, secondary}); setStatus('请按新键；Esc取消选择。');}}
             onContextMenu={event => {
               event.preventDefault(); if (!secondary) return;
               const next = cloneKeyBindings(bindings); delete next.secondary?.[action]; setBindings(next); setCapture(undefined);
-            }}>{active ? '按新键' : code ? keyLabel(code) : ''}</button>;
+            }}>{active ? '按新键' : code ? keyLabel(code) : unsetOptionalPrimary ? '未设置' : ''}</button>;
         }))}
         {QUICK_CHAT_KEYS.map(key => <input key={key} {...props('edt' + key)} className="settings-quick-chat"
           aria-label={key + '快捷聊天'} data-settings-quick-chat={key} value={quickChats[key]} maxLength={72}

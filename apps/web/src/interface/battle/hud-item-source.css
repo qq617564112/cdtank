@@ -29,7 +29,8 @@
   pointer-events: none;
 }
 
-.hud-item-source-control[data-item-selected]::after {
+.hud-item-source-control[data-item-selected]::after,
+.hud-item-source-control[data-item-cursor]::after {
   content: '';
   position: absolute;
   inset: -1px;
