@@ -842,9 +842,9 @@
 
 ### 扩展地图：12张场景支持模式
 
-来源：`recovery/output/verified/assets/data/Data/scn/<id>` 的原 `.rpt`/`.nav`/`.cas`/`.obj` 与 `gamestring.json` 原地图名；逐图采用范围、源出生组与资源依赖见 [extra-map-mode-support.md](extra-map-mode-support.md)。
+来源：`recovery/output/verified/assets/data/Data/scn/<id>` 的原 `.rpt`/`.nav`/`.cas`/`.obj` 与 `gamestring.json` 原地图名；逐图采用范围、源出生组与资源依赖见 [extra-map-mode-support.md](extra-map-mode-support.md)。当前整批 producer/consumer 已接入 12 图目录、真实 Castle/Breach/Plant 目标、最长有效出生组选择、scene-castle-0023、八图 Plant JSON、05416 material/catalog 与 C9/c9 destruction catalog 接线；新增 producer 尚未执行，fresh scene-castle/Plant JSON 与材质/catalog 增量未实际产出，54 个 `MAP-EXT-*` 仍全部保持 `[ ]`。
 
-**扩展采用政策与统一限制**：以下 54 个逐模式条目为扩展采用政策，非原 `m001–m005` 授权（原 13 图 26 组合授权不变）；扩展 12 图当前均未启用（无源行、无正式房间入口）。各条目统一依赖未完成的正式 selector/房间入口、各模式参数、源出生组还原、Castle/Breach 资源与双端联机表现；无 Castle 图（0009/0015/0016/0019/0024/0025）不支持占领，且不得以中立目标代占领。以下条目均保持未勾选。
+**扩展采用政策与统一限制**：以下 54 个逐模式条目为扩展采用政策，非原 `m001–m005` 授权（原 13 图 26 组合授权不变）；扩展 12 图已进入正式目录与房间入口，当前代码 producer/consumer 接线已原位登记。各条目仍依赖资源实际出版、模式规则、页面、联机与表现实测；无 Castle 图（0009/0015/0016/0019/0024/0025）不支持占领，且不得以中立目标代占领。以下条目均保持未勾选。
 
 **0001 不毛岛**（可支持模式 1/2/3/4/5）
 
