@@ -141,8 +141,7 @@ export class World {
   private nextBulletId = 1;
   private nextShotId = 1;
   private combatResolutionDepth = 0;
-  private deferredModeOutcome: {outcome: import('./modes/outcomes').ModeOutcome;
-    attackerId: string} | undefined;
+  private deferredModeFinalization = false;
   /** Real configured tick interval, captured from the running world step. */
   private lastTickMs = 0;
   /** Mid-round ordinary departures, keyed by room then retired participant id; cleared at round end. */
@@ -1084,12 +1083,12 @@ export class World {
       resolve();
     } finally {
       this.combatResolutionDepth -= 1;
-      if (this.combatResolutionDepth === 0 && this.deferredModeOutcome) {
-        const deferred = this.deferredModeOutcome;
-        this.deferredModeOutcome = undefined;
+      if (this.combatResolutionDepth === 0 && this.deferredModeFinalization) {
+        this.deferredModeFinalization = false;
+        const outcome = timeLimitOutcome(room);
         this.finishRoom(room, this.now(), 'OBJECTIVE',
-          deferred.outcome.winnerTeam, deferred.outcome.winnerPlayerId, events);
-        events.push(event(room.roomId, 'finish', this.finishMessage(room), deferred.attackerId));
+          outcome.winnerTeam, outcome.winnerPlayerId, events);
+        events.push(event(room.roomId, 'finish', this.finishMessage(room), outcome.winnerPlayerId));
       }
     }
   }
@@ -1129,15 +1128,15 @@ export class World {
           (source, victim, damage, skillId) =>
             this.applyDirectSkillDamage(room, source, victim, damage, this.now(), skillId, events));
       }
-      if (outcome) this.deferredModeOutcome ??= {outcome, attackerId};
+      if (outcome) this.deferredModeFinalization = true;
     } finally {
       this.combatResolutionDepth -= 1;
-      if (this.combatResolutionDepth === 0 && this.deferredModeOutcome) {
-        const deferred = this.deferredModeOutcome;
-        this.deferredModeOutcome = undefined;
+      if (this.combatResolutionDepth === 0 && this.deferredModeFinalization) {
+        this.deferredModeFinalization = false;
+        const outcome = timeLimitOutcome(room);
         this.finishRoom(room, this.now(), 'OBJECTIVE',
-          deferred.outcome.winnerTeam, deferred.outcome.winnerPlayerId, events);
-        events.push(event(room.roomId, 'finish', this.finishMessage(room), deferred.attackerId));
+          outcome.winnerTeam, outcome.winnerPlayerId, events);
+        events.push(event(room.roomId, 'finish', this.finishMessage(room), outcome.winnerPlayerId));
       }
     }
   }
