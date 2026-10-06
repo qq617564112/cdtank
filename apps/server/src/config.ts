@@ -72,6 +72,8 @@ export const MAPS: ModeMapConfig[] = [1, 2, 3, 4, 5].flatMap(mode =>
     timeScore: Number(row.TimeScore),
   })));
 
+export const TITLE_TABLE = readTable('title');
+
 export function getTankConfig(id: number): TankConfig {
   return TANKS.find(tank => tank.id === id) ?? TANKS[0];
 }
