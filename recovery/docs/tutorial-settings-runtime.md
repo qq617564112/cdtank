@@ -1,6 +1,6 @@
 # 大厅顶栏教学/设置/退出（UI-64 / M5-14）
 
-正式大厅无房间时，在现 800×600 源 stage 顶端复用原 `tut_settings.xml` 顶栏。顶栏为根 `SheetWindow`（800×57，无图）加三个原按钮：`btnTutorial` 601,0,679,57、`btnSettings` 672,0,754,55、`btnClose` 750,0,800,51。三者按原 paintorder（tutorial → settings → close）依次绘制，矩形/相对缩放沿用现有 `useSourceUi`、`HomeSourceLayout`、`sourceProps`、`SourceImageScale`，未改坐标、未加通用间距。图像取自 `gy0` 图像集已导出的 `ui/regions/27/{20..25,44..46}.png`，未新增或重新生成任何资源。
+正式大厅无房间时，在现 800×600 源 stage 顶端复用原 `tut_settings.xml` 顶栏。顶栏为根 `SheetWindow`（800×57，无图）加三个原按钮：`btnTutorial` 601,0,679,57、`btnSettings` 672,0,754,55、`btnClose` 750,0,800,51。三者按原 paintorder（tutorial → settings → close）依次绘制，矩形/相对缩放沿用现有 `useSourceUi`、`HomeSourceLayout`、`sourceProps`、`SourceImageScale`，未改坐标、未加通用间距。图像按现消费者 DDS 优先规则解析 `gy0`（`ui/imagesets_dds/gy_0.imageset`），落到已导出的 `ui/regions/60/{20..25,44..46}.png`：教学 Normal/Hover/Pushed=`60/25,24,23`，设置=`60/20,22,21`，退出=`60/44,46,45`。未新增或重新生成任何资源。
 
 ## 三个真实回调
 
