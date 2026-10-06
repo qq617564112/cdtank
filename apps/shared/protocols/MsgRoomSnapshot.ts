@@ -57,6 +57,8 @@ export interface PlayerSnapshot {
   turnBoost?: {skillId: number; expiresAt: number; turnBonus: number};
   speedBoost?: {skillId: number; expiresAt: number; moveBonus: number};
   invincibility?: {skillId: number; expiresAt: number};
+  /** Confirmed skill9 lifetime; enemy actor visibility is reconstructed from the client contract. */
+  opticalCamouflage?: {skillId: 9; expiresAt: number};
   /** Existing rebuilt2007 burn authority; presence controls retained4005 presentation. */
   trapRestraint?: {skillId: 4001; expiresAt: number; movePermissionCount: number};
   trapTurnRestraint?: {skillId: 4002; expiresAt: number; turnPermissionCount: number};
