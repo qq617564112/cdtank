@@ -10,6 +10,7 @@ import {sourceProps} from '../resources/source-ui-props';
 import {sourceOwnedTankDays} from '../home/home-owned-tank-row-display';
 import {sourcePartOwnedDays, sourcePartOwnedKind} from './part-shop-owned-row-display';
 import {sourcePetKind} from './pet-shop-row-display';
+import {tradePetDescriptions, tradeTankDescriptions} from './trade-detail-descriptions';
 
 const rectWidth = (value: string | undefined) => Number(value?.match(/r:(-?\d+(?:\.\d+)?)/)?.[1] ?? 0);
 const rectHeight = (value: string | undefined) => Number(value?.match(/b:(-?\d+(?:\.\d+)?)/)?.[1] ?? 0);
@@ -59,7 +60,14 @@ export function TradeSourceDetail({ui, catalog, record, scale, close}: {
   const fields = new Map(record.role?.fields);
   const texts: Record<string, string> = {};
   if (record.role) texts.txtName = record.role.name;
-  if (record.kind === 'tank') texts.txtDurable = sourceOwnedTankDays(fields.get(0x34));
+  if (record.kind === 'tank') {
+    texts.txtDurable = sourceOwnedTankDays(fields.get(0x34));
+    for (const [name, offset] of [['txtAttack', 0x3c], ['txtAttackExtra', 0x40],
+      ['txtPanzer', 0x4c], ['txtPanzerExtra', 0x50]] as const) {
+      const value = fields.get(offset);
+      texts[name] = value === undefined ? '' : String(value);
+    }
+  }
   if (record.kind === 'pet') {
     for (const [name, offset] of [['txtHP', 0x2c], ['txtSavage', 0x34], ['txtLucky', 0x3c]] as const) {
       const value = fields.get(offset); texts[name] = value === undefined ? '' : String(value);
@@ -69,14 +77,19 @@ export function TradeSourceDetail({ui, catalog, record, scale, close}: {
     for (let slot = 0; slot < 6; slot++) {
       const base = fields.get(0x44 + slot * 4), rank = fields.get(0x5c + slot * 4);
       const skillId = base === undefined || rank === undefined ? undefined : base + Math.max(0, rank - 1);
-      texts[`txtSkillName${slot}`] = catalog?.skills.find(value => value.skillId === skillId)?.name ?? '';
-      texts[`txtSkill${slot}`] = rank === undefined ? '' : String(rank);
+      texts[`txtSkillName${slot}`] = base ? catalog?.skills.find(value => value.skillId === skillId)?.name ?? '' : '';
+      texts[`txtSkill${slot}`] = !base || rank === undefined ? '' : String(rank);
     }
   }
   if (record.item) {
     texts.txtType = sourcePartOwnedKind(record.item.itemTableId);
     texts.txtDurable = sourcePartOwnedDays(record.item.ownedQuantity);
   }
+  const definitionId = fields.get(record.kind === 'pet' ? 8 : 0x24);
+  const description = record.item
+    ? catalog?.items.find(item => item.itemTableId === record.item!.itemTableId)?.info ?? ''
+    : definitionId === undefined ? '' : record.kind === 'pet'
+      ? tradePetDescriptions[definitionId] ?? '' : tradeTankDescriptions[definitionId] ?? '';
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
   useLayoutEffect(() => {
@@ -110,10 +123,12 @@ export function TradeSourceDetail({ui, catalog, record, scale, close}: {
           {controls.filter(control => control.type === 'WindowsLook/StaticImage').map(control =>
             <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} aria-hidden="true"/>)}
           {controls.filter(control => control.type === 'WindowsLook/StaticText').map(control =>
-            <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} text={texts[control.name] ?? ''}/>)}
+            <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name}
+              text={texts[control.name] ?? control.properties.Text ?? ''}/>)}
           {controls.filter(control => control.type?.endsWith('Editbox')).map(control =>
-            <div key={control.name} {...sourceProps(ui, layout, suffix, control.name)} className="trade-source-description">
-              {record.item ? catalog?.items.find(item => item.itemTableId === record.item!.itemTableId)?.info ?? '' : ''}
+            <div key={control.name} {...sourceProps(ui, layout, suffix, control.name)} className="trade-source-description"
+              role="region" aria-label="交易物品说明" tabIndex={description ? 0 : -1}>
+              {description}
             </div>)}
         </SourceImageScale>
       </div>

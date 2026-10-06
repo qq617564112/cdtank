@@ -182,6 +182,7 @@
 
 .trade-source-description {
   overflow: auto;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
   font-size: 13px;
   line-height: 16px;
