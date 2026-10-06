@@ -8,6 +8,28 @@ M6-06。原495e90的kind5调用494bad(instance,quantity)，只接受4396e0类别
 
 [最小来源索引](../output/valuable-item-sale-contract-source.json)保存新sender/receiver及删除合同。原Item表仅20001鱼骨、20002骨头，ItemMoney/ItemCoin/GGet/Durable均0，Break2、BattleUseMax0。正式consumableShopItems与partShopItems均不供应类别6。
 
-当前未闭合的玩家行为是正常取得后出售鱼骨或骨头：缺少已资格的原取得producer及正式取得消费者。表中描述捡拾后数量增加与恢复生命15，不足以确定掉落、角色资格、碰撞、消费与持久时序。价格0不构成免费购买政策；类别7既没有本表记录，也不能复用本sender。原服务端支付、原子出售和授权仍缺。未改正式协议、账户、库存或可购买列表，未启动网络或原native矩阵。
+当前玩家行为已闭合于现有地面取得、保存与普通使用链：正常取得并保存 `20001`
+鱼骨或 `20002` 骨头后，可在账户持久 `ownedQuantity` 上出售；出售只按请求实例和
+24 位数量扣减，不要求取得记录，也不生成新 grant。价格 `0` 不构成免费购买政策；
+类别 7 既没有本表记录，也不能复用本 sender。
 
-既有正式Skill目录中，20001/20002为Trigger1、Target1、Func20，参数分别T1/T2、X1、Y20001/Y20002；同物件第二技能30005为Trigger1、Func2、HP30。物件描述15与技能字段30不一致，不能据任一字段宣布最终治疗量，也不能把Func20的T1/T2自行命名为猫狗资格。取得闭环最小还需来源：接触请求/通知、目标与T门禁、数量持久写入身份，以及独立治疗执行。
+当前服务端合同采用独立 `ValuableItemSale` API58、共享 schema 114 和
+`valuable_item_sale_receipts`。`QUERY` 只读当前 inventory/money/profile 并返回 exact
+`20001/20002` quotes；`SELL` 只接受正 uint32 实例与 `1..0xffffff` 数量，在同一账户事务内
+重读 owned，原子扣减并写同 requestId/instance/quantity 幂等回执。部分出售更新同实例；
+完全出售删除实例及全部贵重品快捷槽引用；money/profile 其它内容与 `0x70` 钱包值保持。
+回执为 `{instanceId,itemTableId,quantity,price,result:2}`，重复同参数只返回历史 receipt
+和当前投影，不重复扣量。
+
+原 receiver 在类别 6 部分出售后只扣 `MyItem+10` 的旧行为不是本次终态。当前采用规则把
+已绑定真实 hotkey 的实例 `battleQuantity` 置为剩余 owned，未绑定为 `0`；完全出售清
+hotkey 引用，不改皮肤、装饰、标记或部件 selector。成功 `SELL` 在 `WAITING` 绑定确认
+inventory、取消 ready 并广播；非 `WAITING` 沿现 kind3 资格拒绝，`QUERY` 纯读。
+原 Windows 服务端 dispatcher、原 receiver 未命名字段和支付/授权实现仍未取得。
+
+既有正式 Skill 目录中，`20001/20002` 为 Trigger1、Target1、Func20，参数分别 T1/T2、
+X1、Y20001/Y20002；同物件第二技能 30005 为 Trigger1、Func2、HP30。物件描述 15 与技能
+字段 30 不一致，不能据任一字段宣布最终治疗量，也不能把 Func20 的 T1/T2 自行命名为
+猫狗资格。当前普通取得已由既有 ground acquire 账户事务写入 owned，普通 use 由
+`treasure-item-use.ts` 沿现 CAS 治疗并扣减；出售链独立复用保存后的 owned，不冒充原
+Windows 分派。

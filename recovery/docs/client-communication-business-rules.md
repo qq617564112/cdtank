@@ -12,6 +12,17 @@ Func20只负责地面拾取数量入账：服务端沿既有ground acquire账户
 
 两件贵重品源的`BattleUseMax=0`保持原字段；采用规则按已配置实例的真实owned初始化可用量，不放宽到category6全类，不开放免费shop/gift，不做客户端预测。最后一份在同一AccountStore CAS事务删空实例与所有引用快捷槽，当前角色零量记录及七快捷槽/数组0清；其它物件保持原零量UPDATE。其它原物件仍按`min(owned, max(0, cap - roundUse))`。原服务端writer、真实双端、持久重启及高清验收仍未执行。
 
+采用规则：原 kind5 sender/receiver 只保留上述来源事实；当前独立 `ValuableItemSale`
+API58/共享 schema114，只接受 exact `20001/20002`。普通 Home 贵重页双击或 Enter 进入
+数量弹窗，先 `QUERY` 只读 quote，再以同实例/数量 requestId `SELL`；成功只安装确认
+inventory/money/profile。部分出售保留实例，完全出售清全部贵重品 hotkey 引用并移除
+页面行；本机 cursor 按确认 inventory 重算。`SELL` 门禁只作用于出售，非 `WAITING` 沿现
+kind3 资格拒绝，成功后在 `WAITING` 重绑 inventory、取消 ready 并广播，`QUERY` 纯读；
+同 requestId/instance/quantity 重放沿用 receipts 与当前投影，不二次结算。
+
+原 receiver 在类别 6 部分出售时只扣数量且不清资料引用，不能把当前服务端采用的
+mutex、receipt 或完整 hotkey 清理宣称为原 Windows 等价行为。
+
 ## 光学迷彩
 
 对应M4-10-I09、FUNC-07及M6-06。原物件9关联skill9、BattleUseMax=2；技能Target1、TriggerType1、FuncType7、T10且Effect/Sound均为0。普通使用请求没有可确认的目标或持续时间字段，服务端按请求者自用和原表10秒执行，不从客户端接收生命、期限、技能或效果参数。

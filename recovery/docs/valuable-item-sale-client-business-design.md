@@ -24,8 +24,7 @@
 - 已被快捷槽绑定的两个贵重品按 adopted consumable policy 暴露真实 remaining owned；
   未绑定实例的 `battleQuantity=0`。
 - `ground-item-business-design.md`、`ground-item-account-runtime.md`、
-  `treasure-item-use-runtime.md` 已记录该现态；旧 `valuable-item-sale-contract.md` 和
-  `valuable-item-sale-consumer-preparation.md` 中“取得未接”的话不再是当前实现事实。
+  `treasure-item-use-runtime.md` 已记录该现态。
 
 现有普通消费 consumer 已接入：
 
@@ -36,8 +35,8 @@
 
 ## 当前接口边界
 
-当前 `apps/shared/protocols/serviceProto.ts` version 是 `113`，最后新增 API 是
-`TankUpgrade id56`、`PlayerProfile id57`；未占用 API id 从 `58` 继续。已有
+当前 `apps/shared/protocols/serviceProto.ts` version 是 `114`，`ValuableItemSale`
+占用 API id `58`。已有
 `StackItemSale id52` 继续只服务 category 1/2，不追加 category 6 分支，也不给
 `PtlStackItemSale` 伪造 kind5 mapping。
 
@@ -54,7 +53,7 @@
 | AccountStore method | `valuableItemSale(accountId, request, catalog)` |
 
 固定新增 API 身份，不改 `StackItemSale` 的 id52、请求结构、返回结构或 kind3 语义。
-shared/schema 手工 append；不得运行 generator。
+共享协议与 schema 已登记为 version `114`。
 
 ```ts
 export interface ReqValuableItemSale {
@@ -96,8 +95,8 @@ uint32 值；两个精确 ID 的出售价恒为 `0`，出售不会改变它。
 
 ## 服务端事务
 
-新增 `AccountValuableItemSale` 私有字段接入 `AccountStore` 的同一 `DatabaseSync`，
-不建第二个数据库连接。表：
+`AccountValuableItemSale` 接入 `AccountStore` 的同一 `DatabaseSync`，不建第二个数据库
+连接。表：
 
 ```sql
 CREATE TABLE IF NOT EXISTS valuable_item_sale_receipts (
@@ -135,9 +134,8 @@ Partial 的 `battleQuantity` 采用当前 confirmed consumable policy，而不�
 的可用量，也不把未绑定库存自动塞入战斗槽。
 
 完全出售清引用只触及贵重品库存和实际 `hotkeys`。`20001/20002` 的合法引用是消耗快捷槽，
-不会进入 EQUIP 皮肤、装饰、标记或部件 selector；因此不能因为整数恰好等于库存实例号，
-就把 `role_profiles.payload` 的 `0x118/0x13c/0x140/0x144/0x148/0x14c/0x150/0x154/0x158`
-等无关装备 selector 清 0。零收入出售同样不写 money，profile bytes/strings 保持原样。
+不会进入皮肤、装饰、标记或部件 selector；因此清除范围不扩到 `role_profiles.payload`
+中的装备或外观字段。零收入出售同样不写 money，profile bytes/strings 保持原样。
 
 ## room、trade 与生命周期
 
@@ -149,13 +147,8 @@ Partial 的 `battleQuantity` 采用当前 confirmed consumable policy，而不�
 - `QUERY` 在任意 room stage 只读当前投影，不改库存。
 
 交易互斥在 `SELL` 前执行：若该账户在 `registerTradeApi` 的 active trade session 中，
-返回交易未结束错误，不与 `Trade` 的 `prepare/settle` 并发写同一账户。精确接法是在
-`apps/server/src/index.ts` 现 `registerAccountApis` 之前先建立
-`const trades = registerTradeApi(...)`，给 `registerAccountApis` 追加
-`assertTradeAvailable: (accountId: string) => void` 参数，并把
-`accountId => trades.assertLobbyAvailable(accountId)` 传给新增
-`registerValuableItemSaleApi`。不新增或复制 trade 状态，不改变旧 `StackItemSale`
-或旧注册模块资格，只做必要的声明顺序和传参调整。
+返回交易未结束错误，不与 `Trade` 的 `prepare/settle` 并发写同一账户。该门禁复用
+现有 trade 状态，不复制 `Trade` session，也不改变旧 `StackItemSale` 或旧注册模块资格。
 
 成功 `SELL` 且存在房间 session 时，服务端调用
 `world.bindInventory(session.playerId, accounts.inventory(accountId), true)` 并广播房间状态。
@@ -209,32 +202,8 @@ UI 状态机要求：
   generation 变化都忽略晚返回的旧响应。
 - 失败状态走现有 `SourceFeedbackText`；不把失败当成功、不更新余额或库存。
 
-## 未知与边界
+## 限制
 
 原 Windows 服务端 dispatcher、完整 battle 实测、持久重启实测和原 receiver 未命名字段
-不从客户端表象猜测。本设计只固定可在当前 source 链实施的 server/shared/UI 终态。
-现有 M5-09 / UI36 / UI65 / M6-06 和总清单保持未勾；本设计不修改 `tasklist`。
-
-## 并行 ownership
-
-core worker 只拥有：
-
-- `apps/shared/protocols/PtlValuableItemSale.ts` 新增。
-- `apps/shared/protocols/index.ts`、`apps/shared/protocols/serviceProto.ts`。
-- `apps/server/src/accounts/valuable-item-sale.ts` 新增。
-- `apps/server/src/accounts/valuable-item-sale-api.ts` 新增。
-- `apps/server/src/account-store.ts`、`apps/server/src/accounts/api.ts`、
-  `apps/server/src/index.ts`。
-
-UI worker 只拥有：
-
-- `apps/web/src/network/accounts.ts`、`apps/web/src/match/battle.ts`。
-- `apps/web/src/interface/home/home-inventory.tsx`、
-  `apps/web/src/interface/home/home-inventory-source-list.tsx`。
-- `apps/web/src/interface/home/home-valuable-sale-source.tsx` 新增。
-- `apps/web/src/interface/account/stack-item-sale-source.tsx`。
-- 必要的对应新 CSS；优先复用既有 dialog CSS，不新增泛框架。
-
-`apps/web/src/app.tsx` 现已把 battle 传给 Home，通常无需改动。不新增 owned 文件。
-core 与 UI 不修改对方 owned；root 向各 worker 提供 frozen before 的 main 现真实 source
-和同 feature actual，不把 source `64f8967` 前未 tracked 的旧 sale/mend 模块整文件拷成新实现。
+仍未取得。现有实现只固定可在当前 source 链实施的 server/shared/UI 终态；已有 M5-09 /
+UI36 / UI65 / M6-06 父项及新增 M6-06-VSALE 子项保持未勾。
