@@ -631,8 +631,10 @@ export class World {
         if (player.combat.dirty) recomputeBattleAttributes(player);
         return accepted;
       },
-      afterFire: player => {
+      fired: player => {
         countShot(player);
+      },
+      afterFire: player => {
         restoreRoleDisguiseAfterAcceptedFire(room.roomId, player,
           () => recomputeBattleAttributes(player), events);
       },

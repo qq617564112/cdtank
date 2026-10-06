@@ -64,6 +64,7 @@ export function advanceActors<Player extends CombatActor>(room: {
   allocateShotId(): string;
   staticObjects?(player: Player): Iterable<RoleStaticCollider>;
   beforeFire?(player: Player): boolean;
+  fired?(player: Player): void;
   afterFire?(player: Player): void;
   hitSceneObject?(owner: Player, targetId: string, damage: number, ammoItemId: number): boolean;
   hitPlayer?(owner: Player, targetId: string, damage: number, ammoItemId: number,
@@ -88,7 +89,7 @@ export function advanceActors<Player extends CombatActor>(room: {
         handlers.allocateBulletId, events, bodyRadius,
         (targetId, damage, ammoItemId) => handlers.hitSceneObject?.(player, targetId, damage, ammoItemId) ?? false,
         (targetId, damage, ammoItemId) => handlers.hitPlayer?.(player, targetId, damage, ammoItemId, shotId),
-        pendingShot.ammoItemId, shotId);
+        pendingShot.ammoItemId, shotId, () => handlers.fired?.(player));
       handlers.afterFire?.(player);
     } else {
       pendingShot.remainingSeconds = Math.fround(pendingShot.remainingSeconds - elapsed);

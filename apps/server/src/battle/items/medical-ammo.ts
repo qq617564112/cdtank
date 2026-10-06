@@ -1,12 +1,12 @@
 import type {MsgRoomEvent} from '../../../../shared/protocols';
 import {combatSkills} from '../catalog';
 import {setBattleHealth, type HealthParticipant} from '../health';
-import {recordHealing} from '../round-statistics';
+import {recordHealing, type RoundStatsCarrier} from '../round-statistics';
 
 export const MEDICAL_AMMO_ID = 2009;
 
 /** Source4007 supplies HP300; accepted-shot victim qualification is rebuilt. */
-export function resolveMedicalAmmo(roomId: string, owner: {id: string; name: string},
+export function resolveMedicalAmmo(roomId: string, owner: {id: string; name: string} & RoundStatsCarrier,
   target: HealthParticipant & {id: string; name: string; alive: boolean;
     x: number; y: number; z: number; combat: HealthParticipant['combat'] & {status: number}},
   ammoItemId: number | undefined, events: MsgRoomEvent[],

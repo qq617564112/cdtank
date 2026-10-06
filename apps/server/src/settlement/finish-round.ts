@@ -49,8 +49,8 @@ export function finishRound(room: FinishingRoom, now: number, reason: MatchResul
   });
   const awards = computeRoundAwards(room.map, participants);
   for (const player of result.players) {
-    const playerAwards = awards.get(player.id);
-    if (!playerAwards?.length) continue;
+    if (!player.roundStats) continue;
+    const playerAwards = awards.get(player.id) ?? [];
     const score = playerAwards.reduce((total, award) => total + award.score, 0);
     player.combatScore += score;
     player.totalScore += score;

@@ -155,7 +155,7 @@ export function fireProjectile(room: {
 }, currentSeconds: number, allocateId: () => string, events: MsgRoomEvent[], bodyRadius: number,
   hitSceneObject?: (targetId: string, damage: number, ammoItemId: number) => boolean,
   hitPlayer?: (targetId: string, damage: number, ammoItemId: number, shotId?: string) => void,
-  itemId = player.combat.currentAmmoTableId, shotId?: string): void {
+  itemId = player.combat.currentAmmoTableId, shotId?: string, fired?: () => void): void {
   const speed = 360;
   const angle = player.yaw + player.aim;
   const aim = createRoleFreeAim(player, {x: Math.sin(angle), y: 0, z: Math.cos(angle)}, currentSeconds);
@@ -178,6 +178,7 @@ export function fireProjectile(room: {
     x: player.x, y: player.y, z: player.z, skillId: itemId,
     // Original player-target branch is silent here; scene/free display immediately.
     shotDisplay: target.kind === 'PLAYER' ? undefined : {itemId, ...target.point}});
+  fired?.();
   // Temporary attack skills already contribute to qualified role recomputation.
   const damage = player.armorReady && player.recoveredArmor
     ? calculateQualifiedShotAttack(player.recoveredArmor)
