@@ -19,6 +19,8 @@ import {roomChat} from './rooms/chat';
 import {canBindBattleSources, bindBattleInventory, bindOwnedBattleSources, bindBattleEquipment, selectBattleTank, confirmBattleKitbag} from './battle/preparation';
 import {baseTankMaxHp} from './battle/create-player';
 import {setBattleHealth} from './battle/health';
+import {combatSkills, combatItemSkills} from './battle/catalog';
+import {selectRoleSkills} from './battle/roles/skills';
 import {insertRoomPlayer} from './rooms/membership';
 import {manageRoomCpu} from './rooms/cpu';
 import {editWaitingRoom} from './rooms/edit';
@@ -79,6 +81,8 @@ import type {KitbagAssignmentResult, KitbagCancellationResult} from './accounts/
 import {matchFinishMessage} from './settlement/match-result';
 import {finishRound} from './settlement/finish-round';
 import type {CommittedMatch, CommittedReceipt} from './settlement/history';
+import {readResultRewardModifiers} from './settlement/reward-modifiers';
+import type {ResultRewardModifiers} from './settlement/reward-modifiers';
 import type {ResultAward} from '../../shared/protocols/MsgRoomSnapshot';
 import {countShot} from './battle/round-statistics';
 
@@ -92,6 +96,8 @@ interface DepartedParticipant {
   accountId?: string;
   /** Real frozen PLAYING time before this participant left; never extended by the surviving round. */
   elapsedSeconds?: number;
+  /** Func19 selection captured before the departing participant's temporary sources are cleared. */
+  rewardModifiers?: ResultRewardModifiers;
 }
 
 // Body radius and speed conversion remain prototype rules in native map units.
@@ -274,6 +280,7 @@ export class World {
     const found = this.findPlayer(playerId);
     if (!found) return [];
     const {room, player} = found;
+    const rewardModifiers = this.freezeRewardModifiers(room.players.values());
     clearCopiedRoleSkill(player.combat);
     clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
     clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
@@ -286,8 +293,8 @@ export class World {
     resetTrapFireRestraint(player);
     events.push(...leaveRoomPlayer(this.rooms, room, player, this.minPlayers(room), {
       finish: outcome => this.finishRoom(room, this.now(), 'FORFEIT',
-        outcome.winnerTeam, outcome.winnerPlayerId, events),
-      departed: departed => this.captureDeparted(room, departed),
+        outcome.winnerTeam, outcome.winnerPlayerId, events, rewardModifiers),
+      departed: departed => this.captureDeparted(room, departed, rewardModifiers.get(departed.id)),
       create: mode => {this.createRoom(mode);},
       start: () => this.beginRoomLoading(room),
       rematch: () => this.tryRematch(room),
@@ -297,7 +304,8 @@ export class World {
   }
 
   /** Freeze a mid-round ordinary leaver's statistics and real account before removal. */
-  private captureDeparted(room: RoomState, player: PlayerState): void {
+  private captureDeparted(room: RoomState, player: PlayerState,
+    rewardModifiers?: ResultRewardModifiers): void {
     if (player.cpu) return;
     const accountId = this.options.resolveAccount?.(player.clientId);
     const frozen = {id: player.id, name: player.name, team: player.team, score: player.score,
@@ -308,8 +316,28 @@ export class World {
     room.departedParticipants.set(player.id, frozen);
     const byRoom = this.departedParticipants.get(room.roomId) ?? new Map();
     byRoom.set(player.id, {player: frozen, accountId,
-      elapsedSeconds: frozen.playedSeconds});
+      elapsedSeconds: frozen.playedSeconds, rewardModifiers});
     this.departedParticipants.set(room.roomId, byRoom);
+  }
+
+  /** Freeze each human participant's real Func19 selection before any leave/finish cleanup. */
+  private freezeRewardModifiers(players: Iterable<PlayerState>):
+    Map<string, ResultRewardModifiers> {
+    const frozen = new Map<string, ResultRewardModifiers>();
+    for (const player of players) {
+      if (player.cpu) continue;
+      frozen.set(player.id, this.selectedRewardModifiers(player));
+    }
+    return frozen;
+  }
+
+  /** Read Func19 only from this role's actual selected skill sources; catalog ownership alone grants nothing. */
+  private selectedRewardModifiers(player: PlayerState): ResultRewardModifiers {
+    const sources = battleSkillSources(player);
+    const skillIds = sources
+      ? selectRoleSkills(sources, combatSkills, combatItemSkills).map(skill => skill.skillId)
+      : [];
+    return {...readResultRewardModifiers(skillIds)};
   }
 
   /** Attach committed receipts to the still-live frozen result, by player id. */
@@ -849,8 +877,11 @@ export class World {
 
   private finishRoom(room: RoomState, now: number, reason: MatchResult['reason'],
                      winnerTeam?: number, winnerPlayerId?: string,
-                     events: MsgRoomEvent[] = []): void {
+                     events: MsgRoomEvent[] = [],
+                     frozenRewardModifiers?: ReadonlyMap<string, ResultRewardModifiers>): void {
     if (finishRound(room, now, reason, DEFAULT_INPUT, winnerTeam, winnerPlayerId)) {
+      const rewardModifiers = frozenRewardModifiers
+        ?? this.freezeRewardModifiers(room.players.values());
       clearGroundTraps(room);
       room.airstrikes = [];
       for (const player of room.players.values()) {
@@ -867,10 +898,13 @@ export class World {
         participants: [
           ...[...room.players.values()].map(player => ({playerId: player.id,
             connectionId: player.clientId, cpu: !!player.cpu,
-            elapsedSeconds: Math.max(0, (now - room.startedAt) / 1000)})),
+            elapsedSeconds: Math.max(0, (now - room.startedAt) / 1000),
+            rewardModifiers: player.cpu ? undefined : {...rewardModifiers.get(player.id)!}})),
           ...[...this.departedParticipants.get(room.roomId)?.values() ?? []].map(departed =>
             ({playerId: departed.player.id, connectionId: '', cpu: false, accountId: departed.accountId,
-              elapsedSeconds: departed.elapsedSeconds})),
+              elapsedSeconds: departed.elapsedSeconds,
+              rewardModifiers: departed.rewardModifiers
+                ? {...departed.rewardModifiers} : undefined})),
         ]});
       // Attach the authoritative receipt only after the same-transaction write commits;
       // a failed or replayed commit leaves the frozen award absent.
