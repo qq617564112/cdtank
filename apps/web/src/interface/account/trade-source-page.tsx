@@ -225,6 +225,6 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
           || (session?.phase === 'COMPLETED' ? '交易已完成' : session?.phase === 'CANCELLED' ? '交易已取消' : dirty ? '提供物尚未提交' : '')}</output>
       </div>
     </div>
-    {ui && detail && <TradeSourceDetail ui={ui} catalog={catalog} record={detail} close={() => setDetail(undefined)}/>}
+    {ui && detail && <TradeSourceDetail ui={ui} catalog={catalog} record={detail} scale={scale} close={() => setDetail(undefined)}/>}
   </dialog>, document.body);
 }

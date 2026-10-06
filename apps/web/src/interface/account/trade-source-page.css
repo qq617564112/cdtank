@@ -108,6 +108,20 @@
   appearance: textfield;
 }
 
+/* Peer offer values sit on a light source strip; keep them legible without touching the source image. */
+.trade-source-stage [data-source-control='txtOtherMoney'],
+.trade-source-stage [data-source-control='txtOtherOriginality'],
+.trade-source-stage [data-source-control='txtOtherTech'] {
+  text-shadow: none;
+}
+
+.trade-source-stage [data-source-control='txtOtherMoney'] [data-source-text-content],
+.trade-source-stage [data-source-control='txtOtherOriginality'] [data-source-text-content],
+.trade-source-stage [data-source-control='txtOtherTech'] [data-source-text-content] {
+  color: #102b42;
+  text-shadow: 0 0 2px #fff, 0 0 4px #fff;
+}
+
 .trade-source-amount::-webkit-inner-spin-button,
 .trade-source-amount::-webkit-outer-spin-button {
   appearance: none;
@@ -149,7 +163,7 @@
 .trade-source-detail {
   max-width: none;
   max-height: none;
-  padding: 10px;
+  padding: 0;
   border: 1px solid #b7eaff;
   color: white;
   background: #183b54;
@@ -157,11 +171,28 @@
 
 .trade-source-detail-stage {
   position: relative;
+  overflow: hidden;
+}
+
+.trade-source-detail-source {
+  position: absolute;
+  inset: 0 auto auto 0;
+  transform-origin: top left;
 }
 
 .trade-source-description {
   overflow: auto;
   white-space: pre-wrap;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 16px;
+}
+
+.trade-source-detail [data-trade-detail-close] {
+  display: block;
+  margin: 8px;
+  padding: 4px 10px;
+  border: 1px solid #b7eaff;
+  color: #fff;
+  background: #24546f;
+  font: inherit;
 }

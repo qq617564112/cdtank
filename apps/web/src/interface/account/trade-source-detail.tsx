@@ -3,13 +3,29 @@ import {createPortal} from 'react-dom';
 import type {TradeRecordView} from '../../../../shared/protocols/PtlTrade';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
-import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
-import {SourceStaticImage} from '../resources/source-static-image';
+import {HomeSourceLayout, type HomeSourceControl, type HomeSourceUi} from '../resources/source-ui-layout';
+import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceStaticText} from '../resources/source-static-text';
 import {sourceProps} from '../resources/source-ui-props';
 import {sourceOwnedTankDays} from '../home/home-owned-tank-row-display';
 import {sourcePartOwnedDays, sourcePartOwnedKind} from './part-shop-owned-row-display';
 import {sourcePetKind} from './pet-shop-row-display';
+
+const rectWidth = (value: string | undefined) => Number(value?.match(/r:(-?\d+(?:\.\d+)?)/)?.[1] ?? 0);
+const rectHeight = (value: string | undefined) => Number(value?.match(/b:(-?\d+(?:\.\d+)?)/)?.[1] ?? 0);
+const absoluteRect = (controls: HomeSourceControl[], control: HomeSourceControl) => {
+  const byName = new Map(controls.map(value => [value.name, value]));
+  const values = (value: HomeSourceControl) => value.properties.AbsoluteRect.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+  const box = values(control);
+  let left = box[0], top = box[1], right = box[2], bottom = box[3];
+  for (let parent = control.parent; parent;) {
+    const parentBox = values(byName.get(parent)!);
+    left += parentBox[0]; right += parentBox[0];
+    top += parentBox[1]; bottom += parentBox[1];
+    parent = byName.get(parent)!.parent;
+  }
+  return {left, top, right, bottom};
+};
 
 export function tradeRecordPresentation(record: TradeRecordView, catalog?: CombatCatalog) {
   const fields = new Map(record.role?.fields);
@@ -30,12 +46,16 @@ export function hasTradeRecordDetail(record: TradeRecordView): boolean {
 }
 
 /** Dedicated source detail panels read the same confirmed record as the offer. */
-export function TradeSourceDetail({ui, catalog, record, close}: {
-  ui: HomeSourceUi; catalog?: CombatCatalog; record: TradeRecordView; close(): void;
+export function TradeSourceDetail({ui, catalog, record, scale, close}: {
+  ui: HomeSourceUi; catalog?: CombatCatalog; record: TradeRecordView; scale: number; close(): void;
 }) {
   const suffix = record.kind === 'pet' ? 'trade_petdesc.xml' : record.kind === 'tank' ? 'trade_tankdesc.xml' : 'trade_partdesc.xml';
   const layout = new HomeSourceLayout(ui, suffix);
   const controls = ui.layouts.find(value => value.path.endsWith(suffix))!.windows;
+  const root = layout.control('all');
+  const bounds = controls.map(control => absoluteRect(controls, control));
+  const width = Math.max(rectWidth(root.properties.AbsoluteRect), ...bounds.map(value => value.right));
+  const height = Math.max(rectHeight(root.properties.AbsoluteRect), ...bounds.map(value => value.bottom));
   const fields = new Map(record.role?.fields);
   const texts: Record<string, string> = {};
   if (record.role) texts.txtName = record.role.name;
@@ -58,6 +78,7 @@ export function TradeSourceDetail({ui, catalog, record, close}: {
     texts.txtDurable = sourcePartOwnedDays(record.item.ownedQuantity);
   }
   const dialog = useRef<HTMLDialogElement>(null);
+  const escapePending = useRef(false);
   useLayoutEffect(() => {
     const element = dialog.current!, previous = document.activeElement;
     element.showModal(); element.querySelector<HTMLButtonElement>('button')?.focus();
@@ -68,17 +89,35 @@ export function TradeSourceDetail({ui, catalog, record, close}: {
   }, []);
   return createPortal(<dialog ref={dialog} className="trade-source-detail" data-trade-detail={record.kind}
     aria-label={`交易物品详情：${tradeRecordPresentation(record, catalog).name}`}
-    onCancel={event => {event.preventDefault(); close();}}>
-    <div className="trade-source-detail-stage" style={{width: record.kind === 'item' ? 240 : 280, height: record.kind === 'pet' ? 220 : record.kind === 'tank' ? 340 : 130}}>
-      {controls.filter(control => control.type === 'WindowsLook/StaticImage').map(control =>
-        <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} aria-hidden="true"/>)}
-      {controls.filter(control => control.type === 'WindowsLook/StaticText').map(control =>
-        <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} text={texts[control.name] ?? ''}/>)}
-      {controls.filter(control => control.type?.endsWith('Editbox')).map(control =>
-        <div key={control.name} {...sourceProps(ui, layout, suffix, control.name)} className="trade-source-description">
-          {record.item ? catalog?.items.find(item => item.itemTableId === record.item!.itemTableId)?.info ?? '' : ''}
-        </div>)}
+    onCancel={event => {event.preventDefault(); event.stopPropagation(); close();}}
+    onKeyDown={event => {
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (!event.nativeEvent.isComposing && event.keyCode !== 229) escapePending.current = true;
+      }
+    }}
+    onKeyUp={event => {
+      event.stopPropagation();
+      if (event.key === 'Escape' && escapePending.current) {
+        escapePending.current = false;
+        if (!event.nativeEvent.isComposing && event.keyCode !== 229) close();
+      }
+    }}>
+    <div className="trade-source-detail-stage" style={{width: width * scale, height: height * scale}}>
+      <div className="trade-source-detail-source" style={{width, height, transform: `scale(${scale})`}}>
+        <SourceImageScale value={scale}>
+          {controls.filter(control => control.type === 'WindowsLook/StaticImage').map(control =>
+            <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} aria-hidden="true"/>)}
+          {controls.filter(control => control.type === 'WindowsLook/StaticText').map(control =>
+            <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} text={texts[control.name] ?? ''}/>)}
+          {controls.filter(control => control.type?.endsWith('Editbox')).map(control =>
+            <div key={control.name} {...sourceProps(ui, layout, suffix, control.name)} className="trade-source-description">
+              {record.item ? catalog?.items.find(item => item.itemTableId === record.item!.itemTableId)?.info ?? '' : ''}
+            </div>)}
+        </SourceImageScale>
+      </div>
     </div>
-    <button type="button" data-trade-detail-close="" onClick={close}>关闭详情</button>
+    <button type="button" data-trade-detail-close="" aria-label="关闭详情" onClick={close}>关闭详情</button>
   </dialog>, document.body);
 }
