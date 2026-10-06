@@ -58,6 +58,14 @@
 
 修饰不改变确认后的真实弹药ID、消耗/装填时序或第二条400ms队列，不生成item2022/2023结果，也不新增效果、声音、资源或第二条400ms队列；战斗伤害数字继续使用既有原图片。每次权威重算先清除再由当前来源重建，离开已选来源后恢复普通行为。原server分派、原始X单位及完整玩家授予/取得链仍未恢复，保持FUNC-22/23未勾。
 
+## 结算奖励与账户成长
+
+对应M2-11、M6-02及UI-19/UI-20。原客户端结果接收回调按消息`+c0/+c4/+c8/+cc`读出金钱/星币/创意点/技能点signed整数，`+d4`在同控制器给出WIN/LOSE/DRAW；`439184`读结果对应DataScale率只决定该行显不显示，不对消息值再乘比例。原`datascale.dat`31–34胜利、35–38平局、39–42失败分别给出金钱/星币/技能点/创意点增加百分比+50/−20/−50。原`level.dat`1–20按累计积分阈值0/300/…/399000；21–27为排行榜百分比/名次、98/99为最高女性/男性，均依赖全服排名。
+
+原服务端reward producer、资格、舍入与账户原写链未取得，当前按客户端接收、确认账户字段与原表参数采用：不把`combatScore`当原奖励显示，以每局非负四舍五入地图`combatScore`为重建基数base；各项读对应outcome的DataScale百分比，moneyBase=base、originalityBase=base/5、techBase=base/10、coinBase=0，分别按`round(base_i*(1+rate_i/100))`计算，只保留自然非负语义，不引入无来源的500/1000上限。coin保持0；money写入已有可花费确认余额profile`0x70`，不挪代币；累计积分/等级/创意点/技能点写入独立`account_growth`明确类型列，不覆写原`0x5c/0x9c/0xa0/0x80`，也不把结果技能点混作宠物学习`0x80`。积分累加冻结`totalScore`并以0为下界，等级取原1..20阈值中满足`>=`的最高档，21..27/98/99无排名来源不授。以上为server工作树中的采用规则实现，提交与root集成后生效。
+
+首次`(account,matchId,round)`与既有`match_history`同SQLite事务写入receipt，重复返回同一receipt不重复加钱成长；账户缺失或写失败整场回滚，沿既有pending history队列重试，保存成功才在冻结结果上附`award`。CPU/旁观无account跳过，同一account多participants只结算一次；离场人在delete前冻结真实身份并入FORFEIT，普通leave不提前结算未结局的留场玩家。共享合同`MsgRoomSnapshot.AccountGrowth`与`ResultAward`、`ResultPlayer.award?`、`ResRoleProfile.growth?`已提交beea00d；UI按4818b0c只渲染该receipt，不从local推算或重放授予。以上为采用规则，server接线提交与root集成待完成，未在原Windows程序对照，实际对局/双网页/高清/持久重启未执行。
+
 ## 未完成范围
 
 本批普通输入、消费、期限、目标、快照、Web表现和CPU接线已登记实现；本批一次集中gpt-5.6走查覆盖伪装、空袭与Func22/23，已修复发射边界恢复、普通输入快照先于事件发送，以及Func22/23的query options参数位、direct命中后效复用与Func23端点一致性三项真实问题。光学迷彩与建筑工具既有范围的集中走查与Castle重连稳态及修复事务共用损伤绘声清理保持原范围。确认已有库存的配置/自然施放、光学迷彩到期与死亡/结束/再战、建筑工具实际修复、双端绘声及库存重启恢复仍需实际验收；原未知字段、全部技能分派、五模式完整规则和M8-05不因这一合同关闭。FUNC-22/23只登记当前有限查询/射程执行器及采用的百分比政策，未执行实际玩家授予、取得或对局证据，不把source计算等同原server分派。
