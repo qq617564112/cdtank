@@ -7,6 +7,7 @@ import {TankDamageTextRenderer, type TankDamageTextFont} from './tank-damage-tex
 import {effectModelEngineDelta} from './effects/models/effect-model-animation';
 import type {PlayerSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
+import {isHiddenByOpticalCamouflage} from '../../../shared/combat/optical-camouflage';
 import {followBattleCamera} from './battle-camera';
 import {TankView} from '../assets/tanks/tank-view';
 
@@ -34,6 +35,9 @@ export class BattlePlayers {
   private readonly presentedLife = new Map<string, boolean>();
   private readonly moving = new Set<string>();
   private snapshot?: readonly PlayerSnapshot[];
+  private localPlayerId?: string;
+  private mode = 1;
+  private playing = true;
   private generation = 0;
   private error = '';
   private ammoCatalog?: CombatCatalog;
@@ -70,8 +74,10 @@ export class BattlePlayers {
     }
   }
 
-  reconcile(players: readonly PlayerSnapshot[], localPlayerId?: string): void {
+  reconcile(players: readonly PlayerSnapshot[], localPlayerId?: string, mode = 1): void {
     this.snapshot = players;
+    this.localPlayerId = localPlayerId;
+    this.mode = mode;
     const present = new Set(players.map(player => player.id));
     for (const id of this.previousHp.keys()) {
       if (!present.has(id)) this.previousHp.delete(id);
@@ -111,7 +117,10 @@ export class BattlePlayers {
         this.benefit(player.id, player.hp - previousHp, player.id === localPlayerId);
       }
       const view = this.players.get(player.id);
-      if (view) this.applyAmmoEffect(view, player);
+      if (view) {
+        this.applyAmmoEffect(view, player);
+        this.applyVisibility(view, player);
+      }
       const previous = this.previousPositions.get(player.id);
       if (view && previous?.alive && !player.alive) {
         const petType = this.ammoCatalog?.petTypes?.find(pet => pet.petId === player.petId)?.petType;
@@ -214,6 +223,7 @@ export class BattlePlayers {
       }
       view.position(player.x, player.y, player.z);
       this.applyAmmoEffect(view, current);
+      this.applyVisibility(view, current);
       this.players.set(player.id, view);
       if (this.damageTextRenderer) {
         this.damageTexts.set(player.id, new TankDamageText(this.damageTextRenderer, this.criticalTextRenderer));
@@ -238,6 +248,12 @@ export class BattlePlayers {
   private applyAmmoEffect(view: TankView, player: PlayerSnapshot): void {
     const effect = this.ammoCatalog?.items.find(item => item.itemTableId === (player.ammoItemId ?? 2001))?.effects?.[0];
     if (effect) view.setAmmoAttackEffect(effect.effectId);
+  }
+
+  /** Hostile observers hide the alive skill9 actor root; self, teammates and non-playing phases show it. */
+  private applyVisibility(view: TankView, player: PlayerSnapshot): void {
+    const observer = this.localPlayerId ? this.snapshot?.find(value => value.id === this.localPlayerId) : undefined;
+    view.root.setEnabled(this.playing && !isHiddenByOpticalCamouflage(player, observer, this.mode));
   }
 
   private actionError(id: string, view: TankView, error: unknown): void {
@@ -266,9 +282,12 @@ export class BattlePlayers {
   }
 
   render(alpha: number, localPlayerId?: string, playing = true): void {
+    this.localPlayerId = localPlayerId;
+    this.playing = playing;
     for (const player of this.snapshot ?? []) {
       const view = this.players.get(player.id);
       if (!view) continue;
+      this.applyVisibility(view, player);
       void view.life(player.alive).catch(error => {this.actionError(player.id, view, error);});
       const queueStarted = this.effects.queuedParts(player.id, player.queuedPartSkillIds ?? [], playing && player.alive);
       const revived = player.alive && this.presentedLife.get(player.id) === false;
@@ -307,6 +326,9 @@ export class BattlePlayers {
   clear(): void {
     this.generation++;
     this.snapshot = undefined;
+    this.localPlayerId = undefined;
+    this.mode = 1;
+    this.playing = true;
     this.players.forEach(view => {this.effects.detach(view); view.dispose();});
     this.players.clear();
     this.damageTexts.forEach(queue => queue.dispose());

@@ -45,7 +45,7 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
   }, []);
   const allowed = (slot: number) => items?.filter(item => slot <= 4
     ? item.itemTableId === 2007 || item.itemTableId === 2011
-    : item.itemTableId >= 1 && item.itemTableId <= 8) ?? [];
+    : item.itemTableId >= 1 && item.itemTableId <= 9) ?? [];
   async function save() {
     if (busy || requestPending.current || !items) return;
     const loadout: CpuLoadoutItem[] = [];
