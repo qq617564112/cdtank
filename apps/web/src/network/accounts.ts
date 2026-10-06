@@ -18,6 +18,7 @@ import type {ReqTankMaintenance, ResTankMaintenance} from '../../../shared/proto
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../shared/protocols/PtlOwnedRoleSale';
 import type {ResHistory} from '../../../shared/protocols/PtlHistory';
 import type {ReqTankUpgrade, ResTankUpgrade} from '../../../shared/protocols/PtlTankUpgrade';
+import type {ResPlayerProfile} from '../../../shared/protocols/PtlPlayerProfile';
 
 /** Account operations over the authenticated transport owned by GameConnection. */
 export class AccountConnection {
@@ -76,6 +77,13 @@ export class AccountConnection {
   async roleProfile(selectTitleId?: number): Promise<ResRoleProfile> {
     await this.ensureConnected();
     const result = await this.client.callApi('RoleProfile', selectTitleId === undefined ? {} : {selectTitleId});
+    if (!result.isSucc) throw new Error(result.err.message);
+    return result.res;
+  }
+
+  async playerProfile(targetAccountId: string): Promise<ResPlayerProfile> {
+    await this.ensureConnected();
+    const result = await this.client.callApi('PlayerProfile', {targetAccountId});
     if (!result.isSucc) throw new Error(result.err.message);
     return result.res;
   }

@@ -35,6 +35,7 @@ import type {ResInventory} from '../../../shared/protocols/PtlInventory';
 import type {ReqKitbag, ResKitbag} from '../../../shared/protocols/PtlKitbag';
 import type {ResOwnedRoles} from '../../../shared/protocols/PtlOwnedRoles';
 import type {ResRoleProfile} from '../../../shared/protocols/PtlRoleProfile';
+import type {ResPlayerProfile} from '../../../shared/protocols/PtlPlayerProfile';
 import type {ReqEquipment, ResEquipment} from '../../../shared/protocols/PtlEquipment';
 import type {ReqSelectRole, ResSelectRole} from '../../../shared/protocols/PtlSelectRole';
 import type {ReqTankTextures, ResTankTextures} from '../../../shared/protocols/PtlTankTextures';
@@ -371,6 +372,10 @@ export class Battle {
 
   async roleProfile(selectTitleId?: number): Promise<ResRoleProfile> {
     return this.accounts.roleProfile(selectTitleId);
+  }
+
+  async playerProfile(targetAccountId: string): Promise<ResPlayerProfile> {
+    return this.accounts.playerProfile(targetAccountId);
   }
 
   async selectRole(request: ReqSelectRole): Promise<ResSelectRole> {

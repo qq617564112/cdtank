@@ -8,6 +8,9 @@ import {sourceProps, useSourceUi} from './source-react';
 import {loadSourceUiFonts} from '../resources/source-ui-fonts';
 import {PlayerInfoResourceFeedback} from './player-info-resource-feedback';
 import {waitingTankReference} from './waiting-room-state';
+import {SourceFeedbackText} from '../resources/source-feedback-text';
+import {PlayerInfoSummary} from './player-info-summary';
+import type {ResPlayerProfile} from '../../../../shared/protocols/PtlPlayerProfile';
 
 export interface PlayerInfoPlayer {
   accountId?: string;
@@ -29,6 +32,7 @@ export interface PlayerInfoViewProps {
   onRemoveBlacklist?: () => void;
   onClose: () => void;
   onExchange?: () => void;
+  query?: (targetAccountId: string) => Promise<ResPlayerProfile>;
   roomDetails?: {roomId: string; tankId: number; petId?: number; team: string; ready: boolean};
 }
 
@@ -39,12 +43,17 @@ export function PlayerInfoView(props: PlayerInfoViewProps) {
   return props.open && props.player ? <PlayerInfoSession {...props} player={props.player}/> : null;
 }
 
-function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend, onAddBlacklist, onRemoveBlacklist, onClose, onExchange, roomDetails}: PlayerInfoViewProps & {player: PlayerInfoPlayer}) {
+function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend, onAddBlacklist, onRemoveBlacklist, onClose, onExchange, query, roomDetails}: PlayerInfoViewProps & {player: PlayerInfoPlayer}) {
   const {ui, error} = useSourceUi(true, [suffix]);
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
   const requestedFocus = useRef<'friend' | 'blacklist' | null>(null);
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [profile, setProfile] = useState<ResPlayerProfile>();
+  const [profilePending, setProfilePending] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileAttempt, setProfileAttempt] = useState(0);
+  const [summaryTab, setSummaryTab] = useState<'battle' | 'award'>();
   const layout = ui ? new HomeSourceLayout(ui, suffix) : undefined;
   useEffect(() => {
     const element = dialog.current!;
@@ -73,13 +82,39 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
       dialog.current?.querySelector<HTMLButtonElement>(`[data-player-info-${action}-action]`)?.focus();
     }
   }, [pending, player.isFriend, player.isBlocked]);
+  useEffect(() => {
+    const accountId = player.accountId;
+    setProfile(undefined);
+    setProfileError('');
+    setSummaryTab(undefined);
+    if (!accountId || !query) {
+      setProfilePending(false);
+      return;
+    }
+    let current = true;
+    setProfilePending(true);
+    void query(accountId).then(value => {
+      if (!current || value.accountId !== accountId) return;
+      setProfile(value);
+    }).catch(reason => {
+      if (current) setProfileError(`资料查询失败：${reason instanceof Error ? reason.message : String(reason)}`);
+    }).finally(() => {
+      if (current) setProfilePending(false);
+    });
+    return () => {current = false;};
+  }, [player.accountId, query, profileAttempt]);
   const friendSource = player.isFriend ? 'btnRemoveFriend' : 'btnAddFriend';
-  const knownText = (name: string) => name === 'txtPlayerName' ? player.name : name === 'txtPlayerStatus'
+  const knownText = (name: string) => name === 'txtPlayerName' ? profile?.name ?? player.name : name === 'txtPlayerStatus'
     ? player.online ? player.inRoom ? '房间中' : '在线' : '离线'
-    : name === 'txtPlayerTitle' ? player.title ?? '' : name === 'txtRoomNumber' ? roomDetails?.roomId ?? '' : '';
+    : name === 'txtPlayerTitle' ? profile ? profile.title?.name ?? '' : player.title ?? ''
+    : name === 'txtPlayerOriginality' ? profile?.originality === undefined ? '' : String(profile.originality)
+    : name === 'txtPlayerTech' ? profile?.tech === undefined ? '' : String(profile.tech)
+    : name === 'txtPlayerScore' ? profile?.score === undefined ? '' : String(profile.score)
+    : name === 'txtRoomNumber' ? roomDetails?.roomId ?? '' : '';
   const description = roomDetails ? `${roomDetails.team}\n战车：${roomDetails.tankId}${roomDetails.petId ? `\n宠物：${roomDetails.petId}` : ''}\n${roomDetails.ready ? '已准备' : '未准备'}` : '';
+  const writePending = pending || profilePending;
   return <dialog ref={dialog} data-player-info="" data-player-info-account={player.accountId}
-    aria-label={`玩家资料：${player.name}`} aria-busy={pending} style={{zoom: scale}}
+    aria-label={`玩家资料：${player.name}`} aria-busy={writePending} style={{zoom: scale}}
     onCancel={event => {event.preventDefault(); onClose();}}
     onKeyDown={event => {
       event.stopPropagation();
@@ -103,21 +138,36 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
               name={control.name} text={knownText(control.name)} hidden={control.properties.Visible === 'False'}/>)}
           <textarea {...sourceProps(ui, layout, suffix, 'edtPlayerDescription')} aria-label={roomDetails ? '房间玩家详情' : '玩家介绍'} readOnly value={description} tabIndex={-1}/>
           <SourceButton ui={ui} layout={layout} suffix={suffix} source={friendSource}
-            data-player-info-friend-action="" aria-label={player.isFriend ? '删除好友' : '加好友'} disabled={pending || !(player.isFriend ? onRemoveFriend : onAddFriend)}
+            data-player-info-friend-action="" aria-label={player.isFriend ? '删除好友' : '加好友'} disabled={writePending || !(player.isFriend ? onRemoveFriend : onAddFriend)}
             onClick={() => {requestedFocus.current = 'friend'; if (player.isFriend) onRemoveFriend?.(); else onAddFriend?.();}}/>
           <SourceButton ui={ui} layout={layout} suffix={suffix} source={player.isBlocked ? 'btnRemoveBlacklist' : 'btnAddBlacklist'}
-            data-player-info-blacklist-action="" aria-label={player.isBlocked ? '解除屏蔽' : '屏蔽'} disabled={pending || !(player.isBlocked ? onRemoveBlacklist : onAddBlacklist)}
+            data-player-info-blacklist-action="" aria-label={player.isBlocked ? '解除屏蔽' : '屏蔽'} disabled={writePending || !(player.isBlocked ? onRemoveBlacklist : onAddBlacklist)}
             onClick={() => {requestedFocus.current = 'blacklist'; if (player.isBlocked) onRemoveBlacklist?.(); else onAddBlacklist?.();}}/>
           <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnExchange"
-            data-player-info-exchange="" aria-label="交易" disabled={pending || !onExchange || !player.online || player.inRoom}
+            data-player-info-exchange="" aria-label="交易" disabled={writePending || !onExchange || !player.online || player.inRoom}
             onClick={onExchange}/>
-          {['btnEnlarge', 'btnInvite', 'rdoBattleSummary', 'rdoAwardSummary'].map(name =>
+          {['btnEnlarge', 'btnInvite'].map(name =>
             <SourceButton key={name} ui={ui} layout={layout} suffix={suffix} source={name} disabled
-              aria-label={({btnEnlarge: '展开', btnInvite: '邀请', btnExchange: '交易',
-                rdoBattleSummary: '战斗统计', rdoAwardSummary: '获奖统计'} as Record<string, string>)[name]}/>)}
+              aria-label={({btnEnlarge: '展开', btnInvite: '邀请'} as Record<string, string>)[name]}/>)}
+          <SourceButton ui={ui} layout={layout} suffix={suffix} source="rdoBattleSummary"
+            selected={summaryTab === 'battle'} aria-pressed={summaryTab === 'battle'} aria-label="战斗统计"
+            data-player-info-battle-summary="" disabled={profilePending || !profile}
+            onClick={() => setSummaryTab('battle')}/>
+          <SourceButton ui={ui} layout={layout} suffix={suffix} source="rdoAwardSummary"
+            selected={summaryTab === 'award'} aria-pressed={summaryTab === 'award'} aria-label="获奖统计"
+            data-player-info-award-summary="" disabled={profilePending || !profile}
+            onClick={() => setSummaryTab('award')}/>
           <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnClose" data-player-info-close="" aria-label="关闭玩家资料" onClick={onClose}/>
+          {summaryTab && profile && <PlayerInfoSummary key={summaryTab} mode={summaryTab} profile={profile}/>}
         </>}
         <output className="player-info-status" data-player-info-status="" aria-live="polite">{!ui && error ? '' : error || status}</output>
+        {profileError && <div className="player-info-query-status" data-player-info-query-status="" role="status" aria-live="polite">
+          <SourceFeedbackText text={profileError} />
+          <button type="button" data-player-info-profile-retry="" disabled={profilePending}
+            onClick={() => setProfileAttempt(value => value + 1)}>
+            <SourceFeedbackText text="重试资料" />
+          </button>
+        </div>}
         {!ui && error && <PlayerInfoResourceFeedback close={onClose} />}
         {!ui && !error && <button type="button" data-player-info-close="" onClick={onClose}>关闭</button>}
       </div>

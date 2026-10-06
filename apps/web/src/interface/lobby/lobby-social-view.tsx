@@ -1,6 +1,6 @@
 import {TradeSourcePage} from '../account/trade-source-page';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
-import {useEffect, useState, useSyncExternalStore} from 'react';
+import {useCallback, useEffect, useState, useSyncExternalStore} from 'react';
 import type {Battle} from '../../match/battle';
 import {LobbyPlayerListView} from './lobby-player-list';
 import {PlayerInfoView} from './player-info';
@@ -20,6 +20,7 @@ export function LobbySocialView({battle}: {battle: Battle}) {
   const [selected, setSelected] = useState<{accountId: string; name: string} | null>(null);
   const {ui} = useSourceUi(true, ['playerlist.xml']);
   const layout = ui ? new HomeSourceLayout(ui, 'playerlist.xml') : undefined;
+  const queryPlayerProfile = useCallback((accountId: string) => battle.playerProfile(accountId), [battle]);
   useEffect(() => {battle.lobbyPresence.start(); return () => battle.lobbyPresence.stop();}, [battle]);
   useEffect(() => {
     if (presence.status === '连接已断开') setSelected(null);
@@ -44,6 +45,7 @@ export function LobbySocialView({battle}: {battle: Battle}) {
   }
   const tradeValue = trade.value, tradeSession = tradeValue?.session;
   const showTrade = !presence.inRoom && tradeSession && dismissedTrade !== tradeSession.id;
+  useEffect(() => {if (showTrade) setSelected(null);}, [showTrade]);
   const incomingTrade = tradeSession?.inviterAccountId !== tradeValue?.account.accountId;
   const peerName = tradeSession?.parties.find(party => party.accountId !== tradeValue?.account.accountId)?.name;
   const closeTrade = () => {
@@ -55,9 +57,9 @@ export function LobbySocialView({battle}: {battle: Battle}) {
   return <>
     {ui && layout && <>
       <SourceButton ui={ui} layout={layout} suffix="playerlist.xml" source="PlayerTab" className="lobby-source-tab" selected={tab === 'players'}
-        data-lobby-player-tab onClick={() => setTab('players')} aria-label="大厅玩家"/>
+        data-lobby-player-tab onClick={() => {setTab('players'); setSelected(null);}} aria-label="大厅玩家"/>
       <SourceButton ui={ui} layout={layout} suffix="playerlist.xml" source="FriendTab" className="lobby-source-tab" selected={tab === 'friends'}
-        data-lobby-friend-tab onClick={() => {setTab('friends'); void battle.friends.refresh(); void battle.blacklist.refresh();}} aria-label="好友"/>
+        data-lobby-friend-tab onClick={() => {setTab('friends'); setSelected(null); void battle.friends.refresh(); void battle.blacklist.refresh();}} aria-label="好友"/>
       <SourceStaticImage ui={ui} layout={layout} suffix="playerlist.xml"
         name={tab === 'friends' ? 'picFriendTabSelect' : 'picPlayerTabSelect'} className="lobby-source-picture"/>
     </>}
@@ -72,6 +74,7 @@ export function LobbySocialView({battle}: {battle: Battle}) {
         setSelected(canonical ?? player); void battle.friends.refresh(); void battle.blacklist.refresh();
       }}/>
     <PlayerInfoView open={!!profile && !presence.inRoom && !showTrade} player={profile} pending={friends.pending || blacklist.pending || trade.pending} status={trade.status || blacklist.status || friends.status}
+      query={queryPlayerProfile}
       onAddFriend={() => {if (selected) void battle.friends.change('ADD', selected.accountId);}}
       onRemoveFriend={() => {if (selected) void battle.friends.change('REMOVE', selected.accountId);}}
       onAddBlacklist={() => {if (selected) void battle.blacklist.change('ADD', selected.accountId);}}
