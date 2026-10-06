@@ -23,11 +23,11 @@ export interface DisplayPreferences {
 
 `initializeSettings` 在 React 首帧前恢复并应用显示偏好，并把读取结果放入 `display` 供 `SettingsSourceView` 显示初始消息。设置页草稿以当前 active 对象为初值，不重新读取损坏存储覆盖 active。确认时键位和快捷聊天保持既有分范围保存流程；显示偏好只有完整写入成功后才应用到 active 并通知运行时，保存失败时显示草稿保留、对话框不关闭且 active 显示属性不变。恢复默认只还原三组草稿，不即时应用；取消、关闭和 Escape 不写显示偏好，也不改变运行时。
 
-高、低画质单选互斥，卡通渲染独立。高画质保留当前 Engine 的 `adaptDeviceRatio=true` 真实 DPR 后备缓冲比例；低画质的 3D 后备缓冲宽高为高档一半，CSS 视口与 current DPR 不变。切换时当前 engine 即时调整并 resize，后续窗口 resize 和 DPR 变化仍按选档比例。实现不写固定 `hardwareScaling1` 覆盖 DPR，也不以低分辨率结果声明高清性能通过。
+高、低画质单选互斥，卡通渲染独立。高画质保留当前 Engine 的 `adaptDeviceRatio=true` 真实 DPR 后备缓冲比例；低画质的 3D 后备缓冲宽高为高档一半，CSS 视口与 current DPR 不变。比例使用真实 `window.devicePixelRatio || 1`，DPR 小于 1 时仍保持高一档 `1/DPR`、低一档 `2/DPR`。切换时当前 engine 即时调整并 resize，后续窗口 resize 和 DPR 变化仍按选档比例。实现不写固定 `hardwareScaling1` 覆盖 DPR，也不以低分辨率结果声明高清性能通过。
 
 Type8 屏幕 `EffectOverlayDrawState` 随实际 engine 后备缓冲更新 `width`、`height`，保留 UV retention、颜色、`f32` 和 native vertices，不沿用构造时旧尺寸，也不另开材质或纹理。
 
-卡通渲染只调整已注册合格 Mesh 的 `renderOutline`，保持黑色 RGB、Ink 0.65、原 InstancedMesh source、动画和 morph、alpha 混合与 planar alpha-test 排除规则，地形不描边。已加载模型、设置后的异步新增模型、动作切换和新 scene 对象读取当前 active 值；不创建新 Mesh/Material、不复制 geometry、不逐帧扫描全部 mesh。`sourceMesh` 只注册一次，Mesh/Scene dispose 时解绑监听并释放引用，scene-runtime dispose 解绑 preference listener。
+卡通渲染只调整已注册合格 Mesh 的 `renderOutline`，保持黑色 RGB、Ink 0.65、原 InstancedMesh source、动画和 morph、alpha 混合与 planar alpha-test 排除规则，地形不描边。已加载模型、已注册 source 的实际克隆、设置后的异步新增模型、动作切换和新 scene 对象读取当前 active 值；不创建新 Mesh/Material、不复制 geometry、不逐帧扫描全部 mesh。`sourceMesh` 只注册一次，已注册 source 通过 `onClonedObservable` 将合格克隆 Mesh 接入同一偏好注册，clone observer 自身也随 Mesh/Scene dispose 解绑并释放引用，scene-runtime dispose 解绑 preference listener。
 
 ## 源界面
 

@@ -6,7 +6,7 @@ import {getDisplayPreferences, subscribeDisplayPreferences} from '../interface/s
 export function createSceneRuntime(canvas: HTMLCanvasElement) {
   const engine=new Engine(canvas,true,{},true),scene=new Scene(engine);
   const displayScale=(): number => (getDisplayPreferences().highPrecision ? 1 : 2)
-    / Math.max(1, window.devicePixelRatio || 1);
+    / (window.devicePixelRatio || 1);
   const applyDisplayScale=(): void=>{engine.setHardwareScalingLevel(displayScale());};
   const applyDisplay=(): void=>{applyDisplayScale();};
   const unsubscribeDisplay=subscribeDisplayPreferences(applyDisplay);
