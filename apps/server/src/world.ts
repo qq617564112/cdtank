@@ -22,6 +22,8 @@ import {MEDICAL_AMMO_ID, resolveMedicalAmmo} from './battle/items/medical-ammo';
 import {advanceAmmoBurn, clearAmmoBurn, startAmmoBurn} from './battle/items/ammo-burn';
 import {advanceAmmoSlow, clearAmmoSlow, startAmmoSlow} from './battle/items/ammo-slow';
 import {advanceAmmoRadarJam, ammoRadarJamSkillEffect, clearAmmoRadarJam, startAmmoRadarJam} from './battle/items/ammo-radar-jam';
+import {resolveExplosiveAmmoBlast} from './battle/items/explosive-ammo';
+import {resolveSelfDestructDeath} from './battle/items/self-destruct';
 import {roomMaxPlayers, roomMinPlayers} from './rooms/player-limits';
 import {findAvailableTankSpawn} from './battle/spawn-position';
 import {battleAttributes, battlePartSources, battleSkillSources, battleInventory} from './battle/projection';
@@ -138,6 +140,9 @@ export class World {
   private nextRoomId = 1;
   private nextBulletId = 1;
   private nextShotId = 1;
+  private combatResolutionDepth = 0;
+  private deferredModeOutcome: {outcome: import('./modes/outcomes').ModeOutcome;
+    attackerId: string} | undefined;
   /** Real configured tick interval, captured from the running world step. */
   private lastTickMs = 0;
   /** Mid-round ordinary departures, keyed by room then retired participant id; cleared at round end. */
@@ -870,26 +875,34 @@ export class World {
     const resolveShotPlayerHit = (owner: PlayerState, target: PlayerState, damage: number,
       ammoItemId: number | undefined, shotId?: string, bearing?: {x: number; z: number}) => {
       if (!target.alive || room.phase !== 'PLAYING') return;
-      const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);
-      const previousHp = target.hp;
-      const firstEvent = events.length;
-      this.applyPlayerDamage(room, owner, target, damage, events, selector, undefined, ammoItemId,
-        bearing ? {bodyYaw: target.bodyYaw ?? target.yaw, bearing} : undefined, shotId);
-      if (room.phase === 'PLAYING' && ammoItemId === 2007 && target.alive && target.hp < previousHp) {
-        startAmmoBurn(target, owner.id, now);
-      }
-      if (room.phase === 'PLAYING' && ammoItemId === 2008 && target.alive && target.hp < previousHp) {
-        startAmmoSlow(room.roomId, target, now, () => recomputeBattleAttributes(target), events);
-      }
-      if (room.phase === 'PLAYING' && ammoItemId === 2010 && target.alive && target.hp > 0
-          && target.hp < previousHp
-          && owner.id !== target.id && !this.isAlly(room, owner, target)) {
-        if (startAmmoRadarJam(room.roomId, target, now, events)) {
-          for (const notice of events.slice(firstEvent)) {
-            if (notice.type === 'hit') {notice.playSkillEffect = ammoRadarJamSkillEffect(target);}
+      const blastCenter = ammoItemId === 2005 ? {x: target.x, y: target.y, z: target.z} : undefined;
+      this.runCombatResolution(room, events, () => {
+        const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);
+        const previousHp = target.hp;
+        const firstEvent = events.length;
+        this.applyPlayerDamage(room, owner, target, damage, events, selector, undefined, ammoItemId,
+          bearing ? {bodyYaw: target.bodyYaw ?? target.yaw, bearing} : undefined, shotId);
+        if (room.phase === 'PLAYING' && ammoItemId === 2007 && target.alive && target.hp < previousHp) {
+          startAmmoBurn(target, owner.id, now);
+        }
+        if (room.phase === 'PLAYING' && ammoItemId === 2008 && target.alive && target.hp < previousHp) {
+          startAmmoSlow(room.roomId, target, now, () => recomputeBattleAttributes(target), events);
+        }
+        if (room.phase === 'PLAYING' && ammoItemId === 2010 && target.alive && target.hp > 0
+            && target.hp < previousHp
+            && owner.id !== target.id && !this.isAlly(room, owner, target)) {
+          if (startAmmoRadarJam(room.roomId, target, now, events)) {
+            for (const notice of events.slice(firstEvent)) {
+              if (notice.type === 'hit') {notice.playSkillEffect = ammoRadarJamSkillEffect(target);}
+            }
           }
         }
-      }
+        if (blastCenter) {
+          resolveExplosiveAmmoBlast(room, owner, blastCenter, now, events,
+            (source, victim, directDamage, skillId) =>
+              this.applyDirectSkillDamage(room, source, victim, directDamage, now, skillId, events));
+        }
+      });
     };
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {
       respawn: player => {
@@ -1056,6 +1069,31 @@ export class World {
     if (wasAlive && !target.alive) this.commitPlayerDeath(room, target, owner.id, outcome, events);
   }
 
+  private applyDirectSkillDamage(room: RoomState, owner: PlayerState, target: PlayerState,
+    damage: number, now: number, skillId: number, events: MsgRoomEvent[]): void {
+    const wasAlive = target.alive;
+    const hpBefore = target.hp;
+    const outcome = damagePlayerDirectly(room, owner, target, damage, now, skillId, events);
+    applyPetHitSpeed(target, owner, room.mode, hpBefore, now, () => recomputeBattleAttributes(target));
+    if (wasAlive && !target.alive) this.commitPlayerDeath(room, target, owner.id, outcome, events);
+  }
+
+  private runCombatResolution(room: RoomState, events: MsgRoomEvent[], resolve: () => void): void {
+    this.combatResolutionDepth += 1;
+    try {
+      resolve();
+    } finally {
+      this.combatResolutionDepth -= 1;
+      if (this.combatResolutionDepth === 0 && this.deferredModeOutcome) {
+        const deferred = this.deferredModeOutcome;
+        this.deferredModeOutcome = undefined;
+        this.finishRoom(room, this.now(), 'OBJECTIVE',
+          deferred.outcome.winnerTeam, deferred.outcome.winnerPlayerId, events);
+        events.push(event(room.roomId, 'finish', this.finishMessage(room), deferred.attackerId));
+      }
+    }
+  }
+
   /** Real teams in modes1-3; modes4/5 are individual, so no other participant is an ally. */
   private isAlly(room: RoomState, owner: Pick<PlayerState, 'id' | 'team'>,
     target: Pick<PlayerState, 'id' | 'team'>): boolean {
@@ -1065,27 +1103,42 @@ export class World {
   private commitPlayerDeath(room: RoomState, target: PlayerState, attackerId: string,
     outcome: import('./modes/outcomes').ModeOutcome | undefined, events: MsgRoomEvent[]): void {
     const attacker = room.players.get(attackerId);
-    clearRespawnProtection(target);
-    clearAmmoRadarJam(target);
-    clearPetHitSpeed(target, () => recomputeBattleAttributes(target));
-    if (attacker) healPetAfterKill(room.roomId, attacker, target, room.mode, events);
-    if (attacker && copyPassiveSkillAfterKill(attacker, target, room.mode)) recomputeBattleAttributes(attacker);
-    if (clearCopiedRoleSkill(target.combat)) recomputeBattleAttributes(target);
-    target.equipmentSupply = undefined;
-    resetTrapRestraint(target);
-    resetTrapTurnRestraint(target);
-    resetTrapFireRestraint(target);
-    clearDefenseDrink(target, () => recomputeBattleAttributes(target));
-    clearAttackDrink(target, () => recomputeBattleAttributes(target));
-    clearInvincibility(target, () => recomputeBattleAttributes(target));
-    clearOpticalCamouflage(target, () => recomputeBattleAttributes(target));
-    clearRoleDisguise(target, () => recomputeBattleAttributes(target), room.roomId, events);
-    clearSpeedDrink(target, () => recomputeBattleAttributes(target));
-    clearTurnDrink(target, () => recomputeBattleAttributes(target));
-    clearAmmoSlow(target, () => recomputeBattleAttributes(target));
-    if (outcome) {
-      this.finishRoom(room, this.now(), 'OBJECTIVE', outcome.winnerTeam, outcome.winnerPlayerId, events);
-      events.push(event(room.roomId, 'finish', this.finishMessage(room), attackerId));
+    const blastCenter = target.alive ? undefined : {x: target.x, y: target.y, z: target.z};
+    this.combatResolutionDepth += 1;
+    try {
+      clearRespawnProtection(target);
+      clearAmmoRadarJam(target);
+      clearPetHitSpeed(target, () => recomputeBattleAttributes(target));
+      if (attacker) healPetAfterKill(room.roomId, attacker, target, room.mode, events);
+      if (attacker && copyPassiveSkillAfterKill(attacker, target, room.mode)) recomputeBattleAttributes(attacker);
+      if (clearCopiedRoleSkill(target.combat)) recomputeBattleAttributes(target);
+      target.equipmentSupply = undefined;
+      resetTrapRestraint(target);
+      resetTrapTurnRestraint(target);
+      resetTrapFireRestraint(target);
+      clearDefenseDrink(target, () => recomputeBattleAttributes(target));
+      clearAttackDrink(target, () => recomputeBattleAttributes(target));
+      clearInvincibility(target, () => recomputeBattleAttributes(target));
+      clearOpticalCamouflage(target, () => recomputeBattleAttributes(target));
+      clearRoleDisguise(target, () => recomputeBattleAttributes(target), room.roomId, events);
+      clearSpeedDrink(target, () => recomputeBattleAttributes(target));
+      clearTurnDrink(target, () => recomputeBattleAttributes(target));
+      clearAmmoSlow(target, () => recomputeBattleAttributes(target));
+      if (blastCenter && room.phase === 'PLAYING') {
+        resolveSelfDestructDeath(room, target, blastCenter, this.now(), events,
+          (source, victim, damage, skillId) =>
+            this.applyDirectSkillDamage(room, source, victim, damage, this.now(), skillId, events));
+      }
+      if (outcome) this.deferredModeOutcome ??= {outcome, attackerId};
+    } finally {
+      this.combatResolutionDepth -= 1;
+      if (this.combatResolutionDepth === 0 && this.deferredModeOutcome) {
+        const deferred = this.deferredModeOutcome;
+        this.deferredModeOutcome = undefined;
+        this.finishRoom(room, this.now(), 'OBJECTIVE',
+          deferred.outcome.winnerTeam, deferred.outcome.winnerPlayerId, events);
+        events.push(event(room.roomId, 'finish', this.finishMessage(room), deferred.attackerId));
+      }
     }
   }
 
