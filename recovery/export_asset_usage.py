@@ -74,6 +74,35 @@ def code_evidence(file, token):
     number = next(i for i, line in enumerate(code, 1) if token in line)
     return dict(file=file, line=number, code=code[number - 1].strip())
 
+def table_consumers():
+    result = {}
+    # These literal calls name decoded tables, rather than Web metadata files.
+    for path in sorted((ROOT / 'apps/server/src').rglob('*.ts')):
+        for number, line in enumerate(path.read_text().splitlines(), 1):
+            names = re.findall(r"sourceTablePath\(['\"]([^'\"]+)['\"]\)", line)
+            if path.relative_to(ROOT).as_posix() == 'apps/server/src/config.ts':
+                names += re.findall(r"readTable\(['\"]([^'\"]+)['\"]\)", line)
+            for name in names:
+                result.setdefault(name, []).append(dict(file=path.relative_to(ROOT).as_posix(),
+                    line=number, entry='decoded-table-read', code=line.strip()))
+    # config.ts expands its explicit five-mode range into m001 through m005.
+    config = 'apps/server/src/config.ts'
+    mode_range = code_evidence(config, '[1, 2, 3, 4, 5].flatMap(mode =>')
+    mode_read = code_evidence(config, 'readTable(`m00${mode}`)')
+    for mode in range(1, 6):
+        result.setdefault(f'm00{mode}', []).extend([
+            dict(**mode_range, entry='decoded-mode-table-range'),
+            dict(**mode_read, entry='decoded-mode-table-read')])
+    resolver = dict(**code_evidence('apps/server/src/runtime/content-paths.ts',
+        'process.env.CONTENT_TABLES'), entry='decoded-table-path')
+    config_read = dict(**code_evidence(config, 'readFileSync(sourceTablePath(name)'),
+        entry='decoded-table-loader')
+    for entries in result.values():
+        if any(entry['file'] == config for entry in entries):
+            entries.append(config_read)
+        entries.append(resolver)
+    return result
+
 def build():
     inventory = json.loads((ROOT / 'recovery/output/catalog/inventory.json').read_text())
     by_key = {row['key']: row for row in inventory}
@@ -143,13 +172,15 @@ def build():
             if field in DERIVED_FIELDS and normalize(value) in regions:
                 add(regions[normalize(value)], name, location, value, 'atlas-region-use', value)
     # Table provenance published by the table decoder includes the source path.
+    table_loaders = table_consumers()
     for path in sorted((ROOT / 'recovery/output/verified/tables').glob('*.json')):
         table = json.loads(path.read_text())
         source = table.get('source')
         if source and normalize(source) in references:
             references[normalize(source)].append(dict(metadata=path.relative_to(ROOT).as_posix(), pointer='/source',
                 reference=source, normalizedReference=normalize(source), relation='decoded-table', artifact=None,
-                usage='table-metadata', loadingCode=[], runtimeAcceptance='not-established-by-index'))
+                usage='table-metadata', loadingCode=table_loaders.get(path.stem, []),
+                runtimeAcceptance='not-established-by-index'))
     # Source paths constructed by exporters are recorded with their exact code basis.
     def exporter_source(key, name, location, code_file, code_token):
         add(key, name, location, key, 'exporter-source-construction', name)

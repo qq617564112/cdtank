@@ -8,6 +8,8 @@
 
 React加载入口已随导出器写入当前全量索引；Home、等待房间、结算、设置、商城和交易页面的明确`ui.json`/`combat-catalog.json`加载入口均记录在对应引用的`loadingCode`中。该入口只是代码引用证据，不把`ui.json`或目录的加载算作其中任一资产的浏览器实载或原表现验收。
 
+解码表引用另记录服务端明确的`sourceTablePath('名称')`调用，以及`config.ts`中`readTable('tank')`、`readTable('pet')`与显式五模式范围生成的`m001`至`m005`入口。每条保留具名调用、共同读取函数及`CONTENT_TABLES`路径解析的文件/行号/代码；未找到调用的表仍为空，不把相近文件名算作加载来源。此表入口实现尚未重新导出全量索引或完成集中静态走查；不会改变统一`runtimeAcceptance`。
+
 明确source→output/asset映射将glb/png使用反向关联源POL/MV3/CVD/DDS；战车动作file相对component.ini目录解析；UI裁切区域关联Imagefile原图集纹理，region名字不是同名独立TGA文件。场景OBJ/CAS/BOX、地形POL/出生RPT/NAV、城堡INI、effect.sav与combat三张源表由导出器明确构造源路径，记录sourceConstruction的代码文件、行号和语句，保留与直接元数据引用的区别。
 
 路径统一Windows斜线与大小写，去除已提取data/Data或CDTank/Data前缀。不按相近文件名、后缀替换或资源名字猜来源。outsideReferences保留效果原TGA引用、未发布模型路径、独立music归档及非Data二进制证据引用；已有显式published source映射者另标publishedResolvedSource。外部引用并不统一解释成文件丢失。
