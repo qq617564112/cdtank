@@ -40,6 +40,7 @@ import {battleMovementPose} from './battle/movement';
 import {roleHurtSelector} from './battle/roles/hurt-direction';
 import {initializeBattleParticipants} from './battle/start';
 import {initializeModeRound} from './modes/start';
+import {timeLimitOutcome} from './modes/outcomes';
 import {advanceActors} from './battle/actors';
 import {consumeConfirmedAmmo} from './battle/items/ammo-consumption';
 import {acceptBattleInput} from './battle/accept-input';
@@ -512,7 +513,9 @@ export class World {
         if (now >= room.startedAt) {
           // Expiry precedes simulation: no post-deadline movement, hit or respawn.
           if (now - room.startedAt >= this.timeLimit(room) * 1000) {
-            this.finishRoom(room, now, 'TIME_LIMIT', undefined, undefined, events);
+            const outcome = timeLimitOutcome(room);
+            this.finishRoom(room, now, 'TIME_LIMIT',
+              outcome.winnerTeam, outcome.winnerPlayerId, events);
             events.push(event(room.roomId, 'finish', this.finishMessage(room), ''));
           } else {
             // The first active tick only advances by the time elapsed since the
