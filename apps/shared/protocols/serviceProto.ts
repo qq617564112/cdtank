@@ -242,7 +242,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 93,
+    "version": 94,
     "services": [
         {
             "id": 0,
@@ -3055,6 +3055,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                             }
                         ]
                     }
+                },
+                {
+                    "id": 11,
+                    "name": "award",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/ResultAward"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -6747,6 +6756,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         ]
                     },
                     "optional": true
+                },
+                {
+                    "id": 2,
+                    "name": "growth",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/AccountGrowth"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -8231,6 +8249,100 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 6,
                     "name": "z",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/AccountGrowth": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "rankPoints",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "level",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "originality",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "tech",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/ResultAward": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "money",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "coin",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "originality",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "tech",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "rankPoints",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "levelBefore",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "levelAfter",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "expPercent",
                     "type": {
                         "type": "Number"
                     }

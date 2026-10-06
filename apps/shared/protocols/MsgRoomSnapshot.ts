@@ -148,6 +148,24 @@ export interface GroundTrapSnapshot {
   expiresAt: number;
 }
 
+export interface AccountGrowth {
+  rankPoints: number;
+  level: number;
+  originality: number;
+  tech: number;
+}
+
+export interface ResultAward {
+  money: number;
+  coin: number;
+  originality: number;
+  tech: number;
+  rankPoints: number;
+  levelBefore: number;
+  levelAfter: number;
+  expPercent: number;
+}
+
 export interface ResultPlayer {
   id: string;
   name: string;
@@ -160,6 +178,7 @@ export interface ResultPlayer {
   outcomeBonus: number;
   totalScore: number;
   outcome: 'WIN' | 'LOSE' | 'DRAW';
+  award?: ResultAward;
 }
 
 export interface MatchResult {
