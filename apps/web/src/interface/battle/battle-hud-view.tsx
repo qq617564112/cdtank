@@ -27,18 +27,6 @@ export function BattleHudView({hud, items, onUseSlot}: {
     window.addEventListener('resize', resize); return () => window.removeEventListener('resize', resize);
   }, []);
   const scale = Math.min(size.width / 800, size.height / 600), data = state.data;
-  const playing = state.visible && state.phase === 'PLAYING';
-  const [intro, setIntro] = useState<'hidden' | 'mode' | 'fight'>('hidden');
-  useEffect(() => {
-    if (!playing) {
-      setIntro('hidden');
-      return;
-    }
-    setIntro('mode');
-    const fight = setTimeout(() => setIntro('fight'), 2000);
-    const finish = setTimeout(() => setIntro('hidden'), 3000);
-    return () => {clearTimeout(fight); clearTimeout(finish);};
-  }, [playing, state.roomId, state.round]);
   return <div id="original-battle-hud" hidden={!state.visible} data-mode={state.mode}
     style={{width: 800, height: 600, left: (size.width - 800 * scale) / 2,
       top: (size.height - 600 * scale) / 2, transform: `scale(${scale})`}}>
@@ -47,7 +35,7 @@ export function BattleHudView({hud, items, onUseSlot}: {
     </filter></svg>
     {data && <>
       <HudLayout source={data.layouts.find(layout => layout.path === 'ui/layouts/game_main.xml')!}
-        data={data} state={state} hud={hud} filterId={filterId} scale={scale} intro={intro} />
+        data={data} state={state} hud={hud} filterId={filterId} scale={scale} intro={state.introStage} />
       <HudItemPanel data={data} hud={hud} items={items} onUseSlot={onUseSlot} />
       <HudMinimapView hud={hud} data={data} />
       {['team', 'conquer', 'vip', 'melee', 'destroy'].map((name, index) => <HudLayout key={name}

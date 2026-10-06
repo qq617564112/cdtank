@@ -79,8 +79,15 @@ export class BattlePlayers {
     this.benefitTexts.forEach(queue => queue.clear());
     this.previousHp.clear();
     for (const player of players) {
-      this.players.get(player.id)?.position(player.x, player.y, player.z);
+      const view = this.players.get(player.id);
+      if (view) this.resetPose(view, player);
     }
+  }
+
+  private resetPose(view: TankView, player: PlayerSnapshot): void {
+    view.root.rotation.y = -(player.bodyYaw ?? player.yaw);
+    view.position(player.x, player.y, player.z);
+    view.aim(player.yaw + player.aim + view.root.rotation.y);
   }
 
   reconcile(players: readonly PlayerSnapshot[], localPlayerId?: string, mode = 1): void {
@@ -232,7 +239,7 @@ export class BattlePlayers {
         view.dispose();
         return;
       }
-      view.position(player.x, player.y, player.z);
+      this.resetPose(view, current);
       this.applyAmmoEffect(view, current);
       this.applyVisibility(view, current);
       this.players.set(player.id, view);

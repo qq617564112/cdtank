@@ -252,7 +252,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 101,
+    "version": 102,
     "services": [
         {
             "id": 55,
@@ -2538,6 +2538,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                             "type": "String"
                         }
                     }
+                },
+                {
+                    "id": 16,
+                    "name": "battleStartsAt",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 },
                 {
                     "id": 3,

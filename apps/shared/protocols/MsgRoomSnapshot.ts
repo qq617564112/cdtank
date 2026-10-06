@@ -234,6 +234,8 @@ export interface MatchSnapshot {
   /** Clients which completed resource loading for this round; CPUs have no separate renderer. */
   loadedPlayerIds?: string[];
   rematchPlayerIds: string[];
+  /** Server millisecond time the round's battle actually starts; intro precedes it. */
+  battleStartsAt?: number;
   minPlayers: number;
   maxPlayers?: number;
   targetScore: number;

@@ -26,7 +26,7 @@ M5-04 / UI-09 与 M5-05。`battle-hud-view.tsx` 现在按 `ui/layouts/game_main.
 
 `hud-minimap-view.tsx` 独立订阅小地图快照，在原 `picMiniMap`(608,408,192,192,Alpha0.5) 内显示本图原场景的俯视捕获。25图分别读取NAV和全部RPT出生点，采用包含这些原位置的固定正方形范围；底图与标记共用 `hud-minimap-bounds.ts`。原世界+X向右、+Z向上，本机朝上箭头按 `yaw` 旋转。详见 `hud-minimap-coordinate-source.md` 的逐图范围与600出生点像素表。
 
-本机使用原 `wotanke.tga`，敌我使用 `danke.tga`，目标使用 `diaobao.tga`，擒王使用 `viptanke.tga`。只显示存活且观察者可见的玩家；模式1–3按队伍区分敌我，模式4/5本人以外都是对手。原八边框独立于内容Alpha0.5。未知地图或俯视图尚未就绪时不显示标记。
+本机使用原 `wotanke.tga`，敌我使用 `danke.tga`，目标使用 `diaobao.tga`，擒王使用 `viptanke.tga`。只显示存活且观察者可见的玩家；模式1–3按队伍区分敌我，模式4/5本人以外都是对手。原八边框独立于内容Alpha0.5。地图边界可用时即使俯视底图尚未就绪也照常投影玩家与占领/破坏目标；未知地图且无固定边界时才不显示标记。
 
 ## 五模式信息
 
@@ -41,9 +41,9 @@ mode4 本机 kills，mode5 存活 `DESTROY` 目标剩余数；缺失合法字段
 
 ## 阶段与开场
 
-当前阶段和介绍时长已由用户确认采用。
+当前阶段、介绍时长和开始门禁已由用户确认采用。模式提示2秒、Fight1秒期间所有坦克不动，提示播放完才进入实际计时与移动。
 
-开场采用本局 `PLAYING` 的 Web 呈现政策：模式背景与当前模式图显示2秒，随后仅显示Fight图1秒，再隐藏。`roomId/round`与战斗显隐变化清理旧计时器。原 native 阶段 producer 仍未恢复。
+开场采用本局 `PLAYING` 的 Web 呈现政策：模式背景与当前模式图显示2秒，随后仅显示Fight图1秒，再隐藏。客户端HUD不再独立`setTimeout`，而沿`snapshot.serverTime`加收到后真实frame elapsed显示剩余提示；重连只显示剩余而不重播。`roomId/round`与战斗显隐变化清理旧状态。开始deadline来自`MatchSnapshot.battleStartsAt?:number`，服务端毫秒时间；模式提示/Fight期间服务器不推进运动/CPU/托管/射击/道具/占领/伤害，拒绝普通input和pose，`remaining`恒定`timeLimit`，deadline后首active dt只含deadline之后时间。没有新phase/flag，LOADING保留旧资源门禁，再战重新deadline。原 native 阶段 producer 仍未恢复。
 
 ## 数据订阅
 

@@ -1,6 +1,6 @@
 # 战斗HUD确认业务规则
 
-M5-04、M5-05、UI-09采用以下用户确认。原指令事实与项目规则分别记录；缺原服务端实现不再阻止这些已明确规则的接线。
+M5-04、M5-05、UI-09采用以下用户确认。原指令事实与项目规则分别记录；缺原服务端实现不再阻止这些已明确规则的接线。战斗开始合同采用用户确认：模式提示2秒、Fight提示1秒，提示期间所有坦克不动，提示播放完才进入实际计时与移动。
 
 | 项目 | 确认规则 | 当前消费者 |
 | --- | --- | --- |
@@ -10,7 +10,8 @@ M5-04、M5-05、UI-09采用以下用户确认。原指令事实与项目规则�
 | 擒王数字（4） | 双方王的当前血量 | 两方 `isVIP` 玩家的 `hp` |
 | 破坏数字（6） | 剩余目标 | 存活 `DESTROY` 目标数 |
 | 道具遮罩（7） | 当前效果剩余时间 | 现服务端 `expiresAt`；弹药装填使用 `reload` |
-| 阶段（8） | 采用当前推导 | WAITING/LOADING隐藏；PLAYING显示；FINISHED保留终值；换局/离房清理；模式介绍2秒、Fight1秒 |
+| 阶段（8） | 采用当前推导 | WAITING/LOADING隐藏；PLAYING显示；FINISHED保留终值；换局/离房清理；模式提示2秒、Fight1秒；`MatchSnapshot.battleStartsAt?:number`为服务端毫秒开始时间 |
+| 开始门禁 | 模式提示与Fight播放完才真正开始 | 所有真人地图战车 loaded 后的 startRoom 设置`room.startedAt=now+3000ms`并公布`battleStartsAt`；期间服务器不simulate运动/CPU/托管/射击/道具/占领/伤害，拒绝普通input和pose，remaining恒定timeLimit；deadline后首active dt只含deadline之后时间；elapsed/playedSeconds沿真实room.startedAt，不含intro |
 | 快捷栏（9） | 弹药槽选弹，道具槽立即使用 | 鼠标与数字键共用现 `PlayerInput.useItem` 和服务端分派 |
 | 小地图 | 逐张建立世界坐标与地图像素映射 | 原25份NAV及RPT、每图固定正方形范围、同投影俯视原场景 |
 | 头顶标签 | 美观优先，参照原版风格 | 称号→姓名/王徽章→原血条→当前/最大生命，实际模型顶部锚点、温和距离缩放、原有效隐身规则 |
@@ -24,4 +25,4 @@ M5-04、M5-05、UI-09采用以下用户确认。原指令事实与项目规则�
 
 ## 验收边界
 
-用户确认已消除上述项目规则的业务定义缺口；它不等于取得原服务端producer，也不等于新增页面实测。本批未运行测试、浏览器、构建或类型检查，完整高清/原版视觉父项保持待验收。
+用户确认已消除上述项目规则的业务定义缺口；它不等于取得原服务端producer，也不等于新增页面实测。开场合同没有新phase/flag，LOADING保留旧资源门禁，再战重新deadline；共享 helper `battleIntroStage` / `battleIsActive` 和常量定义在`apps/shared/combat/battle-start.ts`。客户端HUD不再独立`setTimeout`，而沿`snapshot.serverTime`加收到后真实frame elapsed显示剩余提示，重连只显示剩余而不重播；客户端`motionAxes`/`LocalTankMotion`/`reportedPose`/`HUD canUseShortcuts`同步gate，聊天室和离房不禁用。本批未运行测试、浏览器、构建或类型检查，完整高清/原版视觉父项保持待验收。

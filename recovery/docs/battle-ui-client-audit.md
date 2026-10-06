@@ -13,7 +13,7 @@
 | 八槽 | 默认弹无限图、确认数量、确认选中弹槽、装填/道具剩余秒数、点击选弹/立即使用 |
 | 小地图 | 原场景俯视图、25图独立NAV/RPT映射、八边框、敌我坦克/王/目标、光学迷彩过滤 |
 | 五模式数字 | 双方剩余生命、整数占领分、双方王生命、本机击毁、剩余破坏目标；只显示当前模式 |
-| 开场 | 当前模式原图，随后Fight原图；切阶段和离房清理 |
+| 开场 | 当前模式原图2秒，随后Fight原图1秒；`MatchSnapshot.battleStartsAt`服务端deadline前所有坦克不动，提示完才计时/移动；切阶段和离房清理 |
 | 战车头顶 | 其它玩家/队友/敌人的权威/默认称号、姓名/王标记、原96×4血条、生命数字与温和距离缩放；当前策略隐藏本人头顶标签 |
 | 聊天与消息 | 闲置隐藏聊天、Enter编辑、确认发送退出、拒绝保草稿、新消息短显；原战斗消息8秒透明度及hover |
 
@@ -23,12 +23,18 @@
 
 - 小地图初始化 `0x47285c`：选择子0使用 `wotanke.tga`（字符串 `0x5c9308`）及颜色 `FF5DF587`；选择子1/2使用 `danke.tga`（`0x5c92ec`），颜色分别为 `FF80ACF7`（`0x47292c`）和 `FFF57E78`（`0x4729be`）。`0x4d1637–0x4d1642`将本人以0送入，`0x4d173c–0x4d1741`将本队其它成员以1送入，`0x4d2015–0x4d2020`将对方以2送入。Web沿这三个颜色着色原轮廓。
 - 原三部件和四部件战车初始化分别在 `0x46a108`、`0x46d5f7`读取 `wanjiaxuecao.tga`（字符串 `0x5c87f0`）；四部件 `0x46d66b`读取 `wanjiaxuecao_jindukuai.tga`（`0x5c87c4`）。原图块为96×4，发布区域77/127、77/128。
-- `picFight`缓存至HUD+0x72c（`0x4c7a97`）。`0x4cca4e–0x4ccac6`隐藏模式图及倒数，显示Fight并清计时+0x730。frame `0x4caf69–0x4caf9b`在Fight可见时累计dt，严格超过常量 `0x5cfb10`后隐藏；直接读取PE该常量为float32(1.0)。Web将Fight显示1秒，模式介绍前段采用2秒呈现政策。
+- `picFight`缓存至HUD+0x72c（`0x4c7a97`）。`0x4cca4e–0x4ccac6`隐藏模式图及倒数，显示Fight并清计时+0x730。frame `0x4caf69–0x4caf9b`在Fight可见时累计dt，严格超过常量 `0x5cfb10`后隐藏；直接读取PE该常量为float32(1.0)。Web将Fight显示1秒，模式介绍前段采用2秒呈现政策；开始门禁由`battleStartsAt`统一供给，客户端只显示服务端剩余提示。
 - 原主弹匣 `0x4cb52f–0x4cb5a2`对允许显示的角色状态设置宽度 `capacity×15`、进度 `remaining/capacity`。当前Web以确认弹匣及战斗阶段供给该消费者。
 - 称号与VIP字段链沿 `battle-hud-title-source.md`；账户称号持有/选用与持久投影及 `PlayerSnapshot.title` / `HudPlayer.title`（`player.title?.name`）接线已接通（UI-39），有已选用称号时优先显示，缺值时才回退已确认原表ID1“嗷嗷待哺”。空玩家槽保持空白。
 - 小地图底图未加载时，只要权威快照带固定地图边界就照常投影玩家与占领/破坏目标，权威坐标/目标不被吞掉；旋转只作用于坦克轮廓（按 `bodyYaw`，缺省 `yaw`），不旋转王徽章或定位。目标/占领着色选择器改为 `data-objective-side` 友/敌，与本机/本队/敌方三色一致。
 
 控件映射见 `game-main-control-map.md`，状态及五模式映射见 `hud-m505-integration.md`。用户确认规则见 `battle-hud-confirmed-rules.md`，原动态俯视纹理与25图范围见 `hud-minimap-coordinate-source.md`。
+
+## 附属界面缺项
+
+原 `game_main_chat_shrinked.xml` 有 `btnFamily`/`btnGM`，当前 `source-battle-chat.tsx` 未挂载它们，频道 `rdoGM` 明确禁用；原权限/producer未恢复。原 `game_summary_dialog.xml`（`wndDialog`/`picItem`/`txtMessage`）及 `game_summary_title.xml`（`wndDialog`/`txtMessage`）在当前 `apps/web/src` 没有消费者引用，不把名字推断为确切业务触发；原软键盘 `keyboard.xml` 的55控件也无对应消费者引用。它们是附属界面缺项，不是主 `game_main` 165控件中漏计控件，本任务不顺带实现。
+
+原HUD `edtBattleInfo`是RichEdit，现`BattleHud`为messages字符串/最近5条加`HudLayout` plain内容，不等于原完整彩色/图文战斗消息格式化恢复；既有聊天`ChatEmotes`解析是独立消费者，不能冒称该HUD日志已具备。完整800/1080/4K原版视觉未经实测，原乱斗`DogsInfo`加数含义还缺（现本机`kills`）；已接账号title不要重复写称号功能缺失，缺值默认ID1仅展示。
 
 ## 限制
 

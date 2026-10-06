@@ -155,9 +155,9 @@
 | 145 | `prgCrossbar` | `all` | `WindowsLook/ProgressBar` | 活着且PLAYING的reload；既有duration+.5原进度消费者 | `ReloadControl / SourceProgress` | 既有原装填消费者 |
 | 146 | `picBattleInfoPanel` | `all` | `WindowsLook/StaticImage` | 既有BattleInfoOpacity：消息重置、8秒后alpha.2、hover | `BattleInfoPanel` | 既有原alpha消费者 |
 | 147 | `edtBattleInfo` | `picBattleInfoPanel` | `WindowsLook/RichEditbox` | 确认事件消息、最近五条 | `HudLayout` | Web消息容量与文本 |
-| 148 | `picFight` | `SheetWindow` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
+| 148 | `picFight` | `SheetWindow` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；`battleStartsAt`前坦克不动，提示完才计时/移动；离房/终局隐藏 | `HudLayout` | 原资源＋Web开始合同；原producer未恢复 |
 | 149 | `txtCountdown` | `SheetWindow` | `WindowsLook/StaticText` | 既有LocalDeathCountdown；无值隐藏 | `HudLayout` | 既有复活消费者，用户字体 |
-| 150 | `picModeSplash` | `SheetWindow` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
+| 150 | `picModeSplash` | `SheetWindow` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；`battleStartsAt`前坦克不动，提示完才计时/移动；离房/终局隐藏 | `HudLayout` | 原资源＋Web开始合同；原producer未恢复 |
 | 151 | `picVIPMode` | `SheetWindow` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
 | 152 | `qinwang` | `picVIPMode` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
 | 153 | `moshi1` | `picVIPMode` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
@@ -174,4 +174,4 @@
 | 164 | `hunzhan` | `picMeleeMode` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
 | 165 | `moshi5` | `picMeleeMode` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
 
-完整 800×600、1080p、4K 页面与输入焦点尚未实测，12 称号槽和世界标签勋章仍缺完整权威接线。M5-04、M5-05、UI-09 保持未勾选。
+完整 800×600、1080p、4K 页面与输入焦点尚未实测。当前接线已存在十二槽姓名/称号、VIP、小地图、弹量与开始提示消费者，头像/生命/模式数字/聊天也已接入；真实来源限制按各来源文档保留。称号槽现读取账号已选用`PlayerSnapshot.title.name`，无选用时缺值默认ID1仅作展示；世界标签勋章仍缺完整权威接线。M5-04、M5-05、UI-09 保持未勾选。

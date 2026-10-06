@@ -30,6 +30,12 @@ export class LocalTankMotion {
   private round = 0;
   private command: RoleMovementMathInput['command'] = 0;
   private playing = false;
+  private active = false;
+
+  /** Shared server-clock gate; false during the round intro before the battle start. */
+  setActive(active: boolean): void {
+    this.active = active;
+  }
 
   synchronize(snapshot: MsgRoomSnapshot, playerId?: string): void {
     const player = snapshot.players.find(value => value.id === playerId);
@@ -60,14 +66,14 @@ export class LocalTankMotion {
   }
 
   get reportedPose(): ClientTankPose | undefined {
-    return this.playing && this.player?.alive && this.field.navigation ? this.renderedPose : undefined;
+    return this.playing && this.active && this.player?.alive && this.field.navigation ? this.renderedPose : undefined;
   }
 
   advance(axes: Axes, seconds: number, players: readonly PlayerSnapshot[]): void {
     this.moving = false;
     const player = this.player, initial = this.pose, movement = player?.movement;
     const grid = this.field.navigation, dt = roleMovementElapsed(seconds);
-    if (!player?.alive || player.isAutopilot || !this.playing || !initial || !movement || !grid || dt === 0) return;
+    if (!player?.alive || player.isAutopilot || !this.playing || !this.active || !initial || !movement || !grid || dt === 0) return;
     const tankType = movement.tankType as RoleMovementMathInput['tankType'];
     const command = roleMovementCommand(axes.move, axes.turn) as RoleMovementMathInput['command'];
     const permitted = command <= 2 ? movement.canMove : command <= 4 ? movement.canTurn
@@ -149,6 +155,7 @@ export class LocalTankMotion {
     this.pose = undefined;
     this.moving = false;
     this.playing = false;
+    this.active = false;
     this.command = 0;
   }
 }

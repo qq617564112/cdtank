@@ -9,6 +9,7 @@ import {loadSourceUiFonts} from '../resources/source-ui-fonts';
 import {combatState, sameCombatState, type HudCombatSnapshot} from './hud-combat-state';
 import {minimapState, sameMinimapState, type HudMinimapSnapshot} from './hud-minimap-state';
 import {modeInfo, type HudModeInfo} from './hud-mode-info';
+import {battleIntroStage, type BattleIntroStage} from '../../../../shared/combat/battle-start';
 
 export type {HudCombatSnapshot} from './hud-combat-state';
 export type {HudMinimapSnapshot} from './hud-minimap-state';
@@ -37,6 +38,7 @@ export interface HudPlayer {
 export interface HudSnapshot {
   data?: SourceUi; visible: boolean; mode: number;
   roomId?: string; round?: number; phase?: MsgRoomSnapshot['phase'];
+  introStage: BattleIntroStage;
   timers: readonly {text: string; colour?: string}[];
   slots: readonly (HudPlayer | undefined)[];
   localHealth?: {name: string; hp: number; maxHp: number};
@@ -52,7 +54,7 @@ const EMPTY_MINIMAP: HudMinimapSnapshot = {visible: false, mode: 1, players: [],
 
 /** Only visible source HUD projections notify React; movement and tick fields do not. */
 export class BattleHud {
-  private state: HudSnapshot = {visible: false, mode: 1, timers: Array.from({length: 5}, () => ({text: ''})), slots: [], messages: ''};
+  private state: HudSnapshot = {visible: false, mode: 1, introStage: 'hidden', timers: Array.from({length: 5}, () => ({text: ''})), slots: [], messages: ''};
   private reload: HudReloadSnapshot = {visible: false, fraction: 1};
   private combat: HudCombatSnapshot = EMPTY_COMBAT;
   private minimap: HudMinimapSnapshot = EMPTY_MINIMAP;
@@ -94,6 +96,7 @@ export class BattleHud {
   private publish(next: HudSnapshot): void {
     const same = this.state.data === next.data && this.state.visible === next.visible && this.state.mode === next.mode
       && this.state.roomId === next.roomId && this.state.round === next.round && this.state.phase === next.phase
+      && this.state.introStage === next.introStage
       && this.state.messages === next.messages
       && this.state.deathCountdown === next.deathCountdown
       && sameValues(this.state.localHealth, next.localHealth) && sameValues(this.state.teamCounts, next.teamCounts)
@@ -132,7 +135,7 @@ export class BattleHud {
     });
     this.loading = operation; return operation;
   }
-  update(snapshot: MsgRoomSnapshot, playerId: string, now = performance.now()): void {
+  update(snapshot: MsgRoomSnapshot, playerId: string, now = performance.now(), serverNow = snapshot.serverTime): void {
     const data = this.state.data; if (!data) return;
     const seconds = this.lastUpdate === undefined ? 0 : (now - this.lastUpdate) / 1000; this.lastUpdate = now;
     this.battleInfoOpacity.advance(seconds);
@@ -199,12 +202,13 @@ export class BattleHud {
     const visible = !!local?.reload && local.alive && snapshot.phase === 'PLAYING';
     const fraction = local?.reload && visible ? this.reloadProgress.update(local.reload, snapshot.serverTime, seconds) : 1;
     this.publishReload({visible, fraction});
-    this.publishCombat(combatState(snapshot, local));
+    this.publishCombat(combatState(snapshot, local, serverNow));
     const minimap = minimapState(snapshot, playerId);
     this.publishMinimap({...minimap, imageUrl: this.minimapImage?.mapId === minimap.mapId
       ? this.minimapImage.imageUrl : undefined});
+    const introStage = battleIntroStage(snapshot, serverNow);
     this.publish({...this.state, visible: snapshot.phase === 'PLAYING' || snapshot.phase === 'FINISHED', mode, timers, slots,
-      roomId: snapshot.roomId, round, phase: snapshot.phase, messages: this.messages.join('\n'),
+      roomId: snapshot.roomId, round, phase: snapshot.phase, introStage, messages: this.messages.join('\n'),
       localHealth: local ? {name: local.name, hp: local.hp, maxHp: local.maxHp} : undefined,
       teamCounts: teamInfo(snapshot, playerId), modeInfo: modeInfo(snapshot, playerId)});
   }
@@ -241,7 +245,7 @@ export class BattleHud {
     this.publishReload({visible: false, fraction: 1});
     this.publishCombat(EMPTY_COMBAT);
     this.publishMinimap(EMPTY_MINIMAP);
-    this.publish({...this.state, visible: false, slots: [], localHealth: undefined,
+    this.publish({...this.state, visible: false, slots: [], localHealth: undefined, introStage: 'hidden',
       roomId: undefined, round: undefined, phase: undefined, deathCountdown: undefined,
       messages: '', teamCounts: undefined, modeInfo: undefined,
       timers: this.state.timers.map(() => ({text: ''}))});

@@ -1,4 +1,5 @@
 import type {MsgRoomSnapshot, PlayerSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
+import {battleIsActive} from '../../../../shared/combat/battle-start';
 
 /** Rebuilt combat projection shared with the item bar. Every field is a plain
  * server-confirmed snapshot value; the client never invents an authoritative
@@ -36,14 +37,16 @@ function activeEffects(local: PlayerSnapshot): {skillId: number; expiresAt: numb
   return effects;
 }
 
-export function combatState(snapshot: MsgRoomSnapshot, local: PlayerSnapshot | undefined): HudCombatSnapshot {
+export function combatState(snapshot: MsgRoomSnapshot, local: PlayerSnapshot | undefined,
+  serverNow = snapshot.serverTime): HudCombatSnapshot {
   if (!local || !['PLAYING', 'FINISHED'].includes(snapshot.phase)) {
     return {visible: false, canUseShortcuts: false, alive: false, serverTime: snapshot.serverTime, ammoSlots: [], activeEffects: []};
   }
   const live = local.alive && snapshot.phase === 'PLAYING';
+  const active = battleIsActive(snapshot, serverNow);
   return {
     visible: true,
-    canUseShortcuts: live && !local.isAutopilot,
+    canUseShortcuts: live && active && !local.isAutopilot,
     playerId: local.id,
     alive: local.alive,
     serverTime: snapshot.serverTime,

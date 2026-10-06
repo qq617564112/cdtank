@@ -54,6 +54,7 @@ import {LocalTankMotion} from './local-tank-motion';
 import {BattleItemInventory} from './battle-item-inventory';
 import type {KeyBindings} from './input-bindings';
 import type {QuickChatPreferences} from '../interface/settings/quick-chat-preferences';
+import {battleIsActive} from '../../../shared/combat/battle-start';
 
 /** Displays server-owned world state; no local damage or outcome calculation. */
 export class Battle {
@@ -82,13 +83,16 @@ export class Battle {
     this.lobbyPresence.stop();
     return this.connection.disconnect();
   }
-  private readonly input = new BattleInput(() => ({
-    active: this.active,
-    playing: this.mapLoaded && this.loadedRound === this.roomFeed.snapshot?.match?.round
-      && this.roomFeed.snapshot?.phase === 'PLAYING',
-    connected: this.client.isConnected && !this.reconnecting,
-    autopilot: this.roomFeed.snapshot?.players.find(player => player.id === this.playerId)?.isAutopilot ?? false,
-  }), message => {
+  private readonly input = new BattleInput(() => {
+    const snapshot = this.roomFeed.snapshot;
+    return {
+      active: this.active,
+      playing: this.mapLoaded && this.loadedRound === snapshot?.match?.round
+        && Boolean(snapshot && battleIsActive(snapshot, this.serverNow())),
+      connected: this.client.isConnected && !this.reconnecting,
+      autopilot: snapshot?.players.find(player => player.id === this.playerId)?.isAutopilot ?? false,
+    };
+  }, message => {
     void this.client.sendMsg('PlayerInput', {...message, pose: this.localMotion.reportedPose});
   });
   private readonly localMotion = new LocalTankMotion();
@@ -756,6 +760,12 @@ export class Battle {
     this.input.clear();
   }
 
+  /** Shared server clock derived from the newest snapshot's receive time. */
+  private serverNow(): number {
+    const snapshot = this.roomFeed.snapshot;
+    return snapshot ? snapshot.serverTime + performance.now() - this.roomFeed.receivedAt : performance.now();
+  }
+
   private async rematch(): Promise<void> {
     const round = this.roomFeed.snapshot?.match?.round;
     if (round === undefined || this.roomFeed.snapshot?.phase !== 'FINISHED' || !this.client.isConnected) {
@@ -840,8 +850,11 @@ export class Battle {
     this.ammoBurnPresentation?.reconcile(snapshot.players,
       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`, snapshot.phase === 'PLAYING');
     const now = snapshot.serverTime + performance.now() - this.roomFeed.receivedAt;
+    const active = battleIsActive(snapshot, now);
     this.localMotion.field.reconcile(snapshot, now);
-    this.localMotion.advance(this.input.motionAxes, this.scene.getEngine().getDeltaTime() / 1000, snapshot.players);
+    this.localMotion.setActive(active);
+    this.localMotion.advance(active ? this.input.motionAxes : {move: 0, turn: 0, aim: 0},
+      this.scene.getEngine().getDeltaTime() / 1000, snapshot.players);
     this.players.render(alpha, this.playerId, snapshot.phase === 'PLAYING',
       this.localMotion.renderedPose, this.localMotion.moving);
     this.skillEffects?.frame(this.scene.getEngine().getDeltaTime() / 1000);
@@ -850,7 +863,7 @@ export class Battle {
       snapshot.serverTime, this.scene.getEngine().getDeltaTime() / 1000);
     const local = snapshot.players.find(player => player.id === this.playerId);
     if (this.playerId) {
-      this.originalHud.update(snapshot, this.playerId);
+      this.originalHud.update(snapshot, this.playerId, performance.now(), now);
     }
     const phase = {WAITING: '等待其他玩家', LOADING: '正在载入对局', PLAYING: '战斗中', FINISHED: '本局结束'}[snapshot.phase] ?? snapshot.phase;
     this.hud.value = this.groundTrapError || this.players.loadingError || `${phase} · ${snapshot.players.length} 人 · ${snapshot.remaining}s · 生命 ${local?.hp ?? 0}/${local?.maxHp ?? 0} · 得分 ${local?.score ?? 0}`;

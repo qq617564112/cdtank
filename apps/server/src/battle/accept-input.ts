@@ -20,11 +20,11 @@ import {confirmAcceptedAmmoSelection} from './items/ammo-confirmation';
 import {acceptClientTankPose} from './client-movement';
 
 /** Accept ordinary human/CPU inputs or the participant's separate autopilot lane. */
-export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'round' | 'phase' | 'mode' | 'map' | 'teamLives' | 'groundTraps' | 'sceneObjects' | 'airstrikes' | 'players'>, player: PlayerState,
+export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'round' | 'phase' | 'startedAt' | 'mode' | 'map' | 'teamLives' | 'groundTraps' | 'sceneObjects' | 'airstrikes' | 'players'>, player: PlayerState,
   input: MsgPlayerInput, autonomous: boolean, maxHp: () => number,
   consumeItem: Parameters<typeof applyHealingItem>[4], now: number, tickMs: number): MsgRoomEvent[] {
-  const {roomId, phase} = room;
-  if (phase !== 'PLAYING' || !Number.isSafeInteger(input.sequence)
+  const {roomId, phase, startedAt} = room;
+  if (phase !== 'PLAYING' || now < startedAt || !Number.isSafeInteger(input.sequence)
       || autonomous !== !!player.autopilot
       || input.sequence <= (autonomous ? player.autopilotInputSequence ?? 0 : player.inputSequence)) {
     return [];

@@ -52,7 +52,8 @@ interface SnapshotRoom {
 }
 
 /** Project authoritative state onto the existing wire format without advancing the world. */
-export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSeconds = 0): PlayerSnapshot {
+export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSeconds = 0,
+  battleActive = true): PlayerSnapshot {
   const sources = player.ownedRoles.snapshot();
   const owned = sources.equipment;
   const skills = battleSkillSources(player);
@@ -75,8 +76,9 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
     movement: {speed: movement?.speed ?? player.tank.speed * 6,
       turn: movement?.turn ?? player.tank.turn * .12,
       tankType: player.tank.recomputeBase.tankType, original: movement !== undefined,
-      canMove: isRoleMovementAllowed(player.combat, 1),
-      canTurn: isRoleMovementAllowed(player.combat, 3), command: player.movementCommand ?? 0},
+      canMove: battleActive && isRoleMovementAllowed(player.combat, 1),
+      canTurn: battleActive && isRoleMovementAllowed(player.combat, 3),
+      command: battleActive ? player.movementCommand ?? 0 : 0},
     alive: player.alive, score: Math.round(player.score), kills: player.kills, deaths: player.deaths,
     respawnAt: player.respawnAt, isVIP: player.vip, objectivesDestroyed: player.objectivesDestroyed,
     isCpu: !!player.cpu, isAutopilot: !!player.autopilot, selectedAmmoSlot: player.combat.selectedAmmoSlot,
@@ -114,10 +116,11 @@ export function roomSnapshot(room: SnapshotRoom, now: number, timeLimit: number,
     roomInfo: {name: room.roomName, mapId: room.map.mapId, mapName: room.map.name,
       mapDescription: room.map.description ?? '', timeLimitSeconds: timeLimit, hasPassword: !!room.passwordHash},
     remaining: room.phase === 'PLAYING'
-      ? Math.max(0, timeLimit - Math.floor((now - room.startedAt) / 1000)) : 0,
+      ? Math.max(0, Math.min(timeLimit, timeLimit - Math.floor((now - room.startedAt) / 1000))) : 0,
     phase: room.phase, players, bullets: room.bullets.map(bullet => ({...bullet})),
     teamScores: [...room.teamScores], winnerTeam: room.winnerTeam,
-    match: {round: room.round, readyPlayerIds: [...room.ready], loadedPlayerIds: [...room.loaded], rematchPlayerIds: [...room.rematch],
+    match: {round: room.round, battleStartsAt: room.startedAt,
+      readyPlayerIds: [...room.ready], loadedPlayerIds: [...room.loaded], rematchPlayerIds: [...room.rematch],
       cpuManagerId: [...room.players.values()].find(player => player.clientId === room.creatorClientId)?.id,
       minPlayers, maxPlayers: roomMaxPlayers(room), friendlyFire: room.friendlyFire ?? false, targetScore: room.targetScore, teamLives: [...room.teamLives],
       objectives: room.objectives.map(objective => ({...objective})),

@@ -59,6 +59,7 @@ import {createObjectives, advanceObjectives, damageObjective} from './modes/obje
 import {resetBreachCollision, syncBreachCollision} from './battle/breach-collision';
 import {roomSnapshot, playerSnapshot} from './rooms/snapshot';
 import type {MsgRoomEvent} from '../../shared/protocols/MsgRoomEvent';
+import {BATTLE_INTRO_MS} from '../../shared/combat/battle-start';
 import type {
   MsgPlayerInput,
   MsgRoomSnapshot,
@@ -506,12 +507,19 @@ export class World {
     for (const room of this.rooms.values()) {
       if (room.phase === 'PLAYING') {
         room.tick += 1;
-        // Expiry precedes simulation: no post-deadline movement, hit or respawn.
-        if (now - room.startedAt >= this.timeLimit(room) * 1000) {
-          this.finishRoom(room, now, 'TIME_LIMIT', undefined, undefined, events);
-          events.push(event(room.roomId, 'finish', this.finishMessage(room), ''));
-        } else {
-          this.simulateRoom(room, deltaMs / 1000, now, events);
+        // The intro is real wall time before the battle clock starts: the loop
+        // below is skipped so human, CPU and autopilot participants all stay put.
+        if (now >= room.startedAt) {
+          // Expiry precedes simulation: no post-deadline movement, hit or respawn.
+          if (now - room.startedAt >= this.timeLimit(room) * 1000) {
+            this.finishRoom(room, now, 'TIME_LIMIT', undefined, undefined, events);
+            events.push(event(room.roomId, 'finish', this.finishMessage(room), ''));
+          } else {
+            // The first active tick only advances by the time elapsed since the
+            // battle clock started, never by the preceding intro.
+            const activeDeltaMs = Math.max(0, Math.min(deltaMs, now - room.startedAt));
+            this.simulateRoom(room, activeDeltaMs / 1000, now, events);
+          }
         }
       }
       snapshots.push(this.snapshotRoom(room, now));
@@ -784,7 +792,7 @@ export class World {
     resetBreachCollision(room.battlefield);
     resetSceneObjectCollision(room.battlefield);
     room.phase = 'PLAYING';
-    room.startedAt = this.now();
+    room.startedAt = this.now() + BATTLE_INTRO_MS;
     room.endedAt = 0;
     room.tick = 0;
     const assignVip = initializeModeRound(room);
@@ -877,9 +885,11 @@ export class World {
 
   private snapshotRoom(room: RoomState, now: number): MsgRoomSnapshot {
     const combatTime = room.phase === 'FINISHED' ? room.endedAt : now;
+    const battleActive = room.phase !== 'PLAYING' || now >= room.startedAt;
     return roomSnapshot(room, now, this.timeLimit(room), this.minPlayers(room),
       [...room.players.values()].map(player => playerSnapshot(player,
-        player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), (combatTime - room.startedAt) / 1000)));
+        player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player),
+        (combatTime - room.startedAt) / 1000, battleActive)));
   }
 
 }
