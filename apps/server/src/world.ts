@@ -145,6 +145,8 @@ export class World {
   private readonly roundItemUses = new Map<string, Map<number, number>>();
   /** Last ordinary discard sequence accepted for the current round. */
   private readonly lastGroundItemActionSequence = new Map<string, number>();
+  /** Live participants refreshed by a committed ground write, awaiting their inventoryChanged event. */
+  private readonly pendingInventoryChanged = new Set<string>();
 
   constructor(private readonly now: () => number = Date.now,
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
@@ -593,7 +595,25 @@ export class World {
   private syncGroundItemRecord(accountId: string, record: InventoryWireRecord): void {
     for (const playerId of this.accountPlayerIds(accountId)) {
       const player = this.findPlayer(playerId)?.player;
-      if (player) reconcileGroundItemInventory(player, record, this.groundItemCallbacks);
+      if (!player) continue;
+      reconcileGroundItemInventory(player, record, this.groundItemCallbacks);
+      this.pendingInventoryChanged.add(playerId);
+    }
+  }
+
+  /**
+   * Emit one ordinary inventoryChanged event per participant refreshed by the committed
+   * ground write. The event carries no account identity; the client re-queries its own
+   * Inventory RPC. Callers own the transaction boundary and drain it before returning.
+   */
+  private drainInventoryChanged(events: WorldEvent[]): void {
+    if (!this.pendingInventoryChanged.size) return;
+    const playerIds = [...this.pendingInventoryChanged];
+    this.pendingInventoryChanged.clear();
+    for (const playerId of playerIds) {
+      const found = this.findPlayer(playerId);
+      if (!found) continue;
+      events.push(event(found.room.roomId, 'inventoryChanged', '', found.player.id, found.player.id));
     }
   }
 
@@ -706,9 +726,9 @@ export class World {
     const events: WorldEvent[] = [];
     const discarded = discardToGround(found.room, found.player, message.value >>> 0,
       this.now(), this.groundItemCallbacks, events);
-    return discarded
-      ? {events, affectedRoomIds: this.accountAffectedRooms(accountId)}
-      : {events, affectedRoomIds: []};
+    if (!discarded) return {events, affectedRoomIds: []};
+    this.drainInventoryChanged(events);
+    return {events, affectedRoomIds: this.accountAffectedRooms(accountId)};
   }
 
   chat(playerId: string, text: string, channel = 0): WorldEvent[] {
@@ -745,6 +765,9 @@ export class World {
       }
       snapshots.push(this.snapshotRoom(room, now));
     }
+    // Pickups committed by advanceGroundItems during this tick: deliver the
+    // ordinary inventoryChanged notices after every room snapshot is queued.
+    this.drainInventoryChanged(events);
     return {snapshots, events};
   }
 

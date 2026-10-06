@@ -83,10 +83,11 @@ SQL、不保存 connection map、不把 receipt 写入库存；持久层在成�
   `(roomId, round, groundId, playerId)` 交给持久层作为 receipt 键。callback 成功后
   domain 才移除实体并生成拾取/删除事件；失败保留实体，不重复 late force-consume。
   同一账户多连接只通过 callback 返回的 `refreshPlayerIds` 刷新已绑定的在房角色。
-- 战斗数量：World 以真实成功 `consumeItem` 回调累计本轮每玩家/物品使用量。已占 hotkey
-  的实例按 `battleQuantity=max(0,min(ownedQuantity,BattleUseMax)-roundUse)` 更新；
-  未占 hotkey 的实例只增加 owned，不自动占槽。重置只发生在新 round 或离场，拾取、
-  丢弃和连接刷新不会补回本轮已消耗额度。
+- 战斗数量：World 以真实成功 `consumeItem` 回调累计本轮每玩家/物品使用量。`ownedQuantity`
+  已经扣过真实消费，`roundUse` 只限制剩余可用上限：已占 hotkey 的实例按
+  `battleQuantity=max(0,min(ownedQuantity,max(0,BattleUseMax-roundUse)))` 更新；未占 hotkey
+  的实例为 0，不自动占槽。重置只发生在新 round 或离场，拾取、丢弃和连接刷新不会重置或
+  补回本轮已消耗额度；数量归零清实例时同步清 hotkey。
 - CPU：没有账户绑定，只在本轮 local inventory 中合并已有堆叠；没有同表记录时分配不与
   旧实例冲突的正 uint32 local instance，并沿用 `InventoryWireRecord` 真实字段构造，
   不从 0x58 Treasure record 或未知 raw 字段推导拥有物。
@@ -109,6 +110,12 @@ watermark、hotkey 实例、owned/battle 正量及真实丢弃资格，再调用
 才移除地面实体。discard 的归零回执转成同实例 `ownedQuantity=0` 记录以清 local hotkey。
 同一账户在其它房间的活跃参与者通过最小 `reconcileGroundItemInventory` 只刷新该实例，
 不重建整个 inventory，也不重置本局已用额度或 `RoleCombatState`。
+
+真实 ground 库存写入（拾取 acquire、丢弃 discard）经 `syncGroundItemRecord` 提交后，World
+对同一 account 的全部在房真人参与者（含其它房间）各产生一次普通 `MsgRoomEvent`
+`type='inventoryChanged'`，`roomId`/`playerId`/`targetId` 取该参与者的房间与 id，其它 required
+字段为 0/`''`；事件不携带 account 身份。它只在真实库存变更后发出，不对 CPU grant、不每 tick
+轮询，也不因 receipt 空变化触发。消费者据此重查本机 Inventory RPC，无需新增 RPC 或快照字段。
 
 房间快照继续由既有 `rooms/state.ts`/`rooms/snapshot.ts` 的单一 `groundItems` 列表投影；
 本桥没有新增第二份实体表或 shared 字段。

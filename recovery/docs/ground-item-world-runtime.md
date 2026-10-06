@@ -63,12 +63,33 @@ The counter resets on a new round and on leave. A committed pickup or connection
 refresh recomputes an assigned stack as:
 
 ```text
-max(0, min(ownedQuantity, BattleUseMax) - roundUse)
+max(0, min(ownedQuantity, max(0, BattleUseMax - roundUse)))
 ```
+
+`ownedQuantity` already reflects real consumption, so `roundUse` bounds the
+remaining spendable amount instead of being subtracted from the owned count a
+second time. An unassigned instance stays at zero battle quantity.
 
 An unassigned new instance becomes available but is not automatically selected into
 a hotkey. This keeps a pickup from restoring quantity already spent in the round.
 Discard is not a use: it reduces owned quantity without increasing `roundUse`.
+
+## Same-account inventory notification
+
+After a committed real ground-inventory write (a pickup acquire or a discard),
+`syncGroundItemRecord` records each live human participant of the same account,
+across every room, and World emits one ordinary `MsgRoomEvent` with
+`type='inventoryChanged'` per participant. The `roomId`, `playerId`, and
+`targetId` fields carry that participant's room and id; the remaining required
+fields are `0`/`''`. The event never carries account identity. A client consumes
+it by re-querying its own Inventory RPC and republishing discard candidates; no
+new RPC or snapshot field is introduced.
+
+The notification is produced only when a real ground-inventory change commits.
+CPU grants do not notify, and there is no per-tick or receipt-only polling. In
+the action path `drainInventoryChanged` runs after the write commits; in the tick
+path it runs after every room snapshot is queued, so the committed notice still
+travels alongside the same-tick finish snapshot.
 
 ## Event and lifecycle ordering
 

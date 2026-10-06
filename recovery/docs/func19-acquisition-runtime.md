@@ -1,7 +1,7 @@
 # Func19 取得入口运行时
 
-本文记录 item12501、12502、12503 的购买入口与 Func19 现有运行时链。Func19 计算实现已按
-`9f6620f`、`9d632fc` 接入；本文只补取得入口，不把后续装配、来源选择或实际验收写成已完成。
+本文记录 item12501、12502、12503 的购买入口、Home MARKER 装配后的来源投影与 Func19 现有
+运行时链。Func19 计算实现已按 `9f6620f`、`9d632fc` 接入；本文不把实际验收写成已完成。
 
 ## 来源事实
 
@@ -30,11 +30,20 @@ PART 目录在既有普通部件之外只开放精确的 12501/12502/12503 三�
 `ownedQuantity` 使用现有库存构造，`battleQuantity` 仍为 0，不自动装配，不直接给 World
 倍率，不默认授予账户技能，也不新增 coin 奖励基数或目录 schema、role/table ID。
 
-装配仍由既有 Home MARKER/EQUIP producer 完成。真正生效路径保持：
+装配仍由既有 Home MARKER/EQUIP producer 完成。`BattleRoleSources.equipment().marks` 保存
+profile `0x13c` 的三个真实 mark instanceId；`battleSkillSources` 逐槽用这些 instanceId 在
+`player.inventory` 中查找 `ownedQuantity > 0` 的记录，只接受真实物品表 12501/12502/12503，
+再由 `combatItemSkills` 的 `ItemSkill1` 展开。该投影写入本地
+`RoleSkillSources.markerItemIds`，由 `selectRoleMarkerSkills` 只选择对应 Func19，并由现有
+`selectRoleSkills` 追加到原 current/equipment/extra/item 顺序之后。instanceId 不作为
+item table ID 或 skill ID；未装配、零拥有、无效 instance 或其它物品不会进入来源。
+
+真正生效路径为：
 
 ```text
 Shop BUY -> 持久 owned marker instance -> Home MARKER EQUIP
-  -> selected role sources -> selectRoleSkills -> World freeze
+  -> profile0x13c marks -> inventory instance lookup -> ItemSkill1 Func19
+  -> markerItemIds -> selectRoleSkills -> World freeze
   -> history/account pending transaction -> ResultAward
 ```
 
@@ -45,4 +54,5 @@ Shop BUY -> 持久 owned marker instance -> Home MARKER EQUIP
 
 本轮未运行测试、浏览器验收、构建或类型检查。待实测：MONEY 以 0 单价购买被拒、TOKENS 购买
 12501/12502/12503 各扣 3000 并生成真实 owned 实例、重复 `requestId` 不重复扣款或发放、
-失败全事务回滚、Home MARKER 装配、真实 `selectedSkillIds` 展开及 World 冻结到账户回执。
+失败全事务回滚、Home MARKER 装配后 snapshot/World 的 `selectedSkillIds` 均包含对应 Func19，
+以及 World 冻结到账户回执。

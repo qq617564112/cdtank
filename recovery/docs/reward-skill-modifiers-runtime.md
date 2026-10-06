@@ -10,16 +10,19 @@
   `X100`、`Y100`、`Z100`，Effect/Sound 全 0。`combat-catalog.json` 的实际型字段为
   顶层 `triggerType`、顶层 `target` 与 `functions[].{type,x,y,z}`。
 - item12501/02/03 的 `ItemSkill1` 分别指向这三个技能。取得入口为已有或由真实来源写入的
-  owned item，再经真实 `selectRoleSkills` 选择；本轮不新增 writer。
+  owned item，再经 Home MARKER 装配；`battleSkillSources` 从 profile `0x13c` 的三个真实
+  instanceId 反查 `ownedQuantity > 0` 的 inventory 记录并展开 `ItemSkill1`。本轮不新增 writer。
 - 现有结算先冻结 `ResultPlayer.combatScore`/`totalScore`，再按 DataScale 结果率计算奖励。
   `money` 写入 profile `0x70`，originality/tech 写入账户成长账本，coin 基数为 0；
   `(account,matchId,round)` 在既有 `BEGIN IMMEDIATE` 中 exactly-once。
 
 ## 采用 policy
 
-只从真实 `selectRoleSkills` 得到的 `selectedSkillIds` 读取；同技能去重，每项按类型取实际
-选中值的最高非负百分比一次，负数或非有限值拒绝并保留 DataScale 结果。不从全局技能目录启用、
-不按拥有实例数量或相近技能编号推导。同账户多个 participant 在结算合并时同样按类型取最高值。
+只从真实 `selectRoleSkills` 得到的 `selectedSkillIds` 读取；marker来源仅接纳已装配的
+12501/02/03 经 `ItemSkill1` 展开的 Func19，不改变原 current/equipment/extra/item Func1 筛选。
+同技能去重，每项按类型取实际选中值的最高非负百分比一次，负数或非有限值拒绝并保留 DataScale
+结果。不从全局技能目录启用、不按拥有实例数量或相近技能编号推导。同账户多个 participant 在
+结算合并时同样按类型取最高值。
 
 在 DataScale outcome 率之后乘一次，且只在最终各项 `Math.round` 一次（base 已是
 `round(combatScore)`、`moneyBase=base`、`orig=base/5`、`tech=base/10`）：
@@ -71,6 +74,7 @@ coin          = rewardValue(0, outcomeCoinRate)
 
 ```text
 battleSkillSources(player)
+  -> equipment().marks + player.inventory -> ItemSkill1 Func19 markerItemIds
   -> selectRoleSkills(sources, combatSkills, combatItemSkills)
   -> selected skill.skillId[]
   -> readResultRewardModifiers(ids)

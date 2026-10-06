@@ -176,7 +176,7 @@ function applyDiscardedRecord(player: GroundItemRoomPlayer, record: InventoryWir
   const assigned = hotkeyContains(player, record.instanceId);
   const used = Math.max(0, callbacks.roundUse?.(player.id, record.itemTableId) ?? 0);
   const next = {...record, ownedQuantity: owned,
-    battleQuantity: assigned ? Math.max(0, Math.min(owned, cap) - used) : 0};
+    battleQuantity: assigned ? Math.max(0, Math.min(owned, Math.max(0, cap - used))) : 0};
   replaceInventoryRecord(player, next);
 }
 
@@ -185,7 +185,7 @@ function acquiredBattleQuantity(player: GroundItemRoomPlayer, instanceId: number
   const cap = battleUseMax(itemTableId);
   if (!cap) return 0;
   if (!hotkeyContains(player, instanceId)) return 0;
-  return Math.max(0, Math.min(newOwned >>> 0, cap) - Math.max(0, used));
+  return Math.max(0, Math.min(newOwned >>> 0, Math.max(0, cap - used)));
 }
 
 function applyAcquiredRecord(player: GroundItemRoomPlayer, record: InventoryWireRecord,

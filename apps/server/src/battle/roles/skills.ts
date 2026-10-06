@@ -1,4 +1,5 @@
 import type {RoleSkillRecord} from '../../../../shared/contracts/role-skills';
+import {selectRoleMarkerSkills} from './marker-skills';
 
 export interface RankedRoleSkill {
   baseId: number;
@@ -13,6 +14,8 @@ export interface RoleSkillSources {
   extraSkill: RankedRoleSkill;
   /** Original profile3, role record5 and record +0x70/+0x6c item slots, in order. */
   itemIds?: readonly number[];
+  /** Home MARKER instances resolved to their exact item-table IDs and owned inventory records. */
+  markerItemIds?: readonly number[];
 }
 
 export interface RoleItemSkills {
@@ -43,6 +46,7 @@ export function selectRoleSkills<T extends RoleSkillRecord>(sources: RoleSkillSo
   for (const ranked of sources.equipmentSkills?.slice(0, 6) ?? []) appendPassive(ranked);
   appendPassive(sources.extraSkill);
   selected.push(...selectRoleItemSkills(sources.itemIds ?? [], slots, catalog, items));
+  selected.push(...selectRoleMarkerSkills(sources.markerItemIds ?? [], slots, catalog, items));
   return selected;
 }
 

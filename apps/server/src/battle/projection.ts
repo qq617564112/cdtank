@@ -2,6 +2,7 @@ import type {PlayerState} from './player-state';
 import type {AccountInventory} from '../account-store';
 import {selectRoleItemSkills} from './roles/skills';
 import {readRoleSkillSources} from './roles/skill-sources';
+import {readEquippedMarkerItemIds} from './roles/marker-skills';
 import {combatSkills, combatItemSkills} from './catalog';
 
 export function battleAttributes(player: PlayerState) {
@@ -22,17 +23,21 @@ export function battlePartSources(player: PlayerState): {tableIds: number[]; pas
   return {tableIds, passiveSkillIds};
 }
 
-export function battleSkillSources(player: Pick<PlayerState, 'boundGear'> & {
-  ownedRoles: Pick<PlayerState['ownedRoles'], 'snapshot'>;
+export function battleSkillSources(player: Pick<PlayerState, 'boundGear' | 'inventory'> & {
+  ownedRoles: Pick<PlayerState['ownedRoles'], 'snapshot'> &
+    {equipment?: PlayerState['ownedRoles']['equipment']};
   combat: {attributeSourceFields(): ReadonlyMap<number, number> | undefined;
     record?: {arrays: ReadonlyMap<number, ArrayLike<number>>}};
 }): ReturnType<typeof readRoleSkillSources> | undefined {
   const equipment = player.ownedRoles.snapshot().equipment;
+  if (typeof player.ownedRoles.equipment !== 'function') return undefined;
+  const profile = player.ownedRoles.equipment();
   const fields = player.combat.attributeSourceFields();
   if (!equipment || !fields || ![0x58, 0x5c, 0x60].every(offset => equipment.fields.has(offset))) return undefined;
   // The reconstructed selected-pet binding stays separate from owned manager sources.
-  return readRoleSkillSources({currentSkillIds: Array.from(player.combat.record!.arrays.get(4)!),
-    boundGear: player.boundGear, equipment, roleFields: fields});
+  return {...readRoleSkillSources({currentSkillIds: Array.from(player.combat.record!.arrays.get(4)!),
+    boundGear: player.boundGear, equipment, roleFields: fields}),
+    markerItemIds: readEquippedMarkerItemIds(profile.marks, player.inventory, combatItemSkills)};
 }
 
 export function battleInventory(player: PlayerState): AccountInventory {
