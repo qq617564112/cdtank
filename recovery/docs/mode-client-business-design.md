@@ -2,7 +2,7 @@
 
 本文定义 M2-06 至 M2-10 的规则合同、快照字段和界面计数传播。它直接指导下一批实现，不替代原服务端 writer 取证。来源事实与项目采用政策分开记录；采用政策不冒称原 Windows 服务端逐行为复刻。
 
-合同覆盖 `m001.dat` 至 `m005.dat` 的全部 26 行、25 张场景图。所有 `MapID`、`MapName`、`MapInfo`、`PlayerMin`、`PlayerMax`、`Time` 保持不变；支持房间继续按源行校验人数范围。
+合同覆盖 `m001.dat` 至 `m005.dat` 的全部 26 行；这些行按 `MapID` 去重后对应 13 张获授权场景图：0002/0004/0005/0006/0007/0010/0011/0014/0017/0018/0020/0021/0022。`25` 是总场景资源目录数量，不是模式表地图集合。所有 `MapID`、`MapName`、`MapInfo`、`PlayerMin`、`PlayerMax`、`Time` 保持不变；支持房间继续按源行校验人数范围。
 
 ## 原来源事实
 
@@ -37,7 +37,7 @@
 
 ### 场景对象
 
-25 张原图中：
+模式表 26 行去重后对应 13 张获授权地图，总场景资源目录为 25 张原图。下表只列出其中实际放置 Castle 或 Breach 的模式地图，不把 25 张资源目录等同于模式表许可组合：
 
 | 模式地图 | Castle 放置 | Breach 放置 | 说明 |
 | --- | ---: | ---: | --- |
@@ -184,7 +184,7 @@
 - 每张 `m005` 地图使用全部实际 `SYcScnObjBreach` 放置作为规则目标池：0020 117 个、0021 73 个、0022 46 个。目标身份、模型和位置来自源放置，不使用当前临时三球体或未命名目标。
 - 目标初始 HP 使用 `DefaultButt`：0020/0021/0022 为 123/77/34 HP。目标重生 HP 使用 `ButtReborn`：90/60/30 HP；重生间隔使用 `ButtRebornTime=15` 秒。`m005.BunkerHP=0` 不用于 Breach。
 - 玩家弹丸命中目标时按实际伤害扣 HP；`HitScore=10`，`DestroyScore=0`。HP 降到 0 时目标进入销毁，停止继续受伤和计分，并增加摧毁者 `objectivesDestroyed`。
-- `dropitem.dat` 只提供场景掉落类别到模型/声音/特效的映射，没有已恢复的 Breach 销毁到掉落类别 producer；本局目标不掉落。摧毁后目标在 `ButtRebornTime` 秒后按原放置重生，生命重置为 `ButtReborn` 值。再战重新按 `DefaultButt` 初始化。
+- `dropitem.dat` 只提供场景掉落类别到模型/声音/特效的映射。当前目标实现不自动授予物品；完整掉落业务由客户端 ground-item discard/pickup/delete 通信及 `dropitem`/模型/table 来源继续还原，独立 business 子项仍为完整 scope，不因原 server writer 未恢复而禁用。摧毁后目标在 `ButtRebornTime` 秒后按原放置重生，生命重置为 `ButtReborn` 值。再战重新按 `DefaultButt` 初始化。
 - “全清”定义为本局当前目标全部同时处于 HP 0 状态；一旦成立立即 `OBJECTIVE`。若重生已发生，则继续到下一次全清或时限。
 - 时限结束按本局累计 `objectivesDestroyed` 排序，再按战斗分排序；唯一第一名胜，完全相等平局。
 - 目标销毁的现有 2 秒客户端淡出继续负责视觉状态；服务器在目标 HP 0 时停止伤害，客户端隐藏时移除该实例的动态 NAV/碰撞盒，重生时按同一源放置恢复动态碰撞。没有源证据支持的其他物体碰撞不新增。
@@ -220,9 +220,9 @@
 
 ## 未确认来源
 
-- `BunkerHP` 被采用为模式 2/3 Castle 规则 HP；原服务端逐字段 writer 尚未取得。CAS 导出 2000 HP 只作为源放置的视觉/记录值，不能作为 M2-07 目标身份。
+- `BunkerHP` 只被采用为模式 2 的 Castle 规则 HP；模式 3 的王生命采用 `VIPHPMax`，不把 `BunkerHP` 接为擒王 Castle。原服务端逐字段 writer 尚未取得。CAS 导出 2000 HP 只作为源放置的视觉/记录值，不能作为 M2-07 目标身份。
 - `DefaultButt`/`ButtReborn` 被采用为模式 5 Breach 初始/重生 HP，`ButtRebornTime` 为重生秒数；`VanishTime` 的服务端对象语义未恢复，本文不把它接到玩家复活或 NAV 生命周期。
 - 原普通玩家复活秒数和 `TankNum` 在模式 5 的玩法含义未恢复；本文保留现有 3 秒玩家复活，不使用源对象重生秒数替代。
 - 模式 4 的原击毁阈值没有源表字段；本文采用时限排行，不保留固定 10 杀。
 - 原 `m_iDogsInfo` 在混战中的第二加数生产者、破坏模式角色 `+0x314` 的递增对象类型和原 server `ModeGroupGame` writer 未取得。Web 只消费本文列出的 typed 权威快照，不从这些未证字段生成业务结果。
-- 原服务器完整目标选择、刷新、掉落、奖励和重连规则仍按各自任务项保持开放；本文件是下一批实现合同，不是原 Windows 服务端复刻声明。
+- 原服务器完整目标选择、刷新、掉落、奖励和重连规则由各自 business 子项继续还原；掉落子项按客户端 ground-item discard/pickup/delete 通信及 `dropitem`/模型/table 来源闭合，不由当前 writer 缺口禁用或预先结束。本文件是下一批实现合同，不是原 Windows 服务端复刻声明。
