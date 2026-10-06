@@ -15,6 +15,7 @@ import {SourceButton} from '../resources/source-button';
 import {sourceProps} from '../resources/source-ui-props';
 import {PetModelPreview} from '../resources/pet-model-preview';
 import {PetShopDirectoryDetails} from './pet-shop-directory-details';
+import {sourcePetDescription} from '../resources/role-source-descriptions';
 
 export interface PetPurchaseOwner {
   salePending?: ReqOwnedRoleSale;
@@ -44,10 +45,15 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
   const session = useRef({active: false, query: false, identity: {}});
   const focusAfterCommit = useRef<HTMLElement | null>(null);
   const ownedRecord = owned?.base.find(record => new Map(record.fields).get(0) === ownedSelection);
-  const displayedPetId = mode === 'buy' ? selected : ownedRecord ? new Map(ownedRecord.fields).get(8) : undefined;
+  const ownedFields = ownedRecord ? new Map(ownedRecord.fields) : undefined;
+  const displayedPetId = mode === 'buy' ? selected : ownedFields?.get(8);
   const product = confirmed?.pets.find(pet => pet.petId === displayedPetId);
   const saleQuote = sale?.quotes.find(quote => quote.kind === 'pet' && quote.instanceId === ownedSelection);
   const displayedName = mode === 'owned' ? ownedRecord?.name ?? '' : product?.name ?? '';
+  const displayedHp = mode === 'owned' ? ownedFields?.get(0x2c) : product?.maxHp;
+  const displayedDescription = mode === 'owned' ? sourcePetDescription(displayedPetId) : product?.info;
+  const descriptionText = mode === 'owned' ? displayedDescription : product ? `${product.name} — ${product.info}` : undefined;
+  const previewPetId = mode === 'owned' ? displayedPetId : product?.petId;
   useEffect(() => {onBusy(busy);}, [busy, onBusy]);
   useEffect(() => {
     const current = {active: true, query: false, identity: {}}; session.current = current;
@@ -172,7 +178,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtCoin" text={confirmed?.tokens === undefined ? '' : String(confirmed.tokens)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtName" text={displayedName}/>
     <span {...sourceProps(ui, layout, 'shop_petpage.xml', 'txtHP')} className="pet-shop-hp"
-      data-pet-shop-hp="" data-presentation-colour="web-readable">{product ? String(product.maxHp) : ''}</span>
+      data-pet-shop-hp="" data-presentation-colour="web-readable">{displayedHp === undefined ? '' : String(displayedHp)}</span>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtListQuantity" text={mode === 'buy' ? confirmed ? String(confirmed.pets.length) : '' : owned ? String(owned.base.length) : ''}/>
     <SourceButton ui={ui} layout={layout} suffix="shop_petpage.xml" source="rdoBuy" selected={mode === 'buy'}
       data-pet-shop-buy-tab="" aria-label="购买宠物商品" aria-pressed={mode === 'buy'} disabled={busy} onClick={() => {generation.current++; setSaleConfirm(false); setMode('buy'); setStatus('');}} />
@@ -187,12 +193,14 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       selected={mode === 'owned' ? ownedSelection : selected} busy={busy} select={id => {
         if (mode === 'owned') setOwnedSelection(id); else {owner.selected = id; setSelected(id);}
       }}/>
-    {product && <PetModelPreview petId={product.petId} kind="shop" scale={scale}
+    {previewPetId !== undefined && <PetModelPreview petId={previewPetId} kind="shop" scale={scale}
       {...sourceProps(ui, layout, 'shop_petpage.xml', 'picModel')} data-shop-pet-preview="" />}
     <div {...sourceProps(ui, layout, 'shop_petpage.xml', 'edtPetDesc')}
-      className="pet-shop-product" data-pet-shop-product="" data-presentation-colour="web-readable">{product && <>
-      <p>{product.name} — {product.info}</p>
-    </>}</div>
+      className="pet-shop-product" data-pet-shop-product="" data-presentation-colour="web-readable"
+      data-description-source={descriptionText ? mode === 'owned' ? 'original-pet-table' : 'confirmed-pet-shop-product' : 'unavailable'}
+      role={descriptionText ? 'region' : undefined}
+      aria-label={descriptionText ? mode === 'owned' ? '拥有宠物介绍' : '宠物商品介绍' : undefined}
+      tabIndex={descriptionText ? 0 : -1}>{descriptionText ?? ''}</div>
     <p className="pet-shop-price" data-pet-shop-price="">{mode === 'buy' && product ? `售价：${product.moneyPrice}金币` : ''}</p>
     <p className="pet-shop-balance" data-pet-shop-balance="">{confirmed?.money === undefined ? '账户尚无余额资料'
       : `金币：${confirmed.money} · 软星币：${confirmed.tokens}`}</p>

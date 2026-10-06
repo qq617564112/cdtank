@@ -19,6 +19,7 @@ import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-
 import {SourceButton} from '../resources/source-button';
 import {sourceProps} from '../resources/source-ui-props';
 import {TankProductPreview} from '../resources/tank-product-preview';
+import {sourceTankDescription} from '../resources/role-source-descriptions';
 
 export interface TankPurchaseOwner {
   salePending?: ReqOwnedRoleSale;
@@ -53,10 +54,13 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const session = useRef({active: false, query: false, identity: {}});
   const focusAfterCommit = useRef<HTMLElement | null>(null);
   const ownedRecord = owned?.equipment.find(record => new Map(record.fields).get(0x1c) === ownedSelection);
-  const displayedTankId = mode === 'Owned' ? ownedRecord ? new Map(ownedRecord.fields).get(0x24) : undefined : selected;
+  const ownedFields = ownedRecord ? new Map(ownedRecord.fields) : undefined;
+  const displayedTankId = mode === 'Owned' ? ownedFields?.get(0x24) : selected;
   const product = confirmed?.tanks.find(tank => tank.tankId === displayedTankId);
   const saleQuote = sale?.quotes.find(quote => quote.kind === 'tank' && quote.instanceId === ownedSelection);
   const displayedName = mode === 'Owned' ? ownedRecord?.name ?? '' : product?.name ?? '';
+  const displayedDescription = mode === 'Owned' ? sourceTankDescription(displayedTankId) : product?.info;
+  const descriptionText = mode === 'Owned' ? displayedDescription : product ? `${product.name} — ${product.info}` : undefined;
   const previewTextures = mode === 'Owned' && ownedRecord
     ? readOwnedTankTextures({name: ownedRecord.name, fields: new Map(ownedRecord.fields)}) : product?.textures;
   useEffect(() => {if (mode !== 'Texture') onBusy(busy);}, [busy, onBusy, mode]);
@@ -210,9 +214,11 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     {displayedTankId !== undefined && previewTextures && <TankProductPreview {...sourceProps(ui, layout, 'shop_tankpage.xml', 'picModel')}
       tankId={displayedTankId} textures={previewTextures} scale={scale} data-tank-shop-preview=""/>}
     <div {...sourceProps(ui, layout, 'shop_tankpage.xml', 'edtDescription')}
-      className="tank-shop-product" data-tank-shop-product="" data-presentation-colour="web-readable">{product && <>
-      <p>{displayedName} — {product.info}</p>
-    </>}</div>
+      className="tank-shop-product" data-tank-shop-product="" data-presentation-colour="web-readable"
+      data-description-source={descriptionText ? mode === 'Owned' ? 'original-tank-table' : 'confirmed-tank-shop-product' : 'unavailable'}
+      role={descriptionText ? 'region' : undefined}
+      aria-label={descriptionText ? mode === 'Owned' ? '拥有战车介绍' : '战车商品介绍' : undefined}
+      tabIndex={descriptionText ? 0 : -1}>{descriptionText ?? ''}</div>
     <p className="tank-shop-price" data-tank-shop-price="">{mode === 'Buy' && product ? `售价：${product.moneyPrice}金币` : ''}</p>
     <p className="tank-shop-balance" data-tank-shop-balance="">{confirmed?.money === undefined ? '账户尚无余额资料'
       : `金币：${confirmed.money} · 软星币：${confirmed.tokens}`}</p>
