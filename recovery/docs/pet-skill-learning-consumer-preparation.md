@@ -1,0 +1,15 @@
+# 宠物技能学习消费者准备
+
+现正式技能弹层为apps/web/src/interface/home/pet-skill-source-view.tsx，由HomeRolesView中的HomePetOwnedDetails打开。HomePetOwnedDetails已保存selected.owner/index，但当前只向弹层传skill/level。学习接线需要将真实record实例fields+0与slot索引透传，主线HomeRoles持有owned/profile并负责确认结果替换。
+
+学习消费主线稳定报价与提交合同。原txtTechExpense显示确认费用，edtNextSkillDesc显示确认的下级技能，父页txtTech显示确认技能点。等级上限由原Pet.SkillLv资格决定，缺报价、封顶、点数不足或pending时禁用Learn；缺值保空，不本地猜算。正常点击固定当前instance/slot，成功仅使用server-confirmed owned/profile刷新等级与点数。失败保确认记录并显示错误，页面关闭后不消费迟到UI结果。
+
+Root提供的具名来源为4dc23a→49380b、实例/slot、base+rank下级技能、PetSkill+18费用、Pet.SkillLv上限、profile raw80和成功rank5c+slot4增长。现JSON旧exactGap不代替本轮root新增loader资格；具体协议和字段名以root最终合同为准。
+
+本提案未改生产、未执行类型检查或浏览器。来源pointsfixture将明确为外部给定，技能点取得来源仍缺；旧宠物records不迁移。未来只验新学习报价、点数、上限、提交状态、确认结果和Close，不重复旧slot/逃逸与商城套件。
+
+正式三文件已接线，共同mtime为1791227064751192368：home-roles.tsx、home-pet-owned-details.tsx、pet-skill-source-view.tsx。QUERY在初始角色读取完成后进入宠物页时载入全量报价，避免初始结果覆盖；LEARN提交实例、slot和独立requestId，页面generation与pending门禁管理返回。当前元数据索引base+max(0,rank-1)保留rank0入口，下级介绍按quote.nextSkillId读取。错误复用父status并在技能弹层原控件下方的Web反馈位置显示。
+
+预留浏览器3606/5636/9836，等待主线统一工程与网络检查后发行；本线未独立执行type/build/Chrome，尚无学习浏览器actual声明。
+
+浏览器组合记录为recovery/output/pet-skill-learning-browser-accepted.json。真实新BUY Pet2实例3的六rank0入口、slot4费用200与下级描述及Point400在800/1920/3840完整图可读；slot4正式学习确认rank1/Point200。后继未达尾段观察其Learn禁用，并完成slot0费用10→rank1/Point190、费用20→rank2/Point170。正常Close与重开后确认记录保持，再次严格Close；尾段不BUY、不注入、不截新图，仅两次LEARN。原首及观察器尾FAIL均作为原始证据保存，最终主线review为recovery/output/pet-skill-learning-root-review.json，PASS_FINITE_PET_SKILL_LEARNING_PURCHASE_QUOTE_THREE_ACTIONS_DUAL_EFFECT_RESTART_CLOSE_SCOPE；双玩家效果与重启证据归主线network review，本浏览器没有重复该套件。

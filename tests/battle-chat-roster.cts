@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {BattleChat} from '../apps/web/src/interface/battle/battle-chat';
+
+const chat = new BattleChat(async () => {}, () => {});
+let notifications = 0;
+chat.subscribe(() => {notifications++;});
+chat.show(); chat.setDraft('对象中文草稿'); chat.setTargetName('乙');
+const players = [{id: 'P1', name: '甲', hp: 700}, {id: 'P2', name: '乙', hp: 655}];
+chat.setPlayers(players);
+const snapshot = chat.getSnapshot(), before = notifications;
+chat.setPlayers(players.map(player => ({...player, hp: player.hp - 1})));
+assert.equal(notifications, before); assert.equal(chat.getSnapshot(), snapshot);
+players[1].name = '乙改名';
+assert.equal(snapshot.players[1].name, '乙');
+chat.setPlayers(players);
+assert.equal(notifications, before + 1); assert.equal(chat.getSnapshot().players[1].name, '乙改名');
+chat.setPlayers(players.slice(0, 1));
+assert.equal(chat.getSnapshot().players.length, 1);
+assert.equal(chat.getSnapshot().draft, '对象中文草稿'); assert.equal(chat.getSnapshot().targetName, '乙');
+chat.clear();
+assert.deepEqual(chat.getSnapshot().players, []); assert.equal(chat.getSnapshot().visible, false);
+chat.show(); chat.setPlayers([{id: 'P3', name: '丙'}]);
+assert.deepEqual(chat.getSnapshot().players, [{id: 'P3', name: '丙'}]);
+console.log('PASS readonly room roster: membership/name changes, no tick notifications, leave/session clear');

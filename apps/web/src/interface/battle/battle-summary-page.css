@@ -1,0 +1,19 @@
+.battle-summary-viewport { position: fixed; inset: 0; display: grid; place-items: center; z-index: 10; background: #142032; }
+.battle-summary-stage { position: relative; width: 800px; height: 600px; color: #fff; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
+.battle-summary-stage > *, .battle-summary-row > * { position: absolute; box-sizing: border-box; }
+.battle-summary-picture { pointer-events: none; }
+.battle-summary-row { color: #fff; }
+.battle-summary-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.battle-summary-number { text-align: center; line-height: 16px; }
+.battle-summary-stats { left: 281px; top: 6px; width: 104px; font-size: 10px; line-height: 15px; }
+.battle-summary-title { left: 185px; top: 24px; width: 430px; margin: 0; text-align: center; font-size: 21px; }
+.battle-summary-objective { left: 182px; top: 61px; width: 436px; margin: 0; text-align: center; line-height: 17px; }
+.battle-summary-extra-heading { top: 100px; width: 70px; text-align: center; line-height: 18px; }
+.battle-summary-status { left: 64px; top: 506px; width: 711px; font-size: 11px; line-height: 16px; }
+.battle-summary-rematch { left: 74px; top: 555px; width: 150px; height: 28px; border: 1px solid #8faac7; background: #203c5c; color: #fff; font: inherit; }
+.battle-summary-rematch:disabled { opacity: .6; }
+.battle-summary-stage button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.battle-summary-loading-leave { left: 310px; top: 556px; }
+.battle-summary-individual { left: 28px; top: 55px; font-size: 18px; }
+.battle-summary-pagination { left: 545px; top: 556px; display: flex; gap: 8px; align-items: center; }
+.battle-summary-pagination button { background: #203c5c; color: #fff; border: 1px solid #8faac7; font: inherit; }

@@ -1,0 +1,164 @@
+#home-inventory { color: #fff; background: transparent; border: 0; padding: 0; max-width: none; max-height: none; overflow: visible; }
+#home-inventory::backdrop { background: rgb(0 0 0 / 55%); }
+.home-inventory-stage { position: relative; width: 625px; height: 404px; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
+.home-inventory-stage > * { position: absolute; box-sizing: border-box; }
+.home-source-image, .home-tab, .home-slot, .home-item-icon { background-repeat: no-repeat; background-size: 100% 100%; }
+.home-tab, .home-slot { padding: 0; border: 0; background-color: transparent; }
+.home-slot:focus-visible, .home-tab:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.home-slot span { position: absolute; right: 0; bottom: 0; color: #fff; text-shadow: 1px 1px #000; font-size: 12px; }
+.home-item-list { overflow-y: auto; }
+.home-item-list button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px; color: #fff; background: transparent; border: 0; text-align: left; }
+.home-item-list button[aria-pressed="true"] { background: #365a67; outline: 1px solid #a8d7db; outline-offset: -1px; }
+.home-item-icon { flex: 0 0 32px; width: 32px; height: 32px; }
+#home-inventory output { display: block; width: 210px; min-height: 36px; font-size: 12px; }
+#home-inventory > button { display: block; margin: 8px 0 0 auto; }
+#home-roles { color: #fff; background: transparent; border: 0; padding: 0; max-width: none; max-height: none; overflow: visible; }
+#home-roles::backdrop { background: rgb(0 0 0 / 55%); }
+.home-roles-stage { position: relative; width: 625px; height: 404px; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
+.home-roles-stage > * { position: absolute; box-sizing: border-box; }
+.home-roles-stage > button { margin: 0; }
+.home-roles-stage .home-source-image { pointer-events: none; }
+.home-tank-preview canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.home-tank-preview output { position: absolute; inset: 0; margin: 0; color: #253740; font-size: 12px; pointer-events: none; }
+.home-role-use { background-color: transparent; background-repeat: no-repeat; background-size: 100% 100%; border: 0; padding: 0; }
+.home-role-use:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.home-role-use:disabled { opacity: .55; }
+#home-roles output { display: block; min-height: 36px; font-size: 12px; }
+#home-roles > button { display: block; margin: 8px 0 0 auto; }
+
+#home-equipment { max-width: none; max-height: none; overflow: visible; color: #fff; background: transparent; border: 0; padding: 0; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
+#home-equipment::backdrop { background: rgb(0 0 0 / 55%); }
+.home-equipment-stage { position: relative; width: 625px; height: 404px; }
+.home-equipment-stage > * { position: absolute; box-sizing: border-box; }
+.home-equipment-stage > button { margin: 0; }
+.home-equipment-stage .home-source-image { pointer-events: none; }
+.home-equipment-stage .home-slot:disabled { opacity: 0.5; }
+.home-equipment-detail { left: 12px; top: 410px; width: 200px; max-height: 76px; padding: 0; color: #fff; white-space: pre-line; overflow: auto; }
+#home-equipment :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+#home-equipment output { display: block; min-height: 36px; }
+#home-equipment .home-equipment-status { position: absolute; left: 224px; top: 410px; width: 370px; min-height: 20px; margin: 0; }
+.home-equipment-stage > .source-state-button { margin: 0; padding: 0; border: 0; background: transparent; }
+
+.home-equipment-stage > .home-tank-source-picture,
+.home-equipment-stage > .home-equipment-source-picture {
+  pointer-events: none;
+}
+
+.home-equipment-stage > .home-item-list button[aria-pressed='true'] {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  outline: none;
+}
+
+.home-business-navigation {display: flex; flex-wrap: wrap; gap: 0.5rem; border: 0; margin: 0; padding: 0;}
+
+.home-root-picture { pointer-events: none; }
+#home-inventory .home-page-status { left: 224px; top: 410px; width: 372px; min-height: 36px; margin: 0; }
+.home-page-navigation { left: 12px; top: 410px; width: 200px; min-inline-size: 0; border: 0; margin: 0; padding: 0; color: #fff; font-family: sans-serif; }
+.home-page-navigation-scroll { max-height: 60px; overflow: auto; }
+.home-page-navigation legend { margin-bottom: 8px; font-size: 12px; }
+.home-page-navigation button { font-size: 12px; }
+.home-loading-close { left: 570px; top: 0; }
+.home-inventory-stage > .home-player-source-picture { pointer-events: none; }
+.home-inventory-stage > .home-item-list button[aria-pressed='true'] {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  outline: none;
+}
+.home-page-navigation label { flex: 0 0 100%; align-self: center; }
+.home-page-navigation input[type="range"] { flex: 0 0 260px; width: 260px; margin: 0; }
+#home-inventory .home-page-navigation output { flex: 0 0 48px; width: 48px; min-height: 16px; margin: 0; align-self: center; }
+#home-inventory #volume-settings-status { flex-basis: 100%; width: 100%; }
+.home-inventory-stage > .source-state-button, .home-roles-stage > .source-state-button { margin: 0; padding: 0; border: 0; background: transparent; }
+.home-inventory-stage > .source-state-button:focus-visible, .home-roles-stage > .source-state-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.home-role-web-tools { left: 224px; top: 334px; width: 365px; display: flex; align-items: center; gap: 8px; }
+.home-role-web-tools button { margin: 0; padding: 4px 8px; font-size: 12px; }
+#home-roles .home-role-status { left: 224px; top: 369px; width: 370px; min-height: 20px; margin: 0; }
+
+[data-home-role-page='tank'] > .home-tank-source-picture {
+  pointer-events: none;
+}
+
+[data-home-role-page='tank'] > .source-state-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+}
+
+[data-home-role-page='tank'] > .home-tank-source-use:disabled {
+  opacity: 1;
+}
+
+[data-home-role-page='tank'] > .home-role-web-tools {
+  top: 410px;
+}
+
+[data-home-role-page='tank'] > .home-item-list button[aria-pressed='true'] {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  outline: none;
+}
+
+#home-roles [data-home-role-page='tank'] > .home-role-status {
+  top: 446px;
+}
+
+[data-home-role-page='pet'] > .home-pet-source-picture {
+  pointer-events: none;
+}
+
+[data-home-role-page='pet'] .home-pet-owned-number {filter: brightness(.15);}
+[data-home-role-page='tank'] .home-tank-owned-attribute {filter: brightness(.15);}
+.home-equipment-stage .home-tank-owned-attribute {filter: brightness(.15);}
+[data-home-role-page='pet'] > .home-pet-owned-skill {inset: 0; pointer-events: none;}
+.home-pet-owned-skill > .source-static-image {position: absolute;}
+.home-pet-owned-skill > .source-static-text {position: absolute; filter: brightness(.15);}
+[data-home-role-page='pet'] > .home-pet-owned-description {
+  overflow: auto;
+  color: #253740;
+  white-space: pre-wrap;
+  line-height: 16px;
+}
+
+[data-home-role-page='pet'] > .source-state-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+}
+
+[data-home-role-page='pet'] > .home-pet-source-use:disabled {
+  opacity: 1;
+}
+
+[data-home-role-page='pet'] > .home-item-list button[aria-pressed='true'] {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  outline: none;
+}
+
+#home-roles [data-home-role-page='pet'] > .home-role-status {
+  top: 410px;
+}
+
+[data-home-role-page='tank'] > .home-tank-description {
+  overflow: auto;
+  color: #253740;
+  line-height: 15px;
+  white-space: pre-wrap;
+}
+
+.home-equipment-stage > .home-tank-description {
+  overflow: auto;
+  color: #253740;
+  line-height: 15px;
+  white-space: pre-wrap;
+}
+
+.home-player-profile-number { filter: brightness(.15); }

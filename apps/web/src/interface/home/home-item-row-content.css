@@ -1,0 +1,46 @@
+#home-inventory .home-inventory-source-list > [data-home-source-item-row],
+#home-inventory .home-inventory-source-list > [data-home-source-weapon-row],
+#home-inventory .home-inventory-source-list > [data-home-source-valuable-row] {
+  position: relative;
+  display: block;
+  width: 161px;
+  height: 56px;
+  min-height: 0;
+  padding: 0;
+  background-position: left top;
+  background-size: 161px 51px;
+}
+
+[data-home-source-item-row] > span,
+[data-home-source-weapon-row] > span,
+[data-home-source-valuable-row] > span {
+  position: absolute;
+  white-space: nowrap;
+}
+
+.home-item-row-icon {
+  left: 5px;
+  top: 8px;
+  width: 32px;
+  height: 32px;
+  background: center / 32px 32px no-repeat;
+}
+
+.home-item-row-name {
+  left: 44px;
+  top: 12px;
+  max-width: 117px;
+  overflow: hidden;
+}
+
+.home-item-row-type {
+  left: 44px;
+  top: 28px;
+  max-width: 117px;
+  overflow: hidden;
+}
+
+.home-item-row-quantity {
+  right: 119px;
+  bottom: 11px;
+}

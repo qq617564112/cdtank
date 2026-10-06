@@ -1,0 +1,157 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {mkdtemp, rm, writeFile, readFile, copyFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {spawn} from 'node:child_process';
+import {createServer} from 'vite';
+import {DatabaseSync, backup} from 'node:sqlite';
+import {classifyItemId} from '../apps/shared/combat/item-hotkeys.ts';
+import {serviceProto} from '../apps/shared/protocols/serviceProto.ts';
+const require=createRequire(import.meta.url),WebSocket=require('ws'),{WsClient}=require('tsrpc'),{TransportDataUtil}=require('tsrpc-base-client');
+const decoder=new WsClient(serviceProto,{server:'ws://127.0.0.1:3460',logger:undefined});
+const network=[];
+let serverLog='';
+const navigationOnly=process.argv.includes('--navigation-only');
+const runId=new Date().toISOString().replace(/[:.]/g,'-');
+const output='recovery/output/browser-attachment-font-'+runId;
+const directory=await mkdtemp(join(tmpdir(),'cdtank-home-pet-details-'));
+const database=join(directory,'accounts.sqlite');
+let server,chrome,vite,ws;
+const fixture=JSON.parse(await readFile('recovery/output/home-tank-active-marker-browser-fixture.json','utf8'));
+const checkpoint=fixture.database??'recovery/output/home-tank-active-marker-browser.sqlite';await copyFile(checkpoint,database);
+const pages=[],contexts=[];
+
+const roomTailOnly=process.argv.includes('--room-tail-only');
+const visualOnly=process.argv.includes('--visual-only');
+const evidence={status:'RUNNING',roomTailOnly,visualOnly,navigationOnly,ports:{server:3460,vite:5490,cdp:9690},runId,scope:'User global attachment font: dynamic text/input/chat/HUD; static image lettering preserved. User five screenshots: lobby/Home/Item/Pet/Tank source typography, description/summary geometry, directory mastery, skill details and preview orbit/drag. Readonly checkpoint queries, no BUY/Ready/room.',checkpoint:{source:checkpoint,copied:true,originalModified:false,originalFundsFixture:true}};
+async function stop(child){if(child?.exitCode===null&&child.signalCode===null){const done=new Promise(r=>child.once('exit',r));child.kill();await done;}}
+let sequence = 0;
+const pending = new Map();
+function command(method, params = {}, sessionId) {
+  return new Promise((resolve, reject) => {
+    const id = ++sequence;
+    pending.set(id, {resolve, reject});
+    ws.send(JSON.stringify({id, method, params, sessionId}));
+  });
+}
+async function evaluate(session, expression) {
+  const result = await command('Runtime.evaluate', {expression, returnByValue: true, awaitPromise: true}, session);
+  if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
+  return result.result.value;
+}
+async function waitUntil(session, expression, timeout = 45000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    try {
+      return await evaluate(session, `(async()=>{const deadline=Date.now()+${timeout};while(Date.now()<deadline){if(${expression})return true;await new Promise(r=>setTimeout(r,50));}throw new Error('Browser condition timeout: '+document.querySelector('[data-tank-shop-status]')?.value+' '+document.querySelector('[data-tank-shop-preview]')?.dataset.status);})()`);
+    } catch (error) {
+      if (!String(error).includes('Execution context was destroyed')
+          && !String(error).includes('Inspected target navigated or closed')) throw error;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+  throw new Error('Page navigation timeout');
+}
+async function nativeClick(session, selector) {
+  await command('Page.bringToFront', {}, session);await new Promise(r=>setTimeout(r,100));
+  const point = await evaluate(session, `(()=>{const e=document.querySelector(${JSON.stringify(selector)});e.scrollIntoView({block:'nearest'});const r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2;if(!e.contains(document.elementFromPoint(x,y)))throw new Error('Control covered '+e.outerHTML+' by '+document.elementFromPoint(x,y)?.outerHTML);return {x,y}})()`);
+  await command('Input.dispatchMouseEvent',{type:'mouseMoved',...point},session);
+  await command('Input.dispatchMouseEvent', {type:'mousePressed',button:'left',clickCount:1,...point}, session);
+  await command('Input.dispatchMouseEvent', {type:'mouseReleased',button:'left',clickCount:1,...point}, session);
+}
+async function startServer(){const start=serverLog.length;const env={...process.env,PORT:'3460',ACCOUNT_DB_PATH:database,MATCH_TIME_LIMIT_SECONDS:'60'};delete env.MATCH_MIN_PLAYERS;server=spawn(process.execPath,['--import','tsx','apps/server/src/index.ts'],{env,stdio:['ignore','pipe','pipe']});for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{serverLog+=String(d);});const deadline=Date.now()+15000;while(!serverLog.slice(start).includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));assert(serverLog.slice(start).includes('Server started'),serverLog.slice(start));}
+try {
+  await startServer();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',plugins:[{name:'readonly-font-resource-state',transform(source,id){if(id.endsWith('/src/match/battle.ts'))return source+'\nconst fontOldQuick=Battle.prototype.setQuickChats;Battle.prototype.setQuickChats=function(value){window.fontReadinessBattle=this;return fontOldQuick.call(this,value);};';}}],server:{port:5490,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3460',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
+    '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
+    '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9690',
+    `--user-data-dir=${join(directory,'chrome')}`,'about:blank'],{stdio:'ignore'});
+  let endpoint;for(let i=0;i<100;i++){try{endpoint=(await(await fetch('http://127.0.0.1:9690/json/version')).json()).webSocketDebuggerUrl;break;}catch{await new Promise(r=>setTimeout(r,50));}}
+  assert(endpoint,'Chromium9690');ws=new WebSocket(endpoint);await new Promise((r,j)=>{ws.once('open',r);ws.once('error',j);});
+ws.on('message', raw => {
+  const message = JSON.parse(String(raw));
+  const callback = pending.get(message.id);
+  if (callback) {
+    pending.delete(message.id);
+    message.error ? callback.reject(new Error(JSON.stringify(message.error))) : callback.resolve(message.result);
+  }
+});
+ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFrameReceived','Network.webSocketFrameSent'].includes(m.method))return;const frame=m.params.response;if(frame.opcode!==2)return;const bytes=new Uint8Array(Buffer.from(frame.payloadData,'base64'));if(bytes.length===1&&bytes[0]===0)return;const received=m.method.endsWith('Received');let parsed;if(received)parsed=TransportDataUtil.parseServerOutout(decoder.tsbuffer,decoder.serviceMap,bytes);else{const envelope=TransportDataUtil.tsbuffer.decode(bytes,'ServerInputData');assert(envelope.isSucc);const service=decoder.serviceMap.id2Service[envelope.value.serviceId],payload=decoder.tsbuffer.decode(envelope.value.buffer,service.type==='api'?service.reqSchemaId:service.msgSchemaId);assert(payload.isSucc);parsed={isSucc:true,result:{type:service.type,service,...(service.type==='api'?{req:payload.value}:{msg:payload.value})}};}assert(parsed.isSucc);const r=parsed.result;if(['Equipment','OwnedRoles','Inventory','Shop','TankShop','SelectRole','PetShop','RoleProfile'].includes(r.service.name))network.push({index:network.length,page:m.sessionId,direction:received?'received':'sent',name:r.service.name,kind:r.type,...(r.ret?{success:r.ret.isSucc,response:r.ret.isSucc?r.ret.res:r.ret.err}:{payload:r.msg??r.req})});});
+
+  for(let index=0;index<1;index++){
+    const {browserContextId}=await command('Target.createBrowserContext');contexts.push(browserContextId);
+    const {targetId}=await command('Target.createTarget',{url:'about:blank',browserContextId});
+    const {sessionId}=await command('Target.attachToTarget',{targetId,flatten:true});pages.push({targetId,sessionId});await command('Page.enable',{},sessionId);await command('Network.enable',{},sessionId);await command('Page.addScriptToEvaluateOnNewDocument',{source:'localStorage.setItem("cdtank-account-token",'+JSON.stringify(fixture.token)+');'},sessionId);await command('Page.navigate',{url:'http://127.0.0.1:5490'},sessionId);
+    await command('Emulation.setDeviceMetricsOverride',{width:1920,height:1080,deviceScaleFactor:1,mobile:false},sessionId);
+    await waitUntil(sessionId,`document.querySelector('[data-room-card-create]')&&localStorage.getItem('cdtank-account-token')`);
+
+  }
+  const s=pages[0].sessionId;
+
+
+
+  assert.equal(await evaluate(s,`localStorage.getItem('cdtank-account-token')`),fixture.token);
+  evidence.pages=[];
+  evidence.font=await evaluate(s, `document.fonts.load('12px CDTank-Xiangjiao').then(f=>({loaded:f.length,status:f[0]?.status,family:f[0]?.family}))`);assert.equal(evidence.font.status,'loaded');
+  async function key(key,code,vk){await command('Input.dispatchKeyEvent',{type:'keyDown',key,code,windowsVirtualKeyCode:vk},s);await command('Input.dispatchKeyEvent',{type:'keyUp',key,code,windowsVirtualKeyCode:vk},s);}
+  async function resize(width,height){await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},s);await new Promise(r=>setTimeout(r,180));}
+  async function shots(name,selector){
+    for(const [width,height]of (['waiting','playing','map','create'].includes(name)?[[1920,1080]]:[[800,600],[1920,1080],[3840,2160]])){
+      await resize(width,height);await waitUntil(s,`document.querySelector(${JSON.stringify(selector)})`);
+      await evaluate(s,`document.fonts.ready`);await new Promise(r=>setTimeout(r,200));
+      const fonts=await evaluate(s,`(()=>{const bad=[];for(const e of document.querySelectorAll('body *')){if(!e.getClientRects().length)continue;const hasText=[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())||e.matches('input,textarea,select');if(hasText&&!getComputedStyle(e).fontFamily.includes('CDTank-Xiangjiao'))bad.push(e.tagName+'.'+e.className);}return {bad,raster:document.querySelectorAll('[data-source-raster-glyph],[data-feedback-glyph],[data-source-description-glyph]').length};})()`);assert.deepEqual(fonts.bad,[]);assert.equal(fonts.raster,0);
+      evidence.fontChecks??=[];evidence.fontChecks.push({name,width,...fonts});
+      const shot=await command('Page.captureScreenshot',{format:'png'},s);await writeFile(output+'-'+name+'-'+width+'.png',Buffer.from(shot.data,'base64'));
+      evidence.pages.push({name,width,height,screenshot:output+'-'+name+'-'+width+'.png'});
+    }
+    await resize(1920,1080);
+  }
+  if(!roomTailOnly){
+  await waitUntil(s,`document.querySelector('[data-feedback-font="xiangjiao-brush"]')`);
+  await nativeClick(s,'[data-lobby-chat-input]');await command('Input.insertText',{text:'中文字体测量与光标测试'},s);await key('Home','Home',36);await key('ArrowRight','ArrowRight',39);
+  evidence.draft=await evaluate(s,`(()=>{const e=document.querySelector('[data-lobby-chat-input]');return {value:e.value,caret:e.selectionStart,font:getComputedStyle(e).fontFamily}})()`);assert.equal(evidence.draft.caret,1);
+  await shots('lobby','[data-lobby-stage]');
+  await nativeClick(s,'[data-room-card-home]');await waitUntil(s,`document.querySelector('[data-home-saved-summary]')?.getAttribute('aria-busy')==='false'`);
+  await shots('home','[data-home-saved-summary]');await nativeClick(s,'[data-home-close]');
+  await nativeClick(s,'[data-room-card-shop]');await waitUntil(s,`document.querySelector('[data-shop-description-text]')`);
+  await shots('item','[data-shop-description-text]');
+  for(const [name,category,preview] of [['pet','Pet','[data-shop-pet-preview]'],['tank','Tank','[data-tank-shop-preview]']]){
+    await nativeClick(s,'[data-shop-root-category="'+category+'"]');
+    await waitUntil(s,`document.querySelector('${preview}')?.dataset.status==='ready'`);
+    await shots(name,preview);
+    if(visualOnly)continue;
+    const angle=()=>evaluate(s,`(()=>{const e=document.querySelector('${preview}');return {yaw:Number(e.dataset.orbitYaw),pitch:Number(e.dataset.orbitPitch),frames:Number(e.dataset.frames),status:e.dataset.status}})()`);
+    const before=await angle();await new Promise(r=>setTimeout(r,300));const rotating=await angle();assert(rotating.yaw>before.yaw);
+    const point=await evaluate(s,`(()=>{const r=document.querySelector('${preview} canvas').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+    await command('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',buttons:1,clickCount:1,...point},s);
+    await command('Input.dispatchMouseEvent',{type:'mouseMoved',button:'left',buttons:1,x:point.x+50,y:point.y+30},s);
+    await new Promise(r=>setTimeout(r,150));const dragged=await angle();assert(Math.abs(dragged.pitch-rotating.pitch)>.001);
+    await command('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',buttons:0,clickCount:1,x:point.x+50,y:point.y+30},s);
+    evidence[name+'Preview']={before,rotating,dragged};
+    if(name==='pet'){
+      evidence.mastery=await evaluate(s,`[...document.querySelectorAll('[data-mastery-value]')].map(e=>Number(e.dataset.masteryValue))`);assert.equal(evidence.mastery.length,4);
+      await waitUntil(s,`document.querySelector('[data-pet-shop-skill-open="0"]').matches(':enabled')`);
+      await nativeClick(s,'[data-pet-shop-skill-open="0"]');await waitUntil(s,`document.querySelector('[data-pet-skill-dialog]')?.open`);
+      evidence.skill=await evaluate(s,`({id:document.querySelector('[data-pet-skill-dialog]').dataset.skillId,text:document.querySelector('[data-pet-skill-description]').textContent,binding:document.querySelector('[data-pet-skill-dialog]').dataset.skillBinding})`);
+      assert(evidence.skill.text.length>0);await key('Escape','Escape',27);await waitUntil(s,`!document.querySelector('[data-pet-skill-dialog]')&&document.activeElement.matches('[data-pet-shop-skill-open="0"]')`);
+    }
+  }
+  await nativeClick(s,'[data-shop-close]');await waitUntil(s,`document.activeElement.matches('[data-room-card-shop]')`);
+  assert(network.every(n=>n.direction!=='sent'||n.payload?.operation==='QUERY'||['OwnedRoles','Inventory','RoleProfile'].includes(n.name)));
+  await nativeClick(s,'[data-room-card-home]');await waitUntil(s,`document.querySelector('#open-quick-chat-settings')`);await nativeClick(s,'#open-quick-chat-settings');await waitUntil(s,`document.querySelector('[data-settings-source-page]')`);await shots('settings','[data-settings-source-page]');await nativeClick(s,'[data-settings-cancel]');await nativeClick(s,'[data-home-close]');
+  }
+  await nativeClick(s,'[data-room-card-create]');await waitUntil(s,`document.querySelector('[data-map-selector-map="7"]')`);if(!roomTailOnly)await shots('map','[data-map-selector-map="7"]');await nativeClick(s,'[data-map-selector-map="7"]');await nativeClick(s,'[data-map-selector-confirm]');await waitUntil(s,`document.querySelector('[data-room-create-name]')`);
+  if(!roomTailOnly){
+  await nativeClick(s,'[data-room-create-name]');await command('Input.dispatchKeyEvent',{type:'keyDown',key:'a',code:'KeyA',windowsVirtualKeyCode:65,modifiers:2},s);await command('Input.dispatchKeyEvent',{type:'keyUp',key:'a',code:'KeyA',windowsVirtualKeyCode:65,modifiers:2},s);await command('Input.insertText',{text:'附件字体中文光标'},s);await key('Home','Home',36);await key('ArrowRight','ArrowRight',39);await key('ArrowRight','ArrowRight',39);
+  evidence.caret=await evaluate(s,`(()=>{const e=document.querySelector('[data-room-create-name]'),c=document.querySelector('[data-room-create-caret="edtRoomName"] i'),ctx=document.createElement('canvas').getContext('2d'),style=getComputedStyle(e);ctx.font=style.fontSize+' '+style.fontFamily;return {index:e.selectionStart,left:parseFloat(c.style.left),expected:ctx.measureText(e.value.slice(0,e.selectionStart)).width-e.scrollLeft,font:style.fontFamily};})()`);assert.equal(evidence.caret.index,2);assert(Math.abs(evidence.caret.left-evidence.caret.expected)<.1);
+  await shots('create','[data-room-create-name]');}
+  await nativeClick(s,'[data-room-create-confirm]');await waitUntil(s,`document.querySelector('[data-formal-waiting-page]')`);
+  await waitUntil(s,`document.querySelector('.source-waiting-chat [data-chat-input]')`);await nativeClick(s,'.source-waiting-chat [data-chat-input]');await command('Input.insertText',{text:'房内附件字体中文消息用于检查自动换行显示和聊天行间距离保持内容完整清晰可读'},s);await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'},s);await key('Enter','Enter',13);await waitUntil(s,`document.querySelector('.source-waiting-chat [data-chat-input]')?.value===''`);await shots('waiting','[data-formal-waiting-page]');
+  for(let i=0;i<3;i++){await nativeClick(s,'[data-add-cpu]');await waitUntil(s,`JSON.parse(document.querySelector('#battle-status')?.dataset.world??'null')?.players.length>=${i+2}&&document.querySelector('[data-add-cpu]')?.matches(':enabled')`);}
+  await waitUntil(s,`window.fontReadinessBattle?.mapLoaded&&window.fontReadinessBattle?.players.resourcesReady&&!window.fontReadinessBattle.players.loadingError&&document.querySelector('[data-waiting-ready]')?.matches(':enabled')`,90000);await nativeClick(s,'[data-waiting-ready]');await waitUntil(s,`document.querySelector('[data-formal-battle-page]')`,90000);await shots('playing','[data-formal-battle-page]');await nativeClick(s,'[data-leave-room]');await waitUntil(s,`document.activeElement.matches('[data-room-card-create]')`);
+  evidence.fontContext={formal:true,map:7,humans:1,cpus:3,ready:1,leave:1,buy:0,send:1};
+  evidence.noPurchases=true;evidence.status='PASS';console.log('PASS five page feedback '+output);
+}catch(error){evidence.status='FAIL';evidence.error=String(error);throw error;}
+finally{evidence.network=network;await writeFile(output+'.json',JSON.stringify(evidence,null,2)+'\n');if(ws){for(const p of pages)await command('Target.closeTarget',{targetId:p.targetId}).catch(()=>{});ws.close();}await vite?.close();await stop(server);await stop(chrome);await rm(directory,{recursive:true,force:true,maxRetries:5,retryDelay:100});}

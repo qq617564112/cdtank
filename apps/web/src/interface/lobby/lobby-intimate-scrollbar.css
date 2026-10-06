@@ -1,0 +1,40 @@
+.lobby-intimate-scroll-shell {
+  position: absolute;
+}
+
+.lobby-chat .lobby-intimate-scroll-shell .lobby-intimate-list {
+  box-sizing: border-box;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.lobby-intimate-scrollbar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8.5px;
+  overflow: hidden;
+  background-size: 100% 100%;
+}
+
+.lobby-intimate-scrollbar div,
+.lobby-intimate-scrollbar span,
+.lobby-intimate-scrollbar button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: transparent center / 100% 100% no-repeat;
+}
+
+.lobby-intimate-scroll-track {width: 8.5px;}
+.lobby-intimate-scroll-thumb {width: 28px; overflow: hidden;}
+.lobby-intimate-thumb-top {top: 0; width: 28px; height: 26px;}
+.lobby-intimate-thumb-middle {top: 26px; bottom: 27px; width: 28px;}
+.lobby-intimate-thumb-bottom {bottom: 0; width: 28px; height: 27px;}
+.lobby-intimate-scrollbar .lobby-intimate-scroll-up {top: 0; width: 28px; height: 26px;}
+.lobby-intimate-scrollbar .lobby-intimate-scroll-down {bottom: 0; width: 28px; height: 27px;}
+.lobby-intimate-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}

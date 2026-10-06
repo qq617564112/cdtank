@@ -1,0 +1,14 @@
+[data-formal-battle-page] {position: fixed; inset: 0; z-index: 5; pointer-events: none;}
+.battle-play-stage {position: absolute; width: 800px; height: 600px; transform-origin: top left; color: #fff; font: 12px 'CDTank-SIMSUN', serif;}
+.battle-play-stage > .source-state-button {position: absolute; margin: 0; padding: 0; border: 0; background: transparent; pointer-events: auto;}
+.battle-play-stage :focus-visible {outline: 2px solid #fff; outline-offset: 2px;}
+.battle-play-loading-exit {position: absolute; left: 747px; top: 0; width: 46px; height: 46px; pointer-events: auto;}
+.battle-play-feedback {position: absolute; left: 309px; top: 316px; width: 287px; max-height: 88px; overflow: auto; pointer-events: auto; text-shadow: 1px 1px #000;}
+.battle-play-feedback:empty {display: none;}
+.battle-play-feedback p {margin: 0 0 4px;}
+.battle-play-tools {position: absolute; left: 309px; bottom: 44px; width: 287px; max-height: 148px; overflow: auto; color: #fff; pointer-events: auto;}
+.battle-play-tools > summary {padding: 5px 8px; cursor: pointer; background: rgb(38 59 73 / 85%);}
+.battle-play-tool-content {padding: 6px 8px; background: rgb(38 59 73 / 85%);}
+.battle-play-tool-content h2 {margin: 0 0 4px; font-size: 12px; font-weight: normal;}
+.battle-play-tool-content p {margin: 4px 0; line-height: 16px;}
+.battle-play-tool-content button {padding: 3px 6px; border: 1px solid #8dabad; background: #263b49; color: #fff; font: inherit;}

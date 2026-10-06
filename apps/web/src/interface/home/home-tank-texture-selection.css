@@ -1,0 +1,10 @@
+#home-tank-texture-selection { color: #fff; background: #253740; border: 1px solid #8dabad; padding: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+#home-tank-texture-selection::backdrop { background: rgb(0 0 0 / 55%); }
+#home-tank-texture-selection p { margin: 0; font-size: 12px; }
+#home-tank-texture-selection output { display: block; min-height: 28px; font-size: 12px; }
+#home-tank-texture-selection > button { display: block; margin: 8px 0 0 auto; }
+#home-tank-texture-selection .home-roles-stage { width: 615px; height: 345px; }
+#home-tank-texture-selection .home-texture-component { display: contents; }
+#home-tank-texture-selection .home-texture-component > * { position: absolute; box-sizing: border-box; z-index: 1; }
+#home-tank-texture-selection :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+#home-tank-texture-selection .home-texture-component > button { margin: 0; }

@@ -1,0 +1,9 @@
+# 建房 display／metrics 源边界（UI-07-R-DISPLAY）
+
+本片限定定位原消费者入口，保持现sourceViewport高清适配。CEGUIBase.dll的ImagesetManager::notifyScreenResolution0x1001a680遍历manager map，调用Imageset::notifyScreenResolution0x10018de0；后者已由UI-07-R-SCALE执行其display/native因子和图像遍历消费。
+
+Window::setMetricsMode0x10033970将MetricsMode写+0x34，继承值2从parent解析；Window::setRect0x10033d10在mode0走相对矩形换算、非0走绝对坐标整数化。建房源所有控件声明MetricsMode=Absolute，同时保留AbsoluteRect与RelativeRect。此定位是原指令阅读，不是完整窗口布局树或XML属性赋值执行证明，不能根据两个矩形同时存在将现Web minscale当原宽屏策略。
+
+唯一display生产缺口是原System/renderer屏幕尺寸输入到ImagesetManager::notifyScreenResolution的调用者及实际display值。现有入口0x1001a680/0x10018de0可接该值继续追踪；没有可运行原客户端会话，本片不扩探索。正式页面仍采用明确sourceViewport=居中800×600×minscale输入，不将整window各轴factor混入统一stage控件矩形，不关闭DISPLAY父项。
+
+本轮可交付正式子片为UI-07-R-TEXT：恢复源StaticText区域裁剪，源消费者与Web接线见`room-create-text-source.md`，真实页面验收见`room-create-text-browser.md`。

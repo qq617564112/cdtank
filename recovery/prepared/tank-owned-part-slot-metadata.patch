@@ -1,0 +1,25 @@
+--- a/apps/shared/combat/catalog.ts
++++ b/apps/shared/combat/catalog.ts
+@@ -43,8 +43,8 @@
+   dataScales: CombatDataScaleDefinition[];
+   /** Original PetTable.ID/PetType/PetSize metadata; ownership comes from the snapshot petId. */
+   petTypes?: {petId: number; petType: number; petSize?: number}[];
+-  /** Original TankTable.ID/TankType metadata, independent of sale availability. */
+-  tankTypes?: {tankId: number; tankType: number}[];
++  /** Original TankTable.ID/TankType/TankPartSlot metadata, independent of sale availability. */
++  tankTypes?: {tankId: number; tankType: number; partSlotCount?: number}[];
+ }
+ 
+ export interface CombatDataScaleDefinition {
+--- a/recovery/export_combat_catalog.py
++++ b/recovery/export_combat_catalog.py
+@@ -37,7 +37,8 @@
+     pet_types = [dict(petId=int(row['values']['ID']), petType=int(row['values']['PetType']),
+                       petSize=int(row['values']['PetSize']))
+                  for row in read_table(ROOT / 'CDTank/Data/table/pet.dat')['rows']]
+-    tank_types = [dict(tankId=int(row['values']['ID']), tankType=int(row['values']['TankType']))
++    tank_types = [dict(tankId=int(row['values']['ID']), tankType=int(row['values']['TankType']),
++                       partSlotCount=int(row['values']['TankPartSlot']))
+                   for row in read_table(ROOT / 'CDTank/Data/table/tank.dat')['rows']]
+     return dict(skills=skills, items=items, dataScales=scales, petTypes=pet_types, tankTypes=tank_types)
+ 

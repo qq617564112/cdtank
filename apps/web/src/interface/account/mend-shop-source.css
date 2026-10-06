@@ -1,0 +1,76 @@
+.mend-shop-source {
+  position: absolute;
+  inset: 0;
+  width: 615px;
+  height: 395px;
+  pointer-events: none;
+}
+
+.mend-shop-source > [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mend-shop-source > button,
+.mend-shop-source > .mend-shop-list {
+  pointer-events: auto;
+}
+
+.mend-shop-source > button {
+  background-color: transparent;
+}
+
+.mend-shop-list {
+  overflow: auto;
+  font: 12px 'CDTank-SIMSUN', serif;
+}
+
+.mend-shop-list > button {
+  display: block;
+  width: 100%;
+  min-height: 30px;
+  margin: 0;
+  padding: 3px;
+  color: white;
+  border: 0;
+  background: transparent center / 100% 100% no-repeat;
+  font: inherit;
+  text-align: left;
+}
+
+.mend-shop-status {
+  position: absolute;
+  left: 12px;
+  top: 410px;
+  width: 590px;
+  padding: 6px;
+  color: white;
+  background: #263b49;
+  overflow-wrap: anywhere;
+}
+
+.mend-shop-status:empty {
+  display: none;
+}
+
+[data-shop-active-page='Mend'] #account-shop-title {
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.mend-shop-list > [data-mend-owned-tank-row] {
+  position: relative;
+  box-sizing: border-box;
+  width: 161px;
+  height: 56px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background-position: left top;
+  background-size: 161px 51px;
+}

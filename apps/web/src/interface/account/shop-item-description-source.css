@@ -1,0 +1,30 @@
+#account-shop .shop-item-description-source {
+  left: 0;
+  top: 374px;
+  width: 218px;
+  height: 103px;
+}
+
+.shop-item-description-source > [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.shop-item-description-source > .source-static-image,
+.shop-item-description-source > .source-static-text {
+  pointer-events: none;
+}
+
+.shop-item-description-source [data-shop-description-text] {
+  color: white;
+  background: transparent;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: 'CDTank-SIMSUN', serif;
+  font-size: 12px;
+  line-height: 17px;
+}

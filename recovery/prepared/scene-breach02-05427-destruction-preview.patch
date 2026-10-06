@@ -1,0 +1,20 @@
+--- a/apps/web/src/assets/scenes/scene-preview.ts
++++ b/apps/web/src/assets/scenes/scene-preview.ts
+@@ -310,6 +310,8 @@
+           libraryAsset = '/scene-breach-0014.json';
+         } else if (id === '0010' && placement.model === 'obj05425') {
+           libraryAsset = '/scene-breach-0014.json';
++        } else if (id === '0002' && placement.model === 'obj05427') {
++          libraryAsset = '/scene-breach-0002-05427.json';
+         } else if (id === '0002' && placement.model === 'obj05428') {
+           libraryAsset = '/scene-breach-0014.json';
+         } else if (id === '0014' && ['obj05425', 'obj05426', 'obj05428'].includes(placement.model)) {
+@@ -449,7 +451,7 @@
+     const value = this.breakables.get(sourcePlacementId);
+     if (!value?.broken || value.soundPlayed) return;
+     value.soundPlayed = true;
+-    const reference = ['obj05425', 'obj05426'].includes(value.broken.model) ? 'GA32' :
++    const reference = ['obj05425', 'obj05426', 'obj05427'].includes(value.broken.model) ? 'GA32' :
+       value.broken.model === 'obj05428' ? 'GA30' :
+       value.broken.model === 'obj05469' ? 'GA33' :
+       ['obj05460', 'obj05434', 'obj05435', 'obj05436'].includes(value.broken.model) ? 'GA12' :

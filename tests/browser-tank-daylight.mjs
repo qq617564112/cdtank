@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+import {createRequire} from 'node:module';
+const WebSocket = createRequire(import.meta.url)('ws');
+const browser = await (await fetch('http://127.0.0.1:9368/json/version')).json();
+const ws = new WebSocket(browser.webSocketDebuggerUrl);
+await new Promise((resolve, reject) => {ws.once('open', resolve);ws.once('error', reject);});
+let id = 0;
+const pending = new Map();
+ws.on('message', raw => {const message=JSON.parse(String(raw));const task=pending.get(message.id);if(task){pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result);}});
+const call=(method,params={},sessionId)=>new Promise((resolve,reject)=>{const request=++id;pending.set(request,{resolve,reject});ws.send(JSON.stringify({id:request,method,params,sessionId}));});
+let targetId;
+try {
+  ({targetId}=await call('Target.createTarget',{url:'http://127.0.0.1:5298/'}));
+  const {sessionId}=await call('Target.attachToTarget',{targetId,flatten:true});
+  await call('Emulation.setDeviceMetricsOverride',{width:1920,height:1080,deviceScaleFactor:1,mobile:false},sessionId);
+  const evaluate=async expression=>{const response=await call('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true},sessionId);if(response.exceptionDetails)throw new Error(JSON.stringify(response.exceptionDetails));return response.result.value;};
+  await new Promise(resolve=>setTimeout(resolve,1500));
+  const setup=await evaluate(`(async()=>{
+    const source=await(await fetch('/src/main.ts')).text();
+    const url=source.match(/from "([^"]*@babylonjs_core.js[^"]*)"/)[1];
+    const B=await import(url);
+    const production=B.EngineStore.LastCreatedScene;
+    const productionAmbient=production.ambientColor.asArray();
+    B.EngineStore.LastCreatedEngine.stopRenderLoop();
+    const {TankView}=await import('/src/assets/tanks/tank-view.ts');
+    const {ScenePreview}=await import('/src/assets/scenes/scene-preview.ts');
+    const canvas=document.createElement('canvas');canvas.width=1920;canvas.height=1080;
+    canvas.style.cssText='position:fixed;inset:0;width:1920px;height:1080px;z-index:99999';document.body.append(canvas);
+    const engine=new B.Engine(canvas,true,{preserveDrawingBuffer:true},false);
+    const scene=new B.Scene(engine);scene.clearColor=new B.Color4(.25,.36,.44,1);
+    const light=new B.HemisphericLight('sky',new B.Vector3(0,1,0),scene);light.intensity=1.2;light.groundColor=new B.Color3(.35,.35,.35);
+    const camera=new B.ArcRotateCamera('camera',-Math.PI/2,Math.PI/3,700,B.Vector3.Zero(),scene);camera.minZ=.1;camera.maxZ=100000;
+    const preview=new ScenePreview(scene,camera);await preview.load('0007');camera.radius=400;camera.target.x+=300;camera.target.y=20;
+    scene.ambientColor=new B.Color3(.2,.2,.2);
+    let tank=await TankView.load(scene,'daylight-tank',1);tank.position(-camera.target.x,0,camera.target.z);
+    async function render(){await scene.whenReadyAsync();scene.render();engine._gl.finish();}
+    await render();
+    function pixels(){const bytes=new Uint8Array(1920*1080*4);const gl=engine._gl;gl.readPixels(0,0,1920,1080,gl.RGBA,gl.UNSIGNED_BYTE,bytes);return bytes;}
+    const before=pixels();
+    window.daylight={async after(){tank.dispose();await new Promise(r=>setTimeout(r,100));scene.ambientColor=B.Color3.FromArray(productionAmbient);tank=await TankView.load(scene,'daylight-tank',1);tank.position(-camera.target.x,0,camera.target.z);await render();const after=pixels();let changed=0,brighter=0,sumBefore=0,sumAfter=0;for(let i=0;i<before.length;i+=4){const a=before[i]+before[i+1]+before[i+2],b=after[i]+after[i+1]+after[i+2];if(Math.abs(a-b)>3){changed++;if(b>a)brighter++;sumBefore+=a/3;sumAfter+=b/3;}}const materials=scene.materials.filter(m=>m.metadata?.originalMV3).map(m=>({script:m.metadata.originalMV3.script,ambient:m.metadata.originalMV3.ambient,textureCount:m.getActiveTextures().length}));return {changed,brighter,meanBefore:sumBefore/changed,meanAfter:sumAfter/changed,materials,canvas:[engine.getRenderWidth(),engine.getRenderHeight()]};},dispose(){tank.dispose();preview.clear();scene.dispose();engine.dispose();}};
+    return {productionAmbient,camera:{radius:camera.radius,alpha:camera.alpha,beta:camera.beta,target:camera.target.asArray()},scope:'Fixed-view original map0007 and actual TankView1; old initial ambient vs production scene ambient. Static rendering, no network or gameplay claim.'};
+  })()`);
+  const shot=await call('Page.captureScreenshot',{format:'png'},sessionId);
+  await writeFile('recovery/output/tank-daylight-before.png',Buffer.from(shot.data,'base64'));
+  const result=await evaluate('daylight.after()');
+  console.log(JSON.stringify({setup,result}));
+  assert.deepEqual(setup.productionAmbient,[1,1,1]);
+  assert(result.changed>100);
+  assert(result.brighter/result.changed>.99);
+  assert(result.meanAfter>result.meanBefore*3);
+  assert(result.materials.length>0&&result.materials.every(row=>row.ambient.every(value=>value===1)&&row.textureCount===1));
+  assert.deepEqual(result.canvas,[1920,1080]);
+  const after=await call('Page.captureScreenshot',{format:'png'},sessionId);
+  await writeFile('recovery/output/tank-daylight-after.png',Buffer.from(after.data,'base64'));
+  await evaluate('daylight.dispose()');
+  const evidence={status:'PASS',setup,result};
+  await writeFile('recovery/output/tank-daylight-browser.json',JSON.stringify(evidence,null,2)+'\n');
+  console.log(JSON.stringify(evidence));
+} finally {if(targetId)await call('Target.closeTarget',{targetId});ws.close();}

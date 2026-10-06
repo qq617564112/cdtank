@@ -1,0 +1,179 @@
+[data-room-create-dialog] {
+  padding: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: visible;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  font-family: 'CDTank-SIMSUN', serif;
+}
+
+.room-create-viewport {
+  position: relative;
+}
+
+.room-create-stage {
+  position: absolute;
+  width: 310px;
+  height: 328px;
+  transform-origin: top left;
+}
+
+.room-create-stage button, .room-create-stage span, .room-create-stage input {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  border: 0;
+  color: #fff;
+  font-family: 'CDTank-SIMSUN', serif;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.room-create-stage span {
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.room-create-stage button {
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.room-create-stage input {
+  background: transparent;
+  text-align: left;
+}
+
+.room-create-stage input:disabled {
+  opacity: 1;
+  -webkit-text-fill-color: currentColor;
+}
+
+.room-create-stage input::selection {
+  color: #fff;
+  background: #607fff;
+}
+
+.room-create-stage input:not(:focus)::selection {
+  background: #808080;
+}
+
+.room-create-stage input.room-create-password-selected {
+  -webkit-text-fill-color: transparent;
+}
+
+.room-create-stage input.room-create-name-selected {
+  -webkit-text-fill-color: transparent;
+}
+
+.room-create-stage input.room-create-name-selected::selection {
+  color: transparent;
+  background: transparent;
+}
+
+.room-create-stage .room-create-name-selection {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.room-create-name-selection i {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.room-create-name-selection [data-room-name-selection-text] {
+  top: 0;
+  text-align: left;
+}
+
+.room-create-stage input.room-create-source-caret-input {
+  caret-color: transparent;
+}
+
+.room-create-stage .room-create-source-caret {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.room-create-source-caret i {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+
+
+.room-create-stage input.room-create-password-selected::selection {
+  color: transparent;
+  background: transparent;
+}
+
+.room-create-stage .room-create-password-selection {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.room-create-password-selection i {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.room-create-password-selection [data-room-password-selection-text] {
+  top: 0;
+  font-family: 'CDTank-SIMSUN-Password', serif;
+  text-align: left;
+}
+
+.room-create-stage button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.room-create-stage button:focus-visible, .room-create-stage input:focus-visible {
+  outline: 2px solid #fff;
+}
+
+
+[data-room-create-status] {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  display: block;
+  padding: 0.5rem;
+  color: #fff;
+  font-size: 12px;
+  background: #263b49;
+}
+
+[data-room-create-status]:empty {
+  display: none;
+}
+
+[data-room-create-dialog]::backdrop {
+  background: transparent;
+}
+
+.room-create-source-mask {
+  position: fixed;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.room-create-stage .room-create-source-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: center;
+}
+

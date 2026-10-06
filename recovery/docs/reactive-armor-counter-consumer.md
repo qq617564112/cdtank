@@ -1,0 +1,33 @@
+# 反应装甲攻击抵消消费者准备
+
+原17071“反应装甲”价格Money1500/Token150，category12、durable3、Break1、GetMethod0；正式partShopItems已将其纳入普通Shop。原Skill13161 Trigger0/Target1/Func1/T65535，MaxCounter1、ItemMove−2。后者已进入统一移动公式，本候选只补未消费的攻击抵消。Pet5 slot0=10511/cap1/cost200也提供MaxCounter1，普通装备路径可先验证，不依赖技能点取得。
+
+原4334e8初始化role integer+58=0，432951累加signed32乘法及回绕，DataScale20“攻击抵消总数”限0..9，保持整数且无比例转换。完整重算保存在RoleAttributeState.values.roleIntegers+58；attributesReady合格才可读。combat.roleFloatFields只发布float，不能以float58或recordFields58最大HP代替，也不能混为role+24/getter9死亡计数。
+
+当前life.ts没有MaxCounter抵挡或剩余次数消费者，因此合法购买装备后虽然移动减益生效，描述的一次抵挡尚无玩家行为。原服务器抵挡回包、已耗次数、生命/回合重置与换来源刷新规则仍缺。下一最小Web权威可用独立瞬态remaining，在资格成立的敌对普通炮击上抵消并消耗；重置边界、换来源及免伤/友伤/周期/医疗优先顺序须主线明确后接入，不先装公式、事件或重置政策。
+
+来源合同reactive-armor-counter-consumer-preparation.json。本次仅原表/现模块静态具名核对，无source/native矩阵、类型检查、服务或生产修改。10911当前玩家闭环优先，未把本候选计为交付或父项完成。
+
+原读取入口有限调查：432417整数selector16读取record+58最大生命，selector20读取role+5c；5c2c28具名role虚表和直接+58 getter匹配均未给出MaxCounter消费者。匹配5420e0不在该role虚表，不能冒成抵挡入口。仅这些路线未取得读取/已耗状态合同，不推出原客户端不存在抵挡行为。
+
+具体待协调政策：每生命保存cancellationsSpent，current合格maxCounter−spent构成剩余，普通回合启动/复活才重置；ammo/drink/来源重算不补充。新来源改变capacity但不清spent，资格撤回时不消费陈旧值。敌对普通炮击先消费一次并不扣HP，因整数loss0不触发10911吸收。此为待主线决定的Web提议，无状态、事件、HP或production改动。
+
+首次验收输入可沿已实际10911页面22-20-27检查点及原双身份：正常Shop BUY17071 quantity1/MONEY1500，从receipt取实例再EQUIP slot1。Pet104当前slotCount2、slot1为空；category12跳过普通同类别装物冲突检查，仍核原车内置三parts。kind4 ownedQuantity沿期限分钟，购买raw1分钟不能混为1抵挡次数。完整bound六rank/current16和received shield进入原重算，integer58=1；无需再购宠/学习/资金或Point夹具。准备范围仅普通两次peer2001自然炮击分辨首抵挡与耗尽后伤害、双端完整状态及Leave/原生/冷态重启；当前尚无driver/runtime，消费与reset政策先由主线定。
+
+## 正式Web政策与验收准备
+
+主线已明确并接入每生命cancellationsSpent：newround/respawn清0，普通来源重算不补；合格integer58−spent构成remaining。只有敌对非self合法ammo shot，在friendly/immune门禁后、伤害/score/HPDrain之前抵消1次。沿原有hit事件value0且无hurtSelector，不加命中分，不造特效；medical/periodic不进入。重置、耗次及事件行为明确Web权威，不冒原server。
+
+正式pure apps/server/src/battle/roles/reactive-armor-counter.ts / resolveAttackCancellation，专属shot-attack-cancellation.cts实际exit0：首次数消费、耗尽/missing不消费、来源降容量不清spent、增加容量剩余及DataScale9上限顺序均核；reset由caller单独负责。root owns shot-cancellation/life/actor/start/respawn，consumer/type/10911相关检查以及compiled48422 build/copy由shot-cancellation-engineering.json记录，独立复用。
+
+3629 driver tests/reactive-armor-network.cts已准备一房2hit/2Leave：普通BUY17071 quantity1，Ready→EQUIPslot1→双取消Ready/selected13161，完整原重算及独立MaxCounter累加一致为1。mode4 team0按实际模式视敌对，current4020 Trigger8合法，等待双方首WAITING快照才Ready。第一shot hit0/HP与score保持、弹匣消费；等公开reload.remaining0后第二shot按原attack/defense重算预期损失，双同key unique完整快照/同hit、完整两资料和购买receipt、冷QUERY→stop/start同库全文等。首次普通实际已完成，范围见下。
+
+## 首次普通网络
+
+reactive-armor-network-2026-10-05T22-31-16-125Z.json / PASS_FINITE_ORDINARY_REACTIVE_ARMOR17071_FIRST_BLOCK_SECOND_DAMAGE_READY_DUAL_STATE_NATIVE_RESTART_SCOPE，runner96406实际exit0，专属targettypes5154exit0。普通17071购入raw1分钟与slot1装备，从完整源核MaxCounter1；Ready取消/source13161双端生效。peer普通2001两次命中：第一hit0、HP650及score0保持且无hurtSelector；第二伤害93.78881977161026、HP650→556并正常命中分，每次弹匣消费1，无playerHealed。
+
+45 unique同room/round/phase/tick/serverTime完整snapshot逐值同，普通两Leave；原生双方完整profile/inventory/owned与新shopreceipt保存一致，冷四QUERY→实际stop/start同库双方全文一致。finally检查点188416B/private0600/端口3629空。analysis reactive-armor-network-analysis.json已回链独立networkRootReview reactive-armor-network-root-review.json / PASS_FINITE_ORDINARY_BUY_EQUIP17071_QUALIFIED_COUNTER_FIRST_ZERO_SECOND_DAMAGE_READY_DUAL_STATE_NATIVE_RESTART_SCOPE。页面键盘与总结退出合审已完成，主线五模式两自然局重置工程独立登记；不把一个17071/两2001组合说成全部抵挡来源或原server恢复。
+
+## 最终有限合审
+
+mainReview reactive-armor-counter-root-review.json / PASS_FINITE_PURCHASED_EQUIPPED_REACTIVE_ARMOR17071_PER_LIFE_FIRST_BLOCK_SECOND_DAMAGE_READY_DUAL_STATE_NATIVE_RESTART_KEYBOARD_SUMMARY_CLOSE_SCOPE。networkRootReview保持reactive-armor-network-root-review.json；browserRootReview为reactive-armor-counter-browser-root-review.json / PASS_FINITE_EQUIPPED17071_NATIVE_TWO_SHOTS_ZERO_THEN_DAMAGE_DUAL_STATE_NATIVE_SUMMARY_HOME_CLOSE_SCOPE。页面tick69/106两次原生炮击，双端同tickplayers、HP650→650→556、0healing/itemUse，双Close和完整原生资料/receipt；网络96406提供独立同库重启。World3854五模式×两自然局为50ms模拟工程，10blocks/177damagingHits/2ownerrespawns，不冒真实网络或全组合。原server消费/重置与完整装备宠物父继续开放。

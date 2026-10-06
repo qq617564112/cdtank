@@ -1,0 +1,11 @@
+# TankShop 拥有行第四文字来源
+
+UI57/M5-10。原拥有工厂已确认第四getter4d9633。wrapper用所选MyTank+24查413c95/411068同TankTable，再调用4d8a38。原loader43b62a的column3 TankMoney写record+48；formatter4d8a63..4d8a6e执行signed32除2向零截断后转十进制整数。
+
+tank-shop-owned-price-native.json执行21条真实TankTable单列复制与原half指令，复用既有fullTankTable loader身份。数字转换后124条指令与原Item4d85e8的已确认出售价拼接尾部相同，label81出售价/721金钱及双空格保持；静态字符串合同为出售价、双空格、金钱、half值，不宣原CEGUI绘制执行。车型3/4原TankMoney2500/3500分别输出1250/1750。
+
+root未来 owns完整21项CombatCatalog.tankTypes optionaltankMoney原TankMoney导出，不能仅靠10saleTankShop QUERY。UI未来在同owned+24对应定义上透传tankMoney，复用既有TankShopRowContent第四行sourcePrice位置；missingblank，Buy tokenPrice分支与SELLdisabled保持。不得把此文字变成卖出authority、成交金额或账户余额。
+
+UI建议四现file范围为tank-shop-row-display.ts、tank-shop-row-content.tsx、role-shop-source-list.tsx仅Tank字段和props、tank-shop.tsx仅ownedsamecatalog映射。shared RoleShopListEntry与Pet第三preparedpatch同UI owner，应在未来明确同批窗口合并一次，不交错应用覆盖对方字段。当前只source/proposal，未prepare或应用Tank生产补丁。
+
+后继只读实际仅两合法保存Tank3/4在三分辨率的新第四文字与glyph边界、严格ShopClose；原名称图标/type/day、rowgeometry、Buy/Owned导航和preview证据复用。完整UI57、出售authority及原高清精度保持开放。

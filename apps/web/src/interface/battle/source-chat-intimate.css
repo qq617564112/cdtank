@@ -1,0 +1,53 @@
+.source-room-intimate-menu {
+  position: absolute;
+  z-index: 20;
+}
+
+.source-room-intimate-waiting {
+  left: 78px;
+  top: 39px;
+}
+
+.source-room-intimate-playing {
+  left: 52px;
+  top: -12px;
+}
+
+.source-room-intimate-menu > span {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.source-room-intimate-scroll-shell {
+  position: absolute;
+}
+
+.source-room-intimate-list {
+  position: absolute;
+  box-sizing: border-box;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #fff;
+  font: 12px 'SimSun', serif;
+}
+
+.source-room-intimate-menu .source-room-intimate-list > button {
+  position: static;
+  display: block;
+  width: 100%;
+  min-height: 18px;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  overflow: hidden;
+  background-color: transparent;
+  background-size: 100% 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

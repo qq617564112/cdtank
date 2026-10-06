@@ -1,0 +1,18 @@
+--- a/recovery/export_scenes.py
++++ b/recovery/export_scenes.py
+@@ -14,6 +14,7 @@
+ from export_scene_breach22 import export as export_scene_breach22
+ from export_scene_breach07 import export as export_scene_breach07
+ from export_scene_breach17 import export as export_scene_breach17
++from export_scene_breach14 import export as export_scene_breach14
+ from export_scene_breach04 import export as export_scene_breach04
+ from export_scene_environment_sound21 import export as export_scene_environment_sound
+ from export_scene_environment_sound20 import export as export_scene_environment_sound20
+@@ -70,6 +71,7 @@
+ export_scene_breach22()
+ export_scene_breach07()
+ export_scene_breach17()
++export_scene_breach14()
+ export_scene_breach04()
+ export_scene_environment_sound()
+ export_scene_environment_sound20()

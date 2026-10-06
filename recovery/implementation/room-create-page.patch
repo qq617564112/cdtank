@@ -1,0 +1,94 @@
+--- a/apps/web/src/interface/lobby/room-create-dialog.tsx
++++ b/apps/web/src/interface/lobby/room-create-dialog.tsx
+@@ -44,28 +44,27 @@
+     <SourceButton key={name} ui={ui!} layout={layout!} source={name} suffix="createroom.xml" offsetX={-246} offsetY={-130}
+       data-create-control={control} disabled={pending || disabled} aria-label={label} title={label} selected={selected} onClick={action} {...data}/>;
+   async function confirm() {
+-    if (pending) return;
+-    try {validateRoomCreateDraft(draft, map);} catch (reason) {setStatus(String(reason)); return;}
++    if (pending || composing.current) return;
++    try {validateRoomCreateDraft(draft, map);} catch (reason) {setStatus(reason instanceof Error ? reason.message : String(reason)); return;}
+     setPending(true); setStatus('正在创建房间…');
+     try {await submit(draft); close();}
+-    catch (reason) {setStatus(String(reason));}
++    catch (reason) {setStatus(reason instanceof Error ? reason.message : String(reason));}
+     finally {
+       restoreInputFocus.current = true;
+       setPending(false);
+     }
+   }
+-  return <dialog ref={dialog} data-room-create-dialog="" aria-label="创建房间" onCancel={event => {
++  return <dialog ref={dialog} data-room-create-dialog="" aria-label="创建房间" aria-busy={pending || !ui} onCancel={event => {
+     event.preventDefault();
+-    if (!pending && !composing.current) close();
+   }} onCompositionStart={() => {composing.current = true;}}
+     onCompositionEnd={() => {composing.current = false;}}
+     onKeyDown={event => {
+       event.stopPropagation();
+       if (event.key === 'Escape') {
++        escapePending.current = false;
++        if (composing.current || event.nativeEvent.isComposing || event.keyCode === 229) return;
+         event.preventDefault();
+-        if (!pending && !composing.current && !event.nativeEvent.isComposing && event.keyCode !== 229) {
+-          escapePending.current = true;
+-        }
++        if (!pending) escapePending.current = true;
+       }
+     }} onKeyUp={event => {
+       event.stopPropagation();
+@@ -109,6 +108,6 @@
+         {button('btnClose', 'close', '关闭创建房间', close, false, false, {'data-room-create-close': ''})}
+       </RoomCreateImageScale>}
+     </div></div>
+-    <output data-room-create-status="" role="status">{(error || scale.fontError) ? `原建房资源载入失败：${error || scale.fontError}；按Escape返回后重试` : !ui ? '正在载入创建房间…' : status}</output>
++    <output data-room-create-status="" role="status">{(error || scale.fontError) ? '创建房间界面载入失败，请按 Escape 返回后重试。' : !ui ? '正在载入创建房间…' : status}</output>
+   </dialog>;
+ }
+--- a/apps/web/src/interface/lobby/room-create-dialog.css
++++ b/apps/web/src/interface/lobby/room-create-dialog.css
+@@ -20,7 +20,7 @@
+   transform-origin: top left;
+ }
+ 
+-.room-create-stage button, .room-create-stage span, .room-create-stage input {
++.room-create-stage > button, .room-create-stage > span, .room-create-stage > input {
+   position: absolute;
+   box-sizing: border-box;
+   margin: 0;
+@@ -35,17 +35,17 @@
+   text-align: center;
+ }
+ 
+-.room-create-stage span {
++.room-create-stage > span {
+   pointer-events: none;
+   white-space: nowrap;
+ }
+ 
+-.room-create-stage button {
++.room-create-stage > button {
+   background-color: transparent;
+   cursor: pointer;
+ }
+ 
+-.room-create-stage input {
++.room-create-stage > input {
+   background: transparent;
+   text-align: left;
+ }
+@@ -89,6 +89,7 @@
+ }
+ 
+ .room-create-name-selection [data-room-name-selection-text] {
++  position: absolute;
+   top: 0;
+   text-align: left;
+ }
+@@ -129,6 +130,7 @@
+ }
+ 
+ .room-create-password-selection [data-room-password-selection-text] {
++  position: absolute;
+   top: 0;
+   font-family: 'CDTank-SIMSUN-Password', serif;
+   text-align: left;

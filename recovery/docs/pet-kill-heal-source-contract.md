@@ -1,0 +1,25 @@
+# Pet2 10211 最终击毁恢复来源合同
+
+对应M4-10/FUNC-02/Trigger4，正式Web政策见[pet-kill-heal-policy.md](pet-kill-heal-policy.md)。原skill.dat 10211“大麦得意”Info“击破敌方坦克时，生命值+40。”；Trigger4、Target1、Range0、HP40、Func2 T/X/Y/Z均0。HPRegainRate及HPDrain均0，因此本次恢复来源为原HP40，不采用食物倍率或按伤害吸收。原技能及费用行全文保存于[pet-kill-heal-source-preparation.json](../output/pet-kill-heal-source-preparation.json)。
+
+原petskill记录10211为类别10211、等级1、技能点花费10。玩家起点为peer已有Pet2 instance3，槽0 base10211/rank0，槽1已学10221保持。仅普通Select旧拥有实例及LEARN槽0；预服务Point10明确非earned，学习消耗10，不购买宠物或食物，不改资金/owned/rank。来源绑定3002最终browser-contact-mine-2026-10-06T02-08-40-962Z-checkpoint.sqlite及其私密fixture，contact-mine-root-review.json已独立收取。
+
+资格读取所选ownedPet2槽0 base字段+0x44=10211与rank字段+0x5c=1，独立于current/selected技能数组。正式调用以attributesReady、alive/status2、仍在房的攻击者最终敌对非self击毁为条件；mode≤3同队排除。World.commitPlayerDeath统一即时伤害、直接HP与10441期限最终死亡，不在目标HP0待死时提前恢复。
+
+恢复采用原HP40经既有setBattleHealth(currentHP+40)，沿整数生命setter及maxHP夹取；保留10441正增HP拒绝。只有实际正差额公布一次playerHealed，skillId10211，playerId/targetId均为杀敌者。满血或恢复被拒绝时无正恢复事件，不补弹或装填，不把战斗生命写入owned/profile。最终击杀资格与调度时序是明确Web重建，原Trigger4/Func2服务器执行器仍未知。
+
+原首效果Effect11、Sound GA15、tag0、method3；第二/第三效果与声音均0。这些是原字段证据，尚无10211原effect sender/caller实证，不派通用特效，不把恢复文字等同原效果完成。
+
+root owns pet-kill-heal.ts资格/生命消费者及World最终死亡接线；数值线拥有此合同和后续普通网络验收。tests/pet-kill-heal-network.cts已完成唯一普通first；不新增pure。后续普通未学基线与已学击杀恢复需杀敌者先自然缺血至少40，保持双端完整同键状态/实际恢复事件、原学习receipt与完整owned、同库真实重启；当前不宣称这些业务已验。
+
+现Web恢复文字由render/battle-players.ts比较连续快照HP触发：前值非0且本帧增加时，benefit显示实际快照差额；不是playerHealed事件直接显示。普通验收应先使自然缺血状态稳定，再以唯一恢复40的击杀帧同时核实际事件与快照差额。BattleSkillEffects仅消费显式playSkillEffect/stopSkillEffect，playerHealed.skillId不自动触发Effect11/GA15，原效果sender仍为独立缺口。
+
+3668驱动准备两房：host保持Pet102/10711，peer普通Select旧3。第一房peer rank0，host普通正面命中一次准备自然缺血至少40；peer最多12普通正面2001最终击毁host，HP与未学恢复0严格保持。第二房peer WAITING Ready后LEARN10211cost10，确认双方Ready撤回及rank1来源，双方Ready正常开局；同样先自然缺血稳定，再有限普通击杀，仅一次实际playerHealed40与同键快照HP+40。每击按完整装备/精通/技能/current4020来源独立重算raw与前方防御，critical倍乘沿同hit bool纳入，不硬填攻击。击杀不补弹匣，四Leave，最终host完整四QUERY保持、peer仅普通选择/Point10消耗/旧3slot0rank1变化，旧10221及所有其他owned保持，learning全文与学习后等；完整native双profile/inventory/owned/七hotkeys/新LEARNreceipt及全部旧receipts，真正停启同tempDB后双四QUERY全文等。所有时基记录tick/server/wall，服务验收已结束并清理。
+
+正式pet-kill-heal.ts与World最终死亡入口已接；pet-kill-heal-engineering.json登记consumer/World及相关copy/laststand/oldbomb回归0、productiontypes25554实际0、build10993实际0和releasecopy。只接已有真实HP恢复事件，未派Effect11/GA15；工程的明确生命夹具范围与后续普通联机验收分列，3668实际网络证据与工程生命夹具范围分列。
+
+3668唯一first session29196实际exit0，专属targettypes21945实际exit0；raw pet-kill-heal-network-2026-10-06T02-20-10-759Z.json状态`PASS_FINITE_ORDINARY_SELECT_EXISTING_PET2_LEARN10211_FINAL_HOSTILE_KILL_HEAL40_READY_DUAL_STATE_NATIVE_RESTART_SCOPE`。两房共同完整snapshot318/288；未学自然击毁后杀敌者HP572保持且无10211恢复，Ready学习后自然击毁HP572→612/唯一playerHealed40，各房只有一次目标死亡，真实弹匣不回填。独立来源raw host196/peer151，正常FRONT伤害127.10765255670468/95.81218319769495，自然critical布尔按同hit纳入原伤害和整数HP。四Leave、双完整native/profile/inventory/owned/七hotkeys、sole新LEARNreceipt及旧receipts、同tempDB真实停启四QUERY全文等通过；225280B0600检查点及私密身份0600，finally清理且亲3668空。此处为驱动实际结果，独立networkRootReview已收，main/browser仍待审，不冒网页Benefit或原Effect11/GA15完成。
+
+网络独立主审[pet-kill-heal-network-root-review.json](../output/pet-kill-heal-network-root-review.json)接受`PASS_FINITE_ORDINARY_SELECT_EXISTING_PET2_LEARN10211_FINAL_HOSTILE_KILL_HEAL40_READY_DUAL_STATE_NATIVE_RESTART_SCOPE`：606共同完整快照与双房事件全文相等，SQLite每表独立expected成立；仅peer普通选择3、旧3slot0rank1、新LEARNreceipt及正常2settlement/4history改变，所有旧owned/inventory/七hotkeys/receipts保持。双完整原生四QUERY与真实同DB停启重启全文一致。网页Benefit40与Summary/HomeClose仍待3669，预Point10非earned与原Trigger4/Func2/Effect11/GA15调用及完整父范围保持开放。
+
+最终主审[pet-kill-heal-root-review.json](../output/pet-kill-heal-root-review.json)：`PASS_FINITE_ORDINARY_SELECT_PET2_LEARN10211_FINAL_HOSTILE_KILL_HEAL40_BENEFIT_DUAL_STATE_NATIVE_RESTART_SUMMARY_CLOSE_SCOPE`；网页主审[pet-kill-heal-browser-root-review.json](../output/pet-kill-heal-browser-root-review.json)：`PASS_FINITE_LEARNED_PET2_10211_NATIVE_HOSTILE_KILL_HEAL40_BENEFIT_DUAL_STATE_NATIVE_RESTART_SUMMARY_HOME_CLOSE_SCOPE`。网页26940实际exit0、716共同完整快照和各页自身tick全文等，双端唯一self恢复40与实际Benefit一次、8+8原glyph Scene帧、自然expiry/Leave零资源/StrictClose获收。原生每表仅正常1settlement/2history，完整profile/owned/inventory/七hotkeys/receipts保持，双四QUERY及同DB真正停启恢复一致；225280B0600检查点与清理端口亲空。main/browser有限范围已闭合，716留存不称完整会话；原Trigger4/Func2、Effect11/GA15 sender、像素HD、Point取得及全部21车型/相关业务父范围保持未完成。

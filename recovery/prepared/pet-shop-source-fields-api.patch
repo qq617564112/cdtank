@@ -1,0 +1,23 @@
+--- a/apps/shared/protocols/PtlPetShop.ts
++++ b/apps/shared/protocols/PtlPetShop.ts
+@@ -8,6 +8,8 @@
+   moneyPrice: number;
+   tokenPrice: number;
+   maxHp: number;
++  petType?: number;
++  petSize?: number;
+ }
+ 
+ export interface ReqPetShop {
+--- a/apps/server/src/accounts/pet-shop-catalog.ts
++++ b/apps/server/src/accounts/pet-shop-catalog.ts
+@@ -13,7 +13,8 @@
+ /** Positive-price source pets; the recovered purchase entry checks MONEY only. */
+ export function petShopCatalog(): PetShopDefinition[] {
+   return paidPets.map(pet => ({product: {petId: Number(pet.ID), name: pet.PetName, info: pet.PetInfo,
+-    moneyPrice: Number(pet.PetMoney), tokenPrice: Number(pet.PetCoin), maxHp: Number(pet.MaxHP)},
++    moneyPrice: Number(pet.PetMoney), tokenPrice: Number(pet.PetCoin), maxHp: Number(pet.MaxHP),
++    petType: Number(pet.PetType), petSize: Number(pet.PetSize)},
+   base: {critical: Number(pet.Critical), lucky: Number(pet.Lucky),
+     skills: Array.from({length: 6}, (_, index) => Number(pet[`Skill${index}`])),
+     levels: Array.from({length: 6}, (_, index) => Number(pet[`SkillLv${index}`]))}}));

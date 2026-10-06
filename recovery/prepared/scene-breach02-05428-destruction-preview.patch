@@ -1,0 +1,11 @@
+--- a/apps/web/src/assets/scenes/scene-preview.ts
++++ b/apps/web/src/assets/scenes/scene-preview.ts
+@@ -310,6 +310,8 @@
+           libraryAsset = '/scene-breach-0014.json';
+         } else if (id === '0010' && placement.model === 'obj05425') {
+           libraryAsset = '/scene-breach-0014.json';
++        } else if (id === '0002' && placement.model === 'obj05428') {
++          libraryAsset = '/scene-breach-0014.json';
+         } else if (id === '0014' && ['obj05425', 'obj05426', 'obj05428'].includes(placement.model)) {
+           libraryAsset = '/scene-breach-0014.json';
+         } else if (id === '0017' && placement.model === 'obj05469') {

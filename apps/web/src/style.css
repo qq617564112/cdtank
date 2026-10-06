@@ -1,0 +1,99 @@
+@import './interface/resources/app-font.css';
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  color: #fff8da;
+  font-family: 'Microsoft YaHei', sans-serif;
+  background: #405b6f;
+}
+
+#world {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  outline: none;
+}
+
+.controls {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: min(22rem, calc(100vw - 4rem));
+  padding: 1rem;
+  background: #263b49e8;
+  border: 2px solid #dfc26f;
+  border-radius: 8px;
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+}
+
+select, button {
+  font: inherit;
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+select {
+  width: 100%;
+}
+
+output {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.controls {
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+}
+
+input {
+  box-sizing: border-box;
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem;
+}
+
+.controls p {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+.controls {
+  z-index: 2;
+}
+
+.in-battle .controls {
+  top: auto;
+  bottom: 1rem;
+  width: min(12rem, calc(100vw - 4rem));
+}
+
+/* The original transparent room sheet must reveal the scene behind it. */
+body:has([data-waiting-room][open]) .controls {
+  visibility: hidden;
+}
+
+body:has([data-match-panel][data-phase="PLAYING"]) #original-battle-hud {
+  z-index: 4;
+}
+
+.game-status {position: absolute; left: 1rem; bottom: 0.25rem; pointer-events: none; z-index: 2; max-width: calc(100vw - 2rem);}
+.game-status output:empty {display: none;}
+body:has([data-lobby-page]:not([hidden])) .game-status {display: none;}

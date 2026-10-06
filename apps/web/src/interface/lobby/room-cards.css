@@ -1,0 +1,126 @@
+[data-room-cards] {
+  padding: 1rem;
+  max-width: calc(100vw - 3rem);
+  max-height: calc(100vh - 3rem);
+  overflow: auto;
+  color: #fff8da;
+  background: #263b49;
+  border: 2px solid #dfc26f;
+}
+
+.room-card-viewport {
+  position: relative;
+}
+
+.room-card-stage {
+  position: absolute;
+  width: 615px;
+  height: 321px;
+  transform-origin: top left;
+}
+
+.room-card-slot, .room-source-card, .room-source-card > span {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.room-card-source-background {
+  position: absolute;
+  pointer-events: none;
+}
+
+.room-source-card {
+  margin: 0;
+  padding: 0;
+  background-size: 100% 100%;
+  background-color: transparent;
+  border: 0;
+  color: #172a38;
+  font-size: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.room-source-card > span {
+  background-size: 100% 100%;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.room-source-card:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.room-source-card:focus-visible {
+  outline: 2px solid #fff;
+  z-index: 1;
+}
+
+.room-source-card .room-card-capacity {
+  left: 16px;
+  top: 89px;
+  width: 94px;
+  height: 11px;
+}
+
+.room-card-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.room-card-toolbar select {
+  width: auto;
+}
+
+.room-card-pagination {
+  position: absolute;
+  left: 0;
+  top: -84px;
+  width: 615px;
+  pointer-events: none;
+}
+
+.room-source-page-button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.room-source-page-button:focus-visible {
+  outline: 2px solid #fff;
+}
+
+.room-card-pagination > .source-static-text {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+}
+
+[data-room-cards-embedded] {
+  position: absolute;
+  left: 0;
+  top: 84px;
+  width: 615px;
+  height: 321px;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+[data-room-cards-embedded] > output:empty {
+  display: none;
+}
+
+.room-source-card .room-card-capacity {height: 15px; overflow: visible; color: #172a38;}
+.room-card-capacity > [data-feedback-font] {filter: brightness(.15);}

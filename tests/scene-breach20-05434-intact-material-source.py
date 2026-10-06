@@ -1,0 +1,53 @@
+"""Compare original Map20 obj05434 inputs with published geometry and texture."""
+import json
+from io import BytesIO
+from PIL import Image
+from pathlib import Path
+import struct
+import sys
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'recovery'))
+from pol import read_pol
+from scene import read_scene
+source = ROOT / 'recovery/output/verified/assets/data'
+records = [r for r in read_scene(source / 'Data/scn/0020/0020.obj')
+           if r['className'] == 'SYcScnObjBreach' and r['model'] == 'obj05434']
+assert len(records) == 24 and all(r['enabled'] == 1 for r in records)
+mesh = read_pol(source / 'Data/scnobj/obj05434/obj05434.POL')['meshes'][0]
+assert mesh['name'] == 'plane02' and mesh['fvf'] == 21 and len(mesh['parts']) == 1
+part = mesh['parts'][0]
+assert part['kind'] == 1 and part['textures'] == ['obj05434.tga']
+raw = (ROOT / 'recovery/output/web-assets/Data/scnobj/obj05434/obj05434.glb').read_bytes()
+size = struct.unpack_from('<I', raw, 12)[0]
+glb = json.loads(raw[20:20+size]); binary = 28 + size
+primitive = glb['meshes'][0]['primitives'][0]
+def values(accessor, components):
+    a = glb['accessors'][accessor]; view = glb['bufferViews'][a['bufferView']]
+    return struct.unpack_from('<' + 'f' * a['count'] * components, raw,
+        binary + view.get('byteOffset', 0) + a.get('byteOffset', 0))
+positions = values(primitive['attributes']['POSITION'], 3)
+colors = values(primitive['attributes']['COLOR_0'], 4)
+uvs = values(primitive['attributes']['TEXCOORD_0'], 2)
+indices = [i for face in part['faces'] for i in face]
+for k, i in enumerate(indices):
+    vertex = mesh['vertices'][i]; b,g,r,a = vertex[12:16]
+    expected = tuple(struct.unpack('<f',struct.pack('<f',x/255))[0] for x in (r,g,b,a))
+    assert positions[3*k:3*k+3] == struct.unpack_from('<3f',vertex)
+    assert colors[4*k:4*k+4] == expected
+    assert uvs[2*k:2*k+2] == struct.unpack_from('<2f',vertex,16)
+image = glb['images'][0]
+view = glb['bufferViews'][image['bufferView']]
+png = raw[binary+view.get('byteOffset',0):binary+view.get('byteOffset',0)+view['byteLength']]
+original_pixels = Image.open(source / 'Data/scnobj/obj05434/obj05434.dds').convert('RGBA')
+published_pixels = Image.open(BytesIO(png)).convert('RGBA')
+assert original_pixels.size == published_pixels.size
+assert original_pixels.tobytes() == published_pixels.tobytes()
+result = dict(status='PASS_BREACH20_05434_SOURCE_INPUTS_ONLY',mapId=20,model='obj05434',
+    placements=records,mesh=mesh['name'],fvf=21,kind=1,expandedVertices=len(indices),
+    originalTexture=part['textures'][0],originalMaterial=part['properties'],
+    publishedMaterial=glb['materials'][primitive['material']],sourcePositionUVPackedRGBAExact=True,originalDdsPublishedPngRGBAExact=True,textureSize=original_pixels.size,
+    loaderReuse='scene-breach20-05434-native.json exact intact loader blend mode0 alpha1',
+    selectorReuse='scene-terrain02-material-native.json: FVF21/kind1 geom_t_c1.gbf; intact alpha consumer not implemented',
+    scope='Original new asset inputs only; no production hook, player pixels, sounds or Castle changes.')
+(ROOT / 'recovery/output/scene-breach20-05434-intact-material-source.json').write_text(json.dumps(result,indent=2)+'\n')
+print('PASS_BREACH20_05434_SOURCE_INPUTS_ONLY:24 placements/12 original expanded vertices')

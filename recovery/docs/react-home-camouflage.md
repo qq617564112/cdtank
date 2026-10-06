@@ -1,0 +1,11 @@
+# React owned tank camouflage
+
+`HomeTankTextureSelectionView` mounts for the owned tank selected in the roles sheet. It receives the owned record, confirmed profile and recovered source UI. React owns the modal, component choices, expense, wallet, request state and status. `shop_tankpage_texture.xml` supplies the U/M/XY labels and previous/next controls; `shop_tankpage.xml` supplies the model rectangle and change button. Controls retain their source PNG assets, data selectors and Chinese accessibility labels. The model uses its recovered 218×217 rectangle at (225, 52); each component expense retains its 45-pixel source width. Texture controls paint above the model where the two source layouts overlap, preserving their original coordinates and mouse access.
+
+The tank catalog's components with actions determine whether the turret, body and combined tracks can be changed. Choices retain the confirmed texture and include selectable catalog rows with resolved assets for every required side. Price and expense use the existing rarity, money and token fields. An unchanged selection disables saving.
+
+Saving sends the owned instance ID and three selected textures through `Battle.configureTankTextures`. Result 3 replaces the confirmed textures and wallet and passes the returned owned records and profile to the roles sheet. Other results and request failures restore the confirmed preview without changing the wallet. Saving disables choices, return and Escape until the request finishes.
+
+Each mount owns its loading request and modal lifecycle. Return and Escape can close during loading; unmount aborts the catalog fetch and prevents late results from changing state or invoking the confirmation callback. Modal cleanup restores focus to the connected trigger. Keyboard events stay within the sheet. The original 800×600 scale follows viewport resize.
+
+`HomeEquipmentPreview` owns a mounted scene, engine and render loop. A separate model effect replaces `TankView` when the primitive tank, instance or U/M/XY values change, preserving the canvas, camera and orbit. Wallet, status and save-state changes retain the model. Scale updates resize the engine after React commits. Unmount stops the render loop, disconnects resize subscriptions and disposes the view, scene and engine.

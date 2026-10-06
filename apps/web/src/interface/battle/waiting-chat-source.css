@@ -1,0 +1,90 @@
+.battle-chat.source-waiting-chat {
+  right: auto;
+  bottom: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: clip;
+  font: 12px 'CDTank-SIMSUN', serif;
+  color: #fff;
+}
+
+.waiting-chat-stage {
+  position: relative;
+  width: 612px;
+  height: 198px;
+  transform-origin: top left;
+}
+
+.waiting-chat-stage [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-size: 100% 100%;
+}
+
+.waiting-chat-picture {
+  pointer-events: none;
+}
+
+.waiting-chat-stage button {
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.waiting-chat-stage form {
+  display: contents;
+}
+
+.source-waiting-chat [data-chat-channel],
+.source-waiting-chat button[type='submit'] {
+  display: none;
+}
+
+.source-waiting-chat [data-chat-log] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  max-height: none;
+  font: inherit;
+  line-height: 16px;
+  color: #fff;
+}
+
+.source-waiting-chat input {
+  background: transparent;
+  color: #fff;
+  font: inherit;
+}
+
+.waiting-chat-channel-menu,
+.waiting-chat-emote-menu {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.waiting-chat-channel-menu button,
+.waiting-chat-emote-menu button {
+  pointer-events: auto;
+}
+
+.source-waiting-chat [data-waiting-chat-business-status] {
+  position: absolute;
+  left: 15px;
+  top: 3px;
+  max-width: 579px;
+  max-height: 17px;
+  margin: 0;
+  overflow: auto;
+  color: #fff;
+  background: #263b49;
+  font: inherit;
+}
+
+.source-waiting-chat [data-waiting-chat-business-status]:empty {
+  display: none;
+}

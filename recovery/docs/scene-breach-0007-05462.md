@@ -1,0 +1,17 @@
+# 0007 oil barrel destruction
+
+Map7 consumes the original obj05462 destruction resource for its three oil-barrel placements79,81 and82. The standard map7 destruction exporter adds the original seven-node c9 model; ScenePreview includes this family and uses the existing GA41 sound dispatch. The model and native cue contract reuse the verified map20 obj05462 source.
+
+`scene-breach07-05462-source.json` verifies all three complete original map7 placement records/Breach tails/intact assets, equality of the destruction resource with the published map20 c9 resource, the existing GA41 once/repeat native contract and byte-identical original WAV content. No original loader or material source is inferred again.
+
+The existing sourcePlacementId ENV event/snapshot path supplies ordinary damage and destruction. With this family, legal mode1/3 map7 has13 supported ENV instances. HP200, ordinary damage authority and intact collision footprint retained through a strictly greater-than2000ms fade remain rebuilt policies. Environment hits add no gameplay score or round-ending rule.
+
+`browser-breach07-05462-2026-10-04T08-37-26-534Z.json` records ordinary mode1/map7 with two actual001 webpages and two authenticated Account/Join/Ready players maintaining heartbeat. Native turn/W, turret aim and Space inputs naturally damage and destroy ENV79. Both webpages receive matching positive hits totalling200 and one sceneObjectDestroyed event. They draw all seven original c9 nodes with changing animation poses, fade to hidden, and play GA41 once at the original placement origin through playing and ended, duration0.948435 seconds. The sampled voice outputs have maximum amplitudes0.6330361366 and0.6296878457.
+
+`scene-breach07-05462-actual.cts` independently compares all recorded XYZ, UV, indices, source texture URLs, placement matrices and animation-clock matrices against the original published resource. Maximum XYZ and matrix errors are0 on both pages. Coverage remains during FADING and releases2043ms after destruction, removing the dynamic box and restoring the same navigation sample's validity. Natural images show the original fragments amid the actual explosion and foreground occlusion. The intact POL remains source-verified; this run does not claim an intact-model camera draw.
+
+The round naturally finishes TIME_LIMIT at its explicit120-second acceptance deadline. Two webpage and two auxiliary ordinary Rematch votes restore all13 ENV objects to HP200, alpha1, intact enabled, fading/hiddenfalse and soundPlayedfalse. Ordinary Leave clears the five scene/audio resource counts and deletes the room with dynamic coverage0. `scene-breach07-05462-process-cleanup.json` confirms3322/5352/9552 closed with no dedicated processes or temporary directories. The original three oil-barrel source placements receive resource coverage; source rule eligibility also supports legal mode3, while actual gameplay acceptance here is mode1.
+
+## Limitations
+
+The ordinary acceptance uses diagnostic validation.html, four authenticated human connections and software320×180 rendering. It covers one naturally shot oil barrel's original geometry/audio and lifecycle; the other two source placements receive resource coverage. The existing barrel passage evidence is reused for the common collision consumer, without claiming a new physical oil-barrel crossing or original dynamic NAV equivalence. Browser audio output measures a tap after the voice gain with the normal master/destination path retained, not human listening or OS speaker recording.

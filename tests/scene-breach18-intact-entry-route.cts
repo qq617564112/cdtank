@@ -1,0 +1,18 @@
+import {writeFileSync} from 'node:fs';
+import {World} from '../apps/server/src/world';
+import type {RoomState} from '../apps/server/src/rooms/state';
+import {BotPathPlanner} from '../apps/server/src/battle/cpu/navigation';
+import {createOriginalBotNavigation} from '../apps/server/src/battle/cpu/original-navigation';
+const world=new World();const joined=world.createAndJoin('breach18-intact-route',4,18,'B18','Player',1);
+for(let i=0;i<3;i++)world.manageCpu(joined.playerId,1,'ADD',1);world.ready(joined.playerId,1);
+const room=(world as unknown as {rooms:Map<string,RoomState>}).rooms.get(joined.roomId)!;
+const snapshot=world.snapshot(joined.roomId)!;const me=snapshot.players.find(p=>p.id===joined.playerId)!;
+const start={x:me.x,y:me.y,z:me.z};
+const policy=createOriginalBotNavigation(room.battlefield,{width:73,depth:76});
+const goal={x:308,y:0,z:-878};
+const cell=room.battlefield.navigation.sample(goal.x,goal.z);if(!cell?.valid)throw Error('Invalid source NAV approach');goal.y=cell.height;
+const planner=new BotPathPlanner(room.battlefield,start,goal,policy);let route;
+for(let j=0;j<10000&&route===undefined;j++)route=planner.advance(1000,20);
+if(!route?.length)throw Error('No original footprint route to Breach18 intact barrel approach');
+writeFileSync('recovery/output/scene-breach18-intact-entry-route.json',JSON.stringify({start,goal,route,scope:'Offline source NAV path candidate to original source43 barrel; no active position/camera injection or player reachability acceptance'},null,2)+'\n');
+console.log(JSON.stringify({start,goal,route}));world.leave(joined.playerId);

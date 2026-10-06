@@ -1,0 +1,39 @@
+.waiting-room-resource-feedback {
+  position: absolute;
+  left: 100px;
+  top: 100px;
+  box-sizing: border-box;
+  width: 400px;
+  padding: 24px;
+  border: 1px solid #d9bd80;
+  background: #13244d;
+  color: #fff;
+}
+
+.waiting-room-resource-feedback p {
+  margin: 0 0 16px;
+}
+
+.waiting-room-stage .waiting-room-resource-feedback button {
+  position: static;
+  padding: 10px 20px;
+  border: 1px solid #d9bd80;
+  background: #243e73;
+  color: #fff;
+  cursor: pointer;
+}
+
+.waiting-room-stage .waiting-room-resource-feedback button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.waiting-room-stage .waiting-room-resource-feedback button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.waiting-room-stage .waiting-room-resource-feedback span {
+  position: static;
+  white-space: normal;
+}

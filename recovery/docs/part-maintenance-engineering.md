@@ -1,0 +1,13 @@
+# 部件维修账户接口
+
+M6-03 / UI-54 的正式 PartMaintenance 接口接受拥有实例、1/7/30 天、原货币选择和请求 ID。QUERY 返回本账户部件的六项报价、可维修资格、剩余分钟、完整库存及资料。MAINTAIN 在同一事务中扣余额、增加剩余分钟并保存回执；相同请求重放返回确认状态而不再次付款。
+
+原 ItemTable 的 Money、Coin、Break 与 DataScale48.Max 提供费用和不可维修资格。费用使用原低32位乘积和无符号除法，代币文本独立使用原显示比例。MyItem+10 在此是剩余分钟，协议保留既有 ownedQuantity 载荷并显式投影 remainingMinutes；库存实例、装备状态和其他载荷位保持。消耗品的数量语义不变。
+
+服务端核验账户归属、Break3、余额、255天上限和准备阶段。成功维修同步当前房间库存及资料，并取消本人准备；重复确认保持准备。实际授权、事务、回执及持久化为 Web 重建。
+
+有限业务已由 [主审](/workspace/cdtank/recovery/output/part-maintenance-root-review.json)收拢：正式六次页面维修、三分辨率、双端状态及网络同库重启通过。页面六笔维修保存109441分钟，网络同库重启恢复金币维修后的1441分钟，验收范围分开记录。
+
+证据入口为 [工程索引](/workspace/cdtank/recovery/output/part-maintenance-engineering.json) 与 [原合同](/workspace/cdtank/recovery/docs/part-maintenance-contract.md)。事务检查覆盖完整回滚、六报价、保留其他字段、缺资料、不可维修、期限上限、余额不足和重放。
+
+购买初始期限沿现有重建政策保留；自然期限递减尚未恢复。完整 M6-03/UI-54 保持未完成。

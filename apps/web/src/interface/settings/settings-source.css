@@ -1,0 +1,18 @@
+#source-settings { position: fixed; inset: 0; width: 800px; height: 599px; max-width: none; max-height: none; margin: auto; padding: 0; border: 0; background: transparent; overflow: visible; color: #fff; }
+#source-settings::backdrop { background: transparent; }
+.settings-source-stage { position: relative; width: 800px; height: 599px; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
+.settings-source-stage > * { position: absolute; box-sizing: border-box; }
+.settings-source-picture { pointer-events: none; }
+.settings-source-button { margin: 0; padding: 0; border: 0; background-color: transparent; background-size: 100% 100%; background-repeat: no-repeat; }
+.settings-source-button:disabled { opacity: .55; }
+.settings-source-button:focus-visible, .settings-key:focus-visible, .settings-quick-chat:focus-visible { outline: 1px solid #fff; outline-offset: 1px; }
+.settings-key { border: 0; padding: 0; margin: 0; background: transparent; color: #fff; font: inherit; text-align: center; white-space: nowrap; }
+.settings-key[aria-pressed='true'] { outline: 1px solid #fff; }
+.settings-quick-chat { border: 0; padding: 0; margin: 0; background: transparent; color: #fff; font: inherit; line-height: 14px; }
+.settings-volume { appearance: none; margin: 0; background: transparent; padding: 0; }
+.settings-volume::-webkit-slider-runnable-track { height: 4px; background-image: var(--settings-track-left), var(--settings-track-right), var(--settings-track-middle); background-position: left center, right center, center; background-repeat: no-repeat, no-repeat, repeat-x; }
+.settings-volume::-webkit-slider-thumb { appearance: none; width: var(--settings-thumb-width); height: var(--settings-thumb-height); margin-top: calc((4px - var(--settings-thumb-height)) / 2); background-image: var(--settings-thumb); background-size: 100% 100%; }
+.settings-volume::-moz-range-track { height: 4px; background-image: var(--settings-track-left), var(--settings-track-right), var(--settings-track-middle); background-position: left center, right center, center; background-repeat: no-repeat, no-repeat, repeat-x; }
+.settings-volume::-moz-range-thumb { width: var(--settings-thumb-width); height: var(--settings-thumb-height); border: 0; border-radius: 0; background-image: var(--settings-thumb); background-size: 100% 100%; }
+.settings-status { left: 220px; top: 13px; width: 450px; min-height: 18px; font-size: 12px; }
+.settings-loading-close { left: 740px; top: 10px; }

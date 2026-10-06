@@ -1,0 +1,48 @@
+#account-shop .shop-list-scroll-shell {
+  padding: 0;
+}
+
+#account-shop .shop-list-scroll-shell > .shop-item-source-list {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.shop-list-scrollbar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8.5px;
+  overflow: hidden;
+  background-size: 100% 100%;
+}
+
+#account-shop .shop-list-scrollbar div,
+#account-shop .shop-list-scrollbar span,
+#account-shop .shop-list-scrollbar button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: transparent center / 100% 100% no-repeat;
+}
+
+#account-shop .shop-list-scrollbar button {
+  display: block;
+  min-height: 0;
+  gap: 0;
+}
+
+.shop-list-scroll-track {width: 8.5px;}
+.shop-list-scroll-thumb {width: 28px; overflow: hidden;}
+.shop-list-thumb-top {top: 0; width: 28px; height: 29px;}
+.shop-list-thumb-middle {top: 29px; bottom: 17px; width: 28px;}
+.shop-list-thumb-bottom {bottom: 0; width: 28px; height: 17px;}
+#account-shop .shop-list-scrollbar .shop-list-scroll-up {top: 0; width: 28px; height: 26px;}
+#account-shop .shop-list-scrollbar .shop-list-scroll-down {bottom: 0; width: 28px; height: 27px;}
+#account-shop .shop-list-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}

@@ -1,0 +1,7 @@
+# 2016红包拿来／4014原025停止入口缺环
+
+原item2016分类3、价格50／50、技能[2016,4014,0]，4014 Trigger8／Target1／Func2／HP0首025／SE50／tag0／method3。source直接核原表及SAV完整11节点，原文字hbnl0、红包、gongji1与dian DDS解码RGBA和发布PNG逐字节一致，SE50原WAV逐字节一致／0.5238095238095238秒，树无type4声音。
+
+原十drawable包括2807type6寿命0。2807原controller0在0..0.5秒以1000／秒连续发射capacity30、particlelife1秒，controller1从0.5秒开始emit0且end0。真实EffectRuntime模块十node均曾非空submit，六秒后有限文字／红包及粒子内容结束，唯一非零type节点2807仍active、controller1、particles0。原生命周期duration0不自动结束，不能把可见内容结束等同原树release，不能擅设2.25秒expiry或改变共享随机流。
+
+现stopEffect原停止API、detach和runtime stop均清instance／mesh0；这只证明已有API，不提供正式025停止caller。combat-shot-player-result-2016-runtime.json为PASS_MODULE_DRAW_EXPLICIT_CLEAR_ONLY_NATURAL_TREE_RELEASE_GAP；首natural-end-fail.log保原。来源已恢复、模块明确原active-empty及显式clear合同，普通业务／像素／声音未触发。主线确认无025正式stop输入，未开放Shop或资格，本轮停止该缺环，不新native／Chrome／共享runtime或生产guard。M4-09／M4-10完整025与原Func2父保持未完成。

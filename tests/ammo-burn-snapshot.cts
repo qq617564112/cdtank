@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {TSBuffer} from 'tsbuffer';
+import {serviceProto} from '../apps/shared/protocols/serviceProto';
+import {TANKS} from '../apps/server/src/config';
+import {createBattlePlayer} from '../apps/server/src/battle/create-player';
+import {playerSnapshot} from '../apps/server/src/rooms/snapshot';
+import {startAmmoBurn, advanceAmmoBurn, clearAmmoBurn} from '../apps/server/src/battle/items/ammo-burn';
+
+const player = createBattlePlayer('P2', 'client', 'Target', TANKS[0], 0,
+  {x: 0, y: 0, z: 0, yaw: 0},
+  {sequence: 0, move: 0, turn: 0, aim: 0, fire: false, useItem: 0, clientTime: 0});
+const snapshot = () => playerSnapshot(player, 700);
+assert.equal(snapshot().ammoBurn, undefined);
+assert(startAmmoBurn(player, 'P1', 1000));
+const first = snapshot().ammoBurn!;
+assert.deepEqual(first, {itemId: 2007, skillId: 4005, startedAt: 1000, expiresAt: 10000});
+first.startedAt = -1;
+assert.equal(player.burn!.startedAt, 1000, 'Wire projection does not expose mutable authority');
+assert(!startAmmoBurn(player, 'P3', 2000));
+assert.equal(snapshot().ammoBurn!.startedAt, 1000);
+const codec = new TSBuffer(serviceProto.types);
+const encoded = codec.encode(snapshot(), 'MsgRoomSnapshot/PlayerSnapshot');
+assert(encoded.isSucc, encoded.errMsg);
+const decoded = codec.decode(encoded.buf!, 'MsgRoomSnapshot/PlayerSnapshot');
+assert(decoded.isSucc, decoded.errMsg);
+assert.deepEqual(decoded.value.ammoBurn, snapshot().ammoBurn);
+advanceAmmoBurn(player, 9999, () => true, () => {});
+assert(snapshot().ammoBurn, 'Authority remains present until the final burn tick');
+advanceAmmoBurn(player, 10000, () => true, () => {});
+assert.equal(snapshot().ammoBurn, undefined);
+startAmmoBurn(player, 'P1', 11000);
+clearAmmoBurn(player);
+assert.equal(snapshot().ammoBurn, undefined, 'Explicit cure is reflected without a client timer');
+startAmmoBurn(player, 'P1', 12000);
+player.alive = false;
+assert.equal(snapshot().ammoBurn, undefined, 'Dead role never presents retained fire');
+player.alive = true;
+advanceAmmoBurn(player, 12050, () => false, () => assert.fail('Missing owner cannot damage'));
+assert.equal(snapshot().ammoBurn, undefined);
+console.log('PASS actual burn projection/codec, no refresh, expiry, clear, death and owner departure');

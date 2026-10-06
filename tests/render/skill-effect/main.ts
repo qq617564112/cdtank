@@ -1,0 +1,81 @@
+import '@babylonjs/loaders/glTF';
+import {Camera, Color4, Engine, FreeCamera, Scene, Vector3} from '@babylonjs/core';
+import type {CombatCatalog} from '../../../apps/shared/combat/catalog';
+import {EffectRuntime} from '../../../apps/web/src/render/effects/runtime/effect-runtime';
+import {createSkillEffectNotifications} from '../../../apps/web/src/match/skills/skill-effect-runtime';
+import {TankView} from '../../../apps/web/src/assets/tanks/tank-view';
+import {EffectRuntimeTree} from '../../../apps/web/src/render/effects/runtime/effect-runtime-tree';
+
+const canvas=document.querySelector<HTMLCanvasElement>('#skill-effect-check')!;
+const engine=new Engine(canvas,false,{preserveDrawingBuffer:true});
+const scene=new Scene(engine); scene.clearColor=new Color4(.05,.1,.15,1);
+const camera=new FreeCamera('camera',new Vector3(0,100,-300),scene); camera.setTarget(Vector3.Zero());
+camera.mode=Camera.ORTHOGRAPHIC_CAMERA;
+camera.orthoLeft=camera.orthoBottom=-200;camera.orthoRight=camera.orthoTop=200;
+camera.minZ=1;camera.maxZ=1000;
+const runtime=new EffectRuntime(scene,camera);
+const state=runtime as unknown as {instances:{handle:number;tree:EffectRuntimeTree}[];
+  skillSound:{context:AudioContext;master:GainNode;voices:Map<number,{audio:HTMLAudioElement;gain:GainNode;position:number[]}>}};
+const output=window as unknown as {skillEffectReady?:boolean;skillEffectError?:string;runSkillEffectCheck?:()=>Promise<object>};
+void (async()=>{
+  const [view,catalog]=await Promise.all([TankView.load(scene,'skill-actor',1),
+    fetch('/combat-catalog.json').then(response=>response.json() as Promise<CombatCatalog>)]);
+  await runtime.load();runtime.start();
+  const notifications=createSkillEffectNotifications(runtime,catalog,{role:id=>id===47?view:undefined,localRole:()=>view});
+  const message=(skillId:number,duration=0)=>({skillId,effectIndex:0,duration,roleId:47,xBits:0,zBits:0});
+  output.runSkillEffectCheck=async()=>{
+    if(state.skillSound.context.state!=='running') throw new Error('Skill sound context requires test interaction');
+    notifications.play(message(12,10));
+    const audio=state.skillSound.voices.values().next().value;
+    if(!audio||audio.audio.loop||!audio.audio.src.endsWith('/GA35.wav'))throw new Error('Skill12 original Sound1 missing');
+    const sound={asset:audio.audio.src,loop:audio.audio.loop,voices:state.skillSound.voices.size};
+    await audio.audio.play();
+    const tree=state.instances[0].tree;
+    if(tree.root.definition.name!=='_root\\online\\019' || tree.parentMatrix!==view.primaryTag('tag_efcenter')) throw new Error('Skill12 source attachment mismatch');
+    for(let i=0;i<11;++i)runtime.update(.05);
+    scene.render();
+    const models=scene.meshes.filter(mesh=>mesh.metadata?.originalEffect?.startsWith('_root\\online\\019'));
+    await Promise.all(models.map(mesh=>mesh.material!.forceCompilationAsync(mesh)));
+    scene.render();const actual=new Uint8Array((await engine.readPixels(0,0,256,256)).buffer).slice();
+    models.forEach(mesh=>mesh.setEnabled(false));scene.render();
+    const baseline=new Uint8Array((await engine.readPixels(0,0,256,256)).buffer);
+    let changedPixels=0;
+    for(let i=0;i<actual.length;i+=4)if([0,1,2].some(c=>actual[i+c]!==baseline[i+c]))++changedPixels;
+    if(!changedPixels)throw new Error('Skill12 original model root has no visible pixels');
+    runtime.clear();
+    const loopHandle=runtime.playSkillSound(view,'GA35',-1);
+    const loopVoice=state.skillSound.voices.get(loopHandle)!;
+    await loopVoice.audio.play();runtime.update(.001);
+    if(!loopVoice.audio.loop)throw new Error('Original selector-1 loop missing');
+    const distance=Math.hypot(...camera.globalPosition.asArray());
+    const expectedGain=Math.max(0,Math.min(1,1-2*(Math.max(100,Math.min(1600,distance))-100)/1500));
+    if(Math.abs(loopVoice.gain.gain.value-expectedGain)>1e-6)throw new Error('Original skill sound attenuation mismatch');
+    runtime.setVolume(.3);
+    if(Math.abs(state.skillSound.master.gain.value-.3)>1e-6)throw new Error('Skill sound master volume mismatch');
+    const loopSound={loop:loopVoice.audio.loop,position:loopVoice.position,attenuation:loopVoice.gain.gain.value,expectedGain};
+    runtime.stopSkillSound(loopHandle);
+    if(!loopVoice.audio.paused||state.skillSound.voices.size)throw new Error('Skill loop audio stop did not release voice');
+    notifications.play(message(8,2));
+    const retained=notifications.records[0].effect!;
+    if(!retained||!state.instances.some(instance=>instance.handle===retained))throw new Error('Retained skill handle missing');
+    notifications.update(29);notifications.update(1);notifications.update(30);
+    if(notifications.records.length||state.instances.some(instance=>instance.handle===retained))throw new Error('Retained expiry did not stop original tree');
+    notifications.play(message(13501));notifications.play(message(13502));notifications.revive(47);
+    const first=notifications.queues.get(47)![0].effect!;
+    if(!state.instances.some(instance=>instance.handle===first&&instance.tree.root.definition.name==='_root\\online\\031'))throw new Error('Revival queue root missing');
+    notifications.advanceTimers(5);if(notifications.queues.get(47)![1].effect!==undefined)throw new Error('Queue fired at exactly zero');
+    notifications.advanceTimers(.01);
+    const next=notifications.queues.get(47)![1].effect!;
+    if(!next||state.instances.some(instance=>instance.handle===first)||!state.instances.some(instance=>instance.handle===next&&instance.tree.root.definition.name==='_root\\online\\032'))throw new Error('Queue alternation did not stop/start roots');
+    notifications.clearRole(47);
+    const world=runtime.spawnWorldEffect('_root\\online\\004',[12.5,0,-4]);
+    if(!world||state.instances[0].tree.parentMatrix||state.instances[0].tree.origin[0]!==12.5)throw new Error('World root positioning mismatch');
+    runtime.update(.05);runtime.stopEffect(world);runtime.clear();
+    const result={passed:true,root:tree.root.definition.name,sourceNodes:tree.nodes.map(node=>node.definition.index),
+      changedPixels,sound,loopSound,retainedHandle:retained,queueHandles:[first,next],retainedMeshes:scene.meshes.filter(mesh=>mesh.name.startsWith('original-effect')).length,
+      retainedInstances:state.instances.length,retainedVoices:state.skillSound.voices.size,queueTimers:notifications.queueTimers.size,
+      sourceInvocation:'notification-fixture',serverSkillTriggered:false};
+    view.dispose();scene.dispose();engine.dispose();return result;
+  };
+  output.skillEffectReady=true;
+})().catch(error=>{output.skillEffectError=String(error);});

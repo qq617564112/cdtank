@@ -1,0 +1,167 @@
+.trade-source-dialog {
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  color: white;
+  background: transparent;
+}
+
+.trade-source-dialog::backdrop,
+.trade-source-detail::backdrop {
+  background: transparent;
+}
+
+.trade-source-stage {
+  position: relative;
+  width: 615px;
+  height: 485px;
+  transform-origin: top left;
+}
+
+.trade-source-stage [data-source-control],
+.trade-source-detail-stage [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.trade-source-stage > .source-static-image,
+.trade-source-detail-stage > .source-static-image {
+  pointer-events: none;
+}
+
+.trade-source-stage > .source-state-button {
+  background: transparent;
+}
+
+.trade-source-stage button,
+.trade-source-stage input {
+  font: inherit;
+}
+
+.trade-source-candidates {
+  overflow: auto;
+  background: transparent;
+  font-size: 12px;
+}
+
+.trade-source-candidate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-bottom: 3px;
+}
+
+.trade-source-candidate > button:first-child {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 30px;
+  padding: 2px;
+  border: 1px solid transparent;
+  color: white;
+  background: transparent;
+  text-align: left;
+}
+
+.trade-source-candidate > button[aria-pressed='true'] {
+  border-color: #ffe76b;
+}
+
+.trade-source-candidate > button:first-child > span:nth-child(2) {
+  flex: 1;
+  overflow: hidden;
+}
+
+.trade-source-record-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.trade-source-candidate > button:not(:first-child) {
+  padding: 0 2px;
+  border: 0;
+  color: white;
+  background: #193652;
+}
+
+.trade-source-candidate input {
+  width: 65px;
+  margin-left: 30px;
+}
+
+.trade-source-amount {
+  color: white;
+  background: transparent;
+  font-size: 12px;
+  appearance: textfield;
+}
+
+.trade-source-amount::-webkit-inner-spin-button,
+.trade-source-amount::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.trade-source-grid-detail {
+  cursor: pointer;
+  background: transparent;
+}
+
+.trade-source-web-tools {
+  position: absolute;
+  top: 409px;
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 615px;
+  min-height: 40px;
+  padding: 8px;
+  box-sizing: border-box;
+  background: #17334c;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.trade-source-web-tools output {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.trade-source-stage :focus-visible,
+.trade-source-detail :focus-visible {
+  outline: 1px solid white;
+  outline-offset: 1px;
+}
+
+.trade-source-detail {
+  max-width: none;
+  max-height: none;
+  padding: 10px;
+  border: 1px solid #b7eaff;
+  color: white;
+  background: #183b54;
+}
+
+.trade-source-detail-stage {
+  position: relative;
+}
+
+.trade-source-description {
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 16px;
+}

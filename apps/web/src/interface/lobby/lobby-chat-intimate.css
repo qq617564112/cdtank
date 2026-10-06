@@ -1,0 +1,34 @@
+.lobby-intimate-menu {
+  position: absolute;
+  left: 78px;
+  top: 441px;
+  width: 118px;
+  height: 124px;
+  z-index: 20;
+}
+
+.lobby-intimate-menu > span {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.lobby-intimate-list {
+  position: absolute;
+  overflow: auto;
+  color: #fff;
+  font: 12px 'SimSun', serif;
+}
+
+.lobby-chat .lobby-intimate-list > button {
+  position: static;
+  display: block;
+  width: 100%;
+  min-height: 18px;
+  overflow: hidden;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,10 @@
+[data-home-name-dialog] { border: 0; padding: 0; background: transparent; color: #fff; overflow: visible; max-width: none; max-height: none; }
+[data-home-name-dialog]::backdrop { background: rgb(0 0 0 / 40%); }
+.home-name-source-stage { position: relative; width: 307px; height: 120px; font: 12px 'CDTank-SIMSUN', serif; }
+.home-name-source-stage > *, .home-name-source-stage form > * { position: absolute; box-sizing: border-box; }
+.home-name-source-stage form { position: static; }
+.home-name-source-input { border: 0; background: transparent; color: #fff; padding: 0; margin: 0; font: inherit; }
+.home-name-source-stage button { padding: 0; margin: 0; border: 0; background: transparent; }
+.home-name-source-stage button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.home-name-source-status { left: 0; top: 124px; width: 307px; min-height: 16px; padding: 2px; background: #142032; color: #fff; }
+.home-name-source-status:empty { display: none; }

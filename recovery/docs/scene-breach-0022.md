@@ -1,0 +1,17 @@
+# 0022 Breach destruction
+
+The map22 scene publishes both original destruction resources: `obj05424/c9.CVD` for18 placements and `obj05469/c9.CVD` for28. ScenePreview consumes the46 existing authoritative objectives and renders the original animated geometry when the ordinary objective destruction event arrives. The source branches play GA13 and GA33 respectively, once per destruction. The normal scene exporter creates the dedicated library.
+
+`scene-breach22-source.json` verifies all46 original placement records and Breach tails, both original CVD node hierarchies, frames, tracks, indices and materials, decoded source DDS pixels, and original WAV bytes. The original obj05469 destruction resource references `obj05469A.tga`; its published texture preserves that source identity. Native loader/destruction execution verifies GA33 on the first destroy and no repeat cue. The existing obj05424 native proof supplies GA13.
+
+The room owns a separate reconstructed collision and navigation overlay. It retains the original intact bounds during the fade and removes coverage strictly after2000ms of server time; this scheduling remains a Web reconstruction. The original static BOX and NAV assets remain intact.
+
+`browser-breach22-2026-10-04T06-29-45-347Z.json` records normal dual-web001 accounts, twoCPU, Ready and autopilot in mode5/map22. Ordinary projectiles clear46/46 objectives and finish by OBJECTIVE. The primary matched source samples are obj05424/SCN532 and obj05469/SCN546 on both pages. Both receive total200 damage and one destruction event, draw all original geometry nodes with changing poses, play GA13/GA33 once through `playing` and `ended`, and fade to hidden. Collision traces retain coverage through FADING and remove it strictly after2000ms. Both webpages restore all46 intact alpha1 models and HP200 in natural round2. Ordinary Leave clears five scene/audio counts and deletes the room with zero dynamic boxes.
+
+`scene-breach22-actual.cts` independently compares full recorded XYZ, UV, indices, original texture URLs, source placement matrices and every animation-clock matrix against the original published resources. Both primary dual-page samples and the additional unobscured obj05424/SCN496 page2 and obj05469/SCN520 page1 samples pass with maximum XYZ and matrix error0. Natural representative images are `scene-breach22-obj05424-representative.png` and `scene-breach22-obj05469-representative.png`; they show the distinct original debris silhouettes. These extra samples come from the same ordinary round. The matching primary views retain actual terrain/foreground occlusion. Root separately runs the actual verifier and reviews natural images.
+
+The native, source, actual and dedicated process cleanup records are `scene-breach22-05469-native.json`, `scene-breach22-source.json`, `scene-breach22-actual.json` and `scene-breach22-process-cleanup.json`. Ports3314/5344/9544 are closed and dedicated processes/temp directories are absent.
+
+## Limitations
+
+The acceptance uses the diagnostic `validation.html` entry for an ordinary authoritative battle. It does not certify the redesigned official lobby. Resource coverage includes all46 placements; actual browser geometry acceptance samples one naturally destroyed placement from each family. Software320×180 rendering does not establish original GPU equivalence or high resolution performance. Original HP, scoring, projectile authority and dynamic NAV kernel remain reconstructed.

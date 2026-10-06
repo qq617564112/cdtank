@@ -1,0 +1,25 @@
+[data-history-intro-dialog] {
+  max-width: none;
+  max-height: none;
+  border: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+}
+.history-intro-stage {
+  width: 800px;
+  height: 600px;
+  transform-origin: top left;
+}
+.history-intro-resource-feedback {
+  position: absolute;
+  inset: 200px 200px;
+  box-sizing: border-box;
+  padding: 20px;
+  background: #203c5c;
+  color: white;
+}
+
+:root:has([data-history-intro-dialog][open]) {
+  overflow: hidden;
+}

@@ -1,0 +1,115 @@
+[data-lobby-page] {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0039b0;
+  z-index: 2;
+}
+
+.lobby-source-viewport {
+  position: relative;
+}
+
+.lobby-resource-feedback {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 32px));
+  padding: 20px;
+  background: #152a3b;
+  color: white;
+  font-family: sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.lobby-resource-feedback p {
+  margin: 0 0 12px;
+}
+
+.lobby-resource-feedback button {
+  min-height: 36px;
+  padding: 6px 12px;
+  color: #152a3b;
+  background: white;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lobby-resource-feedback button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
+
+.lobby-source-stage {
+  position: absolute;
+  width: 800px;
+  height: 600px;
+  transform-origin: top left;
+  overflow: hidden;
+}
+
+.lobby-source-picture, .lobby-source-stage > .source-static-text,
+.lobby-source-empty-region, .lobby-source-chat-input, .lobby-source-status {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.lobby-source-picture, .lobby-source-empty-region {
+  pointer-events: none;
+}
+
+.lobby-source-chat-input {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: white;
+  font-size: 12px;
+}
+
+.lobby-source-status {
+  overflow: hidden;
+  white-space: nowrap;
+  color: white;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+[data-room-password-dialog] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.room-password-stage {
+  position: absolute;
+  width: 307px;
+  height: 120px;
+  transform-origin: top left;
+}
+
+.room-password-stage .source-static-image, .room-password-stage .source-static-text,
+.room-password-stage button, .room-password-stage input {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  color: white;
+  font-size: 12px;
+}
+
+.lobby-source-tab {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}

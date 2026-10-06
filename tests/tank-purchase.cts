@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {mkdtempSync, rmSync, writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {AccountStore} from '../apps/server/src/account-store';
+import {AccountTankShop} from '../apps/server/src/accounts/tank-shop';
+
+const dir = mkdtempSync(join(tmpdir(), 'cdtank-tank-purchase-'));
+const path = join(dir, 'accounts.sqlite');
+const accounts = new AccountStore(path);
+let db = new DatabaseSync(path);
+let shop = new AccountTankShop(db);
+try {
+  const owner = accounts.open(), other = accounts.open(), missing = accounts.open();
+  const payload = new Uint8Array(0x170);
+  const view = new DataView(payload.buffer);
+  view.setUint32(0x70, 8000, true); view.setUint32(0x74, 999, true);
+  accounts.replaceRoleProfile(owner.accountId, {bytes: payload, strings: ['', '']});
+  accounts.replaceRoleProfile(other.accountId, {bytes: new Uint8Array(0x170), strings: ['', '']});
+  db.prepare('INSERT INTO inventory VALUES (?, ?, ?)').run(owner.accountId, 1, '{}');
+  db.prepare('INSERT INTO role_records VALUES (?, ?, ?, ?)').run(owner.accountId, 'base', 2, '{}');
+  const request = {operation: 'BUY', tankId: 3, currency: 'MONEY', requestId: 'tank-buy-001'} as const;
+  const query = shop.request(owner.accountId, {operation: 'QUERY'});
+  assert.equal(query.tanks[0].moneyPrice, 2500);
+  assert.equal(query.tanks[0].tokenPrice, 250);
+  const purchased = shop.request(owner.accountId, request);
+  assert.equal(purchased.money, 5500);
+  assert.equal(purchased.tokens, 999);
+  const fields = new Map(purchased.purchased!.fields);
+  assert.equal(fields.size, 21);
+  assert.deepEqual([fields.get(0x1c), fields.get(0x24), fields.get(0x28), fields.get(0x2c), fields.get(0x30)], [3, 3, 30041, 30042, 30013]);
+  assert.deepEqual([fields.get(0x3c), fields.get(0x40), fields.get(0x4c), fields.get(0x50)], [122, 78, 17, 44]);
+  assert.equal(fields.get(0x34), 0);
+  assert.equal(fields.get(0x6c), 2);
+  const replay = shop.request(owner.accountId, request);
+  assert(replay.replayed);
+  assert.deepEqual(replay.purchased, purchased.purchased);
+  assert.equal(replay.money, 5500);
+  assert.throws(() => shop.request(owner.accountId, {...request, currency: 'TOKENS'}));
+  assert.throws(() => shop.request(owner.accountId, {...request, tankId: 4}));
+  assert.throws(() => shop.request(other.accountId, request), /余额不足/);
+  assert.throws(() => shop.request(missing.accountId, request), /资料/);
+  assert.throws(() => shop.request('missing', request), /账户/);
+  assert.equal(shop.request(owner.accountId, {operation: 'QUERY'}).money, 5500);
+  assert.equal(db.prepare('SELECT count(*) AS n FROM tank_purchases').get()!.n, 1);
+  const next = shop.request(owner.accountId, {...request, requestId: 'tank-buy-002'});
+  assert.equal(next.money, 3000);
+  assert.equal(new Map(next.purchased!.fields).get(0x1c), 4);
+  assert.equal(db.prepare("SELECT count(*) AS n FROM role_records WHERE account_id = ? AND kind = 'equipment'").get(other.accountId)!.n, 0);
+  db.close(); db = new DatabaseSync(path); shop = new AccountTankShop(db);
+  const reopened = shop.request(owner.accountId, request);
+  assert(reopened.replayed);
+  assert.equal(reopened.money, 3000);
+  assert.deepEqual(reopened.purchased, purchased.purchased);
+  // Failure after balance UPDATE must roll back both balance and new receipt.
+  db.exec("CREATE TRIGGER fail_tank_insert BEFORE INSERT ON role_records WHEN NEW.kind = 'equipment' BEGIN SELECT RAISE(ABORT, 'fixture write failure'); END;");
+  assert.throws(() => shop.request(owner.accountId, {...request, requestId: 'tank-buy-003'}), /fixture write failure/);
+  assert.equal(shop.request(owner.accountId, {operation: 'QUERY'}).money, 3000);
+  assert.equal(db.prepare('SELECT count(*) AS n FROM tank_purchases').get()!.n, 2);
+  writeFileSync('recovery/output/tank-purchase.json', JSON.stringify({status: 'PASS', query, purchased, next, reopened,
+    scope: 'Actual SQLite MONEY purchase2500, complete21-field rebuilt owned equipment, firstfree shared allocation, exact replay/new key, conflicts/insufficient/missing profile/account/isolation/reopen and transaction rollback on record write failure. No original server initial-value claim.'}, null, 2) + '\n');
+  console.log('PASS: tank3 atomic MONEY purchase, owned equipment, replay/isolation/reopen and rollback');
+} finally {db.close(); accounts.close(); rmSync(dir, {recursive: true, force: true});}

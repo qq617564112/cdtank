@@ -1,0 +1,69 @@
+#key-settings {
+  box-sizing: border-box;
+  width: min(44rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: 1rem;
+  color: #fff8da;
+  background: #263b49;
+  border: 2px solid #dfc26f;
+  border-radius: 8px;
+}
+
+#key-settings::backdrop {
+  background: #0008;
+}
+
+.key-settings-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.key-settings-list > div {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.key-settings-list button {
+  min-height: 2.5rem;
+  overflow-wrap: anywhere;
+}
+
+.key-settings-list button:disabled {
+  opacity: 0.5;
+}
+
+#key-settings-status {
+  display: block;
+  min-height: 1.5em;
+  margin-top: 0.75rem;
+}
+
+.key-settings-actions {
+  position: sticky;
+  bottom: -1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0;
+  background: #263b49;
+}
+
+#key-settings button:focus-visible {
+  outline: 2px solid #dfc26f;
+  outline-offset: 2px;
+}
+
+@media (max-width: 36rem) {
+  .key-settings-list > div {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .key-settings-list label {
+    grid-column: 1 / -1;
+  }
+}

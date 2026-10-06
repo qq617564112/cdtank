@@ -1,0 +1,65 @@
+.source-battle-chat .source-chat-scroll-log {
+  scrollbar-width: none;
+  box-sizing: border-box;
+}
+.source-chat-scroll-log::-webkit-scrollbar {
+  display: none;
+}
+.source-battle-chat .source-chat-stage .source-chat-scrollbar {
+  z-index: 1;
+  overflow: hidden;
+  background-size: 28px 21px;
+  background-repeat: repeat;
+  background-position: 0 0;
+}
+.source-battle-chat .source-chat-scrollbar[hidden] {
+  display: none;
+}
+.source-battle-chat .source-chat-scrollbar button,
+.source-battle-chat .source-chat-scrollbar [data-chat-scroll-track],
+.source-battle-chat .source-chat-scrollbar [data-chat-scroll-thumb] {
+  position: absolute;
+  left: 0;
+  width: 100%;
+}
+.source-battle-chat .source-chat-scrollbar button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background-size: 100% 100%;
+}
+.source-battle-chat [data-chat-scroll-up] {
+  top: 0;
+}
+.source-battle-chat [data-chat-scroll-down] {
+  bottom: 0;
+}
+.source-battle-chat [data-chat-scroll-thumb] {
+  cursor: grab;
+  touch-action: none;
+  overflow: hidden;
+}
+.source-battle-chat .source-chat-scrollbar [data-chat-scroll-thumb] span {
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  background-repeat: repeat-x;
+}
+.source-battle-chat .source-chat-scrollbar [data-chat-scroll-thumb] span:first-child {
+  top: 0;
+  height: 28px;
+  background-size: 20px 28px;
+}
+.source-battle-chat .source-chat-scrollbar [data-chat-scroll-thumb] span:nth-child(2) {
+  top: 28px;
+  bottom: 17px;
+  height: auto;
+  background-size: 20px 7px;
+  background-repeat: repeat;
+}
+.source-battle-chat .source-chat-scrollbar [data-chat-scroll-thumb] span:last-child {
+  bottom: 0;
+  height: 17px;
+  background-size: 20px 17px;
+}

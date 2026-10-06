@@ -1,0 +1,5 @@
+# 2015远端场景结果事务
+
+现Shop原50/50资格和CAS有限消费复用既有业务。服务端仅冻结首致死scene/objective的2015原端点，非致死、terrain及重复静默。remote024/SE19与GA08消费者，本机结果静默；原damage/flight/4013政策保持已有范围。
+
+FX新soundnode对象身份观察器已用两真实树、同声引用和延迟交错节点作独立组合对照，不借show时刻或最近effect归属。四drawable及六WW原缺资产请求逐树身份、双正常Leave以本新consumer实际首验为准；2014两个FAIL及Leave缺口保持，不以本片代替。World库存15/CAS回调/模拟时钟是模块夹具，普通购买和双页另验。

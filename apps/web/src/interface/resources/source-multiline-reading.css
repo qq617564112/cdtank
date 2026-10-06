@@ -1,0 +1,68 @@
+.source-multiline-reading {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.source-multiline-reading .source-multiline-lines {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.source-multiline-reading [data-source-description-line] {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 16px;
+  line-height: 16px;
+  font-size: 12px;
+  font-family: 'CDTank-SIMSUN', serif;
+  color: #fff;
+  text-align: left;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.source-multiline-reading .source-description-scrollbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.source-multiline-reading .source-description-scrollbar button {
+  position: absolute;
+  left: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.source-multiline-reading [data-source-description-thumb] {
+  position: absolute;
+  left: 0;
+  background: transparent;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.source-multiline-reading:focus-visible,
+.source-multiline-reading [data-source-description-thumb]:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.source-multiline-reading [data-source-description-fallback]::before {
+  content: attr(data-source-description-fallback);
+}

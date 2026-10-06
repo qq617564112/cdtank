@@ -1,0 +1,88 @@
+--- a/apps/web/src/assets/scenes/scene-castle-damage-text.ts
++++ b/apps/web/src/assets/scenes/scene-castle-damage-text.ts
+@@ -20,7 +20,8 @@
+ export class SceneCastleDamageText {
+   private readonly records: CastleDamageTextRecord[] = [];
+ 
+-  constructor(private readonly renderer: CastleDamageTextRenderer) {}
++  constructor(private readonly renderer: CastleDamageTextRenderer,
++              private readonly screenYRate = 40) {}
+ 
+   /** Screen position is captured once by the accepted damage event. */
+   show(screenX: number, screenY: number, delta: number): void {
+@@ -38,7 +39,7 @@
+       record.scale = scale;
+       record.elapsed = Math.fround(elapsed);
+       if (elapsed > 0.5) record.alpha = Math.fround((1 - elapsed) / 0.5);
+-      record.y = Math.fround(record.y + delta * 40);
++      record.y = Math.fround(record.y + delta * this.screenYRate);
+       if (elapsed >= 1) {
+         this.renderer.release(record.handle);
+         this.records.splice(index, 1);
+--- a/apps/web/src/render/scene-castle-damage-text-renderer.ts
++++ b/apps/web/src/render/scene-castle-damage-text-renderer.ts
+@@ -26,9 +26,10 @@
+   private sequence = 0;
+   private disposed = false;
+ 
+-  constructor(private readonly scene: Scene, private readonly font: CastleDamageTextFont) {
+-    if (font.name !== 'Damage' || font.attributes.Type !== 'Static') {
+-      throw new Error('原Damage字体定义缺失');
++  constructor(private readonly scene: Scene, private readonly font: CastleDamageTextFont,
++              fontName: 'Damage' | 'Benefit' = 'Damage') {
++    if (font.name !== fontName || font.attributes.Type !== 'Static') {
++      throw new Error(`原${fontName}字体定义缺失`);
+     }
+   }
+ 
+@@ -62,7 +63,7 @@
+     const glyphs = [...text].map(character => this.resources.get(character.codePointAt(0)!));
+     const draws: GlyphDraw[] = [];
+     for (const resource of glyphs) {
+-      // Damage.font has only ten digits. Unmapped signs have no replacement glyph.
++      // Original static numeric fonts have only ten digits. Unmapped signs stay blank.
+       if (!resource || this.disposed) continue;
+       const material = new ShaderMaterial('castle-damage-text', this.scene, {
+         vertexSource: 'precision highp float; attribute vec3 position; attribute vec2 uv; uniform vec2 viewport; varying vec2 vUV; void main(){gl_Position=vec4(position.x*2.0/viewport.x-1.0,1.0-position.y*2.0/viewport.y,0.0,1.0);vUV=uv;}',
+--- a/apps/web/src/assets/tanks/tank-benefit-text.ts
++++ b/apps/web/src/assets/tanks/tank-benefit-text.ts
+@@ -0,0 +1,25 @@
++import {SceneCastleDamageText} from '../scenes/scene-castle-damage-text';
++import type {CastleDamageTextRenderer} from '../scenes/scene-castle-damage-text';
++
++/** Original selector0 actor queue, using the shared original numeric-text records. */
++export class TankBenefitText extends SceneCastleDamageText {
++  /** The player presentation owner retains and disposes the shared Benefit glyph renderer. */
++  constructor(renderer: CastleDamageTextRenderer) {
++    super({
++      create: text => renderer.create(Number(text) > 0 ? `+${text}` : text),
++      draw: (record, viewport) => renderer.draw(record, viewport),
++      release: handle => renderer.release(handle),
++      dispose: () => renderer.dispose(),
++    }, -40);
++  }
++
++  /** The qualified actor HP observer supplies its confirmed positive difference. */
++  show(screenX: number, screenY: number, increase: number, isLocal = false): void {
++    super.show(screenX, isLocal ? Math.fround(screenY - 100) : screenY, increase | 0);
++  }
++
++  /** Actor destruction releases its records; the presentation owner owns the glyph resources. */
++  dispose(): void {
++    this.clear();
++  }
++}
+--- a/apps/web/src/render/tank-benefit-text-renderer.ts
++++ b/apps/web/src/render/tank-benefit-text-renderer.ts
+@@ -0,0 +1,11 @@
++import type {Scene} from '@babylonjs/core';
++import {SceneCastleDamageTextRenderer} from './scene-castle-damage-text-renderer';
++import type {CastleDamageTextFont} from './scene-castle-damage-text-renderer';
++
++/** Original Benefit.font uses the same static-digit drawing provider with its own glyph owner. */
++export class TankBenefitTextRenderer extends SceneCastleDamageTextRenderer {
++  constructor(scene: Scene, font: CastleDamageTextFont) {
++    super(scene, font, 'Benefit');
++  }
++}
++export type {CastleDamageTextFont as TankBenefitTextFont} from './scene-castle-damage-text-renderer';

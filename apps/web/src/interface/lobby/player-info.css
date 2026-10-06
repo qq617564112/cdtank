@@ -1,0 +1,9 @@
+[data-player-info] { padding: 0; border: 0; max-width: none; max-height: none; overflow: visible; color: #fff; background: transparent; }
+[data-player-info]::backdrop { background: rgb(0 0 0 / 55%); }
+.player-info-stage { position: relative; width: 405px; height: 405px; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
+.player-info-stage > * { position: absolute; box-sizing: border-box; }
+.player-info-picture { pointer-events: none; }
+.player-info-stage > .source-state-button { margin: 0; padding: 0; border: 0; background: transparent; }
+.player-info-stage > .source-state-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.player-info-stage textarea { resize: none; border: 0; padding: 0; background: transparent; color: #fff; }
+.player-info-status { left: 12px; top: 243px; width: 380px; min-height: 32px; margin: 0; font-size: 12px; }

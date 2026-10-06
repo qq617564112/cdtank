@@ -1,0 +1,17 @@
+.battle-chat input.room-chat-source-caret-input {
+  caret-color: transparent;
+}
+
+.battle-chat .room-chat-source-caret {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.room-chat-source-caret i {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-size: 100% 100%;
+}

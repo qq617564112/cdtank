@@ -1,0 +1,91 @@
+#account-shop [data-pet-shop-item] {
+  padding: 4px;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  font: inherit;
+}
+
+#account-shop [data-pet-shop-item] button {
+  display: block;
+  width: 100%;
+  padding: 10px 6px;
+  color: #fff;
+  border: 0;
+  background: transparent center / 100% 100% no-repeat;
+  font: inherit;
+  text-align: left;
+}
+
+#account-shop [data-pet-shop-item] {overflow: auto;}
+
+.pet-shop-product {
+  overflow: auto;
+  line-height: 15px;
+  color: #253740;
+}
+
+.pet-shop-product p {
+  margin: 0;
+}
+
+.pet-shop-price {
+  left: 12px;
+  top: 410px;
+  width: 200px;
+  line-height: 18px;
+}
+
+.pet-shop-balance {
+  left: 237px;
+  top: 334px;
+  width: 190px;
+  line-height: 18px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.pet-shop-refresh {
+  left: 458px;
+  top: 410px;
+  width: 126px;
+  padding: 4px;
+  color: #fff;
+  background: #263b49;
+  border: 1px solid #8dabad;
+  font: inherit;
+}
+
+.pet-shop-status {
+  left: 224px;
+  top: 444px;
+  width: 372px;
+  height: 34px;
+  overflow: auto;
+  line-height: 16px;
+}
+
+[data-shop-active-page='Pet'] #account-shop-title {
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.pet-shop-hp {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: #253740;
+}
+
+.pet-shop-directory-text {filter: brightness(.15);}
+.shop-source-stage > .pet-shop-directory-skill {inset: 0; pointer-events: none;}
+.pet-shop-directory-skill > .source-static-image {position: absolute;}
+.pet-shop-directory-skill > .source-static-text {position: absolute; filter: brightness(.15);}
+
+.pet-shop-directory-skill > .source-state-button {position: absolute; pointer-events: auto; padding: 0; border: 0; background: transparent;}
+.pet-shop-directory-skill > .source-static-text {pointer-events: none;}
+.pet-shop-mastery-values {pointer-events: none;}
+.pet-shop-mastery-values > span {position: absolute; width: 28px; height: 15px; text-align: center;}

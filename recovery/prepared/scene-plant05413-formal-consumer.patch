@@ -1,0 +1,50 @@
+--- a/apps/web/src/assets/scenes/scene-plant-sway.ts
++++ b/apps/web/src/assets/scenes/scene-plant-sway.ts
+@@ -1,4 +1,5 @@
+ import {InstancedMesh, Mesh, TransformNode, VertexBuffer} from '@babylonjs/core';
++import {ScenePlant05413MaterialOwner} from './scene-plant-material-owner';
+ 
+ interface PlantResource {
+   sourcePlacementId: string;
+@@ -25,6 +26,7 @@
+   private readonly resources = new Map<string, PlantResource>();
+   private readonly owners = new Map<string, PlantOwner>();
+   private disposed = false;
++  private materialOwner?: ScenePlant05413MaterialOwner;
+ 
+   async load(mapId: string): Promise<void> {
+     if (!['0002', '0004', '0005', '0006', '0017', '0021'].includes(mapId)) return;
+@@ -33,6 +35,16 @@
+     const resource = await response.json() as {mapId: number; plants: PlantResource[]};
+     if (this.disposed) return;
+     if (resource.mapId !== Number(mapId)) throw new Error('原植物地图身份不符');
++    if (resource.plants.some(plant => plant.model === 'obj05413')) {
++      const materialResponse = await fetch('/scene-plant-material-05413.json');
++      if (!materialResponse.ok) throw new Error('原Plant05413材质资源载入失败');
++      const material = await materialResponse.json() as {model: string; mesh: string; properties: number[]};
++      if (this.disposed) return;
++      if (material.model !== 'obj05413' || material.mesh !== 'plane507/0') {
++        throw new Error('原Plant05413材质身份不符');
++      }
++      this.materialOwner = new ScenePlant05413MaterialOwner(material.properties);
++    }
+     for (const plant of resource.plants) this.resources.set(plant.sourcePlacementId, plant);
+   }
+ 
+@@ -62,6 +74,7 @@
+       const positions = Float32Array.from(source);
+       mesh.setVerticesData(VertexBuffer.PositionKind, positions, true);
+       mesh.metadata = {...mesh.metadata, sourcePlantSway: id};
++      if (resource.model === 'obj05413') this.materialOwner?.register(mesh);
+       meshes.push({mesh, source, positions});
+     }
+     //45589c supplies rand15 *120*f32(1/32767). Browser entropy is the provider.
+@@ -94,6 +107,8 @@
+ 
+   dispose(): void {
+     this.disposed = true;
++    this.materialOwner?.dispose();
++    this.materialOwner = undefined;
+     for (const owner of this.owners.values()) {
+       owner.meshes.forEach(value => {value.mesh.dispose();});
+     }

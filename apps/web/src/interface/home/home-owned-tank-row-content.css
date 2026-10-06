@@ -1,0 +1,17 @@
+#home-roles .home-owned-role-source-list > [data-home-owned-tank-row] {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 161px;
+  height: 56px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background-position: left top;
+  background-size: 161px 51px;
+}
+[data-home-owned-tank-row] > span {position: absolute; white-space: nowrap;}
+.home-owned-tank-row-icon {left: 5px; top: 8px; width: 32px; height: 32px; background: center / 32px 32px no-repeat;}
+.home-owned-tank-row-name {left: 44px; top: 12px; max-width: 117px; overflow: hidden;}
+.home-owned-tank-row-type {left: 44px; top: 28px; max-width: 60px; overflow: hidden;}
+.home-owned-tank-row-days {left: 104px; top: 28px; max-width: 57px; overflow: hidden;}

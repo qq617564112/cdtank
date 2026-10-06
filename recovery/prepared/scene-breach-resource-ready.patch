@@ -1,0 +1,13 @@
+--- a/apps/web/src/assets/scenes/scene-breach-visual.ts
++++ b/apps/web/src/assets/scenes/scene-breach-visual.ts
+@@ -36,6 +36,10 @@
+     this.renderer.setRate(0);
+     this.renderer.setTime(0);
+     this.renderer.update();
++    this.renderer.draw({matrix: this.matrix, blend: 1, alpha: 1, priority: -1});
++    this.renderer.draw(undefined);
++    await Promise.all(this.renderer.meshes.map(mesh =>
++      mesh.material!.forceCompilationAsync(mesh)));
+   }
+ 
+   seek(seconds: number): void {

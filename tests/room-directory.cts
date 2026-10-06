@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {canJoinRoom, orderRooms, selectDirectoryRoom} from '../apps/web/src/interface/lobby/room-directory';
+import type {RoomSummary} from '../apps/shared/protocols/PtlListRooms';
+const room = (id: string, playerCount = 1, maxPlayers = 4, phase = 'WAITING'): RoomSummary =>
+  ({id, name: id, mode: 4, mapId: 7, playerCount, maxPlayers, phase});
+const rooms = [room('R10', 1, 4), room('R2', 2, 6), room('R3', 0, 2), room('R4', 4, 4), room('R5', 0, 6, 'PLAYING')];
+const original = structuredClone(rooms);
+assert.deepEqual(orderRooms(rooms, 'ID').map(r => r.id), ['R2', 'R3', 'R4', 'R5', 'R10']);
+assert.deepEqual(orderRooms(rooms, 'EMPTY').map(r => r.id), ['R2', 'R10', 'R3', 'R5', 'R4']);
+assert.deepEqual(rooms, original);
+assert.deepEqual(orderRooms([room('R2', 2, 4), room('R10', 1, 3), room('R1', 1, 3)], 'EMPTY').map(r => r.id), ['R1', 'R10', 'R2']);
+assert.deepEqual(orderRooms([room('R2'), room('R1a'), room('R10')], 'ID').map(r => r.id), ['R2', 'R10', 'R1a']);
+assert.equal(canJoinRoom({...room('R1'), hasPassword: true}), true);
+assert.equal(canJoinRoom(room('R1', 4, 4)), false);
+assert.equal(canJoinRoom(room('R1', 0, 6, 'PLAYING')), false);
+assert.equal(canJoinRoom(room('R1', 0, 6, 'FINISHED')), true);
+const ordered = orderRooms(rooms, 'EMPTY');
+assert.equal(selectDirectoryRoom(ordered, 'R3'), 'R3');
+assert.equal(selectDirectoryRoom(ordered, 'R4'), 'R2');
+assert.equal(selectDirectoryRoom(ordered, 'missing'), 'R2');
+assert.equal(selectDirectoryRoom([room('R1', 4, 4), room('R2', 0, 6, 'PLAYING')], 'R1'), '');
+assert.equal(selectDirectoryRoom([], ''), '');
+console.log('PASS: room ID/space sorting, immutable directory, joinability and stable selection/fallback');

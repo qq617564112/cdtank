@@ -1,0 +1,11 @@
+/CDTank/
+/CDTank.rar
+/recovery/.venv/
+/recovery/output/
+/recovery/client-local/
+/recovery/captures/
+__pycache__/
+*.pyc
+node_modules/
+dist/
+/core

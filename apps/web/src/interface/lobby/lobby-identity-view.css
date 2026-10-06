@@ -1,0 +1,4 @@
+[data-lobby-identity] { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+[data-lobby-identity] #player-name { min-width: 0; width: 142px; }
+[data-lobby-name-save] { padding: 2px 4px; font: inherit; }
+[data-lobby-name-status] { width: 100%; font-size: 11px; color: #fff; }

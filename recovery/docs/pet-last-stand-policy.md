@@ -1,0 +1,13 @@
+# 最后一搏生命阶段
+
+所选合法Pet4拥有记录slot3的base10441/rank1与当前attributesReady提供资格，原Trigger6/Target1/Func11 T3及文案共同限定持续3秒。当前生命首次归零时记录authority serverNow+3000，保持alive和combat.status2，普通移动、瞄准和开火继续经过现权限和装填门禁。
+
+期限不随重复命中延长。该生命阶段不接受食物、医疗弹、周期补给或吸收恢复；食物拒绝且不扣库存。生命仍为0，额外命中可沿原hit反馈，但不重复触发延迟死亡。到期仅发布一次最终destroy并增加目标死亡数；原致死射手仍在房时收到kill与destroyScore，团队生命和模式终点沿原死亡链执行。射手已离开时不给其个人奖励，目标死亡与团队生命结算仍执行。复活期限从最终死亡开始，复活恢复完整生命与弹匣并清除阶段。Leave、FINISHED和新局清除临时阶段；FINISHED不额外制造击毁或奖励。
+
+这是明确Web时序政策。原治疗组合、Trigger6/Func11调度和最终爆炸调用尚未恢复。effect43字段单独保留为来源，现alive→false死亡表现复用，不依据字段猜新增FX或爆炸伤害。全部宠物技能、Point取得、原绑定producer和完整高清父项保持开放。
+
+## 有限验收
+
+last-stand-engineering.json记录source/pure、固定期限与治疗拒绝、一次模式终点、原Critical和补给回归、server与生产/owned测试类型及发行构建。last-stand-world.json接受自然普通CPU致死后的60个HP0alive模拟tick、阶段普通输入/开火、单death与复活、阶段终局取消及Rematch恢复。全旧测试集的类型问题在last-stand-root-types.log保留，生产与本轮专属类型通过不代全仓通过。
+
+pet-last-stand-network-root-review.json接受正常BUY4/Select/LEARN3及rank0立即死亡对照；学后自然致死/重复hit/普通move-turn-aim-fire、3005ms最终death、3002ms复活/完整reset及新fire、双完整状态/原Leave/native双资料与购买学习收据、同库重启全文QUERY恢复。Pet4MaxHP650和FRONT伤害93.78881977161026是该实际配装独立重算结果。pet-last-stand-browser-root-review.json接受首Home/六方向真实输入范围和必要新房HP0 nativeSpace、双TankView.fire接受、3016ms单最终死亡09、3040ms自然复活01及再次开火、原双phase Leave与StrictHomeClose。832共同保留完整快照与逐阶段双完整状态/网页自身tick相等，Runtime异常0；原生业务表全文保持，正常结算仅新增一match/两history。pet-last-stand-root-review.json合审接受这一有限闭环。

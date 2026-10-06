@@ -1,0 +1,25 @@
+.history-intro-scrollbar {
+  position: absolute;
+  overflow: hidden;
+  background-repeat: repeat;
+}
+
+.history-intro-scrollbar div,
+.history-intro-scrollbar span,
+.history-intro-scrollbar button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: transparent center / 100% 100% no-repeat;
+}
+
+.history-intro-scroll-track {width: 100%;}
+.history-intro-scroll-thumb {width: 28px; overflow: hidden;}
+.history-intro-thumb-top {top: 0; width: 28px; height: 29px;}
+.history-intro-thumb-middle {top: 29px; bottom: 17px; width: 28px; background-size: 28px 7px; background-repeat: repeat-y;}
+.history-intro-thumb-bottom {bottom: 0; width: 28px; height: 17px;}
+.history-intro-scrollbar .history-intro-scroll-up {top: 0; width: 28px; height: 26px;}
+.history-intro-scrollbar .history-intro-scroll-down {bottom: 0; width: 28px; height: 27px;}
+.history-intro-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}

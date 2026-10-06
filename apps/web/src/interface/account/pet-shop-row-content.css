@@ -1,0 +1,37 @@
+#account-shop .role-shop-list-scroll-shell .role-shop-source-list > [data-pet-shop-source-row] {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 161px;
+  height: 56px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background-position: left top;
+  background-size: 161px 51px;
+}
+
+[data-pet-shop-source-row] > span {
+  position: absolute;
+  white-space: nowrap;
+}
+
+.pet-shop-row-icon {
+  left: 5px;
+  top: 8px;
+  width: 32px;
+  height: 32px;
+  background: center / 32px 32px no-repeat;
+}
+
+.pet-shop-row-name,
+.pet-shop-row-secondary,
+.pet-shop-row-tertiary {
+  left: 44px;
+  max-width: 117px;
+  overflow: hidden;
+}
+
+.pet-shop-row-name {top: 4px;}
+.pet-shop-row-secondary {top: 18px;}
+.pet-shop-row-tertiary {top: 32px;}

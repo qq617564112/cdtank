@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {TankShotPlayerResult} from '../apps/web/src/assets/tanks/shot-player-result';
+import type {TankView} from '../apps/web/src/assets/tanks/tank-view';
+const catalog=JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json','utf8'));
+const victim={tankId:1} as TankView;
+const local={tankId:105} as TankView;
+const calls:unknown[][]=[];
+const consumer=new TankShotPlayerResult({spawnAttachedEffect:(...args)=>{calls.push(['effect',...args]);return 1;},
+  playSkillSound:(...args)=>{calls.push(['sound',...args]);return 1;}},catalog);
+consumer.showPlayerResult(victim,2001,local);
+assert.deepEqual(calls,[['effect',victim,7,0,true,local],['sound',victim,'SE30',1]]);
+calls.length=0;
+consumer.showPlayerResult(victim,2001,victim);
+assert.deepEqual(calls,[['effect',victim,7,0,true,victim],['sound',victim,'SE30',1]]);
+calls.length=0;
+for(const item of [0,2007]) consumer.showPlayerResult(victim,item,local);
+assert.deepEqual(calls,[]);
+consumer.showPlayerResult(victim,2011,local);
+assert.deepEqual(calls,[['effect',victim,20,0,true,local],['sound',victim,'SE25',1]]);
+calls.length=0;
+consumer.showPlayerResult(victim,2011,victim);
+assert.deepEqual(calls,[['effect',victim,20,0,true,victim],['sound',victim,'SE25',1]]);
+writeFileSync('recovery/output/combat-shot-player-result.json',JSON.stringify({status:'PASS',scope:'Source2001/4020 and2011/4009; victim attached007/020 tag0/oneShot1, spatialSE30/SE25 selector1, local-view forwarding and unrelated-ammo silence'},null,2)+'\n');
+console.log('PASS: 2001/2011 victim result original007/020, spatialSE30/SE25 and local-view qualification');

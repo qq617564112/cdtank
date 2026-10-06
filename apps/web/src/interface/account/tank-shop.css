@@ -1,0 +1,93 @@
+#account-shop [data-tank-shop-item] {
+  padding: 4px;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  font: inherit;
+}
+
+#account-shop [data-tank-shop-item] button {
+  display: block;
+  width: 100%;
+  padding: 10px 6px;
+  color: #fff;
+  border: 0;
+  background: transparent center / 100% 100% no-repeat;
+  font: inherit;
+  text-align: left;
+}
+
+#account-shop [data-tank-shop-item] {overflow: auto;}
+
+.tank-shop-product {
+  overflow: auto;
+  line-height: 15px;
+  color: #253740;
+}
+
+.tank-shop-product p {
+  margin: 0;
+}
+
+.tank-shop-price {
+  left: 12px;
+  top: 410px;
+  width: 200px;
+  line-height: 18px;
+}
+
+.tank-shop-balance {
+  left: 237px;
+  top: 334px;
+  width: 190px;
+  line-height: 18px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.tank-shop-refresh {
+  left: 458px;
+  top: 410px;
+  width: 126px;
+  padding: 4px;
+  color: #fff;
+  background: #263b49;
+  border: 1px solid #8dabad;
+  font: inherit;
+}
+
+.tank-shop-status {
+  left: 224px;
+  top: 444px;
+  width: 372px;
+  height: 34px;
+  overflow: auto;
+  line-height: 16px;
+}
+
+[data-shop-active-page='Tank'] #account-shop-title {
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+#account-shop [data-tank-shop-owned-list] {overflow: auto; padding: 4px; font: inherit;}
+#account-shop [data-tank-shop-owned-list] button {
+  position: relative; display: block; box-sizing: border-box; width: 161px; height: 56px; min-height: 0; margin: 0; padding: 0; color: #fff; border: 0;
+  background: transparent left top / 161px 51px no-repeat; font: inherit; text-align: left;
+}
+.tank-shop-texture-component {display: contents;}
+.tank-shop-texture-component > * {position: absolute; box-sizing: border-box;}
+.tank-shop-texture-component > span {overflow: hidden; white-space: nowrap; color: #253740;}
+.tank-shop-texture-component > .source-state-button {padding: 0; border: 0; background: transparent;}
+
+.tank-shop-texture-save-unavailable {position: absolute; inset: 0; opacity: .5; background: center / 100% 100% no-repeat; pointer-events: none;}
+
+.tank-shop-source-attribute { filter: brightness(.15); }
+
+.tank-shop-buy-parameters { display: contents; }
+.tank-shop-buy-parameters > * { position: absolute; }
+.tank-shop-buy-capacity { background-size: 100% 100%; pointer-events: none; }
+.tank-shop-buy-capacity-count { position: absolute; right: 0; top: 4px; min-width: 12px; text-align: center; background: #fffbd4; }

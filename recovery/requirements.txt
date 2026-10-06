@@ -1,0 +1,6 @@
+lzokay==2.1.0
+pefile==2024.8.26
+capstone==5.0.9
+Pillow==12.3.0
+unicorn==2.1.4
+fonttools==4.66.1

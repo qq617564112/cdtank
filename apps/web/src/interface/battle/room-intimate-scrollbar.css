@@ -1,0 +1,28 @@
+.room-intimate-scrollbar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8.5px;
+  overflow: hidden;
+  background-size: 100% 100%;
+}
+
+.room-intimate-scrollbar div,
+.room-intimate-scrollbar span,
+.room-intimate-scrollbar button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: transparent center / 100% 100% no-repeat;
+}
+
+.room-intimate-scroll-track {width: 8.5px;}
+.room-intimate-scroll-thumb {width: 28px; overflow: hidden;}
+.room-intimate-thumb-top {top: 0; width: 28px; height: 26px;}
+.room-intimate-thumb-middle {top: 26px; bottom: 27px; width: 28px;}
+.room-intimate-thumb-bottom {bottom: 0; width: 28px; height: 27px;}
+.room-intimate-scrollbar .room-intimate-scroll-up {top: 0; width: 28px; height: 26px;}
+.room-intimate-scrollbar .room-intimate-scroll-down {bottom: 0; width: 28px; height: 27px;}
+.room-intimate-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}

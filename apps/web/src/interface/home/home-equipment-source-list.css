@@ -1,0 +1,52 @@
+#home-equipment .home-equipment-list-scroll-shell {
+  position: absolute;
+  padding: 0;
+}
+
+#home-equipment .home-equipment-list-scroll-shell > .home-equipment-source-list {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.home-equipment-list-scrollbar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8.5px;
+  overflow: hidden;
+  background-size: 100% 100%;
+}
+
+#home-equipment .home-equipment-list-scrollbar div,
+#home-equipment .home-equipment-list-scrollbar span,
+#home-equipment .home-equipment-list-scrollbar button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: transparent center / 100% 100% no-repeat;
+}
+
+#home-equipment .home-equipment-list-scrollbar button {
+  display: block;
+  min-height: 0;
+  gap: 0;
+}
+
+.home-equipment-list-scroll-track {width: 8.5px;}
+.home-equipment-list-scroll-thumb {width: 28px; overflow: hidden;}
+.home-equipment-list-thumb-top {top: 0; width: 28px; height: 29px;}
+.home-equipment-list-thumb-middle {top: 29px; bottom: 17px; width: 28px;}
+.home-equipment-list-thumb-bottom {bottom: 0; width: 28px; height: 17px;}
+#home-equipment .home-equipment-list-scrollbar .home-equipment-list-scroll-up {top: 0; width: 28px; height: 26px;}
+#home-equipment .home-equipment-list-scrollbar .home-equipment-list-scroll-down {bottom: 0; width: 28px; height: 27px;}
+#home-equipment .home-equipment-list-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}
+
+#home-equipment .home-equipment-source-list button {display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px; min-height: 38px; color: white; border: 0; background: transparent center / 100% 100% no-repeat; font: inherit; text-align: left;}
+.home-equipment-source-icon {flex: 0 0 32px; width: 32px; height: 32px; background: center / contain no-repeat;}

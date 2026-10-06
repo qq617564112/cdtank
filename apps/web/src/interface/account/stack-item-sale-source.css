@@ -1,0 +1,50 @@
+[data-stack-sale-confirm] {
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: white;
+  font-family: 'CDTank-SIMSUN', serif;
+}
+
+.stack-sale-stage {
+  position: relative;
+  width: 307px;
+  height: 120px;
+  transform-origin: top left;
+}
+
+.stack-sale-stage [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.stack-sale-stage .source-static-image {
+  pointer-events: none;
+}
+
+.stack-sale-stage input {
+  background: transparent;
+  color: white;
+  font: 12px 'CDTank-Xiangjiao', sans-serif;
+}
+
+.stack-sale-stage [data-source-control='txtMessage'] {
+  text-align: center;
+  font-size: 12px;
+  line-height: 19px;
+}
+
+.stack-sale-status {
+  position: absolute;
+  top: 124px;
+  width: 307px;
+  padding: 8px;
+  background: #152a3b;
+  color: white;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}

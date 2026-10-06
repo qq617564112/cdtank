@@ -1,0 +1,13 @@
+# 原收到表情序列动画（M5-12-E-A）
+
+ChatEmoteSequence实现原无限循环SequenceImage唯一float32更新与选帧：Duration逐项f32累加，elapsed写回f32，严格大于total才单次减total；选第一个累计Duration>=elapsed的帧，巨大delta留下elapsed超出所有帧时不画图。不是取模、while或统一帧间隔。30序列120个完整原update/draw样本对照通过，资源由export_chat_emote_sequences.py直接读取原seqimage并映射现有原图集PNG，默认Name001使用001b_i而非001A。assets:ui正式生成链包含新导出，不能只手工留产物。
+
+ChatEmotes收到内部glyph后读取默认序列帧和尺寸，替换原base静态消息图；输入/选择仍使用原字体基础图片映射，不混用收到序列。loadChatEmoteSequences提供应用级按name共享provider；每个聊天owner将全部连接消息中的id去重，每帧只推进一次，重复glyph/新消息不重置相位。metadata失败保留静态来源图供聊天继续，但此回退不能算动画验收通过。
+
+RAF供应浏览器delta（Web调度适配）；按已连接消息推进provider，日志50条裁剪后断开的row不再保留；离场clear取消RAF/清消息引用，保留manager provider相位，重入首tick不补充离场时间。原formatText清指针不销毁provider已有来源；原窗口隐藏外部调度未知，当前离场停止/忽略间隔明确Web适配。每个页面的时钟独立，不要求服务器或两个网页同相位；两端必须收到同一消息并使用同一原序列资源和选择合同。图data-chat-emote-frame/elapsed是只读验收状态，不注入业务。
+
+native draw无帧时使用visibility隐藏但保留布局尺寸；正常图按源帧尺寸参与浏览器行布局，完整CEGUI文字/图片换行、颜色/滚动与逐像素差异仍留M5-12-E父项。原完整XML parser尚未执行，当前TSRPC传Unicode不模拟原A262字节或接收标签。
+
+验收：test:chat:emote-animation对照30native序列与72frame身份/尺寸；chat-emote-animation-lifecycle.cts直接运行生产tick，DOM/RAF边界fixture验证同owner重复去重、新row不reset、裁剪/clear停止且provider保留。真实浏览器普通双账户同房/同队Enter收到动画、重复/新增同id相位与实际原framePNG、30序列/全72PNG、1080p4K/正常退出清理。旧表情alias/快捷确认规则按受改动消费者回归，类型/正式依赖/Web发行；服务端/账户/CPU/资源像素生产未改，复用其有效基线，不跑五模式/重启。
+
+软件渲染限制：双高清网页真实RAF间隔过大时，原单步减周期产生无绘制帧并保留之前src；新节点可能留frame0旧节点留其他src，双方frame=none时不要求各自src相同。此边界不改为取模，也不重置provider掩盖。自然轮换可在800×600视口/DPR0.5（实际400×300画布）的真实对局单独证明，1080p/4K以DPR1核对UI原比例和帧源，不宣称高清帧率达标，M7仍未完成。重入保留已超周期相位可能继续none；正确恢复是继承相位和源更新规则，不要求偷偷reset使图片可见。

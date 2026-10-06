@@ -1,0 +1,51 @@
+#home-roles .home-owned-role-list-scroll-shell {
+  position: absolute;
+  padding: 0;
+}
+
+#home-roles .home-owned-role-list-scroll-shell > .home-owned-role-source-list {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.home-owned-role-list-scrollbar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8.5px;
+  overflow: hidden;
+  background-size: 100% 100%;
+}
+
+#home-roles .home-owned-role-list-scrollbar div,
+#home-roles .home-owned-role-list-scrollbar span,
+#home-roles .home-owned-role-list-scrollbar button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: transparent center / 100% 100% no-repeat;
+}
+
+#home-roles .home-owned-role-list-scrollbar button {
+  display: block;
+  min-height: 0;
+  gap: 0;
+}
+
+.home-owned-role-list-scroll-track {width: 8.5px;}
+.home-owned-role-list-scroll-thumb {width: 28px; overflow: hidden;}
+.home-owned-role-list-thumb-top {top: 0; width: 28px; height: 29px;}
+.home-owned-role-list-thumb-middle {top: 29px; bottom: 17px; width: 28px;}
+.home-owned-role-list-thumb-bottom {bottom: 0; width: 28px; height: 17px;}
+#home-roles .home-owned-role-list-scrollbar .home-owned-role-list-scroll-up {top: 0; width: 28px; height: 26px;}
+#home-roles .home-owned-role-list-scrollbar .home-owned-role-list-scroll-down {bottom: 0; width: 28px; height: 27px;}
+#home-roles .home-owned-role-list-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}
+
+#home-roles .home-owned-role-source-list button {display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px; min-height: 18px; color: white; border: 0; background: transparent center / 100% 100% no-repeat; font: inherit; text-align: left;}

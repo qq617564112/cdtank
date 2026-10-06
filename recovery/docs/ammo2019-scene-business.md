@@ -1,0 +1,5 @@
+# 2019远端场景结果事务
+
+服务端冻结首致死scene/objective的2019原端点，非致死、terrain与重复静默。现Shop原50/50资格及有限CAS消费直接复用。新场景消费者使用remote028/root2625、2632贴片与2633雪粒子、SE22及GA08；本机结果静默。原damage/flight规则保持既有范围。
+
+普通World选弹、瞄准开火、ENV79首致死结果、TSBuffer往返与正常Leave验证正式producer。库存15、CAS回调和模拟时钟明确为模块fixture。已有受害者2019whole和原source/runtime复用，新场景普通购买与双正常Leave独立首验，完整像素范围单独记录。

@@ -1,0 +1,25 @@
+.waiting-chat-history-scrollbar {
+  position: absolute;
+  overflow: hidden;
+  background-repeat: repeat;
+}
+
+.waiting-chat-history-scrollbar div,
+.waiting-chat-history-scrollbar span,
+.waiting-chat-history-scrollbar button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: transparent center / 100% 100% no-repeat;
+}
+
+.waiting-chat-history-scroll-track {width: 100%;}
+.waiting-chat-history-scroll-thumb {width: 28px; overflow: hidden;}
+.waiting-chat-history-thumb-top {top: 0; width: 28px; height: 29px;}
+.waiting-chat-history-thumb-middle {top: 29px; bottom: 17px; width: 28px; background-repeat: repeat-y;}
+.waiting-chat-history-thumb-bottom {bottom: 0; width: 28px; height: 17px;}
+.waiting-chat-history-scrollbar .waiting-chat-history-scroll-up {top: 0; width: 28px; height: 26px;}
+.waiting-chat-history-scrollbar .waiting-chat-history-scroll-down {bottom: 0; width: 28px; height: 27px;}
+.waiting-chat-history-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}

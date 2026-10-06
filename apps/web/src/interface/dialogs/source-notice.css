@@ -1,0 +1,44 @@
+[data-source-notice] {
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: white;
+  font-family: 'CDTank-SIMSUN', serif;
+}
+
+.source-notice-stage {
+  position: relative;
+  width: 315px;
+  height: 108px;
+  transform-origin: top left;
+}
+
+.source-notice-stage div, .source-notice-stage button, .source-notice-stage span {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-size: 100% 100%;
+}
+
+.source-notice-stage button {
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.source-notice-stage button:focus-visible {
+  outline: 1px solid white;
+}
+
+.source-notice-picture {
+  pointer-events: none;
+}
+
+.source-notice-stage [data-source-control='txtMessage'] {
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 18px;
+}

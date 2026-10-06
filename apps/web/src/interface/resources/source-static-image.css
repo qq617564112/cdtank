@@ -1,0 +1,11 @@
+.source-static-image i {
+  position: absolute;
+  display: block;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  pointer-events: none;
+}
+
+.source-static-image [data-source-image] {
+  overflow: hidden;
+}

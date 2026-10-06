@@ -1,0 +1,57 @@
+[data-source-confirm] {
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: white;
+  font-family: 'CDTank-SIMSUN', serif;
+}
+
+.source-confirm-stage {
+  position: relative;
+  width: 315px;
+  height: 108px;
+  transform-origin: top left;
+}
+
+.source-confirm-stage [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.source-confirm-stage button {
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.source-confirm-stage button:focus-visible {
+  outline: 1px solid white;
+}
+
+.source-confirm-picture {
+  pointer-events: none;
+}
+
+.source-confirm-stage [data-source-control='txtMessage'] {
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.source-confirm-status {
+  position: absolute;
+  top: 114px;
+  left: 0;
+  box-sizing: border-box;
+  width: 315px;
+  padding: 8px;
+  background: #152a3b;
+  color: white;
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}

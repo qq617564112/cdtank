@@ -1,0 +1,29 @@
+# 永久装甲正常命中消费者准备
+
+M2-01 / M4-10 / M6-01。原14001→13031 Def10、14003→13033 Def15，Trigger0/Func1/T65535，普通拥有和装备已有正式业务。原432951分别合成role+7c Def与role+88 DefBonus；前者float32、后者int32，DataScale10/11限幅位于有效精通加成之前。Def随后加入421c7a effectiveMastery系数与owned+4c uint32贡献，433c55乘float32(.01)。DefBonus由owned+50 signed32初始化并累计技能，保持int32。原指令确认的是两个字段，不是最终合成装甲值或服务器减伤公式。
+
+正式armorReady/recoveredArmor已发布这些字段。battle/life.ts仅将伤害交defenseAdjustedDamage读取临时defenseBoost；无药水时永久装甲不进入减伤。现defense-drink.originalDefense的percent+bonus组合与100比例均为已明确Web重建，活跃药水已被原current技能重算包含。下一正常装甲消费者必须单次合成，不能完整读取含药水的防御后再重复应用药水增量。
+
+共享命中入口同时承接周期伤害：World416的4005燃烧与464/471的普通炮击都进入applyPlayerDamage。燃烧源描述提供3/6/9秒各70HP，原normalarmor对周期HPDrain的资格没有确认；直接在life.ts统一减伤会扩大这条已交付行为。普通shot带ammoItemId，燃烧带skillId4005且不带ammoItemId，可由主线明确限定新装甲消费者到炮击分支。医疗弹在入口先行resolveMedicalAmmo，保持独立。
+
+已有tank-purchased-part-armor-network-17-31-42证明装备14001前后药水base/boosted防御值不同，没有证明不喝药水时永久装甲的命中减伤。最新炮管21-38-35实际本人装14003输出defensePercent .28599998354911804、defenseBonus44，ownedDef17/ownedDefBonus44；炮管对照以peer为命中目标，不能充当本人装甲撤装对照。两项直接复用，不重新执行旧native或药水矩阵。
+
+下一独立普通网络范围使用炮管真实检查点，账号0作为防守方，正常卸下slot2实例7建立基线，再第二房WAITING装回同一14003。账号1保持现合法拥有/所选来源，仅正常瞄准与2001命中。两房完整字段作为独立原重算输入，伤害预期使用主线最终明确的Web减伤规则。补Ready取消及13033来源、双端完整快照/同hit、四Leave、原生完整资料及同库重启。无BUY、资金/Point/拥有记录或活跃状态注入。
+
+permanent-armor-source-preparation.cts已只读提取检查点双方完整输入，保存permanent-armor-source-inputs.json；current16沿已接受actual快照，普通2001安装包含4020。本人卸装后原字段Def .13599999248981476/DefBonus44，装回14003为 .28599998354911804/44，其他攻防字段不变；peer原攻击151。已装字段与炮管actual原输出逐值一致。此为来源与验收输入准备，没有执行装甲减伤政策或联网对照。
+
+## 正式重建规则与验收准备
+
+主线已明确Web规则：defensePoints=Math.max(0,defensePercent*100+defenseBonus)，damage=rawDamage*100/(100+defensePoints)。原Def已转比例，乘100还原点数；DefBonus沿原int32点数。字段组合与减伤分母是Web重建，不能声称原服务器公式。calculateQualifiedShotDamage保留浮点伤害；生命继续通过现setBattleHealth/setRoleHp的value|0写入整数，不添加新的round。
+
+只有ammoItemId存在且armorReady/recoveredArmor合格的炮击使用当前防御一次，当前字段已含药水5，不再调用增量药水减伤。不合格炮击和周期燃烧沿既有defenseAdjustedDamage；医疗弹入口独立。主线owns World/life接线，本线owns纯函数与独立数值验收。
+
+qualified-shot-defense.cts纯规则actualexit0。复用完整原字段，peer raw151得到卸装95.81218319769495、装配87.48551647694896；比例与Bonus各20点等价、非负防御、零伤害、保留小数已断言。普通driver permanent-armor-network.cts独立算式核浮点hit.value与Math.max(0,(beforeHP-damage)|0)，无BUY/资金/Point/活跃注入。
+
+## 首次正式普通网络
+
+permanent-armor-network-2026-10-05T21-56-36-580Z.json / PASS_FINITE_PERMANENT_ARMOR_ORDINARY_SHOT_READY_DUAL_STATE_NATIVE_RESTART_SCOPE，runner50914实际exit0，专属types actualexit0。两房同源peer151普通2001单hit：卸装95.81218319769495、650→554；装回14003后87.48551647694896、650→562。Ready取消/13033来源双端确认，两房各14共同完整snapshot逐值相等、两个hit双端逐值同，普通Leave四次。
+
+本人完整profile与owned来源保持、peer完整查询保持；原生完整双方profile/inventory与outroom QUERY逐值同，同一数据库实际stop/start后双方Inventory/Equipment/OwnedRoles全文相等。finally188416B检查点、private0600与清理true/端口3625空已确认。分析permanent-armor-network-analysis.json。独立网络主审permanent-armor-network-root-review.json / PASS_FINITE_ORDINARY_ARMOR14003_SHOT_DEFENSE95_812183_TO87_485516_READY_DUAL_STATE_NATIVE_RESTART_SCOPE已收；普通0drink与工程单次药水边界分列，页面合审permanent-armor-root-review.json / PASS_FINITE_OWNED_ARMOR14003_QUALIFIED_SHOT_DEFENSE_READY_DUAL_STATE_NATIVE_RESTART_KEYBOARD_SUMMARY_CLOSE_SCOPE已完成；独立networkRootReview保持原路径。页面原生96ms Space对应1个true输入、唯一2001、双端87.485516及HP562，阶段Leave、双Close与完整原生资料保持。页面首0fire原因未具名，原FAIL保留。
+
+具体合同见permanent-armor-consumer-preparation.json。原侧背防御/暴击及最终伤害父保持未完成；模块测试不替代普通命中及页面闭环。

@@ -1,0 +1,151 @@
+--- a/apps/web/src/render/battle-players.ts
++++ b/apps/web/src/render/battle-players.ts
+@@ -1,4 +1,7 @@
+-import {ArcRotateCamera, Scene, Vector3} from '@babylonjs/core';
++import {ArcRotateCamera, Matrix, Scene, Vector3, Viewport} from '@babylonjs/core';
++import {TankDamageText} from '../assets/tanks/tank-damage-text';
++import {TankDamageTextRenderer, type TankDamageTextFont} from './tank-damage-text-renderer';
++import {effectModelEngineDelta} from './effects/models/effect-model-animation';
+ import type {PlayerSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
+ import type {CombatCatalog} from '../../../shared/combat/catalog';
+ import {followBattleCamera} from './battle-camera';
+@@ -15,6 +18,9 @@
+ /** Owns tank resources and presentation of authoritative player snapshots. */
+ export class BattlePlayers {
+   private readonly players = new Map<string, TankView>();
++  private readonly damageTexts = new Map<string, TankDamageText>();
++  private damageTextRenderer?: TankDamageTextRenderer;
++  private damageTextLoading?: Promise<void>;
+   private readonly loading = new Set<string>();
+   private readonly previousPositions = new Map<string, {x: number; z: number; alive: boolean}>();
+   private readonly presentedLife = new Map<string, boolean>();
+@@ -26,7 +32,9 @@
+   private ammoCatalogLoading?: Promise<CombatCatalog>;
+ 
+   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
+-              private readonly effects: PlayerEffects) {}
++              private readonly effects: PlayerEffects) {
++    this.scene.onDisposeObservable.addOnce(() => {this.clear();});
++  }
+ 
+   get(id: string): TankView | undefined {return this.players.get(id);}
+ 
+@@ -46,6 +54,7 @@
+     this.previousPositions.clear();
+     this.presentedLife.clear();
+     this.moving.clear();
++    this.damageTexts.forEach(queue => queue.clear());
+     for (const player of players) {
+       this.players.get(player.id)?.position(player.x, player.y, player.z);
+     }
+@@ -59,6 +68,8 @@
+         this.effects.remove(id);
+         this.effects.detach(view);
+         view.dispose();
++        this.damageTexts.get(id)?.dispose();
++        this.damageTexts.delete(id);
+         this.players.delete(id);
+         this.previousPositions.delete(id);
+         this.presentedLife.delete(id);
+@@ -71,6 +82,8 @@
+         this.effects.remove(player.id);
+         this.effects.detach(loaded);
+         loaded.dispose();
++        this.damageTexts.get(player.id)?.dispose();
++        this.damageTexts.delete(player.id);
+         this.players.delete(player.id);
+         this.presentedLife.delete(player.id);
+       }
+@@ -89,6 +102,33 @@
+     }
+   }
+ 
++  private async loadDamageText(generation: number): Promise<void> {
++    this.damageTextLoading ??= (async () => {
++      const response = await fetch('/ui-fonts.json');
++      if (!response.ok) throw new Error('原字体目录载入失败');
++      const fonts = await response.json() as {fonts: TankDamageTextFont[]};
++      if (generation !== this.generation) return;
++      const font = fonts.fonts.find(value => value.name === 'Damage' && value.attributes.Type === 'Static');
++      if (!font?.glyphs?.length) throw new Error('原Damage字体定义缺失');
++      const renderer = new TankDamageTextRenderer(this.scene, font);
++      this.damageTextRenderer = renderer;
++      await renderer.load();
++      if (generation !== this.generation) renderer.dispose();
++    })();
++    await this.damageTextLoading;
++  }
++
++  /** Original hit text is queued before the separate hurt-action eligibility gate. */
++  damage(id: string, value: number, isLocal: boolean): void {
++    const view = this.players.get(id);
++    const queue = this.damageTexts.get(id);
++    if (!view || !queue) return;
++    const engine = this.scene.getEngine();
++    const point = Vector3.Project(view.root.position, Matrix.Identity(),
++      this.camera.getTransformationMatrix(), new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
++    queue.show(Math.trunc(point.x), Math.trunc(point.y), value, isLocal);
++  }
++
+   private sameSelection(view: Pick<PlayerSnapshot, 'tankId' | 'tankTextures'>,
+                         player: PlayerSnapshot): boolean {
+     return view.tankId === player.tankId &&
+@@ -99,6 +139,7 @@
+     const generation = this.generation;
+     this.loading.add(player.id);
+     try {
++      await this.loadDamageText(generation);
+       this.ammoCatalogLoading ??= fetch('/combat-catalog.json').then(async response => {
+         if (!response.ok) throw new Error(`Combat catalog ${response.status}`);
+         this.ammoCatalog = await response.json() as CombatCatalog;
+@@ -114,6 +155,9 @@
+       view.position(player.x, player.y, player.z);
+       this.applyAmmoEffect(view, current);
+       this.players.set(player.id, view);
++      if (this.damageTextRenderer) {
++        this.damageTexts.set(player.id, new TankDamageText(this.damageTextRenderer));
++      }
+       this.effects.attach(view);
+     } catch (error) {
+       const current = this.snapshot?.find(value => value.id === player.id);
+@@ -185,6 +229,16 @@
+         followBattleCamera(this.camera, view.root.position, view.turretYaw);
+       }
+     }
++    const engine = this.scene.getEngine();
++    const delta = Math.fround(effectModelEngineDelta(engine.getDeltaTime() / 1000));
++    const viewport = {width: engine.getRenderWidth(), height: engine.getRenderHeight()};
++    for (const [id, queue] of this.damageTexts) {
++      const view = this.players.get(id);
++      if (!view) continue;
++      const viewZ = Vector3.TransformCoordinates(view.root.position, this.camera.getViewMatrix()).z;
++      queue.advance(delta, viewZ);
++      queue.draw(viewport);
++    }
+   }
+ 
+   clear(): void {
+@@ -192,6 +246,11 @@
+     this.snapshot = undefined;
+     this.players.forEach(view => {this.effects.detach(view); view.dispose();});
+     this.players.clear();
++    this.damageTexts.forEach(queue => queue.dispose());
++    this.damageTexts.clear();
++    this.damageTextRenderer?.dispose();
++    this.damageTextRenderer = undefined;
++    this.damageTextLoading = undefined;
+     this.loading.clear();
+     this.previousPositions.clear();
+     this.presentedLife.clear();
+--- a/apps/web/src/match/battle.ts
++++ b/apps/web/src/match/battle.ts
+@@ -147,6 +147,9 @@
+           if (event.playerId === this.playerId && localRecoil) this.effects.ordinaryFireCamera();
+           if (event.shotDisplay) this.shotDisplay?.show(event.shotDisplay);
+         }
++        if (event.type === 'hit') {
++          this.players.damage(event.targetId, event.value, event.targetId === this.playerId);
++        }
+         if (event.type === 'hit' || event.type === 'playerHealed') {
+           const victim = this.players.get(event.targetId);
+           if (victim && event.shotPlayerResult) {

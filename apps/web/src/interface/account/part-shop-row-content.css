@@ -1,0 +1,53 @@
+#account-shop .part-shop-list-scroll-shell .part-shop-source-list > :is([data-part-owned-source-row], [data-part-product-source-row]) {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 161px;
+  height: 56px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background-position: left top;
+  background-size: 161px 51px;
+}
+
+:is([data-part-owned-source-row], [data-part-product-source-row]) > span {
+  position: absolute;
+  white-space: nowrap;
+}
+
+.part-shop-owned-row-icon {
+  left: calc(var(--part-row-origin, 0px) + 4px);
+  top: 8px;
+  width: 32px;
+  height: 32px;
+  background: center / 32px 32px no-repeat;
+}
+
+.part-shop-owned-row-name,
+.part-shop-owned-row-secondary,
+.part-shop-owned-row-fourth {
+  left: calc(var(--part-row-origin, 0px) + 43px);
+  max-width: 118px;
+  overflow: hidden;
+}
+
+.part-shop-owned-row-tertiary {
+  left: calc(var(--part-row-origin, 0px) + 103px);
+  max-width: 58px;
+  overflow: hidden;
+}
+
+.part-shop-owned-row-name {top: 4px;}
+.part-shop-owned-row-secondary,
+.part-shop-owned-row-tertiary {top: 18px;}
+.part-shop-owned-row-fourth {top: 32px;}
+
+#account-shop .part-shop-source-list[data-part-common-product-grid] {
+  display: grid;
+  grid-template-columns: repeat(2, 171px);
+  grid-auto-rows: 56px;
+  align-content: start;
+  gap: 0;
+}
+[data-part-product-source-row] {--part-row-origin: 11px;}

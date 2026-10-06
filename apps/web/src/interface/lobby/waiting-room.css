@@ -1,0 +1,152 @@
+[data-waiting-room] {
+  padding: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: visible;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  font-family: 'CDTank-SIMSUN', serif;
+}
+
+.waiting-room-viewport {
+  position: relative;
+}
+
+.waiting-room-stage {
+  position: absolute;
+  width: 615px;
+  height: 391px;
+  transform-origin: top left;
+}
+
+.waiting-room-stage > button, .waiting-room-stage > span {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  background-size: 100% 100%;
+  border: 0;
+  color: #fff;
+  font-family: 'CDTank-SIMSUN', serif;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.waiting-room-stage > span {
+  pointer-events: none;
+  overflow: hidden;
+  white-space: pre-line;
+}
+
+.waiting-room-stage > button {
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.waiting-room-stage > button:disabled {
+  cursor: default;
+}
+
+.waiting-room-stage > button:focus-visible {
+  outline: 2px solid #fff;
+  z-index: 1;
+}
+
+[data-waiting-room-status] {
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  color: #fff;
+  background: #263b49;
+}
+
+[data-waiting-room-status-state="normal"] {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.waiting-room-stage .waiting-room-label {
+  pointer-events: auto;
+}
+
+.waiting-room-label:focus-visible {
+  outline: 2px solid #fff;
+}
+
+[data-waiting-room]::backdrop {
+  background: transparent;
+}
+
+.waiting-room-stage [data-source-text-content] {
+  white-space: nowrap;
+}
+
+.waiting-room-management {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.waiting-room-management button {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #fff8da;
+  color: #fff8da;
+  background: #263b49;
+  font: 12px 'CDTank-SIMSUN', serif;
+}
+
+[data-waiting-room-formal] [data-waiting-room-status]:not([data-waiting-room-status-state="normal"]) {
+  position: static;
+  box-sizing: border-box;
+}
+
+.waiting-room-management [data-waiting-management-status] {
+  flex-basis: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+}
+
+[data-waiting-room-formal] {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: max-content;
+  height: max-content;
+  overflow: auto;
+  z-index: 4;
+}
+
+[data-waiting-room-formal] {
+  overflow: visible;
+  pointer-events: none;
+}
+
+[data-waiting-room-formal] .waiting-room-stage {
+  pointer-events: auto;
+}
+
+[data-waiting-room-formal] .waiting-room-management {
+  position: absolute;
+  width: 185px;
+  height: 400px;
+  box-sizing: border-box;
+  overflow: auto;
+  margin: 0;
+  padding: 8px;
+  transform-origin: top left;
+  pointer-events: auto;
+}

@@ -1,0 +1,71 @@
+[data-pet-skill-dialog] {
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  color: white;
+  background: transparent;
+}
+
+[data-pet-skill-dialog]::backdrop {
+  background: transparent;
+}
+
+.pet-skill-source-stage {
+  position: relative;
+  width: 800px;
+  height: 599px;
+  transform-origin: top left;
+}
+
+.pet-skill-source-stage [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pet-skill-source-picture {
+  pointer-events: none;
+}
+
+.pet-skill-source-stage button {
+  background: transparent;
+  cursor: pointer;
+}
+
+.pet-skill-source-stage button:disabled {
+  cursor: default;
+}
+
+.pet-skill-source-stage :focus-visible {
+  outline: 1px solid white;
+  outline-offset: 1px;
+}
+
+.pet-skill-source-stage [data-source-control^='edt'] {
+  overflow: auto;
+  white-space: pre-wrap;
+  color: white;
+  background: transparent;
+  font-family: 'CDTank-SIMSUN', serif;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.home-pet-owned-skill > .source-state-button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.home-pet-owned-skill > .source-state-button:focus-visible {
+  outline: 1px solid white;
+  outline-offset: 1px;
+}

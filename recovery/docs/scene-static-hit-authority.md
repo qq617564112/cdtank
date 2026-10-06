@@ -1,0 +1,7 @@
+# 普通2001命中源静态BOX
+
+原4247aa的type2场景分支将远端结果坐标交给423956→423092，不执行损坏事务。来源见scene-shot-type2-source.md及对应六个原receiver执行条件。
+
+正式服务端在普通2001已接受开火、queryShotTarget选择SCENE且hitSceneObject未提交损坏事务时，仅对battlefield.boxes中存在的源ID发布sceneStaticHit。shotItemResult保存该次2001及选定坐标，既有TankShotItemResult对远端攻击者消费007/SE30/GA07；本机保持原静默分支。源BOX身份到通知的服务端授权是明确重建。没有新增HP、可破坏对象或terrain结果政策。
+
+scene-static-hit-authority-rules.json/log通过原map7出生点到BOX29的生产query及fireProjectile、端点冻结、损坏事务排除、特殊弹药排除和真实协议编码往返。此为模块及wire证据；普通双网页反馈、图声、自然结束与离房待专属实际验证。

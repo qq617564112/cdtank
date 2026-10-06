@@ -1,0 +1,45 @@
+.mend-shop-list > [data-mend-owned-part-row] {
+  position: relative;
+  width: 161px;
+  height: 56px;
+  min-height: 0;
+  padding: 0;
+  background-position: left top;
+  background-size: 161px 51px;
+  background-repeat: no-repeat;
+}
+
+[data-mend-owned-part-row] > span {
+  position: absolute;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.mend-part-icon {
+  left: 5px;
+  top: 8px;
+  width: 32px;
+  height: 32px;
+  background: center / 32px 32px no-repeat;
+}
+
+.mend-part-name {
+  left: 44px;
+  top: 12px;
+  width: 117px;
+  line-height: 16px;
+}
+
+.mend-part-type {
+  left: 44px;
+  top: 28px;
+  width: 60px;
+  line-height: 16px;
+}
+
+.mend-part-duration {
+  left: 104px;
+  top: 28px;
+  width: 57px;
+  line-height: 16px;
+}

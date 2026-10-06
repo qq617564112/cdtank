@@ -1,0 +1,120 @@
+#account-shop {
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  color: #fff;
+  background: transparent;
+  font-family: 'CDTank-SIMSUN', serif;
+  font-size: 12px;
+}
+
+#account-shop::backdrop {background: rgb(0 0 0 / 55%);}
+
+.shop-source-stage {position: relative; width: 625px; height: 404px;}
+.shop-source-stage > * {position: absolute; box-sizing: border-box; margin: 0;}
+.shop-source-stage > .source-static-image {pointer-events: none;}
+.shop-source-stage > .source-state-button {padding: 0; border: 0; background: transparent;}
+.shop-source-stage > .source-state-button[aria-disabled='true'] {pointer-events: none;}
+#account-shop :focus-visible {outline: 2px solid white; outline-offset: 1px;}
+#account-shop-title {left: 18px; top: 10px; width: 180px; font-size: 16px; font-weight: normal;}
+.shop-balance-summary {left: 12px; top: 312px; width: 184px; height: 18px; overflow: hidden; font-size: 10px;}
+#account-shop [data-shop-item] {
+  padding: 4px;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  font: inherit;
+}
+#account-shop [data-shop-item] option {padding: 10px 6px; background: transparent;}
+#account-shop [data-shop-item] option:checked {background: #365a67; color: white;}
+.shop-product {left: 12px; top: 70px; width: 184px; height: 130px; overflow: auto;}
+.shop-icon {float: left; width: 40px; height: 40px; margin: 0 8px 6px 0; background: center / contain no-repeat;}
+.shop-product p {margin: 0; line-height: 18px; white-space: pre-wrap;}
+.shop-quantity {left: 12px; top: 208px; width: 184px;}
+.shop-currency {left: 12px; top: 244px; width: 184px;}
+#account-shop input, #account-shop .shop-currency select {
+  width: 112px;
+  height: 24px;
+  margin-left: 4px;
+  padding: 2px 4px;
+  color: #fff;
+  background: #263b49;
+  border: 1px solid #8dabad;
+  font: inherit;
+}
+#account-shop [data-shop-buy], #account-shop [data-shop-refresh] {
+  top: 279px;
+  height: 26px;
+  padding: 3px 6px;
+  color: #fff;
+  background: #263b49;
+  border: 1px solid #8dabad;
+  font: inherit;
+}
+#account-shop [data-shop-buy] {left: 12px; width: 72px;}
+#account-shop [data-shop-refresh] {left: 96px; width: 100px;}
+#account-shop [data-shop-status] {left: 224px; top: 379px; width: 372px; height: 22px; overflow: auto; line-height: 18px;}
+.shop-loading-close {left: 570px; top: 0;}
+
+[data-shop-active-page='Item'] #account-shop-title,
+[data-shop-active-page='Item'] .shop-balance-summary {
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+#account-shop .shop-item-source-list {
+  overflow: auto;
+  padding: 0;
+  font: inherit;
+}
+
+.shop-item-source-list button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 42px;
+  padding: 3px;
+  color: #fff;
+  border: 0;
+  background: transparent center / 100% 100% no-repeat;
+  font: inherit;
+  text-align: left;
+}
+
+.shop-list-icon {flex: 0 0 32px; width: 32px; height: 32px; background: center / contain no-repeat;}
+.shop-list-text {display: flex; flex-direction: column; gap: 3px;}
+
+[data-shop-active-page='Item'] .shop-product {left: 12px; top: 410px; width: 270px; height: 84px;}
+[data-shop-active-page='Item'] .shop-product p {line-height: 16px;}
+#account-shop [data-shop-active-page='Item'] .shop-quantity {left: 300px; top: 410px; width: 140px; display: flex; align-items: center; white-space: nowrap;}
+#account-shop [data-shop-active-page='Item'] .shop-currency {left: 448px; top: 410px; width: 166px; display: flex; align-items: center; white-space: nowrap;}
+#account-shop [data-shop-active-page='Item'] .shop-quantity input {width: 88px; min-width: 0;}
+#account-shop [data-shop-active-page='Item'] .shop-currency select {width: 100px; min-width: 0;}
+#account-shop [data-shop-active-page='Item'] [data-shop-buy] {left: 300px; top: 444px; width: 100px;}
+#account-shop [data-shop-active-page='Item'] [data-shop-refresh] {left: 414px; top: 444px; width: 150px;}
+#account-shop [data-shop-active-page='Item'] [data-shop-status] {left: 300px; top: 476px; width: 314px; height: 20px;}
+.shop-owned-status {left: 12px; top: 410px; width: 270px; min-height: 18px; background: #263b49;}
+.shop-owned-status:empty {display: none;}
+
+#account-shop [data-shop-active-page='Item'] [data-shop-status][data-shop-no-catalog='true'] {
+  left: 12px;
+  top: 410px;
+  width: 270px;
+  height: 84px;
+  padding: 6px;
+  color: #fff;
+  background: #263b49;
+  overflow-wrap: anywhere;
+}
+
+#account-shop [data-shop-active-page='Item'] .shop-selected-query-prices {
+  left: 230px;
+  top: 410px;
+  width: 68px;
+  min-height: 20px;
+}

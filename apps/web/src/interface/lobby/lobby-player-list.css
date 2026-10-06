@@ -1,0 +1,48 @@
+.lobby-player-list {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+  color: white;
+  font: 12px 'CDTank-SIMSUN', serif;
+}
+
+.lobby-player-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.lobby-player-list [data-lobby-presence-status] {
+  margin: 0;
+  color: white;
+  font: inherit;
+  line-height: 14px;
+}
+
+.lobby-player-list button {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 14px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  color: inherit;
+  font: inherit;
+  line-height: 14px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.lobby-player-list button:focus-visible {
+  outline: 1px solid white;
+  outline-offset: -1px;
+}

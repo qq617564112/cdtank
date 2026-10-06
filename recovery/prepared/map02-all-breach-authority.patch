@@ -1,0 +1,11 @@
+--- a/apps/server/src/battle/environment.ts
++++ b/apps/server/src/battle/environment.ts
+@@ -11,7 +11,7 @@
+       sourcePlacementId: source.id, sourceModel: source.model,
+       x: source.matrix[12], y: source.matrix[13], z: source.matrix[14],
+       hp: source.hp, maxHp: source.hp})) : [];
+-  const models = room.mode === 1 && room.map.mapId === 2 ? ['obj05428', 'obj05427']
++  const models = room.mode === 1 && room.map.mapId === 2 ? ['obj05428', 'obj05427', 'obj05425', 'obj05426', 'obj05422']
+     : room.mode === 1 && room.map.mapId === 5 ? ['obj05425', 'obj05426']
+     : room.mode === 1 && room.map.mapId === 10 ? ['obj05425']
+     : room.mode === 1 && room.map.mapId === 4 ? ['obj05466']

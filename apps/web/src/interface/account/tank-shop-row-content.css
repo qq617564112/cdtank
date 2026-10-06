@@ -1,0 +1,44 @@
+#account-shop .role-shop-list-scroll-shell .role-shop-source-list > [data-tank-shop-source-row] {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 161px;
+  height: 56px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background-position: left top;
+  background-size: 161px 51px;
+}
+
+[data-tank-shop-source-row] > span {
+  position: absolute;
+  white-space: nowrap;
+}
+
+.tank-shop-row-icon {
+  left: 5px;
+  top: 8px;
+  width: 32px;
+  height: 32px;
+  background: center / 32px 32px no-repeat;
+}
+
+.tank-shop-row-name,
+.tank-shop-row-secondary,
+.tank-shop-row-fourth {
+  left: 44px;
+  max-width: 117px;
+  overflow: hidden;
+}
+
+.tank-shop-row-tertiary {
+  left: 104px;
+  max-width: 57px;
+  overflow: hidden;
+}
+
+.tank-shop-row-name {top: 4px;}
+.tank-shop-row-secondary,
+.tank-shop-row-tertiary {top: 18px;}
+.tank-shop-row-fourth {top: 32px;}

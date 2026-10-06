@@ -1,0 +1,230 @@
+import './trade-source-page.css';
+import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {createPortal} from 'react-dom';
+import type {ReqTrade, ResTrade, TradeOffer, TradeParty, TradeRecordRef, TradeRecordView} from '../../../../shared/protocols/PtlTrade';
+import type {CombatCatalog} from '../../../../shared/combat/catalog';
+import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
+import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
+import {SourceButton} from '../resources/source-button';
+import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
+import {SourceStaticText} from '../resources/source-static-text';
+import {sourceProps} from '../resources/source-ui-props';
+import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {TradeSourceDetail, hasTradeRecordDetail, tradeRecordPresentation} from './trade-source-detail';
+
+export interface TradeSourcePageProps {
+  state: ResTrade; pending: boolean; status: string; act(request: ReqTrade): void; close(): void;
+}
+type Tab = 'item' | 'equipment' | 'pet' | 'tank';
+const suffix = 'trade.xml';
+const keyOf = (record: TradeRecordRef) => `${record.kind}:${record.instanceId}`;
+const partyStatus = (party?: TradeParty) => party?.confirmed ? '已确认' : party?.shown ? '已展示' : party ? '编辑中' : '';
+
+/** Source Trade regions consume confirmed party state; editable offers remain local drafts. */
+export function TradeSourcePage({state, pending, status, act, close}: TradeSourcePageProps) {
+  const session = state.session;
+  const own = session?.parties.find(party => party.accountId === state.account.accountId);
+  const peer = session?.parties.find(party => party.accountId !== state.account.accountId);
+  const [ui, setUi] = useState<HomeSourceUi>();
+  const [catalog, setCatalog] = useState<CombatCatalog>();
+  const [resourceError, setResourceError] = useState('');
+  const [localError, setLocalError] = useState('');
+  const [tab, setTab] = useState<Tab>('item');
+  const [subtab, setSubtab] = useState(1);
+  const [draft, setDraft] = useState<TradeOffer>({money: 0, originality: 0, skillPoints: 0, records: []});
+  const [amounts, setAmounts] = useState({money: '0', originality: '0', skillPoints: '0'});
+  const [detail, setDetail] = useState<TradeRecordView>();
+  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const dialog = useRef<HTMLDialogElement>(null);
+  const open = session?.phase === 'OPEN' && !!own;
+  const dirty = !!own && (JSON.stringify(draft.records) !== JSON.stringify(own.offer.records)
+    || (['money', 'originality', 'skillPoints'] as const).some(name => Number(amounts[name]) !== own.offer[name]));
+
+  const confirmedOffer = JSON.stringify(own?.offer);
+  useEffect(() => {
+    if (!confirmedOffer) return;
+    const offer = JSON.parse(confirmedOffer) as TradeOffer;
+    setDraft({...offer, records: offer.records.map(record => ({...record}))});
+    setAmounts({money: String(offer.money), originality: String(offer.originality), skillPoints: String(offer.skillPoints)});
+    setLocalError(''); setDetail(undefined);
+  }, [session?.id, confirmedOffer]);
+
+  const confirmedRecords = JSON.stringify(session?.parties.flatMap(party => party.records));
+  useEffect(() => {
+    setDetail(current => {
+      if (!current || !confirmedRecords) return current;
+      const records = JSON.parse(confirmedRecords) as TradeRecordView[];
+      const confirmed = records.find(record => keyOf(record) === keyOf(current)
+        && JSON.stringify(record) === JSON.stringify(current));
+      return confirmed ? current : undefined;
+    });
+  }, [confirmedRecords]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.all([fetch('/ui.json', {signal: controller.signal}), loadSourceUiFonts()]).then(async ([response]) => {
+      if (!response.ok) throw new Error('交易界面资源载入失败');
+      const value = await response.json() as HomeSourceUi;
+      if (!controller.signal.aborted) setUi(value);
+    }).catch(error => {if (!controller.signal.aborted) setResourceError(String(error));});
+    void fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
+      if (!response.ok) throw new Error('交易物品资料载入失败');
+      const value = await response.json() as CombatCatalog;
+      if (!controller.signal.aborted) setCatalog(value);
+    }).catch(error => {if (!controller.signal.aborted) setResourceError(String(error));});
+    return () => controller.abort();
+  }, []);
+
+  useLayoutEffect(() => {
+    const element = dialog.current!, previous = document.activeElement;
+    element.showModal();
+    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
+    window.addEventListener('resize', resize);
+    return () => {
+      window.removeEventListener('resize', resize);
+      if (element.open) element.close();
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (ui && dialog.current?.open) dialog.current.querySelector<HTMLButtonElement>('[data-trade-close]')?.focus();
+  }, [ui]);
+
+  function action(operation: 'SHOW' | 'UNSHOW' | 'CONFIRM' | 'CANCEL') {
+    if (!session || pending) return;
+    act({operation, sessionId: session.id, expectedRevision: session.revision});
+  }
+  function showOffer() {
+    if (!session || !open || pending) return;
+    if (own?.shown && !dirty) {action('UNSHOW'); return;}
+    const values = {money: Number(amounts.money), originality: Number(amounts.originality), skillPoints: Number(amounts.skillPoints)};
+    if (Object.values(values).some(value => !Number.isInteger(value) || value < 0)) {
+      setLocalError('提供金额须为非负整数'); return;
+    }
+    setLocalError('');
+    act({operation: 'SHOW', sessionId: session.id, expectedRevision: session.revision, offer: {...values, records: draft.records}});
+  }
+  function toggle(record: TradeRecordView) {
+    const found = draft.records.some(value => keyOf(value) === keyOf(record));
+    if (!found && draft.records.length >= 12) {setLocalError('交易提供物最多12项'); return;}
+    const quantity = record.item && classifyInventoryCategory(record.item.itemTableId) <= 2 ? record.item.ownedQuantity : 1;
+    setDraft(value => ({...value, records: found ? value.records.filter(ref => keyOf(ref) !== keyOf(record))
+      : [...value.records, {kind: record.kind, instanceId: record.instanceId, quantity}]}));
+    setLocalError('');
+  }
+  const candidates: TradeRecordView[] = tab === 'pet' ? state.account.owned.base.map(role =>
+    ({kind: 'pet', instanceId: new Map(role.fields).get(0)!, role}))
+    : tab === 'tank' ? state.account.owned.equipment.map(role =>
+      ({kind: 'tank', instanceId: new Map(role.fields).get(0x1c)!, role}))
+    : state.account.inventory.records.filter(item => {
+      const category = classifyInventoryCategory(item.itemTableId);
+      return tab === 'item' ? category === subtab : subtab === 5 ? category === 5 || category === 7 : category === subtab;
+    }).map(item => ({kind: 'item', instanceId: item.instanceId, item}));
+
+  const layout = ui ? new HomeSourceLayout(ui, suffix) : undefined;
+  const controls = ui?.layouts.find(value => value.path.endsWith(suffix))?.windows ?? [];
+  const visible = (name: string): boolean => {
+    for (let control = layout?.control(name); control; control = control.parent ? layout?.control(control.parent) : undefined) {
+      if (control.name === 'picItemPanel' && tab !== 'item' || control.name === 'picEquipPanel' && tab !== 'equipment'
+        || control.name === 'picTankPetPanel' && tab !== 'pet' && tab !== 'tank') return false;
+    }
+    return true;
+  };
+  const texts: Record<string, string> = {
+    txtMyName: own?.name ?? '', txtOtherName: peer?.name ?? '', txtMyTradeState: partyStatus(own), txtOtherTradeState: partyStatus(peer),
+    txtMoney: state.account.wallet ? String(state.account.wallet.money) : '',
+    txtOriginality: state.account.wallet ? String(state.account.wallet.originality) : '',
+    txtTech: state.account.wallet ? String(state.account.wallet.skillPoints) : '',
+    txtOtherMoney: peer ? String(peer.offer.money) : '', txtOtherOriginality: peer ? String(peer.offer.originality) : '',
+    txtOtherTech: peer ? String(peer.offer.skillPoints) : '', txtListQuantity: String(candidates.length),
+  };
+  const checkmark = (name: string, checked: boolean) => {
+    if (!ui || !layout || !checked) return null;
+    const props = sourceProps(ui, layout, suffix, name, layout.control(name).properties.CheckMarkImage);
+    return <i data-trade-checkmark={name} data-source-asset={props['data-source-asset']} style={{backgroundImage: props.style.backgroundImage}}/>;
+  };
+
+  return createPortal(<dialog ref={dialog} className="trade-source-dialog" data-trade-page=""
+    data-trade-session={session?.id} data-trade-revision={session?.revision} data-trade-phase={session?.phase}
+    aria-label="玩家交易" aria-busy={pending} style={{width: 615 * scale, height: 485 * scale}}
+    onCancel={event => {event.preventDefault(); if (!pending) close();}}>
+    <div className="trade-source-stage" style={{transform: `scale(${scale})`}}>
+      {ui && layout && <SourceImageScale value={scale}>
+        {controls.filter(control => control.type === 'WindowsLook/StaticImage' && visible(control.name)
+          && !/^pic(My|Other)Item\d+$/.test(control.name)).map(control =>
+          <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} aria-hidden="true"/>)}
+        {controls.filter(control => control.type === 'WindowsLook/StaticText' && visible(control.name)
+          && !/^txt(My|Other)ItemCount\d+$/.test(control.name) && !['txtMyMoney', 'txtMyOriginality', 'txtMyTech'].includes(control.name)).map(control =>
+          <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} text={texts[control.name] ?? ''}/>)}
+        {([['item', 'rdoItemPage', '道具'], ['equipment', 'rdoEquipPage', '装备'], ['pet', 'rdoPetPage', '宠物'], ['tank', 'rdoTankPage', '战车']] as const).map(([value, source, label]) =>
+          <SourceButton key={value} ui={ui} layout={layout} suffix={suffix} source={source} aria-label={label}
+            selected={tab === value} disabled={pending} data-trade-tab={value}
+            onClick={() => {setTab(value); setSubtab(value === 'equipment' ? 5 : 1);}}/>)}
+        {(tab === 'item' ? [[1, 'rdoItem', '道具'], [2, 'rdoWeapon', '武器'], [6, 'rdoValuable', '贵重品']] as const
+          : tab === 'equipment' ? [[5, 'rdoCommon', '零件'], [3, 'rdoHat', '帽子'], [4, 'rdoMark', '标志']] as const : []).map(([value, source, label]) =>
+          <SourceButton key={source} ui={ui} layout={layout} suffix={suffix} source={source} selected={subtab === value}
+            disabled={pending} aria-label={label} onClick={() => setSubtab(value)}/>)}
+        <div {...sourceProps(ui, layout, suffix, tab === 'item' ? 'lstMyItem' : tab === 'equipment' ? 'lstMyEquip' : 'lstMyTankMyPet')}
+          className="trade-source-candidates" data-trade-candidates={tab}>
+          {candidates.map(record => {
+            const display = tradeRecordPresentation(record, catalog), selected = draft.records.find(value => keyOf(value) === keyOf(record));
+            const icon = sourceProps(ui, layout, suffix, 'picMyItem0', display.reference);
+            return <div key={keyOf(record)} className="trade-source-candidate" data-trade-candidate={keyOf(record)}>
+              <button type="button" aria-pressed={!!selected} disabled={!open || pending || !display.name}
+                onClick={() => toggle(record)} data-trade-record-toggle={keyOf(record)}>
+                <span className="trade-source-record-icon" data-source-asset={icon['data-source-asset']} style={{backgroundImage: icon.style.backgroundImage}}/>
+                <span>{display.name}</span>{record.item && <span>{record.item.ownedQuantity}</span>}
+              </button>
+              {hasTradeRecordDetail(record) && <button type="button" disabled={pending} aria-label={`${display.name}详情`}
+                data-trade-record-detail={keyOf(record)} onClick={() => setDetail(record)}>详情</button>}
+              {selected && record.item && classifyInventoryCategory(record.item.itemTableId) <= 2 && <input type="number" min={1}
+                max={record.item.ownedQuantity} step={1} aria-label={`${display.name}提供数量`} value={selected.quantity ?? record.item.ownedQuantity}
+                disabled={pending || !open} onChange={event => {
+                  const quantity = event.currentTarget.valueAsNumber;
+                  if (Number.isInteger(quantity) && quantity > 0 && quantity <= record.item!.ownedQuantity)
+                    setDraft(value => ({...value, records: value.records.map(ref => keyOf(ref) === keyOf(record) ? {...ref, quantity} : ref)}));
+                }}/>}</div>;
+          })}
+        </div>
+        {([['My', own], ['Other', peer]] as const).map(([side, party]) => Array.from({length: 12}, (_, index) => {
+          const record = party?.records[index];
+          if (!record) return null;
+          const display = tradeRecordPresentation(record, catalog);
+          return <span key={`${side}${index}`} data-trade-offer-record={`${side}:${index}`}>
+            <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name={`pic${side}Item${index}`} reference={display.reference}
+              aria-label={display.name} role="img"/>
+            <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txt${side}ItemCount${index}`}
+              text={record.item && classifyInventoryCategory(record.item.itemTableId) <= 2 ? String(record.quantity ?? '') : ''}/>
+            {hasTradeRecordDetail(record) && <button type="button" {...sourceProps(ui, layout, suffix, `pic${side}Item${index}`)}
+              className="trade-source-grid-detail" aria-label={`${display.name}详情`} disabled={pending} onClick={() => setDetail(record)}/>}
+          </span>;
+        }))}
+        {([['money', 'btnMyMoney', 'txtMyMoney', '提供金钱'], ['originality', 'btnMyOriginality', 'txtMyOriginality', '提供创意点'], ['skillPoints', 'btnMyTech', 'txtMyTech', '提供技能点']] as const).map(([field, button, text, label]) =>
+          <span key={field}>
+            <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name={button} reference={layout.control(button).properties.NormalImage} aria-hidden="true"/>
+            <input {...sourceProps(ui, layout, suffix, text)} className="trade-source-amount" type="number" min={0} step={1}
+              value={amounts[field]} aria-label={label} data-trade-amount={field} disabled={!open || pending}
+              onChange={event => {const amount = event.currentTarget.value; setAmounts(value => ({...value, [field]: amount}));}}/>
+          </span>)}
+        <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnShow" aria-label={own?.shown && !dirty ? '撤回展示' : '展示'}
+          data-trade-show="" disabled={!open || pending} onClick={showOffer}>
+          {checkmark('btnShow', !!own?.shown)}
+        </SourceButton>
+        <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnExchange" aria-label="确认交易" data-trade-confirm=""
+          disabled={!open || pending || dirty || !own?.shown || !peer?.shown || own.confirmed} onClick={() => action('CONFIRM')}>
+          {checkmark('btnExchange', !!own?.confirmed)}
+        </SourceButton>
+        <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnCancel" aria-label="取消交易" data-trade-cancel=""
+          disabled={!session || pending || session.phase === 'COMPLETED' || session.phase === 'CANCELLED'} onClick={() => action('CANCEL')}/>
+        <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnClose" aria-label="关闭交易" data-trade-close="" disabled={pending} onClick={close}/>
+      </SourceImageScale>}
+      <div className="trade-source-web-tools">
+        {!ui && <button type="button" disabled={pending} onClick={close}>关闭交易</button>}
+        <output aria-live="polite" data-trade-status="">{localError || resourceError || status || session?.reason
+          || (session?.phase === 'COMPLETED' ? '交易已完成' : session?.phase === 'CANCELLED' ? '交易已取消' : dirty ? '提供物尚未提交' : '')}</output>
+      </div>
+    </div>
+    {ui && detail && <TradeSourceDetail ui={ui} catalog={catalog} record={detail} close={() => setDetail(undefined)}/>}
+  </dialog>, document.body);
+}

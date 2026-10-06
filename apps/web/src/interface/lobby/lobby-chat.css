@@ -1,0 +1,42 @@
+.lobby-chat [data-lobby-chat-log] {
+  position: absolute;
+  left: 20px;
+  top: 437px;
+  width: 574px;
+  height: 114px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: auto;
+  font: 12px 'SimSun', serif;
+  color: #fff;
+}
+.lobby-chat li {overflow-wrap: anywhere; line-height: 16px;}
+.lobby-chat [data-lobby-chat-input] {
+  position: absolute;
+  left: 66px;
+  top: 571px;
+  width: 504px;
+  height: 17px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: 12px 'SimSun', serif;
+}
+.lobby-chat [data-lobby-chat-status] {
+  position: absolute;
+  left: 66px;
+  top: 592px;
+  margin: 0;
+  font-size: 11px;
+  color: #ffd4a0;
+}
+.lobby-chat button, .lobby-chat [data-lobby-whisper-target] {position: absolute; box-sizing: border-box;}
+.lobby-chat button {border: 0; margin: 0; padding: 0; background-color: transparent; background-size: 100% 100%; cursor: pointer;}
+.lobby-chat button:disabled {cursor: default;}
+.lobby-chat [data-lobby-whisper-target] {border: 0; margin: 0; padding: 0; background: transparent; color: #fff; font: 12px 'SimSun', serif;}
+.lobby-channel-menu {position: absolute; left: 0; top: 454px; width: 48px; height: 110px; z-index: 20;}
+.lobby-channel-menu > span {position: absolute; display: block; pointer-events: none;}

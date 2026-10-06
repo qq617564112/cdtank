@@ -1,0 +1,17 @@
+.lobby-chat input.lobby-chat-source-caret-input {
+  caret-color: transparent;
+}
+
+.lobby-chat .lobby-chat-source-caret {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lobby-chat-source-caret i {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-size: 100% 100%;
+}

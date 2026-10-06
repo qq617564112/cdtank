@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {mkdtempSync, rmSync, writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {AccountStore} from '../apps/server/src/account-store';
+import type {CombatCatalog} from '../apps/shared/combat/catalog';
+
+const directory = mkdtempSync(join(tmpdir(), 'owned-sale-'));
+const database = join(directory, 'accounts.sqlite'), accounts = new AccountStore(database), db = new DatabaseSync(database);
+const catalog = {petTypes: [{petId: 2, petType: 1, petMoney: 3500}], tankTypes: [{tankId: 3, tankType: 1, tankMoney: 2500}]} as CombatCatalog;
+try {
+  const a = accounts.open(), missing = accounts.open();
+  assert.deepEqual(accounts.ownedRoleSale(missing.accountId, {operation: 'QUERY'}, catalog), {owned: {base: [], equipment: []}, quotes: []});
+  const bytes = new Uint8Array(0x170), view = new DataView(bytes.buffer);
+  view.setUint32(0x70, 100, true); view.setUint32(0x74, 7, true); view.setUint32(0xa4, 1, true); view.setUint32(0xa8, 2, true); view.setUint32(0x11c, 777, true);
+  accounts.replaceRoleProfile(a.accountId, {bytes, strings: ['sale fixture', '']});
+  accounts.replaceRoleRecords(a.accountId, {base: [{name: 'pet', fields: new Map([[0, 1], [8, 2], [0x6c, 1]])}],
+    equipment: [{name: 'tank', fields: new Map([[0x1c, 2], [0x24, 3], [0x34, 1440]])}]});
+  const query = () => accounts.ownedRoleSale(a.accountId, {operation: 'QUERY'}, catalog);
+  const sellPet = {operation: 'SELL' as const, kind: 'pet' as const, instanceId: 1, requestId: 'pet-sale-0001'};
+  const sellTank = {operation: 'SELL' as const, kind: 'tank' as const, instanceId: 2, requestId: 'tank-sale-0001'};
+  const initial = query();
+  assert(initial.quotes.every(quote => quote.selected && !quote.canSell));
+  assert.throws(() => accounts.ownedRoleSale(a.accountId, sellPet, catalog), /出击中/);
+  assert.throws(() => accounts.ownedRoleSale(a.accountId, sellTank, catalog), /出击中/);
+  assert.deepEqual(query(), initial);
+  view.setUint32(0xa4, 0, true); view.setUint32(0xa8, 0, true);
+  accounts.replaceRoleProfile(a.accountId, {bytes, strings: ['sale fixture', '']});
+  const before = query();
+  db.exec("CREATE TRIGGER abort_sale BEFORE INSERT ON owned_role_sales BEGIN SELECT RAISE(ABORT, 'sale receipt fixture'); END;");
+  assert.throws(() => accounts.ownedRoleSale(a.accountId, sellPet, catalog), /sale receipt fixture/);
+  assert.deepEqual(query(), before);
+  db.exec('DROP TRIGGER abort_sale');
+  assert.throws(() => accounts.ownedRoleSale(a.accountId, sellPet, {...catalog, petTypes: []}), /价格未载入/);
+  assert.deepEqual(query(), before);
+  const pet = accounts.ownedRoleSale(a.accountId, sellPet, catalog);
+  assert.equal(pet.money, 1850); assert.equal(pet.owned.base.length, 0); assert.equal(pet.sold!.result, 2);
+  const tank = accounts.ownedRoleSale(a.accountId, sellTank, catalog);
+  assert.equal(tank.money, 3100); assert.equal(tank.owned.equipment.length, 0);
+  const replay = accounts.ownedRoleSale(a.accountId, sellPet, catalog);
+  assert.equal(replay.replayed, true); assert.equal(replay.money, 3100); assert.deepEqual(replay.owned, tank.owned);
+  assert.throws(() => accounts.ownedRoleSale(a.accountId, {...sellPet, kind: 'tank'}, catalog), /不同实例/);
+  assert.throws(() => accounts.ownedRoleSale(a.accountId, {...sellPet, requestId: 'pet-sale-0002'}, catalog), /不属于/);
+  assert.throws(() => accounts.ownedRoleSale(missing.accountId, sellPet, catalog), /资料尚未/);
+  const actualProfile = Uint8Array.from(query().profile!.bytes), actualView = new DataView(actualProfile.buffer);
+  assert.equal(actualView.getUint32(0x74, true), 7); assert.equal(actualView.getUint32(0x11c, true), 777);
+  assert.equal(db.prepare('SELECT count(*) AS n FROM owned_role_sales').get()!.n, 2);
+  accounts.replaceRoleRecords(a.accountId, {base: [{name: 'pet', fields: new Map([[0, 3], [8, 2]])}], equipment: []});
+  actualView.setUint32(0x70, 999998249, true);
+  accounts.replaceRoleProfile(a.accountId, {bytes: actualProfile, strings: ['sale fixture', '']});
+  const atLimit = accounts.ownedRoleSale(a.accountId, {...sellPet, instanceId: 3, requestId: 'sale-max-0001'}, catalog);
+  assert.equal(atLimit.money, 1000000000 - 1);
+  accounts.replaceRoleRecords(a.accountId, {base: [{name: 'pet', fields: new Map([[0, 4], [8, 2]])}], equipment: []});
+  const maxState = query();
+  assert.equal(maxState.quotes[0].canSell, false);
+  assert.throws(() => accounts.ownedRoleSale(a.accountId, {...sellPet, instanceId: 4, requestId: 'sale-max-0002'}, catalog), /上限/);
+  assert.deepEqual(query(), maxState);
+  writeFileSync('recovery/output/owned-role-sale-transaction.json', JSON.stringify({status: 'PASS_OWNED_ROLE_SALE_SELECTED_PRICE_ATOMIC_ROLLBACK_REPLAY_MAXIMUM_PROFILE_SCOPE',
+    fixtureOnly: true, prices: {pet: 1750, tank: 1250}, confirmedMoney: 3100, maximumMoney: 999999999}, null, 2) + '\n');
+} finally {db.close(); accounts.close(); rmSync(directory, {recursive: true, force: true});}

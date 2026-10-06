@@ -1,0 +1,12 @@
+.source-state-button i {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.source-state-button:disabled {
+  opacity: 1;
+}

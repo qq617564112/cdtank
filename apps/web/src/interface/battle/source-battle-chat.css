@@ -1,0 +1,108 @@
+.battle-chat.source-battle-chat {
+  right: auto;
+  bottom: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: 'CDTank-SIMSUN', serif;
+  font-size: 12px;
+}
+.source-battle-chat .source-chat-stage {
+  position: relative;
+  width: 301px;
+  height: 164px;
+  transform-origin: top left;
+}
+.source-battle-chat .source-chat-stage div,
+.source-battle-chat .source-chat-stage span,
+.source-battle-chat [data-source-control] {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background-size: 100% 100%;
+}
+.source-battle-chat form {
+  display: contents;
+}
+.source-battle-chat input {
+  background: transparent;
+  color: white;
+  font: inherit;
+}
+.source-battle-chat ol {
+  max-height: none;
+  line-height: 16px;
+  color: white;
+}
+.source-battle-chat [data-chat-channel],
+.source-battle-chat button[type='submit'] {
+  display: none;
+}
+.source-battle-chat .source-chat-channel-menu {
+  left: 2px;
+  top: 10px;
+  width: 48px;
+  height: 123px;
+  z-index: 2;
+}
+.source-battle-chat button {
+  background-color: transparent;
+}
+.source-battle-chat [role='status'] {
+  position: absolute;
+  bottom: 39px;
+  left: 7px;
+  max-width: 286px;
+  margin: 0;
+  pointer-events: none;
+  color: #fff8da;
+  background: #263b49;
+}
+.source-battle-chat [role='status']:empty {
+  display: none;
+}
+.battle-chat:not(.source-battle-chat) .source-chat-stage {
+  display: contents;
+}
+.battle-chat:not(.source-battle-chat) .source-chat-stage > div {
+  display: none;
+}
+.battle-chat:not(.source-battle-chat):not(.source-waiting-chat) [data-source-control] {
+  position: static;
+  width: auto !important;
+  height: auto !important;
+}
+.battle-chat:not(.source-battle-chat):not(.source-waiting-chat) [data-chat-input] {
+  flex: 1;
+}
+
+/* Keep rebuilt utility controls outside the original lower-left chat region. */
+.source-chat-active.in-battle .controls {
+  bottom: auto;
+  top: 1rem;
+}
+.source-battle-chat .source-chat-emotes {
+  left: 89px;
+  top: -7px;
+  width: 194px;
+  height: 134px;
+  z-index: 3;
+  isolation: isolate;
+}
+.source-battle-chat [data-chat-emote] {
+  vertical-align: middle;
+}
+.battle-chat:not(.source-battle-chat) [data-chat-emote] {
+  vertical-align: middle;
+}
+
+.source-battle-chat .source-chat-channel-menu > span {
+  position: absolute;
+  pointer-events: none;
+}
+
+.source-battle-chat .source-chat-emotes > span {
+  pointer-events: none;
+}

@@ -1,0 +1,16 @@
+.tank-product-preview canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tank-product-preview output {
+  position: absolute;
+  inset: 0;
+  color: #253740;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.tank-product-preview canvas {touch-action: none; cursor: grab;}
+.tank-product-preview canvas:active {cursor: grabbing;}

@@ -1,0 +1,57 @@
+#original-battle-hud {
+  position: absolute;
+  transform-origin: top left;
+  pointer-events: none;
+  color: #30230f;
+  font-family: 'CDTank-SIMSUN', serif;
+  font-size: 12px;
+}
+
+.source-control {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.source-progress-fill {
+  position: absolute;
+  inset: 0;
+}
+
+[data-source-control="edtBattleInfo"] {
+  pointer-events: auto;
+  white-space: pre-line;
+  overflow: hidden;
+  line-height: 16px;
+}
+
+[data-source-control="txtRemainTime"] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+[data-source-layout="ui/layouts/game_main_info_team.xml"][data-source-control="txtSelfInfo"],
+[data-source-layout="ui/layouts/game_main_info_team.xml"][data-source-control="txtEnemyInfo"],
+[data-source-layout="ui/layouts/game_main_info_team.xml"][data-source-control^="lblTimes"] {
+  display: flex;
+  align-items: center;
+}
+
+[data-source-control^="txtPlayerName"] {
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 1px 1px #000;
+}
+
+.source-progress-control {
+  overflow: hidden;
+}
+
+.source-life-background,
+.source-life-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+}

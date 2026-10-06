@@ -1,0 +1,106 @@
+[data-room-map-selector] {
+  padding: 0;
+  margin: auto;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+  color: #fff;
+  background: transparent;
+  border: 0;
+}
+
+[data-room-map-selector]::backdrop {
+  background: transparent;
+}
+
+.map-selector-viewport {
+  position: relative;
+}
+
+.map-selector-stage {
+  position: absolute;
+  width: 800px;
+  height: 600px;
+  transform-origin: top left;
+}
+
+.map-selector-stage > button,
+.map-selector-stage > span,
+.map-selector-stage > output,
+.map-selector-card > span {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  text-align: center;
+}
+
+.map-selector-picture {
+  pointer-events: none;
+}
+
+.map-selector-stage > button {
+  z-index: 1;
+  background: transparent;
+  cursor: pointer;
+}
+
+.map-selector-card {
+  background: transparent;
+  cursor: pointer;
+}
+
+.map-selector-card > span {
+  pointer-events: none;
+  color: #172a38;
+  font-size: 11px;
+  overflow: hidden;
+}
+
+.map-selector-stage > output {
+  color: #fff;
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.map-selector-stage button:focus-visible,
+.map-selector-card[aria-pressed="true"] {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.map-selector-card:disabled {
+  cursor: default;
+}
+
+/* Current draft confirmation has no confirmed original control producer. */
+.map-selector-toolbar {
+  position: absolute;
+  left: 62px;
+  top: 520px;
+  width: 674px;
+  min-height: 45px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 5px;
+  background: #172a38;
+  color: #fff;
+  font-size: 13px;
+}
+
+.map-selector-toolbar button {
+  color: #fff;
+  background: #304a60;
+  border: 1px solid #afc8dd;
+  padding: 5px 10px;
+  font: inherit;
+}
+
+.map-selector-toolbar output {
+  overflow-wrap: anywhere;
+}

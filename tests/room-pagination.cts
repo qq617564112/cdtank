@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {ROOM_PAGE_SIZE, roomDirectoryPage, orderRooms} from '../apps/web/src/interface/lobby/room-directory';
+import type {RoomSummary} from '../apps/shared/protocols/PtlListRooms';
+const source: RoomSummary[] = Array.from({length: 23}, (_, index) => ({id: `R${index + 1}`,
+  name: 'Room', mode: 1, mapId: 7, playerCount: 1, maxPlayers: 4, phase: 'WAITING'}));
+const ordered = orderRooms([...source].reverse(), 'ID');
+const before = structuredClone(ordered);
+assert.equal(ROOM_PAGE_SIZE, 10);
+assert.deepEqual(roomDirectoryPage(ordered, 0, '').rooms.map(room => room.id), source.slice(0, 10).map(room => room.id));
+const second = roomDirectoryPage(ordered, 1, 'R5');
+assert.equal(second.pages, 3); assert.equal(second.selectedId, 'R11');
+assert.equal(roomDirectoryPage(ordered, 2, 'R22').selectedId, 'R22');
+assert.equal(roomDirectoryPage(ordered, 20, '').page, 2);
+assert.equal(roomDirectoryPage(ordered, -1, '').page, 0);
+assert.equal(roomDirectoryPage(ordered, 0, 'R22', true).page, 2);
+const resorted = orderRooms(ordered.map(room => room.id === 'R22' ? {...room, maxPlayers: 10} : room), 'EMPTY');
+assert.equal(roomDirectoryPage(resorted, 2, 'R22', true).page, 0, 'Refresh follows still-valid selection after global sort');
+assert.equal(roomDirectoryPage(ordered.slice(0, 11), 2, 'R22', true).page, 1);
+assert.equal(roomDirectoryPage(ordered.slice(0, 11), 2, 'R22', true).selectedId, 'R11');
+const unavailable = ordered.map(room => ({...room, playerCount: room.maxPlayers}));
+const full = roomDirectoryPage(unavailable, 1, 'R11');
+assert.equal(full.page, 1); assert.equal(full.selectedId, ''); assert.equal(full.rooms.length, 10);
+const empty = roomDirectoryPage([], 9, 'R22', true);
+assert.deepEqual(empty, {rooms: [], page: 0, pages: 0, selectedId: ''});
+assert.deepEqual(ordered, before, 'Pagination does not mutate authority directory');
+console.log('PASS: source10 pagination, globally ordered pages, bounds, selection-following refresh, shrink and empty/unjoinable pages');

@@ -1,0 +1,16 @@
+.home-award-summary-source {
+  left: 219px;
+  top: 36px;
+  width: 375px;
+  height: 332px;
+  pointer-events: none;
+}
+
+.home-award-summary-source > .source-static-image,
+.home-award-summary-source > .source-static-text {
+  position: absolute;
+}
+
+#home-inventory [data-home-summary-battle-slot] > .home-battle-summary-source {
+  position: absolute;
+}

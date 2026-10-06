@@ -1,0 +1,142 @@
+--- a/apps/web/src/render/battle-players.ts
++++ b/apps/web/src/render/battle-players.ts
+@@ -1,5 +1,7 @@
+ import {ArcRotateCamera, Matrix, Scene, Vector3, Viewport} from '@babylonjs/core';
+ import {TankDamageText} from '../assets/tanks/tank-damage-text';
++import {TankBenefitText} from '../assets/tanks/tank-benefit-text';
++import {TankBenefitTextRenderer} from './tank-benefit-text-renderer';
+ import {TankDamageTextRenderer, type TankDamageTextFont} from './tank-damage-text-renderer';
+ import {effectModelEngineDelta} from './effects/models/effect-model-animation';
+ import type {PlayerSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
+@@ -19,6 +21,9 @@
+ export class BattlePlayers {
+   private readonly players = new Map<string, TankView>();
+   private readonly damageTexts = new Map<string, TankDamageText>();
++  private readonly benefitTexts = new Map<string, TankBenefitText>();
++  private readonly previousHp = new Map<string, number>();
++  private benefitTextRenderer?: TankBenefitTextRenderer;
+   private damageTextRenderer?: TankDamageTextRenderer;
+   private damageTextLoading?: Promise<void>;
+   private readonly loading = new Set<string>();
+@@ -55,14 +60,19 @@
+     this.presentedLife.clear();
+     this.moving.clear();
+     this.damageTexts.forEach(queue => queue.clear());
++    this.benefitTexts.forEach(queue => queue.clear());
++    this.previousHp.clear();
+     for (const player of players) {
+       this.players.get(player.id)?.position(player.x, player.y, player.z);
+     }
+   }
+ 
+-  reconcile(players: readonly PlayerSnapshot[]): void {
++  reconcile(players: readonly PlayerSnapshot[], localPlayerId?: string): void {
+     this.snapshot = players;
+     const present = new Set(players.map(player => player.id));
++    for (const id of this.previousHp.keys()) {
++      if (!present.has(id)) this.previousHp.delete(id);
++    }
+     for (const [id, view] of this.players) {
+       if (!present.has(id)) {
+         this.effects.remove(id);
+@@ -70,6 +80,8 @@
+         view.dispose();
+         this.damageTexts.get(id)?.dispose();
+         this.damageTexts.delete(id);
++        this.benefitTexts.get(id)?.dispose();
++        this.benefitTexts.delete(id);
+         this.players.delete(id);
+         this.previousPositions.delete(id);
+         this.presentedLife.delete(id);
+@@ -84,8 +96,16 @@
+         loaded.dispose();
+         this.damageTexts.get(player.id)?.dispose();
+         this.damageTexts.delete(player.id);
++        this.benefitTexts.get(player.id)?.dispose();
++        this.benefitTexts.delete(player.id);
++        this.previousHp.delete(player.id);
+         this.players.delete(player.id);
+         this.presentedLife.delete(player.id);
++      }
++      const previousHp = this.previousHp.get(player.id);
++      this.previousHp.set(player.id, player.hp);
++      if (previousHp !== undefined && previousHp !== 0 && player.hp > previousHp) {
++        this.benefit(player.id, player.hp - previousHp, player.id === localPlayerId);
+       }
+       const view = this.players.get(player.id);
+       if (view) this.applyAmmoEffect(view, player);
+@@ -113,7 +133,13 @@
+       const renderer = new TankDamageTextRenderer(this.scene, font);
+       this.damageTextRenderer = renderer;
+       await renderer.load();
+-      if (generation !== this.generation) renderer.dispose();
++      if (generation !== this.generation) {renderer.dispose(); return;}
++      const benefitFont = fonts.fonts.find(value => value.name === 'Benefit' && value.attributes.Type === 'Static');
++      if (!benefitFont?.glyphs?.length) throw new Error('原Benefit字体定义缺失');
++      const benefitRenderer = new TankBenefitTextRenderer(this.scene, benefitFont);
++      this.benefitTextRenderer = benefitRenderer;
++      await benefitRenderer.load();
++      if (generation !== this.generation) benefitRenderer.dispose();
+     })();
+     await this.damageTextLoading;
+   }
+@@ -127,6 +153,17 @@
+     const point = Vector3.Project(view.root.position, Matrix.Identity(),
+       this.camera.getTransformationMatrix(), new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
+     queue.show(Math.trunc(point.x), Math.trunc(point.y), value, isLocal);
++  }
++
++  /** Original HP observer emits only an increase after a nonzero cached value. */
++  benefit(id: string, increase: number, isLocal: boolean): void {
++    const view = this.players.get(id);
++    const queue = this.benefitTexts.get(id);
++    if (!view || !queue) return;
++    const engine = this.scene.getEngine();
++    const point = Vector3.Project(view.root.position, Matrix.Identity(),
++      this.camera.getTransformationMatrix(), new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
++    queue.show(Math.trunc(point.x), Math.trunc(point.y), increase, isLocal);
+   }
+ 
+   private sameSelection(view: Pick<PlayerSnapshot, 'tankId' | 'tankTextures'>,
+@@ -157,6 +194,9 @@
+       this.players.set(player.id, view);
+       if (this.damageTextRenderer) {
+         this.damageTexts.set(player.id, new TankDamageText(this.damageTextRenderer));
++      }
++      if (this.benefitTextRenderer) {
++        this.benefitTexts.set(player.id, new TankBenefitText(this.benefitTextRenderer));
+       }
+       this.effects.attach(view);
+     } catch (error) {
+@@ -232,7 +272,7 @@
+     const engine = this.scene.getEngine();
+     const delta = Math.fround(effectModelEngineDelta(engine.getDeltaTime() / 1000));
+     const viewport = {width: engine.getRenderWidth(), height: engine.getRenderHeight()};
+-    for (const [id, queue] of this.damageTexts) {
++    for (const [id, queue] of [...this.damageTexts, ...this.benefitTexts]) {
+       const view = this.players.get(id);
+       if (!view) continue;
+       const viewZ = Vector3.TransformCoordinates(view.root.position, this.camera.getViewMatrix()).z;
+@@ -248,6 +288,11 @@
+     this.players.clear();
+     this.damageTexts.forEach(queue => queue.dispose());
+     this.damageTexts.clear();
++    this.benefitTexts.forEach(queue => queue.dispose());
++    this.benefitTexts.clear();
++    this.previousHp.clear();
++    this.benefitTextRenderer?.dispose();
++    this.benefitTextRenderer = undefined;
+     this.damageTextRenderer?.dispose();
+     this.damageTextRenderer = undefined;
+     this.damageTextLoading = undefined;
+--- a/apps/web/src/match/battle.ts
++++ b/apps/web/src/match/battle.ts
+@@ -549,7 +549,7 @@
+         void this.music.playResult(resultFlag).catch(error => console.error('结算音乐载入失败', error));
+       }
+     }
+-    this.players.reconcile(snapshot.players);
++    this.players.reconcile(snapshot.players, this.playerId);
+     this.ammoBurnPresentation?.reconcile(snapshot.players,
+       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`, snapshot.phase === 'PLAYING');
+     this.matchPanel.setReadyAvailable(this.mapLoaded && this.players.resourcesReady && !this.players.loadingError);

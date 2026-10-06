@@ -1,0 +1,112 @@
+.battle-match {
+  position: absolute;
+  z-index: 3;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+  border: 2px solid #dfc26f;
+  background: #263b49ed;
+  color: #fff8da;
+}
+
+.battle-match h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.125rem;
+}
+
+.battle-match p {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.match-finished {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.battle-match[data-phase="PLAYING"] {
+  top: 25%;
+  right: 1rem;
+  left: auto;
+  transform: none;
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: calc(75vh - 2rem);
+}
+
+.battle-match table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.battle-match caption {
+  text-align: left;
+  margin-bottom: 0.5rem;
+}
+
+.battle-match th,
+.battle-match td {
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid #58717c;
+  text-align: left;
+}
+
+.match-self {
+  color: #ffdc6d;
+  background: #344e5b;
+}
+
+.battle-match:has(> [data-waiting-room][open]) {
+  overflow: visible;
+  border-color: transparent;
+  background: transparent;
+}
+
+.battle-match:has(> [data-waiting-room][open]) > :not([data-waiting-room]):not([data-source-notice]) {
+  visibility: hidden;
+}
+
+.battle-match:has(> [data-waiting-room-formal][open]) {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  transform: none;
+  pointer-events: none;
+}
+
+.battle-match:has(> [data-waiting-room-formal][open]) > [data-waiting-room],
+.battle-match:has(> [data-waiting-room-formal][open]) > [data-source-notice] {
+  pointer-events: auto;
+}
+
+.battle-match button {
+  color: #30230f;
+  background: #dfc26f;
+  border: 1px solid #fff8da;
+  cursor: pointer;
+}
+
+.battle-match button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .battle-match {
+    padding: 0.5rem;
+  }
+
+  .battle-match table {
+    font-size: 0.75rem;
+  }
+}

@@ -1,0 +1,14 @@
+.lobby-emote-menu {
+  position: absolute;
+  left: 410px;
+  top: 427px;
+  width: 194px;
+  height: 138px;
+  z-index: 20;
+}
+
+.lobby-emote-menu > span {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}

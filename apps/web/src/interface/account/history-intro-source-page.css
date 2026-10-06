@@ -1,0 +1,33 @@
+.history-intro-source-page {
+  position: relative;
+  width: 800px;
+  height: 600px;
+}
+.history-intro-source-page [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.history-intro-picture {
+  pointer-events: none;
+}
+.history-intro-body {
+  resize: none;
+  background: transparent;
+  color: #253740;
+  font-size: 12px;
+  line-height: 15px;
+  white-space: pre-wrap;
+  overflow: auto;
+}
+.history-intro-source-page .source-state-button {
+  background-color: transparent;
+}
+.history-intro-source-page :focus-visible {
+  outline: 1px solid white;
+}
+
+.history-intro-body {scrollbar-width: none;}
+.history-intro-body::-webkit-scrollbar {display: none;}

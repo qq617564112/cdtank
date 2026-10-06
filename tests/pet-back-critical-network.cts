@@ -1,0 +1,385 @@
+import assert from 'node:assert/strict';
+import {spawn, type ChildProcess} from 'node:child_process';
+import {mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {DatabaseSync, backup} from 'node:sqlite';
+import {WsClient} from 'tsrpc';
+import {serviceProto, type ServiceType} from '../apps/shared/protocols/serviceProto';
+import type {MsgRoomSnapshot, MsgRoomEvent} from '../apps/shared/protocols';
+import {TANKS, PET_BASES} from '../apps/server/src/config';
+import {combatCatalog, combatSkills, combatItemSkills, combatLimits} from '../apps/server/src/battle/catalog';
+import {recomputeRoleAttributes} from '../apps/server/src/battle/roles/recompute';
+import {ROLE_INITIAL_MOVEMENT_SCALES} from '../apps/server/src/battle/roles/record-defaults';
+import {recomputeQualifiedRoleArmor} from '../apps/server/src/battle/roles/recompute-armor';
+
+async function must<T>(promise: Promise<{isSucc: true; res: T} | {isSucc: false; err: unknown}>): Promise<T> {
+  const result = await promise;
+  assert(result.isSucc, JSON.stringify(result));
+  return result.res;
+}
+
+type ArmorFields = NonNullable<ReturnType<typeof recomputeQualifiedRoleArmor>>;
+
+function expectedArmorDamage(rawAttack: number, fields: ArmorFields, correction: number): number {
+  return rawAttack * 100 / (100 + Math.max(0, fields.defensePercent * 100 + fields.defenseBonus) * correction);
+}
+
+async function main(): Promise<void> {
+  const skill = combatSkills.get(10221)!, referenced = combatSkills.get(30004)!;
+  assert.equal(skill.triggerType, 0); assert.equal(skill.target, 1);
+  assert.deepEqual({type: skill.functions[0].type, t: skill.functions[0].t, x: skill.functions[0].x,
+    y: skill.functions[0].y, z: skill.functions[0].z}, {type: 9, t: 0, x: 0, y: 30004, z: 0});
+  assert.equal(referenced.attributes.HP, -400);
+  assert.equal(referenced.functions[0].type, 2);
+  const pet2 = combatCatalog.petTypes!.find(row => row.petId === 2)!;
+  assert(pet2.baseIds && pet2.rankCaps);
+  assert.equal(pet2.baseIds[1], 10221); assert.equal(pet2.rankCaps[1], 1); assert.equal(pet2.petMoney, 3500);
+  const price = combatCatalog.petSkillPrices!.find(row => row.skillId === 10221)!;
+  assert.deepEqual(price, {skillId: 10221, groupId: 10221, level: 1, cost: 200});
+  if (process.argv.includes('--prepare')) {
+    console.log('PREPARED_PET2_LEARN10221_BACK_CRITICAL_EXTRA400_ORDINARY_SCOPE');
+    return;
+  }
+  const port = Number(process.env.PET_BACK_CRITICAL_PORT);
+  assert.equal(port, 3652);
+  assert.equal(process.env.PET_BACK_CRITICAL_RELEASE, '1', 'Requires coordinated compiled release');
+  const tail = process.env.PET_BACK_CRITICAL_TAIL === '1';
+  const source = tail ? 'recovery/output/pet-back-critical-network-2026-10-06T00-08-37-083Z'
+    : 'recovery/output/supply-healing-network-2026-10-05T23-53-12-130Z';
+  if (tail) {
+    const parent = JSON.parse(readFileSync(source + '.json', 'utf8')) as {status: string; phases: unknown[]};
+    assert.equal(parent.status, 'FAIL'); assert.equal(parent.phases.length, 0);
+  }
+  const identitySource = source;
+  const accounts = JSON.parse(readFileSync(identitySource + '-identity.private.json', 'utf8')).accounts as
+    {accountId: string; token: string}[];
+  const directory = mkdtempSync(join(tmpdir(), 'cdtank-pet-back-critical-'));
+  const database = join(directory, 'accounts.sqlite');
+  const original = new DatabaseSync(source + '-checkpoint.sqlite', {readOnly: true});
+  try {await backup(original, database);} finally {original.close();}
+  if (!tail) {
+    const fixtureDatabase = new DatabaseSync(database);
+    try {
+      const row = fixtureDatabase.prepare('SELECT payload FROM role_profiles WHERE account_id=?').get(accounts[1].accountId)!;
+      const bytes = Uint8Array.from(row.payload as Uint8Array);
+      new DataView(bytes.buffer).setUint32(0x80, 200, true);
+      fixtureDatabase.prepare('UPDATE role_profiles SET payload=? WHERE account_id=?').run(bytes, accounts[1].accountId);
+    } finally {fixtureDatabase.close();}
+  }
+  const output = 'recovery/output/pet-back-critical-network-' + new Date().toISOString().replace(/[:.]/g, '-');
+  const evidence: Record<string, unknown> = {status: 'RUNNING', port, phases: [], leaves: [], sourceQualification: [],
+    fixture: {source: source + '-checkpoint.sqlite', fundsInjected: false, pointsInjected: !tail,
+      pointAccountOrdinal: 1, preServicePoint: 200, earnedPointsProved: false,
+      ownedRecordsInjected: false, newBUY: tail ? 2 : false, sourceIdentity: identitySource + '-identity.private.json'},
+    necessaryTail: tail ? {parentRaw: source + '.json', parentStatus: 'FAIL', parentPhases: 0,
+      cause: 'Existing selected Pet2 already rank1; normal purchase supplies new unlearned source',
+      existingPoint200Reused: true, oldOwnedRankChanged: false} : undefined,
+    simulationTickSeconds: .05,
+    policy: {extraHpLoss: 400, condition: 'current qualified Pet2 slot1rank1 and samehit critical BACK',
+      position: 'after ordinary critical/facet damage', randomRollAdded: false, newFX: false,
+      hitEvents: 'one samehit value includes ordinaryDamage+400; actual integer HP loss is clamped'},
+    scope: 'Normal UNEQUIP17061/rank0 BACK baseline, WAITING peerReady LEARN200/source reset, at most20 natural learned shots until normal+critical BACK, dual complete/native/sameDBrestart'};
+  const clients = [0, 1].map(() => new WsClient<ServiceType>(serviceProto, {
+    server: `ws://127.0.0.1:${port}`, logger: undefined, heartbeat: {interval: 5000, timeout: 10000}}));
+  const frames: {snapshot: MsgRoomSnapshot; wallTime: number}[][] = [[], []];
+  const events: {event: MsgRoomEvent; wallTime: number; receivedAfterTick?: number}[][] = [[], []];
+  clients.forEach((client, i) => {
+    client.listenMsg('RoomSnapshot', snapshot => {frames[i].push({snapshot, wallTime: Date.now()});});
+    client.listenMsg('RoomEvent', event => {
+      events[i].push({event, wallTime: Date.now(), receivedAfterTick: frames[i].at(-1)?.snapshot.tick});
+    });
+  });
+  let server: ChildProcess | undefined, log = '';
+  async function wait(predicate: () => boolean, timeout = 20000): Promise<void> {
+    const deadline = Date.now() + timeout;
+    while (!predicate() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 20));
+    assert(predicate(), 'Deadline: ' + log.slice(-1000));
+  }
+  async function start(): Promise<void> {
+    const offset = log.length;
+    server = spawn(process.execPath, ['scripts/start-server.mjs'], {
+      env: {...process.env, PORT: String(port), ACCOUNT_DB_PATH: database}, stdio: ['ignore', 'pipe', 'pipe']});
+    server.stdout!.on('data', data => {log += String(data);});
+    server.stderr!.on('data', data => {log += String(data);});
+    await wait(() => log.slice(offset).includes(`Server started at ${port}.`));
+  }
+  async function stop(): Promise<void> {
+    if (server?.exitCode === null && server.signalCode === null) {
+      const closed = new Promise(resolve => server!.once('close', resolve));
+      server.kill(); await closed;
+    }
+  }
+  async function authenticate(): Promise<void> {
+    for (const [i, client] of clients.entries()) {
+      assert((await client.connect()).isSucc);
+      await must(client.callApi('Account', {token: accounts[i].token}));
+    }
+  }
+  async function query(i: number) {
+    return {
+      inventory: await must<ServiceType['api']['Inventory']['res']>(clients[i].callApi('Inventory', {})),
+      equipment: await must<ServiceType['api']['Equipment']['res']>(clients[i].callApi('Equipment', {operation: 'QUERY'})),
+      owned: await must<ServiceType['api']['OwnedRoles']['res']>(clients[i].callApi('OwnedRoles', {})),
+      learning: await must<ServiceType['api']['PetSkillLearning']['res']>(clients[i].callApi('PetSkillLearning', {operation: 'QUERY'}))};
+  }
+  type AccountState = Awaited<ReturnType<typeof query>>;
+  function originalFields(account: AccountState, player: MsgRoomSnapshot['players'][number]): ArmorFields {
+    const view = new DataView(Uint8Array.from(account.equipment.profile.bytes).buffer);
+    const equipment = new Map(account.owned.equipment.find(row => new Map(row.fields).get(0x1c) === view.getUint32(0xa8, true))!.fields);
+    const gear = new Map(account.owned.base.find(row => new Map(row.fields).get(0) === view.getUint32(0xa4, true))!.fields);
+    const tank = TANKS.find(row => row.id === equipment.get(0x24))!, pet = PET_BASES.find(row => row.id === gear.get(8))!;
+    assert.equal(player.tankId, tank.id); assert.equal(player.petId, pet.id);
+    assert.equal(account.equipment.decorationInstanceId, 0); assert.equal(account.equipment.markInstanceId, 0);
+    for (const offset of [0x2c, 0x34, 0x3c]) assert(gear.has(offset), 'Complete selected base missing ' + offset);
+    for (const offset of [0x34, 0x3c, 0x40, 0x4c, 0x50, 0x58, 0x5c, 0x60]) {
+      assert(equipment.has(offset), 'Complete selected equipment missing ' + offset);
+    }
+    const input = {ownedField34: equipment.get(0x34),
+      ownedAtk: equipment.get(0x3c), ownedAtkBonus: equipment.get(0x40),
+      ownedDef: equipment.get(0x4c), ownedDefBonus: equipment.get(0x50), tank: tank.recomputeBase,
+      tankType: tank.recomputeBase.tankType, pet, sources: {
+        currentSkillIds: player.roleSkillSources!.currentSkillIds,
+        equipmentSkills: Array.from({length: 6}, (_, slot) => ({baseId: gear.get(0x44 + slot * 4)!, rank: gear.get(0x5c + slot * 4)!})),
+        extraSkill: {baseId: 0, rank: 0},
+        itemIds: [0x58, 0x5c, 0x60].map(offset => equipment.get(offset)!).concat(account.equipment.slots
+          .map(id => id ? account.inventory.records.find(row => row.instanceId === id)!.itemTableId : 0), [0, 0])},
+      skills: combatSkills, items: combatItemSkills, limits: combatLimits, roleValue9: 0};
+    const full = recomputeRoleAttributes({...input, base: {name: '', fields: gear},
+      equipment: {name: '', fields: equipment}, movementScales: ROLE_INITIAL_MOVEMENT_SCALES, vip: 0, vipMultiplier: 0},
+      {setMovement() {}, notify() {}, clearDirty() {}});
+    assert.equal(full.completed, true, 'Complete source must reach original attribute completion');
+    assert.equal(full.state.recordFields.get(0x58), player.maxHp);
+    const sourceQualification = {playerId: player.id, completed: full.completed,
+      recordFields: [...full.state.recordFields], roleIntegers: [...full.state.roleIntegers], roleFloats: [...full.state.roleFloats]};
+    (evidence.sourceQualification as unknown[]).push(sourceQualification);
+    const fields = recomputeQualifiedRoleArmor(input);
+    assert(fields); assert.deepEqual(fields.selectedSkillIds, player.roleSkillSources!.selectedSkillIds);
+    return fields;
+  }
+  function assertNative(final: AccountState[]): void {
+    const native = new DatabaseSync(database, {readOnly: true});
+    try {
+      evidence.native = accounts.map((account, ordinal) => {
+        const profile = native.prepare('SELECT payload, strings FROM role_profiles WHERE account_id=?').get(account.accountId)!;
+        const data = {bytes: [...profile.payload as Uint8Array], strings: JSON.parse(String(profile.strings))};
+        assert.deepEqual(data, final[ordinal].equipment.profile);
+        const inventory = native.prepare('SELECT record FROM inventory WHERE account_id=? ORDER BY instance_id').all(account.accountId)
+          .map(row => JSON.parse(String(row.record)));
+        assert.deepEqual(inventory, final[ordinal].inventory.records);
+        const owned: {base: unknown[]; equipment: unknown[]} = {base: [], equipment: []};
+        for (const row of native.prepare('SELECT kind, record FROM role_records WHERE account_id=? ORDER BY instance_id').all(account.accountId)) {
+          owned[row.kind === 'base' ? 'base' : 'equipment'].push(JSON.parse(String(row.record)));
+        }
+        assert.deepEqual(owned, final[ordinal].owned);
+        return {profile: data, inventory, owned};
+      });
+      const receipt = JSON.parse(String(native.prepare('SELECT receipt FROM pet_skill_learning WHERE account_id=? AND request_id=?')
+        .get(accounts[1].accountId, 'pet-back-critical-learn10221')!.receipt));
+      assert.deepEqual(receipt, (evidence.learned as ServiceType['api']['PetSkillLearning']['res']).learned);
+      evidence.nativeReceipt = receipt;
+      if (tail) {
+        const purchase = JSON.parse(String(native.prepare('SELECT receipt FROM pet_purchases WHERE account_id=? AND request_id=?')
+          .get(accounts[1].accountId, 'back-critical-new-pet2')!.receipt));
+        assert.deepEqual(purchase, (evidence.petPurchase as ServiceType['api']['PetShop']['res']).purchased);
+        evidence.nativePetPurchaseReceipt = purchase;
+      }
+    } finally {native.close();}
+  }
+  const key = (s: MsgRoomSnapshot) => [s.roomId, s.match?.round, s.phase, s.tick, s.serverTime].join(':');
+  try {
+    await start(); await authenticate();
+    const before = [await query(0), await query(1)]; evidence.before = before;
+    assert.equal(before[1].learning.points, 200);
+    const peerView = new DataView(Uint8Array.from(before[1].equipment.profile.bytes).buffer);
+    let petInstance = peerView.getUint32(0xa4, true);
+    let peerPet = before[1].owned.base.find(row => new Map(row.fields).get(0) === petInstance)!;
+    if (tail) {
+      assert.equal(new Map(peerPet.fields).get(0x60), 1);
+      const purchase = await must<ServiceType['api']['PetShop']['res']>(clients[1].callApi('PetShop', {
+        operation: 'BUY', petId: 2, currency: 'MONEY', requestId: 'back-critical-new-pet2'}));
+      assert(purchase.purchased); evidence.petPurchase = purchase;
+      assert.equal(purchase.money, peerView.getUint32(0x70, true) - 3500);
+      peerPet = purchase.purchased; petInstance = new Map(peerPet.fields).get(0)!;
+      assert.equal(new Map(peerPet.fields).get(0x34), 20);
+      for (let slot = 0; slot < 6; slot++) assert.equal(new Map(peerPet.fields).get(0x5c + slot * 4), 0);
+      evidence.selected = await must(clients[1].callApi('SelectRole', {kind: 'pet', instanceId: petInstance}));
+    }
+    const afterSelection = [await query(0), await query(1)]; evidence.afterSelection = afterSelection;
+    for (const record of before[1].owned.base) assert.deepEqual(afterSelection[1].owned.base.find(row =>
+      new Map(row.fields).get(0) === new Map(record.fields).get(0)), record);
+    const peerFields = new Map(peerPet.fields);
+    assert.equal(peerFields.get(8), 2); assert.equal(peerFields.get(0x48), 10221); assert.equal(peerFields.get(0x60), 0);
+    const supplyInstance = before[0].equipment.slots[1]; assert(supplyInstance > 0);
+    const supply = before[0].inventory.records.find(row => row.instanceId === supplyInstance)!;
+    assert.equal(supply.itemTableId, 17061); assert.equal(supply.state, 2);
+    evidence.unequipped = await must(clients[0].callApi('Equipment', {operation: 'UNEQUIP', target: 'PART', slot: 1}));
+    const afterUnequip = [await query(0), await query(1)]; evidence.afterUnequip = afterUnequip;
+    assert.equal(afterUnequip[0].equipment.slots[1], 0);
+    assert.deepEqual(afterUnequip[0].inventory.records.find(row => row.instanceId === supplyInstance), {...supply, state: 0});
+    const sequences = [0, 0];
+    async function input(i: number, turn = 0, aim = 0, fire = false): Promise<void> {
+      const message = {sequence: ++sequences[i], move: 0, turn, aim, fire, useItem: 0, clientTime: Date.now()};
+      assert((await clients[i].sendMsg('PlayerInput', message)).isSucc);
+      ((evidence.inputs ??= []) as unknown[]).push({client: i, message});
+    }
+    const wrapped = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
+    let learned = false, acceptedLearnedShots = 0;
+    const learnedClasses = new Set<boolean>();
+    for (let roomOrdinal = 0; roomOrdinal <= 20; roomOrdinal++) {
+      if (roomOrdinal > 0 && learnedClasses.size === 2) break;
+      const learnedPhase = roomOrdinal > 0;
+      const created = await must<ServiceType['api']['CreateRoom']['res']>(clients[0].callApi('CreateRoom', {
+        mode: 4, mapId: 7, roomName: '大麦偷袭', name: 'BackHost', tankId: 3, minPlayers: 2, maxPlayers: 2}));
+      const joined = await must<ServiceType['api']['Join']['res']>(clients[1].callApi('Join', {
+        roomId: created.room.id, clientId: 'unused', name: 'BackPeer', tankId: 3}));
+      const roomId = created.room.id;
+      const latest = (i = 0) => frames[i].at(-1)?.snapshot;
+      await wait(() => [0, 1].every(i => latest(i)?.roomId === roomId && latest(i)?.phase === 'WAITING'
+        && latest(i)?.players.length === 2));
+      if (learnedPhase && !learned) {
+        await must(clients[1].callApi('Ready', {round: 1}));
+        await wait(() => [0, 1].every(i => latest(i)?.match?.readyPlayerIds.includes(joined.playerId) === true));
+        evidence.beforeLearning = {state: await query(1), snapshots: [latest(0), latest(1)]};
+        const result = await must<ServiceType['api']['PetSkillLearning']['res']>(clients[1].callApi('PetSkillLearning', {
+          operation: 'LEARN', instanceId: petInstance, slot: 1, requestId: 'pet-back-critical-learn10221'}));
+        evidence.learned = result;
+        assert.deepEqual(result.learned, {instanceId: petInstance, slot: 1, skillId: 10221, rank: 1, cost: 200});
+        assert.equal(result.points, 0);
+        await wait(() => [0, 1].every(i => latest(i)?.phase === 'WAITING'
+          && latest(i)?.match?.readyPlayerIds.includes(joined.playerId) === false
+          && latest(i)?.players.find(p => p.id === joined.playerId)?.roleSkillSources?.equipmentSkills[1].rank === 1));
+        evidence.afterLearning = {state: await query(1), snapshots: [latest(0), latest(1)]};
+        learned = true;
+      }
+      for (const client of clients) await must(client.callApi('Ready', {round: 1}));
+      await wait(() => [0, 1].every(i => latest(i)?.roomId === roomId && latest(i)?.phase === 'PLAYING'));
+      const player = (id: string) => latest()!.players.find(p => p.id === id)!;
+      assert.equal(created.room.mode <= 3 && player(created.playerId).team === player(joined.playerId).team, false);
+      assert.notEqual(created.playerId, joined.playerId);
+      const sourceStates = [await query(0), await query(1)];
+      const targetFields = originalFields(sourceStates[0], player(created.playerId));
+      const shooterFields = originalFields(sourceStates[1], player(joined.playerId));
+      const shooterQualification = (evidence.sourceQualification as {playerId: string; completed: boolean;
+        roleFloats: [number, number][]}[]).filter(row => row.playerId === joined.playerId).at(-1)!;
+      assert.equal(shooterQualification.completed, true);
+      const criticalRate = new Map(shooterQualification.roleFloats).get(0x68);
+      assert(criticalRate !== undefined && criticalRate > 0 && criticalRate < 1);
+      assert(!shooterFields.selectedSkillIds.includes(10221));
+      assert(!player(joined.playerId).roleSkillSources!.currentSkillIds.includes(10221));
+      assert.deepEqual(player(joined.playerId).roleSkillSources!.equipmentSkills[1], {baseId: 10221, rank: learnedPhase ? 1 : 0});
+      assert.equal(player(created.playerId).petId, 105); assert.equal(player(joined.playerId).petId, 2);
+      assert.equal(sourceStates[0].equipment.slots[1], 0);
+      const raw = Math.round(Math.max(0, shooterFields.attackBase * shooterFields.attackPercent + shooterFields.attackBonus));
+      assert(raw > 0);
+      let aimed = false;
+      for (let n = 0; n < 300; n++) {
+        const attacker = player(joined.playerId), target = player(created.playerId);
+        const difference = wrapped(Math.atan2(target.x - attacker.x, target.z - attacker.z) - attacker.yaw - attacker.aim);
+        if (Math.abs(difference) < .025) {aimed = true; break;}
+        await input(1, 0, Math.sign(difference)); await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      assert(aimed); await input(1);
+      let oriented = false;
+      for (let n = 0; n < 300; n++) {
+        const target = player(created.playerId), attacker = player(joined.playerId);
+        assert(typeof target.bodyYaw === 'number');
+        const difference = wrapped(Math.atan2(attacker.x - target.x, attacker.z - target.z) + Math.PI - target.bodyYaw);
+        if (Math.abs(difference) < .045) {oriented = true; break;}
+        await input(0, Math.sign(difference)); await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      assert(oriented); await input(0);
+      const settledTick = latest()!.tick; await wait(() => latest()!.tick >= settledTick + 3);
+      const beforeShot = structuredClone(latest()!), target = player(created.playerId), attacker = player(joined.playerId);
+      assert(target.alive && attacker.alive); assert.equal(target.hp, target.maxHp);
+      assert.equal(attacker.ammoItemId, 2001); assert.equal(attacker.reload!.remaining, 0);
+      const bearing = {x: attacker.x - target.x, z: attacker.z - target.z};
+      const angle = Math.abs(wrapped(Math.atan2(bearing.x, bearing.z) - target.bodyYaw!));
+      assert(angle >= 3 * Math.PI / 4, 'Actual target body must face away from incoming attacker');
+      const hpBefore = target.hp, indices = events.map(rows => rows.length), shotWallTime = Date.now();
+      const hits = (i: number) => events[i].slice(indices[i]).filter(row => row.event.roomId === roomId
+        && row.event.type === 'hit' && row.event.playerId === joined.playerId && row.event.targetId === created.playerId);
+      await input(1, 0, 0, true); await wait(() => hits(0).length > 0 && hits(1).length > 0); await input(1);
+      assert.equal(hits(0).length, 1); assert.equal(hits(1).length, 1);
+      assert.deepEqual(hits(0)[0].event, hits(1)[0].event);
+      const result = hits(0)[0].event.shotPlayerResult;
+      assert.equal(result?.itemId, 2001); assert(typeof result?.critical === 'boolean');
+      const ordinaryDamage = expectedArmorDamage(raw * (result.critical ? 2 : 1), targetFields, targetFields.backDefensePercent);
+      const expectedBonus = learnedPhase && result.critical ? 400 : 0;
+      const expectedDamage = ordinaryDamage + expectedBonus;
+      const expectedHP = Math.max(0, (hpBefore - ordinaryDamage - expectedBonus) | 0);
+      assert(Math.abs(hits(0)[0].event.value - expectedDamage) < 1e-8);
+      await wait(() => player(created.playerId).hp === expectedHP);
+      assert.equal(hits(0)[0].event.hurtSelector, undefined);
+      assert.equal(player(joined.playerId).ammoMagazine!.remaining, attacker.ammoMagazine!.remaining - 1);
+      const afterTick = latest()!.tick; await wait(() => latest()!.tick >= afterTick + 3);
+      assert.equal(hits(0).length, 1); assert.equal(hits(1).length, 1);
+      for (const i of [0, 1]) {
+        assert.equal(events[i].slice(indices[i]).filter(row => row.event.roomId === roomId && row.event.type === 'playerHealed').length, 0);
+        assert.equal(events[i].slice(indices[i]).filter(row => row.event.roomId === roomId && row.event.type === 'itemUsed').length, 0);
+      }
+      assert.equal(player(created.playerId).score, target.score);
+      assert(player(joined.playerId).score > attacker.score);
+      if (expectedHP > 0) {
+        assert.equal(player(created.playerId).deaths, target.deaths); assert.equal(player(joined.playerId).kills, attacker.kills);
+      } else {
+        assert.equal(player(created.playerId).deaths, target.deaths + 1); assert.equal(player(joined.playerId).kills, attacker.kills + 1);
+      }
+      const afterShot = structuredClone(latest()!);
+      const peer = new Map(frames[1].filter(row => row.snapshot.roomId === roomId).map(row => [key(row.snapshot), row.snapshot]));
+      const common = new Set<string>();
+      for (const row of frames[0]) {
+        if (row.snapshot.roomId !== roomId || row.snapshot.phase !== 'PLAYING') continue;
+        const other = peer.get(key(row.snapshot));
+        if (other) {assert.deepEqual(row.snapshot, other); common.add(key(row.snapshot));}
+      }
+      assert(common.size > 4);
+      (evidence.phases as unknown[]).push({roomId, roomOrdinal, learnedPhase, sourceStates, targetFields, shooterFields, shooterQualification,
+        raw, criticalRate, critical: result.critical, ordinaryDamage, expectedBonus, expectedDamage, hpBefore, expectedHP,
+        actualHpRemoved: hpBefore - expectedHP, bodyYaw: target.bodyYaw, bearing, angle, beforeShot, afterShot, hit: hits(0)[0],
+        timing: {serverMs: afterShot.serverTime - beforeShot.serverTime,
+          simulationSeconds: (afterShot.tick - beforeShot.tick) * .05, wallMs: Date.now() - shotWallTime},
+        commonUniqueFullSnapshots: common.size,
+        roomReset: 'Normal dual Leave/new room after one hit to avoid lowHP death and random respawn LOS'});
+      if (learnedPhase) {acceptedLearnedShots++; learnedClasses.add(result.critical);}
+      for (const client of clients) (evidence.leaves as unknown[]).push(await must(client.callApi('Leave', {roomId, round: 1})));
+    }
+    assert(learned); assert.equal(learnedClasses.size, 2, 'Bounded natural learned shots must include ordinary and critical BACK');
+    assert(acceptedLearnedShots <= 20); evidence.acceptedLearnedShots = acceptedLearnedShots;
+    const final = [await query(0), await query(1)]; evidence.final = final;
+    assert.deepEqual(final[0], afterUnequip[0]);
+    assert.deepEqual(final[1].inventory, before[1].inventory);
+    const expectedFields = new Map(peerPet.fields); expectedFields.set(0x60, 1);
+    const expectedOwned = {...afterSelection[1].owned,
+      base: afterSelection[1].owned.base.map(row => new Map(row.fields).get(0) === petInstance ? {...row, fields: [...expectedFields]} : row)};
+    assert.deepEqual(final[1].owned, expectedOwned);
+    const expectedProfile = Uint8Array.from(before[1].equipment.profile.bytes);
+    new DataView(expectedProfile.buffer).setUint32(0x80, 0, true);
+    if (tail) {
+      new DataView(expectedProfile.buffer).setUint32(0x70, peerView.getUint32(0x70, true) - 3500, true);
+      new DataView(expectedProfile.buffer).setUint32(0xa4, petInstance, true);
+    }
+    const profile = {bytes: [...expectedProfile], strings: before[1].equipment.profile.strings};
+    assert.deepEqual(final[1].equipment, {...before[1].equipment, profile});
+    assert(before[1].learning.profile); assert.equal(final[1].learning.points, 0);
+    assert.deepEqual(final[1].learning.owned, expectedOwned); assert.deepEqual(final[1].learning.profile, profile);
+    assert.deepEqual(final[1].learning, (evidence.afterLearning as {state: AccountState}).state.learning);
+    evidence.finalSelectedPet = {instanceId: petInstance, petId: 2, slot: 1, baseId: 10221, rank: 1};
+    for (const client of clients) await client.disconnect(); await stop();
+    assertNative(final);
+    await start(); await authenticate();
+    const restored = [await query(0), await query(1)]; assert.deepEqual(restored, final); evidence.restored = restored;
+    evidence.status = 'PASS_FINITE_ORDINARY_PET2_LEARN10221_BACK_CRITICAL_EXTRA400_DUAL_STATE_NATIVE_RESTART_SCOPE';
+  } catch (error) {evidence.status = 'FAIL'; evidence.error = String(error); throw error;}
+  finally {
+    for (const client of clients) await client.disconnect(); await stop();
+    const saved = new DatabaseSync(database, {readOnly: true});
+    try {await backup(saved, output + '-checkpoint.sqlite');} finally {saved.close();}
+    writeFileSync(output + '-identity.private.json', JSON.stringify({accounts}), {mode: 0o600});
+    evidence.frames = frames; evidence.events = events; evidence.checkpoint = output + '-checkpoint.sqlite';
+    rmSync(directory, {recursive: true, force: true}); evidence.cleaned = true;
+    writeFileSync(output + '.json', JSON.stringify(evidence, null, 2)); writeFileSync(output + '-server.log', log);
+    console.log(String(evidence.status) + ' ' + output + '.json');
+  }
+}
+void main().catch(error => {console.error(error); process.exitCode = 1;});

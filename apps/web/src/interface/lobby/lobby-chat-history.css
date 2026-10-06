@@ -1,0 +1,42 @@
+.lobby-chat-history {
+  position: absolute;
+  left: 20px;
+  top: 437px;
+  width: 574px;
+  height: 114px;
+}
+
+.lobby-chat .lobby-chat-history [data-lobby-chat-log] {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.lobby-history-scrollbar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  overflow: hidden;
+  background-repeat: repeat;
+}
+
+.lobby-history-scrollbar div,
+.lobby-history-scrollbar span,
+.lobby-history-scrollbar button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  background: transparent center / 100% 100% no-repeat;
+}
+
+.lobby-history-scroll-track {width: 100%;}
+.lobby-history-scroll-thumb {width: 28px; overflow: hidden;}
+.lobby-history-thumb-top {top: 0; width: 28px; height: 29px;}
+.lobby-history-thumb-middle {top: 29px; bottom: 17px; width: 28px; background-repeat: repeat-y;}
+.lobby-history-thumb-bottom {bottom: 0; width: 28px; height: 17px;}
+.lobby-history-scrollbar .lobby-history-scroll-up {top: 0; width: 28px; height: 26px;}
+.lobby-history-scrollbar .lobby-history-scroll-down {bottom: 0; width: 28px; height: 27px;}
+.lobby-history-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}

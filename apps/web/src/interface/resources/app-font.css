@@ -1,0 +1,12 @@
+@font-face {
+  font-family: 'CDTank-Xiangjiao';
+  src: url('/ui/fonts/xiangjiao-brush.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* The selected font applies to text and form controls, including portal dialogs. */
+html, body, body *, body *::before, body *::after {
+  font-family: 'CDTank-Xiangjiao', sans-serif !important;
+}

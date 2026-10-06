@@ -1,0 +1,7 @@
+diff --git a/apps/web/src/assets/scenes/scene-preview.ts b/apps/web/src/assets/scenes/scene-preview.ts
+--- a/apps/web/src/assets/scenes/scene-preview.ts
++++ b/apps/web/src/assets/scenes/scene-preview.ts
+@@ -524,2 +524,3 @@
+       value.broken.model === 'obj05469' ? 'GA33' :
++      ['obj05432', 'obj05433', 'obj05421', 'obj05443'].includes(value.broken.model) ? 'GA40' :
+       ['obj05460', 'obj05434', 'obj05435', 'obj05436'].includes(value.broken.model) ? 'GA12' :

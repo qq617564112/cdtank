@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CDTank 资源查看工具</title>
+  </head>
+  <body>
+    <canvas tabindex="0" id="world" aria-label="原资源三维查看"></canvas>
+    <aside class="controls">
+      <h1>资源查看工具</h1>
+      <div id="viewer">
+        <label for="scene">原版地图</label>
+        <select id="scene"><option value="0001">0001</option><option value="0002">0002</option><option value="0003">0003</option><option value="0004">0004</option><option value="0005">0005</option><option value="0006">0006</option><option value="0007">0007</option><option value="0008">0008</option><option value="0009">0009</option><option value="0010">0010</option><option value="0011">0011</option><option value="0012">0012</option><option value="0013">0013</option><option value="0014">0014</option><option value="0015">0015</option><option value="0016">0016</option><option value="0017">0017</option><option value="0018">0018</option><option value="0019">0019</option><option value="0020">0020</option><option value="0021">0021</option><option value="0022">0022</option><option value="0023">0023</option><option value="0024">0024</option><option value="0025">0025</option></select>
+        <button id="load-scene" type="button">查看地图与物件</button>
+        <label for="model">原版模型</label>
+        <select id="model"></select>
+        <button id="animation" type="button">播放动作</button>
+        <output id="status" aria-live="polite">载入资源…</output>
+      </div>
+    </aside>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

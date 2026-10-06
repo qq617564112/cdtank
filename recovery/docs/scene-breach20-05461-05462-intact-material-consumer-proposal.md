@@ -1,0 +1,18 @@
+# M3-06 Map20 original05461/05462 intact consumers
+
+Original source proofs `scene-breach07-20-05461-intact-material-source.json` and `scene-breach07-20-05462-intact-material-source.json` already cover all21 Map20 obj05461 placements and11 Map20 obj05462 placements. The original meshes are cylinder744/0 with150 vertices and cylinder257/0 with138 vertices, each FVF21/kind0 and its own source texture. Original geometry/UV/packed diffuse/DDS RGBA and generic Breach4610f1/geom_c1 evidence are reused. Map7 already registered05462 and completed the source79 ordinary intact-material first.
+
+Requested two shared hunks:
+
+- SceneBreachMaterial add only named obj05461/cylinder744/0/prefix breach20-05461-intact. The existing obj05462 mapping and default remain.
+- ScenePreview Map0020 tuple becomes05460/05442/05461/05462, using current unique resolved asset cache, revision failure cleanup and owner restore before asset disposal. No alpha model is included.
+
+Prepared patch: `recovery/prepared/scene-breach20-05461-05462-intact-material-consumer.patch`.
+
+The new ordinary React mode5/Map20 first uses four authenticated players, two renderers and default tank1. Source274 at [-35.65769958496094,0,-999.6281127929688] is the target, reusing the old original spawn [-304.71,-1119.34] and ordinary approach already recorded in `browser-breach20-05461-2026-10-03T22-49-39-834Z.json`. That old run drew intact274/cylinder744/0 at frame138 before ordinary destruction. The new run only moves/turns toward the same fixed source target to obtain its restored intact material; no firing, NAV search, replacement camera or extra candidate is required. If ordinary collision prevents the one approach or target pixels are not visible, retain the actual gap and stop.
+
+`tests/browser-scene-breach20-05461-intact-material.mjs` is prepared on3566/5596/9796 and passes Node syntax checking. It requires both new Map20 model registrations, captures source274 after ordinary input release, saves complete host/guest canvases, and verifies dual normal Leave clears both model materials. `tests/scene-breach20-05461-intact-actual.py` checks saved source274 draw, source texture,150 vertices, world matrix and normal mode5/world cleanup. Guest independent target pixels and all placement pixels remain outside the finite host scope. Map20 new05462 is source/formal-load coverage only in this slice; its material consumer actual proof is reused from Map7.
+
+The original05461 atlas has a green metal cap with a circular bung and a dark green body with a worn pale band. These source features guide the new host-canvas review; the prior destruction screenshot is entry evidence, and does not establish the restored intact-material pixels.
+
+State: the reviewed two production hunks are integrated and the single Web type check exited0. The unique ordinary first `browser-scene-breach20-05461-intact-2026-10-05T13-07-06-106Z.json` passed with host source274 frame454/150 vertices/world matrix exact, dual normal Leave/material0, errors[] and complete process cleanup. Complete host canvases show the green cap, dark green body and worn pale marking; the tank naturally occludes the lower edge. Player wrapper: `scene-breach20-05461-05462-intact-material-player-evidence.json`. Map20 new05462 remains source/formal-load only. Root limited review `scene-breach20-05461-05462-intact-material-root-review.json` accepts the host05461/dual-Leave scope and is linked from the wrapper. Unified Web types and build exited0; the1m35 build and release copy completed, release index mtime2026-10-05T13:16:06.113719159Z. Existing c9/GA41/destruction lifecycle and authority are unchanged.

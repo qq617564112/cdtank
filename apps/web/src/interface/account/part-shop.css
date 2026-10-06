@@ -1,0 +1,16 @@
+#account-shop .part-shop-source-list {overflow: auto; padding: 4px; font: inherit;}
+.part-shop-source-list button {
+  display: flex; align-items: center; gap: 6px; width: 100%; min-height: 42px; padding: 3px;
+  color: #fff; border: 0; background: transparent center / 100% 100% no-repeat; font: inherit; text-align: left;
+}
+.part-shop-description {left: 12px; top: 410px; width: 275px; height: 84px; overflow: auto; line-height: 16px;}
+.part-shop-currency {left: 300px; top: 410px; width: 160px; display: flex; align-items: center; white-space: nowrap;}
+.part-shop-currency select {width: 100px; color: #fff; background: #263b49; font: inherit;}
+.part-shop-buy, .part-shop-equipment, .part-shop-refresh {top: 444px; color: #fff; background: #263b49; border: 1px solid #8dabad; font: inherit; padding: 4px;}
+.part-shop-buy {left: 300px; width: 96px;}
+.part-shop-equipment {left: 404px; width: 120px;}
+.part-shop-refresh {left: 532px; width: 82px;}
+.part-shop-status {left: 300px; top: 474px; width: 314px; height: 16px; overflow: auto; line-height: 14px;}
+[data-shop-active-page='Part'] #account-shop-title {width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);}
+
+.part-shop-query-prices {left: 300px; top: 396px; width: 314px; line-height: 14px; white-space: nowrap;}

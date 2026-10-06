@@ -1,0 +1,59 @@
+.battle-chat {
+  position: absolute;
+  z-index: 3;
+  right: 1rem;
+  bottom: 1rem;
+  box-sizing: border-box;
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 0.5rem;
+  border: 2px solid #dfc26f;
+  background: #263b49ed;
+  color: #fff8da;
+  font-size: 0.875rem;
+}
+
+.battle-chat[hidden] {
+  display: none;
+}
+
+.battle-chat ol {
+  max-height: 6rem;
+  overflow-y: auto;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+
+.battle-chat form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.battle-chat input {
+  min-width: 0;
+  flex: 1;
+}
+
+.battle-chat select {
+  max-width: 5rem;
+  color: #fff8da;
+  background: #263b49;
+  border: 1px solid #dfc26f;
+}
+
+.battle-chat button {
+  color: #30230f;
+  background: #dfc26f;
+  border: 1px solid #fff8da;
+  cursor: pointer;
+}
+
+.battle-chat p {
+  margin: 0.25rem 0 0;
+}
+
+.battle-chat :focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

@@ -1,0 +1,7 @@
+# 2010/4008雷达消费者缺口
+
+M2-02/M4-10仅候选来源记录，不新增业务完成项。原item2010的价格Money/Coin均0、BattleUseMax15、技能2010/4008；2010提供Delay23/MaxBullet4/LoadTime100，4008 Trigger8/Target1/FuncType1/T15/RadarA/B/C各999、首13/SE14。当前发布combat-catalog保留这些原字段。
+
+已证通用源调用链是原43acf2–43af5c技能列loader→SkillTable记录→433466/432951合成。完整原432951既有342源合同明确不写RadarA/B/C、HP或PartSlot，不能把其999列直接累加到运动/攻防或当作小地图资格。原4008实际施加Radar字段的写地址和期限writer均尚未取得，正式服务端battle/cpu与角色重算无Radar consumer；下一待查入口为Trigger8命中对4008的原Func1执行器，以及小地图读取Radar字段/期限的原callsite。当前没有这一执行器的已确认调用链，不把receiver效果通知当业务授权。
+
+正式Shop当前没有2010取得路径，零价item不自行变成免费starter或库存fixture。需要分别恢复取得producer和原Radar消费入口；不会以表字段存在制定新的隐藏目标policy。本轮无原客户端行为测量、原native复跑、正式对局或生产修改，候选保持来源不足。
