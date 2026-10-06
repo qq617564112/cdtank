@@ -1,8 +1,8 @@
 # 地面掉落共享契约 (M2-10)
 
 本文记录地面掉落与拾取当前已落地的 shared 类型、手工协议字段和房间快照投影。
-对应业务规则见 `ground-item-business-design.md`；本批只闭合 shared 契约，不把
-persistence/domain/UI producer 的待接状态写成已完成。
+对应业务规则见 `ground-item-business-design.md`；本文只闭合 shared 契约，持久化、
+domain 与 UI producer 的状态以其专题文档为准。
 
 ## 类型契约
 
@@ -73,9 +73,10 @@ battleQuantity > 0，并从该实例扣 1；client 提供的 clientTime 不参�
 到 `match.groundItems`。当前 shared 层不依赖新的 GroundItemState class，也不在
 snapshot 中派生或伪造未知来源记录。
 
-本批没有接入 World 的 create/discard/pickup、账户事务或 web renderer producer；
-因此当前运行路径不会产生 ground item，读取时保持 `groundItems` 初始空数组或省略
-可选旧快照。该接线由后续 server/account/UI worker 完成。
+World 的 create/discard/pickup 生产桥（88b726a）、账户事务（be579f9）与 web renderer
+producer（fc83778）均已接入：真实 mode5 Breach HP 归零建掉落、接触半径40拾取、
+普通 action100 丢弃，房间快照的 `groundItems` 承载权威数组。shared 层本身仍只承载
+类型与投影，不派生或伪造未知来源记录。
 
 ## 手工 schema
 
@@ -107,6 +108,6 @@ actual dirty 的最大 ID 后追加，实际补丁与 shared-current-source 的�
 
 ## Limitations
 
-- 本批未运行 build、typecheck、测试、生成器或真实联机验收；producer 尚未接线。
+- 本批未运行 build、typecheck、测试、生成器或真实联机验收；本报告不替代实测。
 - 掉落概率、dropitem 档位到具体 itemTableId 的映射、类别 6 入账和接触半径仍是
   `ground-item-business-design.md` 中的采用规则，不是原 Windows 服务端逐行为证明。

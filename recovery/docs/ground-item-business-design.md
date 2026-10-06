@@ -1,8 +1,8 @@
 # 地面掉落与拾取业务合同
 
-M2-10 掉落子项。本文定义原客户端地面物件通信已证明的事实、为可实施而采用的业务规则，
-以及下一批 server/shared/UI 需要落地的函数、字段与事务顺序。采用规则不冒称原 Windows
-服务端逐行为复刻。
+M2-10 掉落子项。本文定义原客户端地面物件通信已证明的事实、当前已接的 server/shared/UI
+函数、字段与事务顺序，以及为可实施而采用的业务规则。采用规则不冒称原 Windows 服务端
+逐行为复刻。
 
 覆盖消息：`UMsgDiscardItem`(0x3c96/441155)、`UMsgPickupItem`(0x3c98/441382)、
 `UMsgPickupTreasure`(0x3caa/44162c)、`UMsgDeleteGroundItem`(0x3ca0/441e13)，
@@ -183,7 +183,8 @@ CPU 走同一接触扫描与资格：普通移动真接触，沿同资格在本�
 
 - 已有实例：`ownedQuantity += quantity`，若该实例已在本角色七槽中且本轮
   `battleQuantity < BattleUseMax`，按现 `initializeBattleQuantities` 语义把
-  `battleQuantity` 提升到 `min(ownedQuantity, BattleUseMax)`。
+  `battleQuantity` 提升到 `min(ownedQuantity, max(0, BattleUseMax - roundUse))`；已消费的
+  本局数量由 `roundUse` 计入，`ownedQuantity` 已反映真实扣量，本局可用数不再二次扣减。
 - 新实例：按现未用 uint32 语义分配 instanceId 建 owned 记录，不自动改用户槽位；玩家
   正常配置槽位或再战时通过既有 Kitbag/再战流程选择。
 - 同账户多连接：用现 `refreshAccountTitle` 同型机制把 owned/本局量广播给该 account 的
@@ -208,10 +209,13 @@ CPU 走同一接触扫描与资格：普通移动真接触，沿同资格在本�
 
 ## 接口与实现
 
-### shared 协议（当前实际版本 102）
+以下 server/shared/UI 契约均已落地：shared 契约与投影由 83f138f 提交，domain 由 fda9ebb
+接入，账户事务由 be579f9 接入，World 生产桥由 88b726a 接入，Web 呈现由 fc83778 接入。
 
-现 `apps/shared/protocols/serviceProto.ts` 的版本为 102。本子项把版本加 1，新增类型/字段
-沿用既有 field 结构，不改动任何旧 ID 或旧字段语义。
+### shared 协议（当前实际版本 106）
+
+现 `apps/shared/protocols/serviceProto.ts` 的版本为 106。本子项在版本 105 基础上加 1，
+新增类型/字段沿用既有 field 结构，不改动任何旧 ID 或旧字段语义。
 
 `apps/shared/protocols/MsgRoomSnapshot.ts`：
 
@@ -272,4 +276,5 @@ metadata 带 `groundItemId`/`sourceModel`；`reconcile(snapshot.match?.groundIte
   均为采用规则。
 - 类别 6 的拾取入账无原来源，采用持久加一；后续普通使用按既有规则消耗，非免费 Shop。
 - 3c96/3ca0 只部分反汇编确认字段与节点删除/生成调用；3caa 0x58 记录未映射任何 owned 字段。
-- 接触半径、CPU 本地拾取、多连接广播与前端贴图变体待实现后实测；M2-10 未完成。
+- 接触半径40、CPU 本地拾取、同账户多连接库存广播与前端贴图变体均已实现；实际对局、
+  双端、持久与高清验收未做，M2-10 未完成。
