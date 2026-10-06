@@ -96,6 +96,8 @@ export interface PlayerSnapshot {
   reload?: {duration: number; remaining: number; startedAt: number; source: 'original-normal' | 'rebuilt'};
   /** Worn title, present only when the account has an equipped title. */
   title?: PlayerTitle;
+  /** Current server-side2010 radar interference; only tactical enemy minimap markers are suppressed. */
+  radarJammed?: boolean;
 }
 
 export interface PlayerTitle {

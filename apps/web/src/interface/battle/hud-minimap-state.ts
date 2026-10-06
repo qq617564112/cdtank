@@ -1,4 +1,5 @@
 import {isHiddenByOpticalCamouflage} from '../../../../shared/combat/optical-camouflage';
+import {canObserveRadarMarker} from '../../../../shared/combat/radar-observation';
 import type {MsgRoomSnapshot, PlayerSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 
 /** Rebuilt minimap projection. Coordinates are the snapshot's own world X/Z;
@@ -27,7 +28,8 @@ export function minimapState(snapshot: MsgRoomSnapshot, playerId: string | undef
   }
   const local = playerId ? snapshot.players.find(player => player.id === playerId) : undefined;
   const players = snapshot.players.filter((player: PlayerSnapshot) =>
-    !isHiddenByOpticalCamouflage(player, local, snapshot.mode)).map(player => ({
+    !isHiddenByOpticalCamouflage(player, local, snapshot.mode)
+      && (!local || canObserveRadarMarker(local, player, snapshot.mode))).map(player => ({
     id: player.id, name: player.name, team: player.team, x: player.x, z: player.z,
     yaw: player.bodyYaw ?? player.yaw, alive: player.alive, isVIP: player.isVIP,
   }));

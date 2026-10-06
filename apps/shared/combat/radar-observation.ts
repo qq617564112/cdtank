@@ -17,9 +17,13 @@ export function readRadarModifiers(selectedSkillIds: readonly number[] | undefin
 }
 
 /** Tactical-minimap relationship only; actor visibility and optical camouflage stay separate. */
-export function canObserveRadarMarker(observer: PlayerSnapshot, target: PlayerSnapshot, mode: number): boolean {
+export function canObserveRadarMarker(observer: PlayerSnapshot, target: PlayerSnapshot, mode: number,
+  radarJammed = observer.radarJammed === true): boolean {
   if (target.id === observer.id) return true;
   const hostile = mode >= 4 || target.team !== observer.team;
-  if (!hostile || !readRadarModifiers(target.roleSkillSources?.selectedSkillIds).jammer) return true;
-  return readRadarModifiers(observer.roleSkillSources?.selectedSkillIds).detector;
+  if (!hostile) return true;
+  const detector = readRadarModifiers(observer.roleSkillSources?.selectedSkillIds).detector;
+  if (radarJammed && !detector) return false;
+  if (!readRadarModifiers(target.roleSkillSources?.selectedSkillIds).jammer) return true;
+  return detector;
 }
