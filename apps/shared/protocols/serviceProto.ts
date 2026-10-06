@@ -242,7 +242,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 92,
+    "version": 93,
     "services": [
         {
             "id": 0,
@@ -986,6 +986,63 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Reference",
                         "target": "MsgRoomEvent/StopSkillEffectMessage"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 20,
+                    "name": "roleStyleChanged",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "roleId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "style",
+                                "type": {
+                                    "type": "Union",
+                                    "members": [
+                                        {
+                                            "id": 0,
+                                            "type": {
+                                                "type": "Literal",
+                                                "literal": 1
+                                            }
+                                        },
+                                        {
+                                            "id": 1,
+                                            "type": {
+                                                "type": "Literal",
+                                                "literal": 2
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 21,
+                    "name": "roleStyleRestored",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "roleId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
                     },
                     "optional": true
                 }
@@ -2134,6 +2191,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 }
                             }
                         ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 41,
+                    "name": "roleDisguise",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/RoleDisguiseSnapshot"
                     },
                     "optional": true
                 }
@@ -8082,6 +8148,92 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "type": "Number"
                     },
                     "optional": true
+                }
+            ]
+        },
+        "MsgRoomSnapshot/RoleDisguiseSnapshot": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "skillId",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 10
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 11
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "style",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 1
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 2
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "startedAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "expiresAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "x",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "y",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "z",
+                    "type": {
+                        "type": "Number"
+                    }
                 }
             ]
         }

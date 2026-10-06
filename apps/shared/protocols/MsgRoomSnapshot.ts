@@ -1,6 +1,17 @@
 import type {OwnedTankTextures} from '../combat/role-owned-textures';
 import type {CpuLoadoutItem} from './PtlCpu';
 
+/** Rebuilt skill10/11 lifetime; the source4173 replacement is created at the activation pose. */
+export interface RoleDisguiseSnapshot {
+  skillId: 10 | 11;
+  style: 1 | 2;
+  startedAt: number;
+  expiresAt: number;
+  x: number;
+  y: number;
+  z: number;
+}
+
 export interface PlayerSnapshot {
   id: string;
   name: string;
@@ -59,6 +70,8 @@ export interface PlayerSnapshot {
   invincibility?: {skillId: number; expiresAt: number};
   /** Confirmed skill9 lifetime; enemy actor visibility is reconstructed from the client contract. */
   opticalCamouflage?: {skillId: 9; expiresAt: number};
+  /** Confirmed disguise presence for new observers and late model loads. */
+  roleDisguise?: RoleDisguiseSnapshot;
   /** Existing rebuilt2007 burn authority; presence controls retained4005 presentation. */
   trapRestraint?: {skillId: 4001; expiresAt: number; movePermissionCount: number};
   trapTurnRestraint?: {skillId: 4002; expiresAt: number; turnPermissionCount: number};
