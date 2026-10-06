@@ -5,7 +5,7 @@ import {segmentBox, segmentSphere, type Battlefield, type Point} from '../../bat
 import type {BotNavigationPolicy} from './navigation';
 import {BotPathPlanner} from './navigation';
 import {vipEvasion} from './vip-evasion';
-import {getSceneBreakables, type SceneBreakable} from '../../scene-objects';
+import {getSceneBreakables, getSceneCastles, type SceneBreakable} from '../../scene-objects';
 import {aimTurnRate} from '../roles/aim-turn';
 import {roleMovementElapsed} from '../roles/movement-time';
 import {combatCatalog} from '../catalog';
@@ -103,8 +103,19 @@ export class BotController {
     enemies.sort((a, b) => (mode === 3 ? Number(b.vip) - Number(a.vip) : 0) || distance(a) - distance(b));
     const claimed = new Set(actors.filter(other => other.id !== actor.id && other.alive
       && other.team === actor.team).map(other => (other.cpu ?? other.autopilot)?.objectiveTargetId));
-    const targets = mode === 5 ? objectives.filter(o => o.hp > 0).sort((a, b) =>
-      Number(claimed.has(a.id)) - Number(claimed.has(b.id)) || distance(a) - distance(b)) : enemies;
+    const mapId = Number(field.source.id);
+    const castleTargets = mode === 2 ? objectives.filter(objective => {
+      if (objective.kind !== 'CAPTURE' || objective.hp <= 0 || objective.maxHp <= 0
+          || (objective.ownerTeam !== 0 && objective.ownerTeam !== 1)
+          || objective.ownerTeam === actor.team
+          || objective.sourcePlacementId === undefined || objective.sourceModel === undefined) return false;
+      return getSceneCastles(mapId).some(source => source.id === objective.sourcePlacementId
+        && source.model === objective.sourceModel && source.affiliation === objective.ownerTeam + 1);
+    }) : [];
+    const objectiveTargets = mode === 5 ? objectives.filter(o => o.hp > 0) : castleTargets;
+    const targets: readonly (BotActor | ObjectiveSnapshot)[] = mode === 2 || mode === 5
+      ? objectiveTargets.sort((a, b) =>
+        Number(claimed.has(a.id)) - Number(claimed.has(b.id)) || distance(a) - distance(b)) : enemies;
     for (const [id, until] of this.unavailableUntil) {
       if (now >= until) this.unavailableUntil.delete(id);
     }
@@ -116,17 +127,15 @@ export class BotController {
     const retained = retainTarget ? available.find(target => target.id === this.targetId) : undefined;
     // Work on a reachable firing line before committing to a route around a wall.
     // The existing order still distributes equally shootable work among teammates.
-    const target = retained ?? (mode === 5 ? available.find(objective => {
-      if (!('sourcePlacementId' in objective) || objective.sourcePlacementId === undefined) return false;
-      const box = getSceneBreakables(Number(field.source.id)).find(box => box.id === objective.sourcePlacementId);
+    const target = retained ?? (mode === 2 || mode === 5 ? available.find((objective): objective is ObjectiveSnapshot => {
+      if (!('kind' in objective) || objective.sourcePlacementId === undefined) return false;
+      const box = objectiveSource(objective, mapId, mode);
       if (!box) return false;
       const bearing = Math.atan2(objective.x - actor.x, objective.z - actor.z);
       return canShootSource(actor, bearing, box, field, actors, actor.id);
     }) : undefined) ?? available[0];
-    const capture = mode === 2 ? objectives.find(o => o.kind === 'CAPTURE') : undefined;
-    const sourcePlacementId = target && 'sourcePlacementId' in target ? target.sourcePlacementId : undefined;
-    const source = sourcePlacementId === undefined ? undefined
-      : getSceneBreakables(Number(field.source.id)).find(source => source.id === sourcePlacementId);
+    const objectiveTarget = target && 'kind' in target ? target : undefined;
+    const source = objectiveTarget ? objectiveSource(objectiveTarget, mapId, mode) : undefined;
     const finishInput = (): MsgPlayerInput => {
       const finishItems = (): MsgPlayerInput => {
         if (actor.roleDisguise) input.fire = false;
@@ -185,7 +194,7 @@ export class BotController {
       }
       return finishItems();
     };
-    const navigationTargetId = capture?.id ?? target?.id;
+    const navigationTargetId = target?.id;
     if (this.targetId !== navigationTargetId) {
       this.targetId = navigationTargetId; this.path = []; this.goal = undefined;
       this.planner = undefined; this.nextPlan = 0;
@@ -203,7 +212,7 @@ export class BotController {
     } else this.blockedMovementSeconds = 0;
     this.previousPosition = {x: actor.x, y: actor.y, z: actor.z};
     this.requestedMovement = false;
-    if (this.blockedMovementSeconds >= 2 && target && !capture) {
+    if (this.blockedMovementSeconds >= 2 && target) {
       // A traversable route can still be blocked when steering clips a corner.
       // Retry another approach using observed movement, without bypassing collision.
       this.failedApproaches.set(target.id, (this.failedApproaches.get(target.id) ?? 0) + 1);
@@ -222,7 +231,7 @@ export class BotController {
         - Math.hypot(b.x - target.x, b.z - target.z));
       this.escapePoint = escapes[0];
     }
-    let goal: Point | undefined = capture ?? this.escapePoint ?? target;
+    let goal: Point | undefined = this.escapePoint ?? target;
     let friendly = false;
     if (target) {
       const bearing = Math.atan2(target.x - actor.x, target.z - actor.z);
@@ -230,12 +239,12 @@ export class BotController {
       input.aim = aimStep > 0 ? Math.max(-1, Math.min(1, error / aimStep)) : 0;
       const muzzle = {x: actor.x + Math.sin(bearing) * 30, y: actor.y + 20,
         z: actor.z + Math.cos(bearing) * 30};
-      const end = {...target, y: mode === 5 ? actor.y + 20 : target.y + 20};
+      const end = {...target, y: source || mode === 5 ? actor.y + 20 : target.y + 20};
       const wall = source ? undefined : field.firstSurfaceHit({...actor, y: muzzle.y}, end, 1);
       friendly = mode <= 3 && actors.some(other => other.id !== actor.id && other.alive
         && other.team === actor.team && blocksShot(muzzle, end, other));
       const visible = (source ? canShootSource(actor, bearing, source, field, actors, actor.id) : !wall && distance(target) < 700)
-        && (mode === 5 || Math.abs(actor.y - target.y) < 18);
+        && (source || Math.abs(actor.y - target.y) < 18);
       input.fire = !actor.roleDisguise && visible && Math.abs(error) < .06 && !friendly;
       // Rebuilt VIP survival: create aiming time using ordinary collision-tested
       // movement rather than parking within an enemy's firing range while hurt.
@@ -252,7 +261,7 @@ export class BotController {
         this.repositionDestroy = false;
       }
       const changingDestroyPosition = mode === 5 && this.repositionDestroy;
-      if (!capture && !this.escapePoint && visible && !friendly && distance(target) < 330 && !changingDestroyPosition) goal = undefined;
+      if (!this.escapePoint && visible && !friendly && distance(target) < 330 && !changingDestroyPosition) goal = undefined;
       if (mode === 5 && 'hp' in target) {
         if (this.observedTargetHp !== target.hp) this.ineffectiveFireSeconds = 0;
         this.observedTargetHp = target.hp;
@@ -268,7 +277,7 @@ export class BotController {
       }
     }
     const failed = target ? this.failedApproaches.get(target.id) ?? 0 : 0;
-    const approach = !capture && target && (mode === 5 || friendly || failed > 0);
+    const approach = target && (mode === 5 || friendly || failed > 0);
     // Destroy objects stay fixed. Keep a usable route until it is consumed;
     // movement and damage feedback already release blocked firing approaches.
     const keepDestroyRoute = mode === 5 && this.path.length > 0 && this.goal !== undefined;
@@ -290,7 +299,7 @@ export class BotController {
             const endpoint = {...target, y: mode === 5 ? candidate.y + 20 : target.y + 20};
             const origin = {...candidate, y: candidate.y + 20};
             const wall = field.firstSurfaceHit(origin, endpoint, 1);
-            if (wall && wall.boxId !== `SCN:${source?.id}`) continue;
+            if (wall && !field.isPlacementHit(wall.boxId, source?.id ?? '')) continue;
             if (source && segmentBox(origin, endpoint, source, 1) === undefined) continue;
             if (mode <= 3 && actors.some(other => other.id !== actor.id && other.alive
               && other.team === actor.team && blocksShot(origin, endpoint, other))) continue;
@@ -307,7 +316,6 @@ export class BotController {
         }
       } else goal = this.goal;
     }
-    if (capture && distance(capture) < capture.radius * .45) goal = undefined;
     if (!goal) {this.path = []; this.goal = undefined; this.planner = undefined; return finishInput();}
     if (!this.planner && ((now >= this.nextPlan && !keepDestroyRoute) || !this.goal || Math.hypot(goal.x - this.goal.x, goal.z - this.goal.z) > 60)) {
       this.planner = new BotPathPlanner(field, actor, goal, actor.movement?.navigation ?? 20);
@@ -318,13 +326,13 @@ export class BotController {
       const planned = this.planner.advance();
       if (planned !== undefined) {
         this.path = planned; this.planner = undefined;
-        this.nextPlan = now + (planned.length ? 2500 : capture ? 8000 : 0);
-        if (!planned.length && target && !capture) {
+        this.nextPlan = now + (planned.length ? 2500 : 0);
+        if (!planned.length && target) {
           this.failedApproaches.set(target.id, failed + 1);
           if (mode === 5) this.repositionDestroy = true;
           this.goal = undefined;
         }
-      } else if (!this.path.length && now - this.planStartedAt >= 8000 && target && !capture) {
+      } else if (!this.path.length && now - this.planStartedAt >= 8000 && target) {
         // An unfinished search is not proof that the target is unreachable.
         // Give other targets a turn, then retry a different firing position.
         this.planner = undefined; this.goal = undefined; this.nextPlan = 0;
@@ -350,7 +358,7 @@ export class BotController {
       if (distance(reached) >= 7) waypoint = reached;
     }
     if (!waypoint) {
-      if (friendly && target && !capture && !this.planner) {
+      if (friendly && target && !this.planner) {
         this.failedApproaches.set(target.id, failed + 1);
         this.goal = undefined; this.nextPlan = now;
       }
@@ -390,6 +398,12 @@ export class BotController {
 }
 
 function angle(value: number): number {return Math.atan2(Math.sin(value), Math.cos(value));}
+function objectiveSource(objective: ObjectiveSnapshot, mapId: number, mode: number): SceneBreakable | undefined {
+  if (objective.sourcePlacementId === undefined) return undefined;
+  const sources = mode === 2 ? getSceneCastles(mapId) : getSceneBreakables(mapId);
+  return sources.find(source => source.id === objective.sourcePlacementId
+    && (mode !== 2 || source.model === objective.sourceModel));
+}
 function canShootSource(position: Point, heading: number, source: SceneBreakable, field: Battlefield,
   actors: readonly BotActor[], ownerId: string): boolean {
   const muzzle = {x: position.x + Math.sin(heading) * 30, y: position.y + 20,

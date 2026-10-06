@@ -8,7 +8,7 @@ export interface BuildingToolRoom {
   roomId: string;
   phase: string;
   mode: number;
-  map: {mapId: number};
+  map: {mapId: number; bunkerHp: number};
   sceneObjects: SceneObjectSnapshot[];
 }
 
@@ -26,14 +26,17 @@ export interface BuildingToolParticipant {
 
 /** Rebuilt Target1/Range0 policy selects the first own damaged living Castle
  *  in source placement order without adding a client target payload. */
-export function selectBuildingToolTarget(mapId: number, sceneObjects: readonly SceneObjectSnapshot[],
-  team: number): SceneObjectSnapshot | undefined {
-  if (team !== 0 && team !== 1) return undefined;
+export function selectBuildingToolTarget(mode: number, mapId: number, bunkerHp: number,
+  sceneObjects: readonly SceneObjectSnapshot[], team: number): SceneObjectSnapshot | undefined {
+  if ((mode !== 1 && mode !== 2) || (team !== 0 && team !== 1)) return undefined;
   const affiliation = team + 1;
   for (const source of getSceneCastles(mapId)) {
     if (source.affiliation !== affiliation) continue;
+    const maxHp = mode === 1 ? source.hp : bunkerHp;
+    if (!Number.isFinite(maxHp) || maxHp <= 0) continue;
     const object = sceneObjects.find(candidate => candidate.id === `CASTLE:${source.id}`
-      && candidate.sourcePlacementId === source.id && candidate.sourceModel === source.model);
+      && candidate.sourcePlacementId === source.id && candidate.sourceModel === source.model
+      && candidate.maxHp === maxHp);
     if (object && object.hp > 0 && object.hp < object.maxHp) return object;
   }
   return undefined;
@@ -56,18 +59,22 @@ export function applyBuildingTool(room: BuildingToolRoom, player: BuildingToolPa
     events.push({roomId: room.roomId, type: 'itemRejected', message, playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0});
   };
-  if (room.mode !== 1) {
-    reject('建筑工具仅可在团队模式使用');
+  if (room.mode !== 1 && room.mode !== 2) {
+    reject('建筑工具仅可在团队或占领模式使用');
     return;
   }
   if (!player.alive || player.combat.status !== 2
       || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
-  const target = selectBuildingToolTarget(room.map.mapId, room.sceneObjects, player.team);
+  const target = selectBuildingToolTarget(room.mode, room.map.mapId,
+    room.map.bunkerHp, room.sceneObjects, player.team);
   if (!target) {
     reject('没有可修复的我方碉堡');
     return;
   }
-  const restored = Math.min(skill.functions[0].y, target.maxHp - target.hp);
+  const cap = room.mode === 1
+    ? getSceneCastles(room.map.mapId).find(source => source.id === target.sourcePlacementId)?.hp
+    : room.map.bunkerHp;
+  const restored = cap === undefined ? 0 : Math.min(skill.functions[0].y, cap - target.hp);
   if (!Number.isFinite(restored) || restored <= 0) {
     reject('碉堡无需修复');
     return;

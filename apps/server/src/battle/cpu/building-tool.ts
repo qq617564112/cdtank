@@ -11,7 +11,7 @@ interface BuildingToolActor {
 
 interface BuildingToolRoom {
   mode: number;
-  map: {mapId: number};
+  map: {mapId: number; bunkerHp: number};
   sceneObjects: readonly SceneObjectSnapshot[];
 }
 
@@ -21,14 +21,15 @@ export function buildingToolHotkey(catalog: CombatCatalog | undefined,
   room: BuildingToolRoom): number {
   const definition = catalog?.items.find(item => item.itemTableId === 502);
   if (!definition || definition.skillIds[0] !== 502) return 0;
-  if (room.mode !== 1 || !actor.alive || actor.combat?.status !== 2) return 0;
+  if ((room.mode !== 1 && room.mode !== 2) || !actor.alive || actor.combat?.status !== 2) return 0;
   const hotkeys = actor.combat.record?.arrays.get(0);
   for (let slot = 5; slot <= 8; slot++) {
     const instance = (hotkeys?.[slot - 2] ?? 0) >>> 0;
     if (!instance) continue;
     const item = inventory?.find(record => (record.instanceId >>> 0) === instance);
     if (!item || item.itemTableId !== 502 || item.ownedQuantity <= 0 || item.battleQuantity <= 0) continue;
-    if (selectBuildingToolTarget(room.map.mapId, room.sceneObjects, actor.team)) return slot;
+    if (selectBuildingToolTarget(room.mode, room.map.mapId, room.map.bunkerHp,
+      room.sceneObjects, actor.team)) return slot;
     return 0;
   }
   return 0;
