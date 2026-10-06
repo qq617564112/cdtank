@@ -83,11 +83,20 @@ def consumers(documents):
                                     'fetch(`/${path}`)')
     destruction_loader = code_evidence('apps/web/src/assets/scenes/scene-breach-visual.ts',
                                       'fetch(this.libraryAsset)')
+    breach_selector = 'apps/web/src/assets/scenes/scene-breach-resources.ts'
+    model_libraries = (ROOT / breach_selector).read_text().split('const modelLibraries:', 1)[1].split('};', 1)[0]
+    published_breach_models = set(re.findall(r'\b(obj\d+):', model_libraries))
+    destruction_selection = code_evidence(breach_selector, 'if (published) return published;')
     for scene_index, scene in enumerate(placements):
         for group in ['records', 'castles']:
             for placement_index, placement in enumerate(scene.get(group, [])):
                 for field, loader in [('animation', animation_loader),
                                       ('destruction', destruction_loader)]:
+                    # Published models use the selector's exact map/model library.
+                    # The catalog binding remains a source reference, not the
+                    # placement's runtime library in that case.
+                    if field == 'destruction' and placement.get('model') in published_breach_models:
+                        continue
                     binding = placement.get(field)
                     if not binding or binding.get('library') not in result:
                         continue
@@ -97,7 +106,8 @@ def consumers(documents):
                         metadata='recovery/output/web-assets/scene-placements.json',
                         pointer=f'/{scene_index}/{group}/{placement_index}/{field}/library',
                         placementId=placement['id'], mapId=scene['id'],
-                        loadingCode=scene_entries))
+                        loadingCode=scene_entries,
+                        **(dict(selectionCode=destruction_selection) if field == 'destruction' else {})))
     return result
 
 def original_material_textures(path):

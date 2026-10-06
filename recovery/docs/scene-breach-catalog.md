@@ -2,7 +2,7 @@
 
 对应M3-02、M3-05、M3-07、M3-08。`export_scenes.py`在读取全部25图原放置后调用`export_scene_breach_catalog.export`，按`SYcScnObjBreach`实际型号查找该型号目录的`c9.CVD`，复用现`export_models`保留原节点槽、父索引、轨道、材质和纹理引用。
 
-有自身c9的记录写入`destruction.library=scene-breach-catalog.json`及精确`destruction.reference=Data/scnobj/<model>/c9.CVD`。共享库每型号只导出一次；缺文件的记录不写破损绑定，库的`missingResources`保存原引用、地图和placementId。`export_asset_usage.py`将这些放置绑定关联到`SceneBreachVisual.load → fetch(this.libraryAsset)`，索引仍只记录加载入口，不声称实际加载通过。
+有自身c9的记录写入`destruction.library=scene-breach-catalog.json`及精确`destruction.reference=Data/scnobj/<model>/c9.CVD`。共享库每型号只导出一次；缺文件的记录不写破损绑定，库的`missingResources`保存原引用、地图和placementId。25个已发布型号优先选既有地图库或型号库，其catalog字段只保留元数据来源关系。`export_asset_usage.py`从当前selector读取已发布型号范围，仅将fallback两型号的放置绑定关联到`SceneBreachVisual.load → fetch(this.libraryAsset)`；索引不声称实际加载通过。
 
 现有原放置共有1144个Breach、30个型号，其中27个型号共1063个放置有自身c9。25个型号共1046个放置可以复用已发布的原型号库；05446和05463共17个放置依赖新共享库导出。已接受地图及既有精确地图库仍优先使用当前消费者。
 
