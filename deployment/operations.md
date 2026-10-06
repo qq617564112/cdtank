@@ -2,6 +2,8 @@
 
 使用 Node.js 24.16 或更高版本。Web 构建为 `npm run build`，服务端构建为 `npm run build:server`。将 `dist/web` 作为静态站点发布；`index.html` 是正式玩家入口，`validation.html` 是独立验证入口。WebSocket `/game` 转发到服务端，示例见 `nginx.conf.example`。
 
+转换后的运行资源、字体和内容表通过 GitHub Releases 提供。克隆或下载后执行 `npm ci` 和 `npm run assets:install` 下载解压，即可使用这些资源构建与打包，无需原客户端、Python 或外部字体。
+
 ## 独立发行目录
 
 完成两端构建后，将已构建的 Web、编译服务端、运行依赖锁文件和内容表打包到新目录：

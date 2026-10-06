@@ -1,6 +1,16 @@
 # GitHub 源码发布
 
-源码仓库保留应用代码、转换工具、开发与还原文档、现有验收入口和依赖锁文件。运行资源、依赖、构建产物、账户存档及本地配置由 `.gitignore` 排除。
+仓库包含应用代码、转换工具、开发与还原文档、现有验收入口、依赖锁文件和资源安装脚本。已提取并转换的运行资源、字体和解码数据表压缩为 `.tar.xz`，单独发布到 GitHub Releases。下载源码后按 README 安装依赖及资源并启动，无需原客户端。
+
+安装后运行资源位于 `recovery/output/web-assets/`，内容表位于 `recovery/output/verified/tables/`。原客户端、下载与恢复输出、依赖、构建产物、账户存档及本地配置由 `.gitignore` 排除。
+
+## 资源包
+
+- 发布页：[v0.3.0](https://github.com/qq617564112/cdtank/releases/tag/v0.3.0)。
+- 附件：`cdtank-assets-0.3.0.tar.xz`，使用 `xz -9e` 压缩。
+- 安装命令：`npm run assets:install`，通过固定版本地址下载并解压到仓库根目录。
+
+更新资源版本时同步修改安装脚本中的版本、发布附件名和 README 下载链接。
 
 ## 仓库首页
 
@@ -29,5 +39,4 @@ git push -u origin HEAD:main
 
 ## 运行发行包
 
-运行发行包由资源重建及两端构建产物组装，与 GitHub 源码仓库分别管理。打包、安装、启动和存档说明见[运行与账户存档](../deployment/operations.md)。
-
+运行发行包由已安装资源、内容表及两端构建产物组装，与 GitHub 仓库分别管理。打包、安装、启动和存档说明见[运行与账户存档](../deployment/operations.md)。

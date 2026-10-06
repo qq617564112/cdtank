@@ -22,8 +22,19 @@
 
 图片于 2026-10-06 获取，以原文件保存，作为项目文档中的原作参考。
 
+## 运行资源与字体
+
+已提取并转换的运行资源通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.3.0) 发布。执行 `npm run assets:install` 自动下载解压，普通运行无需原客户端或另行下载字体。
+
+| 安装后的目录或文件 | 内容与来源 |
+| --- | --- |
+| `recovery/output/web-assets/` | 从原 Windows 客户端提取并转换的模型、贴图、音乐、音效、界面、字库与资源目录 |
+| `recovery/output/verified/tables/` | 从原客户端解码的数据表，保存为 JSON 和 CSV |
+| `recovery/output/web-assets/ui/fonts/SIMSUN.ttf`、`SIMSUN-password.ttf` | 原客户端使用的界面字体及密码字体 |
+| `recovery/output/web-assets/ui/fonts/xiangjiao-brush.ttf` | 项目维护者提供的 `XiangJiaoKuanMaoShuaLingGanTi-2.ttf`，用于动态文字 |
+
 ## 权利说明
 
 原作由上海软星制作、大宇资讯发行。图片中的游戏名称、标志、美术和界面归相应权利人所有，来源网站的图片展示不构成开放许可。项目截图中的原作素材同样保留原有权利；本项目代码的许可不授予原作素材的使用权。
 
-第三方字体、从原客户端提取的模型、贴图、音乐和音效同样保留各自权利。原客户端与生成的运行资源分别保存在本地 `CDTank/` 和 `recovery/output/`，由 Git 忽略。
+第三方字体、从原客户端提取的模型、贴图、音乐和音效同样保留各自权利。原客户端 `CDTank/` 和安装后的资源目录由 Git 忽略，转换后的运行资源和解码数据表通过 Release 资源包发布。

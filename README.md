@@ -44,20 +44,18 @@
 
 ## 本地运行
 
-需要 **Node.js 24.16 或更高版本**、**Python 3**，以及自行准备的原版 `CDTank/` 客户端和 `XiangJiaoKuanMaoShuaLingGanTi-2.ttf` 字体。以下命令在仓库根目录执行。
+需要 **Node.js 24.16 或更高版本**、浏览器和支持 `.tar.xz` 的 `tar`。已提取的模型、贴图、音频、界面、字体和数据表通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.3.0) 提供，安装脚本自动下载解压，无需原客户端、Python 或另行准备字体。Windows 10/11 和 macOS 使用系统 `tar`；Linux 需安装 `tar` 和 `xz-utils`。以下命令在仓库根目录执行。
 
-### 1. 准备资源
+### 1. 安装依赖和资源
 
-将原客户端解压到 `CDTank/`，保留 EXE、`Data/` 和 `download/` 目录。原程序、运行素材和附件字体由本地提供。
+克隆仓库或下载 ZIP 并解压后安装依赖：
 
 ```bash
 npm ci
-python3 -m venv recovery/.venv
-recovery/.venv/bin/python -m pip install -r recovery/requirements.txt
-npm run assets:rebuild -- --font /path/to/XiangJiaoKuanMaoShuaLingGanTi-2.ttf
+npm run assets:install
 ```
 
-已有 `recovery/output/verified/` 提取结果时，使用 `--reuse-verified`；已发布该字体时可以省略 `--font`。详细要求见[资源重建说明](recovery/docs/reproducible-assets.md)。
+脚本下载 `cdtank-assets-0.3.0.tar.xz`，将运行资源解压到 `recovery/output/web-assets/`，内容表解压到 `recovery/output/verified/tables/`。解压后约占 933 MB；资源包包含所需字体。已安装资源后直接启动即可。
 
 ### 2. 启动服务端和网页
 
@@ -109,13 +107,15 @@ recovery/
   evidence/             原程序行为取证脚本和对应实现
   prepared/             还原切片与部分验证所用的候选实现
   implementation/       待集成的界面实现稿
+  output/web-assets/    安装脚本下载的模型、贴图、音频、界面与字体
+  output/verified/tables/ 安装脚本下载的解码数据表
 scripts/                构建、资源重建、打包和账户备份脚本
 deployment/             运行配置、反向代理与存档说明
 tools/asset-viewer/     独立资源查看器
 tests/                  现有资产、规则、联机和页面验收入口
 ```
 
-`CDTank/`、`recovery/output/`、`node_modules/` 和 `dist/` 是本地资源、生成数据、依赖或构建目录，由 `.gitignore` 排除。
+运行资源单独发布到 GitHub Releases。原客户端 `CDTank/`、下载与提取输出 `recovery/output/`、账户数据库、`node_modules/` 和 `dist/` 由 `.gitignore` 排除。
 
 ## 文档
 
@@ -126,7 +126,7 @@ tests/                  现有资产、规则、联机和页面验收入口
 | 图片出处与权利归属 | [素材来源](docs/assets/README.md) |
 | 开发命令、配置与项目范围 | [开发指南](docs/development.md) |
 | 当前还原状态与专题导航 | [还原文档索引](recovery/docs/README.md) |
-| 从原客户端生成资源 | [资源重建](recovery/docs/reproducible-assets.md) |
+| 可选：从原客户端重新生成资源 | [资源重建](recovery/docs/reproducible-assets.md) |
 | 生产部署与账户备份恢复 | [运行与账户存档](deployment/operations.md) |
 | GitHub 源码发布 | [发布说明](docs/github-publication.md) |
 
@@ -134,4 +134,4 @@ tests/                  现有资产、规则、联机和页面验收入口
 
 原作名称、美术、模型、音频、界面和其他游戏素材的权利归相应权利人所有。仓库中的原作参考图片用于介绍复刻对象，图片来源记录在[素材来源](docs/assets/README.md)。本项目与原作开发商、发行商没有官方关联。
 
-运行资源从自行合法持有的原客户端生成。仓库尚未指定代码开源许可证，原作素材和第三方字体的使用、分发授权需分别确认。
+Release 资源包包含从原客户端提取并转换的运行资源，以及运行所用的第三方字体，来源见[素材来源](docs/assets/README.md)。仓库尚未指定代码开源许可证，原作素材和第三方字体保留各自权利。

@@ -27,29 +27,30 @@
 | R5 界面与社会功能 | 登录、频道、我的家、商城、交易、聊天、好友、历史和设置 |
 | R6 综合交付 | 高清多人体验、断线与重入、账户重启恢复、部署和全内容验收 |
 
-## 资源准备
+## 运行资源
 
-原客户端放在仓库根目录的 `CDTank/`。资源准备的完整步骤见[从原客户端重建资源](../recovery/docs/reproducible-assets.md)。主要目录为：
+运行资源、字体和解码数据表已发布到 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.3.0)。普通开发与运行使用 Node.js 24.16 或更高版本及支持 `.tar.xz` 的 `tar`，执行 `npm ci` 和 `npm run assets:install` 后即可启动服务端和网页。主要目录为：
 
-| 本地目录 | 内容 |
+| 目录 | 内容 |
 | --- | --- |
-| `recovery/.venv/` | Python 提取与转换依赖 |
-| `recovery/output/verified/` | 解包资源、已解码内容表与来源清单 |
-| `recovery/output/web-assets/` | Web 和服务端实际读取的转换资源 |
-| `recovery/output/accounts.sqlite` | 开发环境默认账户数据库 |
-| `recovery/output/` 中的其他文件 | 专题取证、验收结果与截图 |
+| `recovery/output/web-assets/` | 安装脚本下载的模型、贴图、音频、界面、字体及资源目录，由 Git 忽略 |
+| `recovery/output/verified/tables/` | 安装脚本下载的解码内容表，包含 JSON 和 CSV，由 Git 忽略 |
+| `recovery/output/accounts.sqlite` | 开发环境默认账户数据库，由运行时创建并由 Git 忽略 |
+| `recovery/output/` 中的其他文件 | 本地提取结果、来源清单、专题取证与截图，由 Git 忽略 |
+| `recovery/.venv/` | 可选资源重建使用的 Python 依赖，由 Git 忽略 |
 
-这些目录包含运行依赖、玩家数据和还原依据。清理生成数据时应保留需要复用的资源与验收记录；运行中账户数据库通过备份命令保存。
+资源重新提取和转换是可选的维护流程，才需要将原客户端放在 `CDTank/` 并安装 Python 依赖，步骤见[从原客户端重建资源](../recovery/docs/reproducible-assets.md)。运行中账户数据库通过备份命令保存。
 
 ## 常用命令
 
-以下命令在仓库根目录执行，运行和构建前需完成资源准备。
+以下命令在仓库根目录执行。安装资源后可直接用于运行、构建和打包。
 
 | 命令 | 用途 |
 | --- | --- |
 | `npm ci` | 按锁文件安装 JavaScript 依赖 |
-| `npm run assets:rebuild -- --font /path/to/font.ttf` | 首次提取并生成运行资源 |
-| `npm run assets:rebuild -- --reuse-verified` | 复用提取结果重新导出资源，需已有附件字体 |
+| `npm run assets:install` | 自动下载并解压 Release 运行资源包，包含字体和内容表 |
+| `npm run assets:rebuild -- --font /path/to/font.ttf` | 可选：从原客户端重新提取并生成运行资源，替换动态文字字体 |
+| `npm run assets:rebuild -- --reuse-verified` | 可选：复用本地完整提取结果重新导出资源，沿用已安装字体；仍需原客户端 |
 | `npm run dev:server` | 启动开发服务端 |
 | `npm run dev` | 启动正式 Web 开发入口 |
 | `npm run tools:assets:dev` | 启动独立资源查看器，默认端口 5211 |
@@ -82,4 +83,3 @@ Web 开发服务器将同源 `/game` WebSocket 转发到游戏服务端。
 现有验收命令保留在根 `package.json`，对应的原始来源和范围记录在[还原文档索引](../recovery/docs/README.md)及各专题中。资产结构、原程序行为对照、联机业务、网页表现和性能分别记录证据，完成状态按[任务清单](../recovery/docs/tasklist.md)维护。
 
 本仓库当前协作约定见[AGENTS.md](../AGENTS.md)。执行检查前需明确要检测的失败和失败后的修改；当前约定不编写单元测试，不运行测试、浏览器验收、构建或类型检查。
-
