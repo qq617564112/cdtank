@@ -110,6 +110,14 @@ Func19的12501/12502/12503 domain、history/account与真实World来源冻结已
 
 未验收边界：原服务端键位回调与实际扣量/落点/技能成功结果仍未取得，不能声明为已恢复；上述为客户端采用规则，未做实际对局、双网页、高清或持久重启验收，也不把静态来源与client链等同原server分派。运行期接口见 battle-cycle-controls-runtime.md，设置与消费见 settings-cycle-controls-client.md。
 
+## 战车改装
+
+对应M6-03/UI-33/M6-06-TU。直接来源为原双 action 改装入口、TankUp 表费用/等级行、owned `+38/+48` 资格与 `+44/+54` 等级、`+3c/+40` 或 `+4c/+50` 攻防/加成字段，以及原3f94/3f95请求确认：请求只带 action 8位和 owned instance 32位，确认先替换完整 money/originality，再按 result 写等级和对应攻防/加成。原服务器结果抽样、返回 attribute/bonus 生成公式和 owned 资格位 producer 未取得。
+
+当前 Web 采用规则登记为单一 `TankUpgrade` API：QUERY 只读返回当前 owned/profile 与 action1/action2 quote；UPGRADE 在账户 `BEGIN IMMEDIATE` 中校验 owned instance、action、资格位、目标 TankUp 行、费用和余额，扣 money/originality，更新 owned 等级和对应攻防/加成，并同事务写 `tank_upgrade_receipts` 与 `account_spending_ledger source='tank-upgrade'`。费用使用 owned `+24` Tank 表 TankMoney 与目标行 Money 的 uint32 低乘积再无符号整除 100，创意点读目标行；等级域 0..24、目标行 1..25，25 为终表哨兵，当前 24 及以上拒绝，最高可执行 23→24，失败下限 0。成功/失败/无效果按表字面值优先采样且不归一化；成功和失败以 Tank 表 Min/Max 无符号增减，属性/加成 clamp 0..0xffff，noEffect 保留当前值。新购 TankShop BUY 仅在新 owned equipment 写 `+38=1/+48=1`，旧/导入 `0` 不迁移，QUERY、SELECT、弹窗、重连、升级、交易、保养、迷彩和普通战斗不改资格位。
+
+无房间与 WAITING 可提交；LOADING、PLAYING、FINISHED 在账户事务前拒绝。新提交在 WAITING 成功后重绑 inventory、角色来源和 equipment profile，取消 Ready 并广播；receipt replay 只返回历史 confirmation 并读取当前 owned/profile，不重扣、不重 roll、不回拨钱包/属性。当前 owned/quote 经 `roleRecords`、`selectedRoleSources`、`World.bindRoleSources` 与 profile 绑定进入现有战斗消费者。原 server 公式、普通自然伤害消费者、真实双端、持久重启、HD 与完整父项仍未实测或取得；M6-03/UI-33/M2-01/M6-06/M5-07 保持未勾。实现细节见 `tank-modification-client-business-design.md`、`tank-modification-runtime.md`、`tank-modification-client-presentation.md`、`tank-modification-implementation.md`。
+
 ## 未完成范围
 
 本批普通输入、消费、期限、目标、快照、Web表现和CPU接线已登记实现；本批一次集中gpt-5.6走查覆盖伪装、空袭与Func22/23，已修复发射边界恢复、普通输入快照先于事件发送，以及Func22/23的query options参数位、direct命中后效复用与Func23端点一致性三项真实问题。光学迷彩与建筑工具既有范围的集中走查与Castle重连稳态及修复事务共用损伤绘声清理保持原范围。确认已有库存的配置/自然施放、光学迷彩到期与死亡/结束/再战、建筑工具实际修复、双端绘声及库存重启恢复仍需实际验收；原未知字段、全部技能分派、五模式完整规则和M8-05不因这一合同关闭。FUNC-22/23只登记当前有限查询/射程执行器及采用的百分比政策，未执行实际玩家授予、取得或对局证据，不把source计算等同原server分派。
