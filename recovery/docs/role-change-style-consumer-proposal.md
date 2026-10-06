@@ -1,45 +1,23 @@
-# FUNC-08 原角色伪装接收消费者准备
+# FUNC-08 角色伪装消费者
 
-原4173/4174消息已确认角色伪装显示与恢复消费者。完整施放权威仍缺，当前生产未接。复用tasklist FUNC-08与M4-10原父，不关闭I09或创建新完成编号。
+物件10/11的两种伪装沿原4173/4174显示字段接入生产。style1使用obj05428南瓜、style2使用obj05422木桶；服务端状态提供确认期限与创建位置，网页以`PlayerSnapshot.roleDisguise`为主要状态来源。普通请求、成功消费和采用的业务规则见`role-disguise-runtime.md`及`client-communication-business-rules.md`，源接收证据见`role-change-style-receiver-source.md`。
 
-## 已确认输入与行为
+## 原显示合同
 
-原4173 `UMsgChangeStyle` 为style8、roleId32：style1加载obj05428南瓜，style2加载obj05422木桶。接收角色和actor缺失时不操作；存在时隐藏战车actor，按角色当前XYZ创建替身世界对象，并保存生成的对象名称用于删除。4174输入roleId32，恢复战车并删除该角色记录的替身对象。原setter与两种tankrender门禁已执行，九路由与四绘制门禁PASS。
+原4173 `UMsgChangeStyle` 为style8、roleId32：style1加载obj05428南瓜，style2加载obj05422木桶。接收角色和actor缺失时不操作；存在时隐藏战车actor，按角色当前XYZ创建替身世界对象，并保存生成的对象名称用于删除。4174输入roleId32，恢复战车并删除该角色记录的替身对象。原setter与两种tankrender门禁已执行，九路由与四绘制门禁PASS；原链没有本机、同队、敌对显示区别，也不清除其它角色绘声。
 
-源模型已有174/108展开顶点与原128纹理资格，可复用既有场景资源，不重新转换。源码只确认创建时复制角色XYZ，不能提前决定替身跟随角色。原链没有本机、同队、敌对区别；不能借此补I09的隐身过滤或透明度。
+源模型已有174/108展开顶点与原128纹理资格，可复用既有场景资源，不重新转换。源码只确认创建时复制角色XYZ，不能提前决定替身跟随角色。原链不能借作I09的隐身过滤或透明度来源。
 
-## 当前正式协议
+## 当前正式状态与通知
 
-`apps/shared/protocols/MsgRoomEvent.ts` 仅有playSkillEffect/stopSkillEffect与shot/scene等消息，没有style或restore语义。`PlayerSnapshot`也没有伪装presence。现SkillEffect通知按skill表特效引用产生树，不承载这两条原模型替换消息，不能把itemUsed或Effect0解释为伪装成功。
+`PlayerSnapshot.roleDisguise`包含skillId10/11、style1/2、startedAt/expiresAt和施放XYZ。`MsgRoomEvent.roleStyleChanged`对应原角色/style显示字段，公共事件XYZ来自权威施放位置；`roleStyleRestored`对应原恢复身份。共享schema手工附加version93、property41及event20/21，未执行生成器；不宣称原codec注册或uint32 objectId生产已恢复。
 
-若主线提供具备资格的权威状态，最小事件输入建议为独立 `roleStyleChanged?: {roleId:number; style:1|2}` 与 `roleStyleRestored?: {roleId:number}`。它们对应原两种通知，不含未知duration或虚构的effect。已有Battle数值role映射 `P${roleId}` 可复用当前适配，仍不宣称恢复原uint32 objectId生产。
+`BattleRoleDisguises`按角色持有替身，键为skillId/style/startedAt/expiresAt/x/y/z。同epoch的快照与通知保留一个替身；快照覆盖断线、晚加入和模型晚加载。替身固定在确认施放XYZ，不跟随角色后续位姿；原后续跟随没有得到证明。
 
-新进入/模型晚加载是否需要snapshot presence，以及替身后续位置、死亡/结算清理时序由主线明确接口后准备；不能只靠不可重放的事件假称完整生命周期。此proposal不修改共享协议或生产。
+`BattlePlayers`以快照为准呈现双方可见的替身并隐藏战车root；角色位姿、动画、相机、插值和碰撞/命中/伤害/HUD路径不变。非PLAYING、死亡、复活前、新局、离房、reselect和清理都会释放替身并恢复战车。`changeRoleStyle(roleId,style)`/`restoreRoleStyle(roleId)`只做快照身份核对，不合成状态或重放通知。
 
-## 权威依赖与归属
+## 待集成与验收
 
-原Func8到4173/4174的server producer仍缺：目标/使用资格、成功消费绑定、T10单位与期限、开火恢复条件、死亡/换局时序。物件和技能说明只能提供资料，不能作为这些规则的原执行证据。待主线选择并明确标注可玩的重建政策后才可普通购买/使用和联机验收。
+另一实现者补齐`Battle`对`roleStyleChanged`/`roleStyleRestored`的显式转发，以及延迟接受开火后再激活伪装时以真实fire结果恢复当前伪装的合同；本次不把这两项写成已完成。原Func8到4173/4174的server producer、T期限writer及原flag12与显示恢复关系仍未恢复。
 
-| 玩家链步骤 | 已确认输入/输出 | 尚缺的权威合同 |
-| --- | --- | --- |
-| 取得与配置 | item10/11关联skill10/11 | 零价商品的合法取得途径、库存和配置资格 |
-| 施放与消费 | skill Func8、X1/2对应原style1/2 | 谁可施放、目标是谁、成功条件与库存CAS因果 |
-| 激活显示 | 4173收到style8/roleId32，隐藏actor并创建替身 | 正式发送者与当前协议中的通知，以及晚加载/新进入所需presence |
-| 期限与开火恢复 | T10原表值、说明文字；4174恢复并删除同角色记录 | T的权威时基、到期触发点、哪一次开火构成恢复条件 |
-| 生命周期 | 原restore删除全部同role替身记录 | 死亡、退离、终局与再战的权威状态清理/通知时序 |
-
-现公开事件和快照都没有承载伪装状态的字段。上表已确认的显示输入不能代替尚缺的施放输出；仅导入呈现模块不能形成可操作玩家链。
-
-root owns权威施放、CAS、公开协议、World生命周期与正式Web接线；本线owns专属数值/来源合同与必要网络测量；FX/地图资源归原owner。当前共享生产freeze保持。
-
-依据：`role-change-style-receiver-source.md`、`role-change-style-receiver-native.json`。新增codec组合探针尚未通过，保留 `role-change-style-wire-native-incomplete.json`，不并入来源PASS；已有原reader/writer静态字段合同保持原有限范围。
-
-## 未导入呈现合同
-
-`recovery/prepared/role-change-style-presentation.ts` 提供纯回调式 `RoleStylePresentation.change(roleId,style)` 与 `restore(roleId)`。role ID保持数字身份，provider提供actor存在性、可见setter、角色XYZ、世界对象创建/按名称删除与scene存在性。它不持有Babylon对象，也未导入生产。
-
-change先隐藏战车，再复制创建时角色XYZ并生成对应模型；保存每一条role ID/对象名称记录，不添加非叠加或刷新规则。restore在actor存在时先恢复可见；scene存在才逐条删除同role的世界名称记录。缺actor时保留记录，与原清理入口门禁一致。源码未给出替身跟随、倒计时、死亡或开火事件绑定，因此模块没有这些行为。
-
-此prepare未执行新native、类型构建或actual，也不登记成玩家业务。主线必须先落实正式权威通知与完整玩家scope，再决定导入和提供scene回调。
-
-原42aa70/42aa71另供给世界创建参数尾0与2；prepare按45aeb6原形参+1c/+20保留raw2/0，不为未证明的参数语义命名成期限或生命周期。
+依据`role-change-style-receiver-source.md`及`role-change-style-receiver-native.json`的9组接收路由/4组draw门禁；codec组合探针未通过，`role-change-style-wire-native-incomplete.json`不作为来源PASS。`recovery/prepared/role-change-style-presentation.ts`保留原回调式消费者来源合同，raw参数2/0未赋予新语义；生产网页按当前状态及资源所有权实现，不把准备模块当作普通玩家验收。当前仅登记实现状态，普通施放/拒绝、双端实际绘制与恢复、自然到期/开火/死亡/再战、高清及库存实际重启仍待实测；一次集中gpt-5.6走查待root集成后执行，FUNC-08及M4-10保持未完成。

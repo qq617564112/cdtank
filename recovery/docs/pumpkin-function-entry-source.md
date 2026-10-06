@@ -8,9 +8,15 @@
 
 | 未恢复字段 | 已确认读写地址 | 已确认链与下一入口 |
 | --- | --- | --- |
-| Func8 X1/X2→伪装身份及actor模型 | 43aee9表加载；实际Func8执行读取与模型写入尚未定位 | item10/11→skill10/11→函数五字段。下一为Func8目标执行器或接收观察者，追至role+310 actor并区分X1/X2 |
-| Func8 T10→期限与恢复 | 43aee9表加载；期限字段写入/恢复回调尚未定位 | 先取得同一Func8 actor producer，再追其时间基准和expiry callback |
-| 开炮或选择弹槽→伪装恢复 | 4288fe→431dbf(12,0)；432528 selector11→4325a6清role+308；431d92读取 | 已证清byte，下一须建立此byte或另一实际伪装状态到actor替换的消费者；不能由说明文字推导绑定 |
-| 正式取得10/11 | 原item.dat ItemMoney=0；无已证正式购买/掉落producer | 查取得授权入口后才可接CAS与普通玩家消费；不新增免费发放规则 |
+| Func8 X1/X2→伪装身份及actor模型 | 43aee9表加载；实际Func8执行读取与模型写入尚未定位 | item10/11→skill10/11→函数五字段。原4173接收消费者已证明X1→obj05428、X2→obj05422及actor隐藏；原Func8 server producer仍未定位 |
+| Func8 T10→期限与恢复 | 43aee9表加载；期限字段写入/恢复回调尚未定位 | 当前生产采用T10=10秒及权威expiresAt；不称原时限writer已恢复 |
+| 开炮或选择弹槽→伪装恢复 | 4288fe→431dbf(12,0)；432528 selector11→4325a6清role+308；431d92读取 | 已证清byte，尚未建立该byte或另一原状态到4174的消费者；当前生产仅在真实开火通过弹药门禁后采用恢复规则 |
+| 正式取得10/11 | 原item.dat ItemMoney=0；无已证正式购买/掉落producer | 当前从已有归属库存或房主有限CPU配置使用，零价不开放免费购买；原取得producer仍未知 |
 
-来源封装pumpkin-function-entry-source.json保留两技能/两物件完整记录、函数列号、十个指令地址和三段原反汇编。脚本recovery/evidence/skills/pumpkin-function-entry-source.py只做一次静态定位，无新native执行或正式对局。FUNC08尚未实现，父项保持开放；表中10秒不构成已恢复的计时执行规则。
+## 当前生产接线
+
+item10/11沿普通input进入`acceptBattleInput`和`role-disguise.ts`，服务端核对原始Func8表值、自用资格、互斥、16槽及有限库存。成功CAS消费后加入本次临时skill10/11并建立权威`roleDisguise={skillId,style,startedAt,expiresAt,x,y,z}`；style1固定创建原obj05428南瓜，style2固定创建原obj05422木桶，替身固定在施放XYZ并双方可见。首槽Effect3/GA16、到期/死亡/复活/结束/新局/离房清理、合法开火后恢复及CPU有限配置策略均已接入。采用规则与直接来源事实分别见`role-disguise-runtime.md`、`role-disguise-client-presentation.md`及`client-communication-business-rules.md`。
+
+另一实现者补齐`Battle`对`roleStyleChanged`/`roleStyleRestored`的显式转发，以及延迟接受开火后再激活伪装时以真实fire结果恢复当前伪装的合同；本次文档不把该待集成项写成已完成。`serviceProto.ts`的version93、property41和event20/21为手工附加字段，未执行协议生成器。
+
+来源封装pumpkin-function-entry-source.json保留两技能/两物件完整记录、函数列号、十个指令地址和三段原反汇编。脚本recovery/evidence/skills/pumpkin-function-entry-source.py只做一次静态定位，无新native执行或正式对局。当前仅有实现登记，普通双端施放/拒绝/恢复、自然到期、高清、持久及一次集中gpt-5.6走查仍待root集成后执行；FUNC-08父项保持未勾。

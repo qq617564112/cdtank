@@ -49,6 +49,6 @@ FuncType2恢复前置已新增原生命赋值合同：433250 selector15先通过
 
 ## 当前有限生产范围
 
-物件9/skill9的Func7已接普通输入、CAS消费、权威10秒及生命周期、快照/Web敌对模型隐藏和CPU观察；物件502/skill502的Func18 X2/Y5000已接本队真实Castle恢复、普通消费、修复事件和CPU配置。原零价/GGet0不开放免费购买，字段事实与采用的规则分列client-communication-business-rules.md。两项实际对局、绘声及持久验收仍待执行。
+物件9/skill9的Func7已接普通输入、CAS消费、权威10秒及生命周期、快照/Web敌对模型隐藏和CPU观察；物件10/11的Func8 X1/X2已接普通输入、CAS消费、临时技能与10秒状态、原4173/4174显示字段、快照/双方替身显示、合法开火恢复及CPU有限配置；物件502/skill502的Func18 X2/Y5000已接本队真实Castle恢复、普通消费、修复事件和CPU配置。原零价/GGet0不开放免费购买，字段事实与采用的规则分列client-communication-business-rules.md。三项实际对局、绘声及持久验收仍待执行；FUNC-08的Battle显式事件转发与延迟开火后重激活fire恢复待另一实现者集成，集中走查待root集成后执行。
 
 Func13的物件3001定时炸弹沿old-bomb-policy.md的既有有限普通购买/放置/直接伤害、双端原资源和同库重启证据；不以该子范围替代原执行器、未知X30或全部函数完成。342技能/204道具的完整状态继续按tasklist.md追踪。

@@ -24,9 +24,9 @@ packet `+c` 是8位style；`+10` 是32位role ID。writer `4898e2` 和reader `49
 
 item10/11分别关联skill10/11；原技能为FuncType8，T10，X1/X2。它们分别是南瓜和木桶伪装，说明文字包含开炮恢复原形。表值和上述style分支相符，但仍未证明原server如何从Func8生成4173、何时生成4174、目标权限、数量消费、10秒时基或开火取消条件。
 
-可准备的正式表现接口是接收权威 `{roleId,style:1|2}` →隐藏同角色战车→按原角色位置显示对应世界对象，以及收到恢复通知→恢复战车→删除该角色替身。正式状态/协议/生命周期接线归主线；来源未足的权威规则需另作明确决策。本片未修改server、World、协议或Web。
+当前生产沿4173/4174原字段接线：权威`{roleId,style:1|2}` presence与事件控制隐藏同角色战车、按原角色施放位置显示对应世界对象，恢复状态或事件控制恢复战车并释放替身。来源未足的权限、消费、期限和开火条件按客户端通信采用，分别见`role-disguise-runtime.md`及`role-disguise-client-presentation.md`；不把这些采用规则写成原服务端执行事实。
 
-替身对象创建/删除及现发布 `obj05428/obj05422` 资源合同见下节；未导入的呈现模块见 `role-change-style-consumer-proposal.md`。下一正式玩家依赖是取得、施放与成功消费、恢复条件和权威通知/presence；创建后的姿态更新仍缺来源。
+替身对象创建/删除及现发布 `obj05428/obj05422` 资源合同见下节；原回调式呈现模块的来源合同见 `role-change-style-consumer-proposal.md`。当前正式业务从已有归属实例接普通施放、成功消费、权威通知和presence；创建后的姿态更新仍缺来源，采用固定施放XYZ。`Battle`显式事件转发和延迟接受开火后再激活伪装时的真实fire恢复由另一实现者补齐，集中走查待root集成后进行。
 
 来源：`CDTank/CDTank.exe`；脚本 `recovery/evidence/skills/role-change-style-receiver-native.py`；产物 `recovery/output/role-change-style-receiver-native.json`。既有 `skill-effect-message.md` 的恢复清理与原actor时钟vtable身份复用。
 
