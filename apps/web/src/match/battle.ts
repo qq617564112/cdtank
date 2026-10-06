@@ -168,6 +168,12 @@ export class Battle {
         this.skillEffects?.event(event);
         if (event.type === 'chat') this.chat.message(event.message);
         if (snapshot && this.playerId) this.sound.event(event, snapshot, this.playerId);
+        if (event.roleStyleChanged) {
+          this.players.changeRoleStyle(event.roleStyleChanged.roleId, event.roleStyleChanged.style);
+        }
+        if (event.roleStyleRestored) {
+          this.players.restoreRoleStyle(event.roleStyleRestored.roleId);
+        }
         if (event.type === 'fire') {
           const localRecoil = this.players.fire(event.playerId);
           if (event.playerId === this.playerId && localRecoil) this.effects.ordinaryFireCamera();
