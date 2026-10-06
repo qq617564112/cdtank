@@ -64,6 +64,16 @@
   user-select: none;
 }
 
+.lobby-source-header {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 800px;
+  height: 57px;
+  z-index: 5;
+  pointer-events: none;
+}
+
 .lobby-source-picture, .lobby-source-stage > .source-static-text,
 .lobby-source-empty-region, .lobby-source-chat-input, .lobby-source-status {
   position: absolute;

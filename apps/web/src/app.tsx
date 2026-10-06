@@ -9,6 +9,7 @@ import {BattleHudView} from './interface/battle/battle-hud-view';
 import {VolumeSettingsView} from './interface/settings/volume-settings';
 import {KeySettingsView, KeyBindingsHint} from './interface/settings/key-settings';
 import {SettingsSourceView} from './interface/settings/settings-source-view';
+import {TutorialSettingsBar} from './interface/settings/tutorial-settings-source-view';
 import {QuickChatSettingsView} from './interface/settings/quick-chat-settings';
 import type {InitialSettings} from './interface/settings/settings-startup';
 import {HomeInventoryView} from './interface/home/home-inventory';
@@ -37,6 +38,7 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
   const [keysOpen, setKeysOpen] = useState(false);
   const [quickChatOpen, setQuickChatOpen] = useState(false);
   const [keyBindings, setKeyBindings] = useState(settings.keys.bindings);
+  const settingsOrigin = useRef<HTMLButtonElement | null>(null);
   function closeKeys(): void {
     document.querySelector<HTMLDialogElement>('#key-settings')?.close();
     setKeysOpen(false);
@@ -45,7 +47,14 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
   function closeQuickChat(): void {
     document.querySelector<HTMLDialogElement>(validation ? '#quick-chat-settings' : '#source-settings')?.close();
     setQuickChatOpen(false);
-    document.querySelector<HTMLButtonElement>('#open-quick-chat-settings')?.focus();
+    const origin = settingsOrigin.current;
+    settingsOrigin.current = null;
+    if (origin?.isConnected && !origin.disabled) origin.focus();
+    else document.querySelector<HTMLButtonElement>('#open-quick-chat-settings')?.focus();
+  }
+  function openSettingsFromHeader(): void {
+    settingsOrigin.current = document.activeElement instanceof HTMLButtonElement ? document.activeElement : null;
+    setQuickChatOpen(true);
   }
   const shopOrigin = useRef<HTMLButtonElement | null>(null);
   function openShop(): void {
@@ -110,6 +119,7 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
   </>;
   return <>
     <LobbyView battle={battle} canvas={canvas} hud={hud} validation={validation}
+      headerContent={<TutorialSettingsBar onSettings={openSettingsFromHeader} onExit={login.exit}/>}
       chatContent={<LobbyChatView chat={battle.lobbyChat} presence={battle.lobbyPresence}/>} playerContent={<LobbySocialView battle={battle}/>} openInventory={openInventory}
       openEquipment={()=>setEquipmentOpen(true)} openRoles={()=>setRolesOpen(true)}
       openShop={openShop} openHistory={()=>setHistoryOpen(true)}/>

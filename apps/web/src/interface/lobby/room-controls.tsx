@@ -16,12 +16,12 @@ import {useRoomInputLimit} from './room-input-limit';
 import {ROOM_NAME_MAX_CODEPOINTS, ROOM_PASSWORD_MAX_CODEPOINTS} from '../../../../shared/room-input';
 import {waitingRoomInfo} from './waiting-room-state';
 
-interface LobbyViewProps {validation?: boolean; chatContent?: ReactNode; playerContent?: ReactNode; battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; openInventory: () => void; openEquipment: () => void; openRoles: () => void; openShop: () => void; openHistory: () => void}
+interface LobbyViewProps {validation?: boolean; chatContent?: ReactNode; playerContent?: ReactNode; headerContent?: ReactNode; battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; openInventory: () => void; openEquipment: () => void; openRoles: () => void; openShop: () => void; openHistory: () => void}
 const MODE_NAMES = ['团队', '占领', '擒王', '混战', '破坏'];
 const INITIAL_DRAFT: RoomCreateDraft = {mode: 1, mapId: 0, roomName: '一起对战', password: '', minPlayers: 1, maxPlayers: 1, friendlyFire: false};
 
 /** Lobby state owns ordinary controls and the original source layout dialogs. */
-export function LobbyView({validation = false, chatContent, playerContent, battle, canvas, hud, openInventory, openEquipment, openRoles, openShop, openHistory}: LobbyViewProps) {
+export function LobbyView({validation = false, chatContent, playerContent, headerContent, battle, canvas, hud, openInventory, openEquipment, openRoles, openShop, openHistory}: LobbyViewProps) {
   const match = useSyncExternalStore(battle.matchPanel.subscribe, battle.matchPanel.getSnapshot, battle.matchPanel.getSnapshot);
   const waiting = match?.phase === 'WAITING';
   const [playerName, setPlayerName] = useState('坦克手'), [tankId, setTankId] = useState(0);
@@ -179,7 +179,8 @@ export function LobbyView({validation = false, chatContent, playerContent, battl
   return <>
     {!validation && <LobbySourcePage visible={!inBattle || waiting} room={waiting}
       roomName={match?.waiting ? waitingRoomInfo(match.waiting).name : ''} status={waiting ? '' : status}
-      chatContent={waiting ? undefined : chatContent} playerContent={playerContent}>
+      chatContent={waiting ? undefined : chatContent} playerContent={playerContent}
+      headerContent={!inBattle && !waiting ? headerContent : undefined}>
       {roomCards}
       <RoomInvitations formal messages={invitations} ignore={id => setInvitations(current => current.filter(value => value.invitationId !== id))}
         join={(message, password) => join(message.room.id, password)}/>

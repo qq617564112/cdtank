@@ -1,0 +1,22 @@
+/* Original SheetWindow is a transparent 800x57 frame; only the buttons take input. */
+.tutorial-settings-bar {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  pointer-events: none;
+}
+
+.tutorial-settings-bar .source-state-button {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.tutorial-settings-bar .source-state-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}

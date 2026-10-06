@@ -12,13 +12,14 @@ interface LobbySourcePageProps {
   children: ReactNode;
   chatContent?: ReactNode;
   playerContent?: ReactNode;
+  headerContent?: ReactNode;
   status: string;
   room?: boolean;
   roomName?: string;
 }
 
 /** The original 800×600 lobby sheet contains the directory, player list and chat regions. */
-export function LobbySourcePage({visible, children, chatContent, playerContent, status, room = false, roomName = ''}: LobbySourcePageProps) {
+export function LobbySourcePage({visible, children, chatContent, playerContent, headerContent, status, room = false, roomName = ''}: LobbySourcePageProps) {
   const {ui, error} = useSourceUi(visible, ['default.xml', 'roomlist.xml', 'playerlist.xml', 'chat.xml']);
   const retry = useRef<HTMLButtonElement>(null);
   const calculate = () => Math.min(innerWidth / 800, innerHeight / 600);
@@ -51,6 +52,7 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
               data-lobby-background="" className="lobby-source-picture"/>
             {!room && <img src={lobbyLogoUrl} className="lobby-game-logo" data-lobby-logo=""
               alt="阿猫阿狗大作战" draggable={false}/>}
+            {!room && headerContent && <div className="lobby-source-header" data-lobby-header="">{headerContent}</div>}
             <SourceStaticImage ui={ui} layout={players} suffix="playerlist.xml" name="haoyou"
               className="lobby-source-picture" data-lobby-player-panel=""/>
             {room ? ['房间', roomName].map((text, index) => {
