@@ -21,6 +21,15 @@ const inCategory = (id: number, category: PartShopCategory) => {
   const type = classifyItemId(id);
   return category === 'Common' ? type >= 8 && type <= 12 : type === (category === 'Hat' ? 5 : 7);
 };
+const MARK_CATALOG_IDS = [12501, 12502, 12503] as const;
+const hasMarkCatalog = (items: readonly {itemTableId: number}[]) =>
+  MARK_CATALOG_IDS.every(id => items.some(item => item.itemTableId === id && inCategory(item.itemTableId, 'Mark')));
+const categoryForItem = (id: number): PartShopCategory => {
+  const type = classifyItemId(id);
+  return type >= 8 && type <= 12 ? 'Common' : type === 5 ? 'Hat' : type === 7 ? 'Mark' : 'Common';
+};
+const positivePrice = (value: number | undefined): value is number =>
+  value !== undefined && Number.isSafeInteger(value) && value > 0;
 
 /** Part purchases reuse the existing Shop transaction and refresh real inventory. */
 export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMoney}: {
@@ -34,18 +43,31 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
   const [saleConfirm, setSaleConfirm] = useState(false);
   const generation = useRef(0);
   const [catalog, setCatalog] = useState<CombatCatalog>();
-  const [selected, setSelected] = useState(owner.pending?.itemTableId ?? owner.selected);
+  const initialSelected = owner.pending?.itemTableId ?? owner.selected;
+  const [selected, setSelected] = useState(initialSelected);
   const [ownedSelected, setOwnedSelected] = useState<number>();
-  const [category, setCategory] = useState<PartShopCategory>('Common');
+  const [category, setCategory] = useState<PartShopCategory>(() => initialSelected === undefined ? 'Common' : categoryForItem(initialSelected));
   const [ownedCategory, setOwnedCategory] = useState<PartShopCategory>('Common');
   const [currency, setCurrency] = useState<ShopCurrency>(owner.pending?.currency ?? 'MONEY');
   const [busy, setBusy] = useState(true);
   const [status, setStatus] = useState('载入部件商品与库存…');
   const focusAfterCommit = useRef<HTMLButtonElement | null>(null);
+  const categoryRef = useRef(category);
+  categoryRef.current = category;
   const products = confirmed?.items.filter(item => inCategory(item.itemTableId, category)) ?? [];
   const product = products.find(item => item.itemTableId === selected);
+  const markAvailable = confirmed ? hasMarkCatalog(confirmed.items) : false;
+  const moneyPrice = product && positivePrice(product.moneyPrice) ? product.moneyPrice : undefined;
+  const tokenPrice = product && positivePrice(product.tokenPrice) ? product.tokenPrice : undefined;
+  const effectiveCurrency = currency === 'MONEY' && moneyPrice !== undefined ? 'MONEY'
+    : currency === 'TOKENS' && tokenPrice !== undefined ? 'TOKENS'
+      : moneyPrice !== undefined ? 'MONEY' : tokenPrice !== undefined ? 'TOKENS' : undefined;
+  const unitPrice = effectiveCurrency === 'MONEY' ? moneyPrice : effectiveCurrency === 'TOKENS' ? tokenPrice : undefined;
   const owned = inventory?.records.filter(item => inCategory(item.itemTableId, ownedCategory)) ?? [];
   useEffect(() => {onBusy(busy);}, [busy, onBusy]);
+  useEffect(() => {
+    if (effectiveCurrency && effectiveCurrency !== currency) setCurrency(effectiveCurrency);
+  }, [effectiveCurrency, currency]);
   useEffect(() => {
     generation.current++;
     const current = {active: true, query: false, identity: {}}; session.current = current;
@@ -65,8 +87,13 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
         setConfirmed(saleResult?.money === undefined ? shop : {...shop, money: saleResult.money});
         setInventory(items); setSale(saleResult); setCatalog(definitions);
         if (saleResult?.money !== undefined) onMoney?.(saleResult.money);
-        setSelected(value => {const id = shop.items.some(item => item.itemTableId === value && inCategory(item.itemTableId, 'Common'))
-          ? value : shop.items.find(item => inCategory(item.itemTableId, 'Common'))?.itemTableId; owner.selected = id; return id;});
+        const markCatalogComplete = hasMarkCatalog(shop.items);
+        const nextCategory = categoryRef.current === 'Mark' && !markCatalogComplete ? 'Common' : categoryRef.current;
+        categoryRef.current = nextCategory; setCategory(nextCategory);
+        setSelected(value => {const id = shop.items.some(item => item.itemTableId === value
+          && inCategory(item.itemTableId, nextCategory)) ? value
+          : shop.items.find(item => inCategory(item.itemTableId, nextCategory))?.itemTableId;
+        owner.selected = id; return id;});
         setStatus(owner.inFlight ? '等待购买确认…' : owner.pending ? '购买未确认，可重试原请求。' : '购买部件后可前往装备。');
       } catch (error) {if (current.active) setStatus(error instanceof Error ? error.message : '部件资料载入失败');}
       finally {current.query = false; if (current.active) {setBusy(Boolean(owner.inFlight || owner.saleInFlight)); if (queued) {queued = false; void refresh();}}}
@@ -82,9 +109,11 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
   }, [busy]);
   async function purchase(button: HTMLButtonElement) {
     const current = session.current;
-    if (!current.active || current.query || owner.inFlight || owner.saleInFlight || !product) return;
-    if (!owner.pending || owner.pending.itemTableId !== product.itemTableId || owner.pending.currency !== currency) {
-      owner.pending = {operation: 'BUY', itemTableId: product.itemTableId, quantity: 1, currency, requestId: createRequestId()};
+    if (!current.active || current.query || owner.inFlight || owner.saleInFlight || !product
+        || effectiveCurrency === undefined || unitPrice === undefined) return;
+    if (!owner.pending || owner.pending.itemTableId !== product.itemTableId || owner.pending.currency !== effectiveCurrency) {
+      owner.pending = {operation: 'BUY', itemTableId: product.itemTableId, quantity: 1,
+        currency: effectiveCurrency, requestId: createRequestId()};
     }
     focusAfterCommit.current = button; setBusy(true); setStatus('等待购买确认…');
     const request = source.shop(owner.pending); owner.inFlight = request;
@@ -109,6 +138,12 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
     }
     setOwnedSelected(instanceId); focusAfterCommit.current = button;
     setStatus(''); setSaleConfirm(true);
+  }
+  function selectProductCategory(kind: PartShopCategory) {
+    if (busy || kind === 'Hat' || kind === 'Mark' && !markAvailable) return;
+    categoryRef.current = kind; setCategory(kind);
+    const id = confirmed?.items.find(item => inCategory(item.itemTableId, kind))?.itemTableId;
+    owner.selected = id; setSelected(id);
   }
   async function sell() {
     const current = session.current, ticket = generation.current;
@@ -136,24 +171,35 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
   }
   return <>
     <PartShopSourcePage ui={ui} money={confirmed?.money} tokens={confirmed?.tokens} quantity={inventory ? owned.length : undefined}
-      category={category} ownedCategory={ownedCategory} busy={busy} selectCategory={setCategory}
+      category={category} ownedCategory={ownedCategory} busy={busy} markAvailable={markAvailable} selectCategory={selectProductCategory}
       selectOwned={value => {generation.current++; setSaleConfirm(false); setOwnedCategory(value); setOwnedSelected(undefined);}} />
     <PartShopSourceList ui={ui} source="lstShopEquip" selected={selected} busy={busy}
       select={id => {owner.selected = id; setSelected(id);}}
       entries={products.map(item => ({id: item.itemTableId, itemTableId: item.itemTableId, product: item, name: item.name, iconId: item.iconId,
-        detail: `${item.moneyPrice}金币 / ${item.tokenPrice}软星币`}))} />
+        detail: [positivePrice(item.moneyPrice) ? `${item.moneyPrice}金币` : '',
+          positivePrice(item.tokenPrice) ? `${item.tokenPrice}软星币` : ''].filter(Boolean).join(' / ')}))} />
     <PartShopSourceList ui={ui} source="lstMyEquip" selected={ownedSelected} busy={busy} select={setOwnedSelected}
       activate={requestSale} canActivate={id => Boolean(source.partSale && sale?.quotes.some(quote => quote.instanceId === id && quote.canSell))}
       entries={owned.map(item => {const definition = catalog?.items.find(value => value.itemTableId === item.itemTableId);
         return {id: item.instanceId, itemTableId: item.itemTableId, ownedQuantity: item.ownedQuantity, moneyPrice: definition?.moneyPrice, name: definition?.name ?? String(item.itemTableId),
           iconId: definition?.iconId ?? 0, detail: `×${item.ownedQuantity} · 实例${item.instanceId}`};})} />
     <div className="part-shop-description" data-part-description="">{product?.info ?? ''}</div>
-    <div className="part-shop-query-prices" data-part-query-prices="">{product ? `${product.moneyPrice}金币 / ${product.tokenPrice}软星币` : ''}</div>
-    <label className="part-shop-currency">币种 <select aria-label="部件购买币种" data-part-currency="" value={currency}
-      disabled={busy} onChange={event => setCurrency(event.currentTarget.value as ShopCurrency)}>
-      <option value="MONEY">金币</option><option value="TOKENS">软星币</option>
+    <div className="part-shop-query-prices" data-part-query-prices="">{product
+      ? [moneyPrice !== undefined ? `${moneyPrice}金币` : '', tokenPrice !== undefined ? `${tokenPrice}软星币` : '']
+        .filter(Boolean).join(' / ') : ''}</div>
+    <label className="part-shop-currency">币种 <select aria-label="部件购买币种" data-part-currency=""
+      value={effectiveCurrency ?? ''} disabled={busy || !product || (moneyPrice === undefined && tokenPrice === undefined)}
+      onChange={event => {
+        const value = event.currentTarget.value;
+        if (value === 'MONEY' && moneyPrice !== undefined || value === 'TOKENS' && tokenPrice !== undefined) {
+          setCurrency(value);
+        }
+      }}>
+      {moneyPrice !== undefined && <option value="MONEY">金币</option>}
+      {tokenPrice !== undefined && <option value="TOKENS">软星币</option>}
     </select></label>
-    <button type="button" className="part-shop-buy" data-part-buy="" disabled={busy || !product}
+    <button type="button" className="part-shop-buy" data-part-buy=""
+      disabled={busy || !product || effectiveCurrency === undefined || unitPrice === undefined}
       onClick={event => {void purchase(event.currentTarget);}}>购买一件</button>
     <button type="button" className="part-shop-equipment" data-part-equipment="" disabled={busy || !onEquipmentPage}
       onClick={onEquipmentPage}>装备拥有部件</button>
