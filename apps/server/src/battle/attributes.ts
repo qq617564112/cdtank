@@ -11,6 +11,7 @@ import {ensureSelectedAmmoSkills, initializeDefaultAmmoMagazine} from './roles/a
 import {recomputeRoleAmmo} from './roles/recompute-ammo';
 import {recomputeQualifiedRoleArmor} from './roles/recompute-armor';
 import {recomputeQualifiedRoleLife} from './roles/recompute-life';
+import {resolveSelectedShotModifiers, type ShotModifiers} from './roles/shot-modifiers';
 import type {TankConfig} from '../config';
 import type {RoleSkillSources} from './roles/skills';
 
@@ -24,6 +25,7 @@ export function recomputeBattleAttributes(player: {
   recoveredMaxHp?: number;
   tank: TankConfig;
   recoveredMovement?: {speed: number; turn: number};
+  shotModifiers?: ShotModifiers;
   ownedRoles: BattleRoleSources;
   boundGear?: OwnedRoleBaseRecord;
   combat: RoleCombatState;
@@ -39,6 +41,7 @@ export function recomputeBattleAttributes(player: {
   player.lifeReady = false;
   player.recoveredMaxHp = undefined;
   player.recoveredMovement = undefined;
+  player.shotModifiers = undefined;
   if (!ensureSelectedAmmoSkills(player.combat)) return;
   const owned = player.ownedRoles.snapshot(), tables = player.ownedRoles.tables();
   const fields = player.combat.attributeSourceFields();
@@ -53,6 +56,7 @@ export function recomputeBattleAttributes(player: {
       : {currentSkillIds: [...currentSkillIds],
         extraSkill: {baseId: fields.get(0x88)!, rank: fields.get(0x8c)!},
         itemIds: [0xbc, 0xc0, 0xc4, 0xc8, 0xcc, 0x70, 0x6c].map(offset => fields.get(offset)!)};
+    player.shotModifiers = resolveSelectedShotModifiers(ammoSources, combatSkills, combatItemSkills);
     const life = recomputeQualifiedRoleLife({ownedHp: owned.base?.fields.get(0x2c),
       sources: ammoSources, skills: combatSkills, items: combatItemSkills,
       limits: combatLimits, roleValue9: player.combat.recomputeCounter,

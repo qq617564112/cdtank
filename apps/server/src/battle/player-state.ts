@@ -24,6 +24,7 @@ import type {InvincibilityState} from './items/invincibility';
 import type {OpticalCamouflageState} from './items/optical-camouflage';
 import type {RoleDisguiseState} from './items/role-disguise';
 import type {PetHitSpeedState} from './pet-hit-speed';
+import type {ShotModifiers} from './roles/shot-modifiers';
 
 export interface PlayerState {
   id: string;
@@ -60,6 +61,7 @@ export interface PlayerState {
   lifeReady?: boolean;
   recoveredMaxHp?: number;
   recoveredMovement?: {speed: number; turn: number};
+  shotModifiers?: ShotModifiers;
   attackBoost?: AttackBoostState;
   defenseBoost?: DefenseBoostState;
   trapRestraint?: TrapRestraintState;

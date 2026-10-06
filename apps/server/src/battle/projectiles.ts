@@ -6,6 +6,7 @@ import {getSceneBreakables} from '../scene-objects';
 import {prototypeAttack, type AttackBoostState} from './items/attack-drink';
 import {calculateQualifiedShotAttack} from './roles/qualified-shot-attack';
 import type {recomputeQualifiedRoleArmor} from './roles/recompute-armor';
+import type {ShotModifiers} from './roles/shot-modifiers';
 
 export interface BulletState {
   id: string;
@@ -135,6 +136,7 @@ export function fireProjectile(room: {
   attackBoost?: AttackBoostState;
   armorReady?: boolean;
   recoveredArmor?: ReturnType<typeof recomputeQualifiedRoleArmor>;
+  shotModifiers?: ShotModifiers;
   combat: {specialFlag12: number; currentAmmoTableId: number};
 }, currentSeconds: number, allocateId: () => string, events: MsgRoomEvent[], bodyRadius: number,
   hitSceneObject?: (targetId: string, damage: number) => boolean,
@@ -142,9 +144,12 @@ export function fireProjectile(room: {
   const speed = 360;
   const angle = player.yaw + player.aim;
   const aim = createRoleFreeAim(player, {x: Math.sin(angle), y: 0, z: Math.cos(angle)}, currentSeconds);
+  const penetratesObstacles = player.shotModifiers?.penetratesObstacles === true;
+  const range = 1000 * (player.shotModifiers?.rangePercent ?? 100) / 100;
   const target = queryShotTarget(player, {x: Math.sin(angle), y: 0, z: Math.cos(angle)},
     room.players, room.battlefield, bodyRadius,
-    player.combat.currentAmmoTableId === 2001 ? room.sceneCrushes : undefined);
+    player.combat.currentAmmoTableId === 2001 ? room.sceneCrushes : undefined,
+    {closestPlayer: penetratesObstacles, range, ignoreObstruction: penetratesObstacles});
   const aimX = aim.x - Math.fround(player.x), aimZ = aim.z - Math.fround(player.z);
   const distance = Math.hypot(aimX, aimZ);
   const directionX = aimX / distance, directionZ = aimZ / distance;
@@ -162,9 +167,9 @@ export function fireProjectile(room: {
   const damage = player.armorReady && player.recoveredArmor
     ? calculateQualifiedShotAttack(player.recoveredArmor)
     : 35 + prototypeAttack(player.tank.attack, player.attackBoost) * 0.08;
-  // Ordinary2001 resolves the selected target during the accepted shot. Source
-  // client branches are immediate; query geometry and server damage are rebuilt.
-  if (itemId === 2001) {
+  // Ordinary2001 and FuncType22 resolve one selected target during the accepted
+  // query boundary; query geometry and server damage are rebuilt.
+  if (itemId === 2001 || penetratesObstacles) {
     if (target.kind === 'PLAYER') hitPlayer?.(target.targetId, damage, itemId);
     else if (target.kind === 'SCENE' && !hitSceneObject?.(target.targetId, damage)) {
       // Original type2 receives remote result feedback without a damage transaction.
@@ -191,5 +196,5 @@ export function fireProjectile(room: {
   room.bullets.push({id: allocateId(), ownerId: player.id, ...muzzle,
     vx: directionX * speed, vy: 0, vz: directionZ * speed,
     // Existing damage remains rebuilt; source drink parameters alter attack at shot creation.
-    damage, ammoItemId: itemId, ttl: 2.2});
+    damage, ammoItemId: itemId, ttl: range > 1000 ? range / speed : 2.2});
 }
