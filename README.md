@@ -1,6 +1,6 @@
 # CDTank · 阿猫阿狗大作战复刻
 
-当前版本：**0.2.0** · [更新日志](CHANGELOG.md#020--2026-10-06)
+当前版本：**0.3.0** · [更新日志](CHANGELOG.md#030--2026-10-06)
 
 ![阿猫阿狗大作战 Online 原作标志](docs/assets/original-cover.jpg)
 
