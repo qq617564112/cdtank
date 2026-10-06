@@ -47,6 +47,7 @@ import {advanceTurnDrink, clearTurnDrink} from './battle/items/turn-drink';
 import {advanceSpeedDrink, clearSpeedDrink} from './battle/items/speed-drink';
 import {advanceInvincibility, clearInvincibility} from './battle/items/invincibility';
 import {advanceOpticalCamouflage, clearOpticalCamouflage} from './battle/items/optical-camouflage';
+import {advanceRoleDisguise, clearRoleDisguise, restoreRoleDisguiseAfterAcceptedFire} from './battle/items/role-disguise';
 import {setReady, changeWaitingTeam, voteRematch, prepareRematch} from './rooms/preparation';
 import {advanceProjectiles} from './battle/projectiles';
 import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSceneObjectCollision} from './battle/environment';
@@ -214,16 +215,20 @@ export class World {
     clearCopiedRoleSkill(player.combat);
     clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
     clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
+    const events: WorldEvent[] = [];
+    clearRoleDisguise(player, () => recomputeBattleAttributes(player), room.roomId, events);
     room.groundTraps = room.groundTraps.filter(trap => trap.ownerId !== playerId);
     resetTrapRestraint(player);
     resetTrapTurnRestraint(player);
     resetTrapFireRestraint(player);
-    return leaveRoomPlayer(this.rooms, room, player, this.minPlayers(room), {
-      finish: outcome => this.finishRoom(room, this.now(), 'FORFEIT', outcome.winnerTeam, outcome.winnerPlayerId),
+    events.push(...leaveRoomPlayer(this.rooms, room, player, this.minPlayers(room), {
+      finish: outcome => this.finishRoom(room, this.now(), 'FORFEIT',
+        outcome.winnerTeam, outcome.winnerPlayerId, events),
       create: mode => {this.createRoom(mode);},
       start: () => this.startRoom(room),
       rematch: () => this.tryRematch(room),
-    });
+    }));
+    return events;
   }
 
   /** Transport loss releases controls without changing the participant or round. */
@@ -371,7 +376,7 @@ export class World {
         room.tick += 1;
         // Expiry precedes simulation: no post-deadline movement, hit or respawn.
         if (now - room.startedAt >= this.timeLimit(room) * 1000) {
-          this.finishRoom(room, now, 'TIME_LIMIT');
+          this.finishRoom(room, now, 'TIME_LIMIT', undefined, undefined, events);
           events.push(event(room.roomId, 'finish', this.finishMessage(room), ''));
         } else {
           this.simulateRoom(room, deltaMs / 1000, now, events);
@@ -435,6 +440,7 @@ export class World {
       advanceAttackDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceInvincibility(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceOpticalCamouflage(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
+      advanceRoleDisguise(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceSpeedDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceTurnDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceAmmoSlow(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
@@ -452,6 +458,7 @@ export class World {
         clearCopiedRoleSkill(player.combat);
         clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
         clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
+        clearRoleDisguise(player, () => recomputeBattleAttributes(player));
         resetTrapRestraint(player);
         resetTrapTurnRestraint(player);
         resetTrapFireRestraint(player);
@@ -467,6 +474,10 @@ export class World {
       staticObjects: player => plantContactColliders(room, player.id, events),
       beforeFire: player => {
         const accepted = consumeConfirmedAmmo(room.roomId, player, this.consumeItem, events);
+        if (accepted) {
+          restoreRoleDisguiseAfterAcceptedFire(room.roomId, player,
+            () => recomputeBattleAttributes(player), events);
+        }
         if (player.combat.dirty) recomputeBattleAttributes(player);
         return accepted;
       },
@@ -537,7 +548,7 @@ export class World {
         player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), events);
     }
     if (advanceObjectives(room, dt)) {
-      this.finishRoom(room, now, 'OBJECTIVE');
+      this.finishRoom(room, now, 'OBJECTIVE', undefined, undefined, events);
       events.push(event(room.roomId, 'finish', this.finishMessage(room), ''));
     }
   }
@@ -594,11 +605,12 @@ export class World {
     clearAttackDrink(target, () => recomputeBattleAttributes(target));
     clearInvincibility(target, () => recomputeBattleAttributes(target));
     clearOpticalCamouflage(target, () => recomputeBattleAttributes(target));
+    clearRoleDisguise(target, () => recomputeBattleAttributes(target), room.roomId, events);
     clearSpeedDrink(target, () => recomputeBattleAttributes(target));
     clearTurnDrink(target, () => recomputeBattleAttributes(target));
     clearAmmoSlow(target, () => recomputeBattleAttributes(target));
     if (outcome) {
-      this.finishRoom(room, this.now(), 'OBJECTIVE', outcome.winnerTeam, outcome.winnerPlayerId);
+      this.finishRoom(room, this.now(), 'OBJECTIVE', outcome.winnerTeam, outcome.winnerPlayerId, events);
       events.push(event(room.roomId, 'finish', this.finishMessage(room), attackerId));
     }
   }
@@ -645,7 +657,8 @@ export class World {
   }
 
   private finishRoom(room: RoomState, now: number, reason: MatchResult['reason'],
-                     winnerTeam?: number, winnerPlayerId?: string): void {
+                     winnerTeam?: number, winnerPlayerId?: string,
+                     events: MsgRoomEvent[] = []): void {
     if (finishRound(room, now, reason, DEFAULT_INPUT, winnerTeam, winnerPlayerId)) {
       clearGroundTraps(room);
       for (const player of room.players.values()) {
@@ -661,6 +674,8 @@ export class World {
       for (const player of room.players.values()) clearAttackDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearInvincibility(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
+      for (const player of room.players.values()) clearRoleDisguise(player,
+        () => recomputeBattleAttributes(player), room.roomId, events);
       for (const player of room.players.values()) clearSpeedDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearTurnDrink(player, () => recomputeBattleAttributes(player));

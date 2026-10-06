@@ -15,8 +15,9 @@ import type {AmmoBurnState} from '../items/ammo-burn';
 import type {AmmoSlowState} from '../items/ammo-slow';
 import type {TrapRestraintState} from '../items/trap-restraint';
 import type {OpticalCamouflageState} from '../items/optical-camouflage';
+import type {RoleDisguiseState} from '../items/role-disguise';
 import {isHiddenByOpticalCamouflage} from '../../../../shared/combat/optical-camouflage';
-import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, turnDrinkHotkey, teamLifeHotkey, type TeamLifeContext} from './items';
+import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, roleDisguiseHotkey, turnDrinkHotkey, teamLifeHotkey, type TeamLifeContext} from './items';
 
 export interface BotActor extends Point {
   id: string;
@@ -40,6 +41,7 @@ export interface BotActor extends Point {
   trapTurnRestraint?: TrapTurnRestraintState;
   trapFireRestraint?: TrapFireRestraintState;
   opticalCamouflage?: OpticalCamouflageState;
+  roleDisguise?: RoleDisguiseState;
   inventory?: readonly BattleItemRecord[];
   combat?: {status?: number; currentAmmoTableId?: number;
     roleFloatFields?: ReadonlyMap<number, number>; record?: {arrays: Map<number, Int32Array>}};
@@ -90,6 +92,7 @@ export class BotController {
       this.escapePoint = undefined;
       return input;
     }
+    if (actor.roleDisguise) input.fire = false;
     input.useItem = healingHotkey(actor) || input.useItem;
     const reach = (start: Point, end: Point) => actor.movement
       ? actor.movement.navigation.reachable(start, end) : field.move(start, end, 20);
@@ -126,9 +129,12 @@ export class BotController {
       : getSceneBreakables(Number(field.source.id)).find(source => source.id === sourcePlacementId);
     const finishInput = (): MsgPlayerInput => {
       const finishItems = (): MsgPlayerInput => {
+        if (actor.roleDisguise) input.fire = false;
         if (input.useItem === 0) input.useItem = petInjectionHotkey(actor);
         if (input.useItem === 0) input.useItem = invincibilityHotkey(actor,
           enemies.some(enemy => distance(enemy) <= 300));
+        if (input.useItem === 0) input.useItem = roleDisguiseHotkey(actor,
+          enemies.some(enemy => distance(enemy) <= 300), input.fire);
         if (input.useItem === 0) input.useItem = opticalCamouflageHotkey(actor,
           enemies.some(enemy => distance(enemy) <= 300));
         if (input.useItem === 0) input.useItem = defenseDrinkHotkey(actor,
@@ -224,7 +230,7 @@ export class BotController {
         && other.team === actor.team && blocksShot(muzzle, end, other));
       const visible = (source ? canShootSource(actor, bearing, source, field, actors, actor.id) : !wall && distance(target) < 700)
         && (mode === 5 || Math.abs(actor.y - target.y) < 18);
-      input.fire = visible && Math.abs(error) < .06 && !friendly;
+      input.fire = !actor.roleDisguise && visible && Math.abs(error) < .06 && !friendly;
       // Rebuilt VIP survival: create aiming time using ordinary collision-tested
       // movement rather than parking within an enemy's firing range while hurt.
       if (mode === 3 && actor.vip && actor.hp !== undefined && actor.maxHp !== undefined

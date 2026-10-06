@@ -1,6 +1,7 @@
 import type {MsgRoomEvent} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
 import type {RoleCombatState} from '../roles/combat-state';
+import type {RoleDisguiseState} from './role-disguise';
 import {combatItems, combatSkills} from '../catalog';
 
 export interface OpticalCamouflageState {
@@ -18,6 +19,7 @@ export interface OpticalCamouflageParticipant {
   combat: RoleCombatState;
   inventory: InventoryWireRecord[];
   opticalCamouflage?: OpticalCamouflageState;
+  roleDisguise?: RoleDisguiseState;
 }
 
 /** Rebuilt self-target authority; source skill9 supplies the effect duration. */
@@ -38,7 +40,7 @@ export function applyOpticalCamouflage(roomId: string, player: OpticalCamouflage
       targetId: '', value: 0, x: 0, y: 0, z: 0});
   };
   const slots = player.combat.record?.arrays.get(4);
-  if (player.opticalCamouflage || slots?.includes(9)) {
+  if (player.opticalCamouflage || player.roleDisguise || slots?.includes(9)) {
     reject('隐身效果已生效');
     return;
   }

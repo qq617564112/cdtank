@@ -11,6 +11,7 @@ import {applyTurnDrink, advanceTurnDrink} from './items/turn-drink';
 import {applySpeedDrink, advanceSpeedDrink} from './items/speed-drink';
 import {applyInvincibility, advanceInvincibility} from './items/invincibility';
 import {applyOpticalCamouflage, advanceOpticalCamouflage} from './items/optical-camouflage';
+import {applyRoleDisguise, advanceRoleDisguise} from './items/role-disguise';
 import {applyTeamLifeItem} from './items/team-life';
 import {applyBuildingTool} from './items/building-tool';
 import type {RoomState} from '../rooms/state';
@@ -34,6 +35,7 @@ export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mo
   advanceAttackDrink(roomId, player, now, () => recomputeBattleAttributes(player), requests);
   advanceInvincibility(roomId, player, now, () => recomputeBattleAttributes(player), requests);
   advanceOpticalCamouflage(roomId, player, now, () => recomputeBattleAttributes(player), requests);
+  advanceRoleDisguise(roomId, player, now, () => recomputeBattleAttributes(player), requests);
   advanceSpeedDrink(roomId, player, now, () => recomputeBattleAttributes(player), requests);
   advanceTurnDrink(roomId, player, now, () => recomputeBattleAttributes(player), requests);
   if (player.alive && player.input.useItem !== 0) {
@@ -49,6 +51,7 @@ export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mo
         applyAttackDrink(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applyInvincibility(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applyOpticalCamouflage(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
+        applyRoleDisguise(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applySpeedDrink(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applyTurnDrink(roomId, player, request, now, () => recomputeBattleAttributes(player), consumeItem, requests);
         applyTeamLifeItem(room, player, request, consumeItem, requests);

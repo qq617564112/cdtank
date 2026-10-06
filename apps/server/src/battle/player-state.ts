@@ -22,6 +22,7 @@ import type {TurnBoostState} from './items/turn-drink';
 import type {SpeedBoostState} from './items/speed-drink';
 import type {InvincibilityState} from './items/invincibility';
 import type {OpticalCamouflageState} from './items/optical-camouflage';
+import type {RoleDisguiseState} from './items/role-disguise';
 import type {PetHitSpeedState} from './pet-hit-speed';
 
 export interface PlayerState {
@@ -68,6 +69,7 @@ export interface PlayerState {
   ammoSlow?: AmmoSlowState;
   invincibility?: InvincibilityState;
   opticalCamouflage?: OpticalCamouflageState;
+  roleDisguise?: RoleDisguiseState;
   speedBoost?: SpeedBoostState;
   turnBoost?: TurnBoostState;
   petHitSpeed?: PetHitSpeedState;

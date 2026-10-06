@@ -5,6 +5,7 @@ import type {OwnedRoleBaseRecord} from '../../../shared/contracts/owned-base';
 import {queuedPartSkillIds} from '../battle/passive-part-effects';
 import {roomMaxPlayers} from './player-limits';
 import type {DefenseBoostState} from '../battle/items/defense-drink';
+import type {RoleDisguiseState} from '../battle/items/role-disguise';
 import type {MsgRoomSnapshot, PlayerSnapshot, MatchResult, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot} from '../../../shared/protocols';
 import {readOwnedTankTextures} from '../../../shared/combat/role-owned-textures';
 import type {RoleOwnedSources} from '../accounts/owned/receive-pair';
@@ -29,6 +30,7 @@ interface SnapshotPlayer {
   speedBoost?: {skillId: number; expiresAt: number; moveBonus: number};
   invincibility?: {skillId: number; expiresAt: number};
   opticalCamouflage?: {skillId: 9; expiresAt: number};
+  roleDisguise?: RoleDisguiseState;
   trapRestraint?: {skillId: 4001; expiresAt: number};
   trapTurnRestraint?: {skillId: 4002; expiresAt: number};
   trapFireRestraint?: {skillId: 4003; expiresAt: number};
@@ -89,6 +91,7 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
     speedBoost: player.speedBoost ? {...player.speedBoost} : undefined,
     invincibility: player.invincibility ? {...player.invincibility} : undefined,
     opticalCamouflage: player.opticalCamouflage ? {...player.opticalCamouflage} : undefined,
+    roleDisguise: player.roleDisguise ? {...player.roleDisguise} : undefined,
     ammoBurn: player.alive && player.burn ? {itemId: 2007, skillId: 4005,
       startedAt: player.burn.startedAt, expiresAt: player.burn.startedAt + 9000} : undefined,
     reload: {duration: player.combat.reloadDuration, startedAt: player.combat.reloadStartedAt, source: player.combat.reloadSource,
