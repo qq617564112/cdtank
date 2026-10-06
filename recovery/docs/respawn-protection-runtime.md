@@ -41,23 +41,37 @@ Either strictly future timestamp blocks damage. It does not read a pose or clien
 Item8 keeps its existing inventory CAS, skill8 slot, consume path, and independent
 `invincibility` state.
 
+`apps/server/src/battle/life.ts` wires this predicate into both damage entry points.
+`damagePlayer` (shot and burn/DOT path) and `damagePlayerDirectly` (direct trap and
+airstrike path) call `isBattleInvincible(target, now)` and return one zero-damage
+`immuneHit` event with no hit, damage, or reward accounting when either timer is
+active. The event `skillId` reports the active source: item8 when its deadline is
+strictly future, otherwise `30001`. Friendly-fire and shot-cancellation checks and
+the original critical, defense, and death settlement order are unchanged. No
+per-item second gate is added.
+
+`finalizePlayerDeath` and `respawnPlayer` call `clearRespawnProtection` so no state
+survives into the next life. Neither path grants protection; the first spawn does
+not receive it, and this module never applies it automatically.
+
 `PlayerState.respawnProtection` is optional and is not initialized by the constructor.
-No inventory, account, role-source, current-skill-slot, or protocol-generator change is
-part of this domain module.
+The snapshot schema (`version 106`) and room projection already carry the optional
+`respawnProtection` field through `playerSnapshot`. No inventory, account,
+role-source, current-skill-slot, or protocol-generator change is part of this domain
+module.
 
 ## Pending runtime wiring
 
-The World/life bridge has not called these APIs yet:
+The `World` lifecycle bridge has not called these APIs yet:
 
 - After a real `respawnPlayer` completes and status2/alive health is restored, call
   `applyRespawnProtection` once. Do not use it for the initial spawn.
 - Advance the timer from the authoritative room tick.
-- On death, finish, round reset, and Leave, call `clearRespawnProtection` so no state
-  reaches the next life.
-- Replace direct `invincibility` checks in direct, shot, trap, airstrike, and periodic
-  damage paths with `isBattleInvincible(player, now)`.
-- Project the optional state through the shared typed snapshot worker. This document
-  does not claim that runtime bridge or snapshot projection is implemented.
+- On finish, round reset, and Leave, call `clearRespawnProtection` so no state reaches
+  the next life.
+
+The original measured acceptance evidence has not been run; this document records
+the implemented wiring and its remaining `World` boundary only.
 
 The source30001 second slot Effect37 is not redefined here. No extra HP restore,
 transparency, attack clearing, sound, composite-skill rewrite, or source ownership

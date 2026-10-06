@@ -7,6 +7,9 @@ import {consumeShotCancellation} from './shot-cancellation';
 import {resolveShotCritical} from './shot-critical';
 import {resolveShotBackCriticalBonus} from './shot-back-critical';
 import {qualifiedLastStandDuration} from './last-stand';
+import {isBattleInvincible} from './items/invincibility';
+import {RESPAWN_PROTECTION_SKILL_ID, clearRespawnProtection,
+  type RespawnProtectionState} from './respawn-protection';
 import type {BattleRoleSources} from '../battle-role-sources';
 import {resolveShotHurtSelector} from './shot-hurt-resistance';
 import {setBattleHealth, type HealthParticipant} from './health';
@@ -40,8 +43,15 @@ interface LifePlayer extends HealthParticipant, RoundStatsCarrier {
   attributes: HealthParticipant['attributes'] & {values?: {roleIntegers: Map<number, number>}};
   burn?: AmmoBurnState;
   invincibility?: {expiresAt: number};
+  respawnProtection?: RespawnProtectionState;
   combat: HealthParticipant['combat'] & {readonly status: number; roleFloatFields?: Map<number, number>; setStatus(status: number): void;
     setSelectedAmmoSlot(value: number): boolean; setCurrentAmmoTableId(value: number): boolean};
+}
+
+/** The active immunity authority, item8 deadline first, otherwise real-respawn protection. */
+function activeImmunitySkillId(target: LifePlayer, now: number): number {
+  return target.invincibility && now < target.invincibility.expiresAt
+    ? 8 : RESPAWN_PROTECTION_SKILL_ID;
 }
 
 /** Apply existing damage and mode counters; World commits any returned outcome. */
@@ -60,11 +70,12 @@ export function damagePlayer(room: {
       playerId: attacker.id, targetId: target.id, value: 0, x: 0, y: 0, z: 0, skillId: undefined});
     return;
   }
-  // Rebuilt item8 authority: a real projectile hits but causes no damage or hit reward.
-  if (target.invincibility && now() < target.invincibility.expiresAt) {
+  // Shared immunity authority: a real projectile hits but causes no damage or hit reward.
+  const hitNow = now();
+  if (isBattleInvincible(target, hitNow)) {
     events.push({roomId: room.roomId, type: 'immuneHit', message: `${target.name}处于无敌状态`,
       playerId: attacker.id, targetId: target.id, value: 0,
-      x: target.x, y: target.y, z: target.z, skillId: 8});
+      x: target.x, y: target.y, z: target.z, skillId: activeImmunitySkillId(target, hitNow)});
     return;
   }
   if (ammoItemId !== undefined && !friendly && attacker.id !== target.id &&
@@ -117,10 +128,10 @@ export function damagePlayerDirectly(room: Parameters<typeof damagePlayer>[0],
   skillId: number, events: MsgRoomEvent[]): ModeOutcome | undefined {
   if (!target.alive || target.combat.status !== 2 || attacker.id === target.id ||
       (room.mode <= 3 && attacker.team === target.team)) return;
-  if (target.invincibility && now < target.invincibility.expiresAt) {
+  if (isBattleInvincible(target, now)) {
     events.push({roomId: room.roomId, type: 'immuneHit', message: `${target.name}处于无敌状态`,
       playerId: attacker.id, targetId: target.id, value: 0,
-      x: target.x, y: target.y, z: target.z, skillId: 8});
+      x: target.x, y: target.y, z: target.z, skillId: activeImmunitySkillId(target, now)});
     return;
   }
   const previousHp = target.hp;
@@ -168,6 +179,7 @@ function finalizePlayerDeath(room: Parameters<typeof damagePlayer>[0],
   target.lastStand = undefined;
   target.alive = false;
   clearAmmoBurn(target);
+  clearRespawnProtection(target);
   target.combat.setStatus(3);
   target.deaths += 1;
   recordPlayerDeath(target);
@@ -192,6 +204,7 @@ export function respawnPlayer(field: Battlefield, player: LifePlayer & {
   spawn: SpawnPoint = field.spawn(Math.floor(Math.random() * field.spawns.length))): void {
   player.lastStand = undefined;
   clearAmmoBurn(player);
+  clearRespawnProtection(player);
   player.x = spawn.x;
   player.y = spawn.y;
   player.z = spawn.z;

@@ -22,7 +22,7 @@ export interface RespawnProtectionParticipant {
 
 /**
  * Install the real-respawn protection once. The adopted source30001 policy is five
- * authoritative clock milliseconds; repeating the notification does not refresh it.
+ * authoritative clock seconds; repeating the notification does not refresh it.
  */
 export function applyRespawnProtection(roomId: string, player: RespawnProtectionParticipant,
   now: number, events: MsgRoomEvent[]): boolean {
