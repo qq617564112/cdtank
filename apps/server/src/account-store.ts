@@ -54,6 +54,7 @@ import {resolveRoleRecomputeSource} from './accounts/owned/source-selection';
 import {readRoleProfileSelection} from './accounts/profile/selection';
 import type {CombatCatalog} from '../../shared/combat/catalog';
 import {classifyItemId} from '../../shared/combat/item-hotkeys';
+import {isTreasureItem} from '../../shared/combat/treasure-items';
 import {roleEquipmentSlotCount} from './accounts/equipment/slot-count';
 import {requestRoleEquipment} from './accounts/equipment/request';
 import {readRoleProfileEquipment, writeRoleProfileEquipment} from './accounts/profile/equipment';
@@ -296,8 +297,14 @@ export class AccountStore {
         return false;
       }
       record.ownedQuantity -= 1;
-      this.database.prepare('UPDATE inventory SET record = ? WHERE account_id = ? AND instance_id = ?')
-        .run(JSON.stringify(record), accountId, instanceId);
+      if (isTreasureItem(itemTableId) && record.ownedQuantity === 0) {
+        // Last Func20 treasure unit: delete the empty instance and every shortcut in the same transaction.
+        this.database.prepare('DELETE FROM inventory WHERE account_id = ? AND instance_id = ?').run(accountId, instanceId);
+        this.database.prepare('DELETE FROM hotkeys WHERE account_id = ? AND instance_id = ?').run(accountId, instanceId);
+      } else {
+        this.database.prepare('UPDATE inventory SET record = ? WHERE account_id = ? AND instance_id = ?')
+          .run(JSON.stringify(record), accountId, instanceId);
+      }
       this.database.exec('COMMIT');
       return true;
     } catch (error) {

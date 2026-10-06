@@ -64,11 +64,19 @@ export function applyTreasureItemUse(roomId: string, player: TreasureUseParticip
   const restored = hp - player.hp;
   item.ownedQuantity -= 1;
   item.battleQuantity -= 1;
+  if (item.ownedQuantity <= 0) {
+    const index = player.inventory.findIndex(record => record.instanceId === item.instanceId);
+    if (index >= 0) player.inventory.splice(index, 1);
+    const hotkeys = player.combat.record?.arrays.get(0);
+    if (hotkeys) for (let slot = 0; slot < hotkeys.length; slot++) {
+      if ((hotkeys[slot] >>> 0) === (item.instanceId >>> 0)) hotkeys[slot] = 0;
+    }
+  }
   setBattleHealth(player, hp, maximum);
   events.push({roomId, type: 'itemUsed',
     message: `${player.name}使用${definition.name}，恢复${Math.round(restored)}生命`,
     playerId: player.id, targetId: player.id, value: restored,
-    x: player.x, y: player.y, z: player.z, skillId: skill.skillId,
+    x: player.x, y: player.y, z: player.z, skillId: skill.skillId, itemName: definition.name,
     playSkillEffect: {skillId: skill.skillId, effectIndex: 0, duration: 0,
       roleId: Number(player.id.slice(1)), xBits: 0, zBits: 0}});
 }

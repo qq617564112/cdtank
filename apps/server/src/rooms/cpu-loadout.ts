@@ -1,6 +1,7 @@
 import type {CpuLoadoutItem} from '../../../shared/protocols/PtlCpu';
-import {CPU_LOADOUT_ITEM_IDS} from '../../../shared/combat/cpu-loadout';
+import {CPU_LOADOUT_ITEM_IDS, isValidCpuLoadoutQuantity} from '../../../shared/combat/cpu-loadout';
 import {classifyItemId} from '../../../shared/combat/item-hotkeys';
+import {isTreasureItem} from '../../../shared/combat/treasure-items';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
 import type {PlayerState} from '../battle/player-state';
 import type {RoomState} from './state';
@@ -21,11 +22,13 @@ export function configureRoomCpuLoadout(room: RoomState, owner: PlayerState,
   for (const entry of loadout) {
     const {slot, itemTableId, quantity} = entry;
     const definition = combatItems.get(itemTableId);
+    const consumeSlot = slot > 4;
+    const consumeAllowed = (itemTableId >= 1 && itemTableId <= 11)
+      || itemTableId === 13 || itemTableId === 502 || isTreasureItem(itemTableId);
     if (!Number.isInteger(slot) || slot < 2 || slot > 8 || slots.has(slot)
         || !CPU_LOADOUT_ITEM_IDS.includes(itemTableId) || !definition
-        || (slot <= 4 ? classifyItemId(itemTableId) !== 3
-          : (itemTableId < 1 || itemTableId > 11) && itemTableId !== 13 && itemTableId !== 502)
-        || !Number.isInteger(quantity) || quantity < 1 || quantity > definition.battleUseMax) {
+        || (consumeSlot ? !consumeAllowed : classifyItemId(itemTableId) !== 3)
+        || !isValidCpuLoadoutQuantity(itemTableId, quantity, definition.battleUseMax)) {
       throw new Error('CPU配置物品或数量无效');
     }
     slots.add(slot);
