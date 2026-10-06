@@ -71,6 +71,7 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
   const [inventory, setInventory] = useState<ResInventory>();
   const [profile, setProfile] = useState<ResRoleProfile['profile']>();
   const [playerSummary, setPlayerSummary] = useState<ResRoleProfile['playerSummary']>();
+  const [growth, setGrowth] = useState<ResRoleProfile['growth']>();
   const [balanceError, setBalanceError] = useState('');
   const [name, setName] = useState('');
   const [nameOpen, setNameOpen] = useState(false);
@@ -101,10 +102,14 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
     const controller = new AbortController();
     setResourceError(undefined);
     setResources(undefined); setInventory(undefined); setSelected(0); setName('');
-    setProfile(undefined); setPlayerSummary(undefined); setBalanceError('');
+    setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined); setBalanceError('');
     setBusy(true); setStatus('载入物品…');
     void battle.roleProfile().then(confirmed => {
-      if (current.active) {setProfile(confirmed.profile); setPlayerSummary(confirmed.playerSummary);}
+      if (current.active) {
+        setProfile(confirmed.profile);
+        setPlayerSummary(confirmed.playerSummary);
+        setGrowth(confirmed.growth);
+      }
     }).catch(error => {if (current.active) setBalanceError(String(error));});
     void (async () => {
       const [uiResponse, catalogResponse] = await Promise.all([
@@ -200,7 +205,7 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
         <HomeSourceRoot ui={resources.ui} page="player" busy={busy}
           selectPage={kind => {if (kind !== 'player') onRolePage?.(kind);}}
           close={requestClose} closeAttribute="data-home-close" />
-        <HomePlayerSourcePage ui={resources.ui} name={name} playerSummary={playerSummary}
+        <HomePlayerSourcePage ui={resources.ui} name={name} playerSummary={playerSummary} growth={growth}
           money={profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0x70, true) : undefined}
           tokens={profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0x74, true) : undefined}
           itemQuantity={inventory ? categoryRecords.length : undefined} valuableMode={page === 'valuable'}

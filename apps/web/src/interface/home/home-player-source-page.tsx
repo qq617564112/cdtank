@@ -4,8 +4,9 @@ import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 
 /** Original player sheet regions around the confirmed inventory and account name. */
-export function HomePlayerSourcePage({ui, name, money, tokens, itemQuantity, playerSummary, valuableMode = false, valuableQuantity}: {
+export function HomePlayerSourcePage({ui, name, money, tokens, itemQuantity, playerSummary, growth, valuableMode = false, valuableQuantity}: {
   ui: HomeSourceUi; name: string; money?: number; tokens?: number; itemQuantity?: number; playerSummary?: ResRoleProfile['playerSummary'];
+  growth?: ResRoleProfile['growth'];
   valuableMode?: boolean; valuableQuantity?: number;
 }) {
   const suffix = 'myhome_playerpage.xml';
@@ -20,11 +21,14 @@ export function HomePlayerSourcePage({ui, name, money, tokens, itemQuantity, pla
     {pictures.filter(source => !valuableMode || !['heseditu', 'shuliangditu', 'zhutu'].includes(source)).map(source => <SourceStaticImage key={source} ui={ui} layout={layout}
       suffix={suffix} name={source} className="home-player-source-picture" aria-hidden="true" />)}
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtPlayerName" text={name} />
-    {([['score', 'txtPlayerScore'], ['originality', 'txtPlayerOriginality'], ['tech', 'txtPlayerTech']] as const).map(([field, source]) =>
-      <SourceStaticText key={field} ui={ui} layout={layout} suffix={suffix} name={source}
-        text={playerSummary === undefined ? '' : String(playerSummary[field])}
-        data-home-player-profile-number={field} data-profile-binding={playerSummary === undefined ? 'unavailable' : 'confirmed-role-profile'}
-        className="home-player-profile-number" />)}
+    {([['score', 'rankPoints', 'txtPlayerScore'], ['originality', 'originality', 'txtPlayerOriginality'], ['tech', 'tech', 'txtPlayerTech']] as const).map(([field, growthField, source]) => {
+      const value = growth === undefined ? playerSummary?.[field] : growth[growthField];
+      const binding = growth === undefined ? playerSummary === undefined ? 'unavailable' : 'confirmed-role-profile' : 'confirmed-account-growth';
+      return <SourceStaticText key={field} ui={ui} layout={layout} suffix={suffix} name={source}
+        text={value === undefined ? '' : String(value)}
+        data-home-player-profile-number={field} data-profile-binding={binding}
+        className="home-player-profile-number" />;
+    })}
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtMoney"
       text={money === undefined ? '' : String(money)} data-confirmed-money={money} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtCoin"
