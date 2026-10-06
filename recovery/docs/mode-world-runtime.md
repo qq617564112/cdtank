@@ -47,6 +47,19 @@
 
 本切片未运行 unit、浏览器、build、typecheck、lint 或 exporter，未新增/修改 tests，也未实测 World 超时链、双网页或原服务器逐行为。World/timeLimit 与角色终局的源码静态核对仅覆盖本合同。
 
-## 下一目标 bridge
+## 目标 bridge
 
-模式 2 的 Castle 与模式 5 的 Breach 生成/伤害/重生 bridge 尚未由本切片接入，属 objectives worker 的后续范围。World 已有接线入口：`startRoom` 调用 `createObjectives`，`simulateRoom` 的 `hitSceneObject`/`hitObjective` 分支调用 `damageObjective`，`advanceObjectives` 返回真值时以 `OBJECTIVE` 结束，`syncBreachCollision`/`resetBreachCollision` 维护动态 NAV 碰撞。本切片不宣称为完整 M 批 review 或 M2 父项完成。
+World 已把 `modes/objectives.ts` 与 `battle/environment.ts`、`battle/breach-collision.ts` 的目标接口接入五模式规则链。
+
+开局/再战（`startRoom`）在同一 `RoomState` 上先 `createObjectives(room, BODY_RADIUS)` 再 `createSceneObjects(room)`：模式 2 两者经 per-round 记忆返回同一 Castle 实例（identity/HP/`destroyedAt`/生命周期一致），无中立 `radius=90` 圈、无 30 秒驻留、无累计 5000 分提前胜利；模式 5 由 `getSceneBreakables` 取全部源 Breach，HP 取 `map.defaultButt`。随后用同一 `now` 调 `syncSceneObjectCollision` 与 `syncBreachCollision`。
+
+命中：模式 2 Castle 经 `hitSceneObject`（`segmentBox` 源 Castle OBB）走 `damageSceneObject`，只有真实敌方 Castle 的 HP 减少才加到攻击方 `teamScores`，己方 Castle 受伤扣同一实例 HP 但不给友方正分；模式 5 Breach 经 `advanceProjectiles.hitObjective`（`segmentBox` 源 Breach）走 `damageObjective`。两条路由各自只扣一次 HP/计一次分。
+
+每 tick 战斗后先 `advanceObjectives(room, now)`（真实服务器毫秒时钟，与快照 `serverTime` 同源），再 `syncBreachCollision`/`syncSceneObjectCollision`，最后处理终局：
+
+- 返回 `{winnerTeam: 0|1}` 时以 `OBJECTIVE` 把该队伍交给 `finishRoom`，模式 2 的 Castle HP 0 在当帧命中与场景事件形成之后、`finishRound` 冻结之前同步结束，不等下一 tick，被毁 Castle 不再被修复、post-terminal 玩家不再得分。
+- 返回 `{winnerTeam: -1}`（模式 5 全清）时由 `timeLimitOutcome(room)` 按个人累计 `objectivesDestroyed` 再战斗分确定 `winnerPlayerId`，完全并列时为空。
+- 模式 5 未全清时 `advanceObjectives` 用同一 `now` 判定 `destroyedAt + buttRebornTime*1000` 到期，按 `map.buttReborn` 原地重生并清 `destroyedAt`，当帧 `syncBreachCollision` 依据重生后 HP 直接判定，不额外延迟整秒，亦不留 broken 视觉或客户端目标 marker。
+- 换局/离房复用既有 `resetBreachCollision`/`resetSceneObjectCollision` 释放动态盒体。
+
+统计 `fired -> countShot` hook、disguise 恢复、airstrike/技能命中链以及用户的 intro/spectator/respawn/新 Health/role 字段接线保持不变。完整掉落业务仍为下一整批合同，本切片不自动授予物品。本桥接不宣称完整 M 批 review 或 M2-10 父项完成。

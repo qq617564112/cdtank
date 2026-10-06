@@ -698,15 +698,23 @@ export class World {
     advanceContactMines(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
     advanceGroundTraps(room, now, events);
-    syncBreachCollision(room, now);
-    syncSceneObjectCollision(room, now);
     if (room.phase !== 'PLAYING') return;
     for (const player of room.players.values()) {
       advanceEquipmentSupply(room.roomId, room.phase, player, now,
         player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), events);
     }
-    if (advanceObjectives(room, dt)) {
-      this.finishRoom(room, now, 'OBJECTIVE', undefined, undefined, events);
+    // Rebirth and rule end read the same real server clock as snapshots; collision
+    // and NAV then follow the post-advance objective HP so a reborn Breach's box is
+    // re-added in the same tick rather than a full second later.
+    const objectiveEnd = advanceObjectives(room, now);
+    syncBreachCollision(room, now);
+    syncSceneObjectCollision(room, now);
+    if (objectiveEnd) {
+      // Mode2 carries the winning team directly; mode5 ends with winnerTeam -1 and
+      // the accumulated objectivesDestroyed/score ranking picks the individual winner.
+      const winnerPlayerId = objectiveEnd.winnerTeam < 0
+        ? timeLimitOutcome(room).winnerPlayerId : objectiveEnd.winnerPlayerId;
+      this.finishRoom(room, now, 'OBJECTIVE', objectiveEnd.winnerTeam, winnerPlayerId, events);
       events.push(event(room.roomId, 'finish', this.finishMessage(room), ''));
     }
   }
