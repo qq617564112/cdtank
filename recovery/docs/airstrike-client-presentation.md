@@ -34,7 +34,7 @@ item13 的 ItemSkill1 为 skill13，首槽 Effect10/SE02/Method3；skill3013 首
 
 ## 待验收
 
-普通玩家道具商店 QUERY/BUY item13、我的家槽5–8 ASSIGN/CANCEL/数量、CPU 槽5–8 配置并重启恢复、战斗中一次合法空袭的 `itemUsed`+Effect10/SE02 世界树与一次 SE02、20 tick 后 `airstrikeImpact`+Effect60/SE32 世界树与一次 SE32、原伤害数字图片、数量消费与库存刷新、暂停/离房/终局/再战清理仍需实测。本片未运行测试、构建、类型/lint、浏览器或任何自动验证，上述结论来自已发布目录与既有 consumer 的静态核对。
+普通玩家道具商店 QUERY/BUY item13、我的家槽5–8 ASSIGN/CANCEL/数量、CPU 槽5–8 配置并重启恢复、战斗中一次合法空袭的 `itemUsed`+Effect10/SE02 世界树与一次 SE02、20 tick 后 `airstrikeImpact`+Effect60/SE32 世界树与一次 SE32、原伤害数字图片、数量消费与库存刷新、暂停/离房/终局/再战清理仍需实测。本批一次集中 gpt-5.6 走查覆盖空袭与 Func22/23，空袭接线静态走查未发现代码错误；roleId0 Play 分支仍走 floatbits，不据此宣称恢复原416f整数截断、world sampling 与 sender。本片未运行测试、构建、类型/lint、浏览器或任何自动验证，上述结论来自已发布目录与既有 consumer 的静态核对。
 
 ## 局限与已知问题
 

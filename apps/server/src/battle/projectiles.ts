@@ -21,6 +21,8 @@ export interface BulletState {
   /** Confirmed ammo at creation; later slot changes cannot change this shot. */
   ammoItemId?: number;
   ttl: number;
+  /** Center-based remaining travel for a range-extended functional bullet. */
+  remainingDistance?: number;
 }
 
 interface ProjectilePlayer extends Point {
@@ -48,9 +50,13 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
   for (let index = room.bullets.length - 1; index >= 0 && room.phase === 'PLAYING'; index--) {
     const bullet = room.bullets[index];
     bullet.ttl -= dt;
-    const destination = {x: bullet.x + bullet.vx * dt,
-      y: bullet.y + bullet.vy * dt, z: bullet.z + bullet.vz * dt};
-    if (bullet.ttl <= 0) {
+    const stepDistance = Math.hypot(bullet.vx, bullet.vy, bullet.vz) * dt;
+    const travel = bullet.remainingDistance === undefined ? stepDistance
+      : Math.min(stepDistance, Math.max(0, bullet.remainingDistance));
+    const stepFraction = stepDistance > 0 ? travel / stepDistance : 1;
+    const destination = {x: bullet.x + bullet.vx * dt * stepFraction,
+      y: bullet.y + bullet.vy * dt * stepFraction, z: bullet.z + bullet.vz * dt * stepFraction};
+    if (bullet.ttl <= 0 && bullet.remainingDistance === undefined) {
       room.bullets.splice(index, 1);
       continue;
     }
@@ -112,9 +118,16 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
       }
       if (room.phase === 'PLAYING') room.bullets.splice(index, 1);
     } else {
+      const travelX = destination.x - bullet.x;
+      const travelY = destination.y - bullet.y;
+      const travelZ = destination.z - bullet.z;
       bullet.x = destination.x;
       bullet.y = destination.y;
       bullet.z = destination.z;
+      if (bullet.remainingDistance !== undefined) {
+        bullet.remainingDistance -= Math.hypot(travelX, travelY, travelZ);
+        if (bullet.remainingDistance <= 0) room.bullets.splice(index, 1);
+      }
     }
   }
 }
@@ -196,5 +209,6 @@ export function fireProjectile(room: {
   room.bullets.push({id: allocateId(), ownerId: player.id, ...muzzle,
     vx: directionX * speed, vy: 0, vz: directionZ * speed,
     // Existing damage remains rebuilt; source drink parameters alter attack at shot creation.
-    damage, ammoItemId: itemId, ttl: range > 1000 ? range / speed : 2.2});
+    damage, ammoItemId: itemId, ttl: range > 1000 ? range / speed : 2.2,
+    remainingDistance: range > 1000 ? range - 30 : undefined});
 }

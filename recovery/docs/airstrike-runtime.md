@@ -32,6 +32,8 @@ FUNC-16/FUNC-15/item13的服务端实现记录。规则、采用政策与未知�
 
 `apps/shared/combat/cpu-loadout.ts` 白名单加入 item13，槽5–8允许配置，数量上限由 `battleUseMax=1` 夹取（source cap1）。`apps/server/src/battle/cpu/items.ts` 新增有限策略：仅当CPU当前存活、`status===2`、已配置有限库存、中心200×200闭方形内有合法可见敌对威胁且当前不 `fire` 时，输出普通快捷输入槽号；不直接消费库存、不直接创建在途记录、不赠送库存，也未扩 item12/501 策略。
 
+本批一次集中 gpt-5.6 走查覆盖空袭与 Func22/23：空袭正价取得、有限库存、普通输入资格、CAS 先行、权威中心、configured tick、单次范围/direct伤害、免伤与死亡结算、在途清理、CPU 输入和单次空间声音接线未发现代码错误。roleId0 Play 仍走 floatbits，未据此宣称恢复原416f整数截断、world sampling 与 sender。
+
 ## 资源范围
 
 已发布 `effect-library.json` 含 `_root\online\060`（3013 Effect60）与 `_root\online\010`（skill13 Effect10）节点，`audio.json` 含 `SE32`。服务端只发 world effect，不新增模型或声音资源、不以通用图形替代。

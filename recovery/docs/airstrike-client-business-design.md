@@ -98,3 +98,5 @@ FUNC-16/FUNC-15/item13。本文从已保存的 item/skill 原表、原 `UMsgSkBo
 ## 范围边界
 
 不新增 unit test、不运行 tests/浏览器/构建/类型/lint/exporter/native/协议生成器。不新增通用技能调度框架、哈希、防护层、兼容包装或免费取得路径。已发布资源存在时不造替代；缺失时只保留资源缺口，不用替代资源掩盖。
+
+本批一次集中 gpt-5.6 走查覆盖空袭与 Func22/23：空袭取得、库存、普通输入资格、CAS 先行、权威中心、configured tick、范围/direct 伤害、免伤与死亡结算、在途清理、CPU 输入及单次空间声音接线未发现代码错误。roleId0 Play 仍走 floatbits，不据此宣称恢复原416f整数截断、world sampling 与 sender。

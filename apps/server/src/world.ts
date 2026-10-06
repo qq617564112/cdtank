@@ -460,6 +460,20 @@ export class World {
       });
     }
     if (room.phase !== 'PLAYING') return;
+    const resolveShotPlayerHit = (owner: PlayerState, target: PlayerState, damage: number,
+      ammoItemId: number | undefined, bearing?: {x: number; z: number}) => {
+      if (!target.alive || room.phase !== 'PLAYING') return;
+      const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);
+      const previousHp = target.hp;
+      this.applyPlayerDamage(room, owner, target, damage, events, selector, undefined, ammoItemId,
+        bearing ? {bodyYaw: target.bodyYaw ?? target.yaw, bearing} : undefined);
+      if (room.phase === 'PLAYING' && ammoItemId === 2007 && target.alive && target.hp < previousHp) {
+        startAmmoBurn(target, owner.id, now);
+      }
+      if (room.phase === 'PLAYING' && ammoItemId === 2008 && target.alive && target.hp < previousHp) {
+        startAmmoSlow(room.roomId, target, now, () => recomputeBattleAttributes(target), events);
+      }
+    };
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {
       respawn: player => {
         clearCopiedRoleSkill(player.combat);
@@ -515,24 +529,14 @@ export class World {
       },
       hitPlayer: (owner, targetId, damage, ammoItemId) => {
         const target = room.players.get(targetId);
-        if (!target?.alive || room.phase !== 'PLAYING') return;
-        const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);
-        this.applyPlayerDamage(room, owner, target, damage, events, selector, undefined, ammoItemId,
-          {bodyYaw: target.bodyYaw ?? target.yaw, bearing: {x: owner.x - target.x, z: owner.z - target.z}});
+        if (!target) return;
+        resolveShotPlayerHit(owner, target, damage, ammoItemId,
+          {x: owner.x - target.x, z: owner.z - target.z});
       },
     });
     advanceProjectiles(room, dt, BODY_RADIUS, {
       hitPlayer: (owner, target, damage, ammoItemId, bearing) => {
-        const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);
-        const previousHp = target.hp;
-        this.applyPlayerDamage(room, owner, target, damage, events, selector, undefined, ammoItemId,
-          bearing ? {bodyYaw: target.bodyYaw ?? target.yaw, bearing} : undefined);
-        if (room.phase === 'PLAYING' && ammoItemId === 2007 && target.alive && target.hp < previousHp) {
-          startAmmoBurn(target, owner.id, now);
-        }
-        if (room.phase === 'PLAYING' && ammoItemId === 2008 && target.alive && target.hp < previousHp) {
-          startAmmoSlow(room.roomId, target, now, () => recomputeBattleAttributes(target), events);
-        }
+        resolveShotPlayerHit(owner, target, damage, ammoItemId, bearing);
       },
       hitObjective: (owner, target, damage, ammoItemId) => {
         if (ammoItemId === MEDICAL_AMMO_ID) return;
