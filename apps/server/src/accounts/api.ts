@@ -96,10 +96,28 @@ export function registerAccountApis(
   server.implementApi('RoleProfile', async call => {
     const accountId = accountByConnection.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
+    if (call.req.selectTitleId !== undefined) {
+      const session = sessionByConnection.get(call.conn.id);
+      if (session && !world.canConfigureInventory(session.playerId)) {
+        return call.error('对局进行中不能更换称号', {code: 'TITLE_SELECTION_REJECTED'});
+      }
+      try {
+        const titles = accounts.selectTitle(accountId, call.req.selectTitleId);
+        if (session) {
+          world.bindTitle(session.playerId, accounts.currentTitle(accountId));
+          broadcastRoomState(session.roomId);
+        }
+        await call.succ({titles});
+      } catch (error) {
+        await call.error(error instanceof Error ? error.message : '称号选择失败', {code: 'TITLE_SELECTION_REJECTED'});
+      }
+      return;
+    }
     const profile = accounts.roleProfile(accountId);
     await call.succ(profile ? {profile: {bytes: [...profile.bytes], strings: profile.strings},
-      playerSummary: readRoleProfilePlayerSummary(profile), growth: accounts.accountGrowth(accountId)}
-      : {growth: accounts.accountGrowth(accountId)});
+      playerSummary: readRoleProfilePlayerSummary(profile), growth: accounts.accountGrowth(accountId),
+      titles: accounts.titles(accountId)}
+      : {growth: accounts.accountGrowth(accountId), titles: accounts.titles(accountId)});
   });
 
   server.implementApi('SelectRole', async call => {

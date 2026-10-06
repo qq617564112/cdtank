@@ -25,6 +25,7 @@ import type {OpticalCamouflageState} from './items/optical-camouflage';
 import type {RoleDisguiseState} from './items/role-disguise';
 import type {PetHitSpeedState} from './pet-hit-speed';
 import type {ShotModifiers} from './roles/shot-modifiers';
+import type {PlayerTitle} from '../../../shared/protocols/MsgRoomSnapshot';
 
 export interface PlayerState {
   id: string;
@@ -82,4 +83,6 @@ export interface PlayerState {
   cpu?: BotController;
   autopilot?: BotController;
   autopilotInputSequence?: number;
+  /** Authoritative account-owned worn title projected from AccountStore; absent means none shown. */
+  title?: PlayerTitle;
 }

@@ -38,6 +38,7 @@ const world = new World(Date.now, {
   minPlayers: runtime.minPlayers,
   timeLimitSeconds: runtime.timeLimitSeconds,
   resolveAccount: connectionId => accountByConnection.get(connectionId),
+  currentTitle: accountId => accounts.currentTitle(accountId),
   onMatchCommitted: match => history.committed(match),
   consumeItem: (playerId, instanceId, expectedOwned, itemTableId) => consumeAccountBattleItem(
     accounts, accountByConnection, sessionByConnection, playerId, instanceId, expectedOwned, itemTableId),
@@ -89,7 +90,8 @@ registerRoomWhisperApi(server, accounts, world, accountByConnection, sessionByCo
 registerFriendsApi(server, accounts, accountByConnection, sessionByConnection);
 registerBlacklistApi(server, accounts, accountByConnection, sessionByConnection);
 registerFriendChatApi(server, accounts, world, accountByConnection, sessionByConnection);
-registerLobbyPresenceApi(server, accountByConnection, sessionByConnection, accountId => accounts.displayName(accountId));
+registerLobbyPresenceApi(server, accountByConnection, sessionByConnection,
+  accountId => accounts.displayName(accountId), accountId => accounts.currentTitle(accountId));
 startWorldTicks(world, TICK_RATE, transport, () => world.publishReceipts(history.flush()));
 
 server.start().catch((error: unknown) => {

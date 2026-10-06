@@ -64,6 +64,7 @@ import type {
   MatchResult,
   MapOption,
 } from '../../shared/protocols';
+import type {PlayerTitle} from '../../shared/protocols/MsgRoomSnapshot';
 import {MAPS, type TankConfig} from './config';
 import type {InventoryWireRecord} from '../../shared/protocols/PtlInventory';
 import type {AccountInventory} from './account-store';
@@ -85,6 +86,8 @@ export type {JoinResult} from './rooms/state';
 interface DepartedParticipant {
   player: MatchResultInput['players'][number];
   accountId?: string;
+  /** Real frozen PLAYING time before this participant left; never extended by the surviving round. */
+  elapsedSeconds?: number;
 }
 
 // Body radius and speed conversion remain prototype rules in native map units.
@@ -115,6 +118,7 @@ export class World {
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
                 consumeItem?: (playerId: string, instanceId: number, expectedOwned: number, itemTableId: number) => boolean;
                 resolveAccount?: (connectionId: string) => string | undefined;
+                currentTitle?: (accountId: string) => PlayerTitle | undefined;
                 onMatchCommitted?: (match: CommittedMatch) =>
                   ReadonlyMap<string, ResultAward> | void} = {}) {
     this.ensureDefaultRooms();
@@ -258,7 +262,8 @@ export class World {
     room.departedParticipants ??= new Map();
     room.departedParticipants.set(player.id, frozen);
     const byRoom = this.departedParticipants.get(room.roomId) ?? new Map();
-    byRoom.set(player.id, {player: frozen, accountId});
+    byRoom.set(player.id, {player: frozen, accountId,
+      elapsedSeconds: Math.max(0, (this.now() - room.startedAt) / 1000)});
     this.departedParticipants.set(room.roomId, byRoom);
   }
 
@@ -268,6 +273,13 @@ export class World {
     for (const player of room.result.players) {
       const award = awards.get(player.id);
       if (award) player.award = award;
+    }
+    // Refresh still-live participants' worn badge after a first or retried commit; the persisted
+    // account title is authoritative and survives disconnect/mid-round leave.
+    for (const [playerId, player] of room.players) {
+      if (!awards.has(playerId)) continue;
+      const accountId = this.options.resolveAccount?.(player.clientId);
+      player.title = accountId ? this.options.currentTitle?.(accountId) : undefined;
     }
   }
 
@@ -330,6 +342,13 @@ export class World {
     const found = this.findPlayer(playerId);
     if (!found || !canBindBattleSources(found.room, found.player)) throw new Error('请在准备阶段配置装备来源');
     bindBattleEquipment(found.room, found.player, profile);
+  }
+
+  /** Project the authenticated account's current worn title onto the live participant. */
+  bindTitle(playerId: string, title: PlayerTitle | undefined): void {
+    const player = this.findPlayer(playerId)?.player;
+    if (!player) throw new Error('角色不存在');
+    player.title = title;
   }
 
   roleAttributes(playerId: string): ReturnType<typeof battleAttributes> {
@@ -738,9 +757,11 @@ export class World {
         result: {...room.result!, players: room.result!.players.map(player => ({...player}))},
         participants: [
           ...[...room.players.values()].map(player => ({playerId: player.id,
-            connectionId: player.clientId, cpu: !!player.cpu})),
+            connectionId: player.clientId, cpu: !!player.cpu,
+            elapsedSeconds: Math.max(0, (now - room.startedAt) / 1000)})),
           ...[...this.departedParticipants.get(room.roomId)?.values() ?? []].map(departed =>
-            ({playerId: departed.player.id, connectionId: '', cpu: false, accountId: departed.accountId})),
+            ({playerId: departed.player.id, connectionId: '', cpu: false, accountId: departed.accountId,
+              elapsedSeconds: departed.elapsedSeconds})),
         ]});
       // Attach the authoritative receipt only after the same-transaction write commits;
       // a failed or replayed commit leaves the frozen award absent.

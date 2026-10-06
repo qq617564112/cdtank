@@ -19,7 +19,8 @@ export function registerBlacklistApi(server: WsServer<ServiceType>, accounts: Ac
         if (sessionByConnection.has(connection.id)) inRoom.add(id);
       }
       await call.succ({blocked: ids.map(accountId => ({accountId, name: accounts.displayName(accountId),
-        online: online.has(accountId), inRoom: inRoom.has(accountId)}))});
+        online: online.has(accountId), inRoom: inRoom.has(accountId),
+        title: accounts.currentTitle(accountId)}))});
     } catch (error) {
       if (!(error instanceof BlacklistRequestError)) throw error;
       await call.error(error.message, {code: error.code});

@@ -8,14 +8,19 @@ export interface CommittedMatch {
   mode: number;
   mapId: number;
   result: MatchResult;
-  /** Departed participants carry the already-resolved `accountId` captured before removal. */
-  participants: {playerId: string; connectionId: string; cpu: boolean; accountId?: string}[];
+  /** Departed participants carry the already-resolved `accountId` captured before removal.
+   * `elapsedSeconds` is the real frozen PLAYING duration for that participant (full round for
+   * participants present at finish, leave time for mid-round departures, absent when uncaptured).
+   */
+  participants: {playerId: string; connectionId: string; cpu: boolean; accountId?: string;
+    elapsedSeconds?: number}[];
 }
 
 interface PendingPayload {
   match: {matchId: string; roomId: string; round: number; mode: number; mapId: number;
     endedAt: number; reason: MatchResult['reason']};
-  participants: {accountId: string; result: MatchResult['players'][number]; playerIds: string[]}[]};
+  participants: {accountId: string; result: MatchResult['players'][number];
+    playerIds: string[]; elapsedSeconds?: number}[]};
 
 /** Receipts for a payload that just committed; World publishes these on the still-live room. */
 export interface CommittedReceipt {
@@ -76,22 +81,34 @@ export function accountMatchHistory(store: AccountStore,
           && receipt.round === match.result.round);
         return retried?.awards ?? NO_AWARDS;
       }
-      // One account settles once per round even with two participant connections.
-      const byAccount = new Map<string, {playerIds: string[]; result: MatchResult['players'][number]}>();
+      // One account settles once per round even with two participant connections; keep the
+      // longest real captured duration so a second connection cannot shorten or double-count it.
+      const byAccount = new Map<string, {playerIds: string[]; result: MatchResult['players'][number];
+        elapsedSeconds?: number}>();
       for (const participant of match.participants) {
         const accountId = participant.accountId
           ?? (participant.cpu ? undefined : accounts.get(participant.connectionId));
         const result = match.result.players.find(player => player.id === participant.playerId);
         if (!accountId || !result) continue;
         const existing = byAccount.get(accountId);
-        if (existing) existing.playerIds.push(result.id);
-        else byAccount.set(accountId, {playerIds: [result.id], result: {...result}});
+        if (existing) {
+          existing.playerIds.push(result.id);
+          if (participant.elapsedSeconds !== undefined
+              && (existing.elapsedSeconds === undefined
+                || participant.elapsedSeconds > existing.elapsedSeconds)) {
+            existing.elapsedSeconds = participant.elapsedSeconds;
+          }
+        } else {
+          byAccount.set(accountId, {playerIds: [result.id], result: {...result},
+            elapsedSeconds: participant.elapsedSeconds});
+        }
       }
       if (!byAccount.size) return NO_AWARDS;
       const payload: PendingPayload = {match: {matchId, roomId: match.roomId, round: match.result.round,
         mode: match.mode, mapId: match.mapId, endedAt: match.result.endedAt, reason: match.result.reason},
         participants: [...byAccount].map(([accountId, entry]) =>
-          ({accountId, result: entry.result, playerIds: entry.playerIds}))};
+          ({accountId, result: entry.result, playerIds: entry.playerIds,
+            elapsedSeconds: entry.elapsedSeconds}))};
       try {
         commit(payload);
       } catch (error) {

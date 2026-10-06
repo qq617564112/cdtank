@@ -28,6 +28,7 @@ export function accountBattleBinding(accounts: AccountStore, world: World,
         world.bindInventory(playerId, accounts.inventory(accountId));
         world.bindRoleSources(playerId, accounts.selectedRoleSources(accountId));
         world.bindEquipmentProfile(playerId, accounts.roleProfile(accountId));
+        world.bindTitle(playerId, accounts.currentTitle(accountId));
       }
     },
   };

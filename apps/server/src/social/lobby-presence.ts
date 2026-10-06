@@ -1,11 +1,13 @@
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
+import type {PlayerTitle} from '../../../shared/protocols/MsgRoomSnapshot';
 
 /** Current authenticated lobby connections, deduplicated by rebuilt account identity. */
 export function registerLobbyPresenceApi(server: WsServer<ServiceType>,
   accountByConnection: ReadonlyMap<string, string>,
   sessionByConnection: ReadonlyMap<string, {roomId: string; playerId: string}>,
-  displayName: (accountId: string) => string): void {
+  displayName: (accountId: string) => string,
+  currentTitle: (accountId: string) => PlayerTitle | undefined): void {
   server.implementApi('LobbyPlayers', async call => {
     if (!accountByConnection.has(call.conn.id)) {
       return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
@@ -19,7 +21,7 @@ export function registerLobbyPresenceApi(server: WsServer<ServiceType>,
       if (accountId && !sessionByConnection.has(connection.id)) ids.add(accountId);
     }
     const players = [...ids].sort().map(accountId => ({accountId,
-      name: displayName(accountId)}));
+      name: displayName(accountId), title: currentTitle(accountId)}));
     await call.succ({players});
   });
 }

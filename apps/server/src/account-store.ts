@@ -12,6 +12,7 @@ import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../shared/protocols/Pt
 import type {TradeAccount, TradeOffer} from '../../shared/protocols/PtlTrade';
 import {DatabaseSync} from 'node:sqlite';
 import {AccountHistory} from './accounts/history';
+import {AccountTitle} from './accounts/title';
 import {AccountShop} from './accounts/shop';
 import {AccountTankShop} from './accounts/tank-shop';
 import {AccountTankMaintenance} from './accounts/tank-maintenance';
@@ -54,6 +55,8 @@ import type {OwnedTankTextures} from '../../shared/combat/role-owned-textures';
 import {readOwnedTankTextures} from '../../shared/combat/role-owned-textures';
 import type {RoleTankTextureConfirmation} from '../../shared/contracts/tank-textures';
 import {applyRoleTankTextureConfirmation, evaluateRoleTankTextureRequest} from './accounts/tank-texture-change';
+import type {AccountTitles} from '../../shared/protocols/PtlRoleProfile';
+import type {PlayerTitle} from '../../shared/protocols/MsgRoomSnapshot';
 
 export interface AccountSession {accountId: string; token: string;}
 export interface AccountInventory {records: InventoryWireRecord[]; hotkeys: number[];}
@@ -66,6 +69,7 @@ export interface AccountRoleRecords {
 export class AccountStore {
   private readonly database: DatabaseSync;
   private readonly matchHistory: AccountHistory;
+  private readonly accountTitle: AccountTitle;
   private readonly matchReward: AccountReward;
   private readonly accountShop: AccountShop;
   private readonly accountTankShop: AccountTankShop;
@@ -97,6 +101,7 @@ export class AccountStore {
         payload BLOB NOT NULL, strings TEXT NOT NULL);
     `);
     this.matchHistory = new AccountHistory(this.database);
+    this.accountTitle = new AccountTitle(this.database);
     this.matchReward = new AccountReward(this.database);
     this.accountShop = new AccountShop(this.database);
     this.accountTankShop = new AccountTankShop(this.database);
@@ -184,7 +189,25 @@ export class AccountStore {
 
   recordMatchHistory(match: HistoryMatch, participants: readonly HistoryParticipant[],
       grant?: RewardGrant): boolean {
-    return this.matchHistory.record(match, participants, grant);
+    return this.matchHistory.record(match, participants, grant,
+      (accountId, matchId, round, elapsedSeconds) =>
+        this.accountTitle.grant(accountId, matchId, round, match.endedAt, elapsedSeconds));
+  }
+
+  /** Authoritative owned title catalog and worn selection for the RoleProfile reply. */
+  titles(accountId: string): AccountTitles {
+    return this.accountTitle.titles(accountId);
+  }
+
+  /** Current worn badge for other-player projections; never exposes private profile data. */
+  currentTitle(accountId: string): PlayerTitle | undefined {
+    return this.accountTitle.currentTitle(accountId);
+  }
+
+  /** Explicit title selection; 0 clears, any other id must be owned by this account. */
+  selectTitle(accountId: string, titleId: number): AccountTitles {
+    this.accountTitle.select(accountId, titleId);
+    return this.accountTitle.titles(accountId);
   }
 
   history(accountId: string, offset = 0, limit = 20): ResHistory {

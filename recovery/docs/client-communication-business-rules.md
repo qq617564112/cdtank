@@ -66,6 +66,10 @@
 
 首次`(account,matchId,round)`与既有`match_history`同SQLite事务写入receipt，重复返回同一receipt不重复加钱成长；账户缺失或写失败整场回滚，沿既有pending history队列重试，保存成功才在冻结结果上附`award`。重试成功后`flush`返回收据，`World.publishReceipts`只在房间仍存在、同roomId/round且`FINISHED`时补附，下个常规snapshot带late award；房间已释放只落库。CPU/旁观无account跳过，同一account多participants只结算一次；`forfeitOutcome`命中时离场人在delete前冻结真实身份并入FORFEIT结算，普通leave但留人继续时同样在delete与账号映射清理前冻结参赛者统计与真实accountId、不提前结算，终局与现`players`合并一次。共享合同`MsgRoomSnapshot.AccountGrowth`与`ResultAward`、`ResultPlayer.award?`、`ResRoleProfile.growth?`已提交beea00d；UI按4818b0c只渲染该receipt，不从local推算或重放授予。以上为采用规则，未在原Windows程序对照，实际对局/双网页/高清/持久重启未执行。
 
+## 称号
+
+对应M6-05。原`title.dat`列`称号ID/称号名称/说明/FunctionType/FunctionX/FunctionY/FunctionZ/a/b/c`与统计选择器1–23已恢复；原客户端称号显示消费者为`game_main.xml`/`room_main.xml`的`txtPlayerTitle0..11`、`myhome_playerpage.xml:222`、`playerlist_playerinfo.xml:248`与`myhome_playerpage_titlesummary.xml`的`lstTitles`，当前佩戴原路径为角色属性`m_iNowTitle`（index2，record`+0x14`，type14）。原独立“选择/佩戴称号”请求opcode与成功回包、原服务端授予writer未取得，故不据此补造新请求。当前采用：授予在结算同一事务内按真实累计统计做exactly-once评估，持久化为typed`account_titles`/`account_title_selection`/`account_title_playtime`；默认无称号、首次授予无显式选择时按最大owned ID佩戴、`0`主动清空；累计wins/losses/draws/kills/deaths/最大连段从`match_history`全记录重算，`battleSeconds`只累加真实冻结时长；缺producer的hits/shots/damage/killCombo/九奖项/spend不授予。查询与选择走既有`RoleProfile`的`titles`/`selectTitleId`，其它玩家资料为optional typed `title` badge，不暴露原私有资料/growth。原numeric链只作source fact，生产transport为typed badge；未在原Windows对照、实际网络/双网页/HD/持久重启未执行。
+
 ## 未完成范围
 
 本批普通输入、消费、期限、目标、快照、Web表现和CPU接线已登记实现；本批一次集中gpt-5.6走查覆盖伪装、空袭与Func22/23，已修复发射边界恢复、普通输入快照先于事件发送，以及Func22/23的query options参数位、direct命中后效复用与Func23端点一致性三项真实问题。光学迷彩与建筑工具既有范围的集中走查与Castle重连稳态及修复事务共用损伤绘声清理保持原范围。确认已有库存的配置/自然施放、光学迷彩到期与死亡/结束/再战、建筑工具实际修复、双端绘声及库存重启恢复仍需实际验收；原未知字段、全部技能分派、五模式完整规则和M8-05不因这一合同关闭。FUNC-22/23只登记当前有限查询/射程执行器及采用的百分比政策，未执行实际玩家授予、取得或对局证据，不把source计算等同原server分派。

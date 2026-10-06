@@ -3,9 +3,16 @@ import type {MatchHistoryRecord, ResHistory} from '../../../shared/protocols/Ptl
 import type {ResultAward, ResultPlayer} from '../../../shared/protocols/MsgRoomSnapshot';
 
 export type HistoryMatch = Omit<MatchHistoryRecord, 'result'>;
-export interface HistoryParticipant {accountId: string; result: ResultPlayer;}
+export interface HistoryParticipant {
+  accountId: string;
+  result: ResultPlayer;
+  /** Real frozen round duration for this account; absent for legacy rounds with no captured time. */
+  elapsedSeconds?: number;
+}
 /** Persists one participant's award inside the caller's transaction; a throw rolls the whole match back. */
 export type RewardGrant = (accountId: string, result: ResultPlayer) => ResultAward | undefined;
+/** Persists one account's title grant/play time inside the same transaction, after its history row. */
+export type TitleGrant = (accountId: string, matchId: string, round: number, elapsedSeconds?: number) => void;
 
 /** Rebuilt persistence stores existing settlement scores without assigning rewards. */
 export class AccountHistory {
@@ -21,7 +28,7 @@ export class AccountHistory {
   }
 
   record(match: HistoryMatch, participants: readonly HistoryParticipant[],
-      grant?: RewardGrant): boolean {
+      grant?: RewardGrant, titleGrant?: TitleGrant): boolean {
     this.database.exec('BEGIN IMMEDIATE');
     try {
       const existing = this.database.prepare(
@@ -40,6 +47,7 @@ export class AccountHistory {
         const record: MatchHistoryRecord = {...match,
           result: award ? {...participant.result, award} : participant.result};
         insert.run(participant.accountId, match.matchId, match.round, match.endedAt, JSON.stringify(record));
+        titleGrant?.(participant.accountId, match.matchId, match.round, participant.elapsedSeconds);
       }
       this.database.exec('COMMIT');
       return true;

@@ -7,6 +7,7 @@ import {roomMaxPlayers} from './player-limits';
 import type {DefenseBoostState} from '../battle/items/defense-drink';
 import type {RoleDisguiseState} from '../battle/items/role-disguise';
 import type {MsgRoomSnapshot, PlayerSnapshot, MatchResult, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot} from '../../../shared/protocols';
+import type {PlayerTitle} from '../../../shared/protocols/MsgRoomSnapshot';
 import {readOwnedTankTextures} from '../../../shared/combat/role-owned-textures';
 import type {RoleOwnedSources} from '../accounts/owned/receive-pair';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
@@ -35,6 +36,7 @@ interface SnapshotPlayer {
   trapTurnRestraint?: {skillId: 4002; expiresAt: number};
   trapFireRestraint?: {skillId: 4003; expiresAt: number};
   burn?: {startedAt: number};
+  title?: PlayerTitle;
 }
 
 interface SnapshotRoom {
@@ -94,6 +96,7 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
     roleDisguise: player.roleDisguise ? {...player.roleDisguise} : undefined,
     ammoBurn: player.alive && player.burn ? {itemId: 2007, skillId: 4005,
       startedAt: player.burn.startedAt, expiresAt: player.burn.startedAt + 9000} : undefined,
+    title: player.title ? {...player.title} : undefined,
     reload: {duration: player.combat.reloadDuration, startedAt: player.combat.reloadStartedAt, source: player.combat.reloadSource,
       remaining: player.alive ? Math.max(0, player.combat.nextAvailableSeconds - Math.fround(currentSeconds)) : 0}};
 }
