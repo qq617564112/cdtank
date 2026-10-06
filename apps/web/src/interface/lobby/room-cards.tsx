@@ -54,8 +54,8 @@ function RoomCard({room, index, ui, selected, busy, select, activate}: {
       {text('txtTeam0PlayerNumber', room.teamPlayerCounts ? String(room.teamPlayerCounts[0]) : '—', team)}
       {text('txtTeam1PlayerNumber', room.teamPlayerCounts ? String(room.teamPlayerCounts[1]) : '—', team)}
       {child('picModeMelee', undefined, !team)}{child('xiang', undefined, !team)}{text('txtPlayerNumber', String(room.playerCount), !team)}
-      {child('picLock', undefined, !!room.hasPassword)}{child('picStarted', undefined, room.phase === 'PLAYING')}
-      <span className="room-card-capacity"><SourceFeedbackText text={`${room.playerCount}/${room.maxPlayers}${room.phase === 'FINISHED' ? ' 待再战' : !canJoinRoom(room) && room.phase !== 'PLAYING' ? ' 满员' : ''}`} /></span>
+      {child('picLock', undefined, !!room.hasPassword)}{child('picStarted', undefined, room.phase === 'PLAYING' || room.phase === 'LOADING')}
+      <span className="room-card-capacity"><SourceFeedbackText text={`${room.playerCount}/${room.maxPlayers}${room.phase === 'LOADING' ? ' 载入中' : room.phase === 'FINISHED' ? ' 待再战' : !canJoinRoom(room) && room.phase !== 'PLAYING' ? ' 满员' : ''}`} /></span>
     </SourceButton>
   </div>;
 }

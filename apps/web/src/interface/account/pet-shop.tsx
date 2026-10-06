@@ -1,4 +1,5 @@
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../../shared/protocols/PtlOwnedRoleSale';
+import {createRequestId} from '../../network/request-id';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
 import {SourceImageScale} from '../resources/source-static-image';
 import './pet-shop.css';
@@ -119,7 +120,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
     if (busy || owner.saleInFlight || !saleQuote?.canSell || saleQuote.selected || !source.ownedRoleSale) return;
     if (!owner.salePending || owner.salePending.instanceId !== saleQuote.instanceId) {
       owner.salePending = {operation: 'SELL', kind: 'pet', instanceId: saleQuote.instanceId,
-        requestId: crypto.randomUUID().replaceAll('-', '')};
+        requestId: createRequestId()};
     }
     focusAfterCommit.current = button;
     setStatus(''); setSaleConfirm(true);
@@ -150,7 +151,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
     const current = session.current;
     if (!current.active || current.query || owner.inFlight || mode !== 'buy' || !product) return;
     if (!owner.pending || owner.pending.petId !== product.petId) {
-      owner.pending = {operation: 'BUY', petId: product.petId, currency: 'MONEY', requestId: crypto.randomUUID()};
+      owner.pending = {operation: 'BUY', petId: product.petId, currency: 'MONEY', requestId: createRequestId()};
     }
     focusAfterCommit.current = button;
     setBusy(true); setStatus('等待购买确认…');

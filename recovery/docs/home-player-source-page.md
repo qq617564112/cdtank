@@ -29,6 +29,6 @@ node --import tsx tests/browser-home-player-source-page.mjs --supplement-only
 
 ## 限制
 
-确认余额与当前库存记录数见[余额资料](/workspace/cdtank/recovery/docs/home-player-confirmed-content.md)。原修改昵称按钮已接确认昵称业务，见[昵称页](/workspace/cdtank/recovery/docs/home-name-source-page.md)。右侧总结区域已接保存History统计与原奖章图区域，Battle/Award页签互斥，History保持挂载且不重复查询；见[统计证据](/workspace/cdtank/recovery/output/home-battle-summary-page-accepted.json)与[奖章区域](/workspace/cdtank/recovery/docs/home-award-summary.md)。
+确认余额与当前库存记录数见[余额资料](home-player-confirmed-content.md)。原修改昵称按钮已接确认昵称业务，见[昵称页](home-name-source-page.md)。右侧总结区域已接保存History统计与原奖章图区域，Battle/Award页签互斥，History保持挂载且不重复查询；见[统计证据](../output/home-battle-summary-page-accepted.json)与[奖章区域](home-award-summary.md)。
 
-等级、称号、家族、创意点、技能点、积分、个人介绍、称号名单、奖章权威计数及贵重品业务仍未恢复。具体动态字段来源缺口见[字段记录](/workspace/cdtank/recovery/output/home-remaining-dynamic-field-source-gaps.json)，积分getter链见[定向来源](/workspace/cdtank/recovery/output/home-player-score-update-source.json)。这些字段不填零或模板。原介绍修改、终身统计完整含义、原动态挂载、Windows/GPU及高清1:1精度仍开放；完整66控件和M5-09/UI-36保持未勾。
+等级、称号、家族、创意点、技能点、积分、个人介绍、称号名单、奖章权威计数及贵重品业务仍未恢复。具体动态字段来源缺口见[字段记录](../output/home-remaining-dynamic-field-source-gaps.json)，积分getter链见[定向来源](../output/home-player-score-update-source.json)。这些字段不填零或模板。原介绍修改、终身统计完整含义、原动态挂载、Windows/GPU及高清1:1精度仍开放；完整66控件和M5-09/UI-36保持未勾。

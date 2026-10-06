@@ -19,7 +19,7 @@
 
 每笔新购入分配同账户库存及全部角色未占用的正实例；拥有记录+0为实例、+8为请求定义，+2c/+34/+3c复制该定义MaxHP/Critical/Lucky，六技能与原等级逐槽复制，包括0级。完整31数值字段其余值清0，名称取原表。实例分配、正价目录开放及购入初值采用明确重建服务端政策。
 
-现有单事务扣款/独立base/收据保存、账户隔离、10只容量及回放保持。相同账户请求ID用于另一出售定义时拒绝并保留原值；同定义回放已有收据，不再次扣费。详细事务及原来源见 [pet-purchase-transaction.md](/workspace/cdtank/recovery/docs/pet-purchase-transaction.md) 和 [pet-purchase-source.md](/workspace/cdtank/recovery/docs/pet-purchase-source.md)。
+现有单事务扣款/独立base/收据保存、账户隔离、10只容量及回放保持。相同账户请求ID用于另一出售定义时拒绝并保留原值；同定义回放已有收据，不再次扣费。详细事务及原来源见 [pet-purchase-transaction.md](pet-purchase-transaction.md) 和 [pet-purchase-source.md](pet-purchase-source.md)。
 
 ## 验证
 

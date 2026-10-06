@@ -12,7 +12,7 @@
 | 混战 | 首先10次击毁；截止比较击毁及分数 | 0007木桶广场新手房，300秒，测试2人 | test:timed:browser，模式4；test:melee:browser | 自然多人混战与原阈值规则 |
 | 破坏 | 摧毁全部原Breach或截止，比较摧毁数及分数 | 0020阴森魔王路，180秒，原最低4人 | test:destroy:browser；test:timed:browser，模式5 | 自然清空全部117物件；0021/0022实际对局 |
 
-实际通过记录与时间以progress.md及recovery/output各测试JSON为准。自动脚本只发送正常UI操作和键盘事件，读取快照与Babylon场景验证结果；服务端夹具不能替代自然完整局。浏览器目前采用960×540及hardwareScaling3软件GPU，高清多人性能另行验收。
+实际通过记录与时间以[任务清单](tasklist.md)及recovery/output各测试JSON为准。自动脚本只发送正常UI操作和键盘事件，读取快照与Babylon场景验证结果；服务端夹具不能替代自然完整局。浏览器目前采用960×540及hardwareScaling3软件GPU，高清多人性能另行验收。
 
 ## 继续推进顺序
 

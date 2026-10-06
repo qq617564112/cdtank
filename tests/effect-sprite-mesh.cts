@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {Constants, NullEngine, RawTexture, Scene, Texture, VertexBuffer} from '@babylonjs/core';
+import {Constants, FreeCamera, Material, NullEngine, RawTexture, Scene, Texture, Vector3, VertexBuffer} from '@babylonjs/core';
 import {EffectSpriteMesh} from '../apps/web/src/render/effects/common/effect-sprite-mesh';
+import {effectCameraCorners} from '../apps/web/src/render/effects/camera/effect-camera';
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const texture = RawTexture.CreateRGBATexture(new Uint8Array([255, 255, 255, 255]), 1, 1,
@@ -32,7 +33,31 @@ for (const index of [6, 7, 8, 9]) {
 }
 assert.throws(() => new EffectSpriteMesh(scene, library.rendering.scripts[0].techniques[0].passes[0], texture));
 assert.equal(scene.materials.length, 0);
+const camera = new FreeCamera('explosion-culling', new Vector3(0, 0, -100), scene);
+const explosionPass = library.rendering.scripts.find((script: {index: number}) => script.index === 3).techniques[0].passes[0];
+for (const cull of ['CCW', 'CW', 'NONE']) {
+  const sprite = new EffectSpriteMesh(scene, {states: [...explosionPass.states,
+    {name: 'CullMode', value: cull}]}, texture);
+  for (const position of [new Vector3(0, 0, -100), new Vector3(100, 60, -80)]) {
+    camera.position.copyFrom(position);
+    camera.setTarget(Vector3.Zero());
+    sprite.update(effectCameraCorners(camera, [0, 0, 0], [40, 40, 40], 0),
+      [0, 0, .25, .25], 0xffffffff);
+    const positions = sprite.mesh.getVerticesData(VertexBuffer.PositionKind)!;
+    const transform = camera.getViewMatrix().multiply(camera.getProjectionMatrix());
+    const [a, b, c] = [0, 3, 6].map(offset =>
+      Vector3.TransformCoordinates(Vector3.FromArray(positions, offset), transform));
+    const signedArea = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    assert.ok(signedArea < 0, 'reflected explosion billboard faces clockwise in clip space');
+    const frontFacing = signedArea < 0 ?
+      sprite.material.sideOrientation === Material.ClockWiseSideOrientation :
+      sprite.material.sideOrientation === Material.CounterClockWiseSideOrientation;
+    assert.equal(!sprite.material.backFaceCulling || frontFacing, cull !== 'CW',
+      `native ${cull} must preserve its visible side after reflection`);
+  }
+  sprite.dispose();
+}
 texture.dispose();
 scene.dispose();
 engine.dispose();
-console.log('PASS: source GBF6–9 Babylon mesh/state, reflected vertices, UV updates, ownership/disposal; unresolved cull rejected');
+console.log('PASS: source GBF mesh/state, projected explosion culling, reflected vertices, UV updates, ownership/disposal; unresolved cull rejected');

@@ -1,4 +1,4 @@
-import {ArcRotateCamera, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
+import {ArcRotateCamera, Color3, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
 import {TankView} from '../../assets/tanks/tank-view';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {advanceHomePreviewOrbit, HOME_PREVIEW_CLIP_PLANES} from './home-preview-orbit';
@@ -45,6 +45,7 @@ export class HomeTankPreview {
       if (!this.engine) {
         this.engine = new Engine(this.canvas, true, {alpha: true}, true);
         this.scene = new Scene(this.engine); this.scene.clearColor = new Color4(0, 0, 0, 0);
+        this.scene.ambientColor = Color3.White();
         this.camera = new ArcRotateCamera('home-camera', -Math.PI / 2.5, Math.PI / 3, 100, Vector3.Zero(), this.scene);
         this.camera.minZ = HOME_PREVIEW_CLIP_PLANES.near;
         this.camera.maxZ = HOME_PREVIEW_CLIP_PLANES.far;
@@ -83,7 +84,8 @@ export class HomeTankPreview {
     } catch (error) {
       if (revision !== this.revision) return;
       this.view?.dispose(); this.view = undefined; this.desired = undefined;
-      this.element.dataset.status = 'error'; this.message.value = `模型载入失败：${String(error)}`;
+      console.error('拥有战车预览模型载入失败', error);
+      this.element.dataset.status = 'error'; this.message.value = '模型载入失败，请刷新页面重试。';
     }
   }
 

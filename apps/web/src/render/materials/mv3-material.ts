@@ -48,6 +48,7 @@ gl_FragColor=color;}`,
   }
   material.backFaceCulling = true;
   material.depthFunction = Constants.LESS;
+  material.transparencyMode = transparent ? ShaderMaterial.MATERIAL_ALPHABLEND : ShaderMaterial.MATERIAL_OPAQUE;
   material.alphaMode = transparent ? Constants.ALPHA_COMBINE : Constants.ALPHA_DISABLE;
   material.metadata = {originalMV3: {properties: [...properties], opacity, script: transparent ? 'geom_t' : 'newgeom',
     ambient, scope: 'Source material formula with scene ambient; original actor lighting and fog remain incomplete'}};

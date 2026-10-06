@@ -16,9 +16,9 @@
 
 完整回调只在阶段2进入；结果3且实例查找成功时，先复制返回三槽到拥有记录，再通过真实资料 virtual scalar setter `0x42fdea → 0x420551` 写入 scalar7/26。末端监听者收到结果时已经读到确认后的选择与余额。其他结果或实例缺失保留选择和余额；阶段2的监听者仍收到结果。其他阶段不通知。
 
-## 共享接收入口
+## 确认与取证入口
 
-[role-texture-transfer-sol.ts](/workspace/cdtank/apps/shared/combat/role-texture-transfer-sol.ts) 提供原请求 writer、原确认 reader 和 `applyRoleTankTextureConfirmation`。evaluateRoleTankTextureRequest按原DWORD累加与unsigned余额比较检查费用，1422实际表请求与高位余额/同DWORD表示对照通过；零值或未变化不查表。接收函数按结果3与实例匹配更新拥有记录三个字段及资料 `+0x74/+0x70`；替换记录保留名称和其他字段，通知发生在更新后。它接收已经确认的余额，没有计算服务端价格或给账户增加拥有记录。
+[role-texture-transfer-sol.ts](../evidence/tank-textures/role-texture-transfer-sol.ts) 提供原请求 writer 和原确认 reader；[tank-texture-change.ts](../../apps/server/src/accounts/tank-texture-change.ts) 提供 `applyRoleTankTextureConfirmation` 和 `evaluateRoleTankTextureRequest`。费用检查按原DWORD累加与unsigned余额比较执行，1422实际表请求与高位余额/同DWORD表示对照通过；零值或未变化不查表。接收函数按结果3与实例匹配更新拥有记录三个字段及资料 `+0x74/+0x70`；替换记录保留名称和其他字段，通知发生在更新后。它接收已经确认的余额，没有计算服务端价格或给账户增加拥有记录。
 
 ## 验证
 

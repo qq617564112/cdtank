@@ -50,7 +50,7 @@ export function HomePetOwnedDetails({ui, record, catalog, description, quotes, p
         <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txtSkillName${index}`}
           text={skill?.name ?? ''} title={skill?.info} />
         <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txtSkillLevel${index}`}
-          text={skillId && level !== undefined ? String(level) : ''} />
+          text={skill && level !== undefined ? String(level) : ''} />
       </span>;
     })}
     <div {...sourceProps(ui, layout, suffix, 'edtPetDesc')} className="home-pet-owned-description"

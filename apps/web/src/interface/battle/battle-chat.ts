@@ -1,9 +1,14 @@
 import {DEFAULT_QUICK_CHAT_PREFERENCES, validateQuickChatPreferences} from '../settings/quick-chat-preferences';
 import type {QuickChatKey, QuickChatPreferences} from '../settings/quick-chat-preferences';
+import {CHAT_NOTICE_FADE_MS, CHAT_NOTICE_FULL_MS} from './battle-chat-visibility';
 
 export interface BattleChatSnapshot {
   visible: boolean;
+  phase: string;
   sourceActive: boolean;
+  editing: boolean;
+  noticePhase: 'hidden' | 'full' | 'fading';
+  confirmedSends: number;
   players: readonly {id: string; name: string}[];
   messages: readonly {id: number; text: string}[];
   draft: string;
@@ -17,10 +22,11 @@ export interface BattleChatSnapshot {
 /** Acknowledged room chat state. Presentation and keyboard listeners belong to React. */
 export class BattleChat {
   private state: BattleChatSnapshot = {
-    visible: false, sourceActive: false, players: [], messages: [], draft: '', targetName: '', channel: 0,
-    status: '', pending: false, generation: 0,
+    visible: false, phase: '', sourceActive: false, editing: false, noticePhase: 'hidden', confirmedSends: 0,
+    players: [], messages: [], draft: '', targetName: '', channel: 0, status: '', pending: false, generation: 0,
   };
   private nextMessage = 0;
+  private noticeTimer?: ReturnType<typeof setTimeout>;
   private readonly listeners = new Set<() => void>();
   private quickChats: QuickChatPreferences = {...DEFAULT_QUICK_CHAT_PREFERENCES};
   constructor(private readonly send: (text: string, channel: 0 | 1 | 2 | 3, targetName?: string) => Promise<void>,
@@ -42,9 +48,28 @@ export class BattleChat {
   setChannel(channel: 0 | 1 | 2 | 3): void {
     if (!this.state.pending) this.update({channel});
   }
+  /** Opens the editor when the battle source layout is the active presentation. */
+  openEditor(): void {
+    if (!this.state.visible || !this.state.sourceActive || this.state.editing) return;
+    this.cancelNotice();
+    this.update({editing: true, status: '', noticePhase: 'hidden'});
+  }
+  /** Leaves edit mode but preserves the draft; used by Esc and by confirmed sends. */
+  closeEditor(): void {if (this.state.editing) this.update({editing: false});}
+  /** Clears any transient incoming-message notice and its timers. */
+  cancelNotice(): void {
+    if (this.noticeTimer !== undefined) {clearTimeout(this.noticeTimer); this.noticeTimer = undefined;}
+    if (this.state.noticePhase !== 'hidden') this.update({noticePhase: 'hidden'});
+  }
+  /** Stops pending notice timers without notifying listeners; used on view teardown. */
+  cancelNoticeTimer(): void {
+    if (this.noticeTimer !== undefined) {clearTimeout(this.noticeTimer); this.noticeTimer = undefined;}
+  }
   setPhase(phase: string): void {
     const sourceActive = phase === 'PLAYING' || phase === 'FINISHED';
-    if (sourceActive !== this.state.sourceActive) this.update({sourceActive});
+    if (phase === this.state.phase && sourceActive === this.state.sourceActive) return;
+    if (!sourceActive) this.cancelNotice();
+    this.update({phase, sourceActive, ...(sourceActive ? {} : {editing: false, noticePhase: 'hidden' as const})});
   }
   setPlayers(players: readonly {id: string; name: string}[]): void {
     if (players.length === this.state.players.length && players.every((player, index) =>
@@ -78,7 +103,10 @@ export class BattleChat {
     this.update({pending: true, status: '正在发送…'});
     void this.send(text, channel, targetName).then(() => {
       if (generation !== this.state.generation) return;
-      this.update({status: '', ...(clearDraft && this.state.draft.trim() === text ? {draft: ''} : {})});
+      this.update({status: '', editing: false, confirmedSends: this.state.confirmedSends + 1,
+        ...(clearDraft && this.state.draft.trim() === text ? {draft: ''} : {})});
+      // A confirmed send closes compose; surface the acknowledged message as a notice.
+      if (this.state.sourceActive) this.startNotice();
     }).catch(error => {
       if (generation === this.state.generation) this.update({status: String(error)});
     }).finally(() => {
@@ -89,9 +117,27 @@ export class BattleChat {
   show(): void {this.update({visible: true});}
   message(text: string): void {
     this.update({messages: [...this.state.messages, {id: ++this.nextMessage, text}].slice(-50)});
+    if (this.state.sourceActive && !this.state.editing) this.startNotice();
+  }
+  /** Confirmed-message frame: full opacity, then a short blur fade to hidden. */
+  private startNotice(): void {
+    if (this.noticeTimer !== undefined) clearTimeout(this.noticeTimer);
+    this.update({noticePhase: 'full'});
+    this.noticeTimer = setTimeout(() => {
+      this.noticeTimer = undefined;
+      if (!this.state.sourceActive || this.state.editing) return;
+      this.update({noticePhase: 'fading'});
+      this.noticeTimer = setTimeout(() => {
+        this.noticeTimer = undefined;
+        if (!this.state.sourceActive || this.state.editing) return;
+        this.update({noticePhase: 'hidden'});
+      }, CHAT_NOTICE_FADE_MS);
+    }, CHAT_NOTICE_FULL_MS);
   }
   clear(): void {
-    this.update({visible: false, sourceActive: false, players: [], messages: [], draft: '', targetName: '', channel: 0,
+    this.cancelNotice();
+    this.update({visible: false, phase: '', sourceActive: false, editing: false, noticePhase: 'hidden',
+      confirmedSends: 0, players: [], messages: [], draft: '', targetName: '', channel: 0,
       status: '', pending: false, generation: this.state.generation + 1});
   }
 }

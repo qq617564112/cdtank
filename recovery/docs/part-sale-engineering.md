@@ -8,6 +8,6 @@ M6-06 的正式 PartSale 接口接受拥有实例和请求 ID。QUERY 返回本�
 
 成功回执在当前房间重新绑定库存和装备资料，取消本人准备并广播确认快照；重放不再次改变准备。正式代码归 accounts/part-sale、PtlPartSale、network/accounts 及 PartShop 消费者。
 
-[原合同](/workspace/cdtank/recovery/docs/durable-item-sale-contract.md)与[页面入口](/workspace/cdtank/recovery/output/part-shop-owned-sale-entry-source.json)分别证明请求/回执和双击确认来源。[工程索引](/workspace/cdtank/recovery/output/part-sale-engineering.json)记录类型、事务、构建和有限实际范围。
+[原合同](durable-item-sale-contract.md)与[页面入口](../output/part-shop-owned-sale-entry-source.json)分别证明请求/回执和双击确认来源。[工程索引](../output/part-sale-engineering.json)记录类型、事务、构建和有限实际范围。
 
 事务检查覆盖已装备整实例出售、三类已知资料引用清除、其它资料/账户保留、回执写入失败完整回滚、重放及冲突、非部件分类拒绝和金钱上限。原服务端授权、支付及持久化不可由客户端合同恢复；现事务为明确重建。kind3 部分数量与kind5出售不属于本接口，完整 M6-06 保持未完成。

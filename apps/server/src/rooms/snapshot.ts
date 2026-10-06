@@ -12,16 +12,15 @@ import {readOwnedTankTextures} from '../../../shared/combat/role-owned-textures'
 import type {RoleOwnedSources} from '../accounts/owned/receive-pair';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
 import {classifyItemId} from '../../../shared/combat/item-hotkeys';
+import {originalMovementParameters, type MovingParticipant} from '../battle/movement';
+import {isRoleMovementAllowed} from '../battle/roles/movement-permission';
 
-interface SnapshotPlayer {
-  id: string; name: string; tank: {id: number}; team: number;
+interface SnapshotPlayer extends MovingParticipant {
+  id: string; name: string; team: number;
   x: number; y: number; z: number; yaw: number; bodyYaw?: number; aim: number; hp: number;
   alive: boolean; score: number; kills: number; deaths: number; respawnAt: number;
   vip: boolean; objectivesDestroyed: number; cpu?: unknown; autopilot?: unknown;
-  combat: {selectedAmmoSlot: number; currentAmmoTableId: number; nextAvailableSeconds: number; reloadDuration: number; reloadStartedAt: number;
-    bulletCount: number; maxBulletCount: number;
-    attributeSourceFields(): ReadonlyMap<number, number> | undefined;
-    reloadSource: 'original-normal' | 'rebuilt'; record?: {flags?: Uint8Array; arrays: ReadonlyMap<number, ArrayLike<number>>}};
+  movementCommand?: number;
   inventory: InventoryWireRecord[];
   ownedRoles: {snapshot(): RoleOwnedSources};
   boundGear?: OwnedRoleBaseRecord;
@@ -47,6 +46,7 @@ interface SnapshotRoom {
   players: ReadonlyMap<string, {id: string; clientId: string}>;
   bullets: MsgRoomSnapshot['bullets']; teamScores: number[]; winnerTeam: number;
   round: number; ready: ReadonlySet<string>; rematch: ReadonlySet<string>;
+  loaded: ReadonlySet<string>;
   creatorClientId?: string; targetScore: number; teamLives: number[];
   objectives: ObjectiveSnapshot[]; sceneObjects?: SceneObjectSnapshot[]; sceneCrushes?: SceneCrushSnapshot[]; scenePlants?: ScenePlantSnapshot[]; groundTraps?: GroundTrapSnapshot[]; result?: MatchResult;
 }
@@ -56,6 +56,7 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
   const sources = player.ownedRoles.snapshot();
   const owned = sources.equipment;
   const skills = battleSkillSources(player);
+  const movement = originalMovementParameters(player);
   return {trapFireRestraint: player.trapFireRestraint ? {...player.trapFireRestraint,
     firePermissionCount: player.combat.record!.flags![11]} : undefined, trapTurnRestraint: player.trapTurnRestraint ? {...player.trapTurnRestraint,
     turnPermissionCount: player.combat.record!.flags![10]} : undefined, trapRestraint: player.trapRestraint ? {...player.trapRestraint,
@@ -71,6 +72,11 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
     tankTextures: owned ? readOwnedTankTextures(owned) : undefined, team: player.team,
     x: round(player.x), y: round(player.y), z: round(player.z),
     yaw: round(player.yaw, 4), bodyYaw: player.bodyYaw === undefined ? undefined : round(player.bodyYaw, 4), aim: round(player.aim, 4), hp: Math.round(player.hp), maxHp,
+    movement: {speed: movement?.speed ?? player.tank.speed * 6,
+      turn: movement?.turn ?? player.tank.turn * .12,
+      tankType: player.tank.recomputeBase.tankType, original: movement !== undefined,
+      canMove: isRoleMovementAllowed(player.combat, 1),
+      canTurn: isRoleMovementAllowed(player.combat, 3), command: player.movementCommand ?? 0},
     alive: player.alive, score: Math.round(player.score), kills: player.kills, deaths: player.deaths,
     respawnAt: player.respawnAt, isVIP: player.vip, objectivesDestroyed: player.objectivesDestroyed,
     isCpu: !!player.cpu, isAutopilot: !!player.autopilot, selectedAmmoSlot: player.combat.selectedAmmoSlot,
@@ -111,7 +117,7 @@ export function roomSnapshot(room: SnapshotRoom, now: number, timeLimit: number,
       ? Math.max(0, timeLimit - Math.floor((now - room.startedAt) / 1000)) : 0,
     phase: room.phase, players, bullets: room.bullets.map(bullet => ({...bullet})),
     teamScores: [...room.teamScores], winnerTeam: room.winnerTeam,
-    match: {round: room.round, readyPlayerIds: [...room.ready], rematchPlayerIds: [...room.rematch],
+    match: {round: room.round, readyPlayerIds: [...room.ready], loadedPlayerIds: [...room.loaded], rematchPlayerIds: [...room.rematch],
       cpuManagerId: [...room.players.values()].find(player => player.clientId === room.creatorClientId)?.id,
       minPlayers, maxPlayers: roomMaxPlayers(room), friendlyFire: room.friendlyFire ?? false, targetScore: room.targetScore, teamLives: [...room.teamLives],
       objectives: room.objectives.map(objective => ({...objective})),

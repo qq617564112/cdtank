@@ -1,4 +1,5 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {createRequestId} from '../../network/request-id';
 import {createPortal} from 'react-dom';
 import type {ReqStackItemSale, ResStackItemSale} from '../../../../shared/protocols/PtlStackItemSale';
 import type {ShopSource} from './shop';
@@ -67,7 +68,7 @@ export function StackItemSaleSource({ui, source, instanceId, activation, refresh
     const current = generation.current;
     if (owner.pending?.instanceId !== quote.instanceId || owner.pending.quantity !== count) {
       owner.pending = {operation: 'SELL', instanceId: quote.instanceId, quantity: count,
-        requestId: crypto.randomUUID().replaceAll('-', '')};
+        requestId: createRequestId()};
     }
     const request = owner.pending;
     setPending(true); setStatus('');

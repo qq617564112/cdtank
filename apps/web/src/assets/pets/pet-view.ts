@@ -1,5 +1,6 @@
 import {AssetContainer, LoadAssetContainerAsync, Scene, TransformNode} from '@babylonjs/core';
 import {applyMv3Materials} from '../../render/materials/mv3-material';
+import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {effectModelEngineDelta} from '../../render/effects/models/effect-model-animation';
 import {EffectActorActionClock} from '../tanks/effect-actor-clock';
 import '@babylonjs/loaders/glTF';
@@ -45,6 +46,7 @@ export class PetView {
       assets.addAllToScene();
       for (const node of assets.rootNodes) node.parent = root;
       assets.materials.push(...applyMv3Materials(scene, assets.meshes));
+      applyCartoonOutlines(assets.meshes);
       return new PetView(petId, assets, root, scene, duration);
     } catch (error) {
       assets.dispose(); root.dispose();

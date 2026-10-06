@@ -22,13 +22,17 @@ export class EffectModelMesh {
       samplers: ['modelTexture'], needAlphaBlending: state.blend});
     this.material.setTexture('modelTexture', texture);
     this.material.backFaceCulling = state.cull !== 'NONE';
-    this.material.sideOrientation = state.cull === 'CW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
+    // GBF names the culled winding; Babylon names the retained front face.
+    this.material.sideOrientation = state.cull === 'CCW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
     this.material.disableDepthWrite = !state.depthWrite;
     this.material.depthFunction = state.depthTest ? Constants.LESS : Constants.ALWAYS;
+    this.material.transparencyMode = state.blend ? Material.MATERIAL_ALPHABLEND : Material.MATERIAL_OPAQUE;
     this.material.alphaMode = state.blend ? Constants.ALPHA_COMBINE : Constants.ALPHA_DISABLE;
     this.mesh = new Mesh('original-effect-model', scene);
     this.mesh.material = this.material;
     this.mesh.isPickable = false;
+    scene.setRenderingAutoClearDepthStencil(1, false);
+    this.mesh.renderingGroupId = 1;
   }
 
   update(vertices: readonly number[][], indices: readonly number[], matrix: EffectNativeMatrix,

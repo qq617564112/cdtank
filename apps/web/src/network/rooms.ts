@@ -1,6 +1,8 @@
 import type {WsClient} from 'tsrpc-browser';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {ReqCreateRoom} from '../../../shared/protocols/PtlCreateRoom';
+import type {ReqEditRoom} from '../../../shared/protocols/PtlEditRoom';
+import type {ReqKickRoomPlayer} from '../../../shared/protocols/PtlKickRoomPlayer';
 import type {ReqJoin} from '../../../shared/protocols/PtlJoin';
 import type {ReqReady} from '../../../shared/protocols/PtlReady';
 import type {ReqChangeTeam} from '../../../shared/protocols/PtlChangeTeam';
@@ -53,6 +55,16 @@ export class RoomConnection {
   // Battle checks session cancellation before accepting or reporting a join result.
   create(request: ReqCreateRoom) {return this.client.callApi('CreateRoom', request);}
   join(request: ReqJoin) {return this.client.callApi('Join', request);}
+
+  async edit(request: ReqEditRoom): Promise<void> {
+    const result = await this.client.callApi('EditRoom', request);
+    if (!result.isSucc) throw new Error(result.err.message);
+  }
+
+  async kick(request: ReqKickRoomPlayer): Promise<void> {
+    const result = await this.client.callApi('KickRoomPlayer', request);
+    if (!result.isSucc) throw new Error(result.err.message);
+  }
 
   resume(request: import('../../../shared/protocols/PtlResumeRoom').ReqResumeRoom) {
     return this.client.callApi('ResumeRoom', request);

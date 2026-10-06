@@ -2,6 +2,7 @@ import {ArcRotateCamera, AssetContainer, LoadAssetContainerAsync, Matrix, Observ
 import type {ObjectiveSnapshot} from '../../../../shared/protocols';
 import {SceneCvdAnimation} from './scene-cvd-animation';
 import {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
+import {effectModelEngineDelta} from '../../render/effects/models/effect-model-animation';
 import {SceneBreachState} from './scene-breach-state';
 import {SceneBreachVisual} from './scene-breach-visual';
 import type {EffectRuntime} from '../../render/effects/runtime/effect-runtime';
@@ -21,6 +22,14 @@ import {SceneTerrainMaterial} from './scene-terrain-material';
 import {SceneGeneralMaterial} from './scene-general-material';
 import {SceneBreachMaterial, sceneBreachMaterialModel} from './scene-breach-material';
 import {sceneBreachLibrary, type SceneBreachDestruction} from './scene-breach-resources';
+import type {AbstractMesh} from '@babylonjs/core';
+
+export interface SceneMovementSurface {
+  id: string;
+  meshes: readonly AbstractMesh[];
+  terrain: boolean;
+  enabled: boolean;
+}
 
 interface Placement {
   id: string;
@@ -59,8 +68,13 @@ export class ScenePreview {
   private readonly castles = new Map<string, {visual: SceneCastleVisual;
     presentation: SceneCastlePresentation; runtime: EffectRuntime}>();
   private readonly castleDamageTexts = new Map<string, SceneCastleDamageText>();
+  private readonly objectDamageTexts = new Map<string, SceneCastleDamageText>();
   private castleDamageTextRenderer?: SceneCastleDamageTextRenderer;
   private readonly assets: AssetContainer[] = [];
+  private readonly minimapGeometry: AbstractMesh[] = [];
+  get minimapMeshes(): readonly AbstractMesh[] {return this.minimapGeometry;}
+  private readonly movementGeometry = new Map<string, SceneMovementSurface>();
+  get movementSurfaces(): readonly SceneMovementSurface[] {return [...this.movementGeometry.values()];}
   private water?: SceneWater;
   private plants?: ScenePlantSway;
   private terrainMaterial?: SceneTerrainMaterial;
@@ -87,6 +101,8 @@ export class ScenePreview {
 
   clear(): void {
     this.revision++;
+    this.minimapGeometry.length = 0;
+    this.movementGeometry.clear();
     this.water?.dispose();
     this.water = undefined;
     this.plants?.dispose();
@@ -104,6 +120,8 @@ export class ScenePreview {
     this.castles.clear();
     this.castleDamageTexts.forEach(queue => queue.clear());
     this.castleDamageTexts.clear();
+    this.objectDamageTexts.forEach(queue => queue.clear());
+    this.objectDamageTexts.clear();
     this.castleDamageTextRenderer?.dispose();
     this.castleDamageTextRenderer = undefined;
     this.crushes.forEach(value => {value.presentation.dispose();});
@@ -146,6 +164,8 @@ export class ScenePreview {
     // would draw black borders along tile seams rather than object silhouettes.
     terrain.rootNodes.forEach(node => {node.setEnabled(false);});
     this.assets.push(terrain);
+    this.minimapGeometry.push(...terrain.meshes);
+    this.movementGeometry.set('terrain', {id: 'terrain', meshes: terrain.meshes, terrain: true, enabled: true});
     if (['0002', '0004', '0005', '0006', '0007', '0010', '0011', '0014', '0017', '0018', '0020', '0021', '0022'].includes(id)) {
       const owner = new SceneTerrainMaterial();
       this.terrainMaterial = owner;
@@ -190,7 +210,7 @@ export class ScenePreview {
     }
     if (revision !== this.revision) return '';
     let damageRenderer: SceneCastleDamageTextRenderer | undefined;
-    if (castleResources.length > 0) {
+    if (castleResources.length > 0 || placements.some(value => value.className === 'SYcScnObjBreach')) {
       const fontResponse = await fetch('/ui-fonts.json');
       if (!fontResponse.ok) throw new Error('原字体目录载入失败');
       const fonts = await fontResponse.json() as {fonts: {name: string; attributes: Record<string, string>;
@@ -256,8 +276,13 @@ export class ScenePreview {
           throw error;
         }
         if (revision !== this.revision) {visual.dispose(); return '';}
+        this.minimapGeometry.push(...this.scene.meshes.filter(mesh =>
+          mesh.metadata?.sourceCastlePlacementId === castle.sourcePlacementId && mesh.metadata?.sourceCastleAction === 'n1'));
         const presentation = this.castlePresentation(castle.sourcePlacementId, visual, runtime);
         this.castles.set(castle.sourcePlacementId, {visual, presentation, runtime});
+        this.movementGeometry.set(castle.sourcePlacementId, {id: castle.sourcePlacementId,
+          meshes: this.scene.meshes.filter(mesh => mesh.metadata?.sourceCastlePlacementId === castle.sourcePlacementId
+            && mesh.metadata?.sourceCastleAction === 'n1'), terrain: false, enabled: true});
         if (damageRenderer) {
           this.castleDamageTexts.set(castle.sourcePlacementId,
             new SceneCastleDamageText(damageRenderer));
@@ -278,6 +303,12 @@ export class ScenePreview {
           throw error;
         }
         if (revision !== this.revision) return '';
+        this.minimapGeometry.push(...this.scene.meshes.filter(mesh => mesh.metadata?.sourcePlacementId === placement.id));
+        if (placement.className === 'SYcScnObjGeneral') {
+          this.movementGeometry.set(placement.id, {id: placement.id,
+            meshes: this.scene.meshes.filter(mesh => mesh.metadata?.sourcePlacementId === placement.id),
+            terrain: false, enabled: true});
+        }
       }
       if (!placement.asset) {
         continue;
@@ -289,6 +320,7 @@ export class ScenePreview {
       const root = new TransformNode(`placement-${placement.id}`, this.scene);
       this.disposals.push(() => {instance.dispose(); root.dispose();});
       instance.rootNodes.forEach(node => {node.parent = root;});
+      this.minimapGeometry.push(...root.getChildMeshes());
       const scale = new Vector3();
       const rotation = new Quaternion();
       const position = new Vector3();
@@ -299,6 +331,11 @@ export class ScenePreview {
       root.scaling.copyFrom(scale);
       root.position.set(-placement.position[0], placement.position[1], placement.position[2]);
       root.rotationQuaternion = new Quaternion(rotation.x, -rotation.y, -rotation.z, rotation.w);
+      if (['SYcScnObjBreach', 'SYcScnObjGeneral', 'SYcScnObjCrush', 'SYcCastle'].includes(placement.className ?? '')) {
+        this.movementGeometry.set(placement.id, {id: placement.id,
+          meshes: [...(this.movementGeometry.get(placement.id)?.meshes ?? []), ...root.getChildMeshes()],
+          terrain: false, enabled: placement.className !== 'SYcScnObjCrush' || placement.enabled === 1});
+      }
       if (placement.className === 'SYcScnObjPlant') {
         this.plants?.register(placement.id, root);
         if (['0002', '0004', '0005', '0006', '0017', '0021'].includes(id)) this.registerPlant(placement.id, root, Boolean(placement.enabled));
@@ -337,6 +374,7 @@ export class ScenePreview {
             throw error;
           }
           if (revision !== this.revision) return '';
+          value.state = new SceneBreachState(value.broken.durationSeconds);
         }
       }
     }
@@ -345,6 +383,7 @@ export class ScenePreview {
       this.water = new SceneWater(this.scene);
       await this.water.load(id);
       if (revision !== this.revision) return '';
+      this.minimapGeometry.push(...this.scene.meshes.filter(mesh => mesh.metadata?.sourceSceneWater));
     }
     const bounds = terrain.rootNodes[0].getHierarchyBoundingVectors();
     const center = bounds.min.add(bounds.max).scale(0.5);
@@ -375,6 +414,15 @@ export class ScenePreview {
       queue.advance(deltaSeconds, viewZ);
       queue.draw(viewport);
     });
+    this.objectDamageTexts.forEach((queue, placementId) => {
+      const value = this.breakables.get(placementId);
+      if (!value) return;
+      const native = value.position;
+      const viewPoint = Vector3.TransformCoordinates(new Vector3(-native[0], native[1], native[2]),
+        this.camera.getViewMatrix());
+      queue.advance(deltaSeconds, viewPoint.z);
+      queue.draw(viewport);
+    });
   }
 
   /** Source Plant visibility follows snapshots, including state received before load. */
@@ -397,6 +445,21 @@ export class ScenePreview {
   /** Single accepted Castle transaction; snapshot reconciliation never replays impact cues. */
   damageCastle(result: CastleDamageResult & {castleId: string}): void {
     this.castles.get(result.castleId)?.presentation.damage(result);
+  }
+
+  /** Accepted ordinary object damage uses the loaded Damage glyphs. */
+  damageObject(placementId: string, delta: number, position: EffectVec3): void {
+    if (!this.breakables.has(placementId) || !this.castleDamageTextRenderer || delta <= 0) return;
+    let queue = this.objectDamageTexts.get(placementId);
+    if (!queue) {
+      queue = new SceneCastleDamageText(this.castleDamageTextRenderer);
+      this.objectDamageTexts.set(placementId, queue);
+    }
+    const engine = this.scene.getEngine();
+    const point = Vector3.Project(new Vector3(-position[0], position[1], position[2]),
+      Matrix.Identity(), this.camera.getTransformationMatrix(),
+      new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
+    queue.show(Math.trunc(point.x), Math.trunc(point.y), Math.trunc(delta));
   }
 
   /** Loading and room recovery restore current state without replaying past impacts. */
@@ -510,6 +573,7 @@ export class ScenePreview {
     if (round !== this.round) {
       if (this.round !== undefined) {
         this.castleDamageTexts.forEach(queue => queue.clear());
+        this.objectDamageTexts.forEach(queue => queue.clear());
         for (const [castleId, value] of this.castles) {
           value.presentation.dispose();
           value.visual.action('n1', 0);
@@ -537,11 +601,12 @@ export class ScenePreview {
   }
 
   private advanceBreachVisuals(deltaSeconds: number): void {
+    const elapsed = Math.fround(effectModelEngineDelta(deltaSeconds));
     for (const {root, state, broken} of this.breakables.values()) {
-      state.update(deltaSeconds);
+      state.update(elapsed);
       const visual = state.snapshot();
       root.setEnabled(broken ? !visual.fading : !visual.hidden);
-      broken?.advance(deltaSeconds, visual.alpha, visual.fading && !visual.hidden);
+      broken?.advance(elapsed, visual.alpha, visual.fading && !visual.hidden);
       root.metadata = {...root.metadata, sourceBreach: visual};
       for (const mesh of root.getChildMeshes()) mesh.visibility = Math.max(0, visual.alpha);
     }

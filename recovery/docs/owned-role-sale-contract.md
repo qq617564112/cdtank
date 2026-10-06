@@ -10,6 +10,6 @@ M6-06。原 Pet btnSell 注册4b1e1d绑定4af7f9，候选行+9c保存为页面+2
 
 原确认标签709/713为“你确定出售这只猫狗吗？”/“你确定出售这辆坦克吗？”。result0标签626/627为“无法出售出击中猫狗。”/“无法出售出击中坦克。”；result1标签143为“哇，大富翁！你的金钱太多，放不下了。”；result3标签706为“系统发生未知错误！”。前两种与sender具名门禁相同；result3仅证明显示文本，不确定服务器拒绝原因。原gamestring字段直接复用。
 
-[原指令与字段索引](/workspace/cdtank/recovery/output/owned-role-sale-contract-source.json)保留四个消息vtable、两个完整sender与成功receiver。本次只捕获上述具名链与字段断言，原价格loader/native直接复用。
+[原指令与字段索引](../output/owned-role-sale-contract-source.json)保留四个消息vtable、两个完整sender与成功receiver。本次只捕获上述具名链与字段断言，原价格loader/native直接复用。
 
 正式接口最小输入为kind Pet/Tank与instanceId；输出为result、完整money与该实例移除后的拥有投影。Web原子扣除拥有、支付同报价、去引用、重放及持久属于明确重建。原服务器出售授权、结算和回包生成尚无源码证据；不能把客户端费用门禁称为原服务器成交证明。

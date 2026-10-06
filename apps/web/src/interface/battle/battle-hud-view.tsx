@@ -1,5 +1,6 @@
 import './hud.css';
 import {HudItemSourceView} from './hud-item-source-view';
+import {HudMinimapView} from './hud-minimap-view';
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {lifeProgress} from './life-progress';
@@ -13,20 +14,10 @@ export interface HudItemInventoryStore {
 const EMPTY_ITEM_INVENTORY: {inventory?: ResInventory} = {};
 const emptyItemSnapshot = () => EMPTY_ITEM_INVENTORY;
 const emptyItemSubscribe = () => () => {};
-
-export function BattleHudView({hud, items}: {hud: BattleHud; items?: HudItemInventoryStore}) {
+export function BattleHudView({hud, items, onUseSlot}: {
+  hud: BattleHud; items?: HudItemInventoryStore; onUseSlot: (slot: number) => void;
+}) {
   const state = useSyncExternalStore(hud.subscribe, hud.getSnapshot);
-  const itemState = useSyncExternalStore(items?.subscribe ?? emptyItemSubscribe, items?.getSnapshot ?? emptyItemSnapshot);
-  const [catalog, setCatalog] = useState<CombatCatalog>();
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
-      if (!response.ok) throw new Error('道具目录载入失败');
-      const confirmed = await response.json() as CombatCatalog;
-      if (!controller.signal.aborted) setCatalog(confirmed);
-    }).catch(() => {});
-    return () => controller.abort();
-  }, []);
   const id = useId(), filterId = `original-timer-red-${id.replace(/:/g, '')}`;
   const [size, setSize] = useState(() => ({width: innerWidth, height: innerHeight}));
   useEffect(() => {
@@ -34,6 +25,18 @@ export function BattleHudView({hud, items}: {hud: BattleHud; items?: HudItemInve
     window.addEventListener('resize', resize); return () => window.removeEventListener('resize', resize);
   }, []);
   const scale = Math.min(size.width / 800, size.height / 600), data = state.data;
+  const playing = state.visible && state.phase === 'PLAYING';
+  const [intro, setIntro] = useState<'hidden' | 'mode' | 'fight'>('hidden');
+  useEffect(() => {
+    if (!playing) {
+      setIntro('hidden');
+      return;
+    }
+    setIntro('mode');
+    const fight = setTimeout(() => setIntro('fight'), 2000);
+    const finish = setTimeout(() => setIntro('hidden'), 3000);
+    return () => {clearTimeout(fight); clearTimeout(finish);};
+  }, [playing, state.roomId, state.round]);
   return <div id="original-battle-hud" hidden={!state.visible} data-mode={state.mode}
     style={{width: 800, height: 600, left: (size.width - 800 * scale) / 2,
       top: (size.height - 600 * scale) / 2, transform: `scale(${scale})`}}>
@@ -42,13 +45,37 @@ export function BattleHudView({hud, items}: {hud: BattleHud; items?: HudItemInve
     </filter></svg>
     {data && <>
       <HudLayout source={data.layouts.find(layout => layout.path === 'ui/layouts/game_main.xml')!}
-        data={data} state={state} hud={hud} filterId={filterId} scale={scale} />
-      {catalog && <HudItemSourceView data={data} catalog={catalog} inventory={itemState.inventory} />}
+        data={data} state={state} hud={hud} filterId={filterId} scale={scale} intro={intro} />
+      <HudItemPanel data={data} hud={hud} items={items} onUseSlot={onUseSlot} />
+      <HudMinimapView hud={hud} data={data} />
       {['team', 'conquer', 'vip', 'melee', 'destroy'].map((name, index) => <HudLayout key={name}
         source={data.layouts.find(layout => layout.path === `ui/layouts/game_main_info_${name}.xml`)!}
         data={data} state={state} hud={hud} filterId={filterId} scale={scale} mode={index + 1} />)}
     </>}
   </div>;
+}
+
+function HudItemPanel({data, hud, items, onUseSlot}: {
+  data: SourceUi; hud: BattleHud; items?: HudItemInventoryStore; onUseSlot: (slot: number) => void;
+}) {
+  const combat = useSyncExternalStore(hud.subscribeCombat, hud.getCombatSnapshot);
+  const inventory = useSyncExternalStore(items?.subscribe ?? emptyItemSubscribe, items?.getSnapshot ?? emptyItemSnapshot);
+  const [catalog, setCatalog] = useState<CombatCatalog>();
+  const [error, setError] = useState('');
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
+      if (!response.ok) throw new Error('道具目录载入失败');
+      const confirmed = await response.json() as CombatCatalog;
+      if (!controller.signal.aborted) setCatalog(confirmed);
+    }).catch(error => {if (!controller.signal.aborted) setError(String(error));});
+    return () => controller.abort();
+  }, []);
+  return <>
+    {catalog && <HudItemSourceView data={data} combat={combat} catalog={catalog}
+      inventory={inventory.inventory} onUseSlot={onUseSlot} />}
+    {error && <output className="hud-resource-error" role="status">{error}</output>}
+  </>;
 }
 
 function image(data: SourceUi, reference?: string): SourceRegion | undefined {
@@ -69,19 +96,23 @@ function baseStyle(data: SourceUi, control: SourceWindow): CSSProperties {
     textAlign: properties.HorzFormatting === 'HorzCentred' ? 'center' : undefined,
     opacity: properties.Alpha ? Number(properties.Alpha) : undefined};
 }
-function HudLayout({source, data, state, hud, filterId, scale, mode}: {
-  source: SourceLayout; data: SourceUi; state: HudSnapshot; hud: BattleHud; filterId: string; scale: number; mode?: number;
+function HudLayout({source, data, state, hud, filterId, scale, mode, intro}: {
+  source: SourceLayout; data: SourceUi; state: HudSnapshot; hud: BattleHud;
+  filterId: string; scale: number; mode?: number; intro?: 'hidden' | 'mode' | 'fight';
 }) {
-  const selected = new Set(['SheetWindow', 'all', 'prgLife', 'prgCrossbar', 'picBattleInfoPanel', 'edtBattleInfo', 'txtCountdown']);
-  for (let slot = 0; slot < 12; slot++) for (const prefix of ['picPlayer', 'picPlayerPanel', 'picPlayerIconBg', 'picPlayerIcon', 'txtPlayerName', 'txtPlayerTitle', 'prgPlayerLife']) selected.add(`${prefix}${slot}`);
-  const controls = source.windows.filter(control => mode ? true : selected.has(control.name));
+  const ownedElsewhere = mode ? new Set<string>() : new Set(['daojulan', 'btnExit', 'picMiniMap', 'picMiniMapBound']);
+  for (const control of source.windows) {
+    if (control.parent && ownedElsewhere.has(control.parent)) ownedElsewhere.add(control.name);
+  }
+  const controls = source.windows.filter(control => !ownedElsewhere.has(control.name));
   const names = new Set(controls.map(control => control.name));
   const tree = (parent: string | null): React.ReactNode => controls.filter(control => parent === null
     ? !control.parent || !names.has(control.parent) : control.parent === parent).map(control => {
     const name = control.name, props = {'data-source-control': name, 'data-source-layout': source.path};
     const style = baseStyle(data, control), slot = Number(/\d+$/.exec(name)?.[0]), player = state.slots[slot];
     let hidden: boolean | undefined, content: React.ReactNode, extra: Record<string, unknown> = {};
-    if (name === 'SheetWindow' && mode) hidden = state.mode !== mode;
+    if (name === 'SheetWindow' && mode) hidden = state.mode !== mode
+      || (state.phase !== 'PLAYING' && state.phase !== 'FINISHED');
     if (/^picPlayer\d+$/.test(name)) {hidden = !player; extra = {'data-player-id': player?.id, 'data-alive': player ? String(player.alive) : undefined};}
     if (/^picPlayerIcon\d+$/.test(name)) {
       hidden = !player?.asset; style.backgroundImage = player?.asset ? `url('/${player.asset}')` : 'none';
@@ -90,10 +121,11 @@ function HudLayout({source, data, state, hud, filterId, scale, mode}: {
         role: player ? 'img' : undefined, 'aria-label': player ? `${player.name}宠物头像` : undefined};
     }
     if (/^txtPlayerName\d+$/.test(name)) content = player?.name ?? '';
-    if (/^txtPlayerTitle\d+$/.test(name)) {
+    if (/^txtPlayerTitle\d+$/.test(name) && mode === undefined) {
       content = player?.title ?? '';
       extra = {'data-source-title-binding': player && player.title ? 'confirmed-title' : 'no-confirmed-title'};
     }
+    if (/^picVIP\d+$/.test(name) && mode === undefined) hidden = state.mode !== 3 || !player?.isVIP;
     if (name === 'edtBattleInfo') {
       content = state.messages;
       extra = {onMouseEnter: () => hud.battleInfoHover(true), onMouseLeave: () => hud.battleInfoHover(false)};
@@ -106,32 +138,45 @@ function HudLayout({source, data, state, hud, filterId, scale, mode}: {
       const value = count === undefined ? '' : String(count);
       extra = {'data-value': value || undefined, 'data-source-font': 'Countdown',
         'data-colour': 'ffffffff', 'aria-label': value ? `复活倒计时 ${value}` : undefined};
-      content = <BitmapGlyphs data={data} value={value} fontName="Countdown"/>;
+      content = <HudText data={data} value={value} fontName="Countdown"/>;
     }
     if (name === 'txtRemainTime' && mode) {
       const timer = state.timers[mode - 1];
       extra = {'data-value': timer.text || undefined, 'aria-label': timer.text || undefined, 'data-colour': timer.colour};
       style.filter = timer.colour === 'ffff0000' ? `url(#${filterId})` : 'none';
-      content = <BitmapGlyphs data={data} value={timer.text} />;
+      content = <HudText data={data} value={timer.text} />;
     }
     if (mode && mode !== 1 && ['txtSelfInfo', 'txtEnemyInfo', 'txtInfo'].includes(name)) {
-      extra = {'data-mode-info-binding': 'unbound'};
+      const info = state.modeInfo?.mode === mode ? state.modeInfo : undefined;
+      const value = name === 'txtSelfInfo' ? info?.self ?? '' : name === 'txtEnemyInfo' ? info?.enemy ?? '' : info?.info ?? '';
+      extra = {'data-mode-info-binding': info?.binding ?? 'unbound', 'data-mode-info-finished': info?.finished ? '' : undefined,
+        'data-value': value || undefined, 'aria-label': value || undefined};
+      content = <HudText data={data} value={value} />;
     }
     if (mode && name === 'txtMultiply') {
       const value = control.properties.Text ?? '';
       extra = {'data-value': value, 'aria-label': value};
-      content = <BitmapGlyphs data={data} value={value} />;
+      content = <HudText data={data} value={value} />;
     }
     if (mode === 1 && ['picSelfIcon', 'picEnemyIcon', 'lblTimes0', 'lblTimes1', 'txtSelfInfo', 'txtEnemyInfo'].includes(name)) {
       hidden = !state.teamCounts;
-      if (name.startsWith('lblTimes')) {extra = {'data-value': '*', 'aria-label': '*'}; content = <BitmapGlyphs data={data} value="*" />;}
+      if (name.startsWith('lblTimes')) {extra = {'data-value': '*', 'aria-label': '*'}; content = <HudText data={data} value="*" />;}
       if (name.startsWith('txt')) {
         const value = name === 'txtSelfInfo' ? state.teamCounts?.self ?? '' : state.teamCounts?.enemy ?? '';
         extra = {'data-value': value || undefined, 'data-team-info-source': state.visible ? 'rebuilt-team-lives' : undefined,
           'aria-label': state.visible ? `${name === 'txtSelfInfo' ? '本队' : '对队'}存量 ${value || '未知'}` : undefined};
-        content = <BitmapGlyphs data={data} value={value} />;
+        content = <HudText data={data} value={value} />;
       }
     }
+    if (mode === undefined && (name === 'picFight' || name === 'picModeSplash'
+        || name === 'picTeamMode' || name === 'picConquerMode' || name === 'picVIPMode'
+        || name === 'picMeleeMode' || name === 'picDestroyMode')) {
+      const splashMode = name === 'picTeamMode' ? 1 : name === 'picConquerMode' ? 2 : name === 'picVIPMode' ? 3
+        : name === 'picMeleeMode' ? 4 : name === 'picDestroyMode' ? 5 : undefined;
+      hidden = name === 'picFight' ? intro !== 'fight'
+        : intro !== 'mode' || (splashMode !== undefined && splashMode !== state.mode);
+    }
+    if (name === 'prgBullet') return <BulletControl key={name} {...props} style={style} control={control} data={data} hud={hud} scale={scale} />;
     if (name === 'prgCrossbar') return <ReloadControl key={name} {...props} style={style} control={control} data={data} hud={hud} scale={scale} />;
     if (name === 'picBattleInfoPanel') return <BattleInfoPanel key={name} {...props} style={style} hud={hud}>{tree(name)}</BattleInfoPanel>;
     if (control.type.endsWith('/ProgressBar')) return <HealthControl key={name} {...props} style={style} control={control} data={data}
@@ -148,7 +193,7 @@ function BattleInfoPanel({hud, style, children, ...props}: {
   return <div {...props} className="source-control" style={{...style, opacity}}>{children}</div>;
 }
 
-function BitmapGlyphs({value, fontName = 'BigHT'}: {data: SourceUi; value: string; fontName?: string}) {
+function HudText({value, fontName = 'BigHT'}: {data: SourceUi; value: string; fontName?: string}) {
   const size = fontName === 'Countdown' ? 70 : 20;
   return <span data-dynamic-font="xiangjiao-brush" style={{fontSize: size,
     lineHeight: `${size}px`, color: '#fff', whiteSpace: 'nowrap'}}>{value}</span>;
@@ -158,6 +203,7 @@ function HealthControl({control, data, player, scale, style, ...props}: {
   control: SourceWindow; data: SourceUi; player?: Pick<HudPlayer, 'name' | 'hp' | 'maxHp'>; scale: number; style: CSSProperties;
 }) {
   return <SourceProgress {...props} control={control} data={data} style={style} scale={scale}
+    hidden={!player}
     fraction={lifeProgress(player?.hp ?? 1, player?.maxHp ?? 1, 1).fraction} className="source-life-progress"
     aria-label={player ? `${player.name}生命` : '生命'} aria-valuemin={player ? 0 : undefined}
     aria-valuemax={player?.maxHp} aria-valuenow={player?.hp} title={player ? `${player.hp}/${player.maxHp}` : undefined} />;
@@ -212,4 +258,22 @@ function ReloadControl({hud, control, data, scale, style, ...props}: {
   return <SourceProgress {...props} control={control} data={data} style={style} scale={scale} fraction={state.fraction}
     hidden={!state.visible} aria-label="装填" aria-valuemin={0} aria-valuemax={100}
     aria-valuenow={Math.round(state.fraction * 100)} aria-valuetext={state.fraction < 1 ? '装填中' : '装填完成'} />;
+}
+
+/** Original4cb52f: width = capacity × 15, progress = remaining / capacity. */
+function BulletControl({control, data, hud, scale, style, ...props}: {
+  control: SourceWindow; data: SourceUi; hud: BattleHud; scale: number; style: CSSProperties;
+}) {
+  const combat = useSyncExternalStore(hud.subscribeCombat, hud.getCombatSnapshot);
+  const capacity = combat.magazine?.capacity, remaining = combat.magazine?.remaining;
+  const valid = combat.visible && capacity !== undefined && capacity > 0 && remaining !== undefined;
+  const width = valid ? Math.fround(capacity * 15) : 0;
+  const fraction = valid ? Math.fround(Math.max(0, Math.min(1, remaining / capacity))) : 0;
+  return <SourceProgress {...props} control={control} data={data} className="hud-bullet-control"
+    data-source-asset={image(data, control.properties.BackgroundImage)?.asset}
+    data-bullet-remaining={remaining} data-bullet-capacity={capacity}
+    data-bullet-source={valid ? 'combat-snapshot' : undefined} style={{...style, width}} scale={scale}
+    fraction={fraction} hidden={!valid} aria-label="弹匣余弹" aria-valuemin={0} aria-valuemax={capacity}
+    aria-valuenow={remaining} aria-valuetext={valid ? `${remaining}/${capacity}` : undefined}
+    title={valid ? `${remaining}/${capacity}` : undefined} />;
 }

@@ -1,11 +1,37 @@
+# Original client and locally generated game content.
 /CDTank/
 /CDTank.rar
-/recovery/.venv/
 /recovery/output/
 /recovery/client-local/
 /recovery/captures/
-__pycache__/
-*.pyc
+
+# Dependencies, build products and caches.
 node_modules/
 dist/
+/output/
+/recovery/.venv/
+__pycache__/
+*.py[cod]
+.vite/
+*.tsbuildinfo
+
+# Local configuration, account databases and backups.
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+/state/
+/backups/
+
+# Crash dumps, temporary files and operating system metadata.
 /core
+/core.*
+*.log
+*.tmp
+*.bak
+*~
+.DS_Store
+Thumbs.db

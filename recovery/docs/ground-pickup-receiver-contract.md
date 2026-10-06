@@ -1,6 +1,6 @@
 # 场景拾取通知合同
 
-M2-03 / M6-06。沿原两个具名字符串的直接注册引用取得新receiver，不重复拥有表或道具消费入口。[来源索引](/workspace/cdtank/recovery/output/ground-pickup-receiver-source.json)保存虚表、包体指令与两个完整receiver的原反汇编。
+M2-03 / M6-06。沿原两个具名字符串的直接注册引用取得新receiver，不重复拥有表或道具消费入口。[来源索引](../output/ground-pickup-receiver-source.json)保存虚表、包体指令与两个完整receiver的原反汇编。
 
 | 消息 | 路由 | 包体 | receiver |
 | --- | --- | --- | --- |

@@ -6,11 +6,13 @@ import {TankCriticalTextRenderer, type CriticalTextImage} from './tank-critical-
 import {TankDamageTextRenderer, type TankDamageTextFont} from './tank-damage-text-renderer';
 import {effectModelEngineDelta} from './effects/models/effect-model-animation';
 import type {PlayerSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
+import type {ClientTankPose} from '../../../shared/protocols/MsgPlayerInput';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {isHiddenByOpticalCamouflage} from '../../../shared/combat/optical-camouflage';
 import {followBattleCamera} from './battle-camera';
 import {TankView} from '../assets/tanks/tank-view';
 import {BattleRoleDisguises} from './battle-role-disguises';
+import {BattlePlayerLabels} from './battle-player-labels';
 
 interface PlayerEffects {
   attach(view: TankView): void;
@@ -44,11 +46,13 @@ export class BattlePlayers {
   private ammoCatalog?: CombatCatalog;
   private ammoCatalogLoading?: Promise<CombatCatalog>;
   private readonly disguises: BattleRoleDisguises;
+  private readonly labels: BattlePlayerLabels;
 
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
               private readonly effects: PlayerEffects) {
     this.disguises = new BattleRoleDisguises(scene);
-    this.scene.onDisposeObservable.addOnce(() => {this.clear();});
+    this.labels = new BattlePlayerLabels(scene, camera, id => this.disguises.hidesActor(id));
+    this.scene.onDisposeObservable.addOnce(() => {this.clear(); this.labels.dispose();});
   }
 
   get(id: string): TankView | undefined {return this.players.get(id);}
@@ -66,6 +70,7 @@ export class BattlePlayers {
   get loadingError(): string {return this.disguises.loadingError || this.error;}
 
   resetRound(players: readonly PlayerSnapshot[]): void {
+    this.labels.resetRound();
     this.disguises.clear();
     this.previousPositions.clear();
     this.presentedLife.clear();
@@ -83,6 +88,7 @@ export class BattlePlayers {
     this.localPlayerId = localPlayerId;
     this.mode = mode;
     this.disguises.reconcile(players, this.playing);
+    this.labels.reconcile(players, localPlayerId, mode, this.playing);
     const present = new Set(players.map(player => player.id));
     for (const id of this.previousHp.keys()) {
       if (!present.has(id)) this.previousHp.delete(id);
@@ -309,7 +315,8 @@ export class BattlePlayers {
     return false;
   }
 
-  render(alpha: number, localPlayerId?: string, playing = true): void {
+  render(alpha: number, localPlayerId?: string, playing = true,
+      localPose?: ClientTankPose, localMoving = false): void {
     this.localPlayerId = localPlayerId;
     this.playing = playing;
     this.disguises.reconcile(this.snapshot ?? [], playing);
@@ -323,23 +330,27 @@ export class BattlePlayers {
       if (revived && !queueStarted) this.effects.revive(player.id);
       this.presentedLife.set(player.id, player.alive);
       const previousTurretYaw = view.turretYaw;
-      if (revived) view.position(player.x, player.y, player.z);
-      view.trackMovementTarget(player.x, player.z);
-      view.root.position = Vector3.Lerp(view.root.position, new Vector3(-player.x, player.y, player.z), revived ? 1 : alpha);
-      const bodyYaw = player.bodyYaw ?? player.yaw;
+      const manual = player.id === localPlayerId && !player.isAutopilot && localPose !== undefined;
+      const pose = manual ? localPose : player;
+      const poseAlpha = revived || manual ? 1 : alpha;
+      if (revived) view.position(pose.x, pose.y, pose.z);
+      view.trackMovementTarget(pose.x, pose.z);
+      view.root.position = Vector3.Lerp(view.root.position, new Vector3(-pose.x, pose.y, pose.z), poseAlpha);
+      const bodyYaw = pose.bodyYaw ?? pose.yaw;
       const delta = Math.atan2(Math.sin(-bodyYaw - view.root.rotation.y), Math.cos(-bodyYaw - view.root.rotation.y));
-      view.root.rotation.y += delta * (revived ? 1 : alpha);
-      const turretDelta = Math.atan2(Math.sin(player.yaw + player.aim - previousTurretYaw),
-        Math.cos(player.yaw + player.aim - previousTurretYaw));
-      const turretYaw = previousTurretYaw + turretDelta * (revived ? 1 : alpha);
+      view.root.rotation.y += delta * poseAlpha;
+      const turretDelta = Math.atan2(Math.sin(pose.yaw + pose.aim - previousTurretYaw),
+        Math.cos(pose.yaw + pose.aim - previousTurretYaw));
+      const turretYaw = previousTurretYaw + turretDelta * poseAlpha;
       view.aim(turretYaw + view.root.rotation.y);
-      void view.motion(player.alive && this.moving.has(player.id)).catch(error => {
+      void view.motion(player.alive && (manual ? localMoving : this.moving.has(player.id))).catch(error => {
         this.actionError(player.id, view, error);
       });
       if (player.id === localPlayerId) {
         followBattleCamera(this.camera, view.root.position, view.turretYaw);
       }
     }
+    this.labels.render(this.players, localPlayerId, playing);
     const engine = this.scene.getEngine();
     const delta = Math.fround(effectModelEngineDelta(engine.getDeltaTime() / 1000));
     const viewport = {width: engine.getRenderWidth(), height: engine.getRenderHeight()};
@@ -355,6 +366,7 @@ export class BattlePlayers {
   clear(): void {
     this.generation++;
     this.disguises.clear();
+    this.labels.clear();
     this.snapshot = undefined;
     this.localPlayerId = undefined;
     this.mode = 1;

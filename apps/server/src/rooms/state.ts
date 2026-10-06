@@ -27,13 +27,14 @@ export interface RoomState {
   battlefield: Battlefield;
   players: Map<string, PlayerState>;
   bullets: BulletState[];
-  phase: 'WAITING' | 'PLAYING' | 'FINISHED';
+  phase: 'WAITING' | 'LOADING' | 'PLAYING' | 'FINISHED';
   startedAt: number;
   endedAt: number;
   teamScores: number[];
   winnerTeam: number;
   round: number;
   ready: Set<string>;
+  loaded: Set<string>;
   rematch: Set<string>;
   teamLives: number[];
   objectives: ObjectiveSnapshot[];

@@ -55,6 +55,7 @@ void main() {
     texture.wrapU = texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE;
     texture.updateSamplingMode(Constants.TEXTURE_LINEAR_LINEAR);
     material.setTexture('sourceTexture', texture);
+    material.transparencyMode = transparent ? ShaderMaterial.MATERIAL_ALPHATESTANDBLEND : ShaderMaterial.MATERIAL_OPAQUE;
     material.alphaMode = transparent ? Constants.ALPHA_COMBINE : Constants.ALPHA_DISABLE;
     material.depthFunction = Constants.LESS;
     material.forceDepthWrite = true;

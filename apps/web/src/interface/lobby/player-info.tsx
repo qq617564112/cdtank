@@ -7,13 +7,14 @@ import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceUi} from './source-react';
 import {loadSourceUiFonts} from '../resources/source-ui-fonts';
 import {PlayerInfoResourceFeedback} from './player-info-resource-feedback';
+import {waitingTankReference} from './waiting-room-state';
 
 export interface PlayerInfoPlayer {
-  accountId: string;
+  accountId?: string;
   name: string;
   title?: string;
-  isFriend: boolean;
-  isBlocked: boolean;
+  isFriend?: boolean;
+  isBlocked?: boolean;
   online: boolean;
   inRoom: boolean;
 }
@@ -22,22 +23,23 @@ export interface PlayerInfoViewProps {
   player: PlayerInfoPlayer | null;
   pending: boolean;
   status: string;
-  onAddFriend: () => void;
-  onRemoveFriend: () => void;
-  onAddBlacklist: () => void;
-  onRemoveBlacklist: () => void;
+  onAddFriend?: () => void;
+  onRemoveFriend?: () => void;
+  onAddBlacklist?: () => void;
+  onRemoveBlacklist?: () => void;
   onClose: () => void;
   onExchange?: () => void;
+  roomDetails?: {roomId: string; tankId: number; petId?: number; team: string; ready: boolean};
 }
 
 const suffix = 'playerlist_playerinfo.xml';
 
-/** The source player sheet consumes confirmed account identity and friend state. */
+/** The source player sheet consumes account relationships or current room details. */
 export function PlayerInfoView(props: PlayerInfoViewProps) {
   return props.open && props.player ? <PlayerInfoSession {...props} player={props.player}/> : null;
 }
 
-function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend, onAddBlacklist, onRemoveBlacklist, onClose, onExchange}: PlayerInfoViewProps & {player: PlayerInfoPlayer}) {
+function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend, onAddBlacklist, onRemoveBlacklist, onClose, onExchange, roomDetails}: PlayerInfoViewProps & {player: PlayerInfoPlayer}) {
   const {ui, error} = useSourceUi(true, [suffix]);
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
@@ -74,7 +76,8 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
   const friendSource = player.isFriend ? 'btnRemoveFriend' : 'btnAddFriend';
   const knownText = (name: string) => name === 'txtPlayerName' ? player.name : name === 'txtPlayerStatus'
     ? player.online ? player.inRoom ? '房间中' : '在线' : '离线'
-    : name === 'txtPlayerTitle' ? player.title ?? '' : '';
+    : name === 'txtPlayerTitle' ? player.title ?? '' : name === 'txtRoomNumber' ? roomDetails?.roomId ?? '' : '';
+  const description = roomDetails ? `${roomDetails.team}\n战车：${roomDetails.tankId}${roomDetails.petId ? `\n宠物：${roomDetails.petId}` : ''}\n${roomDetails.ready ? '已准备' : '未准备'}` : '';
   return <dialog ref={dialog} data-player-info="" data-player-info-account={player.accountId}
     aria-label={`玩家资料：${player.name}`} aria-busy={pending} style={{zoom: scale}}
     onCancel={event => {event.preventDefault(); onClose();}}
@@ -93,17 +96,18 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
         {ui && layout && <>
           {ui.layouts.find(value => value.path.endsWith(suffix))!.windows.filter(control => control.type === 'WindowsLook/StaticImage')
             .map(control => <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix}
-              name={control.name} aria-hidden="true" className="player-info-picture"/>)}
+              name={control.name} aria-hidden="true" className="player-info-picture"
+              reference={roomDetails && control.name === 'picTankIcon' ? waitingTankReference(roomDetails.tankId) : undefined}/>)}
           {ui.layouts.find(value => value.path.endsWith(suffix))!.windows.filter(control => control.type === 'WindowsLook/StaticText')
             .map(control => <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix}
               name={control.name} text={knownText(control.name)} hidden={control.properties.Visible === 'False'}/>)}
-          <textarea {...sourceProps(ui, layout, suffix, 'edtPlayerDescription')} aria-label="玩家介绍" readOnly value="" tabIndex={-1}/>
+          <textarea {...sourceProps(ui, layout, suffix, 'edtPlayerDescription')} aria-label={roomDetails ? '房间玩家详情' : '玩家介绍'} readOnly value={description} tabIndex={-1}/>
           <SourceButton ui={ui} layout={layout} suffix={suffix} source={friendSource}
-            data-player-info-friend-action="" aria-label={player.isFriend ? '删除好友' : '加好友'} disabled={pending}
-            onClick={() => {requestedFocus.current = 'friend'; if (player.isFriend) onRemoveFriend(); else onAddFriend();}}/>
+            data-player-info-friend-action="" aria-label={player.isFriend ? '删除好友' : '加好友'} disabled={pending || !(player.isFriend ? onRemoveFriend : onAddFriend)}
+            onClick={() => {requestedFocus.current = 'friend'; if (player.isFriend) onRemoveFriend?.(); else onAddFriend?.();}}/>
           <SourceButton ui={ui} layout={layout} suffix={suffix} source={player.isBlocked ? 'btnRemoveBlacklist' : 'btnAddBlacklist'}
-            data-player-info-blacklist-action="" aria-label={player.isBlocked ? '解除屏蔽' : '屏蔽'} disabled={pending}
-            onClick={() => {requestedFocus.current = 'blacklist'; if (player.isBlocked) onRemoveBlacklist(); else onAddBlacklist();}}/>
+            data-player-info-blacklist-action="" aria-label={player.isBlocked ? '解除屏蔽' : '屏蔽'} disabled={pending || !(player.isBlocked ? onRemoveBlacklist : onAddBlacklist)}
+            onClick={() => {requestedFocus.current = 'blacklist'; if (player.isBlocked) onRemoveBlacklist?.(); else onAddBlacklist?.();}}/>
           <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnExchange"
             data-player-info-exchange="" aria-label="交易" disabled={pending || !onExchange || !player.online || player.inRoom}
             onClick={onExchange}/>

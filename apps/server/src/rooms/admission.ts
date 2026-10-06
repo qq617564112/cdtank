@@ -73,7 +73,7 @@ export function admitRoomPlayer(room: RoomState | undefined, clientId: string, p
   }
   validatePassword(password);
   if (!passwordMatches(room, password)) throw new Error('房间密码错误');
-  if (room.players.size >= roomMaxPlayers(room) || room.phase === 'PLAYING') {
+  if (room.players.size >= roomMaxPlayers(room) || room.phase === 'PLAYING' || room.phase === 'LOADING') {
     throw new Error('房间已满或正在对战，请选择等待中的房间');
   }
   return insert(room);

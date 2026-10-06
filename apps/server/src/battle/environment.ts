@@ -46,7 +46,7 @@ export function damageSceneObject(room: {roomId: string; phase: string},
   }
 }
 
-/** Reconstructed source OBB/NAV occupancy retains intact bounds during the broken fade. */
+/** Render mesh/NAV occupancy retains intact geometry during the broken fade. */
 export function syncSceneObjectCollision(room: {map: {mapId: number}; battlefield: Battlefield;
   sceneObjects: readonly SceneObjectSnapshot[]; sceneCrushes?: readonly SceneCrushSnapshot[]}, now: number): void {
   const previous = active.get(room.battlefield) ?? new Set<string>();

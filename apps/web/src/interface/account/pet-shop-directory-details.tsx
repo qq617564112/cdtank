@@ -52,14 +52,14 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
         }} />
       <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txtSkillName${index}`} text={skill.name} />
       <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txtSkillLevel${index}`}
-        text={skill.id && skill.level !== undefined ? String(skill.level) : ''} />
+        text={skill.name && skill.level !== undefined ? String(skill.level) : ''} />
     </span>)}
     <div {...sourceProps(ui, layout, suffix, 'tankecanshuqu')} className="pet-shop-mastery-values"
       data-pet-shop-mastery="" data-mastery-binding="original-pet-table-directory">
       {(PET_SHOP_MASTERY[petId] ?? []).map((value, index) => <span key={index}
         data-mastery-index={index} data-mastery-value={value}
         style={{left: index % 2 ? 184 : 77, top: index < 2 ? 37 : 63}}>
-        <SourceFeedbackText text={String(value)} colour="#253740" />
+        <SourceFeedbackText text={String(value)} />
       </span>)}
     </div>
     {opened && <PetSkillSourceView ui={ui} skill={opened.skill} level={opened.level}

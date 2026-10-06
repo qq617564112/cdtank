@@ -7,7 +7,7 @@ interface RoomParticipant {
 
 interface PreparationRoom {
   mode: number;
-  phase: 'WAITING' | 'PLAYING' | 'FINISHED';
+  phase: 'WAITING' | 'LOADING' | 'PLAYING' | 'FINISHED';
   round: number;
   map: {maxPlayers: number};
   maxPlayers?: number;
@@ -30,6 +30,7 @@ export function readyCpus(room: PreparationRoom): void {
 export function setReady(room: PreparationRoom, playerId: string, isReady: boolean,
   minPlayers: number): boolean {
   if (room.phase === 'FINISHED') throw new Error('请在结算后选择再来一局');
+  if (room.phase === 'LOADING') throw new Error('正在载入对局，不能更改准备状态');
   if (room.phase === 'WAITING') {
     if (isReady) room.ready.add(playerId);
     else room.ready.delete(playerId);

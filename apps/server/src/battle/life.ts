@@ -13,7 +13,7 @@ import {setBattleHealth, type HealthParticipant} from './health';
 import {resetConfirmedAmmo} from './items/ammo-confirmation';
 import type {RoleCombatState} from './roles/combat-state';
 import type {MsgPlayerInput, MsgRoomEvent} from '../../../shared/protocols';
-import type {Battlefield} from '../battlefield';
+import type {Battlefield, SpawnPoint} from '../battlefield';
 import {applyFriendlyKill, applyModeKill, type ModeOutcome} from '../modes/outcomes';
 
 interface LifePlayer extends HealthParticipant {
@@ -158,14 +158,14 @@ function finalizePlayerDeath(room: Parameters<typeof damagePlayer>[0],
   return outcome;
 }
 
-/** Restore the same participant at an original spawn; input watermark is retained. */
+/** Restore the same participant at the selected free spawn; input watermark is retained. */
 export function respawnPlayer(field: Battlefield, player: LifePlayer & {
   combat: RoleCombatState;
   yaw: number; bodyYaw?: number; movementState?: unknown; movementCommand?: number; aim: number; input: MsgPlayerInput;
-}, maxHp: number, defaultInput: MsgPlayerInput): void {
+}, maxHp: number, defaultInput: MsgPlayerInput,
+  spawn: SpawnPoint = field.spawn(Math.floor(Math.random() * field.spawns.length))): void {
   player.lastStand = undefined;
   clearAmmoBurn(player);
-  const spawn = field.spawn(Math.floor(Math.random() * field.spawns.length));
   player.x = spawn.x;
   player.y = spawn.y;
   player.z = spawn.z;

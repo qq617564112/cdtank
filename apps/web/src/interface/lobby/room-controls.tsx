@@ -1,5 +1,5 @@
 import {LobbyIdentityView} from './lobby-identity-view';
-import {useCallback, useEffect, useRef, useState, type ReactNode} from 'react';
+import {useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode} from 'react';
 import {LobbySourcePage} from './lobby-source-page';
 import {RoomPasswordDialog} from './room-password-dialog';
 import type {Battle} from '../../match/battle';
@@ -14,6 +14,7 @@ import {canJoinRoom, orderRooms, roomDirectoryPage, type RoomSort} from './room-
 import type {MsgRoomInvitation} from '../../../../shared/protocols/MsgRoomInvitation';
 import {useRoomInputLimit} from './room-input-limit';
 import {ROOM_NAME_MAX_CODEPOINTS, ROOM_PASSWORD_MAX_CODEPOINTS} from '../../../../shared/room-input';
+import {waitingRoomInfo} from './waiting-room-state';
 
 interface LobbyViewProps {validation?: boolean; chatContent?: ReactNode; playerContent?: ReactNode; battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; openInventory: () => void; openEquipment: () => void; openRoles: () => void; openShop: () => void; openHistory: () => void}
 const MODE_NAMES = ['团队', '占领', '擒王', '混战', '破坏'];
@@ -21,6 +22,8 @@ const INITIAL_DRAFT: RoomCreateDraft = {mode: 1, mapId: 0, roomName: '一起对�
 
 /** Lobby state owns ordinary controls and the original source layout dialogs. */
 export function LobbyView({validation = false, chatContent, playerContent, battle, canvas, hud, openInventory, openEquipment, openRoles, openShop, openHistory}: LobbyViewProps) {
+  const match = useSyncExternalStore(battle.matchPanel.subscribe, battle.matchPanel.getSnapshot, battle.matchPanel.getSnapshot);
+  const waiting = match?.phase === 'WAITING';
   const [playerName, setPlayerName] = useState('坦克手'), [tankId, setTankId] = useState(0);
   const [tanks, setTanks] = useState<Awaited<ReturnType<typeof tankCatalog>>>([]);
   const [maps, setMaps] = useState<Awaited<ReturnType<Battle['listMaps']>>>([]);
@@ -122,7 +125,10 @@ export function LobbyView({validation = false, chatContent, playerContent, battl
     if (!battle.inRoom) return;
     setInvitations([]); setPasswordRoom(''); setCardsOpen(false); setMapOpen(false); setCreateOpen(false);
     setInBattle(true); document.body.classList.add('in-battle');
-    requestAnimationFrame(() => canvas.focus());
+    requestAnimationFrame(() => {
+      if (battle.matchPanel.getSnapshot()?.phase === 'PLAYING') canvas.focus();
+      else document.querySelector<HTMLButtonElement>('[data-waiting-ready]')?.focus();
+    });
   }
   async function join(roomId: string, password: string) {
     startEntering();
@@ -171,7 +177,9 @@ export function LobbyView({validation = false, chatContent, playerContent, battl
         else {createAfterMap.current = true; setMapOpen(true);}
       }} select={setSelectedId} activate={activateRoom} changeSort={changeSort} previous={previous} next={next} refresh={() => {void refresh();}} join={() => validation ? report(join(page.selectedId, joinPassword)) : activateRoom(page.selectedId)}/>;
   return <>
-    {!validation && <LobbySourcePage visible={!inBattle} status={status} chatContent={chatContent} playerContent={playerContent}>
+    {!validation && <LobbySourcePage visible={!inBattle || waiting} room={waiting}
+      roomName={match?.waiting ? waitingRoomInfo(match.waiting).name : ''} status={waiting ? '' : status}
+      chatContent={waiting ? undefined : chatContent} playerContent={playerContent}>
       {roomCards}
       <RoomInvitations formal messages={invitations} ignore={id => setInvitations(current => current.filter(value => value.invitationId !== id))}
         join={(message, password) => join(message.room.id, password)}/>

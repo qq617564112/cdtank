@@ -26,10 +26,19 @@ export function waitingTankReference(tankId: number): string | undefined {
 export function waitingRoomInfo(snapshot: MsgRoomSnapshot) {
   const info = snapshot.roomInfo;
   return {
-    name: info?.name ?? '资料不可用',
+    name: waitingRoomCustomName(snapshot) || info?.name || '资料不可用',
     mapName: info?.mapName ?? '资料不可用',
     time: info ? String(info.timeLimitSeconds) : '—',
     locked: !!info?.hasPassword,
     description: info?.mapDescription || (info ? '暂无地图说明' : '服务器未提供房间资料'),
   };
+}
+
+export function waitingRoomCustomName(snapshot: MsgRoomSnapshot): string {
+  const info = snapshot.roomInfo;
+  if (!info) return '';
+  const mode = ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'][snapshot.mode - 1];
+  const description = `${mode}·${info.mapName}`;
+  const suffix = ` · ${description}`;
+  return info.name === description ? '' : info.name.endsWith(suffix) ? info.name.slice(0, -suffix.length) : info.name;
 }

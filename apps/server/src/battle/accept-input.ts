@@ -17,9 +17,10 @@ import {applyBuildingTool} from './items/building-tool';
 import {applyAirstrike} from './items/airstrike';
 import type {RoomState} from '../rooms/state';
 import {confirmAcceptedAmmoSelection} from './items/ammo-confirmation';
+import {acceptClientTankPose} from './client-movement';
 
 /** Accept ordinary human/CPU inputs or the participant's separate autopilot lane. */
-export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mode' | 'map' | 'teamLives' | 'groundTraps' | 'sceneObjects' | 'airstrikes'>, player: PlayerState,
+export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'round' | 'phase' | 'mode' | 'map' | 'teamLives' | 'groundTraps' | 'sceneObjects' | 'airstrikes' | 'players'>, player: PlayerState,
   input: MsgPlayerInput, autonomous: boolean, maxHp: () => number,
   consumeItem: Parameters<typeof applyHealingItem>[4], now: number, tickMs: number): MsgRoomEvent[] {
   const {roomId, phase} = room;
@@ -28,6 +29,8 @@ export function acceptBattleInput(room: Pick<RoomState, 'roomId' | 'phase' | 'mo
       || input.sequence <= (autonomous ? player.autopilotInputSequence ?? 0 : player.inputSequence)) {
     return [];
   }
+  if (!autonomous && !player.cpu && input.pose &&
+      !acceptClientTankPose(room.round, player, input.pose, room.players.values())) return [];
   player.input = normalizeInput(input);
   if (autonomous) player.autopilotInputSequence = input.sequence;
   else player.inputSequence = input.sequence;
@@ -72,6 +75,7 @@ function normalizeInput(input: MsgPlayerInput): MsgPlayerInput {
     fire: !!input.fire,
     useItem: Number.isInteger(input.useItem) ? input.useItem : 0,
     clientTime: Number.isFinite(input.clientTime) ? input.clientTime : 0,
+    pose: input.pose ? {...input.pose} : undefined,
   };
 }
 

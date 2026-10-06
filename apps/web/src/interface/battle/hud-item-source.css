@@ -10,3 +10,65 @@
   display: inline-block;
   vertical-align: top;
 }
+
+.hud-item-infinite {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  width: 15px;
+  height: 14px;
+}
+
+.hud-item-cooldown {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 32px;
+  background: url('/ui/regions/77/70.png') 100% 100% no-repeat;
+  background-size: 100% 100%;
+  pointer-events: none;
+}
+
+.hud-item-source-control[data-item-selected]::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 2px solid #ffdf41;
+  pointer-events: none;
+}
+
+.hud-item-remaining {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 1px 1px #000;
+}
+
+.hud-item-action {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.hud-item-action:disabled {
+  cursor: default;
+}
+
+.hud-item-action:enabled:hover,
+.hud-item-action:focus-visible {
+  outline: 1px solid #fff0a0;
+  outline-offset: 1px;
+}
+
+.hud-item-action:enabled:active {
+  background: rgb(255 223 65 / 12%);
+}

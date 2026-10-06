@@ -1,6 +1,6 @@
 # 原 HUD 阶段显隐入口（M5-04-HUD-PHASE）
 
-通用窗口显示入口 `0x4d6216` 完整原执行 PASS8；原阶段显示规则仍缺上游入口。`hud-phase-native.json`保存八组原执行记录，`hud-phase-source-locations.json`保存字符串、导入与准确指令范围。正式 HUD 的阶段状态没有改动，业务子项保持未完成。
+通用窗口显示入口 `0x4d6216` 完整原执行 PASS8；原阶段显示规则仍缺上游入口，当前项目规则已由用户确认采用。`hud-phase-native.json`保存八组原执行记录，`hud-phase-source-locations.json`保存字符串、导入与准确指令范围。正式HUD已接当前阶段策略，完整页面验收仍待完成。
 
 ## 原窗口与共享入口
 
@@ -18,8 +18,12 @@ HUD调用点 `0x4d23f7` 与RoomPanel调用点 `0x50f5c5` 直接把各自函数�
 
 已定位的panel消费者使用alpha：`0x4d0412..0x4d0426`在日志更新后清+0x95c计时并设alpha1；`0x4cae80..0x4caeb3`读取阈值 `0x5cfb08` 的8秒，累计frame dt后设 `0x5c4794` 的float32(0.2)；`0x4ccac7` hover设alpha1，`0x4ccade`在计时达阈值后恢复0.2。这些片段未作为完整业务原执行，也没有提供原WAITING显隐判定。
 
-## 阻塞与下一交付
+## 原生产来源边界
 
-缺失的是scene/phase dispatcher到GameMain与RoomPanel的show布尔生产调用链：必须证明等待、开局、终局与再战分别如何挂接两根，以及相应生命周期回调是否覆盖子控件状态。当前入口没有这些条件，无法决定WAITING隐藏或FINISHED保留。该缺口取证停止，不将网页现状当作原规则。
+缺失的是scene/phase dispatcher到GameMain与RoomPanel的show布尔生产调用链：必须证明等待、开局、终局与再战分别如何挂接两根，以及相应生命周期回调是否覆盖子控件状态。该原入口没有这些条件；项目现采用用户确认的WAITING/LOADING隐藏、FINISHED保留政策。该缺口取证停止，不将网页现状当作原规则。
 
 可独立交付的已有HUD玩家功能是权威生命与头像受击/死亡/复活、原装填反馈的正式普通操作闭环；现有源依据见 `ui-runtime.md`、`reload-hud-source-sol.md`。另一有限候选是战斗消息面板的原8秒alpha与hover反馈，以上地址已经定位；完整原消费者执行和实际玩家消息接线仍需单独业务片授权与验收。本片没有新增字体、GPU或全HUD状态范围。
+
+## 当前接入
+
+本轮当前实现：正式快照入口和战斗帧更新HUD阶段，WAITING/LOADING隐藏、PLAYING显示、FINISHED保留终值。原Fight的显示/隐藏消费者直接读到1秒阈值，见 battle-ui-client-audit.md；模式介绍2秒及上述阶段策略已由用户确认采用，完整原scene/phase生产链仍保留取证边界。

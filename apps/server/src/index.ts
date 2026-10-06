@@ -17,6 +17,7 @@ import {AccountStore} from './account-store';
 import {registerAccountApis} from './accounts/api';
 import {registerRoomApis} from './rooms/api';
 import {registerRoomLeaveApi} from './rooms/leave';
+import {registerRoomKickApi} from './rooms/kick';
 import {registerRoomInvitations} from './rooms/invitations';
 import {registerBattleInputs} from './battle/input';
 import {accountBattleBinding, consumeAccountBattleItem} from './accounts/battle-binding';
@@ -76,6 +77,7 @@ registerRoomApis(server, world, sessionByConnection, roomTankId, bindAccountStat
     return accounts.displayName(accountId);
   });
 registerRoomLeaveApi(server, world, sessionByConnection, transport);
+registerRoomKickApi(server, world, sessionByConnection, transport, reconnections);
 registerRoomInvitations(server, world, accountByConnection, sessionByConnection);
 
 registerBattleInputs(server, world, sessionByConnection, broadcastEvent, roomId => {

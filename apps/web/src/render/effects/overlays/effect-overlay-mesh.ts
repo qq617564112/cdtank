@@ -29,14 +29,18 @@ export class EffectOverlayMesh {
     }, {attributes: ['position', 'uv', 'color'], uniforms: ['viewport'], samplers: ['effectTexture'], needAlphaBlending: true});
     this.material.setTexture('effectTexture', texture);
     this.material.backFaceCulling = cull !== 'NONE';
-    this.material.sideOrientation = cull === 'CW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
+    // GBF names the culled winding; Babylon names the retained front face.
+    this.material.sideOrientation = cull === 'CCW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
     this.material.disableDepthWrite = true;
     this.material.depthFunction = Constants.ALWAYS;
+    this.material.transparencyMode = Material.MATERIAL_ALPHABLEND;
     this.material.alphaMode = Constants.ALPHA_COMBINE;
     this.mesh = new Mesh('original-screen-effect', scene);
     this.mesh.material = this.material;
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.mesh.isPickable = false;
+    scene.setRenderingAutoClearDepthStencil(2, false);
+    this.mesh.renderingGroupId = 2;
   }
 
   update(draw?: EffectOverlayRectangle): void {

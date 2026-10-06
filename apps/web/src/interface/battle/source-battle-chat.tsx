@@ -11,7 +11,8 @@ export interface SourceChatResources {
   layout: ChatSourceLayout; channels: ChatSourceLayout; emotes: ChatSourceLayout;
 }
 
-/** Source ornaments and menus. Input, messages and send state remain controlled. */
+/** Source ornaments and menus. Input, messages and send state remain controlled.
+ *  `active` is the editable editor; the read-only notice frame renders the ornaments only. */
 export function SourceBattleChat({resources, active, channel, pending, composing, input, changeChannel,
   insert, releaseKeys, players, selectedName, chooseTarget, children}: {
   resources?: SourceChatResources; active: boolean; channel: 0 | 1 | 2 | 3; pending: boolean;
@@ -47,7 +48,7 @@ export function SourceBattleChat({resources, active, channel, pending, composing
   const layout = resources?.layout;
   const sourceLayout = resources ? new HomeSourceLayout(resources.layout.ui, 'game_main_chat_shrinked.xml') : undefined;
   const channelLayout = resources ? new HomeSourceLayout(resources.channels.ui, 'game_main_channellist.xml') : undefined;
-  return <div ref={stage} className="source-chat-stage" style={active ? {transform: `scale(${scale})`} : undefined}
+  return <div ref={stage} className="source-chat-stage" style={{transform: `scale(${scale})`}}
     onPointerDownCapture={event => {
       if (event.target instanceof Element && event.target.closest('[data-room-intimate-toggle]')) {
         compositionClick.current = composing.current;
@@ -82,7 +83,7 @@ export function SourceBattleChat({resources, active, channel, pending, composing
     })}
     {children}
     {resources && <>
-      <SourceImageScale value={active ? scale : 1}>
+      <SourceImageScale value={scale}>
       {active && channel === 2 && <>
         <SourceButton ui={resources.layout.ui} layout={sourceLayout!} suffix="game_main_chat_shrinked.xml"
           source="btnExpandIntimate" offsetY={-435} data-room-intimate-toggle="" aria-label="选择密语对象"

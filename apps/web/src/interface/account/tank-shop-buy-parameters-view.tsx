@@ -1,4 +1,4 @@
-import {SourceFeedbackStaticText, SourceFeedbackText} from '../resources/source-feedback-text';
+import {SourceFeedbackStaticText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {TANK_SHOP_BUY_PARAMETERS} from './tank-shop-buy-parameters';
@@ -22,11 +22,9 @@ export function TankShopBuyParametersView({ui, tankId}: {ui: HomeSourceUi; tankI
         title={name === 'txtShootInterval' ? '商品目录的发射间隔修正，实战间隔还由炮弹和装备合成。' : undefined} />)}
     <div {...background} className="tank-shop-buy-capacity" data-tank-buy-capacity=""
       data-capacity={values.capacity} data-progress={values.progress}
-      data-count-binding="web-readout-of-original-shop-capacity"
       role="meter" aria-label="商品炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values.capacity}>
       <span aria-hidden="true" style={{position: 'absolute', inset: 0, clipPath: `inset(0 ${width - extent}px 0 0)`,
         width, height, backgroundImage: fill.style.backgroundImage, backgroundSize: '100% 100%'}} />
-      <span className="tank-shop-buy-capacity-count"><SourceFeedbackText text={String(values.capacity)} colour="#253740" /></span>
     </div>
   </div>;
 }

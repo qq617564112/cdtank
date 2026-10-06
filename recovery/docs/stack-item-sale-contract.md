@@ -8,7 +8,7 @@ M6-06 / M2-02库存生命周期。原495e90 kind3分派4945f7，输入实例和�
 
 category1进入43ce40，category2进入43cf1c。若ownedquantity大于replyquantity，owned+10减量，Item定义存在时battle+20重新计算为min(newowned,Itemrecord+104 BattleUseMax)，其他MyItem字段保持。定义缺失时仍减owned，但battlequantity不写。若ownedquantity不大于回执量，则profile selector0七hotkeys清首个匹配实例，再释放并erase完整MyItem。原virtual+20经42fe3f→4208b7 selector0返回dataobject+100，不能把原对象地址偷换为profilepayload+11c；正式hotkeys独立表为Web映射。原该分支实际清快捷槽，区别于kind4整部件删除只删record的合同；这里不清profile部件实例槽。
 
-[源脚本](/workspace/cdtank/recovery/evidence/stack-item-sale-contract-source.py) 与 [指令合同](/workspace/cdtank/recovery/output/stack-item-sale-contract-source.json) 保存codec、writer、减量和whole删除字节。unsigned半价、MyItem析构及selector0字段复用既有来源，不执行旧购买、维修、PartSale或Pet/Tank源矩阵。
+[源脚本](../evidence/stack-item-sale-contract-source.py) 与 [指令合同](../output/stack-item-sale-contract-source.json) 保存codec、writer、减量和whole删除字节。unsigned半价、MyItem析构及selector0字段复用既有来源，不执行旧购买、维修、PartSale或Pet/Tank源矩阵。
 
 ## 正式接口边界
 

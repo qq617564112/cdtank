@@ -9,7 +9,7 @@ export interface BattleInputContext {
   autopilot: boolean;
 }
 
-/** Manual battle controls and the 50 ms player-input cadence. */
+/** Manual controls send key changes immediately and refresh held input every 50 ms. */
 export class BattleInput {
   private readonly keys = new Set<string>();
   private sequence = 0;
@@ -35,10 +35,15 @@ export class BattleInput {
       }
       if (INPUT_ACTIONS.some(action => bindingCodes(this.bindings, action).includes(event.code))) {
         event.preventDefault();
-        this.keys.add(event.code);
+        if (!this.keys.has(event.code)) {
+          this.keys.add(event.code);
+          this.send();
+        }
       }
     });
-    window.addEventListener('keyup', event => {this.keys.delete(event.code);});
+    window.addEventListener('keyup', event => {
+      if (this.keys.delete(event.code)) this.send();
+    });
     window.addEventListener('blur', () => {this.clear();});
     window.addEventListener('focusin', event => {
       if (event.target instanceof HTMLElement && event.target.matches('input, select, button, textarea, [contenteditable]')) {
@@ -47,7 +52,11 @@ export class BattleInput {
     });
   }
 
-  clear(): void {this.keys.clear();}
+  clear(): void {
+    if (!this.keys.size) return;
+    this.keys.clear();
+    this.send();
+  }
   getKeyBindings(): KeyBindings {return cloneKeyBindings(this.bindings);}
   setKeyBindings(bindings: KeyBindings): void {
     const validated = validateKeyBindings(bindings);
@@ -71,14 +80,22 @@ export class BattleInput {
     return bindingCodes(this.bindings, action).some(code => this.keys.has(code));
   }
 
+  get motionAxes(): Pick<MsgPlayerInput, 'move' | 'turn' | 'aim'> {
+    const context = this.readContext();
+    if (!context.connected || !context.active || !context.playing || context.autopilot) {
+      return {move: 0, turn: 0, aim: 0};
+    }
+    return {move: Number(this.held('forward')) - Number(this.held('backward')),
+      turn: Number(this.held('turnLeft')) - Number(this.held('turnRight')),
+      aim: Number(this.held('aimLeft')) - Number(this.held('aimRight'))};
+  }
+
   send(useItem = 0): void {
     const context = this.readContext();
-    if (!context.connected || context.autopilot) return;
+    if (!context.connected || !context.active || !context.playing || context.autopilot) return;
     this.sendMessage({
       sequence: ++this.sequence,
-      move: Number(this.held('forward')) - Number(this.held('backward')),
-      turn: Number(this.held('turnLeft')) - Number(this.held('turnRight')),
-      aim: Number(this.held('aimLeft')) - Number(this.held('aimRight')),
+      ...this.motionAxes,
       fire: this.held('fire'), useItem, clientTime: Date.now(),
     });
   }

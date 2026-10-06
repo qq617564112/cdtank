@@ -34,4 +34,4 @@
 
 本片数字对应movement-world独立日志；通用original-movement-match与浏览器JSON会由后续正式验收刷新，后续CPU路线片保存独立cpu-original-navigation产物。
 
-不改原CDTank，不追加progress.md；完整复刻与M2-03仍未完成。
+原CDTank保持不变；完整复刻与M2-03仍未完成。

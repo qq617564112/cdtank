@@ -53,8 +53,9 @@
 
 .map-selector-card > span {
   pointer-events: none;
-  color: #172a38;
-  font-size: 11px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 15px;
   overflow: hidden;
 }
 
@@ -103,4 +104,17 @@
 
 .map-selector-toolbar output {
   overflow-wrap: anywhere;
+}
+
+.map-selector-toolbar[data-map-selector-original] {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+.map-selector-toolbar[data-map-selector-original] button {
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }

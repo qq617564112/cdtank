@@ -10,4 +10,4 @@ wire的ownedQuantity只是原MyItem+10的24bit通用字段名，不代表各类�
 
 UI选中setter519d0b取原Itemrecord，439aa5把uint32 ItemCoin乘.02/.1/.2、经%.1f和43079b转换后交三个coin文本，14003一天显示4；三个money文本直接使用439898整数。显示单位和请求raw单位分开。成功4的495612先写完整coin/money余额，再kind4按实例查拥有物品，将+10加days×1440。成功UI回调按当前部件/装饰/标记类别查实例，4d849e重算剩余天数字并刷新原行。
 
-[来源索引](/workspace/cdtank/recovery/output/part-maintenance-contract-source.json)保留新分支与字段；[纯报价准备](/workspace/cdtank/recovery/prepared/part-maintenance.ts)未导入生产。最小正式输入为instanceId、days、currency、requestId；输出为原raw余额、完整Inventory和维修实例的新剩余分钟。原服务授权/原子扣款/持久为明示Web重建，原时间递减仍缺，不能从维修成功推期限自然生效。
+[来源索引](../output/part-maintenance-contract-source.json)保留新分支与字段；[纯报价准备](../prepared/part-maintenance.ts)未导入生产。最小正式输入为instanceId、days、currency、requestId；输出为原raw余额、完整Inventory和维修实例的新剩余分钟。原服务授权/原子扣款/持久为明示Web重建，原时间递减仍缺，不能从维修成功推期限自然生效。

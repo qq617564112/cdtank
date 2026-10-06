@@ -5,16 +5,20 @@ import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceUi} from './source-react';
 
+const lobbyLogoUrl = new URL('../../assets/ui/lobby-logo.png', import.meta.url).href;
+
 interface LobbySourcePageProps {
   visible: boolean;
   children: ReactNode;
   chatContent?: ReactNode;
   playerContent?: ReactNode;
   status: string;
+  room?: boolean;
+  roomName?: string;
 }
 
 /** The original 800×600 lobby sheet contains the directory, player list and chat regions. */
-export function LobbySourcePage({visible, children, chatContent, playerContent, status}: LobbySourcePageProps) {
+export function LobbySourcePage({visible, children, chatContent, playerContent, status, room = false, roomName = ''}: LobbySourcePageProps) {
   const {ui, error} = useSourceUi(visible, ['default.xml', 'roomlist.xml', 'playerlist.xml', 'chat.xml']);
   const retry = useRef<HTMLButtonElement>(null);
   const calculate = () => Math.min(innerWidth / 800, innerHeight / 600);
@@ -45,11 +49,24 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
           {ui && background && players && chat && <>
             <SourceStaticImage ui={ui} layout={background} suffix="default.xml" name="picMainBackground"
               data-lobby-background="" className="lobby-source-picture"/>
+            {!room && <img src={lobbyLogoUrl} className="lobby-game-logo" data-lobby-logo=""
+              alt="阿猫阿狗大作战" draggable={false}/>}
             <SourceStaticImage ui={ui} layout={players} suffix="playerlist.xml" name="haoyou"
               className="lobby-source-picture" data-lobby-player-panel=""/>
-            <SourceStaticImage ui={ui} layout={players} suffix="playerlist.xml" name="datingmingchengditu"
-              className="lobby-source-picture"/>
-            <SourceImageScale value={1}><SourceStaticText ui={ui} layout={players} suffix="playerlist.xml" name="datingmingcheng" text="大厅"/></SourceImageScale>
+            {room ? ['房间', roomName].map((text, index) => {
+              const plaque = sourceProps(ui, players, 'playerlist.xml', 'datingmingchengditu',
+                players.control('datingmingchengditu').properties.Image);
+              return <span key={index} {...plaque} className="lobby-room-plaque" data-room-plaque={index === 0 ? 'label' : 'name'}
+                style={{...plaque.style, top: index * 49, height: 48}} title={text}>
+                <SourceImageScale value={1}><SourceStaticText ui={ui} layout={players} suffix="playerlist.xml" name="datingmingcheng"
+                  style={{left: 10, top: 0, width: 166, height: 48}} text={text}/></SourceImageScale>
+              </span>;
+            }) : <>
+              <SourceStaticImage ui={ui} layout={players} suffix="playerlist.xml" name="datingmingchengditu"
+                className="lobby-source-picture"/>
+              <SourceImageScale value={1}><SourceStaticText ui={ui} layout={players} suffix="playerlist.xml" name="datingmingcheng"
+                className="lobby-source-title" style={{top: 60, height: 30}} text="大厅"/></SourceImageScale>
+            </>}
             {['lt', 'liaotiankuangditu', 'paomadengditu'].map(name =>
               <SourceStaticImage key={name} ui={ui} layout={chat} suffix="chat.xml" name={name}
                 className="lobby-source-picture"/>) }

@@ -13,3 +13,7 @@ M5-05、UI13/14/15/17。正式`HudLayout`此前仅对mode2–5绘制SheetWindow�
 所有页面正常展开现对局控制后Webobjective文字及矩形可读、在视口内，没有把占领秒/王HP/击毁/摧毁值写入原数字。普通Leave均HUD隐藏/strict enabledCreate焦点。没有购买/聊天发送/用户战斗输入；CPU自然伤害只提供真实PLAYING背景，不作为新玩法/终局验收。3422/5452/9652和临时db/Chromium清理完成。
 
 `hud-mode-source-regions-accepted.json`保存源码、六整图、raw与限定证据，focusedWebtypes exit0，主线标准npm run build通过（hud-mode-static-production-web-build.log），正式Web发行已含该hunk。只建议原静态主要区域有限登记；UI13/14/15/17数字与完整M5-05/HUD父继续未完成，其他三模式基准/4K页范围没有冒充已验。
+
+## 当前接入
+
+当前五份原数字已接确认快照，团队剩余生命、占领分、双方王血量、剩余目标的含义已由用户确认采用，mode2–5不再留空；teamScores整数截断、双方VIP生命、本机kills及剩余DESTROY目标详见 hud-m505-integration.md。上述旧静态验收仍只覆盖旧范围，当前数值不宣称原公告producer已恢复，本轮未实测。

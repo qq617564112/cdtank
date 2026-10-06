@@ -61,7 +61,9 @@ export class SceneTerrainMaterial {
           needAlphaBlending: transparent, needAlphaTesting: transparent,
         });
       material.setTexture('sourceTexture', original.albedoTexture!);
-      material.alphaMode = Constants.ALPHA_COMBINE;
+      // POL vertex RGBA does not put an opaque source kind into the alpha queue.
+      material.transparencyMode = transparent ? ShaderMaterial.MATERIAL_ALPHATESTANDBLEND : ShaderMaterial.MATERIAL_OPAQUE;
+      material.alphaMode = transparent ? Constants.ALPHA_COMBINE : Constants.ALPHA_DISABLE;
       material.depthFunction = Constants.LESS;
       material.forceDepthWrite = true;
       // Preserve the existing imported geometry's sidedness in this material slice.

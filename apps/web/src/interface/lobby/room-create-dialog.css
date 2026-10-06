@@ -177,3 +177,37 @@
   text-align: center;
 }
 
+.room-create-stage .room-edit-password-action {
+  position: absolute;
+  left: 20px;
+  top: 109px;
+  width: 84px;
+  height: 20px;
+  box-sizing: border-box;
+  padding: 0 4px;
+  border: 0;
+  background-color: #eed49d;
+  background-size: 100% 100%;
+  color: #fff;
+  font: 12px 'CDTank-SIMSUN', serif;
+  cursor: pointer;
+}
+
+.room-edit-password-action option {
+  color: #fff;
+  background: #b67946;
+}
+
+.room-edit-password-action:focus-visible {
+  outline: 2px solid #fff;
+}
+
+.room-edit-map-button:hover > span {
+  color: #ffe985;
+}
+
+.room-create-stage .room-edit-map-button > .source-feedback-text {
+  position: relative;
+  width: 100%;
+  text-align: center;
+}

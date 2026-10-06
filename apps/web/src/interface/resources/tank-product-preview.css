@@ -7,7 +7,7 @@
 .tank-product-preview output {
   position: absolute;
   inset: 0;
-  color: #253740;
+  color: #fff;
   font-size: 12px;
   pointer-events: none;
 }

@@ -35,6 +35,7 @@ void main() { gl_FragColor = texture2D(sourceTexture, sourceUv) * sourceDiffuse;
     texture.wrapU = texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE;
     texture.updateSamplingMode(Constants.TEXTURE_LINEAR_LINEAR);
     material.setTexture('sourceTexture', texture);
+    material.transparencyMode = ShaderMaterial.MATERIAL_OPAQUE;
     material.alphaMode = Constants.ALPHA_DISABLE;
     material.depthFunction = Constants.LESS;
     material.forceDepthWrite = true;

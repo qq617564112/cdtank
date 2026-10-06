@@ -13,19 +13,17 @@ export interface ShotQueryOptions {
   ignoreObstruction?: boolean;
 }
 
-/** Existing Web collision geometry supplies queries; original436078/436fe0 kernels remain unrecovered. */
+/** Ordinary4354d7 uses an XZ strip; scene intersection still uses the Web battlefield. */
 export function queryShotTarget(player: Point & {id: string}, look: Point,
   players: ReadonlyMap<string, Point & {id: string; alive: boolean}>,
   battlefield: Battlefield, bodyRadius: number, crushes: readonly SceneCrushSnapshot[] = [],
-  options?: ShotQueryOptions): ShotTarget {
-  const closestPlayer = options?.closestPlayer === true;
+  ordinary = false, options?: ShotQueryOptions): ShotTarget {
+  const closestPlayer = ordinary || options?.closestPlayer === true;
   const range = options?.range ?? 1000;
   const rangeScale = Math.fround(range * 0.001);
   const queryLook = range === 1000 ? look : {x: Math.fround(look.x * rangeScale),
     y: Math.fround(look.y * rangeScale), z: Math.fround(look.z * rangeScale)};
   const free = createRoleFreeAim(player, queryLook, 0);
-  // The modifier uses the ordinary source XZ strip; untouched default geometry
-  // retains the existing rebuilt projectile height/radius.
   const start = {...player, y: closestPlayer ? 25 : player.y + 20};
   const end = {...free, y: closestPlayer ? 25 : free.y + 20};
   let surface = battlefield.firstSurfaceHit(start, end, 1);

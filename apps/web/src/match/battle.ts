@@ -11,6 +11,7 @@ import type {ReqPetShop} from '../../../shared/protocols/PtlPetShop';
 import type {CpuLoadoutItem} from '../../../shared/protocols/PtlCpu';
 import {configureBattleCamera} from '../render/battle-camera';
 import {BattlePlayers} from '../render/battle-players';
+import {BattleMinimap} from '../render/battle-minimap';
 import {GameConnection} from '../network/game-connection';
 import {LobbyChat} from '../network/lobby-chat';
 import {Friends} from '../network/friends';
@@ -49,6 +50,7 @@ import {AmmoBurnPresentation} from '../assets/tanks/ammo-burn-presentation';
 import {TankPetDeathPresentation} from '../assets/tanks/tank-pet-death-presentation';
 import {RoomFeed} from './room-feed';
 import {BattleInput} from './battle-input';
+import {LocalTankMotion} from './local-tank-motion';
 import {BattleItemInventory} from './battle-item-inventory';
 import type {KeyBindings} from './input-bindings';
 import type {QuickChatPreferences} from '../interface/settings/quick-chat-preferences';
@@ -82,10 +84,14 @@ export class Battle {
   }
   private readonly input = new BattleInput(() => ({
     active: this.active,
-    playing: this.roomFeed.snapshot?.phase === 'PLAYING',
+    playing: this.mapLoaded && this.loadedRound === this.roomFeed.snapshot?.match?.round
+      && this.roomFeed.snapshot?.phase === 'PLAYING',
     connected: this.client.isConnected && !this.reconnecting,
     autopilot: this.roomFeed.snapshot?.players.find(player => player.id === this.playerId)?.isAutopilot ?? false,
-  }), message => {void this.client.sendMsg('PlayerInput', message);});
+  }), message => {
+    void this.client.sendMsg('PlayerInput', {...message, pose: this.localMotion.reportedPose});
+  });
+  private readonly localMotion = new LocalTankMotion();
   readonly chat = new BattleChat(async (text, channel, targetName) => {
     if (!this.active || !this.client.isConnected) throw new Error('连接已断开');
     if (channel === 3) {
@@ -101,6 +107,7 @@ export class Battle {
   }, () => {this.input.clear();});
   private readonly players: BattlePlayers;
   private readonly battlefield: ScenePreview;
+  private readonly minimap: BattleMinimap;
   private readonly groundTraps: GroundTrapsPresentation;
   private groundTrapError?: string;
   private readonly effects: EffectRuntime;
@@ -115,9 +122,10 @@ export class Battle {
   private ammoBurnPresentation?: AmmoBurnPresentation;
   readonly matchPanel = new BattleMatch(() => this.rematch(),
     isReady => this.ready(isReady), team => this.changeTeam(team),
-    (operation, playerId) => this.manageCpu(operation, playerId), enabled => this.autopilot(enabled),
+    (operation, playerId, team) => this.manageCpu(operation, playerId, team), enabled => this.autopilot(enabled),
     () => this.exitRoom(), () => this.inviteRoom(),
-    (playerId, loadout) => this.configureCpuLoadout(playerId, loadout));
+    (playerId, loadout) => this.configureCpuLoadout(playerId, loadout), () => this.retryBattleLoading(),
+    {listMaps: () => this.listMaps(), save: settings => this.editRoom(settings)}, playerId => this.kickRoomPlayer(playerId));
   private readonly targets: BattleTargets;
   private readonly roomFeed: RoomFeed;
   private playerId?: string;
@@ -125,7 +133,11 @@ export class Battle {
   private session = 0;
   private mapId?: number;
   private mapLoaded = false;
+  private loadingRound?: number;
+  private loadedRound?: number;
+  private resourceRevision = 0;
   private resultMusicRound?: number;
+  private playingMusicRound?: number;
   private returnToLobby?: () => void;
   private exiting?: Promise<void>;
   private reconnecting = false;
@@ -134,6 +146,7 @@ export class Battle {
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
               private readonly hud: HTMLOutputElement) {
     this.battlefield = new ScenePreview(scene, camera);
+    this.minimap = new BattleMinimap(scene);
     this.groundTraps = new GroundTrapsPresentation(scene);
     this.effects = new EffectRuntime(scene, camera);
     this.petDeath = new TankPetDeathPresentation(this.effects);
@@ -152,7 +165,8 @@ export class Battle {
         if (snapshot.phase !== 'PLAYING' || snapshot.match?.round !== previous?.match?.round) {
           this.input.clear();
         }
-        if (snapshot.match?.round !== previous?.match?.round) {
+        if (snapshot.match?.round !== previous?.match?.round
+            || (snapshot.phase === 'PLAYING' && previous?.phase === 'LOADING')) {
           this.skillEffects?.clear();
           this.effects.clearRoundEffects();
           this.players.resetRound(snapshot.players);
@@ -163,6 +177,12 @@ export class Battle {
       },
       snapshot: snapshot => {this.reconcile(snapshot);},
       event: (event, snapshot) => {
+        if (event.type === 'kicked' && event.targetId === this.playerId) {
+          this.leave(false);
+          this.returnToLobby?.();
+          this.hud.value = event.message;
+          return;
+        }
         this.itemInventory.event(event);
         this.originalHud.event(event);
         this.skillEffects?.event(event);
@@ -174,9 +194,11 @@ export class Battle {
         if (event.roleStyleRestored) {
           this.players.restoreRoleStyle(event.roleStyleRestored.roleId);
         }
-        if (event.type === 'fire') {
+        if (event.type === 'beforeShot') {
           const localRecoil = this.players.fire(event.playerId);
           if (event.playerId === this.playerId && localRecoil) this.effects.ordinaryFireCamera();
+        }
+        if (event.type === 'fire') {
           if (event.shotDisplay) this.shotDisplay?.show(event.shotDisplay);
         }
         if (event.type === 'hit') {
@@ -200,6 +222,14 @@ export class Battle {
         if (this.mapLoaded && !this.reconnecting &&
             (event.type === 'sceneObjectHit' || event.type === 'sceneObjectHealed') && event.castleDamage) {
           this.battlefield.damageCastle(event.castleDamage);
+        }
+        if (this.mapLoaded && !this.reconnecting &&
+            event.type === 'sceneObjectHit' && !event.castleDamage) {
+          const object = snapshot?.match?.sceneObjects?.find(value => value.id === event.targetId);
+          if (object?.sourcePlacementId !== undefined) {
+            this.battlefield.damageObject(object.sourcePlacementId, event.value,
+              [event.x ?? object.x, event.y ?? object.y, event.z ?? object.z]);
+          }
         }
         if (this.mapLoaded && !this.reconnecting &&
             event.type === 'sceneObjectDestroyed' && !event.targetId.startsWith('CASTLE:')) {
@@ -346,17 +376,15 @@ export class Battle {
     await this.createRoom(4, 7, 'CPU 对局', name, tankId);
     try {
       if (session !== this.session || !this.active) return;
-      this.hud.value = '加入三名 CPU，载入战车…';
+      this.hud.value = '加入三名 CPU…';
       for (let count = 0; count < 3; count++) {
         await this.manageCpu('ADD');
         if (session !== this.session || !this.active) return;
       }
       const deadline = performance.now() + 60000;
-      while (!this.roomFeed.snapshot || this.roomFeed.snapshot.players.length !== 4
-          || !this.players.resourcesReady) {
+      while (!this.roomFeed.snapshot || this.roomFeed.snapshot.players.length !== 4) {
         if (session !== this.session || !this.active) return;
-        if (this.players.loadingError) throw new Error(this.players.loadingError);
-        if (performance.now() > deadline) throw new Error('CPU 战车载入超时，请重试');
+        if (performance.now() > deadline) throw new Error('等待 CPU 加入超时，请重试');
         await new Promise(resolve => setTimeout(resolve, 50));
       }
       await this.ready(true);
@@ -380,6 +408,7 @@ export class Battle {
   }
 
   private async enter(result: ResJoin, session: number): Promise<void> {
+    if (session !== this.session) return;
     this.roomFeed.enter(result.room.id);
     this.playerId = result.playerId;
     this.mapId = result.room.mapId;
@@ -388,73 +417,148 @@ export class Battle {
     this.pageMusic?.room(result.room.phase ?? 'WAITING', result.room.mode, result.room.mapId);
     this.lobbyChat.setInRoom(true);
     this.lobbyPresence.setInRoom(true);
-    this.hud.value = '载入战场…';
+    this.hud.value = '等待房间快照…';
+    this.chat.show();
+    this.input.start();
+  }
+
+  private async loadBattleResources(round: number): Promise<void> {
+    const session = this.session;
+    const revision = this.resourceRevision;
+    const current = (): boolean => session === this.session && revision === this.resourceRevision && this.active
+      && this.roomFeed.snapshot?.match?.round === round && this.roomFeed.snapshot?.phase !== 'WAITING';
+    const progress = (value: number, status: string): void => {
+      if (current()) this.matchPanel.setLoading(value, status);
+    };
     try {
-      const [, , catalog] = await Promise.all([this.originalHud.load(), this.effects.load(),
-        fetch('/combat-catalog.json').then(async response => {
-          if (!response.ok) throw new Error('原技能目录载入失败');
-          return response.json() as Promise<CombatCatalog>;
-        })]);
-      if (session !== this.session || !this.active) return;
-      this.skillEffects = new BattleSkillEffects(createSkillEffectNotifications(this.effects, catalog, {
-        role: roleId => this.players.get(`P${roleId}`),
-        localRole: () => this.playerId ? this.players.get(this.playerId) : undefined,
-      }));
-      this.shotDisplay = new TankShotDisplay(this.effects, catalog);
-      this.shotPlayerResult = new TankShotPlayerResult(this.effects, catalog);
-      this.shotItemResult = new TankShotItemResult(this.effects, catalog);
-      this.ammoBurnPresentation = new AmmoBurnPresentation(this.effects, id => this.players.get(id));
-      await this.battlefield.load(String(this.mapId).padStart(4, '0'), this.effects);
-      if (session === this.session && this.active && this.roomFeed.snapshot) {
-        const snapshot = this.roomFeed.snapshot;
-        this.battlefield.reconcileCrushes(snapshot.match?.sceneCrushes ?? [], snapshot.match?.round ?? 0);
-        this.battlefield.reconcilePlants(snapshot.match?.scenePlants ?? [], snapshot.match?.round ?? 0);
+      progress(0, '正在载入战斗资源…');
+      if (!this.mapLoaded) {
+        const [, , catalog] = await Promise.all([this.originalHud.load(), this.effects.load(),
+          fetch('/combat-catalog.json').then(async response => {
+            if (!response.ok) throw new Error('原技能目录载入失败');
+            return response.json() as Promise<CombatCatalog>;
+          })]);
+        if (!current()) return;
+        progress(0.15, '正在载入地图…');
+        this.skillEffects = new BattleSkillEffects(createSkillEffectNotifications(this.effects, catalog, {
+          role: roleId => this.players.get(`P${roleId}`),
+          localRole: () => this.playerId ? this.players.get(this.playerId) : undefined,
+        }));
+        this.shotDisplay = new TankShotDisplay(this.effects, catalog);
+        this.shotPlayerResult = new TankShotPlayerResult(this.effects, catalog);
+        this.shotItemResult = new TankShotItemResult(this.effects, catalog);
+        this.ammoBurnPresentation = new AmmoBurnPresentation(this.effects, id => this.players.get(id));
+        await this.battlefield.load(String(this.mapId).padStart(4, '0'), this.effects);
+        if (!current()) return;
+        await this.localMotion.field.load(this.mapId!, this.battlefield.movementSurfaces);
+        if (current() && this.roomFeed.snapshot) {
+          const snapshot = this.roomFeed.snapshot;
+          this.battlefield.reconcileCrushes(snapshot.match?.sceneCrushes ?? [], snapshot.match?.round ?? 0);
+          this.battlefield.reconcilePlants(snapshot.match?.scenePlants ?? [], snapshot.match?.round ?? 0);
+        }
+        if (!current()) {
+          return;
+        }
+        progress(0.6, '正在载入场景声音和特效…');
+        if (!this.environmentSound) {
+          const context = this.effects.audioContext();
+          if (!context) throw new Error('地图声音管理器未就绪');
+          this.environmentSound = new MapEnvironmentSound(this.camera, context);
+          if (this.soundVolume !== undefined) this.environmentSound.setVolume(this.soundVolume);
+        }
+        await this.environmentSound.load(this.mapId!);
+        if (!current()) return;
+        await this.sceneEffects.load(this.mapId!);
+        if (!current()) return;
+        this.effects.start();
+        if (this.roomFeed.snapshot) {
+          const snapshot = this.roomFeed.snapshot;
+          this.battlefield.restoreObjects([
+            ...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? []),
+          ], snapshot.match?.round ?? 0, snapshot.serverTime);
+        }
+        this.mapLoaded = true;
+        await this.sound.start();
+        if (!current()) return;
       }
-      if (session !== this.session || !this.active) {
-        return;
-      }
-      if (!this.environmentSound) {
-        const context = this.effects.audioContext();
-        if (!context) throw new Error('地图声音管理器未就绪');
-        this.environmentSound = new MapEnvironmentSound(this.camera, context);
-        if (this.soundVolume !== undefined) this.environmentSound.setVolume(this.soundVolume);
-      }
-      await this.environmentSound.load(this.mapId!);
-      if (session !== this.session || !this.active) return;
-      await this.sceneEffects.load(this.mapId!);
-      if (session !== this.session || !this.active) return;
-      this.effects.start();
-      if (this.roomFeed.snapshot) {
-        const snapshot = this.roomFeed.snapshot;
-        this.battlefield.restoreObjects([
-          ...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? []),
-        ], snapshot.match?.round ?? 0, snapshot.serverTime);
-      }
-      this.mapLoaded = true;
-      await this.sound.start();
-      if (session !== this.session || !this.active) return;
-      if (!this.pageMusic) await this.music.play(result.room.mode, this.mapId!);
-      if (session !== this.session || !this.active) return;
-      // Local map and tank (including death action) must exist before readiness.
+      progress(0.8, '正在载入各玩家战车…');
+      if (this.roomFeed.snapshot) this.players.reconcile(this.roomFeed.snapshot.players, this.playerId, this.roomFeed.snapshot.mode);
+      // A loading acknowledgement covers the map, tank actions and live scene resources.
       const deadline = performance.now() + 60000;
       while (!this.roomFeed.snapshot || !this.players.resourcesReady) {
-        if (session !== this.session || !this.active) return;
+        if (!current()) return;
         if (this.players.loadingError) throw new Error(this.players.loadingError);
         if (performance.now() > deadline) throw new Error('等待战车资源超时，请重试');
         await new Promise(resolve => setTimeout(resolve, 50));
       }
-
-    } catch (error) {
-      if (session !== this.session || !this.active) {
-        return;
+      progress(0.95, '正在准备画面…');
+      await this.scene.whenReadyAsync();
+      if (!current()) return;
+      if (!this.originalHud.getMinimapSnapshot().imageUrl) {
+        const imageUrl = await this.minimap.capture(this.mapId!, this.battlefield.minimapMeshes);
+        if (!current()) return;
+        if (imageUrl) this.originalHud.setMinimapImage(this.mapId!, imageUrl);
       }
-      this.leave();
-      throw error;
+      configureBattleCamera(this.camera);
+      this.loadedRound = round;
+      progress(1, '载入完成，等待其他玩家…');
+      if (this.roomFeed.snapshot?.phase === 'LOADING') await this.confirmResourcesLoaded(round);
+    } catch (error) {
+      if (!current()) return;
+      this.matchPanel.setLoading(this.loadedRound === round ? 1 : 0, '对局资源载入失败',
+        error instanceof Error ? error.message : String(error));
+      this.hud.value = '对局资源载入失败，请返回房间后重新准备';
     }
-    configureBattleCamera(this.camera);
-    this.hud.value = '等待房间快照…';
-    this.chat.show();
-    this.input.start();
+  }
+
+  private async confirmResourcesLoaded(round: number): Promise<void> {
+    if (this.reconnecting || !this.client.isConnected) return;
+    await this.rooms.ready({round, resourcesLoaded: true});
+  }
+
+  private retryBattleLoading(): void {
+    const snapshot = this.roomFeed.snapshot;
+    if (!snapshot?.match || snapshot.phase !== 'LOADING') return;
+    if (this.loadedRound === snapshot.match.round) {
+      this.matchPanel.setLoading(1, '载入完成，等待其他玩家…');
+      void this.confirmResourcesLoaded(snapshot.match.round).catch(error => {
+        if (this.active && this.roomFeed.snapshot?.phase === 'LOADING') {
+          this.matchPanel.setLoading(1, '载入完成，等待确认', error instanceof Error ? error.message : String(error));
+        }
+      });
+      return;
+    }
+    this.clearCancelledLoading();
+    this.loadingRound = snapshot.match.round;
+    void this.loadBattleResources(snapshot.match.round);
+  }
+
+  private clearCancelledLoading(): void {
+    this.minimap.clear();
+    this.resourceRevision++;
+    this.loadingRound = undefined;
+    this.loadedRound = undefined;
+    this.ammoBurnPresentation?.clear();
+    this.ammoBurnPresentation = undefined;
+    this.sound.stop();
+    this.environmentSound?.clear();
+    this.sceneEffects.clear();
+    this.skillEffects?.clear();
+    this.skillEffects = undefined;
+    this.shotDisplay = undefined;
+    this.shotPlayerResult = undefined;
+    this.shotItemResult = undefined;
+    this.effects.stop();
+    this.players.clear();
+    this.localMotion.clear();
+    this.effects.clear();
+    this.battlefield.clear();
+    this.groundTraps.clear();
+    this.groundTrapError = undefined;
+    this.targets.clear();
+    this.originalHud.clear();
+    this.mapLoaded = false;
+    this.matchPanel.setLoading(0, '正在载入战斗资源…');
   }
 
   get inRoom(): boolean {return this.active;}
@@ -499,6 +603,9 @@ export class Battle {
           ], snapshot.match?.round ?? 0, snapshot.serverTime);
         }
         this.reconnecting = false;
+        if (snapshot?.phase === 'LOADING' && snapshot.match?.round === this.loadedRound) {
+          await this.confirmResourcesLoaded(this.loadedRound!);
+        }
         this.input.start();
         return;
       } catch {
@@ -532,9 +639,14 @@ export class Battle {
   }
 
   leave(disconnect = true): void {
+    this.minimap.clear();
+    this.resourceRevision++;
+    this.loadingRound = undefined;
+    this.loadedRound = undefined;
     this.active = false;
     this.reconnecting = false;
     this.resultMusicRound = undefined;
+    this.playingMusicRound = undefined;
     this.itemInventory.clear();
     this.ammoBurnPresentation?.clear();
     this.ammoBurnPresentation = undefined;
@@ -558,6 +670,7 @@ export class Battle {
     this.input.stop();
     if (disconnect) void this.connection.disconnect();
     this.players.clear();
+    this.localMotion.clear();
     this.effects.clear();
     this.battlefield.clear();
     this.groundTraps.clear();
@@ -580,6 +693,10 @@ export class Battle {
 
   getKeyBindings(): KeyBindings {return this.input.getKeyBindings();}
   setKeyBindings(bindings: KeyBindings): void {this.input.setKeyBindings(bindings);}
+  readonly useHudSlot = (slot: number): void => {
+    const local = this.roomFeed.snapshot?.players.find(player => player.id === this.playerId);
+    if (local?.alive) this.input.send(slot);
+  };
   setQuickChats(preferences: QuickChatPreferences): void {this.chat.setQuickChats(preferences);}
 
   setSoundVolume(volume: number): void {
@@ -593,12 +710,22 @@ export class Battle {
 
   private async ready(isReady: boolean): Promise<void> {
     const round = this.roomFeed.snapshot?.match?.round;
-    if (!this.mapLoaded || this.players.loadingError || round === undefined || this.roomFeed.snapshot?.phase !== 'WAITING'
-        || !this.players.resourcesReady) {
-      throw new Error('请等待地图和战车载入完成');
+    if (round === undefined || this.roomFeed.snapshot?.phase !== 'WAITING') {
+      throw new Error('请等待房间状态');
     }
     await this.rooms.ready({round, isReady});
-    document.querySelector<HTMLCanvasElement>('#world')?.focus();
+  }
+
+  private async editRoom(settings: import('../../../shared/protocols/PtlEditRoom').RoomEditSettings): Promise<void> {
+    const snapshot = this.roomFeed.snapshot;
+    if (!snapshot?.match || snapshot.phase !== 'WAITING') throw new Error('只能编辑当前等待房间');
+    await this.rooms.edit({...settings, round: snapshot.match.round});
+  }
+
+  private async kickRoomPlayer(playerId: string): Promise<void> {
+    const snapshot = this.roomFeed.snapshot;
+    if (!snapshot?.match || snapshot.phase !== 'WAITING') throw new Error('只能在等待房间踢出成员');
+    await this.rooms.kick({round: snapshot.match.round, playerId});
   }
 
   private async changeTeam(team: number): Promise<void> {
@@ -609,10 +736,10 @@ export class Battle {
     await this.rooms.changeTeam({round, team});
   }
 
-  private async manageCpu(operation: 'ADD' | 'REMOVE', playerId?: string): Promise<void> {
+  private async manageCpu(operation: 'ADD' | 'REMOVE', playerId?: string, team?: number): Promise<void> {
     const round = this.roomFeed.snapshot?.match?.round;
     if (round === undefined) throw new Error('请先加入房间');
-    await this.rooms.cpu({round, operation, playerId,
+    await this.rooms.cpu({round, operation, playerId, team,
       tankId: Number(document.querySelector<HTMLSelectElement>('#tank')?.value ?? 1)});
   }
 
@@ -640,6 +767,12 @@ export class Battle {
   }
 
   private reconcile(snapshot: MsgRoomSnapshot): void {
+    const mapId = snapshot.roomInfo?.mapId;
+    if (mapId !== undefined && mapId !== this.mapId) {
+      if (this.loadingRound !== undefined || this.mapLoaded) this.clearCancelledLoading();
+      this.mapId = mapId;
+    }
+    this.localMotion.synchronize(snapshot, this.playerId);
     const session = this.session;
     void this.groundTraps.reconcile(snapshot.phase === 'PLAYING' ? snapshot.match?.groundTraps ?? [] : [],
       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`).catch(error => {
@@ -651,21 +784,36 @@ export class Battle {
       const own = this.playerId ? result?.players.find(player => player.id === this.playerId) : undefined;
       const resultFlag = own?.outcome === 'WIN' ? 1 : own?.outcome === 'LOSE' ? 2 : undefined;
       this.pageMusic?.room(snapshot.phase, snapshot.mode, this.mapId, resultFlag, result?.round, snapshot.roomId);
+      if (!this.pageMusic && snapshot.phase === 'PLAYING' && this.mapLoaded
+          && this.playingMusicRound !== snapshot.match?.round) {
+        this.playingMusicRound = snapshot.match?.round;
+        void this.music.play(snapshot.mode, this.mapId).catch(error => console.error('战场音乐载入失败', error));
+      }
       if (!this.pageMusic && this.mapLoaded && resultFlag !== undefined && result && this.resultMusicRound !== result.round) {
         this.resultMusicRound = result.round;
         void this.music.playResult(resultFlag).catch(error => console.error('结算音乐载入失败', error));
       }
     }
-    this.players.reconcile(snapshot.players, this.playerId, snapshot.mode);
+    if (snapshot.phase !== 'WAITING' && this.loadingRound !== undefined) {
+      this.players.reconcile(snapshot.players, this.playerId, snapshot.mode);
+    }
     this.ammoBurnPresentation?.reconcile(snapshot.players,
       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`, snapshot.phase === 'PLAYING');
-    this.matchPanel.setReadyAvailable(this.mapLoaded && this.players.resourcesReady && !this.players.loadingError);
+    this.matchPanel.setReadyAvailable(snapshot.phase === 'WAITING' && !this.reconnecting);
     this.battlefield.reconcileCrushes(snapshot.match?.sceneCrushes ?? [], snapshot.match?.round ?? 0);
     this.battlefield.reconcilePlants(snapshot.match?.scenePlants ?? [], snapshot.match?.round ?? 0);
     this.chat.setPhase(snapshot.phase);
     this.chat.setPlayers(snapshot.players);
+    if (this.playerId) this.originalHud.update(snapshot, this.playerId);
     if (this.playerId) this.matchPanel.update(snapshot, this.playerId);
-    this.targets.update(snapshot);
+    if (snapshot.phase === 'WAITING' && this.loadingRound !== undefined) {
+      this.clearCancelledLoading();
+    } else if ((snapshot.phase === 'LOADING' || snapshot.phase === 'PLAYING')
+        && snapshot.match && this.loadingRound !== snapshot.match.round) {
+      this.loadingRound = snapshot.match.round;
+      void this.loadBattleResources(snapshot.match.round);
+    }
+    if (snapshot.phase === 'PLAYING' && this.loadedRound === snapshot.match?.round) this.targets.update(snapshot);
     this.hud.dataset.world = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,
       mapId: this.mapId, mapLoaded: this.mapLoaded,
       phase: snapshot.phase, mode: snapshot.mode, remaining: snapshot.remaining,
@@ -686,13 +834,17 @@ export class Battle {
     if (!this.active || !snapshot || !this.client.isConnected || this.reconnecting) {
       return;
     }
-    this.matchPanel.setReadyAvailable(this.mapLoaded && this.players.resourcesReady && !this.players.loadingError);
+    if (!this.mapLoaded || this.loadedRound !== snapshot.match?.round
+        || (snapshot.phase !== 'PLAYING' && snapshot.phase !== 'FINISHED')) return;
     const alpha = Math.min(1, this.scene.getEngine().getDeltaTime() / 80);
     this.ammoBurnPresentation?.reconcile(snapshot.players,
       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`, snapshot.phase === 'PLAYING');
-    this.players.render(alpha, this.playerId, snapshot.phase === 'PLAYING');
+    const now = snapshot.serverTime + performance.now() - this.roomFeed.receivedAt;
+    this.localMotion.field.reconcile(snapshot, now);
+    this.localMotion.advance(this.input.motionAxes, this.scene.getEngine().getDeltaTime() / 1000, snapshot.players);
+    this.players.render(alpha, this.playerId, snapshot.phase === 'PLAYING',
+      this.localMotion.renderedPose, this.localMotion.moving);
     this.skillEffects?.frame(this.scene.getEngine().getDeltaTime() / 1000);
-    const elapsed = Math.min((performance.now() - this.roomFeed.receivedAt) / 1000, 0.1);
     this.battlefield.advance(this.scene.getEngine().getDeltaTime() / 1000);
     this.battlefield.updateObjects([...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? [])], snapshot.match?.round ?? 0,
       snapshot.serverTime, this.scene.getEngine().getDeltaTime() / 1000);
@@ -700,7 +852,7 @@ export class Battle {
     if (this.playerId) {
       this.originalHud.update(snapshot, this.playerId);
     }
-    const phase = {WAITING: '等待其他玩家', PLAYING: '战斗中', FINISHED: '本局结束'}[snapshot.phase] ?? snapshot.phase;
+    const phase = {WAITING: '等待其他玩家', LOADING: '正在载入对局', PLAYING: '战斗中', FINISHED: '本局结束'}[snapshot.phase] ?? snapshot.phase;
     this.hud.value = this.groundTrapError || this.players.loadingError || `${phase} · ${snapshot.players.length} 人 · ${snapshot.remaining}s · 生命 ${local?.hp ?? 0}/${local?.maxHp ?? 0} · 得分 ${local?.score ?? 0}`;
     // DOM world state supports HUD accessibility and browser integration verification.
     this.hud.dataset.world = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,

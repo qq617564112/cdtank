@@ -123,7 +123,7 @@ export class TankView {
     try {
       // Battle single actions must be ready before the player enters the world.
       // Loading their geometry during a hit can outlast the whole action.
-      await Promise.all(['05', '06', '07', '08', '09'].map(name => view.action(name)));
+      await Promise.all(['02', '03', '05', '06', '07', '08', '09'].map(name => view.action(name)));
       return view;
     } catch (error) {
       view.dispose();

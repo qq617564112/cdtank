@@ -19,6 +19,6 @@
 
 ## 限制
 
-原页签已贯通玩家、宠物、战车及装备页面；框下重复角色/部件入口已移除，见[导航范围](/workspace/cdtank/recovery/docs/home-source-navigation.md)。保存战绩与原奖章区域已接入，见[玩家页覆盖](/workspace/cdtank/recovery/docs/home-player-source-page.md)。记录、高级键位、设置入口及业务提示仍是保留玩家能力的Web投影。
+原页签已贯通玩家、宠物、战车及装备页面；框下重复角色/部件入口已移除，见[导航范围](home-source-navigation.md)。保存战绩与原奖章区域已接入，见[玩家页覆盖](home-player-source-page.md)。记录、高级键位、设置入口及业务提示仍是保留玩家能力的Web投影。
 
 等级、称号、家族、成长点、个人介绍及奖章权威数据仍缺来源，不填造值。原字体全精度、原窗口管理/GPU像素、原DDS/TGA管理器选择及完整Home个人资料父项仍未完成。

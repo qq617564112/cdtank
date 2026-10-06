@@ -2,6 +2,9 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {webAssetPath} from './runtime/content-paths';
 import {NavigationGrid, SourceNavigationLayer} from './navigation';
+import {CollisionMesh, type Triangle} from './collision-mesh';
+import {navigationOccupancy} from '../../shared/movement/navigation-collision';
+import {getSceneSolids, getSceneTerrain} from './scene-objects';
 
 export interface Point {
   x: number;
@@ -12,6 +15,8 @@ interface SourceBox {
   id: string;
   matrix: number[];
   dimensions: number[];
+  mesh?: CollisionMesh;
+  placementId?: string;
 }
 interface SourceSpawn {
   position: number[];
@@ -26,12 +31,8 @@ interface SourceField {
   navigationLayers: SourceNavigationLayer[];
 }
 interface GroundTriangle {
-  vertices: number[][];
+  vertices: Triangle;
   denominator: number;
-  minimumY: number;
-  maximumY: number;
-  edge1: number[];
-  edge2: number[];
 }
 export interface SpawnPoint extends Point {
   yaw: number;
@@ -45,26 +46,34 @@ const CELL_SIZE = 128;
 const sources: SourceField[] = JSON.parse(readFileSync(resolve(
   process.env.BATTLEFIELDS ?? webAssetPath('battlefields.json')), 'utf8'));
 const fields = new Map<number, Battlefield>();
-
 /** Original coordinates in source units; rendering reflects X at the client. */
 export class Battlefield {
   private readonly ground = new Map<string, GroundTriangle[]>();
   private readonly boxCells = new Map<string, number[]>();
-  private boxRadiusX = 0;
-  private boxRadiusZ = 0;
   readonly spawns: SpawnPoint[];
   readonly boxes: SourceBox[];
   readonly navigation: NavigationGrid;
   private readonly dynamicBoxes = new Map<string, SourceBox>();
+  private readonly replacedPlacements = new Set<string>();
+  private readonly terrain: CollisionMesh;
   navigationRevision = 0;
 
-  /** Rebuilt dynamic OBB/12-unit occupancy, isolated from source BOX/NAV data. */
+  /** Dynamic actors take ownership of the static render placement and its occupancy. */
   setDynamicBox(box: SourceBox | undefined, id: string): void {
     if (!box) {
       if (!this.dynamicBoxes.delete(id)) return;
       this.navigation.setBlocker(id);
     } else {
       this.dynamicBoxes.set(id, box);
+      if (box.placementId !== undefined) {
+        this.replacedPlacements.add(box.placementId);
+        this.navigation.setBlocker(`SCN:${box.placementId}`);
+      }
+      if (box.mesh) {
+        this.navigation.setBlocker(id, navigationOccupancy(box.mesh, this.navigation));
+        this.navigationRevision++;
+        return;
+      }
       const cells = new Set<number>();
       const grid = this.navigation.source;
       const extent = Math.hypot(...box.dimensions) / 2;
@@ -83,25 +92,13 @@ export class Battlefield {
   }
 
   constructor(readonly source: SourceField) {
-    this.boxes = source.collisionBoxes;
+    this.boxes = [...getSceneSolids(Number(source.id))];
+    this.terrain = getSceneTerrain(Number(source.id));
     this.navigation = new NavigationGrid(source.navigationLayers[0]);
     this.boxes.forEach((box, index) => {
-      // Invert the same local-space basis used by segmentBox, including its
-      // source rounding. Index bounds do not replace the exact narrow phase.
-      const m = box.matrix;
-      const [a, b, c, d, e, f, g, h, i] = [m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]];
-      const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
-      const x = [(e * i - f * h) / det, (c * h - b * i) / det, (b * f - c * e) / det];
-      const z = [(d * h - e * g) / det, (b * g - a * h) / det, (a * e - b * d) / det];
-      const extent = (axis: number[]) => axis.reduce((sum, value, at) => sum + Math.abs(value) * box.dimensions[at] / 2, 0);
-      const extentX = extent(x), extentZ = extent(z);
-      this.boxRadiusX = Math.max(this.boxRadiusX, x.reduce((sum, value) => sum + Math.abs(value), 0));
-      this.boxRadiusZ = Math.max(this.boxRadiusZ, z.reduce((sum, value) => sum + Math.abs(value), 0));
-      // Padding retains boundary contacts under floating-point transforms.
-      const minX = Math.floor((m[12] - extentX - .001) / CELL_SIZE);
-      const maxX = Math.floor((m[12] + extentX + .001) / CELL_SIZE);
-      const minZ = Math.floor((m[14] - extentZ - .001) / CELL_SIZE);
-      const maxZ = Math.floor((m[14] + extentZ + .001) / CELL_SIZE);
+      const mesh = box.mesh!;
+      const minX = Math.floor(mesh.minimum[0] / CELL_SIZE), maxX = Math.floor(mesh.maximum[0] / CELL_SIZE);
+      const minZ = Math.floor(mesh.minimum[2] / CELL_SIZE), maxZ = Math.floor(mesh.maximum[2] / CELL_SIZE);
       for (let cx = minX; cx <= maxX; cx++) {
         for (let cz = minZ; cz <= maxZ; cz++) {
           const key = `${cx},${cz}`;
@@ -111,13 +108,10 @@ export class Battlefield {
         }
       }
     });
-    for (const vertices of source.terrainTriangles) {
+    for (const {vertices} of this.terrain.triangles) {
       const [a, b, c] = vertices;
       const denominator = (b[2] - c[2]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[2] - c[2]);
-      const triangle = {vertices, denominator,
-        minimumY: Math.min(a[1], b[1], c[1]), maximumY: Math.max(a[1], b[1], c[1]),
-        edge1: b.map((value, axis) => value - a[axis]),
-        edge2: c.map((value, axis) => value - a[axis])};
+      const triangle = {vertices, denominator};
       const minX = Math.floor(Math.min(a[0], b[0], c[0]) / CELL_SIZE);
       const maxX = Math.floor(Math.max(a[0], b[0], c[0]) / CELL_SIZE);
       const minZ = Math.floor(Math.min(a[2], b[2], c[2]) / CELL_SIZE);
@@ -145,6 +139,8 @@ export class Battlefield {
     const selected = groups[0].length >= 2 ? groups[0] : groups[1];
     this.spawns = selected.map(spawn => ({x: spawn.position[0], y: spawn.position[1],
       z: spawn.position[2], yaw: spawn.heading * Math.PI / 180}));
+    for (const box of this.boxes) this.navigation.setBlocker(box.id, navigationOccupancy(box.mesh!, this.navigation));
+    this.navigation.setBlocker('terrain', navigationOccupancy(this.terrain, this.navigation, true));
   }
 
   heightAt(x: number, z: number, nearY: number): number | undefined {
@@ -171,10 +167,10 @@ export class Battlefield {
   firstBoxHit(start: Point, end: Point, radius: number): SurfaceHit | undefined {
     let closest: SurfaceHit | undefined;
     const candidates = new Set<number>();
-    const minX = Math.floor((Math.min(start.x, end.x) - radius * this.boxRadiusX) / CELL_SIZE);
-    const maxX = Math.floor((Math.max(start.x, end.x) + radius * this.boxRadiusX) / CELL_SIZE);
-    const minZ = Math.floor((Math.min(start.z, end.z) - radius * this.boxRadiusZ) / CELL_SIZE);
-    const maxZ = Math.floor((Math.max(start.z, end.z) + radius * this.boxRadiusZ) / CELL_SIZE);
+    const minX = Math.floor((Math.min(start.x, end.x) - radius) / CELL_SIZE);
+    const maxX = Math.floor((Math.max(start.x, end.x) + radius) / CELL_SIZE);
+    const minZ = Math.floor((Math.min(start.z, end.z) - radius) / CELL_SIZE);
+    const maxZ = Math.floor((Math.max(start.z, end.z) + radius) / CELL_SIZE);
     for (let x = minX; x <= maxX; x++) {
       for (let z = minZ; z <= maxZ; z++) {
         for (const index of this.boxCells.get(`${x},${z}`) ?? []) candidates.add(index);
@@ -183,6 +179,7 @@ export class Battlefield {
     // Source order decides ties between overlapping boxes.
     for (const index of [...candidates].sort((a, b) => a - b)) {
       const box = this.boxes[index];
+      if (box.placementId !== undefined && this.replacedPlacements.has(box.placementId)) continue;
       const fraction = segmentBox(start, end, box, radius);
       if (fraction !== undefined && (!closest || fraction < closest.fraction)) {
         closest = {fraction, boxId: box.id};
@@ -198,29 +195,14 @@ export class Battlefield {
   }
 
   firstSurfaceHit(start: Point, end: Point, radius: number): SurfaceHit | undefined {
-    let closest = this.firstBoxHit(start, end, radius);
-    const candidates = new Set<GroundTriangle>();
-    const minimumY = Math.min(start.y, end.y), maximumY = Math.max(start.y, end.y);
-    const minX = Math.floor(Math.min(start.x, end.x) / CELL_SIZE);
-    const maxX = Math.floor(Math.max(start.x, end.x) / CELL_SIZE);
-    const minZ = Math.floor(Math.min(start.z, end.z) / CELL_SIZE);
-    const maxZ = Math.floor(Math.max(start.z, end.z) / CELL_SIZE);
-    for (let x = minX; x <= maxX; x++) {
-      for (let z = minZ; z <= maxZ; z++) {
-        if (!crossesGroundCell(start, end, x, z)) continue;
-        for (const triangle of this.ground.get(`${x},${z}`) ?? []) {
-          if (maximumY < triangle.minimumY || minimumY > triangle.maximumY) continue;
-          candidates.add(triangle);
-        }
-      }
-    }
-    for (const triangle of candidates) {
-      const fraction = segmentTriangle(start, end, triangle);
-      if (fraction !== undefined && (!closest || fraction < closest.fraction)) {
-        closest = {fraction, boxId: 'terrain'};
-      }
-    }
-    return closest;
+    const closest = this.firstBoxHit(start, end, radius);
+    const fraction = this.terrain.firstHit(start, end, radius);
+    return fraction !== undefined && (!closest || fraction < closest.fraction)
+      ? {fraction, boxId: 'terrain'} : closest;
+  }
+
+  isPlacementHit(hitId: string, placementId: string): boolean {
+    return hitId === `SCN:${placementId}` || this.dynamicBoxes.get(hitId)?.placementId === placementId;
   }
 
   move(start: Point, end: Point, radius: number): Point {
@@ -253,51 +235,9 @@ export class Battlefield {
   }
 }
 
-function crossesGroundCell(start: Point, end: Point, x: number, z: number): boolean {
-  let entry = 0, exit = 1;
-  for (const [a, b, minimum] of [[start.x, end.x, x * CELL_SIZE], [start.z, end.z, z * CELL_SIZE]]) {
-    const delta = b - a;
-    if (delta === 0) {
-      if (a < minimum || a > minimum + CELL_SIZE) return false;
-    } else {
-      const first = (minimum - a) / delta, second = (minimum + CELL_SIZE - a) / delta;
-      entry = Math.max(entry, Math.min(first, second));
-      exit = Math.min(exit, Math.max(first, second));
-      if (entry > exit + 1e-12) return false;
-    }
-  }
-  return true;
-}
-
-function segmentTriangle(start: Point, end: Point, triangle: GroundTriangle): number | undefined {
-  const {vertices: [a], edge1, edge2} = triangle;
-  const dx = end.x - start.x, dy = end.y - start.y, dz = end.z - start.z;
-  const px = dy * edge2[2] - dz * edge2[1];
-  const py = dz * edge2[0] - dx * edge2[2];
-  const pz = dx * edge2[1] - dy * edge2[0];
-  const determinant = edge1[0] * px + edge1[1] * py + edge1[2] * pz;
-  if (Math.abs(determinant) < 1e-10) {
-    return undefined;
-  }
-  const ox = start.x - a[0], oy = start.y - a[1], oz = start.z - a[2];
-  const u = (ox * px + oy * py + oz * pz) / determinant;
-  if (u < 0 || u > 1) {
-    return undefined;
-  }
-  const qx = oy * edge1[2] - oz * edge1[1];
-  const qy = oz * edge1[0] - ox * edge1[2];
-  const qz = ox * edge1[1] - oy * edge1[0];
-  const v = (dx * qx + dy * qy + dz * qz) / determinant;
-  if (v < 0 || u + v > 1) {
-    return undefined;
-  }
-  const fraction = (edge2[0] * qx + edge2[1] * qy + edge2[2] * qz) / determinant;
-  return fraction > 0.000001 && fraction <= 1 ? fraction : undefined;
-}
-
-// Source matrices are orthonormal row-vector transforms. Transpose the linear
-// part to enter box space; zero-width source boxes remain collidable planes.
+// Scene meshes use their render faces. Actor/contact OBBs retain source dimensions.
 export function segmentBox(start: Point, end: Point, box: SourceBox, radius: number): number | undefined {
+  if (box.mesh) return box.mesh.firstHit(start, end, radius);
   const m = box.matrix;
   const local = (point: Point): number[] => [0, 1, 2].map(axis =>
     (point.x - m[12]) * m[axis * 4] + (point.y - m[13]) * m[axis * 4 + 1]

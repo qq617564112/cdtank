@@ -33,7 +33,7 @@
 .lobby-resource-feedback button {
   min-height: 36px;
   padding: 6px 12px;
-  color: #152a3b;
+  color: #fff;
   background: white;
   border: 0;
   font: inherit;
@@ -51,6 +51,17 @@
   height: 600px;
   transform-origin: top left;
   overflow: hidden;
+}
+
+.lobby-game-logo {
+  position: absolute;
+  left: 65px;
+  top: 6px;
+  width: 475px;
+  height: 76px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
 }
 
 .lobby-source-picture, .lobby-source-stage > .source-static-text,
@@ -78,6 +89,22 @@
   color: white;
   font-size: 12px;
   line-height: 17px;
+}
+
+.lobby-source-title > .source-feedback-text {
+  font-size: 18px;
+  line-height: 26px;
+}
+
+.lobby-room-plaque {
+  position: absolute;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.lobby-room-plaque .source-feedback-text {
+  font-size: 18px;
+  line-height: 26px;
 }
 
 [data-room-password-dialog] {

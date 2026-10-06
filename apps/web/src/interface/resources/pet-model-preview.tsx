@@ -112,7 +112,8 @@ export function PetModelPreview({petId, kind, scale, ...props}: PetModelPreviewP
     }).catch(error => {
       if (!active || !current.active) return;
       loaded?.dispose(); current.view = undefined;
-      element.dataset.status = 'error'; setMessage(`模型载入失败：${String(error)}`);
+      console.error('宠物预览模型载入失败', error);
+      element.dataset.status = 'error'; setMessage('模型载入失败，请刷新页面重试。');
     });
     return () => {
       active = false;

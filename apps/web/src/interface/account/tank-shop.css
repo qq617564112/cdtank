@@ -22,7 +22,7 @@
 .tank-shop-product {
   overflow: auto;
   line-height: 15px;
-  color: #253740;
+  color: #fff;
 }
 
 .tank-shop-product p {
@@ -80,14 +80,11 @@
 }
 .tank-shop-texture-component {display: contents;}
 .tank-shop-texture-component > * {position: absolute; box-sizing: border-box;}
-.tank-shop-texture-component > span {overflow: hidden; white-space: nowrap; color: #253740;}
+.tank-shop-texture-component > span {overflow: hidden; white-space: nowrap; color: #fff;}
 .tank-shop-texture-component > .source-state-button {padding: 0; border: 0; background: transparent;}
 
 .tank-shop-texture-save-unavailable {position: absolute; inset: 0; opacity: .5; background: center / 100% 100% no-repeat; pointer-events: none;}
 
-.tank-shop-source-attribute { filter: brightness(.15); }
-
 .tank-shop-buy-parameters { display: contents; }
 .tank-shop-buy-parameters > * { position: absolute; }
 .tank-shop-buy-capacity { background-size: 100% 100%; pointer-events: none; }
-.tank-shop-buy-capacity-count { position: absolute; right: 0; top: 4px; min-width: 12px; text-align: center; background: #fffbd4; }

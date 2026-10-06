@@ -31,7 +31,16 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   const [size, setSize] = useState(() => ({width: innerWidth, height: innerHeight}));
   const active = state.sourceActive && !!resources;
   const waiting = formal && !state.sourceActive && !!resources;
+  // Validation keeps the reconstructed always-on panel; the formal page engages the
+  // source editor only on Enter/send, otherwise the PLAYING/FINISHED frame is idle.
+  const interactive = active && (state.editing || !formal);
+  const notice = active && !interactive && state.noticePhase !== 'hidden';
+  const present = !formal || !state.sourceActive || interactive || notice;
+  const presentationKind = notice ? 'notice' : interactive ? 'editor' : waiting ? 'waiting' : 'legacy';
+  const editorVisible = presentationKind !== 'notice';
   const source = active || waiting;
+  // Leaving the session must stop any pending incoming-message timers.
+  useEffect(() => () => chat.cancelNoticeTimer(), [chat]);
   useEffect(() => {
     const abort = new AbortController(); let alive = true;
     void (async () => {
@@ -46,7 +55,9 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
     })().catch(error => {if (alive) chat.setStatus(String(error));});
     return () => {alive = false; abort.abort(); renderer.clear();};
   }, [chat, renderer]);
-  useLayoutEffect(() => {renderer.setSourceLayout(source, log.current!);}, [source, renderer]);
+  // The log element only exists while the frame is present; skip layout while idle/hidden
+  // and re-apply when the frame returns so rich text and scroll metrics stay correct.
+  useLayoutEffect(() => {if (log.current) renderer.setSourceLayout(source, log.current);}, [source, renderer, present]);
   useEffect(() => {
     const resize = () => setSize({width: innerWidth, height: innerHeight});
     const keydown = (event: KeyboardEvent) => {
@@ -56,18 +67,46 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
       if (QUICK_CHAT_KEYS.includes(event.code as QuickChatKey)) {
         event.preventDefault(); if (!event.repeat) chat.sendQuickChat(event.code as QuickChatKey);
       } else if (event.code === 'Enter' && !event.repeat) {
-        event.preventDefault(); chat.releaseInputKeys(); input.current?.focus();
+        if (formal) {
+          // Idle PLAYING/FINISHED: Enter opens compose. WAITING keeps the panel always present.
+          if (!state.sourceActive) {event.preventDefault(); chat.releaseInputKeys(); input.current?.focus(); return;}
+          if (state.editing) return;
+          event.preventDefault(); chat.releaseInputKeys();
+          chat.openEditor();
+          requestAnimationFrame(() => {input.current?.focus();});
+        } else {
+          event.preventDefault(); chat.releaseInputKeys(); input.current?.focus();
+        }
       }
     };
     window.addEventListener('keydown', keydown); window.addEventListener('resize', resize);
     return () => {window.removeEventListener('keydown', keydown); window.removeEventListener('resize', resize);};
-  }, [chat]);
+  }, [chat, formal, state.sourceActive, state.editing]);
   useLayoutEffect(() => {
     if (caret.current !== undefined && input.current) {
       input.current.setSelectionRange(caret.current, caret.current); caret.current = undefined;
     }
   }, [state.draft]);
-  useLayoutEffect(() => {if (!active && log.current) log.current.scrollTop = log.current.scrollHeight;}, [state.messages, active]);
+  // Focus lands once the editor is actually mounted (resources may resolve after Enter).
+  useEffect(() => {if (state.editing && interactive) input.current?.focus();}, [state.editing, interactive]);
+  // A confirmed send closes the editor once: blur the input and hand focus back to the canvas.
+  const confirmed = useRef(state.confirmedSends);
+  useLayoutEffect(() => {
+    if (state.confirmedSends === confirmed.current) return;
+    confirmed.current = state.confirmedSends;
+    if (!state.sourceActive) return;
+    input.current?.blur();
+    // PLAYING returns control to the battle canvas; FINISHED keeps the settlement focus untouched.
+    if (state.phase === 'PLAYING') document.querySelector<HTMLCanvasElement>('canvas')?.focus();
+  }, [state.confirmedSends, state.phase, state.sourceActive]);
+  useLayoutEffect(() => {
+    const element = log.current;
+    if (!element || (active && !notice)) return;
+    // Source rich text re-layouts on the next frame after the hidden frame reappears.
+    element.scrollTop = element.scrollHeight;
+    const frame = requestAnimationFrame(() => {element.scrollTop = element.scrollHeight;});
+    return () => cancelAnimationFrame(frame);
+  }, [state.messages, active, notice]);
   const changeDraft = (text: string, position: number, normalize: boolean) => {
     const next = normalize ? normalizeEmoteInput(text) : text;
     if (next !== text) caret.current = normalizeEmoteInput(text.slice(0, position)).length;
@@ -98,12 +137,11 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
       caret.current = at + glyph.length; chat.setDraft(next); input.current?.focus();
     },
   };
-  const content = <>
-      <ol ref={log} id="battle-chat-history" data-chat-log="" role="log" aria-label="房间消息"
+  const history = <ol ref={log} id="battle-chat-history" data-chat-log="" role="log" aria-label="房间消息"
         className={source ? 'source-chat-scroll-log' : undefined} {...logPosition}>
         {state.messages.map(message => <ChatMessage key={message.id} renderer={renderer} text={message.text} active={source} />)}
-      </ol>
-      <form onSubmit={event => {event.preventDefault(); if (!composing.current) chat.sendDraft();}}>
+      </ol>;
+  const editor = <form onSubmit={event => {event.preventDefault(); if (!composing.current) chat.sendDraft();}}>
         <select data-chat-channel="" aria-label="聊天频道" value={state.channel} disabled={state.pending}
           onFocus={() => chat.releaseInputKeys()} onChange={event => {chat.releaseInputKeys(); chat.setChannel(event.currentTarget.value === '3' ? 3 : event.currentTarget.value === '2' ? 2 : event.currentTarget.value === '1' ? 1 : 0);}}>
           <option value="0">房间</option><option value="1">队伍</option><option value="2">密语</option><option value="3">好友</option>
@@ -115,6 +153,10 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
           onCompositionEnd={() => {composing.current = false;}}
           onKeyDown={event => {
             event.stopPropagation();
+            if (event.key === 'Escape' && !event.nativeEvent.isComposing && !composing.current) {
+              event.preventDefault();
+              chat.closeEditor(); input.current?.blur(); document.querySelector<HTMLCanvasElement>('canvas')?.focus(); return;
+            }
             if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current || event.keyCode === 229)) {
               event.preventDefault();
             }
@@ -130,7 +172,10 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
             if (event.nativeEvent.isComposing || composing.current || event.keyCode === 229) {
               if (event.key === 'Enter') event.preventDefault(); return;
             }
-            if (event.key === 'Escape') {event.preventDefault(); input.current?.blur(); document.querySelector<HTMLCanvasElement>('canvas')?.focus();}
+            if (event.key === 'Escape') {
+              event.preventDefault(); event.stopPropagation();
+              chat.closeEditor(); input.current?.blur(); document.querySelector<HTMLCanvasElement>('canvas')?.focus();
+            }
           }} />
         {caretLayout && resources && <>
           <RoomChatSourceCaret input={input} ui={resources.layout.ui} layout={caretLayout} scale={scale}
@@ -141,18 +186,23 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
             name="edtIntimateNameInput" value={state.targetName} />}
         </>}
         <button type="submit" disabled={state.pending}>发送</button>
-      </form>
+      </form>;
+  const content = <>
+      {history}
+      {editorVisible && editor}
       <p role="status" data-waiting-chat-business-status={waiting || undefined}>{state.status}</p>
-      {active && resources && <SourceChatScrollbar log={log} layout={resources.layout} messageVersion={latest}
+      {active && resources && !notice && <SourceChatScrollbar log={log} layout={resources.layout} messageVersion={latest}
         releaseKeys={() => chat.releaseInputKeys()} />}
       {waiting && resources && <WaitingChatHistoryScrollbar list={log} ui={resources.layout.ui}
         properties={new HomeSourceLayout(resources.layout.ui, 'chat.xml').control('ChatTextBox').properties} scale={scale} />}
   </>;
-  return <section ref={root} className={`battle-chat${active ? ' source-battle-chat' : waiting ? ' source-waiting-chat' : ''}`} aria-label="房间聊天"
+  return <section ref={root} data-chat-presentation={presentationKind}
+    className={`battle-chat${active ? ' source-battle-chat' : waiting ? ' source-waiting-chat' : ''}`} aria-label="房间聊天"
+    hidden={!present} data-chat-notice={notice ? state.noticePhase : undefined}
     style={source ? {left: (size.width - 800 * scale) / 2, top: (size.height - 600 * scale) / 2 + (waiting ? 402 : 435) * scale,
       width: (waiting ? 612 : 301) * scale, height: (waiting ? 198 : 164) * scale} : undefined}>
     {waiting && resources ? <WaitingChatSourceView ui={resources.layout.ui} scale={scale} {...presentation}>{content}</WaitingChatSourceView>
-      : <SourceBattleChat resources={resources} active={active} {...presentation}>{content}</SourceBattleChat>}
+      : <SourceBattleChat resources={resources} active={interactive} {...presentation}>{content}</SourceBattleChat>}
   </section>;
 }
 

@@ -1,5 +1,5 @@
 import type {MsgRoomEvent, SceneCrushSnapshot} from '../../../shared/protocols';
-import {segmentBox, type Point} from '../battlefield';
+import type {Point} from '../battlefield';
 import {getSceneCrushes} from '../scene-objects';
 
 /** Rebuilt ordinary2001 permission for the original enabled map7 Crush objects. */
@@ -11,7 +11,7 @@ export function createSceneCrushes(room: {mode: number; map: {mapId: number}}): 
   }));
 }
 
-/** Ground objects use the original OBB horizontal footprint, without enlarging it.
+/** Ground objects use the projected render-mesh footprint, without enlarging it.
  * Height-independent ordinary shot selection is a rebuilt server query policy.
  */
 export function querySceneCrush(start: Point, end: Point, states: readonly SceneCrushSnapshot[]) {
@@ -19,8 +19,7 @@ export function querySceneCrush(start: Point, end: Point, states: readonly Scene
   for (const source of getSceneCrushes(7)) {
     const state = states.find(state => state.sourcePlacementId === source.id);
     if (!state?.enabled || state.hidden) continue;
-    const y = source.matrix[13];
-    const fraction = segmentBox({...start, y}, {...end, y}, source, 0);
+    const fraction = source.mesh!.firstFootprintHit(start, end);
     if (fraction !== undefined && (!nearest || fraction < nearest.fraction)) {
       nearest = {id: state.id, fraction};
     }

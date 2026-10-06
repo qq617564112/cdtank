@@ -2,7 +2,7 @@ import {createRoleFreeAim} from './roles/free-aim';
 import {queryShotTarget} from './shot-query';
 import type {MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot} from '../../../shared/protocols';
 import {segmentSphere, segmentBox, type Battlefield, type Point} from '../battlefield';
-import {getSceneBreakables} from '../scene-objects';
+import {getSceneBreakables, getSceneCastles} from '../scene-objects';
 import {prototypeAttack, type AttackBoostState} from './items/attack-drink';
 import {calculateQualifiedShotAttack} from './roles/qualified-shot-attack';
 import type {recomputeQualifiedRoleArmor} from './roles/recompute-armor';
@@ -90,7 +90,8 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
     }
     for (const object of room.sceneObjects ?? []) {
       if (object.hp <= 0 || !handlers.hitSceneObject) continue;
-      const source = getSceneBreakables(room.map.mapId).find(value => value.id === object.sourcePlacementId);
+      const source = getSceneBreakables(room.map.mapId).find(value => value.id === object.sourcePlacementId)
+        ?? getSceneCastles(room.map.mapId).find(value => value.id === object.sourcePlacementId);
       if (!source) continue;
       const fraction = segmentBox(bullet, destination, source, 1);
       if (fraction !== undefined && (fraction < hitFraction || fraction === hitFraction && wall?.boxId === object.id)) {
@@ -133,7 +134,7 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
 }
 
 
-/** Create one shot after World accepts input and commits its reload deadline. */
+/** Resolve the accepted shot after the original03 start/query delay. */
 export function fireProjectile(room: {
   roomId: string;
   sceneCrushes?: SceneCrushSnapshot[];
@@ -152,8 +153,9 @@ export function fireProjectile(room: {
   shotModifiers?: ShotModifiers;
   combat: {specialFlag12: number; currentAmmoTableId: number};
 }, currentSeconds: number, allocateId: () => string, events: MsgRoomEvent[], bodyRadius: number,
-  hitSceneObject?: (targetId: string, damage: number) => boolean,
-  hitPlayer?: (targetId: string, damage: number, ammoItemId: number) => void): void {
+  hitSceneObject?: (targetId: string, damage: number, ammoItemId: number) => boolean,
+  hitPlayer?: (targetId: string, damage: number, ammoItemId: number) => void,
+  itemId = player.combat.currentAmmoTableId): void {
   const speed = 360;
   const angle = player.yaw + player.aim;
   const aim = createRoleFreeAim(player, {x: Math.sin(angle), y: 0, z: Math.cos(angle)}, currentSeconds);
@@ -161,8 +163,9 @@ export function fireProjectile(room: {
   const range = 1000 * (player.shotModifiers?.rangePercent ?? 100) / 100;
   const target = queryShotTarget(player, {x: Math.sin(angle), y: 0, z: Math.cos(angle)},
     room.players, room.battlefield, bodyRadius,
-    player.combat.currentAmmoTableId === 2001 ? room.sceneCrushes : undefined,
-    {closestPlayer: penetratesObstacles, range, ignoreObstruction: penetratesObstacles});
+    itemId === 2001 ? room.sceneCrushes : undefined, itemId === 2001,
+    {closestPlayer: itemId === 2001 || penetratesObstacles,
+      range, ignoreObstruction: penetratesObstacles});
   const aimX = aim.x - Math.fround(player.x), aimZ = aim.z - Math.fround(player.z);
   const distance = Math.hypot(aimX, aimZ);
   const directionX = aimX / distance, directionZ = aimZ / distance;
@@ -170,7 +173,6 @@ export function fireProjectile(room: {
   player.combat.specialFlag12 = 0;
   const muzzle = {x: player.x + directionX * 30,
     y: player.y + 20, z: player.z + directionZ * 30};
-  const itemId = player.combat.currentAmmoTableId;
   events.push({roomId: room.roomId, type: 'fire', message: `${player.name}开火`, playerId: player.id,
     targetId: target.kind === 'FREE' ? '' : target.targetId, value: 0,
     x: player.x, y: player.y, z: player.z, skillId: itemId,
@@ -184,7 +186,7 @@ export function fireProjectile(room: {
   // query boundary; query geometry and server damage are rebuilt.
   if (itemId === 2001 || penetratesObstacles) {
     if (target.kind === 'PLAYER') hitPlayer?.(target.targetId, damage, itemId);
-    else if (target.kind === 'SCENE' && !hitSceneObject?.(target.targetId, damage)) {
+    else if (target.kind === 'SCENE' && !hitSceneObject?.(target.targetId, damage, itemId)) {
       // Original type2 receives remote result feedback without a damage transaction.
       // Source BOX identity and server notification eligibility are reconstructed.
       const sourceBox = room.battlefield.boxes.some(box => box.id === target.targetId);
@@ -197,7 +199,7 @@ export function fireProjectile(room: {
   }
   const obstruction = room.battlefield.firstSurfaceHit({...player, y: muzzle.y}, muzzle, 1);
   if (obstruction) {
-    if (hitSceneObject?.(obstruction.boxId, damage)) return;
+    if (hitSceneObject?.(obstruction.boxId, damage, itemId)) return;
     events.push({roomId: room.roomId, type: 'terrainHit', message: '弹丸命中障碍', playerId: player.id,
       targetId: obstruction.boxId, value: 0,
       x: player.x + (muzzle.x - player.x) * obstruction.fraction,

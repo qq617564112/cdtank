@@ -18,6 +18,8 @@ export class RoleCombatState {
   reloadStartedAt = 0;
   reloadDuration = 0;
   reloadSource: 'original-normal' | 'rebuilt' = 'rebuilt';
+  /** Web authority retains accepted ammo until the original0.4-second query callback. */
+  pendingShot?: {remainingSeconds: number; ammoItemId: number};
   /** Actual role float writes from recompute/notifications; absent fields stay absent. */
   readonly roleFloatFields = new Map<number, number>();
   activeActionId = 0;
@@ -224,6 +226,10 @@ export class RoleCombatState {
   /** Original0x432e2a/76/cc,0x432f50 lifecycle, dispatched by0x4259ae. */
   setStatus(status: 0 | 1 | 2 | 3): void {
     if (!this.record) return;
+    if (this.pendingShot) {
+      this.pendingShot = undefined;
+      this.specialFlag12 = 0;
+    }
     if (status === 1) this.activeActionId = 0;
     this.record.status = status;
     // The original status3 path does not emit notification27.

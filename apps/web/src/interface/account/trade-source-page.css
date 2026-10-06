@@ -108,7 +108,6 @@
   appearance: textfield;
 }
 
-/* Peer offer values sit on a light source strip; keep them legible without touching the source image. */
 .trade-source-stage [data-source-control='txtOtherMoney'],
 .trade-source-stage [data-source-control='txtOtherOriginality'],
 .trade-source-stage [data-source-control='txtOtherTech'] {
@@ -118,8 +117,8 @@
 .trade-source-stage [data-source-control='txtOtherMoney'] [data-source-text-content],
 .trade-source-stage [data-source-control='txtOtherOriginality'] [data-source-text-content],
 .trade-source-stage [data-source-control='txtOtherTech'] [data-source-text-content] {
-  color: #102b42;
-  text-shadow: 0 0 2px #fff, 0 0 4px #fff;
+  color: #fff;
+  text-shadow: none;
 }
 
 .trade-source-amount::-webkit-inner-spin-button,

@@ -9,4 +9,29 @@
 /* The selected font applies to text and form controls, including portal dialogs. */
 html, body, body *, body *::before, body *::after {
   font-family: 'CDTank-Xiangjiao', sans-serif !important;
+  -webkit-text-stroke: 0.08em #000;
+  paint-order: stroke fill;
+}
+
+input::placeholder, textarea::placeholder {
+  color: inherit;
+  opacity: 1;
+}
+
+.source-feedback-text {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 12px;
+  line-height: 15px;
+  text-align: left;
+}
+
+.source-static-text > .source-feedback-text {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

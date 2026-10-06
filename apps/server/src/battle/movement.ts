@@ -69,10 +69,25 @@ export function predictBattleMovement(player: MovingParticipant, input: MsgPlaye
   }
   const type = player.tank.recomputeBase.tankType;
   if (type < 1 || type > 4) throw new RangeError('Original movement requires a recovered TankType');
-  // Original role constructor dimensions. Later per-role OBB resizing and slope
-  // integration are separate recovery items; no GLB-derived footprint is guessed.
+  // Keep role constructor dimensions; map occupancy comes from the render meshes.
   const result = moveRoleThroughNavigation({...pose, command, tankType: type as 1 | 2 | 3 | 4,
     move: parameters.speed, turn: parameters.turn, dt}, field.navigation, ORIGINAL_MOVEMENT_DIMENSIONS);
+  // Sample intermediate footprints so a fast tick cannot jump a thin mesh wall.
+  const steps = Math.ceil(Math.hypot(result.pose.position.x - pose.position.x,
+    result.pose.position.z - pose.position.z) / 6);
+  const firstYaw = Math.atan2(pose.forward.x, pose.forward.z);
+  const lastYaw = Math.atan2(result.pose.forward.x, result.pose.forward.z);
+  const turn = Math.atan2(Math.sin(lastYaw - firstYaw), Math.cos(lastYaw - firstYaw));
+  for (let step = 1; step < steps; step++) {
+    const fraction = step / steps, heading = firstYaw + turn * fraction;
+    const position = {x: pose.position.x + (result.pose.position.x - pose.position.x) * fraction,
+      y: pose.position.y, z: pose.position.z + (result.pose.position.z - pose.position.z) * fraction};
+    const forward = {x: Math.fround(Math.sin(heading)), y: 0, z: Math.fround(Math.cos(heading))};
+    if (!sampleRoleNavigation(field.navigation, {position, forward}, command,
+        ORIGINAL_MOVEMENT_DIMENSIONS.width, ORIGINAL_MOVEMENT_DIMENSIONS.depth).accepted) {
+      return {pose, yaw: player.yaw, bodyYaw: player.bodyYaw ?? player.yaw};
+    }
+  }
   // Existing rebuilt grounding remains explicit until original vertical/slope
   // post-processing is recovered. Horizontal NAV collision is the original rule.
   result.pose.position.y = field.navigation.sample(result.pose.position.x, result.pose.position.z)?.height ?? player.y;

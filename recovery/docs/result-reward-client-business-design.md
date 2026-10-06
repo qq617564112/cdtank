@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS account_reward_ledger (
 - 账户：money 写 profile `0x70`，积分/等级/创意/技能点写 `account_growth`；同库真实服务重启后余额/积分/等级保持；CPU/旁观空；多连接同场只记一次。
 - 离房/断线/再战：真实 Leave 判负一次，FORFEIT 冻结名单纳入离场人；普通中途离场不提前结算、终局合并纳入离场人一次；断线窗口内重连不发奖、窗口到期一次；再战 round 独立领奖。
 - UI：UI-19 三分辨率整页显冻结结果 + 等级/经验；UI-20 award 子页显本次四值奖励；重开/重连值不变。UI 由独立 UI worker 负责，本批唯一集中走查登记关闭奖励弹层焦点回源 `btnClose`、成长带与既有状态文字重叠两处待修，root 最终集成 UI3/4 修复，未声称真实页面验收通过。
-- 上述真实网络/双网页/HD/持久重启/原 reward producer 验收本轮均未执行；不勾完整父，不改 `progress.md`。
+- 上述真实网络/双网页/HD/持久重启/原 reward producer 验收本轮均未执行；完整父项保持未完成。
 
 ## 剩余源授权/实测缺口
 

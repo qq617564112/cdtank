@@ -2,10 +2,16 @@ import {ReloadProgress} from './reload-progress';
 import {BattleInfoOpacity} from './battle-info-opacity';
 import {teamInfo} from './team-info';
 import {LocalDeathCountdown} from '../../match/local-death-countdown';
-import type {MsgRoomSnapshot, PlayerSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
+import type {MsgRoomSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import type {MsgRoomEvent} from '../../../../shared/protocols/MsgRoomEvent';
 import {PortraitState} from './portrait-state';
 import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {combatState, sameCombatState, type HudCombatSnapshot} from './hud-combat-state';
+import {minimapState, sameMinimapState, type HudMinimapSnapshot} from './hud-minimap-state';
+import {modeInfo, type HudModeInfo} from './hud-mode-info';
+
+export type {HudCombatSnapshot} from './hud-combat-state';
+export type {HudMinimapSnapshot} from './hud-minimap-state';
 
 export interface SourceWindow {
   name: string;
@@ -26,27 +32,38 @@ export interface SourceUi {
 
 export interface HudPlayer {
   id: string; name: string; tankId: number; petId?: number; alive: boolean; hp: number; maxHp: number;
-  expression: string; asset?: string | null; title?: string;
+  expression: string; asset?: string | null; isVIP: boolean; title?: string;
 }
 export interface HudSnapshot {
   data?: SourceUi; visible: boolean; mode: number;
+  roomId?: string; round?: number; phase?: MsgRoomSnapshot['phase'];
   timers: readonly {text: string; colour?: string}[];
   slots: readonly (HudPlayer | undefined)[];
   localHealth?: {name: string; hp: number; maxHp: number};
   teamCounts?: {self: string; enemy: string};
+  modeInfo?: HudModeInfo;
   messages: string;
   deathCountdown?: number;
 }
 export interface HudReloadSnapshot {visible: boolean; fraction: number;}
 
+const EMPTY_COMBAT: HudCombatSnapshot = {visible: false, canUseShortcuts: false, alive: false, serverTime: 0, ammoSlots: [], activeEffects: []};
+const EMPTY_MINIMAP: HudMinimapSnapshot = {visible: false, mode: 1, players: [], objectives: []};
+
 /** Only visible source HUD projections notify React; movement and tick fields do not. */
 export class BattleHud {
   private state: HudSnapshot = {visible: false, mode: 1, timers: Array.from({length: 5}, () => ({text: ''})), slots: [], messages: ''};
   private reload: HudReloadSnapshot = {visible: false, fraction: 1};
+  private combat: HudCombatSnapshot = EMPTY_COMBAT;
+  private minimap: HudMinimapSnapshot = EMPTY_MINIMAP;
+  private minimapImage?: {mapId: number; imageUrl: string};
   private readonly listeners = new Set<() => void>();
   private readonly reloadListeners = new Set<() => void>();
+  private readonly combatListeners = new Set<() => void>();
+  private readonly minimapListeners = new Set<() => void>();
   private readonly messages: string[] = [];
   private readonly portraits = new Map<string, {petId?: number; alive: boolean; state: PortraitState}>();
+  private readonly beforeShotPending = new Set<string>();
   private lastUpdate?: number;
   private readonly reloadProgress = new ReloadProgress();
   private readonly battleInfoOpacity = new BattleInfoOpacity();
@@ -57,19 +74,30 @@ export class BattleHud {
   private readonly deathCountdown = new LocalDeathCountdown(count => {
     this.publish({...this.state, deathCountdown: count});
   });
+  private lifecycle?: string;
 
   readonly getSnapshot = (): HudSnapshot => this.state;
   readonly subscribe = (listener: () => void): (() => void) => {this.listeners.add(listener); return () => {this.listeners.delete(listener);};};
   readonly getReloadSnapshot = (): HudReloadSnapshot => this.reload;
   readonly subscribeReload = (listener: () => void): (() => void) => {this.reloadListeners.add(listener); return () => {this.reloadListeners.delete(listener);};};
+  readonly getCombatSnapshot = (): HudCombatSnapshot => this.combat;
+  readonly subscribeCombat = (listener: () => void): (() => void) => {this.combatListeners.add(listener); return () => {this.combatListeners.delete(listener);};};
+  readonly getMinimapSnapshot = (): HudMinimapSnapshot => this.minimap;
+  readonly subscribeMinimap = (listener: () => void): (() => void) => {this.minimapListeners.add(listener); return () => {this.minimapListeners.delete(listener);};};
+  setMinimapImage(mapId: number, imageUrl: string): void {
+    this.minimapImage = {mapId, imageUrl};
+    if (this.minimap.mapId === mapId) this.publishMinimap({...this.minimap, imageUrl});
+  }
   readonly getBattleInfoOpacity = this.battleInfoOpacity.getSnapshot;
   readonly subscribeBattleInfoOpacity = this.battleInfoOpacity.subscribe;
   readonly battleInfoHover = (entered: boolean): void => {this.battleInfoOpacity.hover(entered);};
   private publish(next: HudSnapshot): void {
     const same = this.state.data === next.data && this.state.visible === next.visible && this.state.mode === next.mode
+      && this.state.roomId === next.roomId && this.state.round === next.round && this.state.phase === next.phase
       && this.state.messages === next.messages
       && this.state.deathCountdown === next.deathCountdown
       && sameValues(this.state.localHealth, next.localHealth) && sameValues(this.state.teamCounts, next.teamCounts)
+      && sameValues(this.state.modeInfo, next.modeInfo)
       && this.state.timers.every((timer, index) => sameValues(timer, next.timers[index]))
       && this.state.slots.length === next.slots.length && this.state.slots.every((slot, index) => sameValues(slot, next.slots[index]));
     if (same) return;
@@ -79,6 +107,14 @@ export class BattleHud {
   private publishReload(next: HudReloadSnapshot): void {
     if (this.reload.visible === next.visible && this.reload.fraction === next.fraction) return;
     this.reload = next; for (const listener of this.reloadListeners) listener();
+  }
+  private publishCombat(next: HudCombatSnapshot): void {
+    if (sameCombatState(this.combat, next)) return;
+    this.combat = next; for (const listener of this.combatListeners) listener();
+  }
+  private publishMinimap(next: HudMinimapSnapshot): void {
+    if (sameMinimapState(this.minimap, next)) return;
+    this.minimap = next; for (const listener of this.minimapListeners) listener();
   }
   load(): Promise<void> {
     if (this.state.data) return Promise.resolve();
@@ -102,18 +138,36 @@ export class BattleHud {
     this.battleInfoOpacity.advance(seconds);
     const present = new Set(snapshot.players.map(player => player.id));
     for (const id of this.portraits.keys()) if (!present.has(id)) this.portraits.delete(id);
-    const mode = snapshot.mode ?? 1, timers = [...this.state.timers], remaining = Math.trunc(snapshot.remaining);
+    for (const id of this.beforeShotPending) {
+      const player = snapshot.players.find(value => value.id === id);
+      if (!player || !player.alive) this.beforeShotPending.delete(id);
+    }
+    const round = snapshot.match?.round;
+    const newRound = this.state.roomId !== snapshot.roomId || this.state.round !== round;
+    if (newRound) {
+      this.portraits.clear();
+      this.messages.length = 0;
+    }
+    const mode = snapshot.mode ?? 1;
+    const timers: {text: string; colour?: string}[] = Array.from({length: 5}, (_, index) =>
+      !newRound && mode === this.state.mode && index === mode - 1 ? this.state.timers[index] : {text: ''});
+    const remaining = Math.max(0, Math.trunc(snapshot.remaining));
     if (mode >= 1 && mode <= 5) timers[mode - 1] = {
       text: `${Math.trunc(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`,
-      colour: remaining < 30 ? remaining % 2 === 1 ? 'ffff0000' : 'ffffffff' : timers[mode - 1].colour,
+      colour: remaining < 30 && remaining % 2 === 1 ? 'ffff0000' : 'ffffffff',
     };
     const local = snapshot.players.find(player => player.id === playerId);
+    const lifecycle = `${snapshot.roomId}:${snapshot.phase}:${snapshot.match?.round ?? 0}`;
+    if (lifecycle !== this.lifecycle) {
+      this.lifecycle = lifecycle;
+      this.beforeShotPending.clear();
+    }
     this.deathCountdown.update(`${snapshot.roomId}:${snapshot.match?.round}:${playerId}`,
       snapshot.phase === 'PLAYING', local?.alive);
-    const friends = snapshot.players.filter(player => player.team === local?.team);
+    const friends = snapshot.players.filter(player => mode <= 3 ? player.team === local?.team : player.id === playerId);
     const localIndex = friends.findIndex(player => player.id === playerId);
     if (localIndex > 0) [friends[0], friends[localIndex]] = [friends[localIndex], friends[0]];
-    const enemies = snapshot.players.filter(player => player.team !== local?.team);
+    const enemies = snapshot.players.filter(player => mode <= 3 ? player.team !== local?.team : player.id !== playerId);
     const left = friends.slice(0, 6), right = [...enemies.slice(0, 6), ...friends.slice(6)].slice(0, 6);
     left.push(...enemies.slice(6, 6 + 6 - left.length));
     const slots: (HudPlayer | undefined)[] = [];
@@ -138,40 +192,59 @@ export class BattleHud {
       const asset = expression === 'dead' ? data.portraitDeath[slot === 0 ? 'local' : 'remote']
         : slot !== 0 ? portrait?.remoteAsset : expression === 'normal' ? portrait?.asset : portrait?.expressions[expression];
       slots.push({id: player.id, name: player.name, tankId: player.tankId, petId: player.petId, alive: player.alive,
-        hp: player.hp, maxHp: player.maxHp, expression, asset, title: player.title?.name});
+        hp: player.hp, maxHp: player.maxHp, expression, asset, isVIP: player.isVIP, title: player.title?.name});
     }
-    const round = snapshot.match?.round;
     if (round !== this.reloadRound || !local?.alive || snapshot.phase !== 'PLAYING') this.reloadProgress.reset();
     this.reloadRound = round;
     const visible = !!local?.reload && local.alive && snapshot.phase === 'PLAYING';
     const fraction = local?.reload && visible ? this.reloadProgress.update(local.reload, snapshot.serverTime, seconds) : 1;
     this.publishReload({visible, fraction});
-    this.publish({...this.state, visible: true, mode, timers, slots,
-      localHealth: local ? {name: local.name, hp: local.hp, maxHp: local.maxHp} : this.state.localHealth,
-      teamCounts: teamInfo(snapshot, playerId)});
+    this.publishCombat(combatState(snapshot, local));
+    const minimap = minimapState(snapshot, playerId);
+    this.publishMinimap({...minimap, imageUrl: this.minimapImage?.mapId === minimap.mapId
+      ? this.minimapImage.imageUrl : undefined});
+    this.publish({...this.state, visible: snapshot.phase === 'PLAYING' || snapshot.phase === 'FINISHED', mode, timers, slots,
+      roomId: snapshot.roomId, round, phase: snapshot.phase, messages: this.messages.join('\n'),
+      localHealth: local ? {name: local.name, hp: local.hp, maxHp: local.maxHp} : undefined,
+      teamCounts: teamInfo(snapshot, playerId), modeInfo: modeInfo(snapshot, playerId)});
   }
   event(event: MsgRoomEvent): void {
-    if (event.type === 'fire') this.portraits.get(event.playerId)?.state.set(2);
+    if (event.type === 'beforeShot') {
+      this.beforeShotPending.add(event.playerId);
+      this.portraits.get(event.playerId)?.state.set(2);
+    }
+    if (event.type === 'fire' && !this.beforeShotPending.delete(event.playerId)) {
+      this.portraits.get(event.playerId)?.state.set(2);
+    }
     if (event.type === 'hit') this.portraits.get(event.targetId)?.state.set(8);
     if (event.type === 'destroy') {
+      this.beforeShotPending.delete(event.targetId);
       this.portraits.get(event.targetId)?.state.set(0x04000000); this.portraits.get(event.playerId)?.state.set(4);
     }
-    if (event.type === 'respawn') this.portraits.get(event.playerId)?.state.set(0x01000000);
+    if (event.type === 'respawn') {
+      this.beforeShotPending.delete(event.playerId);
+      this.portraits.get(event.playerId)?.state.set(0x01000000);
+    }
     if (!['hit', 'destroy', 'respawn', 'finish', 'leave', 'chat', 'friendlyFire', 'itemUsed', 'itemRejected'].includes(event.type)) return;
     this.battleInfoOpacity.reset();
     this.messages.push(event.message); if (this.messages.length > 5) this.messages.shift();
     this.publish({...this.state, messages: this.messages.join('\n')});
   }
   clear(): void {
+    this.minimapImage = undefined;
     this.deathCountdown.clear();
     ++this.loadGeneration; this.abort?.abort(); this.abort = undefined; this.loading = undefined;
-    this.messages.length = 0; this.portraits.clear(); this.lastUpdate = undefined;
+    this.messages.length = 0; this.portraits.clear(); this.beforeShotPending.clear(); this.lastUpdate = undefined;
+    this.lifecycle = undefined;
     this.reloadProgress.reset(); this.reloadRound = undefined;
     this.battleInfoOpacity.reset();
     this.publishReload({visible: false, fraction: 1});
+    this.publishCombat(EMPTY_COMBAT);
+    this.publishMinimap(EMPTY_MINIMAP);
     this.publish({...this.state, visible: false, slots: [], localHealth: undefined,
-      messages: '', teamCounts: undefined,
-      timers: this.state.timers.map(timer => ({text: timer.text}))});
+      roomId: undefined, round: undefined, phase: undefined, deathCountdown: undefined,
+      messages: '', teamCounts: undefined, modeInfo: undefined,
+      timers: this.state.timers.map(() => ({text: ''}))});
   }
 }
 

@@ -6,4 +6,4 @@
 
 下一接线条件是来源充分的普通入口与root稳定权威合同。可复用原数量55弹窗、pending请求身份和完整确认库存投影；完整UI与获取业务保持开放。
 
-[具名来源](/workspace/cdtank/recovery/output/valuable-item-sale-consumer-source.json)保存同实例查询、数量谓词和派发分支；本片只准备来源与消费者边界，无生产、类型构建或浏览器运行。
+[具名来源](../output/valuable-item-sale-consumer-source.json)保存同实例查询、数量谓词和派发分支；本片只准备来源与消费者边界，无生产、类型构建或浏览器运行。

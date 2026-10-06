@@ -12,7 +12,7 @@ import {MEDICAL_AMMO_ID, resolveMedicalAmmo} from './battle/items/medical-ammo';
 import {advanceAmmoBurn, clearAmmoBurn, startAmmoBurn} from './battle/items/ammo-burn';
 import {advanceAmmoSlow, clearAmmoSlow, startAmmoSlow} from './battle/items/ammo-slow';
 import {roomMaxPlayers, roomMinPlayers} from './rooms/player-limits';
-import {separateBattleParticipants} from './battle/dynamic-movement';
+import {findAvailableTankSpawn} from './battle/spawn-position';
 import {battleAttributes, battlePartSources, battleSkillSources, battleInventory} from './battle/projection';
 import {configureBattleAutopilot} from './battle/autopilot';
 import {roomChat} from './rooms/chat';
@@ -21,6 +21,8 @@ import {baseTankMaxHp} from './battle/create-player';
 import {setBattleHealth} from './battle/health';
 import {insertRoomPlayer} from './rooms/membership';
 import {manageRoomCpu} from './rooms/cpu';
+import {editWaitingRoom} from './rooms/edit';
+import type {ReqEditRoom} from '../../shared/protocols/PtlEditRoom';
 import {confirmBattleItemConsumption} from './battle/items/consumption';
 import type {CpuLoadoutItem, ReqCpu} from '../../shared/protocols/PtlCpu';
 import {leaveRoomPlayer} from './rooms/departure';
@@ -49,7 +51,7 @@ import {advanceSpeedDrink, clearSpeedDrink} from './battle/items/speed-drink';
 import {advanceInvincibility, clearInvincibility} from './battle/items/invincibility';
 import {advanceOpticalCamouflage, clearOpticalCamouflage} from './battle/items/optical-camouflage';
 import {advanceRoleDisguise, clearRoleDisguise, restoreRoleDisguiseAfterAcceptedFire} from './battle/items/role-disguise';
-import {setReady, changeWaitingTeam, voteRematch, prepareRematch} from './rooms/preparation';
+import {setReady, changeWaitingTeam, voteRematch, prepareRematch, readyCpus} from './rooms/preparation';
 import {advanceProjectiles} from './battle/projectiles';
 import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSceneObjectCollision} from './battle/environment';
 import {attachProjectileSceneResult} from './battle/projectile-scene-result';
@@ -180,13 +182,13 @@ export class World {
   }
 
   manageCpu(playerId: string, round: number, operation: ReqCpu['operation'], tankId = 1,
-    cpuId?: string, loadout?: CpuLoadoutItem[]): string {
+    cpuId?: string, loadout?: CpuLoadoutItem[], team?: number): string {
     const found = this.findPlayer(playerId);
     if (!found || found.room.round !== round || found.room.phase !== 'WAITING') {
       throw new Error('只能在当前等待房间管理CPU');
     }
     return manageRoomCpu(found.room, found.player, operation, tankId, cpuId,
-      () => this.insertPlayer(found.room, `CPU:${this.nextPlayerId}`, `CPU ${this.nextPlayerId}`, tankId), loadout);
+      () => this.insertPlayer(found.room, `CPU:${this.nextPlayerId}`, `CPU ${this.nextPlayerId}`, tankId), loadout, team);
   }
 
   /** AI controls the same owned participant through ordinary inputs. */
@@ -204,7 +206,18 @@ export class World {
       throw new Error('对局已变化，请等待最新状态');
     }
     const {room} = found;
-    if (setReady(room, playerId, isReady, this.minPlayers(room))) this.startRoom(room);
+    if (setReady(room, playerId, isReady, this.minPlayers(room))) this.beginRoomLoading(room);
+    return room.round;
+  }
+
+  resourcesLoaded(playerId: string, round: number): number {
+    const found = this.findPlayer(playerId);
+    if (!found || found.room.round !== round) throw new Error('对局已变化，请等待最新状态');
+    const {room} = found;
+    if (room.phase === 'PLAYING' && room.loaded.has(playerId)) return room.round;
+    if (room.phase !== 'LOADING') throw new Error('当前房间未开始载入');
+    room.loaded.add(playerId);
+    if ([...room.players.keys()].every(id => room.loaded.has(id))) this.startRoom(room);
     return room.round;
   }
 
@@ -215,6 +228,33 @@ export class World {
     }
     const {room, player} = found;
     return changeWaitingTeam(room, player, team);
+  }
+
+  kickRoomPlayer(playerId: string, round: number, targetId: string): {roomId: string; events: WorldEvent[]} {
+    const found = this.findPlayer(playerId);
+    if (!found || found.room.round !== round || found.room.phase !== 'WAITING') {
+      throw new Error('只能在当前等待房间踢出成员');
+    }
+    const {room, player} = found;
+    if (player.cpu || room.creatorClientId !== player.clientId) throw new Error('只有房主可以踢出成员');
+    if (targetId === playerId) throw new Error('不能踢出自己');
+    if (!room.players.has(targetId)) throw new Error('该成员已离开房间');
+    room.ready.clear();
+    const events = this.leave(targetId);
+    readyCpus(room);
+    return {roomId: room.roomId, events};
+  }
+
+  editRoom(playerId: string, request: ReqEditRoom): number {
+    const found = this.findPlayer(playerId);
+    if (!found || found.room.round !== request.round || found.room.phase !== 'WAITING') {
+      throw new Error('只能编辑当前等待房间');
+    }
+    if (found.player.cpu || found.room.creatorClientId !== found.player.clientId) {
+      throw new Error('只有房主可以编辑房间');
+    }
+    editWaitingRoom(found.room, request);
+    return found.room.round;
   }
 
   rematch(playerId: string, round: number): number {
@@ -246,7 +286,7 @@ export class World {
         outcome.winnerTeam, outcome.winnerPlayerId, events),
       departed: departed => this.captureDeparted(room, departed),
       create: mode => {this.createRoom(mode);},
-      start: () => this.startRoom(room),
+      start: () => this.beginRoomLoading(room),
       rematch: () => this.tryRematch(room),
     }));
     if (!this.rooms.has(room.roomId)) this.departedParticipants.delete(room.roomId);
@@ -545,6 +585,8 @@ export class World {
     };
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {
       respawn: player => {
+        const spawn = findAvailableTankSpawn(room.battlefield, player.id, room.players.values());
+        if (!spawn) return;
         clearCopiedRoleSkill(player.combat);
         clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
         clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
@@ -552,11 +594,10 @@ export class World {
         resetTrapRestraint(player);
         resetTrapTurnRestraint(player);
         resetTrapFireRestraint(player);
-        respawnPlayer(room.battlefield, player, this.playerMaxHp(player), DEFAULT_INPUT);
+        respawnPlayer(room.battlefield, player, this.playerMaxHp(player), DEFAULT_INPUT, spawn);
         recomputeBattleAttributes(player);
         setBattleHealth(player, this.playerMaxHp(player), this.playerMaxHp(player));
         resetEquipmentSupply(player, now);
-        separateBattleParticipants(room.players.values(), room.battlefield, this.now, player.id);
       },
       maxHp: player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player),
       input: (id, input, autonomous) => this.updateInput(id, input, autonomous),
@@ -575,25 +616,25 @@ export class World {
         restoreRoleDisguiseAfterAcceptedFire(room.roomId, player,
           () => recomputeBattleAttributes(player), events);
       },
-      hitSceneObject: (owner, targetId, damage) => {
-        if (owner.combat.currentAmmoTableId === MEDICAL_AMMO_ID) return false;
+      hitSceneObject: (owner, targetId, damage, ammoItemId) => {
+        if (ammoItemId === MEDICAL_AMMO_ID) return false;
         const firstEvent = events.length;
         const crush = room.sceneCrushes.find(object => object.id === targetId);
         if (crush) {
-          if (owner.combat.currentAmmoTableId !== 2001 || !acceptSceneCrush(room, owner.id, crush, events)) return false;
-          this.attachShotItemResult(events, firstEvent, owner.id, owner.combat.currentAmmoTableId);
+          if (ammoItemId !== 2001 || !acceptSceneCrush(room, owner.id, crush, events)) return false;
+          this.attachShotItemResult(events, firstEvent, owner.id, ammoItemId);
           return true;
         }
         const target = room.sceneObjects.find(object => object.id === targetId && object.hp > 0);
         if (target) {
           damageSceneObject(room, owner, target, damage, now, events);
-          this.attachShotItemResult(events, firstEvent, owner.id, owner.combat.currentAmmoTableId);
+          this.attachShotItemResult(events, firstEvent, owner.id, ammoItemId);
           return true;
         }
         const objective = room.objectives.find(object => object.id === targetId && object.kind === 'DESTROY' && object.hp > 0);
         if (!objective) return false;
         damageObjective(room, owner, objective, damage, now, events);
-        this.attachShotItemResult(events, firstEvent, owner.id, owner.combat.currentAmmoTableId);
+        this.attachShotItemResult(events, firstEvent, owner.id, ammoItemId);
         return true;
       },
       hitPlayer: (owner, targetId, damage, ammoItemId) => {
@@ -739,7 +780,18 @@ export class World {
   }
 
   private tryRematch(room: RoomState): void {
-    if (prepareRematch(room, this.minPlayers(room))) this.startRoom(room);
+    if (prepareRematch(room, this.minPlayers(room))) this.beginRoomLoading(room);
+  }
+
+  private beginRoomLoading(room: RoomState): void {
+    room.phase = 'LOADING';
+    room.tick = 0;
+    room.loaded.clear();
+    for (const player of room.players.values()) {
+      player.input = {...DEFAULT_INPUT};
+      if (player.cpu) room.loaded.add(player.id);
+    }
+    this.ensureAvailableRoom(room.mode);
   }
 
   private finishRoom(room: RoomState, now: number, reason: MatchResult['reason'],
@@ -749,6 +801,8 @@ export class World {
       clearGroundTraps(room);
       room.airstrikes = [];
       for (const player of room.players.values()) {
+        player.combat.pendingShot = undefined;
+        player.combat.specialFlag12 = 0;
         clearAmmoBurn(player);
         player.equipmentSupply = undefined;
         player.lastStand = undefined;

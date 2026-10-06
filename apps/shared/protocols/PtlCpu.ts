@@ -10,6 +10,7 @@ export interface ReqCpu {
   operation: 'ADD' | 'REMOVE' | 'CONFIGURE';
   tankId?: number;
   playerId?: string;
+  team?: number;
   /** Rebuilt temporary CPU stock, independent of all account inventory. */
   loadout?: CpuLoadoutItem[];
 }

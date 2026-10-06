@@ -8,6 +8,8 @@ export * from './PtlRoomInvite';
 export * from './MsgRoomInvitation';
 export * from './PtlRematch';
 export * from './PtlCreateRoom';
+export * from './PtlEditRoom';
+export * from './PtlKickRoomPlayer';
 export * from './PtlListMaps';
 export * from './PtlChangeTeam';
 export * from './PtlCpu';

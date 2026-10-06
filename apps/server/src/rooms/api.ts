@@ -79,6 +79,18 @@ export function registerRoomApis(
     }
   });
 
+  server.implementApi('EditRoom', async call => {
+    const session = sessionByConnection.get(call.conn.id);
+    if (!session) return call.error('请先加入房间', {code: 'NOT_JOINED'});
+    try {
+      const round = world.editRoom(session.playerId, call.req);
+      await call.succ({round});
+      broadcastRoomState(session.roomId);
+    } catch (error) {
+      await call.error(error instanceof Error ? error.message : '编辑房间失败', {code: 'ROOM_EDIT_REJECTED'});
+    }
+  });
+
   server.implementApi('ListRooms', async (call: ApiCall<ReqListRooms, ResListRooms>) => {
     await call.succ({rooms: world.listRooms()});
   });
@@ -87,7 +99,10 @@ export function registerRoomApis(
     const session = sessionByConnection.get(call.conn.id);
     if (!session) return call.error('请先加入房间', {code: 'NOT_JOINED'});
     try {
-      await call.succ({round: world.ready(session.playerId, call.req.round, call.req.isReady)});
+      const round = call.req.resourcesLoaded
+        ? world.resourcesLoaded(session.playerId, call.req.round)
+        : world.ready(session.playerId, call.req.round, call.req.isReady);
+      await call.succ({round});
       broadcastRoomState(session.roomId);
     } catch (error) {
       await call.error(error instanceof Error ? error.message : '准备失败', {code: 'ROUND_CONFLICT'});
@@ -122,7 +137,7 @@ export function registerRoomApis(
     if (!session) return call.error('请先加入房间', {code: 'NOT_JOINED'});
     try {
       const playerId = world.manageCpu(session.playerId, call.req.round, call.req.operation,
-        call.req.tankId, call.req.playerId, call.req.loadout);
+        call.req.tankId, call.req.playerId, call.req.loadout, call.req.team);
       await call.succ({round: call.req.round, playerId});
       broadcastRoomState(session.roomId);
     } catch (error) {

@@ -10,7 +10,7 @@ M6-06。原495e90的kind4分派494927，非零实例是唯一出售输入；发�
 
 分类3/4/5分别进入43cff8/43d041/43d08a，扫描vector+2c/+3c/+5c内record+4实例；匹配后调用删除析构并vectorerase4f14f5。三个分支不读record+10，不扣分钟或数量。MyItem构造43bcb5设置vtable5c4d10，其首项43bd1d只恢复虚表及条件operator delete57a6c7，不写profile或快捷槽。
 
-[源脚本](/workspace/cdtank/recovery/evidence/durable-item-sale-contract-source.py) 与 [指令合同](/workspace/cdtank/recovery/output/durable-item-sale-contract-source.json) 保存具体字节、虚表和断言；只核这一新kind4链，不执行Pet/Tank旧sender或native矩阵。
+[源脚本](../evidence/durable-item-sale-contract-source.py) 与 [指令合同](../output/durable-item-sale-contract-source.json) 保存具体字节、虚表和断言；只核这一新kind4链，不执行Pet/Tank旧sender或native矩阵。
 
 ## 服务端边界
 

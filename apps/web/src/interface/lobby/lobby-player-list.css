@@ -16,18 +16,20 @@
 
 .lobby-player-list [data-lobby-presence-status] {
   margin: 0;
+  padding: 2px 4px;
   color: white;
   font: inherit;
-  line-height: 14px;
+  line-height: 16px;
+  overflow-wrap: anywhere;
 }
 
 .lobby-player-list button {
   display: block;
   box-sizing: border-box;
   width: 100%;
-  min-height: 14px;
+  min-height: 20px;
   margin: 0;
-  padding: 0;
+  padding: 2px 4px;
   border: 0;
   border-radius: 0;
   background-color: transparent;
@@ -35,11 +37,20 @@
   background-size: 100% 100%;
   color: inherit;
   font: inherit;
-  line-height: 14px;
+  line-height: 16px;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   cursor: pointer;
+}
+
+.lobby-player-list button > .source-feedback-text {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lobby-player-list button:focus-visible {

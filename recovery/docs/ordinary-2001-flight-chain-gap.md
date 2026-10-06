@@ -1,6 +1,6 @@
 # 普通2001即时显示、玩家结果与飞行来源边界
 
-地图0007、默认普通炮弹2001按已确认的即时目标查询、显示和结果分派交付。正式默认2001在接受开火时立即查询目标并处理命中，不创建延迟bullet；双连接证据见ordinary2001-immediate-accepted.json。独立可见飞行实体的原创建与更新来源仍缺，不能由其他弹药的重建弹丸快照选择2001外观，也不作为即时基础链交付前置。
+正式默认2001先接受开火并启动03，再按原42b020登记的约0.4秒回调查询目标、处理命中，不创建独立bullet。定时与渲染接线见`combat-fire-timing-and-effect-depth.md`，本次没有运行验证。地图0007的`ordinary2001-immediate-accepted.json`保留其原版本的双连接范围，不作为当前定时流程的实测。独立可见飞行实体的原创建与更新来源仍缺，不能由其他弹药的重建弹丸快照选择2001外观。
 
 ## 已确认合同
 
@@ -47,7 +47,7 @@ Castle305新的普通受损／破坏实际覆盖见`scene-castle02-presentation.
 
 本次限定检查原EXE的Bullet/Missile/Projectile/Shell/Shoot/Shot业务字符串与两个具体xref：`SYcSkillSystem::ShowShotEffect`在489cd5是既有489ba8内部诊断；`PlayerShotEvent`在5bdc16是identifier注册。两者未提供独立实体创建或更新入口。没有根据字符串缺失宣称原版没有飞行表现。
 
-玩家结果消费者合同见`combat-shot-player-result.md`。客户端原即时目标选择/显示来源与服务端目标几何、伤害权威重建规则分别记录。当前默认2001权威按普通输入即时fire→hit处理，网络实际证明双端有序通知、共享生命、bullets始终0与自然死亡/复活/Leave；证据见ordinary2001-immediate-network.md。独立飞行消费者仍需实际资源、创建坐标、更新与终止来源。
+玩家结果消费者合同见`combat-shot-player-result.md`。客户端定时目标选择/显示来源与服务端场景几何、伤害权威重建规则分别记录。当前默认2001为beforeShot→约0.4秒查询→fire/合法hit；既有`ordinary2001-immediate-network.md`仅证明其原版本的双端有序通知、共享生命、bullets始终0与自然死亡/复活/Leave。独立飞行消费者仍需实际资源、创建坐标、更新与终止来源。
 
 ## 原Shot末端定位
 

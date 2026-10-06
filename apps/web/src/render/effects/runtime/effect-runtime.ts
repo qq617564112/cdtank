@@ -16,6 +16,7 @@ import {EffectVec3} from '../common/types';
 import {selectSpriteRenderScript} from '../common/effect-render-selection';
 import {EffectSound} from '../../../audio/effect-sound';
 import {effectSpriteDraw} from '../sprites/sprite-draw';
+import {EffectSpriteNodeState} from '../sprites/effect-sprite-node';
 import {effectStripDraw} from '../strips/strip-draw';
 import {EffectModelLibrary, EffectModelRenderer} from '../models/effect-model-renderer';
 import {EffectModelNodeState} from '../models/effect-model-node';
@@ -115,9 +116,32 @@ export class EffectRuntime {
     await Promise.all(models.resources.flatMap(resource => resource.nodes.flatMap(node => node.parts
       .filter(part => part.asset).map(part => this.loadTexture(part.asset!, true)))));
     if (this.scene.isDisposed) return;
+    await this.prepareShotRenderer(library);
+    if (this.scene.isDisposed) return;
     this.library = library;
     this.links = links;
     this.modelLibrary = models;
+  }
+
+  /** Compile the shared smoke/flash shader before the short source004 trail starts. */
+  private async prepareShotRenderer(library: Library): Promise<void> {
+    const definition = library.nodes.find(node => node.name === '_root\\online\\004\\7034b')!;
+    const control = library.spriteControls.find(row => row.node === definition.index && row.modifier === 0)!;
+    const selection = library.rendering.spriteSelections.find(row => row.node === definition.index && row.modifier === 0)!;
+    const pass = library.rendering.scripts.find(row => row.index === selection.selector)!.techniques[0].passes[0];
+    const grid = library.textureGrids.find(row => row.node === definition.index)!;
+    const renderer = new EffectSpriteMesh(this.scene, pass, this.textures.get(grid.asset)!);
+    try {
+      // This one-frame source sprite initializes without consuming CRT random values.
+      const sprite = new EffectSpriteNodeState([control], () => 0, EFFECT_IDENTITY);
+      sprite.start([0, 0, 0]);
+      const billboard = (parseInt(control.remainingFieldAc.slice(0, 2), 16) & 1) !== 0;
+      renderer.updateQuads(effectSpriteDraw(sprite, billboard, grid.uvFrames, this.camera));
+      renderer.mesh.setEnabled(false);
+      await renderer.material.forceCompilationAsync(renderer.mesh);
+    } finally {
+      renderer.dispose();
+    }
   }
 
   private async loadTexture(asset: string, model = false): Promise<void> {

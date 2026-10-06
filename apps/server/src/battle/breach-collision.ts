@@ -4,7 +4,7 @@ import {getSceneBreakables} from '../scene-objects';
 
 const active = new WeakMap<Battlefield, Set<string>>();
 
-/** Room-owned reconstructed coverage: retain the intact footprint during broken fade. */
+/** Room-owned render mesh: retain the intact geometry during broken fade. */
 export function syncBreachCollision(room: {mode: number; map: {mapId: number};
   battlefield: Battlefield; objectives: readonly ObjectiveSnapshot[]}, now: number): void {
   if (room.mode !== 5 || ![20, 21, 22].includes(room.map.mapId)) return;
@@ -15,10 +15,10 @@ export function syncBreachCollision(room: {mode: number; map: {mapId: number};
   for (const objective of room.objectives) {
     if (objective.sourcePlacementId === undefined) continue;
     // Original broken visual fades at0.5/s and hides strictly after alpha0.
-    // Server-time scheduling and intact bounds during that fade remain rebuilt.
+    // Server-time scheduling retains the intact mesh during that fade.
     if (objective.hp <= 0 && objective.destroyedAt !== undefined && now - objective.destroyedAt > 2000) continue;
     const source = sources.find(source => source.id === objective.sourcePlacementId);
-    if (!source || room.map.mapId === 20 && !['obj05460', 'obj05461', 'obj05462', 'obj05442'].includes(source.model)) continue;
+    if (!source) continue;
     present.add(objective.id);
     if (!previous.has(objective.id)) room.battlefield.setDynamicBox({...source, id: objective.id}, objective.id);
   }

@@ -11,14 +11,16 @@ const MODES = [['rdoTeamMode', '团队'], ['rdoConquerMode', '占领'], ['rdoVIP
 interface RoomMapSelectorProps {
   open: boolean; close(): void; maps: readonly MapOption[]; busy: boolean;
   initialMode: number; initialMapId: number; confirm(mode: number, mapId: number): boolean;
+  closeOnConfirm?: boolean;
+  originalConfirm?: boolean;
 }
 
-export function RoomMapSelector({open, close, maps, busy, initialMode, initialMapId, confirm}: RoomMapSelectorProps) {
+export function RoomMapSelector({open, close, maps, busy, initialMode, initialMapId, confirm, closeOnConfirm = true, originalConfirm = false}: RoomMapSelectorProps) {
   const [mode, setMode] = useState(initialMode), [mapId, setMapId] = useState(initialMapId);
   const [page, setPage] = useState(Math.max(0, Math.floor(maps.filter(map => map.mode === initialMode).findIndex(map => map.mapId === initialMapId) / 8)));
   const [status, setStatus] = useState('');
   const escapePending = useRef(false);
-  const {ui, error} = useSourceUi(open, ['selectgamemode.xml', 'selectgamemode_icon.xml']);
+  const {ui, error} = useSourceUi(open, ['selectgamemode.xml', 'selectgamemode_icon.xml', ...(originalConfirm ? ['createroom.xml'] : [])]);
   const dialog = useSourceDialog(open), scale = useSourceScale(800, 600, 0, 0, .25, Infinity);
   useEffect(() => {
     const element = dialog.current;
@@ -29,6 +31,11 @@ export function RoomMapSelector({open, close, maps, busy, initialMode, initialMa
   const state = roomMapPage(maps, mode, page, mapId);
   const layout = ui ? new HomeSourceLayout(ui, 'selectgamemode.xml') : undefined;
   const icon = ui ? new HomeSourceLayout(ui, 'selectgamemode_icon.xml') : undefined;
+  const confirmation = ui && originalConfirm ? new HomeSourceLayout(ui, 'createroom.xml') : undefined;
+  const accept = () => {
+    if (confirm(mode, mapId)) {if (closeOnConfirm) close();}
+    else setStatus('所选地图已不可用，请重新选择');
+  };
   const place = (name: string, image?: string) => sourceProps(ui!, layout!, 'selectgamemode.xml', name, image);
   const button = (name: string, label: string, action: () => void, selected = false, disabled = false, data: Record<string, string> = {}) =>
     <SourceButton key={name} ui={ui!} layout={layout!} suffix="selectgamemode.xml" source={name} 
@@ -71,10 +78,13 @@ export function RoomMapSelector({open, close, maps, busy, initialMode, initialMa
         {Array.from({length: 8 - state.maps.length}, (_, index) => <span key={`empty-${index}`} {...place(`picMap${state.maps.length + index}`)} aria-hidden="true"/>)}
       </>}
       </SourceImageScale>
-    <div className="map-selector-toolbar" data-map-selector-web-confirm="">
-      <button type="button" data-map-selector-confirm="" disabled={busy || !state.selected || !ui} onClick={() => {
-        if (confirm(mode, mapId)) close(); else setStatus('所选地图已不可用，请重新选择');
-      }}>确认模式与地图</button>
+    <div className="map-selector-toolbar" data-map-selector-web-confirm="" data-map-selector-original={originalConfirm || undefined}
+      style={originalConfirm && ui && layout ? {backgroundImage: sourceProps(ui, layout, 'selectgamemode.xml', 'xiamianfenhongtiao',
+        layout.control('xiamianfenhongtiao').properties.Image).style.backgroundImage} : undefined}>
+      {originalConfirm ? ui && confirmation && <SourceButton ui={ui} layout={confirmation} suffix="createroom.xml" source="btnOK"
+        style={{position: 'relative', left: 0, top: 0, width: 81, height: 43}} data-map-selector-confirm=""
+        disabled={busy || !state.selected} aria-label="确认模式与地图" title="确认模式与地图" onClick={accept}/>
+        : <button type="button" data-map-selector-confirm="" disabled={busy || !state.selected || !ui} onClick={accept}>确认模式与地图</button>}
       <output role="status">{error ? `地图选择资源载入失败：${error}；关闭后可重试` : !ui ? '正在载入地图选择…' : status || (state.selected ? `${state.selected.name} · ${state.selected.timeLimit}秒 · ${state.selected.sourceMinPlayers}–${state.selected.maxPlayers}人` : '请选择可用地图')}</output>
     </div>
     </div></div>

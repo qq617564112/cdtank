@@ -2,11 +2,12 @@ import {useSyncExternalStore} from 'react';
 import './match.css';
 import type {MsgRoomSnapshot, ResultPlayer} from '../../../../shared/protocols';
 import {WaitingRoomView} from '../lobby/waiting-room';
-import {CpuLoadoutView} from '../lobby/cpu-loadout';
 import type {CpuLoadoutItem} from '../../../../shared/protocols/PtlCpu';
 import {BattlePlayPage} from './battle-play-page';
 import {BattleSummaryPage} from './battle-summary-page';
+import {BattleLoadingPage} from './battle-loading-page';
 import type {WaitingRoomActions} from '../lobby/waiting-room';
+import type {RoomEditor} from '../lobby/room-edit-dialog';
 
 interface MatchPlayer {
   id: string;
@@ -38,10 +39,14 @@ interface MatchViewState {
   boosts: {kind: string; text: string}[];
   ammoSlots: {slot: number; itemTableId: number; quantity: number}[];
   waiting?: MsgRoomSnapshot;
+  loading: {progress: number; status: string; error?: string};
+  loadedPlayers: number;
+  loadingPlayers: number;
 }
 
 /** Network snapshots publish only the match controls' semantic presentation. */
 export class BattleMatch {
+  readonly roomEditor?: RoomEditor;
   private state?: MatchViewState;
   private readonly listeners = new Set<() => void>();
   private key = '';
@@ -53,6 +58,7 @@ export class BattleMatch {
   private targetSecond = -1;
   private direction = '';
   private readyAvailable = false;
+  private loading = {progress: 0, status: '正在载入战斗资源…', error: undefined as string | undefined};
 
   readonly subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
@@ -76,11 +82,19 @@ export class BattleMatch {
   constructor(private readonly rematch: () => Promise<void>,
               private readonly ready: (isReady: boolean) => Promise<void>,
               private readonly changeTeam: (team: number) => Promise<void>,
-              private readonly cpu?: (operation: 'ADD' | 'REMOVE', playerId?: string) => Promise<void>,
+              private readonly cpu?: (operation: 'ADD' | 'REMOVE', playerId?: string, team?: number) => Promise<void>,
               private readonly autopilot?: (enabled: boolean) => Promise<void>,
               private readonly leave?: () => Promise<void>,
               private readonly invite?: () => Promise<number>,
-              private readonly configureCpu?: (playerId: string, loadout: CpuLoadoutItem[]) => Promise<void>) {}
+              private readonly configureCpu?: (playerId: string, loadout: CpuLoadoutItem[]) => Promise<void>,
+              readonly retryLoading?: () => void,
+              editor?: RoomEditor,
+              private readonly kick?: (playerId: string) => Promise<void>) {
+    if (editor) this.roomEditor = {
+      listMaps: () => editor.listMaps(),
+      save: settings => this.request(() => editor.save(settings), '正在保存房间…'),
+    };
+  }
 
   get supportsCpu(): boolean {return !!this.cpu;}
   get supportsCpuLoadout(): boolean {return !!this.configureCpu;}
@@ -103,6 +117,22 @@ export class BattleMatch {
     if (this.cpu) this.run(() => this.request(() => this.cpu!(operation, playerId), '正在更新CPU…'));
   }
 
+  addRobot(team?: number): Promise<void> {
+    return this.request(async () => {
+      if (!this.cpu) throw new Error('机器人添加入口不可用');
+      await this.cpu('ADD', undefined, team);
+    }, '正在新增机器人…');
+  }
+
+  get supportsKick(): boolean {return !!this.kick;}
+
+  kickPlayer(playerId: string): Promise<void> {
+    return this.request(async () => {
+      if (!this.kick) throw new Error('踢出入口不可用');
+      await this.kick(playerId);
+    }, '正在踢出成员…');
+  }
+
   requestAutopilot(): void {
     if (this.autopilot && this.state) {
       const enabled = !this.state.isAutopilot;
@@ -118,6 +148,11 @@ export class BattleMatch {
     if (this.readyAvailable === available) return;
     this.readyAvailable = available;
     if (this.state) this.publish({...this.state, readyAvailable: available});
+  }
+
+  setLoading(progress: number, status: string, error?: string): void {
+    this.loading = {progress, status, error};
+    if (this.state) this.publish({...this.state, loading: this.loading});
   }
 
   update(snapshot: MsgRoomSnapshot, playerId: string): void {
@@ -193,6 +228,7 @@ export class BattleMatch {
       phase: snapshot.phase, serverTime: 0, tick: 0, remaining: 0, bullets: [], teamScores: [], winnerTeam: -1,
       players: snapshot.players.map(player => ({
         id: player.id, name: player.name, team: player.team, tankId: player.tankId,
+        petId: player.petId, title: player.title,
         x: 0, y: 0, z: 0, yaw: 0, aim: 0, hp: 0, maxHp: 0, alive: true,
         score: 0, kills: 0, deaths: 0, respawnAt: 0, isVIP: false,
         isCpu: player.isCpu, isAutopilot: player.isAutopilot,
@@ -210,7 +246,10 @@ export class BattleMatch {
       hasLocalPlayer: !!local, voted: match.rematchPlayerIds.includes(playerId),
       players: waiting ? snapshot.players.map(player => ({id: player.id, name: player.name, team: player.team,
         isCpu: !!player.isCpu, isAutopilot: !!player.isAutopilot, ready: match.readyPlayerIds.includes(player.id)})) : [],
-      results: result?.players.map(player => ({...player})) ?? [], boosts, waiting: waitingSnapshot});
+      results: result?.players.map(player => ({...player})) ?? [], boosts, waiting: waitingSnapshot,
+      loading: this.loading, loadedPlayers: snapshot.players.filter(player => !player.isCpu
+        && match.loadedPlayerIds?.includes(player.id)).length,
+      loadingPlayers: snapshot.players.filter(player => !player.isCpu).length});
   }
 
   private publish(state?: MatchViewState): void {
@@ -262,6 +301,7 @@ export class BattleMatch {
   }
 
   clear(): void {
+    this.loading = {progress: 0, status: '正在载入战斗资源…', error: undefined};
     this.readyAvailable = false;
     this.generation++;
     this.context = '';
@@ -277,6 +317,10 @@ export class BattleMatch {
 export function BattleMatchView({panel, validation = false}: {panel: BattleMatch; validation?: boolean}) {
   const state = useSyncExternalStore(panel.subscribe, panel.getSnapshot, panel.getSnapshot);
   if (!state) return null;
+  if (state.phase === 'LOADING' || (state.phase === 'PLAYING' && state.loading.progress < 1)) return <BattleLoadingPage key={state.round} round={state.round} progress={state.loading.progress}
+    status={state.loading.status} error={state.loading.error} loadedPlayers={state.loadedPlayers}
+    totalPlayers={state.loadingPlayers} leave={() => panel.requestLeave()} retry={panel.retryLoading}
+    pending={state.pending} feedback={state.status}/>;
   const waiting = state.phase === 'WAITING';
   const finished = state.phase === 'FINISHED';
   if (finished && !validation) return <section data-match-panel="" data-phase={state.phase}
@@ -290,22 +334,9 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
     data-round={state.round} data-formal-waiting-page="" aria-label="等待房间">
     {state.waiting && <WaitingRoomView formal key={`${state.waiting.roomId}:${state.round}`} snapshot={state.waiting}
       playerId={state.playerId} externalBusy={state.pending} readyAvailable={state.readyAvailable} actions={panel.waitingActions}
-      management={<>
-        {panel.supportsCpu && state.canManageCpu && <button type="button" data-add-cpu=""
-          disabled={state.pending} onClick={() => panel.requestCpu('ADD')}>添加 CPU</button>}
-        {state.canManageCpu && panel.supportsCpu && state.waiting?.players.filter(player => player.isCpu).map(player =>
-          <div key={player.id}>
-            <button type="button" data-remove-cpu={player.id} disabled={state.pending}
-              onClick={() => panel.requestCpu('REMOVE', player.id)}>移除 {player.name}</button>
-            {panel.supportsCpuLoadout && <CpuLoadoutView player={player} busy={state.pending}
-              configure={loadout => panel.configureCpuLoadout(player.id, loadout)}/>}
-          </div>)}
-        {panel.supportsAutopilot && state.hasLocalPlayer && <button type="button" data-autopilot=""
-          disabled={state.pending} aria-pressed={state.isAutopilot}
-          title="AI自动移动、开火和使用你已配置的道具；使用会消耗你的库存"
-          onClick={() => panel.requestAutopilot()}>{state.isAutopilot ? '结束托管，自己操作' : 'AI托管我的战车'}</button>}
-        <output data-waiting-management-status="" role="status">{state.readyAvailable ? state.status : '载入地图和战车…'}</output>
-      </>}/>} 
+      roomEditor={state.canManageCpu ? panel.roomEditor : undefined}
+      kickPlayer={panel.supportsKick && state.canManageCpu ? playerId => panel.kickPlayer(playerId) : undefined}
+      addRobot={panel.supportsCpu && state.canManageCpu ? team => panel.addRobot(team) : undefined}/>} 
   </section>;
   if (state.phase === 'PLAYING' && !validation) return <BattlePlayPage round={state.round}
     busy={state.pending} canLeave={state.hasLocalPlayer} leave={() => {void panel.waitingActions.leave();}}
@@ -319,24 +350,17 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
     </>}>
     <h2>{state.title}</h2>
     <p>{state.objective}</p>
-    {panel.supportsAutopilot && state.hasLocalPlayer && <button type="button" data-autopilot=""
-      disabled={state.pending} aria-pressed={state.isAutopilot}
-      title="AI自动移动、开火和使用你已配置的道具；使用会消耗你的库存"
-      onClick={() => panel.requestAutopilot()}>{state.isAutopilot ? '结束托管，自己操作' : 'AI托管我的战车'}</button>}
     <p role="status">{state.status}</p>
   </BattlePlayPage>;
   return <section className={`battle-match${finished ? ' match-finished' : ''}`} data-match-panel=""
     data-phase={state.phase} data-round={state.round} aria-label="对局目标与结算">
     {state.waiting && <WaitingRoomView key={`${state.waiting.roomId}:${state.round}`} snapshot={state.waiting}
-      playerId={state.playerId} externalBusy={state.pending} readyAvailable={state.readyAvailable} actions={panel.waitingActions} />}
+      playerId={state.playerId} externalBusy={state.pending} readyAvailable={state.readyAvailable} actions={panel.waitingActions}
+      roomEditor={state.canManageCpu ? panel.roomEditor : undefined}
+      kickPlayer={panel.supportsKick && state.canManageCpu ? playerId => panel.kickPlayer(playerId) : undefined}
+      addRobot={panel.supportsCpu && state.canManageCpu ? team => panel.addRobot(team) : undefined} />}
     {waiting && <button type="button" data-ready="" disabled={state.pending || !state.hasLocalPlayer || !state.readyAvailable}
       onClick={() => panel.requestReady()}>{state.ready ? '取消准备' : '准备'}</button>}
-    {waiting && panel.supportsCpu && state.canManageCpu && <button type="button" data-add-cpu=""
-      disabled={state.pending} onClick={() => panel.requestCpu('ADD')}>添加 CPU</button>}
-    {panel.supportsAutopilot && state.hasLocalPlayer && <button type="button" data-autopilot=""
-      disabled={state.pending} aria-pressed={state.isAutopilot}
-      title="AI自动移动、开火和使用你已配置的道具；使用会消耗你的库存"
-      onClick={() => panel.requestAutopilot()}>{state.isAutopilot ? '结束托管，自己操作' : 'AI托管我的战车'}</button>}
     {waiting && state.mode <= 3 && <div>{['猫队', '狗队'].map((name, team) =>
       <button key={team} type="button" data-change-team={team} disabled={state.pending || state.ready || state.team === team || !state.hasLocalPlayer}
         aria-pressed={state.team === team} onClick={() => panel.requestTeam(team)}>加入{name}</button>)}</div>}

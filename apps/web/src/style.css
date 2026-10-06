@@ -85,8 +85,16 @@ button:disabled {
   width: min(12rem, calc(100vw - 4rem));
 }
 
-/* The original transparent room sheet must reveal the scene behind it. */
+/* Waiting and loading pages own the screen before the battle begins. */
 body:has([data-waiting-room][open]) .controls {
+  visibility: hidden;
+}
+
+body:has([data-match-panel][data-phase="WAITING"]) #world,
+body:has([data-match-panel][data-phase="LOADING"]) #world,
+body:has([data-match-panel][data-phase="LOADING"]) #original-battle-hud,
+body:has([data-match-panel][data-phase="LOADING"]) .battle-chat,
+body:has([data-match-panel][data-phase="LOADING"]) .game-status {
   visibility: hidden;
 }
 

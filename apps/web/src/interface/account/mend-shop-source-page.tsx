@@ -1,4 +1,5 @@
 import type {ResPartMaintenance} from '../../../../shared/protocols/PtlPartMaintenance';
+import {createRequestId} from '../../network/request-id';
 import './mend-shop-source.css';
 import {HomeOwnedTankRowContent} from '../home/home-owned-tank-row-content';
 import {MendPartRowContent} from './mend-part-row-content';
@@ -17,6 +18,10 @@ import {SourceButton} from '../resources/source-button';
 import {sourceProps} from '../resources/source-ui-props';
 
 const suffix = 'shop_mendpage.xml';
+const legacyCoinImages = new Set([
+  'Qbi', 'Qbi0', 'Qbi1', 'Qbi2',
+  'yongdaibibaoyang', 'yongdaibibaoyang2', 'yongdaibibaoyang3',
+]);
 type PartCategory = 'Common' | 'Hat' | 'Mark';
 interface MendEntry {id: number; name: string; itemTableId?: number; iconId?: number; ownedQuantity?: number; tankId?: number; tankType?: number; durationMinutes?: number;}
 
@@ -78,7 +83,7 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
     submitting.current = true; setBusy(true); onBusy(true); setStatus('正在确认保养…');
     try {
       const request = {operation: 'MAINTAIN' as const, instanceId: selected,
-        days: quote.days, currency: quote.currency, requestId: crypto.randomUUID().replaceAll('-', '')};
+        days: quote.days, currency: quote.currency, requestId: createRequestId()};
       if (page === 'Tank') {
         const result = await source.tankMaintenance!(request);
         if (current !== generation.current) return;
@@ -107,10 +112,11 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
     });
   }
   const partNames = new Set(['picPartPagePanel', 'heseditu2']);
-  const controls = ui.layouts.find(value => value.path.endsWith(suffix))!.windows;
+  const controls = ui.layouts.find(value => value.path.endsWith(suffix))!.windows.filter(control =>
+    selected !== undefined || !/^btn(?:Coin|Money)Mend[0-2]$/.test(control.parent ?? ''));
   return <>
     <div className="mend-shop-source" data-mend-shop-page="" data-mend-page={page} aria-busy={busy}>
-      {(['Coin', 'Money'] as const).flatMap(currency => ([1, 7, 30] as const).map((days, index) => {
+      {selected !== undefined && (['Coin', 'Money'] as const).flatMap(currency => ([1, 7, 30] as const).map((days, index) => {
         const quote = selectedQuotes?.find(value => value.days === days && value.currency === (currency === 'Coin' ? 0 : 1));
         return <SourceButton key={`${currency}${index}`} ui={ui} layout={layout} suffix={suffix}
           source={`btn${currency}Mend${index}`} disabled={busy || !quote || !canMaintain} data-mend-repair=""
@@ -119,7 +125,8 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
           aria-label={`${currency === 'Coin' ? '代币' : '金币'}保养${days}天`}
           onClick={() => {if (quote) void maintain(quote);}} />;
       }))}
-      {controls.filter(control => control.type === 'WindowsLook/StaticImage').map(control =>
+      {controls.filter(control => control.type === 'WindowsLook/StaticImage'
+        && !legacyCoinImages.has(control.name)).map(control =>
         <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name}
           hidden={control.name === 'dankequ' ? page !== 'Tank' : partNames.has(control.name) ? page !== 'Part' : undefined}
           aria-hidden="true" />)}

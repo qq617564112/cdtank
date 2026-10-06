@@ -37,6 +37,16 @@ export interface PlayerSnapshot {
   /** Original independent forward angle, used for the rendered tank body. */
   bodyYaw?: number;
   aim: number;
+  /** Computed movement parameters and current permissions for client-owned motion. */
+  movement?: {
+    speed: number;
+    turn: number;
+    tankType: number;
+    original: boolean;
+    canMove: boolean;
+    canTurn: boolean;
+    command: number;
+  };
   hp: number;
   maxHp: number;
   alive: boolean;
@@ -201,6 +211,8 @@ export interface MatchSnapshot {
   friendlyFire?: boolean;
   round: number;
   readyPlayerIds: string[];
+  /** Clients which completed resource loading for this round; CPUs have no separate renderer. */
+  loadedPlayerIds?: string[];
   rematchPlayerIds: string[];
   minPlayers: number;
   maxPlayers?: number;

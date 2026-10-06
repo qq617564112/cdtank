@@ -3,7 +3,7 @@ import type {PlayerState} from '../battle/player-state';
 import {forfeitOutcome, type ModeOutcome} from '../modes/outcomes';
 import {matchFinishMessage} from '../settlement/match-result';
 import type {RoomState} from './state';
-import {canStartRoom} from './preparation';
+import {canStartRoom, readyCpus} from './preparation';
 import {ensureDefaultRooms} from './availability';
 import {resetBreachCollision} from '../battle/breach-collision';
 import {resetSceneObjectCollision} from '../battle/environment';
@@ -34,6 +34,7 @@ export function leaveRoomPlayer(rooms: Map<string, RoomState>, room: RoomState,
   player.lastStand = undefined;
   room.players.delete(player.id);
   room.ready.delete(player.id);
+  room.loaded.delete(player.id);
   room.rematch.delete(player.id);
   room.bullets = room.bullets.filter(bullet => bullet.ownerId !== player.id);
   if (![...room.players.values()].some(value => !value.cpu)) {
@@ -41,6 +42,11 @@ export function leaveRoomPlayer(rooms: Map<string, RoomState>, room: RoomState,
     resetSceneObjectCollision(room.battlefield);
     rooms.delete(room.roomId);
     ensureDefaultRooms(rooms, actions.create);
+  } else if (room.phase === 'LOADING') {
+    room.phase = 'WAITING';
+    room.loaded.clear();
+    room.ready.clear();
+    readyCpus(room);
   } else if (room.phase === 'WAITING' && canStartRoom(room, minPlayers)
       && room.ready.size === room.players.size) {
     actions.start();

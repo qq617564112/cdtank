@@ -5,6 +5,8 @@ export class ReloadProgress {
   private shot = 0;
 
   update(state: {duration: number; startedAt: number}, serverTime: number, delta: number): number {
+    // Preparation snapshots can carry the deferred shot's future reload start.
+    if (serverTime < state.startedAt) return 0;
     if (state.startedAt !== this.shot) {
       this.shot = state.startedAt;
       this.total = Math.fround(state.duration + .5);

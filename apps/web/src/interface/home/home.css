@@ -19,7 +19,7 @@
 .home-roles-stage > button { margin: 0; }
 .home-roles-stage .home-source-image { pointer-events: none; }
 .home-tank-preview canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-.home-tank-preview output { position: absolute; inset: 0; margin: 0; color: #253740; font-size: 12px; pointer-events: none; }
+.home-tank-preview output { position: absolute; inset: 0; margin: 0; color: #fff; font-size: 12px; pointer-events: none; }
 .home-role-use { background-color: transparent; background-repeat: no-repeat; background-size: 100% 100%; border: 0; padding: 0; }
 .home-role-use:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .home-role-use:disabled { opacity: .55; }
@@ -112,15 +112,15 @@
   pointer-events: none;
 }
 
-[data-home-role-page='pet'] .home-pet-owned-number {filter: brightness(.15);}
-[data-home-role-page='tank'] .home-tank-owned-attribute {filter: brightness(.15);}
-.home-equipment-stage .home-tank-owned-attribute {filter: brightness(.15);}
+.home-tank-capacity {position: absolute; background-size: 100% 100%; pointer-events: none;}
 [data-home-role-page='pet'] > .home-pet-owned-skill {inset: 0; pointer-events: none;}
 .home-pet-owned-skill > .source-static-image {position: absolute;}
-.home-pet-owned-skill > .source-static-text {position: absolute; filter: brightness(.15);}
+.home-pet-owned-skill > .source-static-text {position: absolute;}
+.home-pet-owned-skill > .source-state-button {position: absolute; pointer-events: auto; margin: 0; padding: 0; border: 0; background: transparent;}
+.home-pet-owned-skill > .source-static-text {pointer-events: none;}
 [data-home-role-page='pet'] > .home-pet-owned-description {
   overflow: auto;
-  color: #253740;
+  color: #fff;
   white-space: pre-wrap;
   line-height: 16px;
 }
@@ -149,16 +149,14 @@
 
 [data-home-role-page='tank'] > .home-tank-description {
   overflow: auto;
-  color: #253740;
+  color: #fff;
   line-height: 15px;
   white-space: pre-wrap;
 }
 
 .home-equipment-stage > .home-tank-description {
   overflow: auto;
-  color: #253740;
+  color: #fff;
   line-height: 15px;
   white-space: pre-wrap;
 }
-
-.home-player-profile-number { filter: brightness(.15); }

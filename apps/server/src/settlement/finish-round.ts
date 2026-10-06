@@ -3,7 +3,7 @@ import type {BulletState} from '../battle/projectiles';
 import {computeMatchResult, type MatchResultInput} from './match-result';
 
 interface FinishingRoom {
-  phase: 'WAITING' | 'PLAYING' | 'FINISHED';
+  phase: 'WAITING' | 'LOADING' | 'PLAYING' | 'FINISHED';
   players: ReadonlyMap<string, MatchResultInput['players'][number] & {input: MsgPlayerInput}>;
   departedParticipants?: ReadonlyMap<string, MatchResultInput['players'][number]>;
   mode: number;

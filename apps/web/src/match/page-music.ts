@@ -18,7 +18,7 @@ export class PageMusic {
   }
 
   room(phase: string, mode: number, mapId: number, resultFlag?: 1 | 2, round?: number, roomId?: string): void {
-    if (phase === 'WAITING') this.select('waiting', () => this.player.playPage('waiting'));
+    if (phase === 'WAITING' || phase === 'LOADING') this.select('waiting', () => this.player.playPage('waiting'));
     else if (phase === 'FINISHED' && resultFlag !== undefined && round !== undefined) {
       this.select(`result:${roomId}:${round}:${resultFlag}`, () => this.player.playResult(resultFlag));
     }

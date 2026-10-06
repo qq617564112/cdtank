@@ -403,7 +403,7 @@ function canShootSource(position: Point, heading: number, source: SceneBreakable
     const body = segmentSphere(muzzle, end, {...other, y: other.y + 20}, 20);
     return body !== undefined && body <= hit;
   });
-  return hit !== undefined && (!wall || hit < wall.fraction || wall.boxId === `SCN:${source.id}` && hit === wall.fraction)
+  return hit !== undefined && (!wall || hit < wall.fraction || field.isPlacementHit(wall.boxId, source.id) && hit === wall.fraction)
     && !blocked && !field.firstSurfaceHit({...position, y: muzzle.y}, muzzle, 1);
 }
 function blocksShot(start: Point, end: Point, ally: Point): boolean {

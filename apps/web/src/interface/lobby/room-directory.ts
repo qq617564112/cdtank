@@ -25,7 +25,7 @@ export function roomDirectoryPage(ordered: readonly RoomSummary[], requestedPage
 }
 
 export function canJoinRoom(room: RoomSummary): boolean {
-  return room.phase !== 'PLAYING' && room.playerCount < room.maxPlayers;
+  return room.phase !== 'PLAYING' && room.phase !== 'LOADING' && room.playerCount < room.maxPlayers;
 }
 
 function compareId(left: string, right: string): number {

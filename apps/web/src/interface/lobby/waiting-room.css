@@ -54,6 +54,131 @@
   z-index: 1;
 }
 
+.waiting-room-stage > .waiting-room-add-robot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-repeat: no-repeat;
+}
+
+.waiting-room-add-robot:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+.waiting-room-add-robot:not(:disabled):active {
+  filter: none;
+}
+
+.waiting-room-add-robot:disabled {
+  opacity: .6;
+}
+
+.waiting-room-stage > .waiting-room-map-preview {
+  left: 214px;
+  top: 23px;
+  width: 56px;
+  height: 45px;
+  overflow: hidden;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.waiting-room-ready-mark {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.waiting-room-slot-actions {
+  position: absolute;
+  z-index: 2;
+}
+
+.waiting-room-slot-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  visibility: hidden;
+  background: rgb(28 19 12 / 62%);
+}
+
+.waiting-room-slot-actions:hover > .waiting-room-slot-mask,
+.waiting-room-slot-actions:focus-within > .waiting-room-slot-mask {
+  visibility: visible;
+}
+
+.waiting-room-slot-mask > button {
+  width: 68px;
+  height: 27px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  color: #fff;
+  cursor: pointer;
+}
+
+.waiting-room-slot-mask > button:not(:disabled):hover {
+  filter: brightness(1.12);
+}
+
+.waiting-room-slot-mask > button:not(:disabled):active {
+  filter: brightness(.9);
+}
+
+.waiting-room-slot-mask > button:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.waiting-room-slot-actions:focus-visible,
+.waiting-room-slot-mask > button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.waiting-room-stage > .waiting-room-edit {
+  left: 294px;
+  top: 25px;
+  width: 108px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-repeat: no-repeat;
+}
+
+.waiting-room-edit > .source-feedback-text {
+  font-size: 16px;
+}
+
+.waiting-room-edit:not(:disabled):hover {
+  filter: brightness(1.12);
+}
+
+.waiting-room-edit:not(:disabled):active {
+  filter: brightness(.9);
+}
+
+.waiting-room-edit:disabled {
+  opacity: .6;
+}
+
+.waiting-room-stage > .waiting-room-map-name {
+  left: 294px;
+  top: 58px;
+  width: 88px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 [data-waiting-room-status] {
   display: block;
   position: absolute;
@@ -182,14 +307,14 @@
 .waiting-room-console {
   position: absolute;
   width: 185px;
-  height: 600px;
+  max-height: 580px;
   box-sizing: border-box;
   overflow: auto;
   margin: 0;
   padding: 10px 8px;
   color: #fff8da;
-  background: #172a38;
-  border-left: 1px solid #fff8da;
+  background: transparent;
+  border: 0;
   font-family: 'CDTank-SIMSUN', serif;
   font-size: 12px;
   line-height: 16px;

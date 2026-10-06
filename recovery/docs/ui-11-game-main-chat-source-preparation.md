@@ -8,7 +8,7 @@ The archived layout at `recovery/output/verified/assets/data/Data/ui/layouts/gam
 
 The XML also contains `btnFamily` and `btnGM`. No current Web consumer or verified producer contract binds either control. They remain explicitly unbound; no channel permission or routing behavior is inferred from their image names.
 
-The complete control table and exact consumer paths are recorded in [ui-11-game-main-chat-source-preparation.json](/workspace/cdtank/recovery/output/ui-11-game-main-chat-source-preparation.json).
+The complete control table and exact consumer paths are recorded in [ui-11-game-main-chat-source-preparation.json](../output/ui-11-game-main-chat-source-preparation.json).
 
 ## Next bounded slice
 

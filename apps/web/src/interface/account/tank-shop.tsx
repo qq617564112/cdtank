@@ -1,4 +1,5 @@
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../../shared/protocols/PtlOwnedRoleSale';
+import {createRequestId} from '../../network/request-id';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
 import {TankShopOwnedPartSourceRegions} from './tank-shop-owned-part-source-regions';
 import {SourceImageScale} from '../resources/source-static-image';
@@ -128,7 +129,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     if (busy || owner.saleInFlight || !saleQuote?.canSell || saleQuote.selected || !source.ownedRoleSale) return;
     if (!owner.salePending || owner.salePending.instanceId !== saleQuote.instanceId) {
       owner.salePending = {operation: 'SELL', kind: 'tank', instanceId: saleQuote.instanceId,
-        requestId: crypto.randomUUID().replaceAll('-', '')};
+        requestId: createRequestId()};
     }
     focusAfterCommit.current = button;
     setStatus(''); setSaleConfirm(true);
@@ -159,7 +160,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     const current = session.current;
     if (!current.active || current.query || owner.inFlight || mode !== 'Buy' || !product) return;
     if (!owner.pending || owner.pending.tankId !== product.tankId) {
-      owner.pending = {operation: 'BUY', tankId: product.tankId, currency: 'MONEY', requestId: crypto.randomUUID()};
+      owner.pending = {operation: 'BUY', tankId: product.tankId, currency: 'MONEY', requestId: createRequestId()};
     }
     focusAfterCommit.current = button;
     setBusy(true); setStatus('等待购买确认…');

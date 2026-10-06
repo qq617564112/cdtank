@@ -35,7 +35,7 @@
   background-size: 100% 100%;
   background-color: transparent;
   border: 0;
-  color: #172a38;
+  color: #fff;
   font-size: 10px;
   text-align: center;
   cursor: pointer;
@@ -62,7 +62,24 @@
   left: 16px;
   top: 89px;
   width: 94px;
-  height: 11px;
+  height: 16px;
+  color: #fff;
+}
+
+.room-source-card [data-source-control='txtRoomName'] > .source-feedback-text {
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.room-card-capacity > .source-feedback-text {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .room-card-toolbar {
@@ -121,6 +138,3 @@
 [data-room-cards-embedded] > output:empty {
   display: none;
 }
-
-.room-source-card .room-card-capacity {height: 15px; overflow: visible; color: #172a38;}
-.room-card-capacity > [data-feedback-font] {filter: brightness(.15);}

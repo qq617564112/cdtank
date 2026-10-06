@@ -10,7 +10,7 @@
 
 三槽相等或请求三槽全0返回结果0、原选择及原余额，不扣费。其他通过请求返回结果3，用 `applyRoleTankTextureConfirmation` 更新三个拥有字段及两个余额，再保存并提交；提交完成后才返回确认。非空请求中的0原样进入确认并清空该槽，没有默认迷彩回填。任何保存失败回滚两个更新。
 
-原完整请求门禁和原成功确认见 [role-texture-transfer-sol.md](/workspace/cdtank/recovery/docs/role-texture-transfer-sol.md)。原客户端对照证明请求费用、消息字段与确认写入；账户归属、战车定义/部位资格和数据库事务是重建服务器规则。
+原完整请求门禁和原成功确认见 [role-texture-transfer-sol.md](role-texture-transfer-sol.md)。原客户端对照证明请求费用、消息字段与确认写入；账户归属、战车定义/部位资格和数据库事务是重建服务器规则。
 
 ## 验证
 

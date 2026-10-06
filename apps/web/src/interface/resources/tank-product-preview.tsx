@@ -113,7 +113,8 @@ export function TankProductPreview({tankId, textures, scale, ...props}: ProductP
     }).catch(error => {
       if (!active || !current.active) return;
       loaded?.dispose(); current.view = undefined;
-      element.dataset.status = 'error'; setMessage(`模型载入失败：${String(error)}`);
+      console.error('战车预览模型载入失败', error);
+      element.dataset.status = 'error'; setMessage('模型载入失败，请刷新页面重试。');
     });
     return () => {
       active = false;

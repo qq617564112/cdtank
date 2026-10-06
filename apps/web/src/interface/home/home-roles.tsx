@@ -1,4 +1,5 @@
 import type {ResPetSkillLearning} from '../../../../shared/protocols/PtlPetSkillLearning';
+import {createRequestId} from '../../network/request-id';
 import {HomeResourceFeedback} from './home-resource-feedback';
 import './home.css';
 import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
@@ -62,6 +63,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const [owned, setOwned] = useState<ResOwnedRoles>();
   const [roleCatalog, setRoleCatalog] = useState<CombatCatalog>();
   const [profile, setProfile] = useState<ResRoleProfile['profile']>();
+  const [equippedItemIds, setEquippedItemIds] = useState<number[]>();
   const [selected, setSelected] = useState<number>();
   const focusInitialSelection = useRef(initialSelectedInstance !== undefined);
   const [busy, setBusy] = useState(true);
@@ -146,7 +148,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
     learningPending.current = true; setLearningBusy(true); setStatus('学习技能…');
     try {
       const result = await battle.petSkillLearning({operation: 'LEARN', instanceId, slot,
-        requestId: crypto.randomUUID().replaceAll('-', '')});
+        requestId: createRequestId()});
       if (!current.active || learningGeneration.current !== generation) return;
       setLearning(result); setOwned(result.owned); setProfile(result.profile); setStatus('技能学习已确认');
     } catch (error) {
@@ -167,6 +169,15 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
     }).catch(() => {});
     return () => {active = false; controller.abort();};
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    setEquippedItemIds(undefined);
+    if (profile) void battle.inventory().then(result => {
+      if (active) setEquippedItemIds(result.records.filter(record => record.state === 2).map(record => record.itemTableId));
+    }).catch(() => {});
+    return () => {active = false;};
+  }, [battle, profile]);
 
   useLayoutEffect(() => {
     const target = focusAfterCommit.current;
@@ -241,6 +252,9 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
               else {setKind(page); setSelected(undefined); if (owned) setStatus('');}
             }} />
           {kind === 'tank' ? <HomeTankSourcePage ui={ui} name={displayed?.name ?? ''} busy={busy} record={displayed}
+            catalog={roleCatalog} equippedItemIds={equippedItemIds}
+            pet={profile ? owned?.base.find(record => new Map(record.fields).get(0)
+              === new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0xa4, true)) : undefined}
             money={profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0x70, true) : undefined}
             quantity={owned?.equipment.length} description={sourceTankDescription(fields?.get(0x24))}
             selectedInstance={currentId} alreadyUsed={!!displayed && currentId === id(displayed)}

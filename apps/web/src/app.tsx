@@ -128,7 +128,7 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
     {!validation && <div className="game-status" ref={element=>{if(element && hud.parentElement!==element)element.append(hud);}}/>}
     <BattleMatchView validation={validation} panel={battle.matchPanel}/>
     <BattleChatView chat={battle.chat} formal={!validation}/>
-    <BattleHudView hud={battle.originalHud} items={battle.itemInventory}/>
+    <BattleHudView hud={battle.originalHud} items={battle.itemInventory} onUseSlot={battle.useHudSlot}/>
     <HomeInventoryView onRolePage={kind => {setRolesKind(kind);closeInventory();setRolesOpen(true);}} battle={battle} open={inventoryOpen} close={closeInventory} navigation={!validation ? <>
       <button id="open-history" type="button" onClick={()=>setHistoryOpen(true)}>对局记录</button>
       <button id="open-key-settings" type="button" onClick={()=>setKeysOpen(true)}>键位设置</button>

@@ -18,6 +18,8 @@ import { ReqChangeTeam, ResChangeTeam } from './PtlChangeTeam';
 import { ReqChannel, ResChannel } from './PtlChannel';
 import { ReqCpu, ResCpu } from './PtlCpu';
 import { ReqCreateRoom, ResCreateRoom } from './PtlCreateRoom';
+import { ReqEditRoom, ResEditRoom } from './PtlEditRoom';
+import { ReqKickRoomPlayer, ResKickRoomPlayer } from './PtlKickRoomPlayer';
 import { ReqDisplayName, ResDisplayName } from './PtlDisplayName';
 import { ReqEquipment, ResEquipment } from './PtlEquipment';
 import { ReqFriendChat, ResFriendChat } from './PtlFriendChat';
@@ -83,6 +85,14 @@ export interface ServiceType {
         "CreateRoom": {
             req: ReqCreateRoom,
             res: ResCreateRoom
+        },
+        "KickRoomPlayer": {
+            req: ReqKickRoomPlayer,
+            res: ResKickRoomPlayer
+        },
+        "EditRoom": {
+            req: ReqEditRoom,
+            res: ResEditRoom
         },
         "DisplayName": {
             req: ReqDisplayName,
@@ -242,8 +252,18 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 95,
+    "version": 100,
     "services": [
+        {
+            "id": 55,
+            "name": "KickRoomPlayer",
+            "type": "api"
+        },
+        {
+            "id": 54,
+            "name": "EditRoom",
+            "type": "api"
+        },
         {
             "id": 0,
             "name": "Chat",
@@ -759,6 +779,83 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 6,
                     "name": "clientTime",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "pose",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgPlayerInput/ClientTankPose"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "MsgPlayerInput/ClientTankPose": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "life",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "x",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "y",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "z",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "yaw",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "bodyYaw",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "aim",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "command",
                     "type": {
                         "type": "Number"
                     }
@@ -2205,6 +2302,65 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 },
                 {
                     "id": 42,
+                    "name": "movement",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "speed",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "turn",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "tankType",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 3,
+                                "name": "original",
+                                "type": {
+                                    "type": "Boolean"
+                                }
+                            },
+                            {
+                                "id": 4,
+                                "name": "canMove",
+                                "type": {
+                                    "type": "Boolean"
+                                }
+                            },
+                            {
+                                "id": 5,
+                                "name": "canTurn",
+                                "type": {
+                                    "type": "Boolean"
+                                }
+                            },
+                            {
+                                "id": 6,
+                                "name": "command",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 43,
                     "name": "title",
                     "type": {
                         "type": "Reference",
@@ -2337,6 +2493,17 @@ export const serviceProto: ServiceProto<ServiceType> = {
         "MsgRoomSnapshot/MatchSnapshot": {
             "type": "Interface",
             "properties": [
+                {
+                    "id": 15,
+                    "name": "loadedPlayerIds",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "String"
+                        }
+                    },
+                    "optional": true
+                },
                 {
                     "id": 10,
                     "name": "friendlyFire",
@@ -4203,6 +4370,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         }
                     },
                     "optional": true
+                },
+                {
+                    "id": 5,
+                    "name": "team",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -4221,6 +4396,118 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "playerId",
                     "type": {
                         "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlKickRoomPlayer/ReqKickRoomPlayer": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "playerId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlKickRoomPlayer/ResKickRoomPlayer": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "playerId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlEditRoom/ReqEditRoom": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "mode",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "mapId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "roomName",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "minPlayers",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "maxPlayers",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "friendlyFire",
+                    "type": {
+                        "type": "Boolean"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "password",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlEditRoom/ResEditRoom": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
                     }
                 }
             ]
@@ -6629,6 +6916,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
         "PtlReady/ReqReady": {
             "type": "Interface",
             "properties": [
+                {
+                    "id": 2,
+                    "name": "resourcesLoaded",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
                 {
                     "id": 0,
                     "name": "round",

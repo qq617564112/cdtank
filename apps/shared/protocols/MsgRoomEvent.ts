@@ -29,6 +29,7 @@ export interface ShotDisplayMessage {
 
 export interface MsgRoomEvent {
   roomId: string;
+  /** beforeShot starts03; fire reports the deferred query, sound and endpoint. */
   type: string;
   message: string;
   playerId: string;

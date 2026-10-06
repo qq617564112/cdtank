@@ -33,3 +33,11 @@ Digit2–8 数量显示真实 Inventory.battleQuantity，明确标记 `web-confi
 首 `22-12-57-447Z` raw FAIL 保留，购买前账户未绑定到 checkpoint。驱动补 Page.enable 后严格验证私有 token 身份，不输出 token；该段不作为页面成功证据。专属类型 exit0 与主线统一 `hud-item-source-production-web-build.log` 标准生产构建 exit0/1m27 作为工程证据。
 
 交片索引：`recovery/output/hud-item-source-page-accepted.json`。原数量 setter、默认数量/冷却/选中/鼠标 callback 尚未确认，该消费者不构成 UI-09、M5-04 或完整1:1完成。
+
+## 当前接入
+
+默认炮弹数量显示原无限图，特殊弹药与道具显示确认本局数量。确认弹槽有选中框与装填剩余秒数，持续道具显示效果剩余秒数。剩余时间政策已由用户确认采用。
+
+八槽增加透明按钮，保持全部41个原控件。点击1–4槽选弹，5–8槽立即使用或放置道具；鼠标和数字键共用 `BattleInput.send(slot)` 与现有服务端分派。只有活着、PLAYING且非托管玩家可操作已绑定槽；连接/地图资源门禁仍由输入owner检查。鼠标点击保留战斗输入焦点，按钮支持键盘。数量、选中与消耗只使用服务端确认结果。
+
+原鼠标callback、完整数量/冷却producer仍未全部取得。上述旧页面证据只覆盖其原范围；本批未新增测试、浏览器、构建或类型检查，点击和当前完整HUD仍待实际验收。

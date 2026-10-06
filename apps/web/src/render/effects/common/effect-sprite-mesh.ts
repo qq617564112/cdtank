@@ -51,15 +51,20 @@ export class EffectSpriteMesh {
       samplers: ['effectTexture'], needAlphaBlending: true});
     this.material.setTexture('effectTexture', texture);
     this.material.backFaceCulling = cull !== 'NONE';
-    this.material.sideOrientation = cull === 'CW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
+    // GBF names the culled winding; Babylon names the retained front face.
+    this.material.sideOrientation = cull === 'CCW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
     this.material.disableDepthWrite = true;
     this.material.depthFunction = states.get('ZEnable') === 'TRUE' ? Constants.LEQUAL : Constants.ALWAYS;
+    this.material.transparencyMode = Material.MATERIAL_ALPHABLEND;
     // RGB factors match the GBF. Separate-alpha device state is still unrecovered;
     // Babylon's alpha-channel accumulation is retained pending source evidence.
     this.material.alphaMode = additive ? Constants.ALPHA_ADD : Constants.ALPHA_COMBINE;
     this.mesh = new Mesh('original-effect-quad', scene);
     this.mesh.material = this.material;
     this.mesh.isPickable = false;
+    // Scene surfaces finish first; source depth testing still occludes world effects.
+    scene.setRenderingAutoClearDepthStencil(1, false);
+    this.mesh.renderingGroupId = 1;
   }
 
   update(corners: readonly [EffectVec3, EffectVec3, EffectVec3, EffectVec3],

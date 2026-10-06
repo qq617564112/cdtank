@@ -44,7 +44,7 @@ for (const resource of library.resources.filter(row => row.resolution === 'publi
         library.scripts.find(script => script.name === name)!.states.forEach(state => suppliedStates.set(state.name, state.value));
       }
       assert.equal(material.backFaceCulling, suppliedStates.get('CullMode') !== 'NONE');
-      assert.equal(material.sideOrientation, suppliedStates.get('CullMode') === 'CW' ?
+      assert.equal(material.sideOrientation, suppliedStates.get('CullMode') === 'CCW' ?
         Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation);
       assert.equal(material.disableDepthWrite, suppliedStates.get('ZWriteEnable') !== 'TRUE');
       assert.equal(material.depthFunction, suppliedStates.get('ZEnable') === 'TRUE' ? Constants.LESS : Constants.ALWAYS);

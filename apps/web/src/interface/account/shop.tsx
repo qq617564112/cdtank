@@ -1,4 +1,5 @@
 import {StackItemSaleSource, type StackSaleOwner} from './stack-item-sale-source';
+import {createRequestId} from '../../network/request-id';
 import type {ReqStackItemSale, ResStackItemSale} from '../../../../shared/protocols/PtlStackItemSale';
 import type {ReqPartSale, ResPartSale} from '../../../../shared/protocols/PtlPartSale';
 import type {ReqPartMaintenance, ResPartMaintenance} from '../../../../shared/protocols/PtlPartMaintenance';
@@ -194,7 +195,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     if (!owner.pending || owner.pending.itemTableId !== item.itemTableId
         || owner.pending.quantity !== count || owner.pending.currency !== currency) {
       owner.pending = {operation: 'BUY', itemTableId: item.itemTableId, quantity: count, currency,
-        requestId: crypto.randomUUID()};
+        requestId: createRequestId()};
     }
     const request = owner.pending;
     focusAfterCommit.current = button;

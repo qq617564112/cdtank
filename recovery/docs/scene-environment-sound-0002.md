@@ -32,4 +32,4 @@
 
 ## 给主线的原位更新建议
 
-归入 M3-05；若没有对应子项，登记未勾选的 M3-05-SOUND02。记录 source/module/formal wire 已交付，actual 仅双端普通 PLAYING 原声音输出范围通过，Leave count0/paused 有效，逐节点断开和重入保持未完成。保留原整体 FAIL 与以上具体入口，主线集成代码并统一发行验证。没有修改 tasklist.md 或 progress.md。
+归入 M3-05；若没有对应子项，登记未勾选的 M3-05-SOUND02。记录 source/module/formal wire 已交付，actual 仅双端普通 PLAYING 原声音输出范围通过，Leave count0/paused 有效，逐节点断开和重入保持未完成。保留原整体 FAIL 与以上具体入口，主线集成代码并统一发行验证。任务状态见 tasklist.md。

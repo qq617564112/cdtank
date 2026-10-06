@@ -1,9 +1,11 @@
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {defineConfig} from 'vite';
+import {imageAssetsPlugin} from './image-assets-plugin';
 
 const webRoot = fileURLToPath(new URL('.', import.meta.url));
 const workspaceRoot = resolve(webRoot, '../..');
+const publicDir = resolve(workspaceRoot, process.env.CDTANK_WEB_ASSETS ?? 'recovery/output/web-assets');
 
 function portFromEnvironment(name: string, fallback: number): number {
   const value = process.env[name];
@@ -19,7 +21,8 @@ function portFromEnvironment(name: string, fallback: number): number {
 
 export default defineConfig({
   root: webRoot,
-  publicDir: resolve(workspaceRoot, process.env.CDTANK_WEB_ASSETS ?? 'recovery/output/web-assets'),
+  publicDir,
+  plugins: [imageAssetsPlugin(publicDir, resolve(webRoot, 'image-cache-worker.js'))],
   server: {
     port: portFromEnvironment('CDTANK_WEB_PORT', 5173),
     proxy: {

@@ -1,4 +1,5 @@
 import type {ReqPartSale, ResPartSale} from '../../../../shared/protocols/PtlPartSale';
+import {createRequestId} from '../../network/request-id';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
 import './part-shop.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
@@ -83,7 +84,7 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
     const current = session.current;
     if (!current.active || current.query || owner.inFlight || owner.saleInFlight || !product) return;
     if (!owner.pending || owner.pending.itemTableId !== product.itemTableId || owner.pending.currency !== currency) {
-      owner.pending = {operation: 'BUY', itemTableId: product.itemTableId, quantity: 1, currency, requestId: crypto.randomUUID()};
+      owner.pending = {operation: 'BUY', itemTableId: product.itemTableId, quantity: 1, currency, requestId: createRequestId()};
     }
     focusAfterCommit.current = button; setBusy(true); setStatus('等待购买确认…');
     const request = source.shop(owner.pending); owner.inFlight = request;
@@ -104,7 +105,7 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
     const quote = sale?.quotes.find(value => value.instanceId === instanceId);
     if (!session.current.active || busy || owner.inFlight || owner.saleInFlight || !quote?.canSell || !source.partSale) return;
     if (owner.salePending?.instanceId !== instanceId) {
-      owner.salePending = {operation: 'SELL', instanceId, requestId: crypto.randomUUID().replaceAll('-', '')};
+      owner.salePending = {operation: 'SELL', instanceId, requestId: createRequestId()};
     }
     setOwnedSelected(instanceId); focusAfterCommit.current = button;
     setStatus(''); setSaleConfirm(true);

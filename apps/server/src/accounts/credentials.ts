@@ -39,8 +39,8 @@ export class AccountCredentials {
       if (this.database.prepare('SELECT name FROM account_credentials WHERE name = ?').get(name)) {
         throw new Error('账号已注册');
       }
-      const session = this.open(request.token);
-      if (this.accountName(session.accountId)) throw new Error('当前账户已绑定账号，请使用登录');
+      let session = this.open(request.token);
+      if (this.accountName(session.accountId)) session = this.open();
       this.database.prepare('INSERT INTO account_credentials VALUES (?, ?, ?, ?)').run(session.accountId, name, salt, key);
       this.database.exec('COMMIT');
       return {...session, accountName: name};

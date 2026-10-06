@@ -31,11 +31,11 @@
 
 0x411c88替换字面反斜线n，0x4c3b27调用原setText，随后0x4c3b31将正文光标位置归零。正文使用原保存字符串原样，不补全源数据的截断结尾、引号或姓名。它们是介绍内容，与账户对局记录无关。
 
-[可复现来源证据](/workspace/cdtank/recovery/output/history-intro-content-source.json)保存四份文本、布局、原订阅和完整回调。七个生产组件已接入独立validation入口，整合Web类型检查通过，四份原文、三种分辨率完整页面、自然纵栏、选项重置及关闭焦点已实际验证。原Login入口尚未恢复。缺口为正式原入口的父分派、完整页面滚动及字体/高清实际精度；UI-23/M5-15父项仍未完成。
+[可复现来源证据](../output/history-intro-content-source.json)保存四份文本、布局、原订阅和完整回调。七个生产组件已接入独立validation入口，整合Web类型检查通过，四份原文、三种分辨率完整页面、自然纵栏、选项重置及关闭焦点已实际验证。原Login入口尚未恢复。缺口为正式原入口的父分派、完整页面滚动及字体/高清实际精度；UI-23/M5-15父项仍未完成。
 
 ## 原纵栏合同
 
-[原执行证据](/workspace/cdtank/recovery/output/history-intro-scroll-native.json)执行 WLMultiLineEditbox::layoutComponentWidgets0x1001a750，纵栏相对尺寸0.05×1，位置0.95×0；三种缩放的矩形换算为明确provider。正文724×379。原Scrollbar默认赋值块设thumb最小值10物理像素，history.xml没有覆盖；此值与其他名单页显式53不同。原gy0正文图片为上箭头28×26、下箭头28×27、thumb上片28×29、下片28×17、中片28×7。
+[原执行证据](../output/history-intro-scroll-native.json)执行 WLMultiLineEditbox::layoutComponentWidgets0x1001a750，纵栏相对尺寸0.05×1，位置0.95×0；三种缩放的矩形换算为明确provider。正文724×379。原Scrollbar默认赋值块设thumb最小值10物理像素，history.xml没有覆盖；此值与其他名单页显式53不同。原gy0正文图片为上箭头28×26、下箭头28×27、thumb上片28×29、下片28×17、中片28×7。
 
 独立消费者准备使用上述源尺寸、DOM真实文本范围与当前所选字体行距，保原比例thumb/两倍上箭头高度轨道合同。resize与scale提交后两RAF刷新，并清除blur、观察器、捕获及RAF。生产组件已import，三种缩放的metrics.scale与实际正文矩形/逻辑高度一致。原Staff正文29行自然溢出；实际执行箭头、滚轮、Home/End及thumb在控件外保持capture的单次移动快照，释放后capture为false。完整原字体和framebuffer仍未验。
 
@@ -43,4 +43,4 @@
 
 入口为明确的 `/validation.html` 验证页按钮 `[data-open-history-intro]`，不计为原Login导航。四原页在800×600、1920×1080、3840×2160保原800×600几何；只读正文与gamestring737–740逐字一致，选项互斥，切换后正文滚动及caret归零。完整页面与返回按钮位于可用视口内，窗口打开时隐藏宿主滚动条，关闭后恢复宿主原overflow及严格opener焦点。Escape在down记录、up关闭。
 
-[实际证据](/workspace/cdtank/recovery/output/history-intro-source-page-accepted.json)关联12张完整画面、原纵栏操作、网络只读请求及进程清理。原登录认证/频道、正式Login入口及完整字体精度保持独立缺口；现AccountHistory、Settings及Key业务未改。
+[实际证据](../output/history-intro-source-page-accepted.json)关联12张完整画面、原纵栏操作、网络只读请求及进程清理。原登录认证/频道、正式Login入口及完整字体精度保持独立缺口；现AccountHistory、Settings及Key业务未改。

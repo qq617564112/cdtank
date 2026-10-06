@@ -1,6 +1,6 @@
 # 其余20车型拥有来源运动联机范围
 
-M2-02 / M2-03。专属[driver](/workspace/cdtank/tests/tank-all-models-network.cts)与[准备来源](/workspace/cdtank/recovery/output/tank-all-models-network-preparation.json)，独立端口3618。坦克1复用14-34-12真实网络证据，其余20车型各一次双账户普通输入；单服务器顺序20个房间，每房仅两连接，总连接数40。
+M2-02 / M2-03。专属[driver](../../tests/tank-all-models-network.cts)与[准备来源](../output/tank-all-models-network-preparation.json)，独立端口3618。坦克1复用14-34-12真实网络证据，其余20车型各一次双账户普通输入；单服务器顺序20个房间，每房仅两连接，总连接数40。
 
 本片仅覆盖前进、倒退、车体左右转动、炮塔左右转动六窗口，同serverTime/room/round/phase/tick的完整snapshot及关键event双端一致，双方正常Leave。普通弹匣只读取初始投影，不开火：旧tank-other-models-ammo-network-15-55-25-analysis和tank-three-models-ammo-realtime-network-21-36-12原弹药实际范围直接复用，不重复连续开火或补弹。
 
@@ -14,6 +14,6 @@ M2-02 / M2-03。专属[driver](/workspace/cdtank/tests/tank-all-models-network.c
 
 原服务端弹药/绑定producer、Windows行为测量与完整21车全部修正父项保持未完成。A/D车体与Arrow炮塔操作映射保留现明示Web重建，本片不改生产公式、协议、地图或生命周期。
 
-[实际原raw](/workspace/cdtank/recovery/output/tank-all-models-network-2026-10-05T20-48-57-624Z.json)与[结果索引](/workspace/cdtank/recovery/output/tank-all-models-network-analysis.json)：20个指定车型六窗口全部通过，共120窗口、1019唯一共同完整snapshot、40正常Leave、0fire。原raw同时保存各端全帧与events，独立模拟/server/墙钟时基与完整fixture可复核；mainReview已有限接受。该片补齐Pet1中性拥有来源的其余20车型运动联机范围，不扩大到所有宠物/装备修正或原Windows客户端行为。
+[实际原raw](../output/tank-all-models-network-2026-10-05T20-48-57-624Z.json)与[结果索引](../output/tank-all-models-network-analysis.json)：20个指定车型六窗口全部通过，共120窗口、1019唯一共同完整snapshot、40正常Leave、0fire。原raw同时保存各端全帧与events，独立模拟/server/墙钟时基与完整fixture可复核；mainReview已有限接受。该片补齐Pet1中性拥有来源的其余20车型运动联机范围，不扩大到所有宠物/装备修正或原Windows客户端行为。
 
-[独立主审](/workspace/cdtank/recovery/output/tank-all-models-network-root-review.json)：`PASS_FINITE_REMAINING20_OWNED_TANK_MOVEMENT_TURN_DUAL_SNAPSHOT_LEAVE_SCOPE`。Leave前1019共同完整snapshot、全部已捕获1020共同snapshot分别核定，40Leave；最大速度误差0.03358773、转速误差0.000279194。checkpoint512000字节/身份0600/3618空已核。
+[独立主审](../output/tank-all-models-network-root-review.json)：`PASS_FINITE_REMAINING20_OWNED_TANK_MOVEMENT_TURN_DUAL_SNAPSHOT_LEAVE_SCOPE`。Leave前1019共同完整snapshot、全部已捕获1020共同snapshot分别核定，40Leave；最大速度误差0.03358773、转速误差0.000279194。checkpoint512000字节/身份0600/3618空已核。

@@ -1,5 +1,5 @@
 import {useEffect, useLayoutEffect, useRef, useState, type ComponentPropsWithoutRef} from 'react';
-import {ArcRotateCamera, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
+import {ArcRotateCamera, Color3, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
 import {TankView} from '../../assets/tanks/tank-view';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {advanceHomePreviewOrbit, HOME_PREVIEW_CLIP_PLANES} from './home-preview-orbit';
@@ -48,6 +48,7 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, scale, ...pr
     try {
       engine = new Engine(canvas.current!, true, {alpha: true}, true);
       const scene = new Scene(engine); scene.clearColor = new Color4(0, 0, 0, 0);
+      scene.ambientColor = Color3.White();
       const camera = new ArcRotateCamera('home-equipment-camera', -Math.PI / 2.5, Math.PI / 3, 100, Vector3.Zero(), scene);
       camera.minZ = HOME_PREVIEW_CLIP_PLANES.near; camera.maxZ = HOME_PREVIEW_CLIP_PLANES.far;
       camera.attachControl(canvas.current!, true);

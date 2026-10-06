@@ -13,7 +13,7 @@ import {recomputeBattleAttributes} from './attributes';
 import {baseTankMaxHp} from './create-player';
 
 interface PreparationRoom {
-  phase: 'WAITING' | 'PLAYING' | 'FINISHED';
+  phase: 'WAITING' | 'LOADING' | 'PLAYING' | 'FINISHED';
   ready: Set<string>;
 }
 

@@ -20,7 +20,8 @@ export class RoomReconnections {
   retain(connectionId: string): boolean {
     const session = this.sessions.get(connectionId);
     const accountId = this.accounts.get(connectionId);
-    if (!session || !accountId || this.world.snapshot(session.roomId)?.phase !== 'PLAYING') return false;
+    const phase = session ? this.world.snapshot(session.roomId)?.phase : undefined;
+    if (!session || !accountId || (phase !== 'PLAYING' && phase !== 'LOADING')) return false;
     this.world.pauseDisconnectedPlayer(session.playerId);
     const timer = setTimeout(() => {
       this.retained.delete(accountId);
@@ -32,6 +33,16 @@ export class RoomReconnections {
     timer.unref();
     this.retained.set(accountId, {connectionId, session, timer});
     return true;
+  }
+
+  releasePlayer(playerId: string): void {
+    for (const [accountId, retained] of this.retained) {
+      if (retained.session.playerId !== playerId) continue;
+      clearTimeout(retained.timer);
+      this.retained.delete(accountId);
+      this.sessions.delete(retained.connectionId);
+      this.accounts.delete(retained.connectionId);
+    }
   }
 
   restore(accountId: string, connectionId: string): void {
