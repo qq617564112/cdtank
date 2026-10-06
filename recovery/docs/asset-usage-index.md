@@ -4,7 +4,9 @@
 
 现有发布元数据明确关联3789条资产，876条未匹配。共26419个来源/产物引用，另有2487个不在闭集的引用、涉及352个不同key，单独列于outsideReferences。未匹配表示本次元数据范围尚无引用，不表示原游戏不会加载。
 
-索引覆盖POL/MV3/CVD转换、25场景与battlefields、战车动作/INI、UI布局/图集/字库、声音、ELK/效果库/效果模型/路径/挂点，以及24张解码表与combat-catalog。每个引用保留metadata文件、JSON Pointer、原字符串、规范化路径、关联产物和用途。`loadingCode`仅在apps代码实际包含该metadata文件名时记录文件、行号和原代码；这个入口是代码引用证据，不是单个资产已加载证据。没有代码引用的转换清单保持空数组。
+索引覆盖POL/MV3/CVD转换、25场景与battlefields、战车动作/INI、UI布局/图集/字库、声音、ELK/效果库/效果模型/路径/挂点，以及24张解码表与combat-catalog。每个引用保留metadata文件、JSON Pointer、原字符串、规范化路径、关联产物和用途。`loadingCode`一次扫描apps的`.ts`与`.tsx`源码，实际包含metadata文件名时记录文件、行号和原代码；Home、等待房间、结算及设置等正式React页面的加载入口纳入相同索引。这个入口是代码引用证据，不是单个资产已加载证据。没有代码引用的转换清单保持空数组。
+
+React加载入口覆盖已完成导出器实现，当前未重新生成全量索引或运行测试；上述4665闭集和数量引用既有产物范围，更新产物前不将新增入口算作已发布或运行验收。
 
 明确source→output/asset映射将glb/png使用反向关联源POL/MV3/CVD/DDS；战车动作file相对component.ini目录解析；UI裁切区域关联Imagefile原图集纹理，region名字不是同名独立TGA文件。场景OBJ/CAS/BOX、地形POL/出生RPT/NAV、城堡INI、effect.sav与combat三张源表由导出器明确构造源路径，记录sourceConstruction的代码文件、行号和语句，保留与直接元数据引用的区别。
 

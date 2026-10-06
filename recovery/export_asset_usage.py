@@ -39,13 +39,16 @@ def leaves(value, location=''):
             elif isinstance(child, str):
                 yield '', child, pointer(location, index), None
 
-def consumers(filename):
-    result = []
-    for path in sorted((ROOT / 'apps').rglob('*.ts')):
+def consumers(filenames):
+    result = {filename: [] for filename in filenames}
+    for path in sorted((ROOT / 'apps').rglob('*')):
+        if path.suffix not in {'.ts', '.tsx'}:
+            continue
         for number, line in enumerate(path.read_text().splitlines(), 1):
-            if filename in line:
-                result.append(dict(file=path.relative_to(ROOT).as_posix(), line=number,
-                                   entry='metadata-reference', code=line.strip()))
+            for filename in result:
+                if filename in line:
+                    result[filename].append(dict(file=path.relative_to(ROOT).as_posix(), line=number,
+                                                 entry='metadata-reference', code=line.strip()))
     return result
 
 def original_material_textures(path):
@@ -93,7 +96,7 @@ def build():
             source_fields.append((name, field, value, location, parent))
     references = {key: [] for key in by_key}
     outside = []
-    loader = {name: consumers(name) for name in documents}
+    loader = consumers(documents)
     def add(key, name, location, value, relation, artifact=None):
         item = dict(metadata='recovery/output/web-assets/' + name, pointer=location,
                     reference=value, normalizedReference=normalize(value), relation=relation,
