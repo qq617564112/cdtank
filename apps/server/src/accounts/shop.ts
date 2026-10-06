@@ -51,7 +51,7 @@ export class AccountShop {
       if (!item) throw new Error('该物品不在商店出售范围');
       const unitPrice = currency === 'MONEY' ? item.moneyPrice : item.tokenPrice;
       const cost = unitPrice * quantity!;
-      if (!Number.isSafeInteger(unitPrice) || unitPrice < 0 || !Number.isSafeInteger(cost)) {
+      if (!Number.isSafeInteger(unitPrice) || unitPrice <= 0 || !Number.isSafeInteger(cost)) {
         throw new Error('物品价格无效');
       }
       if (cost > (currency === 'MONEY' ? money : tokens)) {

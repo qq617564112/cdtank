@@ -16,11 +16,15 @@ export function consumableShopItems(catalog: CombatCatalog): ShopItem[] {
   });
 }
 
-/** Positive-price original parts; availability is a rebuilt server policy. */
+const MARKER_SHOP_ITEM_IDS = new Set([12501, 12502, 12503]);
+
+/** Original parts and the three Func19 marker items; availability is a rebuilt server policy. */
 export function partShopItems(catalog: CombatCatalog): ShopItem[] {
   return catalog.items.filter(item => {
     const category = classifyItemId(item.itemTableId);
-    return category >= 8 && category <= 12 && (item.moneyPrice ?? 0) > 0 && (item.tokenPrice ?? 0) > 0;
+    const ordinaryPart = category >= 8 && category <= 12
+      && (item.moneyPrice ?? 0) > 0 && (item.tokenPrice ?? 0) > 0;
+    return ordinaryPart || (category === 7 && MARKER_SHOP_ITEM_IDS.has(item.itemTableId));
   }).map(item => {
     if (!Number.isInteger(item.iconId) || item.iconId! <= 0 ||
         ![item.moneyPrice, item.tokenPrice, item.getMethod, item.durable].every(price =>
