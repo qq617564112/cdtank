@@ -258,7 +258,10 @@ export class Battle {
             && event.playSkillEffect?.skillId === 4008
             && event.playSkillEffect.effectIndex === 0
             && event.playSkillEffect.roleId === battleRoleId(event.targetId);
-          if (victim && event.shotPlayerResult && !hasRadarJamNotification) {
+          const hasExplosiveAmmoBlastNotification = event.type === 'hit'
+            && event.shotPlayerResult?.itemId === 2005;
+          if (victim && event.shotPlayerResult && !hasRadarJamNotification
+              && !hasExplosiveAmmoBlastNotification) {
             this.shotPlayerResult?.showPlayerResult(victim, event.shotPlayerResult.itemId,
               this.playerId ? this.players.get(this.playerId) : undefined);
           }
