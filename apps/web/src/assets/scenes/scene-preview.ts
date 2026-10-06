@@ -19,7 +19,8 @@ import {SceneWater} from './scene-water';
 import {ScenePlantSway} from './scene-plant-sway';
 import {SceneTerrainMaterial} from './scene-terrain-material';
 import {SceneGeneralMaterial} from './scene-general-material';
-import {SceneBreachMaterial} from './scene-breach-material';
+import {SceneBreachMaterial, sceneBreachMaterialModel} from './scene-breach-material';
+import {sceneBreachLibrary, type SceneBreachDestruction} from './scene-breach-resources';
 
 interface Placement {
   id: string;
@@ -31,6 +32,7 @@ interface Placement {
   asset?: string;
   className?: string;
   animation?: {library: string; reference: string};
+  destruction?: SceneBreachDestruction;
 }
 interface SceneEntry {
   id: string;
@@ -221,13 +223,16 @@ export class ScenePreview {
         throw error;
       }
     }
-    if (id === '0004' || id === '0017' || id === '0021' || id === '0018' || id === '0020' || id === '0022' || id === '0011' || id === '0002' || id === '0006' || id === '0005' || id === '0010' || id === '0014' || id === '0007') {
-      const primaryModel = id === '0004' ? 'obj05466' : id === '0006' ? 'obj05421' : id === '0017' ? 'obj05469' : id === '0021' ? 'obj05467' : id === '0018' ? 'obj05442' : id === '0020' ? 'obj05460' : id === '0022' ? 'obj05469' : id === '0011' ? 'obj05430' : 'obj05425';
-      const models = id === '0004' ? ['obj05466', 'obj05422'] as const : id === '0017' ? ['obj05469'] as const : id === '0002' ? ['obj05425', 'obj05426', 'obj05427', 'obj05428', 'obj05422'] as const : id === '0006' ? ['obj05421', 'obj05423', 'obj05443', 'obj05433', 'obj05432'] as const : id === '0005' ? ['obj05425', 'obj05426', 'obj05432'] as const : id === '0018' ? ['obj05442', 'obj05424'] as const : id === '0010' ? ['obj05425', 'obj05426', 'obj05427', 'obj05428', 'obj05429'] as const : id === '0014' ? ['obj05425', 'obj05426', 'obj05428'] as const : id === '0007' ? ['obj05467', 'obj05423', 'obj05466', 'obj05468', 'obj05445', 'obj05462'] as const : id === '0020' ? ['obj05460', 'obj05442', 'obj05461', 'obj05462', 'obj05434', 'obj05435', 'obj05436'] as const : id === '0022' ? ['obj05469', 'obj05424'] as const : id === '0021' ? ['obj05467', 'obj05422', 'obj05466', 'obj05468'] as const : [primaryModel] as const;
+    const breachModels = new Set(placements.flatMap(placement => {
+      const model = placement.className === 'SYcScnObjBreach'
+        ? sceneBreachMaterialModel(placement.model) : undefined;
+      return model ? [model] : [];
+    }));
+    if (breachModels.size > 0) {
       const owner = new SceneBreachMaterial();
       this.breachMaterial = owner;
       try {
-        for (const model of models) {
+        for (const model of breachModels) {
           const paths = new Set(placements.filter(value => value.className === 'SYcScnObjBreach' &&
             value.model === model).map(value => value.asset));
           for (const path of paths) {
@@ -319,40 +324,7 @@ export class ScenePreview {
         const value = {root, state: new SceneBreachState(), position: [...placement.position] as EffectVec3,
           soundPlayed: false, broken: undefined as SceneBreachVisual | undefined};
         this.breakables.set(placement.id, value);
-        let libraryAsset: string | undefined;
-        if (id === '0021' && ['obj05422', 'obj05466', 'obj05467', 'obj05468'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0021.json';
-        } else if (id === '0020' && ['obj05460', 'obj05461', 'obj05462', 'obj05442', 'obj05434', 'obj05435', 'obj05436'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0020.json';
-        } else if (id === '0018' && ['obj05424', 'obj05442'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0018.json';
-        } else if (id === '0007' && ['obj05466', 'obj05467', 'obj05468', 'obj05462', 'obj05423', 'obj05445'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0007.json';
-        } else if (id === '0004' && placement.model === 'obj05466') {
-          libraryAsset = '/scene-breach-0004.json';
-        } else if (id === '0004' && placement.model === 'obj05422') {
-          libraryAsset = '/scene-breach-0021.json';
-        } else if (id === '0006' && ['obj05421', 'obj05423', 'obj05443', 'obj05433', 'obj05432'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0006.json';
-        } else if (id === '0005' && ['obj05425', 'obj05426', 'obj05432'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0005.json';
-        } else if (id === '0011' && placement.model === 'obj05430') {
-          libraryAsset = '/scene-breach-0011.json';
-        } else if (id === '0010' && ['obj05425', 'obj05426', 'obj05427', 'obj05428', 'obj05429'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0010.json';
-        } else if (id === '0002' && placement.model === 'obj05427') {
-          libraryAsset = '/scene-breach-0002-05427.json';
-        } else if (id === '0002' && placement.model === 'obj05422') {
-          libraryAsset = '/scene-breach-0021.json';
-        } else if (id === '0002' && ['obj05425', 'obj05426', 'obj05428'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0014.json';
-        } else if (id === '0014' && ['obj05425', 'obj05426', 'obj05428'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0014.json';
-        } else if (id === '0017' && placement.model === 'obj05469') {
-          libraryAsset = '/scene-breach-0017.json';
-        } else if (id === '0022' && ['obj05424', 'obj05469'].includes(placement.model)) {
-          libraryAsset = '/scene-breach-0022.json';
-        }
+        const libraryAsset = sceneBreachLibrary(id, placement.model, placement.destruction);
         if (libraryAsset) {
           const matrix = [...placement.matrix];
           matrix[12] = placement.position[0];

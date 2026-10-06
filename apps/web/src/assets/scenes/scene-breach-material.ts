@@ -2,12 +2,22 @@ import {AssetContainer, Constants, PBRMaterial, ShaderMaterial} from '@babylonjs
 import '@babylonjs/core/Shaders/ShadersInclude/instancesDeclaration';
 import '@babylonjs/core/Shaders/ShadersInclude/instancesVertex';
 
+const materialModels = ['obj05467', 'obj05442', 'obj05460', 'obj05469', 'obj05466',
+  'obj05430', 'obj05425', 'obj05426', 'obj05427', 'obj05428', 'obj05422', 'obj05421',
+  'obj05423', 'obj05424', 'obj05443', 'obj05433', 'obj05429', 'obj05468', 'obj05445',
+  'obj05462', 'obj05461', 'obj05432', 'obj05434', 'obj05435', 'obj05436'] as const;
+type SceneBreachMaterialModel = typeof materialModels[number];
+
+export function sceneBreachMaterialModel(model: string): SceneBreachMaterialModel | undefined {
+  return materialModels.find(value => value === model);
+}
+
 /** Original intact Breach texture × packed vertex diffuse, with named kind1 alpha. */
 export class SceneBreachMaterial {
   private readonly replacements: {mesh: AssetContainer['meshes'][number];
     original: PBRMaterial; material: ShaderMaterial}[] = [];
 
-  register(asset: AssetContainer, model: 'obj05467' | 'obj05442' | 'obj05460' | 'obj05469' | 'obj05466' | 'obj05430' | 'obj05425' | 'obj05426' | 'obj05427' | 'obj05428' | 'obj05422' | 'obj05421' | 'obj05423' | 'obj05424' | 'obj05443' | 'obj05433' | 'obj05429' | 'obj05468' | 'obj05445' | 'obj05462' | 'obj05461' | 'obj05432' | 'obj05434' | 'obj05435' | 'obj05436' = 'obj05467'): void {
+  register(asset: AssetContainer, model: SceneBreachMaterialModel = 'obj05467'): void {
     const names = {obj05467: 'object08/0', obj05442: 'object04/0', obj05460: 'object10/0', obj05469: 'cylinder02/0', obj05466: 'object04/0', obj05430: 'anangua04/0', obj05425: 'object03/0', obj05426: 'object03/0', obj05427: 'object04/0', obj05428: 'object01/0', obj05422: 'cone78/0', obj05421: 'object568041500/0', obj05423: 'cone78/0', obj05424: 'box01/0', obj05443: 'object568041500/0', obj05433: 'object02/0', obj05429: 'object01/0', obj05468: 'object02/0', obj05445: 'line02/0', obj05462: 'cylinder257/0', obj05461: 'cylinder744/0', obj05432: 'object02/0', obj05434: 'plane02/0', obj05435: 'plane02/0', obj05436: 'plane02/0'};
     const prefixes = {obj05467: 'breach21-intact', obj05442: 'breach18-intact', obj05460: 'breach20-intact', obj05469: 'breach22-intact', obj05466: 'breach04-intact', obj05430: 'breach11-intact', obj05425: 'breach02-intact', obj05426: 'breach02-05426-intact', obj05427: 'breach02-05427-intact', obj05428: 'breach02-05428-intact', obj05422: 'breach02-05422-intact', obj05421: 'breach06-05421-intact', obj05423: 'breach06-05423-intact', obj05424: 'breach18-05424-intact', obj05443: 'breach06-05443-intact', obj05433: 'breach06-05433-intact', obj05429: 'breach10-05429-intact', obj05468: 'breach07-21-05468-intact', obj05445: 'breach07-05445-intact', obj05462: 'breach07-05462-intact', obj05461: 'breach20-05461-intact', obj05432: 'breach05-06-05432-intact', obj05434: 'breach20-05434-intact', obj05435: 'breach20-05435-intact', obj05436: 'breach20-05436-intact'};
     const transparent = model === 'obj05434' || model === 'obj05435' || model === 'obj05436';
