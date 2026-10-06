@@ -74,6 +74,7 @@ export class SceneCastleState {
       this.stage = stage;
       commands.push(this.stageAction(stage));
     }
+    if (hp > 0) this.releaseObsoleteSpouts(hp, maxHP, commands);
     this.updateSpouts(hp, maxHP, commands);
     return commands;
   }
