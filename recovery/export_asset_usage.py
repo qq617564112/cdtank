@@ -39,8 +39,8 @@ def leaves(value, location=''):
             elif isinstance(child, str):
                 yield '', child, pointer(location, index), None
 
-def consumers(filenames):
-    result = {filename: [] for filename in filenames}
+def consumers(documents):
+    result = {filename: [] for filename in documents}
     for path in sorted((ROOT / 'apps').rglob('*')):
         if path.suffix not in {'.ts', '.tsx'}:
             continue
@@ -61,6 +61,39 @@ def consumers(filenames):
             match = re.fullmatch(re.escape(prefix) + r'(\d{4})\.json', filename)
             if match and 1 <= int(match[1]) <= 25:
                 entries.append(dict(**evidence, entry='map-id-metadata-reference'))
+    for prefix, file, token in [
+        ('scene-terrain-material-', 'apps/web/src/assets/scenes/scene-terrain-material.ts',
+         'fetch(`/scene-terrain-material-'),
+        ('scene-plant-', 'apps/web/src/assets/scenes/scene-plant-sway.ts',
+         'fetch(`/scene-plant-'),
+    ]:
+        evidence = code_evidence(file, token)
+        scope = code_evidence(file, '.includes(mapId)')
+        map_ids = set(re.findall(r"'(\d{4})'", scope['code']))
+        for filename, entries in result.items():
+            match = re.fullmatch(re.escape(prefix) + r'(\d{4})\.json', filename)
+            if match and match[1] in map_ids:
+                entries.append(dict(**evidence, entry='map-id-metadata-reference',
+                                    mapScope=scope))
+    # Placement animation libraries are read by the same scene load that owns
+    # their placements; their filenames need not appear literally in TypeScript.
+    placements = documents.get('scene-placements.json', [])
+    scene_entries = result.get('scene-placements.json', [])
+    animation_loader = code_evidence('apps/web/src/assets/scenes/scene-cvd-animation.ts',
+                                    'fetch(`/${path}`)')
+    for scene_index, scene in enumerate(placements):
+        for group in ['records', 'castles']:
+            for placement_index, placement in enumerate(scene.get(group, [])):
+                animation = placement.get('animation')
+                if not animation or animation.get('library') not in result:
+                    continue
+                filename = animation['library']
+                result[filename].append(dict(**animation_loader,
+                    entry='placement-animation-library-reference',
+                    metadata='recovery/output/web-assets/scene-placements.json',
+                    pointer=f'/{scene_index}/{group}/{placement_index}/animation/library',
+                    placementId=placement['id'], mapId=scene['id'],
+                    loadingCode=scene_entries))
     return result
 
 def original_material_textures(path):
