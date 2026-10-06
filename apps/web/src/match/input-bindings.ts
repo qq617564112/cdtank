@@ -1,10 +1,24 @@
 export const INPUT_ACTIONS = [
   'forward', 'backward', 'turnLeft', 'turnRight', 'aimLeft', 'aimRight', 'fire',
   'slot1', 'slot2', 'slot3', 'slot4', 'slot5', 'slot6', 'slot7', 'slot8',
+  'useItem', 'prevWeapon', 'nextWeapon', 'prevItem', 'nextItem',
 ] as const;
 
 export type InputAction = typeof INPUT_ACTIONS[number];
-export type KeyBindings = Record<InputAction, string> & {
+
+/** Shortcuts whose binding may be absent in an existing saved configuration. */
+export const OPTIONAL_INPUT_ACTIONS = [
+  'useItem', 'prevWeapon', 'nextWeapon', 'prevItem', 'nextItem',
+] as const satisfies readonly InputAction[];
+
+export type OptionalInputAction = typeof OPTIONAL_INPUT_ACTIONS[number];
+export type RequiredInputAction = Exclude<InputAction, OptionalInputAction>;
+
+const OPTIONAL_INPUT_SET: ReadonlySet<InputAction> = new Set(OPTIONAL_INPUT_ACTIONS);
+
+export type KeyBindings = Record<RequiredInputAction, string>
+  & Partial<Record<OptionalInputAction, string>>
+  & {
   secondary?: Partial<Record<InputAction, string>>;
 };
 
@@ -25,6 +39,11 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = {
   slot6: 'Digit6',
   slot7: 'Digit7',
   slot8: 'Digit8',
+  useItem: 'KeyH',
+  prevWeapon: 'Home',
+  nextWeapon: 'End',
+  prevItem: 'PageUp',
+  nextItem: 'PageDown',
 };
 
 export function isSupportedKeyCode(value: unknown): value is string {
@@ -35,10 +54,13 @@ export function isSupportedKeyCode(value: unknown): value is string {
 export function validateKeyBindings(value: unknown): KeyBindings | undefined {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
   const source = value as Record<string, unknown>;
-  const bindings = {} as KeyBindings;
+  const bindings: Record<string, unknown> = {};
   const used = new Set<string>();
   for (const action of INPUT_ACTIONS) {
-    if (!Object.hasOwn(source, action)) return undefined;
+    if (!Object.hasOwn(source, action)) {
+      if (OPTIONAL_INPUT_SET.has(action)) continue;
+      return undefined;
+    }
     const code = source[action];
     if (!isSupportedKeyCode(code) || used.has(code)) return undefined;
     bindings[action] = code;
@@ -48,7 +70,7 @@ export function validateKeyBindings(value: unknown): KeyBindings | undefined {
     const value = source.secondary;
     if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
     const sourceSecondary = value as Record<string, unknown>;
-    const secondary: Partial<Record<InputAction, string>> = {};
+    const secondary: Record<string, string> = {};
     for (const action of INPUT_ACTIONS) {
       if (!Object.hasOwn(sourceSecondary, action)) continue;
       const code = sourceSecondary[action];
@@ -58,12 +80,16 @@ export function validateKeyBindings(value: unknown): KeyBindings | undefined {
     }
     if (Object.keys(secondary).length) bindings.secondary = secondary;
   }
-  return bindings;
+  return bindings as unknown as KeyBindings;
 }
 
 export function bindingCodes(bindings: KeyBindings, action: InputAction): string[] {
+  const codes: string[] = [];
+  const primary = bindings[action];
+  if (primary !== undefined) codes.push(primary);
   const secondary = bindings.secondary?.[action];
-  return secondary === undefined ? [bindings[action]] : [bindings[action], secondary];
+  if (secondary !== undefined) codes.push(secondary);
+  return codes;
 }
 
 export function cloneKeyBindings(bindings: KeyBindings): KeyBindings {

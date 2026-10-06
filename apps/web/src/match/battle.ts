@@ -53,6 +53,8 @@ import {RoomFeed} from './room-feed';
 import {BattleInput} from './battle-input';
 import {LocalTankMotion} from './local-tank-motion';
 import {BattleItemInventory} from './battle-item-inventory';
+import {itemCandidateSlots, stepCandidate, WeaponCycleSelection, weaponCandidateSlots}
+  from './battle-shortcut-selection';
 import type {KeyBindings} from './input-bindings';
 import type {QuickChatPreferences} from '../interface/settings/quick-chat-preferences';
 import {battleIsActive} from '../../../shared/combat/battle-start';
@@ -98,7 +100,13 @@ export class Battle {
     };
   }, message => {
     void this.client.sendMsg('PlayerInput', {...message, pose: this.localMotion.reportedPose});
+  }, {
+    itemSlot: slot => this.useItemSlot(slot),
+    currentItemSlot: () => this.itemInventory.getSnapshot().selectedItemSlot,
+    cycleWeapon: direction => this.cycleWeapon(direction),
+    cycleItem: direction => this.cycleItem(direction),
   });
+  private readonly weaponCycle = new WeaponCycleSelection();
   private readonly localMotion = new LocalTankMotion();
   readonly chat = new BattleChat(async (text, channel, targetName) => {
     if (!this.active || !this.client.isConnected) throw new Error('连接已断开');
@@ -182,6 +190,7 @@ export class Battle {
         if (snapshot.phase !== 'PLAYING' || snapshot.match?.round !== previous?.match?.round
             || !local?.alive || local.isAutopilot !== previousLocal?.isAutopilot) {
           this.input.clear();
+          this.weaponCycle.reset();
         }
         if (snapshot.match?.round !== previous?.match?.round
             || (snapshot.phase === 'PLAYING' && previous?.phase === 'LOADING')) {
@@ -683,6 +692,7 @@ export class Battle {
     this.resultMusicRound = undefined;
     this.playingMusicRound = undefined;
     this.itemInventory.clear();
+    this.weaponCycle.reset();
     this.discardSelection = undefined;
     this.ammoBurnPresentation?.clear();
     this.ammoBurnPresentation = undefined;
@@ -734,12 +744,36 @@ export class Battle {
   readonly useHudSlot = (slot: number): void => {
     const local = this.roomFeed.snapshot?.players.find(player => player.id === this.playerId);
     if (!local?.alive) return;
+    this.useItemSlot(slot);
+    this.input.send(slot);
+  };
+
+  /** Reflect a direct Battle slot5–8 press: select the confirmed discard
+   * candidate for item slots and follow the ordinary request with the local
+   * cursor. The immediate send stays in the caller. */
+  private useItemSlot(slot: number): void {
     const instanceId = slot >= 2 ? this.itemInventory.getSnapshot().inventory?.hotkeys[slot - 2] : undefined;
     if (instanceId && this.discardCandidates().some(candidate => candidate.instanceId === instanceId)) {
       this.discardSelection = instanceId;
     }
-    this.input.send(slot);
-  };
+    if (slot >= 5) this.itemInventory.setSelectedItemSlot(slot);
+  }
+
+  /** Ordinary weapon cycle over confirmed class3 ammo slots; selects only, no
+   * fire or consumption, while the server remains the authority on selection. */
+  private cycleWeapon(direction: 1 | -1): number | undefined {
+    const local = this.roomFeed.snapshot?.players.find(player => player.id === this.playerId);
+    if (!local?.alive) return undefined;
+    return this.weaponCycle.next(weaponCandidateSlots(local.ammoSlots ?? []), direction);
+  }
+
+  /** Ordinary item cycle over confirmed hotkey items; moves the local cursor
+   * only and never sends a request or consumes stock. */
+  private cycleItem(direction: 1 | -1): void {
+    const slots = itemCandidateSlots(this.itemInventory.getSnapshot().inventory);
+    const next = stepCandidate(slots, this.itemInventory.getSnapshot().selectedItemSlot, direction);
+    if (next !== undefined) this.itemInventory.setSelectedItemSlot(next);
+  }
 
   private actionSequence = 0;
   private discardSelection?: number;
@@ -903,6 +937,8 @@ export class Battle {
         });
     }
     if (this.playerId) this.itemInventory.update(snapshot, this.playerId);
+    const localPlayer = this.playerId ? snapshot.players.find(player => player.id === this.playerId) : undefined;
+    this.weaponCycle.sync(localPlayer?.selectedAmmoSlot);
     if (this.active && this.mapId !== undefined) {
       const result = snapshot.phase === 'FINISHED' ? snapshot.match?.result : undefined;
       const own = this.playerId ? result?.players.find(player => player.id === this.playerId) : undefined;

@@ -1,5 +1,5 @@
 import type {MsgPlayerInput} from '../../../shared/protocols/MsgPlayerInput';
-import {bindingCodes, cloneKeyBindings, DEFAULT_KEY_BINDINGS, INPUT_ACTIONS, validateKeyBindings} from './input-bindings';
+import {bindingCodes, cloneKeyBindings, DEFAULT_KEY_BINDINGS, validateKeyBindings} from './input-bindings';
 import type {InputAction, KeyBindings} from './input-bindings';
 
 export interface BattleInputContext {
@@ -9,6 +9,31 @@ export interface BattleInputContext {
   autopilot: boolean;
 }
 
+/** Single-press shortcut actions that are not held like motion or fire. */
+const PRESS_ACTIONS = ['useItem', 'prevWeapon', 'nextWeapon', 'prevItem', 'nextItem'] as const;
+
+/** Movement and fire keys are tracked as held input; shortcuts act on keydown only. */
+const HELD_ACTIONS = ['forward', 'backward', 'turnLeft', 'turnRight', 'aimLeft', 'aimRight', 'fire'] as const;
+
+interface BattleInputShortcuts {
+  /** Reflect a direct Battle slot5–8 press: select its discard candidate and
+   * move the local item cursor. The request itself is sent by the caller. */
+  itemSlot(slot: number): void;
+  /** Selected local item slot for the ordinary useItem key, if any. */
+  currentItemSlot(): number | undefined;
+  /** Weapon cycle returns the ammo slot to select, or undefined when none. */
+  cycleWeapon(direction: 1 | -1): number | undefined;
+  /** Item cycle moves the local cursor only; no request is sent. */
+  cycleItem(direction: 1 | -1): void;
+  /** Drop transient shortcut intent for blur, config reload, stop and lifecycle. */
+  clearIntent(): void;
+}
+
+const NO_SHORTCUTS: BattleInputShortcuts = {
+  itemSlot: () => {}, currentItemSlot: () => undefined,
+  cycleWeapon: () => undefined, cycleItem: () => {}, clearIntent: () => {},
+};
+
 /** Manual controls send key changes immediately and refresh held input every 50 ms. */
 export class BattleInput {
   private readonly keys = new Set<string>();
@@ -17,7 +42,8 @@ export class BattleInput {
   private bindings: KeyBindings = {...DEFAULT_KEY_BINDINGS};
 
   constructor(private readonly readContext: () => BattleInputContext,
-    private readonly sendMessage: (message: MsgPlayerInput) => void) {
+    private readonly sendMessage: (message: MsgPlayerInput) => void,
+    private readonly shortcuts: BattleInputShortcuts = NO_SHORTCUTS) {
     window.addEventListener('keydown', event => {
       const context = this.readContext();
       if (!context.active || !context.playing || !context.connected || context.autopilot
@@ -30,10 +56,36 @@ export class BattleInput {
         .find(slot => bindingCodes(this.bindings, `slot${slot}` as InputAction).includes(event.code));
       if (shortcut !== undefined) {
         event.preventDefault();
-        if (!event.repeat) this.send(shortcut);
+        if (!event.repeat) {
+          if (shortcut >= 5) this.shortcuts.itemSlot(shortcut);
+          this.send(shortcut);
+        }
         return;
       }
-      if (INPUT_ACTIONS.some(action => bindingCodes(this.bindings, action).includes(event.code))) {
+      const press = PRESS_ACTIONS.find(action => bindingCodes(this.bindings, action).includes(event.code));
+      if (press !== undefined) {
+        event.preventDefault();
+        if (event.repeat) return;
+        if (press === 'useItem') {
+          const slot = this.shortcuts.currentItemSlot();
+          if (slot !== undefined) {
+            this.shortcuts.itemSlot(slot);
+            this.send(slot);
+          }
+        } else if (press === 'prevWeapon') {
+          const slot = this.shortcuts.cycleWeapon(-1);
+          if (slot !== undefined) this.send(slot);
+        } else if (press === 'nextWeapon') {
+          const slot = this.shortcuts.cycleWeapon(1);
+          if (slot !== undefined) this.send(slot);
+        } else if (press === 'prevItem') {
+          this.shortcuts.cycleItem(-1);
+        } else {
+          this.shortcuts.cycleItem(1);
+        }
+        return;
+      }
+      if (HELD_ACTIONS.some(action => bindingCodes(this.bindings, action).includes(event.code))) {
         event.preventDefault();
         if (!this.keys.has(event.code)) {
           this.keys.add(event.code);
@@ -53,6 +105,7 @@ export class BattleInput {
   }
 
   clear(): void {
+    this.shortcuts.clearIntent();
     if (!this.keys.size) return;
     this.keys.clear();
     this.send();
@@ -74,7 +127,7 @@ export class BattleInput {
     }, 50);
   }
 
-  stop(): void {clearInterval(this.timer); this.timer = undefined;}
+  stop(): void {clearInterval(this.timer); this.timer = undefined; this.shortcuts.clearIntent();}
 
   private held(action: InputAction): boolean {
     return bindingCodes(this.bindings, action).some(code => this.keys.has(code));
