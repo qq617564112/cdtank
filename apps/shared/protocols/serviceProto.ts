@@ -242,7 +242,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 91,
+    "version": 92,
     "services": [
         {
             "id": 0,
@@ -2106,6 +2106,31 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                             }
                                         }
                                     ]
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 40,
+                    "name": "opticalCamouflage",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "skillId",
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 9
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "expiresAt",
+                                "type": {
+                                    "type": "Number"
                                 }
                             }
                         ]
