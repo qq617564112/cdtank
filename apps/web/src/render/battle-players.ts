@@ -10,6 +10,7 @@ import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {isHiddenByOpticalCamouflage} from '../../../shared/combat/optical-camouflage';
 import {followBattleCamera} from './battle-camera';
 import {TankView} from '../assets/tanks/tank-view';
+import {BattleRoleDisguises} from './battle-role-disguises';
 
 interface PlayerEffects {
   attach(view: TankView): void;
@@ -42,9 +43,11 @@ export class BattlePlayers {
   private error = '';
   private ammoCatalog?: CombatCatalog;
   private ammoCatalogLoading?: Promise<CombatCatalog>;
+  private readonly disguises: BattleRoleDisguises;
 
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
               private readonly effects: PlayerEffects) {
+    this.disguises = new BattleRoleDisguises(scene);
     this.scene.onDisposeObservable.addOnce(() => {this.clear();});
   }
 
@@ -60,9 +63,10 @@ export class BattlePlayers {
     return this.snapshot !== undefined && this.snapshot.every(player => this.players.has(player.id));
   }
 
-  get loadingError(): string {return this.error;}
+  get loadingError(): string {return this.disguises.loadingError || this.error;}
 
   resetRound(players: readonly PlayerSnapshot[]): void {
+    this.disguises.clear();
     this.previousPositions.clear();
     this.presentedLife.clear();
     this.moving.clear();
@@ -78,6 +82,7 @@ export class BattlePlayers {
     this.snapshot = players;
     this.localPlayerId = localPlayerId;
     this.mode = mode;
+    this.disguises.reconcile(players, this.playing);
     const present = new Set(players.map(player => player.id));
     for (const id of this.previousHp.keys()) {
       if (!present.has(id)) this.previousHp.delete(id);
@@ -250,10 +255,33 @@ export class BattlePlayers {
     if (effect) view.setAmmoAttackEffect(effect.effectId);
   }
 
-  /** Hostile observers hide the alive skill9 actor root; self, teammates and non-playing phases show it. */
+  /** Hostile observers hide the alive skill9 actor root; self, teammates and non-playing phases show it.
+   * Disguise hides the alive actor root for every observer while its prop is presented.
+   */
   private applyVisibility(view: TankView, player: PlayerSnapshot): void {
     const observer = this.localPlayerId ? this.snapshot?.find(value => value.id === this.localPlayerId) : undefined;
-    view.root.setEnabled(!this.playing || !isHiddenByOpticalCamouflage(player, observer, this.mode));
+    const hiddenByDisguise = this.disguises.hidesActor(player.id);
+    view.root.setEnabled(!this.playing
+      || (!hiddenByDisguise && !isHiddenByOpticalCamouflage(player, observer, this.mode)));
+  }
+
+  /** Source4173 identity; spawns only when the current authoritative snapshot already carries it. */
+  changeRoleStyle(roleId: number, style: 1 | 2): void {
+    const player = this.snapshot?.find(value => value.id === `P${roleId}`);
+    const disguise = player?.roleDisguise;
+    if (!disguise || disguise.style !== style || (disguise.skillId !== 10 && disguise.skillId !== 11)) return;
+    this.refreshDisguises();
+  }
+
+  /** Source4174 identity; restores only after the authoritative snapshot drops the disguise. */
+  restoreRoleStyle(roleId: number): void {
+    const player = this.snapshot?.find(value => value.id === `P${roleId}`);
+    if (player?.roleDisguise) return;
+    this.refreshDisguises();
+  }
+
+  private refreshDisguises(): void {
+    this.disguises.reconcile(this.snapshot ?? [], this.playing);
   }
 
   private actionError(id: string, view: TankView, error: unknown): void {
@@ -284,6 +312,7 @@ export class BattlePlayers {
   render(alpha: number, localPlayerId?: string, playing = true): void {
     this.localPlayerId = localPlayerId;
     this.playing = playing;
+    this.disguises.reconcile(this.snapshot ?? [], playing);
     for (const player of this.snapshot ?? []) {
       const view = this.players.get(player.id);
       if (!view) continue;
@@ -325,6 +354,7 @@ export class BattlePlayers {
 
   clear(): void {
     this.generation++;
+    this.disguises.clear();
     this.snapshot = undefined;
     this.localPlayerId = undefined;
     this.mode = 1;
