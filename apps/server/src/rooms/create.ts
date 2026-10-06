@@ -37,7 +37,7 @@ export function createWaitingRoom(mode: number, mapId: number | undefined,
     scenePlants: [],
     groundTraps: [],
     airstrikes: [],
-    targetScore: mode === 2 ? 30 : mode === 4 ? 10 : 0,
+    targetScore: mode === 2 ? map.bunkerHp : 0,
     tick: 0,
   };
 }

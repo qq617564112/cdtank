@@ -1,4 +1,5 @@
 interface ModeParticipant {
+  id: string;
   team: number;
   vip: boolean;
 }
@@ -15,16 +16,25 @@ export function joiningTeam(mode: number, players: Iterable<{team: number}>): nu
 export function initializeModeRound(room: {
   mode: number;
   map: {tankLimit: number};
+  players: ReadonlyMap<string, ModeParticipant>;
   teamScores: number[];
   teamLives: number[];
 }): (player: ModeParticipant) => void {
   room.teamScores = [0, 0];
-  const lives = room.map.tankLimit > 0 ? room.map.tankLimit : 30;
-  room.teamLives = room.mode === 1 ? [lives, lives] : [];
-  const vipTeams = new Set<number>();
-  // Called in room insertion order, before each participant's attribute reset.
+  room.teamLives = room.mode === 1 && room.map.tankLimit > 0
+    ? [room.map.tankLimit, room.map.tankLimit] : [];
+  const vipIds = new Set<string>();
+  if (room.mode === 3) {
+    const teams = new Set<number>();
+    for (const player of room.players.values()) {
+      if ((player.team === 0 || player.team === 1) && !teams.has(player.team)) {
+        teams.add(player.team);
+        vipIds.add(player.id);
+      }
+    }
+  }
+  // Stable room order chooses one leader per team; every round resets the prior VIP.
   return player => {
-    player.vip = room.mode === 3 && !vipTeams.has(player.team);
-    if (player.vip) vipTeams.add(player.team);
+    player.vip = room.mode === 3 && vipIds.has(player.id);
   };
 }

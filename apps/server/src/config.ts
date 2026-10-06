@@ -48,7 +48,10 @@ export interface ModeMapConfig {
   bunkerHp: number;
   vipHp: number;
   respawnTime: number;
-  reviveLimit: number;
+  defaultButt: number;
+  buttReborn: number;
+  buttRebornTime: number;
+  vanishTime: number;
   hitScore: number;
   destroyScore: number;
   brokenScore: number;
@@ -86,7 +89,9 @@ export const MAPS: ModeMapConfig[] = [1, 2, 3, 4, 5].flatMap(mode =>
     timeLimit: Number(row.Time), maxPlayers: Number(row.PlayerMax),
     sourceMinPlayers: Number(row.PlayerMin),
     tankLimit: Number(row.TankNum), bunkerHp: Number(row.BunkerHP),
-    vipHp: Number(row.VIPHPMax), respawnTime: 3, reviveLimit: Number(row.ButtReborn),
+    vipHp: Number(row.VIPHPMax), respawnTime: 3,
+    defaultButt: Number(row.DefaultButt), buttReborn: Number(row.ButtReborn),
+    buttRebornTime: Number(row.ButtRebornTime), vanishTime: Number(row.VanishTime),
     hitScore: Number(row.HitScore), destroyScore: Number(row.DestroyScore),
     brokenScore: Number(row.BrokenScore), winScore: Number(row.WinScore),
     loseScore: Number(row.LoseScore), drawScore: Number(row.DrawScore),
