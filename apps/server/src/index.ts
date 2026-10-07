@@ -4,6 +4,7 @@ import {registerFriendChatApi} from './social/friend-chat';
 import {registerBlacklistApi} from './social/blacklist';
 import {registerFriendsApi} from './social/friends';
 import {registerPlayerProfileApi} from './social/player-profile';
+import {registerPlayerSearchApi} from './social/player-search';
 import {registerRoomWhisperApi} from './social/room-whisper';
 import {registerLobbyWhisperApi} from './social/lobby-whisper';
 import {registerDisplayNameApi} from './accounts/display-name-api';
@@ -98,6 +99,7 @@ registerRoomWhisperApi(server, accounts, world, accountByConnection, sessionByCo
 registerFriendsApi(server, accounts, accountByConnection, sessionByConnection);
 registerBlacklistApi(server, accounts, accountByConnection, sessionByConnection);
 registerPlayerProfileApi(server, accounts, accountByConnection);
+registerPlayerSearchApi(server, accounts, accountByConnection, sessionByConnection);
 registerFriendChatApi(server, accounts, world, accountByConnection, sessionByConnection);
 registerGmSupportApi(server, accounts, accountByConnection);
 registerFamilyApi(server, accounts, accountByConnection);

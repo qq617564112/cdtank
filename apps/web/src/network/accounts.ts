@@ -19,6 +19,7 @@ import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../shared/protocols
 import type {ResHistory} from '../../../shared/protocols/PtlHistory';
 import type {ReqTankUpgrade, ResTankUpgrade} from '../../../shared/protocols/PtlTankUpgrade';
 import type {ResPlayerProfile} from '../../../shared/protocols/PtlPlayerProfile';
+import type {ResPlayerSearch} from '../../../shared/protocols/PtlPlayerSearch';
 import type {ReqValuableItemSale, ResValuableItemSale} from '../../../shared/protocols/PtlValuableItemSale';
 import type {ResAccount} from '../../../shared/protocols/PtlAccount';
 
@@ -91,6 +92,13 @@ export class AccountConnection {
   async playerProfile(targetAccountId: string): Promise<ResPlayerProfile> {
     await this.ensureConnected();
     const result = await this.client.callApi('PlayerProfile', {targetAccountId});
+    if (!result.isSucc) throw new Error(result.err.message);
+    return result.res;
+  }
+
+  async playerSearch(name: string): Promise<ResPlayerSearch> {
+    await this.ensureConnected();
+    const result = await this.client.callApi('PlayerSearch', {name});
     if (!result.isSucc) throw new Error(result.err.message);
     return result.res;
   }

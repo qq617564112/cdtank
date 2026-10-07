@@ -220,6 +220,10 @@ export class AccountStore {
     return this.accountDisplayName.set(accountId, name);
   }
 
+  playerSearchIds(name: string): string[] {
+    return this.accountDisplayName.find(name);
+  }
+
   shop(accountId: string, items: readonly ShopItem[], request: ReqShop): ResShop {
     return this.accountShop.request(accountId, items, request);
   }

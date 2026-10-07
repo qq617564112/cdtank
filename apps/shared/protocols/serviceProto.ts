@@ -46,6 +46,7 @@ import { ReqPartSale, ResPartSale } from './PtlPartSale';
 import { ReqPetShop, ResPetShop } from './PtlPetShop';
 import { ReqPetSkillLearning, ResPetSkillLearning } from './PtlPetSkillLearning';
 import { ReqPlayerProfile, ResPlayerProfile } from './PtlPlayerProfile';
+import { ReqPlayerSearch, ResPlayerSearch } from './PtlPlayerSearch';
 import { ReqQuickMatch, ResQuickMatch } from './PtlQuickMatch';
 import { ReqReady, ResReady } from './PtlReady';
 import { ReqRematch, ResRematch } from './PtlRematch';
@@ -198,6 +199,10 @@ export interface ServiceType {
             req: ReqPlayerProfile,
             res: ResPlayerProfile
         },
+        "PlayerSearch": {
+            req: ReqPlayerSearch,
+            res: ResPlayerSearch
+        },
         "QuickMatch": {
             req: ReqQuickMatch,
             res: ResQuickMatch
@@ -286,7 +291,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 117,
+    "version": 118,
     "services": [
         {
             "id": 55,
@@ -607,6 +612,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "id": 63,
             "name": "FamilyChat",
             "type": "msg"
+        },
+        {
+            "id": 64,
+            "name": "PlayerSearch",
+            "type": "api"
         }
     ],
     "types": {
@@ -7903,6 +7913,34 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "target": "PtlRoleProfile/AwardCounts"
                     },
                     "optional": true
+                }
+            ]
+        },
+        "PtlPlayerSearch/ReqPlayerSearch": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlPlayerSearch/ResPlayerSearch": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "players",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "PtlFriends/FriendRecord"
+                        }
+                    }
                 }
             ]
         },
