@@ -10,6 +10,10 @@ click、Enter与Space继续toggle当前候选。ArrowUp、ArrowDown、Home、End
 
 对方金钱、创意点和技能点继续由shared `SourceStaticText`及用户当前字体显示白字无shadow；仅 `txtOtherMoney`、`txtOtherOriginality`、`txtOtherTech` 在自己原有`65×13`、右对齐坐标内增加本页scoped深色backing，不改图片几何，也不声明原最终颜色。普通信息展示、金额输入和部分数量编辑保持原Web生命期；详情由既有`TradeSourceDetail`继续消费同一确认记录。
 
+本方 OwnedTank/OwnedPet 候选行已接原状态语义的 N/B：N 来自既有 Home 当前角色投影的确认 RoleProfile `profile.bytes`，小端战车 `+0xa8`、宠物 `+0xa4`，与候选 `kind + instanceId` 相等即为当前实例；B 来自本地 `draft.records.some(kind+instance)` 成员关系，`draft.records` 仍是唯一 B 来源，不从 `aria-selected`/候选选中背景/`party.confirmed`/peer 记录/Home 当前候选推断。同一候选按原状态优先级先判 N，命中 N 不再画 B，仅 `!current` 且命中 draft 时显示 B。两个 glyph 都是原 `SmallHT`：N 复用 Home 现 `n.tga`（`ui/regions/11/10.png`）、B 新增共享 `b.tga`（`ui/regions/11/8.png`），point `5,8`、14×14 随父 scale，ARIA「本方交易草稿」与 Trade attr 只落在 Trade 作用域。item/equipment/peer/12格/detail 不新增状态 glyph，也不把 S/E 或其它 kind 状态填进来。
+
+当前角色投影只在 Trade 页面打开期间经稳定 `battle.roleProfile()` 纯 QUERY 与 `accountContext.generation` 读取，effect 仅在 open/session id/generation/query identity 变化时重跑；active liveness 在 close、换会话、世代变化后丢弃迟响应，无 profile 或 QUERY 失败保持无 N 且不阻塞 Trade 业务。不新增 poll/缓存/query 写参数/UI gate。B/N 随本地 draft 生命期：确认 offer/revision/session 变化按既有 `own.offer` 重置，UNSHOW 与对方撤回保留本地 draft，CANCEL/COMPLETED/关闭/断线会话结束后不延续 B/N。既有 Trade 事务与资源 retry 行为保持。
+
 ## 限定
 
-本次变更已在生产Trade页面接入，并已完成针对该页面的集中静态走查。新页面、双端实际交互与HD布局尚未实测。原trade listfactory的完整恢复仍未确认；本页候选行是采用已确认Home行内容的Web呈现。
+本次变更已在生产Trade页面接入。新页面、双端实际交互与HD布局、迟响应切上下文、关闭重开尚未实测；原交易服务端授权与逐148控件仍待验。原 Trade 本方 OwnedTank/OwnedPet 行工厂与其状态来源已有限恢复，但原 trade listfactory 的其它 kind、完整业务字段与整表恢复仍未确认；本页候选行是采用已确认 Home 行内容的 Web 呈现。

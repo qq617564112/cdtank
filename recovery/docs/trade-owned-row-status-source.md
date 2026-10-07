@@ -190,18 +190,22 @@ failure/revision 重置。B/N 是客户端派生状态；没有原服务端字�
 
 ## 可实施 UI 范围
 
-最小生产改动边界为：
+下列最小生产改动边界已按当前正式接线落地：
 
-- `apps/web/src/interface/account/trade-source-page.tsx`：为候选行计算并传入当前状态和
-  draft offer 状态；保持 `draft.records` 为唯一 B 来源，N 使用现有 Home 当前角色投影。
-- `apps/web/src/interface/account/trade-candidate-row-content.tsx`：接收状态并渲染独立 badge；
-  OwnedPet/OwnedTank 只接受 N/B，物品/装备行不把 Trade B 扩成 E/S。
+- `apps/web/src/interface/lobby/lobby-social-view.tsx` / `apps/web/src/interface/account/trade-source-page.tsx`：
+  稳定 `battle.roleProfile()` 纯 QUERY 与 `accountContext.generation` 传入页面，页面在 open/
+  session id/generation/query identity 变化时读取 `profile.bytes`（小端 tank `+0xa8`、pet `+0xa4`），
+  以 `kind + (instanceId>>>0)` 相等计算 current（N）；`draft.records` 保持为唯一 B 来源，
+  N 优先。
+- `apps/web/src/interface/account/trade-candidate-row-content.tsx`：接收 current/offered，
+  OwnedTank/OwnedPet 渲染 N 或 B，物品/装备行不把 Trade B 扩成 E/S；`!current && offered`
+  时才渲染 B。
 - `apps/web/src/interface/home/home-role-row-status-badge.tsx` 及其 CSS：复用既有 N glyph，
-  按原 trade 字体资源表增加 B glyph；若保留 Home 组件不变，则在 Trade 专属 row content
-  内建立同位置、同 `b.tga` 的 Trade-scoped badge。
+  按原 trade 字体资源表增加 `offered`（`b.tga`）glyph，仅在 `.trade-source-candidate-row`
+  Trade 作用域内应用 `point 5,8`、14×14 几何。
 
 无需新增 server API、协议 schema、轮询、缓存、费用或取得链。`PtlTrade`/`MsgTradeState`
-已是当前确认状态合同；当前角色投影是唯一外部依赖。
+已是当前确认状态合同；当前角色投影是唯一外部依赖，且已接到 Trade 本方候选。
 
 ## Known Issues
 
@@ -212,6 +216,7 @@ failure/revision 重置。B/N 是客户端派生状态；没有原服务端字�
   `TradeRecordRef.kind`，不据此猜道具/装备分类名。
 - OwnedTank/OwnedPet 的状态 `1`/`2` 在本页候选链没有 producer；不把 S/E、当前角色、
   selected 或确认状态填到这两个状态。
-- 当前角色 getter 在 Web 侧没有来自 `PtlTrade` 的字段，必须复用 Home 现有投影；如果该投影
-  未接到 Trade，N 是明确的数据接线缺口，不是可从 B 推导的状态。
+- 当前角色 getter 在 Web 侧没有来自 `PtlTrade` 的字段，已复用 Home 现有投影并经
+  `LobbySocialView` 稳定 `battle.roleProfile()` 接到 Trade；无 profile 或 QUERY 失败时保持
+  无 N，N 不由 B、selected 或 draft 推导。
 - 本来源是有限静态结论，不称原交易流程、HD、导出或持久化已完成。
