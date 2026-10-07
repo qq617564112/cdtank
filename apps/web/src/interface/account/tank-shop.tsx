@@ -56,6 +56,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const [partInventory, setPartInventory] = useState<ResInventory>();
   const [partQuerySequence, setPartQuerySequence] = useState(0);
   const [partError, setPartError] = useState<string>();
+  const [ownedConfirmed, setOwnedConfirmed] = useState(false);
   const [confirmed, setConfirmed] = useState<ResTankShop>();
   const [selected, setSelected] = useState(owner.pending?.tankId ?? owner.selected);
   const [busy, setBusy] = useState(true);
@@ -73,8 +74,8 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const previewTextures = mode === 'Owned' && ownedRecord
     ? readOwnedTankTextures({name: ownedRecord.name, fields: new Map(ownedRecord.fields)}) : product?.textures;
   const ownedPartEquipment = partEquipment?.tankInstanceId === ownedSelection ? partEquipment : undefined;
-  const ownedParameters = tankShopOwnedParameters({owned, record: ownedRecord, profile: sale?.profile,
-    partEquipment: ownedPartEquipment, inventory: partInventory, catalog});
+  const ownedParameters = ownedConfirmed ? tankShopOwnedParameters({owned, record: ownedRecord, profile: sale?.profile,
+    partEquipment: ownedPartEquipment, inventory: partInventory, catalog}) : undefined;
   useEffect(() => {if (mode !== 'Texture') onBusy(busy);}, [busy, onBusy, mode]);
   useEffect(() => {
     setPartError(undefined);
@@ -96,6 +97,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     return () => {active = false;};
   }, [mode, ownedSelection, partQuerySequence, source]);
   useEffect(() => {
+    setOwnedConfirmed(false);
     const current = {active: true, query: false, identity: {}}; session.current = current;
     let queued = false;
     async function refresh() {
@@ -136,6 +138,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     const current = session.current;
     if (!current.active || busy || owner.inFlight || owner.saleInFlight || !source.ownedRoles) return;
     const ticket = ++generation.current;
+    setOwnedConfirmed(false);
     setMode('Owned'); setBusy(true); setStatus('正在载入拥有战车…');
     try {
       const [result, response] = await Promise.all([source.ownedRoleSale ? source.ownedRoleSale({operation: 'QUERY'}) : undefined, fetch('/combat-catalog.json')]);
@@ -145,6 +148,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
       if (!current.active) return;
       if (generation.current !== ticket) return;
       setOwned(records); setCatalog(metadata); setSale(result);
+      setOwnedConfirmed(true);
       if (result?.money !== undefined) {setConfirmed(value => value && {...value, money: result.money!}); onMoney?.(result.money);}
       setOwnedSelection(value => records.equipment.some(record => new Map(record.fields).get(0x1c) === value)
         ? value : records.equipment[0] ? new Map(records.equipment[0].fields).get(0x1c) : undefined);
@@ -174,6 +178,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
       owner.salePending = undefined;
       if (!current.active || generation.current !== ticket) return;
       setOwned(result.owned); setSale(result);
+      setOwnedConfirmed(true);
       setOwnedSelection(value => result.owned.equipment.some(record => new Map(record.fields).get(0x1c) === value)
         ? value : result.owned.equipment[0] ? new Map(result.owned.equipment[0].fields).get(0x1c) : undefined);
       if (result.money !== undefined) {setConfirmed(value => value && {...value, money: result.money!}); onMoney?.(result.money);}
@@ -211,7 +216,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     }
   }
   if (mode === 'Texture') return <TankShopTextureView ui={ui} source={source} owner={owner.texture} scale={scale}
-    onBusy={onBusy} onBuy={() => {setMode('Buy'); owner.session?.refresh();}} />;
+    onBusy={onBusy} onBuy={() => {setOwnedConfirmed(false); setMode('Buy'); owner.session?.refresh();}} />;
   return <SourceImageScale value={1}>
     <TankShopSourceRegions ui={ui} />
     {mode === 'Owned' && <TankShopOwnedPartSourceRegions ui={ui}
@@ -230,13 +235,13 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
         data-tank-owned-field={offset} data-owned-value={ownedFields?.get(offset)} />)}
     <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoTexture"
       data-tank-shop-texture-tab="" aria-label="更换拥有战车迷彩" disabled={busy || !source.ownedRoles || !source.roleProfile || !source.configureTankTextures}
-      onClick={() => {generation.current++; setSaleConfirm(false); setMode('Texture');}} />
+      onClick={() => {generation.current++; setOwnedConfirmed(false); setSaleConfirm(false); setMode('Texture');}} />
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtMoney" text={confirmed?.money === undefined ? '' : String(confirmed.money)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtCoin" text={confirmed?.tokens === undefined ? '' : String(confirmed.tokens)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtName" text={displayedName}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtListQuantity" text={mode === 'Owned' ? owned ? String(owned.equipment.length) : '' : confirmed ? String(confirmed.tanks.length) : ''}/>
     <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoBuy" selected={mode === 'Buy'}
-      data-tank-shop-buy-tab="" aria-label="购买战车商品" aria-pressed={mode === 'Buy'} disabled={busy} onClick={() => {generation.current++; setSaleConfirm(false); setMode('Buy'); setStatus('');}} />
+      data-tank-shop-buy-tab="" aria-label="购买战车商品" aria-pressed={mode === 'Buy'} disabled={busy} onClick={() => {generation.current++; setOwnedConfirmed(false); setSaleConfirm(false); setMode('Buy'); setStatus('');}} />
     <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoSell" selected={mode === 'Owned'}
       data-tank-shop-owned-tab="" aria-label="拥有战车" aria-pressed={mode === 'Owned'} disabled={busy || !source.ownedRoles}
       onClick={() => {void openOwned();}} />

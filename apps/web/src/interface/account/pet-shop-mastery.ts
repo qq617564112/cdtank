@@ -113,7 +113,7 @@ export function petOwnedMastery({selectedBase, currentTank, isCurrent, catalog}:
     if (itemId === 0) continue;
     const item = catalog.items.find(value => value.itemTableId === itemId);
     if (!item) return undefined;
-    item.skillIds.forEach(addSkill);
+    for (const skillId of item.skillIds) if (skillId !== 0) addSkill(skillId);
   }
   if (unresolved) return undefined;
   return {mastery, progress: mastery.map(value => Math.fround(value * Math.fround(.2)))};

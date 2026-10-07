@@ -42,6 +42,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
   const generation = useRef(0);
   const [catalog, setCatalog] = useState<CombatCatalog>();
   const [ownedSelection, setOwnedSelection] = useState<number>();
+  const [ownedConfirmed, setOwnedConfirmed] = useState(false);
   const [status, setStatus] = useState('正在载入宠物目录…');
   const session = useRef({active: false, query: false, identity: {}});
   const focusAfterCommit = useRef<HTMLElement | null>(null);
@@ -55,12 +56,13 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
   const displayedDescription = mode === 'owned' ? sourcePetDescription(displayedPetId) : product?.info;
   const descriptionText = mode === 'owned' ? displayedDescription : product ? `${product.name} — ${product.info}` : undefined;
   const previewPetId = mode === 'owned' ? displayedPetId : product?.petId;
-  const currentTankInstance = mode === 'owned' && sale?.profile
+  const currentTankInstance = mode === 'owned' && ownedConfirmed && sale?.profile
     ? new DataView(Uint8Array.from(sale.profile.bytes).buffer).getUint32(0xa8, true) : undefined;
   const currentTank = currentTankInstance === undefined ? undefined
     : owned?.equipment.find(record => new Map(record.fields).get(0x1c) === currentTankInstance);
   useEffect(() => {onBusy(busy);}, [busy, onBusy]);
   useEffect(() => {
+    setOwnedConfirmed(false);
     const current = {active: true, query: false, identity: {}}; session.current = current;
     let queued = false;
     async function refresh() {
@@ -101,6 +103,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
     const current = session.current;
     if (!current.active || busy || owner.inFlight || owner.saleInFlight || !source.ownedRoles) return;
     const ticket = ++generation.current;
+    setOwnedConfirmed(false);
     setMode('owned'); setBusy(true); setStatus('正在载入拥有宠物…');
     try {
       const [result, response] = await Promise.all([source.ownedRoleSale ? source.ownedRoleSale({operation: 'QUERY'}) : undefined, fetch('/combat-catalog.json')]);
@@ -110,6 +113,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       if (!current.active) return;
       if (generation.current !== ticket) return;
       setOwned(records); setCatalog(metadata); setSale(result);
+      setOwnedConfirmed(true);
       if (result?.money !== undefined) {setConfirmed(value => value && {...value, money: result.money!}); onMoney?.(result.money);}
       setOwnedSelection(value => records.base.some(record => new Map(record.fields).get(0) === value)
         ? value : records.base[0] ? new Map(records.base[0].fields).get(0) : undefined);
@@ -139,6 +143,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       owner.salePending = undefined;
       if (!current.active || generation.current !== ticket) return;
       setOwned(result.owned); setSale(result);
+      setOwnedConfirmed(true);
       setOwnedSelection(value => result.owned.base.some(record => new Map(record.fields).get(0) === value)
         ? value : result.owned.base[0] ? new Map(result.owned.base[0].fields).get(0) : undefined);
       if (result.money !== undefined) {setConfirmed(value => value && {...value, money: result.money!}); onMoney?.(result.money);}
@@ -179,7 +184,8 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
     <PetShopSourceRegions ui={ui} />
     {displayedPetId !== undefined && <PetShopDirectoryDetails ui={ui} petId={displayedPetId}
       mode={mode === 'owned' ? 'owned' : 'directory'} ownedRecord={mode === 'owned' ? ownedRecord : undefined}
-      profile={mode === 'owned' ? sale?.profile : undefined} currentTank={mode === 'owned' ? currentTank : undefined} />}
+      profile={mode === 'owned' && ownedConfirmed ? sale?.profile : undefined}
+      currentTank={mode === 'owned' && ownedConfirmed ? currentTank : undefined} />}
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtMoney" text={confirmed?.money === undefined ? '' : String(confirmed.money)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtCoin" text={confirmed?.tokens === undefined ? '' : String(confirmed.tokens)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtName" text={displayedName}/>
@@ -187,7 +193,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       data-pet-shop-hp="" data-presentation-colour="web-readable">{displayedHp === undefined ? '' : String(displayedHp)}</span>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtListQuantity" text={mode === 'buy' ? confirmed ? String(confirmed.pets.length) : '' : owned ? String(owned.base.length) : ''}/>
     <SourceButton ui={ui} layout={layout} suffix="shop_petpage.xml" source="rdoBuy" selected={mode === 'buy'}
-      data-pet-shop-buy-tab="" aria-label="购买宠物商品" aria-pressed={mode === 'buy'} disabled={busy} onClick={() => {generation.current++; setSaleConfirm(false); setMode('buy'); setStatus('');}} />
+      data-pet-shop-buy-tab="" aria-label="购买宠物商品" aria-pressed={mode === 'buy'} disabled={busy} onClick={() => {generation.current++; setOwnedConfirmed(false); setSaleConfirm(false); setMode('buy'); setStatus('');}} />
     <SourceButton ui={ui} layout={layout} suffix="shop_petpage.xml" source="rdoSell" selected={mode === 'owned'}
       data-pet-shop-owned-tab="" aria-label="拥有宠物" aria-pressed={mode === 'owned'} disabled={busy || !source.ownedRoles}
       onClick={() => {void openOwned();}} />
