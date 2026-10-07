@@ -48,7 +48,8 @@ export function HomeEquipmentSourceList({ui, entries, selected, busy, select}: {
             if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
           }}>
           {common || hat || balloon || mark ? <HomeEquipmentCommonRowContent ui={ui} name={entry.name} iconId={entry.iconId}
-            itemTableId={entry.itemTableId} ownedQuantity={entry.ownedQuantity} installed={common ? entry.installed : undefined}
+            itemTableId={entry.itemTableId} ownedQuantity={entry.ownedQuantity}
+            installed={common || hat || balloon || mark ? entry.installed : undefined}
             kindLabel={hat ? '坦克帽子' : balloon ? '坦克气球' : mark ? '坦克标志' : undefined}/> : <>
           <span className="home-equipment-source-icon" style={{backgroundImage: icon.style.backgroundImage}}
             data-source-asset={icon['data-source-asset']} aria-hidden="true" />
