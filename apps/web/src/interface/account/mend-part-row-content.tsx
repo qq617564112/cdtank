@@ -1,6 +1,7 @@
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
+import {HomeRoleRowStatusBadge} from '../home/home-role-row-status-badge';
 import './mend-part-row-content.css';
 
 const TYPE_LABELS: Record<number, string> = {
@@ -9,8 +10,8 @@ const TYPE_LABELS: Record<number, string> = {
 };
 
 /** Original MyItem row text and image; remaining quantity is displayed without changing it. */
-export function MendPartRowContent({ui, name, itemTableId, iconId, ownedQuantity}: {
-  ui: HomeSourceUi; name: string; itemTableId: number; iconId?: number; ownedQuantity: number;
+export function MendPartRowContent({ui, name, itemTableId, iconId, ownedQuantity, installed}: {
+  ui: HomeSourceUi; name: string; itemTableId: number; iconId?: number; ownedQuantity: number; installed?: boolean;
 }) {
   const layout = new HomeSourceLayout(ui, 'shop_mendpage.xml');
   const icon = iconId === undefined ? undefined : sourceProps(ui, layout, 'shop_mendpage.xml', 'lstPart',
@@ -19,6 +20,7 @@ export function MendPartRowContent({ui, name, itemTableId, iconId, ownedQuantity
   return <>
     <span className="mend-part-icon" aria-hidden="true" data-source-asset={icon?.['data-source-asset']}
       style={{backgroundImage: icon?.style.backgroundImage}} />
+    {installed && <HomeRoleRowStatusBadge ui={ui} status="installed"/>}
     <span className="mend-part-name" data-mend-part-name="">{name}</span>
     <span className="mend-part-type" data-mend-part-type="">{TYPE_LABELS[classifyItemId(itemTableId)] ?? ''}</span>
     <span className="mend-part-duration" data-mend-part-duration="" data-source-duration-field="MyItem+0x10"

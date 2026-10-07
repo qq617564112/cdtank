@@ -33,6 +33,18 @@ const categoryForItem = (id: number): PartShopCategory => {
 };
 const positivePrice = (value: number | undefined): value is number =>
   value !== undefined && Number.isSafeInteger(value) && value > 0;
+/** Current-role install equality from the read-only profile projection. */
+function profileInstalled(profile: {bytes: number[]} | undefined, category: PartShopCategory, instanceId: number): boolean {
+  if (!profile) return false;
+  const bytes = Uint8Array.from(profile.bytes);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const read = (offset: number) => bytes.byteLength >= offset + 4 ? view.getUint32(offset, true) : undefined;
+  const id = instanceId >>> 0;
+  if (category === 'Hat') return read(0x118) === id;
+  if (category === 'Mark') return read(0x13c) === id;
+  for (let slot = 0; slot < 5; slot++) if (read(0x148 + slot * 4) === id) return true;
+  return false;
+}
 
 /** Part purchases reuse the existing Shop transaction and refresh real inventory. */
 export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMoney}: {
@@ -187,7 +199,8 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
     <PartShopSourceList ui={ui} source="lstMyEquip" selected={ownedSelected} busy={busy} select={setOwnedSelected}
       activate={requestSale} canActivate={id => Boolean(source.partSale && sale?.quotes.some(quote => quote.instanceId === id && quote.canSell))}
       entries={owned.map(item => {const definition = catalog?.items.find(value => value.itemTableId === item.itemTableId);
-        return {id: item.instanceId, itemTableId: item.itemTableId, ownedQuantity: item.ownedQuantity, moneyPrice: definition?.moneyPrice, name: definition?.name ?? String(item.itemTableId),
+        return {id: item.instanceId, itemTableId: item.itemTableId, installed: profileInstalled(sale?.profile, ownedCategory, item.instanceId),
+          ownedQuantity: item.ownedQuantity, moneyPrice: definition?.moneyPrice, name: definition?.name ?? String(item.itemTableId),
           iconId: definition?.iconId ?? 0, detail: `×${item.ownedQuantity} · 实例${item.instanceId}`};})} />
     <div className="part-shop-description" data-part-description="">{product?.info ?? ''}</div>
     <div className="part-shop-query-prices" data-part-query-prices="">{product

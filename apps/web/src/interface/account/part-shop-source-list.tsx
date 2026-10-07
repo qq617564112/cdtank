@@ -5,7 +5,7 @@ import {PartShopListScrollbar} from './part-shop-list-scrollbar';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 
-export interface ShopSourceListEntry {id: number; name: string; iconId: number; detail: string; itemTableId?: number; ownedQuantity?: number; moneyPrice?: number; product?: ShopItem;}
+export interface ShopSourceListEntry {id: number; name: string; iconId: number; detail: string; itemTableId?: number; ownedQuantity?: number; moneyPrice?: number; product?: ShopItem; installed?: boolean;}
 
 /** Original list bounds and selection image with React-owned candidate and keyboard focus. */
 export function PartShopSourceList({ui, source, entries, selected, busy, select, activate, canActivate}: {
@@ -58,7 +58,8 @@ export function PartShopSourceList({ui, source, entries, selected, busy, select,
           if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
         }}>
         {originalOwnedRow || originalProductRow ? <PartShopRowContent ui={ui} name={entry.name} iconId={entry.iconId}
-          itemTableId={entry.itemTableId!} ownedQuantity={entry.ownedQuantity} moneyPrice={entry.moneyPrice} product={originalProductRow ? entry.product : undefined}/> : <>
+          itemTableId={entry.itemTableId!} ownedQuantity={entry.ownedQuantity} moneyPrice={entry.moneyPrice}
+          installed={originalProductRow ? undefined : entry.installed} product={originalProductRow ? entry.product : undefined}/> : <>
         <span className="shop-list-icon" aria-hidden="true" style={{backgroundImage: icon.style.backgroundImage}}
           data-source-asset={icon['data-source-asset']} />
         <span className="shop-list-text"><span>{entry.name}</span><span>{entry.detail}</span></span>

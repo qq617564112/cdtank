@@ -23,7 +23,20 @@ const legacyCoinImages = new Set([
   'yongdaibibaoyang', 'yongdaibibaoyang2', 'yongdaibibaoyang3',
 ]);
 type PartCategory = 'Common' | 'Hat' | 'Mark';
-interface MendEntry {id: number; name: string; itemTableId?: number; iconId?: number; ownedQuantity?: number; tankId?: number; tankType?: number; durationMinutes?: number;}
+interface MendEntry {id: number; name: string; itemTableId?: number; iconId?: number; ownedQuantity?: number; installed?: boolean; tankId?: number; tankType?: number; durationMinutes?: number;}
+
+/** Current-role install equality from the read-only profile projection. */
+function profileInstalled(profile: {bytes: number[]} | undefined, category: PartCategory, instanceId: number): boolean {
+  if (!profile) return false;
+  const bytes = Uint8Array.from(profile.bytes);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const read = (offset: number) => bytes.byteLength >= offset + 4 ? view.getUint32(offset, true) : undefined;
+  const id = instanceId >>> 0;
+  if (category === 'Hat') return read(0x118) === id;
+  if (category === 'Mark') return read(0x13c) === id;
+  for (let slot = 0; slot < 5; slot++) if (read(0x148 + slot * 4) === id) return true;
+  return false;
+}
 
 /** Maintenance sheet consumes confirmed ownership and authoritative Tank maintenance results. */
 export function MendShopSourcePage({ui, catalog, source, onBusy}: {
@@ -69,12 +82,12 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
       tankType: catalog?.tankTypes?.find(tank => tank.tankId === tankId)?.tankType};
   }) : (inventory?.records ?? []).filter(record => {
     const type = classifyItemId(record.itemTableId);
-    return category === 'Common' ? type >= 8 && type <= 12 : type === (category === 'Hat' ? 5 : 7);
+    return category === 'Common' ? type >= 8 && type <= 12 : category === 'Hat' ? type === 5 || type === 6 : type === 7;
   }).map(record => {
     const item = catalog?.items.find(item => item.itemTableId === record.itemTableId);
     const currentPart = partMaintenance?.parts.find(part => part.instanceId === record.instanceId);
     return {id: record.instanceId, name: item?.name ?? String(record.itemTableId),
-      itemTableId: record.itemTableId, iconId: item?.iconId,
+      itemTableId: record.itemTableId, iconId: item?.iconId, installed: profileInstalled(profile?.profile, category, record.instanceId),
       ownedQuantity: currentPart?.remainingMinutes ?? record.ownedQuantity};
   });
   const selectedPart = partMaintenance?.parts.find(part => part.instanceId === selected);
@@ -167,7 +180,7 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
             const button = event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-mend-owned-instance="${value.id}"]`);
             button?.focus(); button?.scrollIntoView({block: 'nearest'});
           }}>{page === 'Part' ? <MendPartRowContent ui={ui} name={entry.name}
-            itemTableId={entry.itemTableId!} iconId={entry.iconId} ownedQuantity={entry.ownedQuantity!} /> : <HomeOwnedTankRowContent ui={ui} name={entry.name}
+            itemTableId={entry.itemTableId!} iconId={entry.iconId} ownedQuantity={entry.ownedQuantity!} installed={entry.installed} /> : <HomeOwnedTankRowContent ui={ui} name={entry.name}
               tankId={entry.tankId} tankType={entry.tankType} durationMinutes={entry.durationMinutes} />}</button>)}
       </div>
     </div>
