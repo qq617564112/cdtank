@@ -378,10 +378,30 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
                     if cell.get('sourceBox') and not (ROOT / delivered[cell['source']]).exists()})
     selected = [b for b in selected if not batch_complete(b, delivered)]
     slots = request_slots or threading.Semaphore(concurrency)
+    extraction_retry_at = {}
 
     def call(batch):
         if (ROOT / batch['output']).exists():
-            extract(batch)
+            try:
+                extract(batch)
+            except Exception as error:
+                message = str(error).replace(key, '<REDACTED>')[:800]
+                with LOCK:
+                    extraction_retry_at[batch['id']] = time.time() + retry_delay
+                    previous = next((record for record in reversed(ledger)
+                                     if record['batch'] == batch['id'] and record.get('actualSize')), None)
+                    if previous:
+                        previous.update(status='failed', error=message,
+                                        finished=datetime.now(timezone.utc).isoformat())
+                        save(ledger_path, ledger)
+                return batch['id'] + ': ' + message
+            with LOCK:
+                previous = next((record for record in reversed(ledger)
+                                 if record['batch'] == batch['id'] and record.get('actualSize')), None)
+                if previous and previous['status'] == 'failed':
+                    previous.update(status='complete', finished=datetime.now(timezone.utc).isoformat())
+                    previous.pop('error', None)
+                    save(ledger_path, ledger)
             return batch['id'] + ': restored saved result'
         with slots:
             if STOP.is_set():
@@ -426,7 +446,8 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
         failures = [datetime.fromisoformat(r['finished']).timestamp()
                     for r in ledger if r.get('batch') == batch_id
                     and r['status'] == 'failed' and r.get('finished')]
-        return max(failures, default=0) + retry_delay
+        return max(max(failures, default=0) + retry_delay,
+                   extraction_retry_at.get(batch_id, 0))
 
     def api_wait():
         failures = [datetime.fromisoformat(r['finished']).timestamp() for r in ledger
@@ -559,6 +580,12 @@ def main():
     parser.add_argument('--limit', type=int)
     parser.add_argument('--retry-delay', type=int, default=300)
     args = parser.parse_args()
+    ui_workers = args.ui_concurrency if (args.action == 'run'
+                                        and (not args.groups or 'ui' in args.groups)) else 0
+    if args.concurrency < 1 or args.ui_concurrency < 0 or args.concurrency + ui_workers > 10:
+        parser.error('Request concurrency must be positive and at most 10 including UI workers')
+    if args.retry_delay < 300:
+        parser.error('Image retries must wait at least 300 seconds')
     signal.signal(signal.SIGINT, lambda *_: STOP.set())
     if args.action == 'prepare':
         prepare()
