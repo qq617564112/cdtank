@@ -14,4 +14,4 @@ TradeSourcePage按state、pending、status、act和close消费主线稳定合同
 
 ## 尚存范围
 
-对方金额已使用深色字与浅描边；详情与主页面使用同一viewport scale，Web关闭控件位于原底框之外，当前生产范围见`trade-ui-readability.md`。新详情字段与说明没有浏览器验收证据，完整原参数、attachment/callback和逐控件1:1仍未完成。测试预置创意/技能点不证明正常取得来源。
+对方三项金额保持白字与shared `SourceStaticText`/用户选字体，仅在原浅条带范围内加scoped深色backing（无shadow），不改全局字体、不改黑字、不用`!important`，原65×13右对齐与图片几何不动，不声明原最终颜色；详情与主页面使用同一viewport scale，Web关闭控件位于原底框之外，二者当前实现成立但同scale/关闭位置仍待新实测，当前生产范围见`trade-ui-readability.md`。新详情字段与说明没有浏览器验收证据，完整原参数、attachment/callback和逐控件1:1仍未完成。测试预置创意/技能点不证明正常取得来源。

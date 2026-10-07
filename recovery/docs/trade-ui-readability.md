@@ -4,6 +4,6 @@ UI-60/61/62/63的当前生产消费者为 `apps/web/src/interface/account/trade-
 
 详情现在接收主页面同一 viewport scale，按原布局根 `all` 及后代累计边界建立stage，并通过 `SourceImageScale` 和同一 transform 缩放。原 StaticImage/StaticText/Editbox 的位置、尺寸、图片和字段映射保持不变；缺失字段继续为空。关闭详情是stage之后的独立Web操作区，不再覆盖原详情底框。
 
-对方提供金额、创意点和技能点仍读取 `txtOtherMoney`、`txtOtherOriginality`、`txtOtherTech`。浅色原条带上的白字对比不足，因此当前渲染使用深色字与浅色描边，并在源码中明确为Web可读性修正，不声明原最终颜色。
+对方提供金额、创意点和技能点仍读取 `txtOtherMoney`、`txtOtherOriginality`、`txtOtherTech`。原浅条带上的白字对比不足，因此当前仅在该原始条带范围内加scoped深色backing（无shadow），保持当前shared `SourceStaticText`、用户选字体与原白字，不改全局字体、不改黑字、不用`!important`；原65×13坐标、右对齐与原图片几何不动，不声明原最终颜色。
 
 未改动 SHOW、UNSHOW、CONFIRM、CANCEL、draft重置、交易协议或服务端结算。未编写unit test，未运行测试、浏览器、构建或类型检查。
