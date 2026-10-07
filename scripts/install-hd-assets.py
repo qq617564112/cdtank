@@ -7,6 +7,8 @@ import os
 from pathlib import Path, PurePosixPath
 import shutil
 import struct
+import subprocess
+import sys
 
 
 JSON_CHUNK = 0x4E4F534A
@@ -166,6 +168,8 @@ def main():
             shutil.copyfile(source, root / 'apps/web/src/assets/ui' / name)
     print(f'Installed {len(completed)} PNGs, {model_count} models; '
           f'skipped {len(selected) - len(completed)} incomplete PNGs')
+    subprocess.run([sys.executable, str(root / 'scripts/render-hd-asset-gallery.py'),
+                    '--root', str(root)], check=True)
 
 
 if __name__ == '__main__':

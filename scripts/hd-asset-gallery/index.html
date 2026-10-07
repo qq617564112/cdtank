@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>高清资源对照</title>
+  <style>/* GALLERY_STYLE */</style>
+  <header>
+    <h1>高清资源对照</h1>
+    <p id="progress"></p>
+    <p class="muted" id="updated"></p>
+  </header>
+  <main>
+    <form id="filters" class="filters" role="search">
+      <label>资源分类<select id="group"><option value="">全部分类</option></select></label>
+      <label class="search">路径搜索<input id="search" type="search" placeholder="输入地图编号或文件名"></label>
+      <label>完成状态<select id="status"><option value="complete">已完成</option><option value="all">全部资源</option><option value="pending">待处理</option></select></label>
+      <button id="reload" type="button">刷新进度</button>
+    </form>
+    <div class="results-bar">
+      <p id="results" role="status" aria-live="polite"></p>
+      <div class="pagination"><button id="previous" type="button">上一页</button><span id="page"></span><button id="next" type="button">下一页</button></div>
+    </div>
+    <ul id="assets" class="assets"></ul>
+    <p id="empty" hidden>没有符合条件的资源。</p>
+    <details id="previews"><summary>地图与界面整体预览</summary><ul id="preview-list"></ul></details>
+  </main>
+  <dialog id="zoom" aria-labelledby="zoom-title">
+    <div class="dialog-bar"><h2 id="zoom-title"></h2><button id="close" type="button" autofocus>关闭</button></div>
+    <p id="zoom-size" class="muted"></p>
+    <label class="zoom-control">查看尺寸<select id="zoom-mode"><option value="fit">适应窗口</option><option value="pixels">原始像素</option></select></label>
+    <div id="zoom-pair" class="pair"></div>
+  </dialog>
+  <script id="gallery-data" type="application/json">/* GALLERY_DATA */</script>
+  <script>/* GALLERY_SCRIPT */</script>
+</html>
