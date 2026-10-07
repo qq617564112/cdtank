@@ -1,5 +1,6 @@
 import type {WsServer} from 'tsrpc';
 import type {MsgGmReply} from '../../../shared/protocols/MsgGmReply';
+import type {ResGmSupport} from '../../../shared/protocols/PtlGmSupport';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
 
@@ -19,14 +20,21 @@ export function registerGmSupportApi(server: WsServer<ServiceType>, accounts: Ac
     cursors.delete(call.conn.id);
     try {
       const result = accounts.gmSupportReplies(accountId, call.req.afterId ?? 0);
-      if (!result.hasMore) {
-        cursors.set(call.conn.id, {accountId, afterId: result.nextAfterId});
-      }
       await call.succ(result);
     } catch (error) {
       await call.error(error instanceof Error ? error.message : 'GM回复查询失败',
         {code: 'GM_SUPPORT_REJECTED'});
     }
+  });
+
+  server.flows.postApiReturnFlow.push(input => {
+    if (!input.return.isSucc || input.call.service.name !== 'GmSupport') return input;
+    const response = input.return.res as ResGmSupport;
+    if (response.hasMore) return input;
+    const accountId = accountByConnection.get(input.call.conn.id);
+    if (accountId !== response.accountId) return input;
+    cursors.set(input.call.conn.id, {accountId, afterId: response.nextAfterId});
+    return input;
   });
 
   server.flows.postDisconnectFlow.push(input => {
@@ -61,7 +69,12 @@ export function registerGmSupportApi(server: WsServer<ServiceType>, accounts: Ac
             break;
           }
           const message: MsgGmReply = {accountId: cursor.accountId, reply};
-          await server.broadcastMsg('GmReply', message, [connection]);
+          const sent = await server.broadcastMsg('GmReply', message, [connection]);
+          if (!sent.isSucc) break;
+          if (accountByConnection.get(connectionId) !== cursor.accountId) {
+            cursors.delete(connectionId);
+            break;
+          }
           cursor.afterId = reply.id;
         }
       } catch (error) {
