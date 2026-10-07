@@ -62,7 +62,7 @@ export class ImageLoadingScreen {
   }
 
   fail(error: unknown): void {
-    this.status = '图片资源加载失败';
+    this.status = '游戏资源加载失败';
     this.details = error instanceof Error ? error.message : String(error);
     this.failed = true;
     this.render();
