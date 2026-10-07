@@ -10,6 +10,8 @@ Vite的image-assets-plugin从CDTANK_WEB_ASSETS指定的资源目录（缺省reco
 
 HTTPS与localhost使用浏览器Cache Storage保存完整图片响应及已完成资源目录，Service Worker向后续页面和纹理请求提供本地图片。再次进入时一次读取目录与缓存条目列表，按文件修改时间识别缺失或更新图片，已缓存且未改变的图片直接计入就绪进度，无需逐张读取响应或重新解码。已有图片响应按更新标识复用，下载全部完成后保存目录；缓存条目缺失时重新下载。普通远程HTTP在localStorage保存已完成资源目录，未改变的图片以force-cache读取浏览器HTTP缓存，缺失时由浏览器下载，更新图片重新校验；读取图片响应不触发全量解码。持久存储不可用时仍可完成资源下载。
 
+当前本批采用合同改为IndexedDB：`assets/image-cache.ts` 为图片缓存唯一owner，共享 `decodeImage` 对非abort失败按绝对URL登记该失败URL，下一次现有显式重试只对该失败URL经该owner以no-cache重新获取、按同version写入IndexedDB Blob并替换该URL的PreparedImage Blob URL，后续DOM、引擎 `imageResourceUrl` 与背景使用新图；成功图片的decoderPromise、PreparedImage与IndexedDB版本保持，不自动重试、不清空全部缓存、不改动成功图片；HTTPS与localhost及普通远程HTTP统一使用IndexedDB，不使用Service Worker／CacheStorage或请求头。上文Service Worker／CacheStorage叙述为旧历史行为，不作为本批终态。首次加载出现的PNG解码失败原因仍未确定，本范围不作为稳定性或修复的实测结论。完整合同见 [image-decode-retry-runtime.md](image-decode-retry-runtime.md)。
+
 ## 验证范围
 
-本改动未运行测试、浏览器验收、构建或类型检查。加载页首次下载、再次进入时复用、失败重试及实际页面切换观感尚需运行验收。
+本改动未运行测试、浏览器验收、构建或类型检查。加载页首次下载、再次进入时复用、失败重试及实际页面切换观感尚需运行验收。共享失败URL恢复按有限采用范围登记，core仍在实现，相关实现范围待集中review后再同步终态；firstload与新retry实测缺口保持未勾。
