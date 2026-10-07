@@ -114,7 +114,12 @@ def create_strip_batch(root, batch_id, entries, write):
         cells.append({'source': entry['canonical'], 'box': [8, y, 520, y + height]})
         if write:
             with Image.open(root / entry['original']) as original:
-                canvas.paste(original.convert('RGB').resize((512, height), Image.Resampling.NEAREST), (8, y))
+                if entry.get('solidColor'):
+                    preview = Image.new('RGB', original.size, 'black')
+                    preview.paste(original.convert('RGB'), (0, 0), original.getchannel('A'))
+                else:
+                    preview = original.convert('RGB')
+                canvas.paste(preview.resize((512, height), Image.Resampling.NEAREST), (8, y))
         y += height + 16
     folder = Path('art/hd-assets/batches') / batch_id
     if write:

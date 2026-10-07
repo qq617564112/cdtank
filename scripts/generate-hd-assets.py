@@ -57,6 +57,9 @@ def prepare():
     models = set()
     existing = {str(p.relative_to(ASSETS)).lower(): str(p.relative_to(ASSETS))
                 for p in ASSETS.rglob('*.png')}
+    local_sources = {f'local-ui/loading-words/{path.name}': path
+                     for path in (ROOT / 'apps/web/src/interface/resources/loading-words').glob('*.png')}
+    existing.update({source.lower(): source for source in local_sources})
     previous = document(ART / 'inventory.json') if (ART / 'inventory.json').exists() else {'textures': []}
     previous_entries = {entry['source']: entry for entry in previous['textures']}
     previous_plan = document(ART / 'plan.json') if (ART / 'plan.json').exists() else {'batches': []}
@@ -90,6 +93,8 @@ def prepare():
                     models.add(path)
     directory('ui', 'ui')
     directory('Data/ui', 'ui')
+    for source in local_sources:
+        add(source, 'ui')
     for path in existing.values():
         if path not in groups:
             add(path, 'art')
@@ -119,7 +124,7 @@ def prepare():
         original = ART / 'original' / source
         if not original.exists():
             original.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(ASSETS / source, original)
+            shutil.copyfile(local_sources.get(source, ASSETS / source), original)
         image = Image.open(original).convert('RGBA')
         identity = (image.size, image.tobytes())
         canonical = unique.setdefault(identity, previous_entries.get(source, {}).get('canonical', source))
@@ -134,6 +139,9 @@ def prepare():
                          'original': str(original.relative_to(ROOT)),
                          'png': str(destination.relative_to(ROOT)),
                          'size': list(image.size), 'groups': sorted(membership)})
+        if source in local_sources:
+            textures[-1]['installPath'] = str(local_sources[source].relative_to(ROOT))
+            textures[-1]['solidColor'] = list(image.getpixel((0, 0))[:3])
     by_source = {entry['source'].lower(): entry for entry in textures}
     ui = document(ASSETS / 'ui.json')
     for imageset in ui['imagesets']:
@@ -200,14 +208,15 @@ Repaint crisp natural contours and restrained fine material detail in the origin
     print(json.dumps(dict(Counter(b['group'] for b in batches)), ensure_ascii=False), flush=True)
 
 
-def restore(original_path, generated, terrain, source_box=None):
+def restore(original_path, generated, terrain, source_box=None, solid_color=None):
     original = Image.open(original_path).convert('RGBA')
     if source_box:
         original = original.crop(source_box)
     reference = original.convert('RGB')
-    if source_box:
+    if source_box or solid_color:
         reference = Image.new('RGB', original.size, 'black')
-        reference.paste(Image.new('RGB', original.size, 'white'), (0, 0), original.getchannel('A'))
+        reference.paste(Image.new('RGB', original.size, tuple(solid_color) if solid_color else 'white'),
+                        (0, 0), original.getchannel('A'))
     # Delivered texture dimensions retain the original atlas aspect ratio.
     target = tuple(value * 4 for value in original.size)
     generated = generated.convert('RGB').resize(target, Image.Resampling.LANCZOS)
@@ -223,11 +232,13 @@ def restore(original_path, generated, terrain, source_box=None):
     pixels = cv2.remap(np.asarray(generated), xx + flow[:, :, 0], yy + flow[:, :, 1],
                        cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
     registered = Image.fromarray(pixels)
-    if source_box:
+    if source_box or solid_color:
         support = base.getchannel('A').filter(ImageFilter.MaxFilter(5)).point(lambda value: 255 if value else 0)
-        alpha = np.minimum(np.asarray(registered.convert('L')), np.asarray(support))
-        result = Image.new('RGBA', target, 'white')
-        result.putalpha(Image.fromarray(alpha))
+        color = np.array(solid_color or [255, 255, 255], dtype=np.float32)
+        coverage = np.sum(pixels.astype(np.float32) * color, axis=2) / np.sum(color * color)
+        alpha = np.minimum(np.clip(coverage * 255, 0, 255), np.asarray(support))
+        result = Image.new('RGBA', target, tuple(solid_color) if solid_color else 'white')
+        result.putalpha(Image.fromarray(np.uint8(alpha)))
         return result
     radius = 12 if terrain else 24
     rgb = pixels.astype(np.float32)
@@ -285,7 +296,8 @@ def extract(batch):
         entry = textures[cell['source']]
         box = [round(v * (sx if i % 2 == 0 else sy)) for i, v in enumerate(cell['box'])]
         crop = image.crop(box)
-        result = restore(ROOT / entry['original'], crop, any(g.startswith('map-') for g in entry['groups']), cell.get('sourceBox'))
+        result = restore(ROOT / entry['original'], crop, any(g.startswith('map-') for g in entry['groups']),
+                         cell.get('sourceBox'), entry.get('solidColor'))
         destination = tile_path(batch, index) if cell.get('sourceBox') else ROOT / entry['png']
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_name(destination.name + '.tmp')

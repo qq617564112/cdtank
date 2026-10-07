@@ -125,7 +125,7 @@ def main():
     if args.group is not None:
         for entry in inventory['textures']:
             delivered = root / entry['png']
-            installed = runtime / entry['source']
+            installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
             if (entry['source'].lower() not in replacements and delivered.is_file()
                     and installed.is_file() and installed.read_bytes() == delivered.read_bytes()):
                 replacements[entry['source'].lower()] = entry
@@ -151,7 +151,7 @@ def main():
         temporary.replace(target)
         model_count += 1
     for entry in completed:
-        target = runtime / entry['source']
+        target = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / entry['png'], target)
     # Shared UI parts and locally composed backgrounds are consumed directly.
