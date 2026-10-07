@@ -120,9 +120,22 @@ ItemTurn/Delay/MaxBullet，对应 `agg+0x1c..+0x40`。即战车详情的聚合�
 QUERY/API/schema/wallet 写，不读发起方 current profile，不查未知技能表身份。任一必需字段缺失
 时该控件留空；合法 `0` 显示 `0`；没有源 setter 的进度不添。
 
+采用输入资格（终态）：
+
+- 战车三部件槽 offset `0x58/0x5c/0x60` 必须都有确认值；缺任一 offset 即该项 unknown、相关控件留空。
+- `itemId` 为 `0` 是空槽、无加成：不查 0 号物品定义、不当缺确认；任一槽可合法为 `0`，其余槽各按
+  自身取值；对应 `txtInternalPart` 名称留空，不写 `"0"`。
+- `skillId` 为 `0` 同样为空槽、无加成，不查 0 号技能定义、不当缺确认。
+- 非零 `itemId`/`skillId` 在本地目录查不到定义才是 unknown（该 item/skill 不贡献）；非零 `itemId`
+  缺目录时相关控件留空。
+- 已确认的被动技能定义（`triggerType===0`）中某属性未配置，是该属性按 `0` 累加；单属性未配置
+  不等于整组 unknown，也不影响其它属性或其它槽。
+
 战车：`base = HOME_TANK_PARAMETER_BASES[fields.get(0x24)]`（`[TankType,TankMove,TankTurn,TankDelay,
-TankBullet,SideDef,BackDef]`）。`itemBonus(attr)` = 遍历 `fields.get(0x58/0x5c/0x60)` 查目录物品，
-对其 `skillIds` 中被动技能（`triggerType===0`）累加 `skill.attributes[attr]`：
+TankBullet,SideDef,BackDef]`）。`itemBonus(attr)` = 按上述资格遍历 `fields.get(0x58/0x5c/0x60)`：
+`itemId===0` 跳过；非零 `itemId` 查目录 item，查不到即该项 unknown；对 item 的 `skillIds`，
+`skillId===0` 跳过，非零查不到 skill 即 unknown，查到且 `triggerType===0` 则累加
+`skill.attributes[attr] ?? 0`：
 
 - `txtPanzerSide = base[5] + itemBonus('SideDef')`（不夹取）
 - `txtPanzerBack = base[6] + itemBonus('BackDef')`
@@ -130,7 +143,7 @@ TankBullet,SideDef,BackDef]`）。`itemBonus(attr)` = 遍历 `fields.get(0x58/0x
 - `txtRotateSpeed = (base[2] + itemBonus('ItemTurn')) * 4 - 1`
 - `txtShootInterval = (base[3] + itemBonus('Delay')) * f32(0.1)`，`toFixed(1)`
 - `txtAttackLevel = fields.get(0x44)`、`txtPanzerLevel = fields.get(0x54)`、`txtSlot = fields.get(0x6c)`
-- `txtInternalPart{0,1,2} = 目录物品名(fields.get(0x58/0x5c/0x60))`
+- `txtInternalPart{0,1,2} = 目录物品名(fields.get(0x58/0x5c/0x60))`，槽 `0`/缺目录时名称空
 - `prgLoadingTime`：文本 `Math.round((base[3] + itemBonus('Delay')) * 2)`；进度 `(base[4] +
   itemBonus('MaxBullet')) * f32(1/6)`
 
@@ -141,6 +154,9 @@ Trade。已完成的四攻防字段（`txtAttack/txtAttackExtra/txtPanzer/txtPan
 宠物：`mastery = petShopMastery(fields.get(8))`（原 PetTable `+0x7c..+0x88` 定义值）。
 `prgLightTank/prgMediumTank/prgHeavyTank/prgCruiser = f32(mastery[0..3] * f32(0.2))`。定义 id
 缺失或目录无该宠物时四进度留空；空技能槽不显示 rank 沿现实现。
+
+进度数值使用原相应 f32 乘数/存储值（战车 `f32(1/6)`、宠物 `f32(0.2)`）；视觉 clip `0..1` 只限制
+绘图宽度，原数值/原文字值不 clip。
 
 部件：`txtType/edtDescription/txtDurable` 沿现实现；`shengyutianshu` 的单位字形不新增功能。
 
