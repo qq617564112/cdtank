@@ -50,12 +50,13 @@ export class BattleTankDecoration {
       const texturePath = this.texturePath;
       if (texturePath) {
         const texture = await new Promise<Texture>((resolve, reject) => {
-          const texture = new Texture(texturePath, this.scene, false, false,
-            Constants.TEXTURE_LINEAR_LINEAR, () => resolve(texture),
-            (_message, error) => {texture.dispose(); reject(error ?? new Error('饰品贴图载入失败'));});
+          const created = new Texture(texturePath, this.scene, false, false,
+            Constants.TEXTURE_LINEAR_LINEAR, () => resolve(created),
+            (_message, error) => {created.dispose(); reject(error ?? new Error('饰品贴图载入失败'));});
+          // Hand the in-flight texture to the owner before the load settles so a dispose can release it.
+          this.texture = created;
         });
         if (this.disposed) {texture.dispose(); return false;}
-        this.texture = texture;
         for (const material of assets.materials) {
           if (material instanceof PBRMaterial) material.albedoTexture = texture;
         }
