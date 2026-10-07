@@ -100,7 +100,7 @@ export function advanceGroundTraps(room: RoomState, now: number, events: MsgRoom
     const rule = trapRule(trap.itemTableId);
     if (!rule || rule.itemTableId === 3001) return false;
     if (now >= trap.expiresAt || !room.players.has(trap.ownerId)) return false;
-    if (trap.itemTableId === 3006 && 'healAmount' in rule) {
+    if ('healAmount' in rule) {
       const owner = room.players.get(trap.ownerId)!;
       const isRealAlly = (target: PlayerState) =>
         target.id === trap.ownerId || ([1, 2, 3].includes(room.mode) && target.team === trap.team);
