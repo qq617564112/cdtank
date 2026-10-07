@@ -9,7 +9,7 @@ import type {AmmoRadarJamState} from '../battle/items/ammo-radar-jam';
 import type {RoleDisguiseState} from '../battle/items/role-disguise';
 import type {MsgRoomSnapshot, PlayerSnapshot, MatchResult, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot, ScenePlantSnapshot, GroundTrapSnapshot, GroundItemSnapshot} from '../../../shared/protocols';
 import type {PlayerTitle} from '../../../shared/protocols/MsgRoomSnapshot';
-import {combatItems} from '../battle/catalog';
+import {equipmentTarget} from '../../../shared/combat/equipment-target';
 import {readOwnedTankTextures} from '../../../shared/combat/role-owned-textures';
 import type {RoleOwnedSources} from '../accounts/owned/receive-pair';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
@@ -24,7 +24,7 @@ interface SnapshotPlayer extends MovingParticipant {
   vip: boolean; objectivesDestroyed: number; cpu?: unknown; autopilot?: unknown;
   movementCommand?: number;
   inventory: InventoryWireRecord[];
-  ownedRoles: {snapshot(): RoleOwnedSources};
+  ownedRoles: {snapshot(): RoleOwnedSources; equipment?: () => {decorationInstanceId: number}};
   boundGear?: OwnedRoleBaseRecord;
   defenseBoost?: DefenseBoostState;
   attackBoost?: {skillId: number; expiresAt: number; attackPercent: number; attackBonus: number};
@@ -60,12 +60,11 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
   battleActive = true, now = Date.now()): PlayerSnapshot {
   const sources = player.ownedRoles.snapshot();
   const owned = sources.equipment;
-  const decorationInstanceId = owned?.fields.get(0x118) ?? 0;
-  const decorationRecord = decorationInstanceId === 0 ? undefined
-    : player.inventory.find(item => (item.instanceId >>> 0) === (decorationInstanceId >>> 0));
-  const decorationDefinition = decorationRecord && combatItems.get(decorationRecord.itemTableId);
-  const decoration = decorationRecord && decorationDefinition && decorationRecord.state === 2 && decorationRecord.ownedQuantity > 0
-    && (decorationDefinition as {equipmentTarget?: string}).equipmentTarget === 'DECORATION'
+  const appearanceInstanceId = player.ownedRoles.equipment?.().decorationInstanceId;
+  const decorationRecord = appearanceInstanceId === undefined || appearanceInstanceId === 0 ? undefined
+    : player.inventory.find(item => (item.instanceId >>> 0) === (appearanceInstanceId >>> 0));
+  const decoration = decorationRecord && decorationRecord.state === 2 && decorationRecord.ownedQuantity > 0
+    && equipmentTarget(decorationRecord.itemTableId) === 'DECORATION'
     ? {itemTableId: decorationRecord.itemTableId} : undefined;
   const skills = battleSkillSources(player);
   const movement = originalMovementParameters(player);
