@@ -333,6 +333,12 @@ def extract(batch):
     tiled = set()
     for index, cell in enumerate(batch['cells']):
         entry = textures[cell['source']]
+        if cell.get('reuseTile'):
+            destination = tile_path(batch, index)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / cell['reuseTile'], destination)
+            tiled.add(cell['source'])
+            continue
         box = [round(v * (sx if i % 2 == 0 else sy))
                for i, v in enumerate(cell.get('slotBox', cell['box']))]
         crop = image.crop(box)
