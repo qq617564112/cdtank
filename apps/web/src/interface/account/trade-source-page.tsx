@@ -2,6 +2,7 @@ import './trade-source-page.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {ReqTrade, ResTrade, TradeOffer, TradeParty, TradeRecordRef, TradeRecordView} from '../../../../shared/protocols/PtlTrade';
+import type {ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
@@ -15,6 +16,7 @@ import {TradeCandidateRowContent} from './trade-candidate-row-content';
 
 export interface TradeSourcePageProps {
   state: ResTrade; pending: boolean; status: string; act(request: ReqTrade): void; close(): void;
+  queryProfile(): Promise<ResRoleProfile>; accountGeneration: number;
 }
 type Tab = 'item' | 'equipment' | 'pet' | 'tank';
 const suffix = 'trade.xml';
@@ -43,7 +45,7 @@ const candidateRowData = (record: TradeRecordView): TradeCandidateRowData | unde
 };
 
 /** Source Trade regions consume confirmed party state; editable offers remain local drafts. */
-export function TradeSourcePage({state, pending, status, act, close}: TradeSourcePageProps) {
+export function TradeSourcePage({state, pending, status, act, close, queryProfile, accountGeneration}: TradeSourcePageProps) {
   const session = state.session;
   const own = session?.parties.find(party => party.accountId === state.account.accountId);
   const peer = session?.parties.find(party => party.accountId !== state.account.accountId);
@@ -58,6 +60,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
   const [draft, setDraft] = useState<TradeOffer>({money: 0, originality: 0, skillPoints: 0, records: []});
   const [amounts, setAmounts] = useState({money: '0', originality: '0', skillPoints: '0'});
   const [detail, setDetail] = useState<TradeRecordView>();
+  const [currentRoles, setCurrentRoles] = useState<{tank?: number; pet?: number}>();
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
   const dialog = useRef<HTMLDialogElement>(null);
   const retryFocus = useRef(false);
@@ -84,6 +87,19 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
       return confirmed ? current : undefined;
     });
   }, [confirmedRecords]);
+
+  useEffect(() => {
+    if (!open) {setCurrentRoles(undefined); return;}
+    let active = true;
+    queryProfile().then(result => {
+      if (!active) return;
+      const bytes = result.profile?.bytes;
+      if (!bytes) {setCurrentRoles(undefined); return;}
+      const view = new DataView(Uint8Array.from(bytes).buffer);
+      setCurrentRoles({tank: view.getUint32(0xa8, true), pet: view.getUint32(0xa4, true)});
+    }, () => {if (active) setCurrentRoles(undefined);});
+    return () => {active = false;};
+  }, [open, session?.id, accountGeneration, queryProfile]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -227,6 +243,10 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
             const display = tradeRecordPresentation(record, catalog);
             const selected = draft.records.find(value => keyOf(value) === keyOf(record));
             const rowData = candidateRowData(record);
+            const recordCurrent = record.kind === 'tank'
+              ? currentRoles?.tank !== undefined && (record.instanceId >>> 0) === currentRoles.tank
+              : record.kind === 'pet' ? currentRoles?.pet !== undefined && (record.instanceId >>> 0) === currentRoles.pet : false;
+            const recordOffered = draft.records.some(value => value.kind === record.kind && value.instanceId === record.instanceId);
             return <div key={keyOf(record)} className="trade-source-candidate" data-trade-candidate={keyOf(record)}>
               <button type="button" className="trade-source-candidate-row" role="option" aria-selected={!!selected}
                 aria-pressed={!!selected} disabled={!candidateAvailable(record)}
@@ -256,7 +276,8 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
                 }} onKeyUp={event => {
                   if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter', ' '].includes(event.key)) event.stopPropagation();
                 }}>
-                {catalog && rowData && <TradeCandidateRowContent ui={ui} catalog={catalog} record={record}/>}
+                {catalog && rowData && <TradeCandidateRowContent ui={ui} catalog={catalog} record={record}
+                  current={recordCurrent} offered={recordOffered}/>}
               </button>
               {(hasTradeRecordDetail(record) || selected && record.item && classifyInventoryCategory(record.item.itemTableId) <= 2)
                 && <div className="trade-source-candidate-actions">

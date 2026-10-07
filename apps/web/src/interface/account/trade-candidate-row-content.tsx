@@ -6,25 +6,32 @@ import {HomeEquipmentCommonRowContent} from '../home/home-equipment-common-row-c
 import {HomeItemRowContent} from '../home/home-item-row-content';
 import {HomeOwnedPetRowContent} from '../home/home-owned-pet-row-content';
 import {HomeOwnedTankRowContent} from '../home/home-owned-tank-row-content';
+import {HomeRoleRowStatusBadge} from '../home/home-role-row-status-badge';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 
 /** Confirmed Trade candidates reuse the existing Home row providers without changing ownership state. */
-export function TradeCandidateRowContent({ui, catalog, record}: {
-  ui: HomeSourceUi; catalog: CombatCatalog; record: TradeRecordView;
+export function TradeCandidateRowContent({ui, catalog, record, current, offered}: {
+  ui: HomeSourceUi; catalog: CombatCatalog; record: TradeRecordView; current?: boolean; offered?: boolean;
 }) {
   if (record.kind === 'tank') {
     const fields = new Map(record.role?.fields);
     const tankId = fields.get(0x24);
     const tankType = catalog.tankTypes?.find(value => value.tankId === tankId)?.tankType;
-    return <HomeOwnedTankRowContent ui={ui} name={record.role?.name ?? ''} tankId={tankId}
-      tankType={tankType} durationMinutes={fields.get(0x34)}/>;
+    return <>
+      <HomeOwnedTankRowContent ui={ui} name={record.role?.name ?? ''} tankId={tankId}
+        tankType={tankType} durationMinutes={fields.get(0x34)} current={current}/>
+      {!current && offered && <HomeRoleRowStatusBadge ui={ui} status="offered"/>}
+    </>;
   }
   if (record.kind === 'pet') {
     const fields = new Map(record.role?.fields);
     const petId = fields.get(8);
     const pet = catalog.petTypes?.find(value => value.petId === petId);
-    return <HomeOwnedPetRowContent ui={ui} name={record.role?.name ?? ''} petId={petId}
-      petType={pet?.petType} petSize={pet?.petSize}/>;
+    return <>
+      <HomeOwnedPetRowContent ui={ui} name={record.role?.name ?? ''} petId={petId}
+        petType={pet?.petType} petSize={pet?.petSize} current={current}/>
+      {!current && offered && <HomeRoleRowStatusBadge ui={ui} status="offered"/>}
+    </>;
   }
   const item = record.item;
   if (!item) return null;
