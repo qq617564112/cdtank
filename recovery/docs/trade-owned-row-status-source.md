@@ -117,8 +117,8 @@ OwnedTank/OwnedPet 的 N/B 推导。
 
 `4fc91f` 是 offer receive callback。它把收到的 offer 链表写入 `page+0x230`：
 
-- 节点 kind `0` 宠物：quantity `0`，instance=`record+0`，base/type=`record+8`。
-- 节点 kind `1` 战车：quantity `0`，instance=`record+0x1c`，base/type=`record+0x24`。
+- 节点 kind `0` 宠物：quantity `1`，instance=`record+0`，base/type=`record+8`。
+- 节点 kind `1` 战车：quantity `1`，instance=`record+0x1c`，base/type=`record+0x24`。
 - 节点 kind `2..8` 物品：quantity=`record+0x10`，instance=`record+4`，base/type=`record+c`。
 
 回调随后把 offer 的三个标量写到 `page+0x320`、`page+0x324`、`page+0x328`，并刷新页面。
@@ -180,13 +180,14 @@ const sameRecord = (a: TradeRecordRef, b: TradeRecordRef) =>
 3. N 优先于 B：同一 OwnedTank/OwnedPet 候选同时命中当前实例和本地 draft 时显示 N，不显示 B。
 4. 对方已展示报价只在 `peer.shown` 为 true 时读取 `peer.records`/`peer.offer.records`。
    `TradeParty.confirmed` 是独立确认标志，不能替换 B/N。
-5. 报文新 revision、session id 变化或确认 offer 变化时，按现有 `TradeSourcePage` 规则从
-   `own.offer` 重置本地 draft。UNSHOW、对方撤回/失败只清对方展示和确认状态，不清本地 draft。
+5. session id 变化或本方确认 offer 变化时，按现有 `TradeSourcePage` 规则从 `own.offer`
+   重置本地 draft；revision 只用于请求一致性。对方 SHOW、UNSHOW、单方 CONFIRM 或对方
+   撤回/失败只更新服务端展示和确认状态，不单独因 revision 变化清除未提交 draft。
    CANCEL、COMPLETED、关闭、断线会话结束后不把 B/N 留在新的会话视图。
 6. 不把候选 selected 状态冒名为 B；B/N 应各自有独立 badge/asset，并在同一行内按优先级显示。
 
 当前 confirmed fields 足够驱动双方 12 格视图、SHOW/CONFIRM/UNSHOW/CANCEL 门控和
-failure/revision 重置。B/N 是客户端派生状态；没有原服务端字段必须伪造。
+失败状态处理。B/N 是客户端派生状态；没有原服务端字段必须伪造。
 
 ## 可实施 UI 范围
 
