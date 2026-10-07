@@ -309,6 +309,7 @@ export class AccountStore {
     const summary = growth ? undefined : readPersistedPlayerSummary(this.database, targetAccountId);
     const title = this.currentTitle(targetAccountId);
     const awards = this.awardCounts(targetAccountId);
+    const family = this.family(targetAccountId);
     return {
       accountId: targetAccountId,
       name: this.displayName(targetAccountId),
@@ -318,6 +319,7 @@ export class AccountStore {
       ...(title ? {title} : {}),
       statistics: this.statistics(targetAccountId),
       ...(awards ? {awards} : {}),
+      ...(family ? {family} : {}),
     };
   }
 

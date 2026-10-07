@@ -291,7 +291,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 118,
+    "version": 119,
     "services": [
         {
             "id": 55,
@@ -7911,6 +7911,30 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Reference",
                         "target": "PtlRoleProfile/AwardCounts"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "family",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "id",
+                                "type": {
+                                    "type": "String"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "name",
+                                "type": {
+                                    "type": "String"
+                                }
+                            }
+                        ]
                     },
                     "optional": true
                 }

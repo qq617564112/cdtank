@@ -16,4 +16,8 @@ export interface ResPlayerProfile {
   title?: PlayerTitle;
   statistics?: AccountStatistics;
   awards?: AwardCounts;
+  family?: {
+    id: string;
+    name: string;
+  };
 }
