@@ -52,7 +52,7 @@
 | 16 | `txtPlayerName` | 当前用账户权威 display name；目标读取继续使用同一公开身份字段。 |
 | 17 | `txtLobbyName` | 源 `Visible=False`，保持隐藏。 |
 | 18 | `txtPlayerTitle` | 当前优先使用公开 friend/lobby/blacklist 行的 worn title，也接受目标公开资料查询的确认 title；未知保持空。 |
-| 19 | `txtPlayerFamily` | 无已确认 family 来源，保持空。不得由昵称/accountId/称号猜测。 |
+| 19 | `txtPlayerFamily` | 同一目标已确认 `PlayerProfile.family?.name` 显示于原位置；未查询、不传 query、确认无 family 或失败无已确认 family 时空。不得由昵称/accountId/称号猜测。 |
 | 20 | `txtPlayerOriginality` | 目标确认 profile 的 `playerSummary.originality`，或确认 `growth.originality`；无确认保持空，不补 0。 |
 | 21 | `txtPlayerTech` | 目标确认 profile 的 `playerSummary.tech`，或确认 `growth.tech`；无确认保持空。 |
 | 22 | `txtPlayerScore` | 目标确认 profile 的 `playerSummary.score`，或确认 `growth.rankPoints`；无确认保持空。 |
@@ -143,6 +143,7 @@ export interface ResPlayerProfile {
 | 姓名 | 公开身份行或 `PlayerProfile.name` | 空 |
 | 在线/房间状态 | 现有 presence/friend/blacklist 公开行 | 离线状态文字 |
 | 称号 | 公开行 worn title 或 `PlayerProfile.title` | 空 |
+| family | 目标确认 `PlayerProfile.family.name` | 空 |
 | level | 目标确认 growth | 空；当前只作 Web summary caption，不伪造 `picLevelIcon` |
 | score | 目标确认 growth rankPoints，回退确认 playerSummary score | 空 |
 | originality | 目标确认 growth，回退确认 playerSummary | 空 |
@@ -176,12 +177,12 @@ summary 只准备所选统计页实际需要的 `/ui.json` 图片：`prepareSour
 
 来源事实：三份 XML/`ui.json` 控件与几何；现有 `PtlFriends`、`PtlBlacklist`、`PtlLobbyPlayers`、`PtlRoleProfile` 字段；`AccountStore` 的 display name/title/growth/statistics/awards reader；现有资料页、目录页、好友/屏蔽/交易消费者。
 
-采用政策：`PlayerProfile` 作为目标账户只读公开资料查询，未知字段省略且不填 0；QQ 3 控件在缺原绑定/producer 时保持 source-only；`rdoBattleSummary`/`rdoAwardSummary` 通过 Web 父容器伴随页挂接既有 Home 原统计页并消费所选目标 response，不请求 owner history；迟到响应按代次隔离。以上政策不声称恢复原 server 资料查询、原 QQ 行为或原统计子页附着。
+采用政策：`PlayerProfile` 作为目标账户只读公开资料查询，未知字段省略且不填 0；family 只读确认目标当前归属 id/name，无 owner 默认、noquery 仍空，不改关系/QQ/介绍；QQ 3 控件在缺原绑定/producer 时保持 source-only；`rdoBattleSummary`/`rdoAwardSummary` 通过 Web 父容器伴随页挂接既有 Home 原统计页并消费所选目标 response，不请求 owner history；迟到响应按代次隔离。以上政策不声称恢复原 server 资料查询、原 QQ 行为或原统计子页附着。
 
 ## 未完成与未实测
 
 - 原 `btnQQ`、QQ 打开动作、外部 URI、联系人动作和目标 QQ 号 producer 未取得。
-- 原 family、描述、房号、宠物/坦克公开图标和 level icon producer 未取得。
+- 目标当前 family Web 映射已知并落地；原 family producer 未取得。描述、房号、宠物/坦克公开图标和 level icon producer 未取得。
 - 原统计子页在资料页的附着/偏移未取得；当前只有既有统计与奖章页面消费者。
 - `PlayerProfile`、目标字段显示、统计伴随页和局部 resource retry 已实现；真实页面、QQ popup、三分辨率、真实联机和持久重启仍未实测。
 - UI-41、UI-42、UI-43、M5-13 父项不得因本文关闭。

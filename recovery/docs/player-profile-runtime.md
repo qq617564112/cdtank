@@ -21,6 +21,10 @@ interface ResPlayerProfile {
   title?: PlayerTitle;
   statistics?: AccountStatistics;
   awards?: AwardCounts;
+  family?: {
+    id: string;
+    name: string;
+  };
 }
 ```
 
@@ -32,9 +36,12 @@ interface ResPlayerProfile {
 2. 读取已持久`account_growth`；存在时返回typed level/rankPoints/originality/skillPoints。
 3. 无growth row时只读已存原`role_profiles` summary，返回已确认score/originality/tech；不调用`DEFAULT_GROWTH`，不把未知成长填0，level保持省略。
 4. 读取`currentTitle`、`statistics`和`awardCounts`。title缺省省略；statistics走现有历史聚合；awards只在存在真实award行时返回。
-5. 响应只含公开窄字段，不含raw profile bytes、strings、token、好友/黑名单关系、聊天内容或QQ字段。
+5. family经现`FamilyStore.family(targetAccountId)`读取目标当前归属，仅在存在时返回`{id,name}`；不使用认证owner归属或默认猜值。
+6. 响应只含公开窄字段，不含raw profile bytes、strings、token、好友/黑名单关系、聊天内容或QQ字段。
 
-统计聚合保留真实零：history aggregate wins/losses/draws等可为0并显示0。旧history行缺可选`roundStats`时，shots/hits/damage/killCombo按unknown省略；缺awards时奖章计数保持unknown。`battleSeconds`沿既有`account_title_playtime`。共享schema当前版本为112。
+统计聚合保留真实零：history aggregate wins/losses/draws等可为0并显示0。旧history行缺可选`roundStats`时，shots/hits/damage/killCombo按unknown省略；缺awards时奖章计数保持unknown。`battleSeconds`沿既有`account_title_playtime`。
+
+`ResPlayerProfile`在property id0..8后手工追加property id9 `family`（内联对象id0 `id`、id1 `name`）。手工serviceProto增量保留`PlayerProfile` api57与现新增`PlayerSearch` api64，version递增至120；不运行protocolgenerator。
 
 ## 客户端
 
@@ -58,6 +65,6 @@ interface ResPlayerProfile {
 
 ## 未恢复与未实测
 
-原`btnQQ`、QQ小页调用、外部URI、联系人动作和QQ号producer未取得；当前不显示QQ空popup，也不访问外链。family、原个人介绍、房号、公开宠物/坦克图标、level icon和原公开role icon producer保持unknown，不猜填。
+原`btnQQ`、QQ小页调用、外部URI、联系人动作和QQ号producer未取得；当前不显示QQ空popup，也不访问外链。原个人介绍、房号、公开宠物/坦克图标、level icon和原公开role icon producer保持unknown，不猜填。目标当前family Web映射已知并落地，原public family producer仍未恢复；等待房间不传query保持空family，不虚构房间账户关联。
 
 原资料页统计子页附着/偏移未恢复；当前为Web父容器伴随页。目标字段显示、generation、error retry、resource失败、真实页面、真实联机、持久重启和HD仍未实测或验收。M5-13/M6-09/UI-41/UI-42/UI-43完整父项保持未勾。
