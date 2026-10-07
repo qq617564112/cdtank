@@ -16,9 +16,24 @@ Func20只负责地面拾取数量入账：服务端沿既有ground acquire账户
 API58/共享 schema114，只接受 exact `20001/20002`。普通 Home 贵重页双击或 Enter 进入
 数量弹窗，先 `QUERY` 只读 quote，再以同实例/数量 requestId `SELL`；成功只安装确认
 inventory/money/profile。部分出售保留实例，完全出售清全部贵重品 hotkey 引用并移除
-页面行；本机 cursor 按确认 inventory 重算。`SELL` 门禁只作用于出售，非 `WAITING` 沿现
-kind3 资格拒绝，成功后在 `WAITING` 重绑 inventory、取消 ready 并广播，`QUERY` 纯读；
-同 requestId/instance/quantity 重放沿用 receipts 与当前投影，不二次结算。
+页面行；本机 cursor 按确认 inventory 重算。`SELL` 按该账户全部当前实际 room session
+执行账户级门禁：无 room 或所有 `WAITING` 可出售，任一 `LOADING/PLAYING/FINISHED`
+拒绝；`QUERY` 任意阶段纯读。首次成功把同一确认 inventory 安装到全部允许的当前 player，
+全部取消 Ready，并按 `roomId` 去重各广播一次；历史 receipt replay 不重新取消 Ready，
+无关账户不写。同 requestId/instance/quantity 重放沿用 receipts 与当前投影，不二次结算。
+
+Web 请求 owner 取真实 `GameConnection` 认证结果和连接世代；显式登录和
+`ensureConnected` 自动认证同源。发送 `ValuableItemSale` 前完成真实连接准备并核捕获身份，
+跨页共享 token 由 A 变为 B 后不能把 A 的 pending 发到 B，旧查询和 confirmed projection
+也不能装入新账户。已发送但结果不确定的 pending 用保存的 instance/quantity/requestId
+独立确认，不因当前 quote、剩余数量或行已删除阻塞原 receipt；成功或明确未成交才释放。
+room/round/stage 转换使旧显示世代失效并关闭数量弹窗，同 owner 未确定 pending 保留，
+不允许阶段不发新 `SELL`，回可售阶段按原编号确认。普通 Inventory 刷新不得迟到覆盖
+confirmed projection。
+
+共享原 9 控件数量弹窗的根 CSS 同时覆盖 kind3/kind5，保持原零 padding、无浏览器默认
+border/背景、原字体和 overflow；两个业务的独立 RPC 与 pending 不混用。API58/schema114
+的两 ID 售价为 `0`，仍原子扣量并写 receipt；profile 的其它装备字段不清。
 
 原 receiver 在类别 6 部分出售时只扣数量且不清资料引用，不能把当前服务端采用的
 mutex、receipt 或完整 hotkey 清理宣称为原 Windows 等价行为。

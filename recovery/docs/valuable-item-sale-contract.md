@@ -23,9 +23,20 @@ M6-06。原495e90的kind5调用494bad(instance,quantity)，只接受4396e0类别
 
 原 receiver 在类别 6 部分出售后只扣 `MyItem+10` 的旧行为不是本次终态。当前采用规则把
 已绑定真实 hotkey 的实例 `battleQuantity` 置为剩余 owned，未绑定为 `0`；完全出售清
-hotkey 引用，不改皮肤、装饰、标记或部件 selector。成功 `SELL` 在 `WAITING` 绑定确认
-inventory、取消 ready 并广播；非 `WAITING` 沿现 kind3 资格拒绝，`QUERY` 纯读。
+hotkey 引用，不改皮肤、装饰、标记或部件 selector。
+
+Web 采用规则：`SELL` 先按认证映射收集该账户全部当前实际 room session；无 room 或全部
+`WAITING` 允许，任一 `LOADING/PLAYING/FINISHED` 拒绝。首次成功且未 replay 时，将同一
+确认 inventory 安装到全部允许的当前 player，全部取消 Ready，并按真实 `roomId` 去重各
+广播一次；历史 receipt replay 不重新取消 Ready。`QUERY` 任意阶段纯读，无 room 不写。
 原 Windows 服务端 dispatcher、原 receiver 未命名字段和支付/授权实现仍未取得。
+
+Web 消费以真实 `GameConnection` 认证结果和连接世代为 owner 身份，显式登录与自动
+`ensureConnected` 认证同源；RPC 前按捕获身份核连接，旧账户查询、pending 和 confirmed
+projection 不写入新账户。结果不确定的已发送 pending 用保存的 instance/quantity/requestId
+独立重放，即使剩余不足或行已删除也能确认原 receipt；成功或明确未成交才释放。room、round
+或阶段转换使显示世代失效并关闭数量弹窗，同 owner 未确定 pending 保留但不自动在不可售
+阶段发新 `SELL`。普通 Inventory 刷新不得以迟到响应覆盖确认投影。
 
 既有正式 Skill 目录中，`20001/20002` 为 Trigger1、Target1、Func20，参数分别 T1/T2、
 X1、Y20001/Y20002；同物件第二技能 30005 为 Trigger1、Func2、HP30。物件描述 15 与技能

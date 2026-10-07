@@ -139,21 +139,23 @@ Partial 的 `battleQuantity` 采用当前 confirmed consumable policy，而不�
 
 ## room、trade 与生命周期
 
-`SELL` 的 allowed current room stage 与现 kind3 保持一致：
+`SELL` 按 `identities` 收集该账户的全部当前实际 room session，执行账户级阶段门禁：
 
-- 无房间 session：允许出售，账户投影为持久 owned。
-- 有房间 session：仅 `world.canConfigureInventory(playerId) === true`，即 `WAITING`；
-  `LOADING/PLAYING/FINISHED` 拒绝，错误 code 为 `VALUABLE_ITEM_SALE_REJECTED`。
+- 无 room 或所有对应 player 的 `world.canConfigureInventory(playerId) === true`
+  （均 `WAITING`）时允许出售。
+- 任一当前 session 处于 `LOADING/PLAYING/FINISHED` 时拒绝，错误 code 为
+  `VALUABLE_ITEM_SALE_REJECTED`。
 - `QUERY` 在任意 room stage 只读当前投影，不改库存。
 
 交易互斥在 `SELL` 前执行：若该账户在 `registerTradeApi` 的 active trade session 中，
 返回交易未结束错误，不与 `Trade` 的 `prepare/settle` 并发写同一账户。该门禁复用
 现有 trade 状态，不复制 `Trade` session，也不改变旧 `StackItemSale` 或旧注册模块资格。
 
-成功 `SELL` 且存在房间 session 时，服务端调用
-`world.bindInventory(session.playerId, accounts.inventory(accountId), true)` 并广播房间状态。
-`true` 沿用 kind3 出售后取消 WAITING ready 的现规则。`BattleItemInventory` 通过
-`inventoryChanged`/刷新安装新 owned；不得用响应前猜测的 count 覆盖。
+首次成功 `SELL` 且 `sold && !replayed` 时，服务端读取同一份确认 inventory，逐当前该账户
+允许配置的 player 调用 `world.bindInventory(playerId, inventory, true)`，取消其 Ready，
+并按真实 `roomId` 去重后各广播一次房间状态。无关联账户或 room 不写；历史 receipt replay
+只返回历史 sold 与当前投影，不重新取消 Ready、不重新广播。`BattleItemInventory` 通过
+`inventoryChanged`/刷新安装同一确认 owned；不得用响应前猜测的 count 覆盖。
 
 `selectedItemSlot` 是客户端本机 cursor，不是账户字段。实例完全删除或
 `battleQuantity=0` 后，`BattleItemInventory.resolveCursor` 按确认 inventory 重算；
@@ -185,21 +187,31 @@ transport、pending owner 和 receiver 消费者，不扩旧 class3 receiver，�
 
 UI 状态机要求：
 
-- owner 持有 `pending?: ReqValuableItemSale` 与 `inFlight?: Promise<ResValuableItemSale>`，
-  按实际当前连接/账户 source 身份隔离。换账户时不能继承旧 pending；同一账户跨关闭重开且
-  请求结果仍不确定时保留同一 requestId，直到确认成功、明确失败或无歧义取消。
+- owner 身份来自 `GameConnection` 的真实认证结果与连接世代；显式登录和
+  `ensureConnected` 自动认证同源。发送 `ValuableItemSale` 前先完成真实连接准备并核对
+  捕获身份；身份或世代变化时拒绝旧请求，并使旧 QUERY、confirmed projection 与 pending
+  不能写入新账户。跨页共享 token 由 A 变为 B 后自动重连，不能把 A 的 pending 发到 B。
 - 行双击或 Enter 使用 `activation {instanceId, sequence}`；同一 `sequence` 只处理一次。
 - 打开前先 QUERY `ValuableItemSale`，只允许 quote 中 exact ID 且 `canSell` 的实例。
 - 数量输入只接受整数 `1..min(ownedQuantity,0xffffff)`；单价恒 `0`。
-- 确认时若 pending 的 instance/quantity 不同，创建新 requestId；失败重试保留同一
-  requestId，直到成功或明确取消。
-- busy/locked 时重复确认、重复 Enter、重复双击不派发第二次请求。
+- 真正的新出售按当前 quote 与数量门禁创建请求。已发送但结果不确定的 pending 使用保存的
+  `instanceId/quantity/requestId` 单独确认；即使当前剩余不足原数量、原行已经删除，也按原
+  requestId 重放并消费历史 sold 与当前投影，不以当前 quote、剩余量或行存在阻止确认。
+- 确认成功或服务端明确未成交后释放 pending。关闭数量弹窗或取消不丢未确定请求；同
+  instance/quantity 的 busy 重复确认不派发第二次请求。
 - 成功只安装返回的完整 inventory、money、profile 与新 quotes，刷新当前 Home；不得先
   乐观减 count 或先乐观改 wallet。零价出售不改钱包数值。
-- 成功收据必须是 `sold.result===2`，且 instance/quantity 与请求一致；否则视为未确认。
+- 成功收据必须是 `sold.result===2`，且 instance/quantity 与请求一致；否则仍视为未确认。
 - 部分出售后列表行按服务器 count 更新；完全出售后行移除、弹窗关闭。
-- 取消、切换 weapon/item/valuable tab、关闭 Home、连接变化、room 转换和 query
-  generation 变化都忽略晚返回的旧响应。
+- 沿现 `battle.matchPanel` 订阅 room/round/stage；转换时使 query/sale 显示世代失效、
+  关闭数量弹窗并释放页面 lock。同 owner 的未确定 pending 保留；转到不允许阶段不发新
+  `SELL`，回到可售阶段后再按原编号确认。普通 Inventory 刷新沿用同一确认 authority，
+  迟到响应不能覆盖当前 confirmed projection。
+- 取消、切换 weapon/item/valuable tab、关闭 Home、连接变化以及旧 query/sale generation
+  的晚返回都不得写入；连接变化同时清理旧账户的显示状态。
+- 数量确认复用原 `userinput_dialog.xml` 的 9 项控制。共享 dialog 的根 class/CSS 同时覆盖
+  kind3 与 kind5，保留零 padding、无浏览器默认 border/背景、原字体与 overflow；两类出售
+  的 RPC、pending owner 和 receiver 保持独立。
 - 失败状态走现有 `SourceFeedbackText`；不把失败当成功、不更新余额或库存。
 
 ## 限制

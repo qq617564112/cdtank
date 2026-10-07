@@ -13,6 +13,19 @@ Home 贵重页：双击或 Enter 打开原数量弹窗，确认后发送 `Valuab
 数量限 `1..min(ownedQuantity,0xffffff)`，单价为 `0`。部分出售保留实例并更新服务端数量，
 完全出售移除页面行与快捷槽引用；失败走现反馈且不乐观扣量或改钱包。绑定后的
 `battleQuantity` 按当前 adopted consumable policy 使用真实剩余 owned，未绑定为 `0`。
+真正的 `SELL` 按 account 全部当前 room session 的 `WAITING` 门禁；首次成功把同一确认
+inventory 安装到全部允许 player、全部取消 Ready 并按 room 广播，replay 不重复。
+
+请求 owner 取真实 `GameConnection` 认证结果与连接世代，显式登录和自动重连同源；发送
+前核身份，A→B 共享 token 重连不能把 A 的 pending 发到 B，旧查询或确认也不装入新账户。
+已发送但结果不确定的 pending 保留 instance/quantity/requestId，用独立 receipt 重放确认，
+不因当前剩余不足或行已删除阻塞；成功或明确未成交才释放。room/round/stage 变化使旧显示
+世代失效并关闭数量弹窗，未确定 pending 留在同 owner，不允许阶段不发新 `SELL`，回可售
+阶段再按原编号确认。普通 Inventory 迟到刷新不能覆盖确认投影。
+
+共享数量弹窗的根 CSS 同时覆盖 kind3 与 kind5，保留原 9 项控件、零 padding、原字体和
+overflow；两个业务的 RPC 与 pending 仍独立。API58/schema114 只处理两 ID，售价为 `0` 但
+原子扣量并写 receipt，不清 profile 中其它装备字段。
 
 [具名来源](../output/valuable-item-sale-consumer-source.json)保存同实例查询、数量谓词和
 派发分支；原 kind5 来源事实保持原样。
