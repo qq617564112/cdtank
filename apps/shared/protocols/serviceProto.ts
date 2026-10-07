@@ -286,7 +286,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 116,
+    "version": 117,
     "services": [
         {
             "id": 55,
@@ -2641,6 +2641,27 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "type": "Boolean"
                     },
                     "optional": true
+                },
+                {
+                    "id": 48,
+                    "name": "decoration",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/TankDecorationSnapshot"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "MsgRoomSnapshot/TankDecorationSnapshot": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "itemTableId",
+                    "type": {
+                        "type": "Number"
+                    }
                 }
             ]
         },

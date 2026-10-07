@@ -98,11 +98,18 @@ export interface PlayerSnapshot {
   title?: PlayerTitle;
   /** Current server-side2010 radar interference; only tactical enemy minimap markers are suppressed. */
   radarJammed?: boolean;
+  /** Confirmed decoration model identity; present only when the equipped slot resolves in room inventory. */
+  decoration?: TankDecorationSnapshot;
 }
 
 export interface PlayerTitle {
   id: number;
   name: string;
+}
+
+/** Public decoration model identity; instance ownership and profile bytes stay server-side. */
+export interface TankDecorationSnapshot {
+  itemTableId: number;
 }
 
 export interface ObjectiveSnapshot {
