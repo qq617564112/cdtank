@@ -265,8 +265,24 @@ class Renderer:
         code = f"{int(label.split()[-1]):03d}"
         destination = assets / group / 'thumbnails' / (code+'.png')
         destination.parent.mkdir(parents=True, exist_ok=True)
-        self.render(geometry, 1024, hd=True, transparent=True).save(destination)
+        portrait = self.render(geometry, 1024, hd=True, transparent=True)
+        portrait.save(destination)
         published.append(destination)
+        inventory = json.loads((self.art / 'inventory.json').read_text())
+        textures = {entry['source']: entry for entry in inventory['textures']}
+        ui = json.loads((self.assets / 'ui.json').read_text())
+        for imageset in ui['imagesets']:
+            for image in imageset['images']:
+                name = image['Name'].replace('\\', '/').lower()
+                match = re.search(r'/tanke/(\d+)\.tga$', name) if group == 'tanks' else re.search(r'/gy/maogou_(\d+)\.tga$', name)
+                if not match or int(match[1]) != int(code):
+                    continue
+                entry = textures[image['asset']]
+                delivered = self.root / entry['png']
+                delivered.parent.mkdir(parents=True, exist_ok=True)
+                portrait.resize(tuple(size * 4 for size in entry['size']), Image.Resampling.LANCZOS).save(delivered)
+                installed = self.assets / image['asset']
+                installed.write_bytes(delivered.read_bytes())
         if group == 'tanks':
             definition = json.loads((self.root / 'apps/shared/content/definitions/tanks' / (str(int(code))+'.json')).read_text())
             components = definition['resources']['components']
@@ -315,7 +331,7 @@ class Renderer:
             if not record.get('enabled', 1):
                 continue
             path = record.get('asset')
-            if not path and record in scene.get('castles', []):
+            if record in scene.get('castles', []):
                 path = f"Data/scnobj/{record['model']}/n1.glb"
             if path:
                 transform = np.array(record['matrix']).reshape((4, 4), order='F').copy()

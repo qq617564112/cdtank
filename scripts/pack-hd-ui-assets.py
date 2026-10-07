@@ -120,7 +120,8 @@ def main():
     plan_path = root / 'art/hd-assets/plan.json'
     plan = json.loads(plan_path.read_text())
     textures = {entry['source']: entry for entry in inventory['textures']}
-    unique = {entry['canonical']: entry for entry in inventory['textures'] if 'ui' in entry['groups']}
+    unique = {entry['canonical']: entry for entry in inventory['textures']
+              if 'ui' in entry['groups'] and not entry.get('derived')}
     fonts = font_entries(root, textures)
     # Keep every batch of a font together once any output or tile is saved.
     retained_fonts = set()

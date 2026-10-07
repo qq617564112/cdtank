@@ -130,8 +130,11 @@ def main():
                     and installed.is_file() and installed.read_bytes() == delivered.read_bytes()):
                 replacements[entry['source'].lower()] = entry
     selected_paths = {entry['source'].lower() for entry in completed}
+    selected_directories = {str(PurePosixPath(path).parent) for path in selected_paths}
     model_count = 0
     for source in inventory.get('models', []):
+        if str(PurePosixPath(source.lower()).parent) not in selected_directories:
+            continue
         target = runtime / source
         snapshot = root / 'art/hd-assets/original-models' / source
         original = snapshot.read_bytes() if snapshot.exists() else target.read_bytes()
@@ -151,6 +154,16 @@ def main():
         target = runtime / entry['source']
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / entry['png'], target)
+    # Shared UI parts and locally composed backgrounds are consumed directly.
+    for source in (root / 'art/hd-ui/png').rglob('*.png'):
+        target = runtime / 'hd-ui' / source.relative_to(root / 'art/hd-ui/png')
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+    local_ui = root / 'art/hd-local-ui/png'
+    for name in ('lobby-logo.png', 'normal-cursor-hd.png', 'client-icon.ico'):
+        source = local_ui / name
+        if source.is_file():
+            shutil.copyfile(source, root / 'apps/web/src/assets/ui' / name)
     print(f'Installed {len(completed)} PNGs, {model_count} models; '
           f'skipped {len(selected) - len(completed)} incomplete PNGs')
 
