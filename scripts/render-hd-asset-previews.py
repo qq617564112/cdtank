@@ -7,11 +7,12 @@ import argparse
 from functools import lru_cache
 import io
 import json
+import re
 from pathlib import Path
 import struct
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 
 def accessor(meta, binary, index):
@@ -102,13 +103,15 @@ class Renderer:
             return np.asarray(Image.open(io.BytesIO(binary[offset:offset+view['byteLength']])).convert('RGBA'), dtype=np.float32) / 255
         return np.ones((1, 1, 4), dtype=np.float32)
 
-    def geometry(self, entries):
+    def geometry(self, entries, excluded=None):
         primitives = []
         for path, placement, overrides in entries:
             meta, binary = self.model(path)
 
             def visit(index, parent):
                 node = meta['nodes'][index]
+                if excluded and node.get('name') == excluded:
+                    return
                 transform = parent @ node_matrix(node)
                 if 'mesh' in node:
                     mesh = meta['meshes'][node['mesh']]
@@ -137,9 +140,9 @@ class Renderer:
                 visit(index, placement)
         return primitives
 
-    def render(self, primitives, size, hd=False, top=False):
+    def render(self, primitives, size, hd=False, top=False, transparent=False, bounds=None, padding=None):
         if top:
-            camera = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+            camera = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
         else:
             direction = np.array([1., .8, 1.])
             direction /= np.linalg.norm(direction)
@@ -147,10 +150,19 @@ class Renderer:
             right /= np.linalg.norm(right)
             camera = np.array([right, np.cross(direction, right), direction])
         projected = [p[0] @ camera.T for p in primitives]
-        bounds = np.concatenate(projected)
-        center = (bounds[:, :2].min(0) + bounds[:, :2].max(0)) / 2
-        scale = size * (.98 if top else .84) / max(np.ptp(bounds[:, :2], axis=0).max(), 1e-6)
-        pixels = np.full((size, size, 3), [.16, .20, .24], dtype=np.float32)
+        vertices = np.concatenate(projected)
+        if bounds is None:
+            center = (vertices[:, :2].min(0) + vertices[:, :2].max(0)) / 2
+            span = max(np.ptp(vertices[:, :2], axis=0).max(), 1e-6)
+            scale = size * (padding if padding is not None else (.98 if top else .84)) / span
+        else:
+            min_x, max_x, min_z, max_z = bounds
+            center = np.array([(min_x+max_x)/2, (min_z+max_z)/2])
+            scale = np.array([size/(max_x-min_x), size/(max_z-min_z)])
+        pixels = np.zeros((size, size, 4), dtype=np.float32)
+        if not transparent:
+            pixels[..., :3] = [.25, .36, .44] if top else [.16, .20, .24]
+            pixels[..., 3] = 1
         depth = np.full((size, size), -np.inf)
         triangles = []
         for primitive, positions in zip(primitives, projected):
@@ -203,7 +215,11 @@ class Renderer:
             light = 1 if top else .8 + .2 * abs(normal @ np.array([.3, .9, .3]))
             target = pixels[lo[1]:hi[1]+1, lo[0]:hi[0]+1]
             alpha = rgba[..., 3:4]
-            target[visible] = (rgba[..., :3]*light*alpha + target*(1-alpha))[visible]
+            out_alpha = alpha + target[..., 3:4]*(1-alpha)
+            rgb = (rgba[..., :3]*light*alpha + target[..., :3]*target[..., 3:4]*(1-alpha))
+            rgb /= np.maximum(out_alpha, 1e-9)
+            target[visible, :3] = rgb[visible]
+            target[visible, 3] = out_alpha[..., 0][visible]
             if mode != 'BLEND':
                 target_depth[visible] = z[visible]
         return Image.fromarray(np.uint8(np.clip(pixels, 0, 1)*255))
@@ -229,6 +245,65 @@ class Renderer:
                         entries.append((action['model'], np.eye(4), overrides))
             yield f"{group} {definition['id']}", entries
 
+    def map_bounds(self, map_id):
+        source = (self.root / 'apps/web/src/interface/battle/hud-minimap-bounds.ts').read_text()
+        match = re.search(r'\b' + str(int(map_id)) + r':\s*\{([^}]+)\}', source)
+        if match is None:
+            raise ValueError(f'Map {map_id} has no authored HUD bounds')
+        values = dict(re.findall(r'(minX|maxX|minZ|maxZ):\s*([-\d.]+)', match[1]))
+        return tuple(float(values[key]) for key in ('minX', 'maxX', 'minZ', 'maxZ'))
+
+    def publish(self, group, label, entries, geometry, map_id=None):
+        assets = self.root / 'apps/web/src/assets'
+        published = []
+        if map_id:
+            destination = assets / 'maps/minimaps' / (map_id+'.png')
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            self.render(geometry, 1024, hd=True, top=True,
+                        bounds=self.map_bounds(map_id)).save(destination)
+            return [destination]
+        code = f"{int(label.split()[-1]):03d}"
+        destination = assets / group / 'thumbnails' / (code+'.png')
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        self.render(geometry, 1024, hd=True, transparent=True).save(destination)
+        published.append(destination)
+        if group == 'tanks':
+            definition = json.loads((self.root / 'apps/shared/content/definitions/tanks' / (str(int(code))+'.json')).read_text())
+            components = definition['resources']['components']
+            separate = any(c['part'] == 'U' and c['actions'] for c in components)
+            mini_entries = []
+            for path, transform, overrides in entries:
+                component = next(c for c in components if any(a.get('model') == path and a['fields']['name'] == '01' for a in c['actions']))
+                transform = transform.copy()
+                if not separate or component['part'] == 'U':
+                    transform[:3, :3] *= 1.5
+                    if separate:
+                        action = next(a for a in component['actions'] if a['fields']['name'] == '01')
+                        pivot = action.get('turretPivot', [0, 0, 0])
+                        transform[:3, 3] = np.array(pivot) * -.5
+                        transform[1, 3] = 0
+                mini_entries.append((path, transform, overrides))
+            image = self.render(self.geometry(mini_entries), 1024, hd=True, top=True,
+                                transparent=True, padding=1/1.12)
+            bounds = image.getchannel('A').getbbox()
+            if bounds is None:
+                raise ValueError(f'Tank {code} has no visible minimap pixels')
+            image = image.crop(bounds)
+            image.thumbnail((896, 896), Image.Resampling.LANCZOS)
+            canvas = Image.new('RGBA', (1024, 1024))
+            canvas.alpha_composite(image, ((1024-image.width)//2, (1024-image.height)//2))
+            mask = canvas.getchannel('A').point(lambda value: 255 if value >= 128 else 0)
+            outer = mask.filter(ImageFilter.MaxFilter(97))
+            for side, colour in {'self': (255, 255, 255), 'enemy': (255, 80, 80), 'friend': (80, 160, 255)}.items():
+                icon = Image.new('RGBA', canvas.size, (*colour, 0))
+                icon.putalpha(outer)
+                icon.alpha_composite(canvas)
+                destination = assets / 'tanks/minimap-icons' / (code+'-'+side+'.png')
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                icon.resize((256, 256), Image.Resampling.LANCZOS).save(destination)
+                published.append(destination)
+        return published
+
     def map_items(self, map_id):
         scenes = json.loads((self.assets / 'scene-placements.json').read_text())
         scene = next(scene for scene in scenes if scene['id'] == map_id)
@@ -253,6 +328,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parent.parent)
     parser.add_argument('--group', default='tanks', help='tanks, pets, or map-ID')
+    parser.add_argument('--publish', action='store_true', help='refresh native model thumbnails and minimap images from HD textures')
     parser.add_argument('--map', dest='map_id', help='scene-placements map ID')
     parser.add_argument('--size', type=int, default=512, help='pixels per original/HD view')
     args = parser.parse_args()
@@ -265,12 +341,17 @@ def main():
     sheet = Image.new('RGB', (args.size*2, (args.size+28)*len(items)), '#29333d')
     draw = ImageDraw.Draw(sheet)
     for row, (label, entries) in enumerate(items):
-        geometry = renderer.geometry(entries)
+        excluded = {'0009': 'plane02/1', '0015': 'plane01/23', '0018': 'plane01/19'}.get(map_id)
+        geometry = renderer.geometry(entries, excluded=excluded)
         for column, hd in enumerate((False, True)):
-            image = renderer.render(geometry, args.size, hd=hd, top=bool(map_id))
+            image = renderer.render(geometry, args.size, hd=hd, top=bool(map_id),
+                                    bounds=renderer.map_bounds(map_id) if map_id else None)
             x, y = column*args.size, row*(args.size+28)
             draw.text((x+8, y+8), label + (' / HD' if hd else ' / Original'), fill='white')
             sheet.paste(image, (x, y+28))
+        if args.publish:
+            for path in renderer.publish(group, label, entries, geometry, map_id):
+                print(path, flush=True)
         print(label, flush=True)
     destination = renderer.art / 'previews' / (group+'.png')
     destination.parent.mkdir(parents=True, exist_ok=True)
