@@ -38,7 +38,7 @@ query identity 变化时重跑；`active` liveness 在 close、换会话、世�
 无确认 profile 或 QUERY 失败时保持无 N，不阻塞 Trade 业务，也不新增 poll、缓存、query 写
 参数或 UI gate。
 
-B/N 随本地 draft 生命期：确认 offer/revision/session 变化按既有 `own.offer` 重置，UNSHOW
+B/N 随本地 draft 生命期：仅 session id 或本方确认 offer 变化时按既有 `own.offer` 重置本地 draft，revision 用于请求一致性；对方 SHOW/UNSHOW 或单方 CONFIRM 增 revision 但本方 offer 不变时保留 draft，UNSHOW
 与对方撤回保留本地 draft，CANCEL/COMPLETED/关闭/断线会话结束后不延续 B/N。既有 Trade
 事务、金额/数量编辑、12 提供物与资源 retry 行为保持不变。
 
