@@ -103,11 +103,19 @@ export class LegacyScreenEffectBackend implements EffectScreenBackend {
   }
 
   private createWhiteTexture(): Texture {
-    const texture = RawTexture.CreateRGBATexture(new Uint8Array([255, 255, 255, 255]), 1, 1,
-      this.scene, false, false, Texture.NEAREST_SAMPLINGMODE);
-    texture.name = 'legacy-screen-white';
-    this.whiteTexture = texture;
-    return texture;
+    const existing = new Set(this.scene.textures);
+    try {
+      const texture = RawTexture.CreateRGBATexture(new Uint8Array([255, 255, 255, 255]), 1, 1,
+        this.scene, false, false, Texture.NEAREST_SAMPLINGMODE);
+      texture.name = 'legacy-screen-white';
+      this.whiteTexture = texture;
+      return texture;
+    } catch (error) {
+      for (const texture of this.scene.textures) {
+        if (!existing.has(texture)) texture.dispose();
+      }
+      throw error;
+    }
   }
 
   private releaseActive(): void {

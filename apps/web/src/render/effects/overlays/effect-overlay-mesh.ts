@@ -23,24 +23,34 @@ export class EffectOverlayMesh {
     if (states.get('AlphaTestEnable') === 'TRUE') throw new Error('Unsupported screen effect alpha test');
     texture.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
     texture.wrapU = texture.wrapV = Texture.CLAMP_ADDRESSMODE;
-    this.material = new ShaderMaterial('original-screen-effect', scene, {
-      vertexSource: 'precision highp float; attribute vec3 position; attribute vec2 uv; attribute vec4 color; uniform vec2 viewport; varying vec2 vUV; varying vec4 vColor; void main(){gl_Position=vec4(position.x*2.0/viewport.x-1.0,1.0-position.y*2.0/viewport.y,position.z*2.0-1.0,1.0);vUV=uv;vColor=color;}',
-      fragmentSource: 'precision highp float; varying vec2 vUV; varying vec4 vColor; uniform sampler2D effectTexture; void main(){gl_FragColor=texture2D(effectTexture,vUV)*vColor;}',
-    }, {attributes: ['position', 'uv', 'color'], uniforms: ['viewport'], samplers: ['effectTexture'], needAlphaBlending: true});
-    this.material.setTexture('effectTexture', texture);
-    this.material.backFaceCulling = cull !== 'NONE';
-    // GBF names the culled winding; Babylon names the retained front face.
-    this.material.sideOrientation = cull === 'CCW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
-    this.material.disableDepthWrite = true;
-    this.material.depthFunction = Constants.ALWAYS;
-    this.material.transparencyMode = Material.MATERIAL_ALPHABLEND;
-    this.material.alphaMode = Constants.ALPHA_COMBINE;
-    this.mesh = new Mesh('original-screen-effect', scene);
-    this.mesh.material = this.material;
-    this.mesh.alwaysSelectAsActiveMesh = true;
-    this.mesh.isPickable = false;
-    scene.setRenderingAutoClearDepthStencil(2, false);
-    this.mesh.renderingGroupId = 2;
+    let material: ShaderMaterial | undefined;
+    let mesh: Mesh | undefined;
+    try {
+      material = new ShaderMaterial('original-screen-effect', scene, {
+        vertexSource: 'precision highp float; attribute vec3 position; attribute vec2 uv; attribute vec4 color; uniform vec2 viewport; varying vec2 vUV; varying vec4 vColor; void main(){gl_Position=vec4(position.x*2.0/viewport.x-1.0,1.0-position.y*2.0/viewport.y,position.z*2.0-1.0,1.0);vUV=uv;vColor=color;}',
+        fragmentSource: 'precision highp float; varying vec2 vUV; varying vec4 vColor; uniform sampler2D effectTexture; void main(){gl_FragColor=texture2D(effectTexture,vUV)*vColor;}',
+      }, {attributes: ['position', 'uv', 'color'], uniforms: ['viewport'], samplers: ['effectTexture'], needAlphaBlending: true});
+      material.setTexture('effectTexture', texture);
+      material.backFaceCulling = cull !== 'NONE';
+      // GBF names the culled winding; Babylon names the retained front face.
+      material.sideOrientation = cull === 'CCW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
+      material.disableDepthWrite = true;
+      material.depthFunction = Constants.ALWAYS;
+      material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+      material.alphaMode = Constants.ALPHA_COMBINE;
+      mesh = new Mesh('original-screen-effect', scene);
+      mesh.material = material;
+      mesh.alwaysSelectAsActiveMesh = true;
+      mesh.isPickable = false;
+      scene.setRenderingAutoClearDepthStencil(2, false);
+      mesh.renderingGroupId = 2;
+      this.material = material;
+      this.mesh = mesh;
+    } catch (error) {
+      mesh?.dispose();
+      material?.dispose(false, false);
+      throw error;
+    }
   }
 
   update(draw?: EffectOverlayRectangle): void {
