@@ -1,4 +1,5 @@
 import type {ShopItem} from '../../../../shared/protocols/PtlShop';
+import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import {useRef} from 'react';
 import {PartShopRowContent} from './part-shop-row-content';
 import {PartShopListScrollbar} from './part-shop-list-scrollbar';
@@ -30,8 +31,9 @@ export function PartShopSourceList({ui, source, entries, selected, busy, select,
     data-part-common-product-grid={productGrid ? '' : undefined}
     role="listbox" aria-label={source === 'lstShopEquip' ? '商品' : '已拥有物品'} aria-busy={busy}>
     {entries.map((entry, index) => {
+      const ownedType = entry.itemTableId === undefined ? undefined : classifyItemId(entry.itemTableId);
       const originalOwnedRow = source === 'lstMyEquip' && entry.itemTableId !== undefined
-        && entry.itemTableId >= 13001 && entry.itemTableId <= 18000;
+        && (entry.itemTableId >= 13001 && entry.itemTableId <= 18000 || ownedType === 5 || ownedType === 7);
       const originalProductRow = productGrid && entry.itemTableId !== undefined && entry.itemTableId >= 13001 && entry.itemTableId <= 18000;
       const icon = sourceProps(ui, layout, 'shop_partpage.xml', source,
         `set:daoju0 image:data\\ui\\daoju\\${String(entry.iconId).padStart(5, '0')}.tga`);

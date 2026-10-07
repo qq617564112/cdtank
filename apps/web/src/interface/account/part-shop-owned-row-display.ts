@@ -1,8 +1,9 @@
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 
-/** Original4d83b3 kind+685 gamestrings for CommonPart rows. */
+/** Original4d83b3 kind+685 gamestrings for owned part rows. */
 export function sourcePartOwnedKind(itemTableId: number): string {
-  const labels: Record<number, string> = {8: '炮管类', 9: '装甲类', 10: '射击类', 11: '移动类', 12: '一般类'};
+  const labels: Record<number, string> = {5: '坦克帽子', 7: '坦克标志',
+    8: '炮管类', 9: '装甲类', 10: '射击类', 11: '移动类', 12: '一般类'};
   return labels[classifyItemId(itemTableId)] ?? '';
 }
 
