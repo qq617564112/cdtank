@@ -122,15 +122,16 @@ installed =
 ## 有限采用
 
 - 商城拥有部件、装饰、标志：`PartShopView` 的 `lstMyEquip` 行可用已有
-  `partSale({operation:'QUERY'})` 返回的 `profile` 直接计算 `installed`。若该返回
-  没有 profile，现有 `ShopSource.roleProfile?.()` 已提供同一只读字段，可在当前
-  refresh 中最小复用；不新增 API、schema、cache 或轮询。
-- 商城可售部件、装饰、标志：`lstShopEquip` 不增加安装态。当前目录没有气球/标志商品时
-  保持空目录，不造记录、价格或购买动作。
-- 维修中心拥有部件：`MendShopSourcePage` 已从 `tankMaintenance`/`partMaintenance`
-  或 `roleProfile` 取得 profile，按上式派生 `installed`，并由
-  `MendPartRowContent` 使用现有 `HomeRoleRowStatusBadge` 的 `installed`/`SmallHT E`
-  状态。维修按钮资格仍取现有报价的 `canMaintain`，不由 `installed` 决定。
+  `partSale({operation:'QUERY'})` 返回的 `sale.profile` 直接计算 `installed`；SELL 结果
+  经原 `setSale` 覆盖同一只读 profile。不增加 `ShopSource.roleProfile()` fallback
+  QUERY，也不新增 API、schema、cache 或轮询；profile 缺席或短字节按未知 `false`。
+- 商城可售部件、装饰、标志：`lstShopEquip` 不增加安装态，product 行不传 `installed`。
+  当前目录没有气球/标志商品时保持空目录，不造记录、价格或购买动作。
+- 维修中心拥有部件：`MendShopSourcePage` 复用既有
+  `tankMaintenance` → `partMaintenance` → `roleProfile` 优先 bundle，以及原 MAINTAIN
+  的 `setProfile({profile: result.profile})` 覆盖，按上式派生 `installed`，并由
+  `MendPartRowContent` 使用现有 `HomeRoleRowStatusBadge` 的 `installed`/静态
+  `SmallHT E` 状态。维修按钮资格仍取现有报价的 `canMaintain`，不由 `installed` 决定。
 
 ## Known Issues
 
@@ -138,10 +139,11 @@ installed =
   没有对应 producer。
 - 原 `ShopEquipPage` 拥有行 `4ba7df` 的状态 `1` 只改变文本颜色，没有 `E` glyph；
   当前采用不得把它实现成 Home/维修行的 `E` badge。
-- 当前 `PartShopView` 与 `MendShopSourcePage` 的 Hat 筛选只收
-  `classifyItemId === 5`。原 `518f8a` 分类 `3` 与 Home 分组同时覆盖帽子 `5`
-  和气球 `6`。当前可售目录未提供气球记录，因此不新增商品记录或价格；已有气球
-  的拥有/维修行若要进入本范围，需把筛选依赖明确扩到真实 `5` 或 `6` 记录。
+- 分类精度：商城 `515684`（拥有 Hat/Balloon）与 `514f42`（可售 Hat/Balloon）均按
+  `439762 == 5`，`PartShopView` 的 Hat 筛选保持 `classifyItemId === 5`，未把气球外推。
+  维修 `518f8a` coarse `3` 的原分支同时覆盖帽子 `5` 与气球 `6`；当前
+  `MendShopSourcePage` 维修 Hat 筛选已支持真实 `classifyItemId === 5 || 6`。当前可售
+  目录未提供气球记录，因此不新增商品记录或价格。
 - 原 `ShopEquipPage` 可售 Hat/Balloon、Mark 分支存在，但当前可售目录未提供对应
   气球/标志记录；本来源不据此造目录或价格。
 - 当前 profile 缺省时只能保持未知/未安装呈现，不能由账户级

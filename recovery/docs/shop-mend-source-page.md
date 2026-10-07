@@ -21,3 +21,5 @@ UI54 / M5-10，维修规则依赖M6-03。正式商城原rdoMendPage当前未进�
 source/accepted封装 `recovery/output/shop-mend-source-page-{source,accepted}.json`，交root主审与下一必要统一发行构建。当前并未验有部件内容的图标、长名单滚动或维修执行；该真实空名单不以购入夹具补造。父项维持开放。
 
 主审有限接受见 accepted.mainReview；统一 `mend-complex-map-production-web-build-final.log` 严格Webtypes及Vite exit0（1m31）已包含该稳定只读消费者，未重复页面验收。
+
+当前相关状态：`MendShopSourcePage` 的拥有部件名单行已按只读 profile 派生当前角色 `installed`，命中时由 `MendPartRowContent` 渲染既有 `HomeRoleRowStatusBadge(status="installed")` 静态原 `SmallHT E`（point 5,8、14×14，CSS 只扩 `.mend-shop-list > [data-mend-owned-part-row]` 父 scope，Home/Trade 选择器不变）；该 `installed` 复用 `tankMaintenance` → `partMaintenance` → `roleProfile` 优先 bundle 及原 MAINTAIN profile 覆盖，维修 Hat 分类已支持 `classifyItemId === 5 || 6`（coarse 3 真实 5/6），维修资格/报价/墙钟不改。该 `E` 无实测，不复用旧 PNG/native 向量宣其通过；详 shop-mend-owned-equipment-status-presentation.md、M5-10-PART-STATUS。

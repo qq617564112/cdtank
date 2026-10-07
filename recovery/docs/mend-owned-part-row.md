@@ -4,6 +4,8 @@ UI54 / M5-10。原 ShopMendPage/lstPart 保存于owner+0x5c，三类部件名单
 
 类别文字来自gamestring685+原分类0x439762，即现已有classifyItemId。图标来自原Item表+0x4c，使用daoju0图集。原时长函数0x4d849e读取同一个MyItem记录+0x10，以unsigned向上整除1440，再按gamestring624“（%d天）”格式化。现InventoryWireRecord.ownedQuantity通过账户Inventory查询原样返回；仅恢复这个读取与文字显示，不增加过期、维修或取得规则。
 
+当前行已接当前角色已装备状态：`MendPartRowContent` 增加可选 `installed`，命中时在 icon 之后渲染既有 `HomeRoleRowStatusBadge(status="installed")`（原状态 `+0x3c4 === 1` → 静态 `SmallHT E`，point 5,8、14×14，随父 scale）；`installed` 由只读 profile 派生，复用既有 `tankMaintenance` → `partMaintenance` → `roleProfile` 优先 bundle，维修报价/资格/墙钟不改。该 `E` 与商城拥有行灰字均无实测，不复用旧 PNG 或 native 向量宣其通过；详 shop-mend-owned-equipment-status-presentation.md、M5-10-PART-STATUS。
+
 [来源与原执行](../output/mend-owned-row-source.json)包含原列构造、行构造、绘制、名称/类型/时长getter及原尺寸、时长执行向量。新Part呈现组件已接入现有Mend名单并通过Web类型；Tank、分类选择、查询生命周期与六个禁用维修按钮保留。高清由现整页缩放放大800×600基准行，完整原字体/renderer精度仍未验证。
 
 正式商城在合法账户检查点副本购买14003一件，资金14000→12000，Inventory返回instance3/ownedQuantity1。800×600、1920×1080、3840×2160的非空Common Part行已实际显示原名称、图标、装甲类与“（1天）”，原生点击选择并取得焦点；Close返回商城入口焦点。三张完整图已查看，真实已购SQLite副本已保存。

@@ -4,6 +4,8 @@ UI55 / M5-10。原4ba7df行复用已验几何与图标。4d83b3读取同MyItem+c
 
 4d95eb用同ItemTableID查记录，4d85e8读取ItemMoney并无符号右移一位。正式CombatCatalog.moneyPrice2000用于14003显示“出售价  金钱1000”。复用sourceShopOwnedPrice，不新增售卖动作或协议。
 
+当前角色已装备状态已接入同一行：`PartShopRowContent` 收到 `installed` 且非 product 时，用已有 `SourceFeedbackText.colour` 把名称/类别/天数/售价四段文本置 `#808080`（原 `4ba7df` `+0x4ec` 非零只切灰字、不画 `E`）；icon、整行与 selection 不变灰，product 行不传 `installed`。`installed` 由现 `partSale({operation:'QUERY'})` 的 `sale.profile` 按当前角色安装等式派生，不增 `roleProfile` fallback QUERY。灰字无实测；详 shop-mend-owned-equipment-status-presentation.md、M5-10-PART-STATUS。
+
 四文件最终修改时间2026-10-05T14:03:14.389447649Z。类型检查、构建及发行由主线统一执行。独立3577/5607/9807验收复用首行保存的合法instance3/14003/qty1数据库副本，800、1920、3840只检查三段新文字的真实glyph完整可见与Close。行几何、名称、图标直接复用前次主审；不购买，不重复滚动与库存套件。
 
 附加图标、产品名单、Hat/Mark、原期限与售卖权限、完整Part页面仍未完成。
