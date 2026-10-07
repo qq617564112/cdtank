@@ -6,14 +6,14 @@
 
 - `HomeRoles` 从确认 `RoleProfile.bytes` 读取当前实例号：战车偏移 `0xa8`、宠物偏移 `0xa4`，小端 `u32`。这是确认的当前使用 owned 实例，不是选中候选，也不是商城/交易/维修字段。
 - 该值作为 `current` 传入 `HomeOwnedRoleSourceList`；名单按 `current === entry.instanceId` 只给命中的行传 `current=true`，两 row 的 `current` 参数是可选布尔。
-- 命中行的 `HomeOwnedTankRowContent`/`HomeOwnedPetRowContent` 渲染共用的 `HomeOwnedRoleCurrentBadge`，其余行不渲染。选择候选（`selected`）不改变该标识；只有 `selectRole` 成功并以确认 `profile` 覆盖后，`currentId` 才移动。
-- `HomeOwnedRoleCurrentBadge` 用 `set:xiaoheitizi0 image:data\ui\xiaoheitizi\n.tga` 经 `sourceUiImage` 直读原图集，命中 `ui/regions/11/10.png`（原 `SmallHT` 的 `N` glyph，自然尺寸 `14×14`）。
+- 命中行的 `HomeOwnedTankRowContent`/`HomeOwnedPetRowContent` 渲染共享 consumer `HomeRoleRowStatusBadge(status="current")`，其余行不渲染。选择候选（`selected`）不改变该标识；只有 `selectRole` 成功并以确认 `profile` 覆盖后，`currentId` 才移动。
+- `HomeRoleRowStatusBadge(status="current")` 用 `set:xiaoheitizi0 image:data\ui\xiaoheitizi\n.tga` 经共享 `sourceUiImage` 直读原图集，命中 `ui/regions/11/10.png`（原 `SmallHT` 的 `N` glyph，自然尺寸 `14×14`）；`status="installed"` 的 `E` 走同一共享 consumer 与图像路径。
 
 ## 表现与字体
 
 - 徽标为原 region 位图：`position:absolute; left:5px; top:8px; width:14px; height:14px; background-position:left top; background-size:14px 14px`，位于行局部坐标，随父级源页面 scale 缩放。这对应原调用点的行局部 `(x+5, y+8)`。
 - 这是采用表达：以原 `14×14` region 直接放入该 point，随父 scale。不声称恢复原 `CEGUI::Font::drawText` 的内部像素放置、字体 `AutoScaled` 轴或 HD 逐像素。
-- 原 `SmallHT` 状态 glyph 是图片字符，不是普通文字；`HomeOwnedRoleCurrentBadge` 直接消费该位图。普通名称/类型/天数仍走 `SourceFeedbackText` 的 `Xiangjiao` 描边字。
+- 原 `SmallHT` 状态 glyph 是图片字符，不是普通文字；`HomeRoleRowStatusBadge(status="current")` 直接消费该位图。普通名称/类型/天数仍走 `SourceFeedbackText` 的 `Xiangjiao` 描边字。
 
 ## 复用范围
 
