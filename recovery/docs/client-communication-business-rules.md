@@ -172,6 +172,14 @@ Web消费为`AccountConnection.playerProfile→Battle.playerProfile`薄代理。
 
 本次未实测目标generation、error retry和resource处理；真实页面、真实联机、持久重启、高清和原QQ/原统计附着继续开放，M5-13/M6-09/UI-41/UI-42/UI-43完整父项不勾。
 
+## 饰品购买
+
+对应M6-06-HAT40。原来源范围只取category5精确`10001..10040`；`classifyItemId===5`当前采用范围为`10001..11000`，本批不把`11001..12000`纳入。原`item`表40行均为`ItemType=5`、`ItemMoney/ItemCoin`正、`Durable=3`，`GGet`为0或2；`ItemMoney`、`ItemCoin`、`GGet`与`Durable`均只作源literal登记，Web不把`GGet`解释为免费取得，也不据`Durable=3`实现期限、寿命初值或递减。
+
+Web采用规则是在现`partShopItems`追加精确40个ID，并复用现`ShopItem`、`Shop QUERY`、`Shop BUY`、钱包检查、账户事务、receipt、inventory与owned实例；不新增API、schema、未知字段或客户端价格/余额权威。初始不预置库存，只有普通BUY成功后生成owned记录。UI只在确认`Shop QUERY`返回category5且命中精确40 gating时开放原`rdoShopHatPage`，Hat商品由现Part列表和现BUY消费，Common/Mark行为不变。成功拥有的category5实例沿原Home `DECORATION`装配路径和既有装备入口，owned Hat列表不新建第二套装备模型。
+
+已售category8..12部件74件保持原资格，不重复追加。`2010`保持原`0/0`与mode5 breach掉落，不开放免费Shop。`2016`因原自然stop/release缺口未造。pet世界、原地图002、Seq及其它已关闭范围不改。原server出售授权、饰品世界渲染、逐币种支付、真实页面、持久重启与HD未实测；本批只登记已生产接线，M6-06父项保持未勾。
+
 ## 场景客户端资产
 
 0008/0013的`obj05023` Sequence是客户端场景资产消费者，不新增客户端请求、服务端业务、RPC或授权规则。四条精确placement沿现有`ScenePreview` load/advance/clear边界消费已发布base、screen与`001–004`帧；screen实例克隆的既有原基色纹理在首次换帧前登记owner并在正常clear/失败清理释放。`scene-sequence05023.json` metadata尚未出版，实际页面资源加载、普通对局、像素、双端phase和高清未验；原Windows时钟provider不等同Web `performance.now()`采用。本批最终范围已完成一次集中静态走查，详`scene-sequence-runtime.md`。

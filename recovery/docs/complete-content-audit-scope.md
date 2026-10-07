@@ -24,6 +24,8 @@ Type5模型后端已经由`EffectRuntime.createTree`接入`EffectModelRenderer`�
 
 结算奖励、实际装备奖励、退出处罚、账户成长、统计、九奖章、称号与佩戴已有正式事务/快照/页面消费者。原server producer缺失的部分按客户端请求、确认、原表和冻结结算数据采用业务规则，见`client-communication-business-rules.md`、`battle-equipment-exit-melee-rules.md`等专题。该实现状态不替代对应条目的实际对局、双端或重启验收。
 
+M6-06-HAT40的40件原category5饰品`10001..10040`已追加到现`partShopItems`，复用普通`Shop QUERY/BUY`、钱包、receipt、inventory与owned实例，并沿原Home `DECORATION`装配路径和既有装备入口；不新增API、schema或免费grant。`classifyItemId===5`当前采用范围为`10001..11000`，本批只取`10001..10040`，不纳入`11001..12000`。原`Durable=3`、`GGet=0或2`只作literal展示；74件category8..12已售部件不重复，`2010`保持原`0/0`与mode5掉落、不免费售，`2016` stop缺口不造。详`decoration-purchase-client-business-design.md`。
+
 ## 未完成范围
 
 - 原最终伤害、侧背防御与暴击公式、原弹丸出生/速度/寿命/轨迹和完整垂直/坡面/滑动处理仍缺直接来源。当前采用算法必须继续与原属性来源分列。
@@ -32,6 +34,7 @@ Type5模型后端已经由`EffectRuntime.createTree`接入`EffectModelRenderer`�
 - Type5的22种模型引用只有8种有可解析实物，bat/bianfu.cvd、bing_1..13.pol及youlincat的m120纹理仍缺；map0018的BG07 WAV缺失。缺失资源不使用替代模型、占位纹理或其它声音冒充原资源。
 - 全场景光照/fog、设备状态继承与模型priority排序仍未完整恢复。原资源逐实例表现、原挂点/动作完整性和高清验收继续由M3/M4/M7追踪。
 - 65布局的逐控件业务、21战车和10宠物的全部拥有/成长/改装/维修/技能仍有未完成条目。动态文字沿用户附件字体，战斗伤害/治疗/暴击数字沿原图片。
+- M6-06-HAT40仍待原server出售授权、饰品世界表现、耐久初值与递减、逐币种真实BUY、持久重启、真实页面和HD实测；已生产接线不关闭M6-06父项，也不把新购买范围扩到pet世界、原地图002、Seq或其它已关闭范围。
 - 全资源干净环境重建、独立设备访问、全部业务重启恢复、1920/3840自然对局性能、最大人数服务节拍、长时清理和掉线重连仍按M7/M8开放。已有独立发行、反代和备份恢复证据只保留其限定范围。
 
 当前执行只允许静态走查，不运行测试、构建、类型检查或浏览器。本轮战斗非UI实现和具体剩余项见`battle-non-ui-runtime.md`；新范围尚无实测，不据静态实现或走查关闭正文要求原来源/实测/高清的父项。地图0002沿接受基线，不追加局部补证。
