@@ -20,22 +20,22 @@ def assemble(root):
     for imageset in ui['imagesets']:
         path = str(Path(imageset['attributes']['Imagefile'].replace('\\', '/')).with_suffix('.png'))
         source = paths.get(path.lower())
-        if source and textures[source].get('derived') == 'ui-atlas':
+        if (source and textures[source].get('derived') == 'ui-atlas'
+                and not textures[source].get('deferred')):
             atlases.setdefault(textures[source]['canonical'], imageset)
     completed = 0
     for canonical, imageset in atlases.items():
         entry = textures[canonical]
-        if entry.get('deferred'):
-            continue
+        regions = [image for image in imageset['images'] if 'XPos' in image and 'YPos' in image]
         if any(not textures[image['asset']].get('deferred')
-               and not (root / textures[image['asset']]['png']).exists() for image in imageset['images']):
+               and not (root / textures[image['asset']]['png']).exists() for image in regions):
             continue
         original = Image.open(root / entry['original']).convert('RGBA')
         inverted = Path(imageset['attributes']['Imagefile']).suffix.lower() == '.dds'
         if inverted:
             original = original.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         atlas = original.resize(tuple(n * 4 for n in original.size), Image.Resampling.NEAREST)
-        for region in imageset['images']:
+        for region in regions:
             if textures[region['asset']].get('deferred'):
                 continue
             artwork = Image.open(root / textures[region['asset']]['png']).convert('RGBA')
@@ -46,7 +46,9 @@ def assemble(root):
             atlas = atlas.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         delivered = root / entry['png']
         delivered.parent.mkdir(parents=True, exist_ok=True)
-        atlas.save(delivered)
+        temporary = delivered.with_suffix('.assembling.tmp')
+        atlas.save(temporary, format='PNG')
+        temporary.replace(delivered)
         completed += 1
     print(f'Assembled {completed}/{len(atlases)} UI atlases from original region coordinates', flush=True)
 
