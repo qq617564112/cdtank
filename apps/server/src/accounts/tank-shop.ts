@@ -1,6 +1,7 @@
 import type {DatabaseSync} from 'node:sqlite';
 import type {ReqTankShop, ResTankShop} from '../../../shared/protocols/PtlTankShop';
 import type {OwnedRoleRecordData} from '../../../shared/protocols/PtlOwnedRoles';
+import {removeMaintenanceClock} from './maintenance-clock';
 import {tankShopCatalog} from './tank-shop-catalog';
 import {initializeAccountSpending, recordAccountSpending} from './spending';
 
@@ -54,6 +55,7 @@ export class AccountTankShop {
         else if (id > instanceId) break;
       }
       if (instanceId > 0xffffffff) throw new Error('账户物品实例ID已用尽');
+      removeMaintenanceClock(this.database, accountId, 'tank', instanceId);
       // Rebuilt purchase state uses source base values and part capacity.
       const fields = new Map<number, number>();
       for (let offset = 0x1c; offset <= 0x6c; offset += 4) fields.set(offset, 0);

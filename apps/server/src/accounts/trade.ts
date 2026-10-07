@@ -1,9 +1,11 @@
 import type {DatabaseSync} from 'node:sqlite';
 import {isDeepStrictEqual} from 'node:util';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
+import {classifyItemId} from '../../../shared/combat/item-hotkeys';
 import type {TradeAccount, TradeOffer, TradeRecordView} from '../../../shared/protocols/PtlTrade';
 import type {OwnedRoleRecordData} from '../../../shared/protocols/PtlOwnedRoles';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
+import {currentMaintenanceMinutes, maintenanceExpiry, removeMaintenanceClock, setMaintenanceExpiry} from './maintenance-clock';
 import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 export interface PreparedTradeOffer {offer: TradeOffer; records: TradeRecordView[];}
@@ -95,6 +97,31 @@ export class AccountTrade {
           view.setUint32(offset, balance, true);
         }
       }
+      const timedTransfers = new Map<string, {kind: 'tank' | 'part'; expiresAtMs: number; currentMinutes: number}>();
+      for (let index = 0; index < 2; index++) {
+        const source = accountIds[index];
+        for (const record of prepared[index].records) {
+          if (record.role && record.kind === 'tank') {
+            const storedMinutes = new Map(record.role.fields).get(0x34);
+            const expiresAtMs = storedMinutes === undefined ? undefined
+              : maintenanceExpiry(this.database, source, 'tank', record.instanceId);
+            if (expiresAtMs !== undefined) {
+              timedTransfers.set(`${index}:tank:${record.instanceId}`, {kind: 'tank', expiresAtMs,
+                currentMinutes: currentMaintenanceMinutes(this.database, source, 'tank', record.instanceId, storedMinutes!)});
+            }
+          } else if (record.item) {
+            const kind = classifyItemId(record.item.itemTableId);
+            if (classifyInventoryCategory(record.item.itemTableId) > 2
+                && (kind === 5 || kind === 7 || (kind >= 8 && kind <= 12))) {
+              const expiresAtMs = maintenanceExpiry(this.database, source, 'part', record.instanceId);
+              if (expiresAtMs !== undefined) {
+                timedTransfers.set(`${index}:part:${record.instanceId}`, {kind: 'part', expiresAtMs,
+                  currentMinutes: currentMaintenanceMinutes(this.database, source, 'part', record.instanceId, record.item.ownedQuantity)});
+              }
+            }
+          }
+        }
+      }
       // Remove both sides first. Receiving accounts allocate independent local instance IDs.
       for (let index = 0; index < 2; index++) {
         const id = accountIds[index], view = new DataView(profiles[index].buffer);
@@ -141,13 +168,28 @@ export class AccountTrade {
           }
           if (instanceId > 0xffffffff) throw new Error('账户物品实例ID已用尽');
           if (record.role) {
-            const fields = new Map(record.role.fields); fields.set(record.kind === 'pet' ? 0 : 0x1c, instanceId);
+            const timed = timedTransfers.get(`${index}:${record.kind}:${record.instanceId}`);
+            const fields = new Map(record.role.fields);
+            fields.set(record.kind === 'pet' ? 0 : 0x1c, instanceId);
+            if (timed) fields.set(0x34, timed.currentMinutes);
+            if (record.kind === 'tank') removeMaintenanceClock(this.database, recipient, 'tank', instanceId);
             this.database.prepare('INSERT INTO role_records VALUES (?, ?, ?, ?)').run(recipient,
               record.kind === 'pet' ? 'base' : 'equipment', instanceId, JSON.stringify({name: record.role.name, fields: [...fields]}));
+            if (timed) {
+              setMaintenanceExpiry(this.database, recipient, timed.kind, instanceId, timed.expiresAtMs);
+              removeMaintenanceClock(this.database, accountIds[index], timed.kind, record.instanceId);
+            }
           } else {
             const item = record.item!, stack = classifyInventoryCategory(item.itemTableId) <= 2;
+            const timed = timedTransfers.get(`${index}:part:${record.instanceId}`);
+            removeMaintenanceClock(this.database, recipient, 'part', instanceId);
             this.database.prepare('INSERT INTO inventory VALUES (?, ?, ?)').run(recipient, instanceId,
-              JSON.stringify({...item, instanceId, state: 0, battleQuantity: 0, ownedQuantity: stack ? record.quantity! : item.ownedQuantity}));
+              JSON.stringify({...item, instanceId, state: 0, battleQuantity: 0, ownedQuantity: stack ? record.quantity!
+                : timed ? timed.currentMinutes : item.ownedQuantity}));
+            if (timed) {
+              setMaintenanceExpiry(this.database, recipient, 'part', instanceId, timed.expiresAtMs);
+              removeMaintenanceClock(this.database, accountIds[index], 'part', record.instanceId);
+            }
           }
           received.push({accountId: recipient, kind: record.kind, fromInstanceId: record.instanceId, instanceId});
         }

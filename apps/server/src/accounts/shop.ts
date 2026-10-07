@@ -1,6 +1,7 @@
 import type {DatabaseSync} from 'node:sqlite';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
 import type {ReqShop, ResShop, ShopItem} from '../../../shared/protocols/PtlShop';
+import {removeMaintenanceClock} from './maintenance-clock';
 import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 /** Rebuilt purchase authority; the caller supplies the bounded source catalog. */
@@ -66,6 +67,7 @@ export class AccountShop {
         else if (used > instanceId) break;
       }
       if (instanceId > 0xffffffff) throw new Error('账户物品实例ID已用尽');
+      removeMaintenanceClock(this.database, accountId, 'part', instanceId);
       const purchased: InventoryWireRecord = {instanceId, itemTableId: itemTableId!, ownedQuantity: quantity!,
         battleQuantity: 0, state: 0, field8: 0, float24Bits: 0, float28Bits: 0, float2cBits: 0};
       const nextMoney = currency === 'MONEY' ? money - cost : money;
