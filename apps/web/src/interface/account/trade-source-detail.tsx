@@ -11,6 +11,7 @@ import {sourceOwnedTankDays} from '../home/home-owned-tank-row-display';
 import {sourcePartOwnedDays, sourcePartOwnedKind} from './part-shop-owned-row-display';
 import {sourcePetKind} from './pet-shop-row-display';
 import {sourcePetDescription, sourceTankDescription} from '../resources/role-source-descriptions';
+import {tradePetOwnedMastery, tradeTankOwnedParameters} from './trade-owned-role-parameters';
 
 const rectWidth = (value: string | undefined) => Number(value?.match(/r:(-?\d+(?:\.\d+)?)/)?.[1] ?? 0);
 const rectHeight = (value: string | undefined) => Number(value?.match(/b:(-?\d+(?:\.\d+)?)/)?.[1] ?? 0);
@@ -27,6 +28,28 @@ const absoluteRect = (controls: HomeSourceControl[], control: HomeSourceControl)
   }
   return {left, top, right, bottom};
 };
+
+/** Source ProgressBar uses its own BackgroundImage/ProgressImage pair; the fill is clipped to 0..1. */
+function TradeProgressBar({ui, layout, suffix, name, progress, caption}: {
+  ui: HomeSourceUi; layout: HomeSourceLayout; suffix: string; name: string; progress: number; caption?: string;
+}) {
+  const control = layout.control(name);
+  const background = sourceProps(ui, layout, suffix, name, control.properties.BackgroundImage);
+  const fill = sourceProps(ui, layout, suffix, name, control.properties.ProgressImage);
+  const width = Number(background.style.width), height = Number(background.style.height);
+  const value = Math.max(0, Math.min(1, progress));
+  const extent = Math.floor(width * value + .5);
+  return <>
+    <div {...background} className="trade-source-progress" role="meter" aria-valuemin={0} aria-valuemax={1}
+      aria-valuenow={value} data-trade-progress={name}>
+      <span aria-hidden="true" style={{position: 'absolute', inset: 0, width, height,
+        clipPath: `inset(0 ${width - extent}px 0 0)`, backgroundImage: fill.style.backgroundImage,
+        backgroundSize: '100% 100%'}}/>
+    </div>
+    {caption !== undefined && <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={name}
+      text={caption} className="trade-source-progress-caption"/>}
+  </>;
+}
 
 export function tradeRecordPresentation(record: TradeRecordView, catalog?: CombatCatalog) {
   const fields = new Map(record.role?.fields);
@@ -85,6 +108,10 @@ export function TradeSourceDetail({ui, catalog, record, scale, close}: {
     texts.txtType = sourcePartOwnedKind(record.item.itemTableId);
     texts.txtDurable = sourcePartOwnedDays(record.item.ownedQuantity);
   }
+  const ownedParameters = record.kind === 'tank' ? tradeTankOwnedParameters(record, catalog)
+    : record.kind === 'pet' ? tradePetOwnedMastery(record, catalog) : undefined;
+  if (ownedParameters) Object.assign(texts, ownedParameters.texts);
+  const progress: Record<string, number> = ownedParameters?.progress ?? {};
   const definitionId = fields.get(record.kind === 'pet' ? 8 : 0x24);
   const description = record.item
     ? catalog?.items.find(item => item.itemTableId === record.item!.itemTableId)?.info ?? ''
@@ -122,6 +149,11 @@ export function TradeSourceDetail({ui, catalog, record, scale, close}: {
         <SourceImageScale value={scale}>
           {controls.filter(control => control.type === 'WindowsLook/StaticImage').map(control =>
             <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} aria-hidden="true"/>)}
+          {controls.filter(control => control.type === 'WindowsLook/ProgressBar').map(control => {
+            const value: number | undefined = progress[control.name];
+            return value === undefined ? null : <TradeProgressBar key={control.name} ui={ui} layout={layout}
+              suffix={suffix} name={control.name} progress={value} caption={texts[control.name]}/>;
+          })}
           {controls.filter(control => control.type === 'WindowsLook/StaticText').map(control =>
             <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name}
               text={texts[control.name] ?? control.properties.Text ?? ''}/>)}
