@@ -83,59 +83,67 @@ vtable `5cef2c` 只由 `4bb3bc` 写、`5cef78` 只由 `4bc86b` 写，两个行�
 几处：`4bb3bc` 在 `4b64cd`、`4ecddf`、`4fc890`、`51a15e`；`4bc86b` 在 `4de405`、
 `4fc6b5`。只有这些点建立的 `+0x3c4`/`+0x32c` 才是本行类状态。
 
-会写 `+0x3c4` 的 setter `4bbcfd` 全部调用点，及其所属工厂构造的行类与压入值：
+会写 `+0x3c4` 的 setter `4bbcfd` 调用点，及其所属工厂构造的行类、压入值与触发顺序：
 
-| 调用点 | 压入 | 行构造 | 页面/入口 |
+| 调用点 | 压入 | 页面/入口 | 触发条件 |
 |---|---:|---|---|
-| `4b64fe` | `3` | `4bb3bc` | `LabPage/lstTank`（`+0x34`） |
-| `4e87cf` | `1` | `4b9e77` | Home `MyTank/lstEquip`（Mark 支） |
-| `4e89e1` | `1` | `4b9e77` | Home `MyTank/lstEquip`（Hat/Balloon 支） |
-| `4e8be2` | `1` | `4b9e77` | Home `MyTank/lstEquip`（Common 支） |
-| `4e304a` | `1` | `4b886d` | 部件/装备名单 `[+0x1f4]`（`43bd13==1`，`+0xc` 分组） |
-| `4e3298` | `1` | `4b886d` | 部件/装备名单 `[+0x254]` |
-| `4e4e07` | `1` | `4b886d` | 部件/装备名单 `[+0x1f4]` |
-| `4e9c9d` | `1` 或 `0` | `4b9e77` | Home `MyTank/lstEquip`（`+0x13c`）列表项重设 |
-| `4e9ea5` | `1` 或 `0` | `4b9e77` | Home `MyTank/lstEquip` 列表项重设 |
-| `4ea0ed` | `1` 或 `0` | `4b9e77` | Home `MyTank/lstEquip` 列表项重设 |
-| `519125`/`519339`/`519543` | `1` | `4b9e77` | `ShopMendPage/lstPart` |
-| `4ece11` | `3` | `4bb3bc` | Home `MyTank/lstTank`（`+0x138`） |
-| `4fabeb` | `0` | Trade `lstMyTankMyPet` 行 | Trade 名单项重置 |
-| `4fadef` | `0` | `4b886d` | Trade `lstMyItem`（`+0x120`）行重置 |
-| `4fb6ad` | `1` 或 `4` | `4b886d` | Trade `lstMyItem`（`+0x120`） |
-| `4fb8b2`/`4fba85`/`4fbc36` | `4` | `4b886d` | Trade `lstMyItem` |
-| `4fc8d8` | `3` 或 `4` | `4bb3bc` | Trade `Trade/lstMyTankMyPet`（`+0x11c`） |
-| `500b88`/`500b8f` | `4` | 列表项 | Trade 页名单更新 |
-| `501dfa`/`501e01` | `4` | 列表项 | Trade 页名单更新 |
+| `4b64fe` | `3` | `LabPage/lstTank`（`+0x34`） | `4bb3bc` 行插入后，拥有记录实例等于传入当前实例；不匹配不写 |
+| `4e87cf` | `1` | Home `MyTank/lstEquip`（Mark 支） | `43bd09==4`，行插入后 `[MyItem+0x1c]==2`；否则不写 |
+| `4e89e1` | `1` | Home `MyTank/lstEquip`（Hat/Balloon 支） | `43bd09==3`，行插入后 `[MyItem+0x1c]==2`；否则不写 |
+| `4e8be2` | `1` | Home `MyTank/lstEquip`（Common 支） | `43bd09==5`，行插入后 `[MyItem+0x1c]==2`；否则不写 |
+| `4e304a` | `1` | 部件/装备名单 `[+0x1f4]`（`+0xc` 分组） | `43bd13==1` 且 `[MyItem+0x10]>0`，`4b886d` 行插入后 `[MyItem+0x1c]==2`；否则不写 |
+| `4e3298` | `1` | 部件/装备名单 `[+0x254]` | `[MyItem+0x10]>0`，`4b886d` 行插入后 `[MyItem+0x1c]==2`；否则不写 |
+| `4e4e07` | `1` | 部件/装备名单 `[+0x1f4]` | 快捷分类 `439762` 得 `3/4`、`FName` 查得、`[MyItem+0x10]>0`，`4b886d` 行插入后 `[MyItem+0x1c]==2`；否则不写 |
+| `4e9c9d` | `1` 或 `0` | Home `MyTank/lstEquip`（`+0x13c`）列表项重设 | `43d1a5` 查不到对应实例时跳过；查到后以 `[MyItem+0x1c]==2` 写 `1`，否则写 `0` |
+| `4e9ea5` | `1` 或 `0` | Home `MyTank/lstEquip` 列表项重设 | 同 `4e9c9d`：查不到不写，查到后 `==2` 写 `1`，否则写 `0` |
+| `4ea0ed` | `1` 或 `0` | Home `MyTank/lstEquip` 列表项重设 | 同 `4e9c9d`：查不到不写，查到后 `==2` 写 `1`，否则写 `0` |
+| `519125` | `1` | `ShopMendPage/lstPart` | `43bd09==4`，`4b9e77` 行插入后 `[MyItem+0x1c]==2` |
+| `519339` | `1` | `ShopMendPage/lstPart` | `43bd09==3`，`4b9e77` 行插入后 `[MyItem+0x1c]==2` |
+| `519543` | `1` | `ShopMendPage/lstPart` | `43bd09==5`，`4b9e77` 行插入后 `[MyItem+0x1c]==2` |
+| `4ece11` | `3` | Home `MyTank/lstTank`（`+0x138`） | `4bb3bc` 行插入后，拥有记录实例等于当前战车；不匹配不写 |
+| `4fabeb` | `0` | Trade `lstMyTankMyPet` 行 | Trade 项清除分支内，列表项 `+0x9c` 匹配目标实例时写 `0` |
+| `4fadef` | `0` | Trade `lstMyItem`（`+0x120`）行 | `[page+0xa4]==2` 的 Trade 项清除分支内，列表项 `+0x9c` 匹配目标实例时写 `0` |
+| `4fb6ad` | `1` 或 `4` | Trade `lstMyItem`（`+0x120`） | `4b886d` 行插入后先看 `[MyItem+0x1c]==2` 写 `1`；否则按 `4fa1ff` 的目录 `2/3/7` 命中写 `4`；都不中则不写 |
+| `4fb8b2` | `1` 或 `4` | Trade `lstMyItem` | `43bd13==7`，行插入后 `[MyItem+0x1c]==2` 写 `1`；否则目录 `5` 命中写 `4`；都不中则不写 |
+| `4fba85` | `1` 或 `4` | Trade `lstMyItem` | `43bd13==5/6`，行插入后 `[MyItem+0x1c]==2` 写 `1`；否则目录 `4` 命中写 `4`；都不中则不写 |
+| `4fbc36` | `1` 或 `4` | Trade `lstMyItem` | `43bd09==5`，行插入后 `[MyItem+0x1c]==2` 写 `1`；否则目录 `4` 命中写 `4`；都不中则不写 |
+| `4fc8d8` | `3` 或 `4` | Trade `Trade/lstMyTankMyPet`（`+0x11c`） | `4bb3bc` 行插入后，当前实例匹配 `4fc8ba/4fc8bd` 先写 `3` 并跳过 `4fa1ff`；仅非当前实例才按目录 `4fa1ff(1)` 命中写 `4`，不中不写 |
+| `500b88` | `4` | Trade 页名单更新（`500a43`） | 行由 `[page+0x120]` 当前项取得、`[page+0xa4]==1`，写 `4`；接收者构造点未在函数内确认 |
+| `500b8f` | `4` | Trade 页名单更新（`500a43`） | 同一当前项、`[page+0xa4]` 为 `0/1` 以外的值，走 `4bbcfd` 写 `4`；接收者构造点未在函数内确认 |
+| `501dfa` | `4` | Trade 页名单更新（`5019ff`） | 行 `[ebp-0x14]` 取得后、`[page+0xa4]==1`，写 `4`；接收者构造点未在函数内确认 |
+| `501e01` | `4` | Trade 页名单更新（`5019ff`） | 同一行、`[page+0xa4]` 为 `0/1` 以外的值，走 `4bbcfd` 写 `4`；接收者构造点未在函数内确认 |
 
-会写 `+0x32c` 的 setter `4bd103` 全部调用点：
+会写 `+0x32c` 的 setter `4bd103` 调用点：
 
-| 调用点 | 压入 | 行构造 | 页面/入口 |
+| 调用点 | 压入 | 页面/入口 | 触发条件 |
 |---|---:|---|---|
-| `4de439` | `3` | `4bc86b` | Home `MyPet/lstPet`（`+0x18c`） |
-| `4fc6f9` | `3` 或 `4` | `4bc86b` | Trade `Trade/lstMyTankMyPet`（`+0x11c`） |
-| `4fac8f` | `0` | Trade `lstMyTankMyPet` 行 | Trade 名单项重置 |
-| `500b7c` | `4` | 列表项 | Trade 页名单更新 |
-| `501dee` | `4` | 列表项 | Trade 页名单更新 |
+| `4de439` | `3` | Home `MyPet/lstPet`（`+0x18c`） | `4bc86b` 行插入后，拥有记录实例等于当前宠物；不匹配不写 |
+| `4fc6f9` | `3` 或 `4` | Trade `Trade/lstMyTankMyPet`（`+0x11c`） | `4bc86b` 行插入后，当前实例匹配 `4fc6db/4fc6e0` 先写 `3` 并跳过 `4fa1ff`；仅非当前实例才按目录 `4fa1ff(0)` 命中写 `4`，不中不写 |
+| `4fac8f` | `0` | Trade `lstMyTankMyPet` 行 | `[page+0xa4]==0` 的 Trade 项清除分支内，列表项 `+0x9c` 匹配目标实例时写 `0` |
+| `500b7c` | `4` | Trade 页名单更新（`500a43`） | 行由 `[page+0x120]` 当前项取得、`[page+0xa4]==0`，写 `4`；接收者构造点未在函数内确认 |
+| `501dee` | `4` | Trade 页名单更新（`5019ff`） | 行 `[ebp-0x14]` 取得后、`[page+0xa4]==0`，写 `4`；接收者构造点未在函数内确认 |
 
-对 `OwnedTank`/`OwnedPet` 行类本身，恢复到的 producer 只有：
+对 `OwnedTank`/`OwnedPet` 行类本身，已定位直接构造链恢复到的 producer 为：
 
 - 状态 `3`：Home `MyTank/lstTank`（`4ece11`）、Home `MyPet/lstPet`（`4de439`）、
   `LabPage/lstTank`（`4b64fe`）、Trade `Trade/lstMyTankMyPet`（`4fc8d8`/`4fc6f9`）。
   这些点在记录实例等于当前行实例（Home 用 `profile+0xa8`（战车）/`profile+0xa4`（宠物），
   Trade 用角色实例 getter）时压 `3`。
 - 状态 `4`：仅 Trade `Trade/lstMyTankMyPet`（`4fc8d8`/`4fc6f9`）。在「实例等于当前」
-  之外，还经页面 12 项目录表判定：`4fa1ff` 遍历 `[page+0x140+0x14k]` 与
-  `[page+0x148+0x14k]`（`k=0..11`），与传入的两个值比对，命中才压 `4`。该表的业务语义
-  未在本范围内确认。
+  之外，才经页面 12 项目录表判定：`4fa1ff` 遍历 `[page+0x140+0x14k]` 与
+  `[page+0x148+0x14k]`（`k=0..11`），与传入的两个值比对，命中才压 `4`。同一工厂中
+  `4fc8ba/4fc8bd`（战车）与 `4fc6db/4fc6e0`（宠物）当前实例命中时直接写 `3` 并跳过
+  `4fa1ff`，所以 `N` 优先于目录命中的 `B`；只有非当前实例才进入目录判断。
 - 状态 `0`：构造初值。`51a15e`（`ShopMendPage/lstTank`）构造 `4bb3bc` 行后不调用 setter，
   这些行停在 `0`；Trade 的 `4fabeb`/`4fac8f` 也会把 `lstMyTankMyPet` 行重置为 `0`。
 
-状态 `1`（`E`）与状态 `2`（`S`）在这两个行类上没有 producer：`OwnedTank`/`OwnedPet`
-构造点处的 setter 只压 `3` 或 `4`（或根本不调用）。状态 `1` 的 producer 全部落在其它行类
-（`4b9e77` 装备行与 `4b886d` 部件行，见上表），其 draw、vtable 与 `OwnedTank`/`OwnedPet`
-不同，不能据此点亮本行类。状态 `2` 在全部 `4bbcfd`/`4bd103` 调用点都没有出现过，只在两支
-draw 里有分支。因此不在本范围把字母 `E`/`S` 或任何 selected/raw flag/期限映射到这两个
-行类的 `1`/`2`。
+在已定位的 `OwnedTank`/`OwnedPet` 直接构造链中，构造点处 setter 只压 `3` 或 `4`（或根本
+不调用），没有为状态 `1`（`E`）或 `2`（`S`）恢复出 producer。状态 `1` 的已定位 producer
+均落在其它行类（`4b9e77` 装备行与 `4b886d` 部件行，见上表），其 draw、vtable 与
+`OwnedTank`/`OwnedPet` 不同，不能据此点亮本行类。状态 `2` 在已定位直接构造链没有写入，
+只在两支 draw 里有分支。`500b7c`、`500b88/500b8f`、`501dee`、`501dfa/501e01` 从动态取得
+的行接收者写 `4`，其接收者构造点未在函数内确认；因此不在现范围把 `E`/`S` 扩成全局不存在，
+也不把字母 `E`/`S` 或任何 selected/raw flag/期限映射到这两个行类的 `1`/`2`。
 
 ## 当前采用合同
 
@@ -174,18 +182,20 @@ target 约束的引用都不成立。行本身已按 `equipmentTarget(itemTableI
 - `PART` 的 `slots` 是旧层已支持的入口，只投影 `target==='PART'` 的绑定。它不能拿来推
   `DECORATION`/`MARK`；帽子/标志必须走各自 target 的 binding 与 `decorationInstanceId`/
   `markInstanceId`，不能用 `slots` 反推。
-- 现端 `HomeEquipmentSourceList` 目前只对 `equipmentGroup==='common'` 的行把
-  `installed` 透传给 `HomeEquipmentCommonRowContent`；Hat/Balloon/Mark 分支传
-  `installed={undefined}`。数据接口已能给出 `DECORATION`/`MARK` 的 binding，但这两个 target
-  的 `E` 位尚未接线。这是可实施点，不是数据缺口。
+- 现端 `HomeEquipmentSourceList` 对 `common`、`hat`、`balloon`、`mark` 四类行都把同一
+  confirmed `installed` 条件透传给 `HomeEquipmentCommonRowContent`；`installed` 由
+  `equipment.bindings.some(...)` 的实例与当前 `tankInstanceId` 双匹配给出。`PART`、
+  `DECORATION`、`MARK` 分别使用各自 target 的当前消费者；普通页面显示、资源 decode、
+  target 切换、拒绝、重开与 HD 显示仍待实测。
 
 ## Known Issues
 
-- `OwnedTank`/`OwnedPet` 行类状态 `1`（`E`）与 `2`（`S`）没有恢复出 producer；状态 `2`
-  在全部已定位 setter 调用点都没有出现，只在 draw 分支里存在。两状态含义不据此推定。
+- `OwnedTank`/`OwnedPet` 行类状态 `1`（`E`）与 `2`（`S`）未在已定位直接构造链恢复出
+  producer；状态 `2` 只在 draw 分支里存在。动态 setter 路径的接收者构造点尚未确认，
+  两状态含义不据此推定，也不扩成全局不存在。
 - Trade 页状态 `4` 依赖的 `4fa1ff` 12 项目录表语义（`[page+0x140+0x14k]` /
   `[page+0x148+0x14k]`）未在本范围内确认；`500b88`/`500b8f`、`501dfa`/`501e01`、
-  `500b7c`、`501dee`、`4fac8f` 从列表项取行后写状态，其行类未在各自函数里重建。
+  `500b7c`、`501dee` 从动态取得的行接收者写状态，其接收者构造点未在各自函数里确认。
 - CEGUI `Font::drawText` 的 glyph 内部基线、字符推进与位图放置属外部实现；本范围只恢复
   调用点、字体指针、原字符串与资源元数据。
 - 静态源结论未做运行时实测；不称 runtime/HD/父项完成。
