@@ -5,22 +5,14 @@
 ## 确认目标链
 
 - 装备页按本车 target 查询 `equipment({operation:'QUERY', tankInstanceId})`，confirmed bundle 的 `equipment.tankInstanceId` 为本行所属战车。
-- 原 `4e8bd7` 的 `MyItem+0x1c == 2` producer 在当前 Web 采用为同 target 的绑定判定：
-
-  ```ts
-  equipment.bindings.some(binding =>
-    binding.instanceId === row.instanceId &&
-    binding.tankInstanceId === equipment.tankInstanceId)
-  ```
-
+- 已确认 per-role PART projection 由 `Equipment.slots` 支持本车已装备匹配：`equipment.slots.includes(row.instanceId)` 命中即该 PART 属于本 target。
 - 只有 `common === true` 的行把 `installed` 传给 Common row consumer。
-- `selected`、任意全局 `inventory.state 2`、仅凭 `bindingName` 存在都不触发本页 `E`；未附加 `ownedQuantity > 0` 或当前槽位额外门禁，现 `available`/drag/槽位/QUERY/保存规则不改。
+- 未附加 `ownedQuantity > 0` 或当前槽位额外门禁，现 `available`/drag/槽位/QUERY/保存规则不改。
 
 ## 两个角色范围
 
-- 目标 `E`：以上同 target 绑定判定，只标注本页该战车的已装备行。
-- 全账号占用标签：`bindingName` 仍按账户级 bindings 显示库存被哪辆战车占用，可指向其它战车；该标签不触发本页 `E`，其它战车占用不画本页 `E`。
-- Hat/Balloon/Mark 与 Trade/Mend 不传 `installed`，不扩入本 scope。
+- 目标 `E`：以上 per-role PART slots 实例匹配，只标注本页该战车的已装备 Common 行。
+- 其它分支：Hat/Balloon/Mark 与 Trade/Mend 不传 `installed`，不扩入本 scope。
 
 ## 图像与共享 consumer
 
@@ -31,7 +23,7 @@
 
 ## 不涉及新协议
 
-- 复用已确认的 `equipment.tankInstanceId`、`equipment.bindings[].instanceId`、`equipment.bindings[].tankInstanceId` 与 row instance；不新增 server/API/schema 字段，不改现有 available/drag/slot/query/保存。
+- 复用已确认的 `equipment.tankInstanceId`、`equipment.slots` 与 row instance；不新增 server/API/schema 字段，不改现有 available/drag/slot/query/保存。
 
 ## 尚未实测边界
 
