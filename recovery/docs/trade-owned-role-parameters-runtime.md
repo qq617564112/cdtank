@@ -77,5 +77,5 @@ Math.fround(0.2))`，本页新增渲染；`fields.get(8)` 缺失或 `petShopMast
 
 原 `0x50109b`/`0x4fbf7f` 的最终像素、色/字形与原设备 HD 表现、`prgLoadingTime` 文本在进度条上的
 原绘制表现、各记录字段在 Web `OwnedRoleRecordData.fields` 的实际填充范围、原 server 交易授权与
-对战最终属性均未证；本页聚合是原 Trade 显示投影，不等于战斗最终属性。本批无 native 执行对照，
+对战最终属性均未证；本页聚合是原 Trade 显示投影，不等于战斗最终属性。既有采用参数与 source 边界保持；本 BV 一次集中静态代码走查已完成，该走查不是页面/联机/HD/精准 server 实测。本批无 native 执行对照，
 无页面/联机/HD 实测，未宣原设备像素或原 server 已恢复。
