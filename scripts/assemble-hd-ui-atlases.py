@@ -25,10 +25,15 @@ def assemble(root):
     completed = 0
     for canonical, imageset in atlases.items():
         entry = textures[canonical]
+        if entry.get('deferred'):
+            continue
         if any(not textures[image['asset']].get('deferred')
                and not (root / textures[image['asset']]['png']).exists() for image in imageset['images']):
             continue
         original = Image.open(root / entry['original']).convert('RGBA')
+        inverted = Path(imageset['attributes']['Imagefile']).suffix.lower() == '.dds'
+        if inverted:
+            original = original.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         atlas = original.resize(tuple(n * 4 for n in original.size), Image.Resampling.NEAREST)
         for region in imageset['images']:
             if textures[region['asset']].get('deferred'):
@@ -37,6 +42,8 @@ def assemble(root):
             size = (int(region['Width']) * 4, int(region['Height']) * 4)
             atlas.paste(artwork.resize(size, Image.Resampling.LANCZOS),
                         (int(region['XPos']) * 4, int(region['YPos']) * 4))
+        if inverted:
+            atlas = atlas.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
         delivered = root / entry['png']
         delivered.parent.mkdir(parents=True, exist_ok=True)
         atlas.save(delivered)
