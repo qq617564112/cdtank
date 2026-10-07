@@ -37,6 +37,17 @@ export class AmmoBurnPresentation {
       this.clear();
       this.context = context;
     }
+    const currentEnded = new Map<string, Set<number>>();
+    for (const player of players) {
+      const burn = player.ammoBurn;
+      if (!player.alive || burn?.itemId !== 2007 || burn.skillId !== 4005) continue;
+      if (this.ended.get(player.id)?.has(burn.startedAt)) {
+        let startedAt = currentEnded.get(player.id);
+        if (!startedAt) {startedAt = new Set(); currentEnded.set(player.id, startedAt);}
+        startedAt.add(burn.startedAt);
+      }
+    }
+    this.clearMarkers(currentEnded);
     const present = new Set<string>();
     if (playing) for (const player of players) {
       const burn = player.ammoBurn;
@@ -77,6 +88,14 @@ export class AmmoBurnPresentation {
     this.runtime.stopEffect(instance.effect);
     this.runtime.stopSkillSound(instance.sound);
     this.active.delete(id);
+  }
+
+  private clearMarkers(current: ReadonlyMap<string, ReadonlySet<number>>): void {
+    for (const [id, ended] of [...this.ended]) {
+      const currentEnded = current.get(id);
+      for (const startedAt of [...ended]) if (!currentEnded?.has(startedAt)) ended.delete(startedAt);
+      if (!ended.size) this.ended.delete(id);
+    }
   }
 
   clear(): void {
