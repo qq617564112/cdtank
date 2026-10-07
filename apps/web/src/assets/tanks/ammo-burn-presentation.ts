@@ -25,6 +25,8 @@ interface ActiveBurn {
 export class AmmoBurnPresentation {
   private context = '';
   private readonly active = new Map<string, ActiveBurn>();
+  /** Real startedAt values an ammoBurnEnded event already retired for a role. */
+  private readonly ended = new Map<string, Set<number>>();
 
   constructor(private readonly runtime: Pick<EffectRuntime,
     'spawnAttachedEffect' | 'playSkillSound' | 'stopEffect' | 'stopSkillSound'>,
@@ -44,6 +46,9 @@ export class AmmoBurnPresentation {
       present.add(player.id);
       const previous = this.active.get(player.id);
       if (previous?.view === view && previous.startedAt === burn.startedAt) continue;
+      // A stale snapshot can still carry the burn the ammoBurnEnded event already retired;
+      // its real startedAt keeps the stopped instance from restarting before the snapshot drops it.
+      if (this.ended.get(player.id)?.has(burn.startedAt)) continue;
       this.remove(player.id);
       const effect = this.runtime.spawnAttachedEffect(view, 14, 0, false);
       if (!effect) continue;
@@ -51,6 +56,19 @@ export class AmmoBurnPresentation {
       this.active.set(player.id, {startedAt: burn.startedAt, view, effect, sound});
     }
     for (const id of this.active.keys()) if (!present.has(id)) this.remove(id);
+  }
+
+  /**
+   * Consumes the real ammoBurnEnded event before the generic slot1 notification: it stops the
+   * matching startedAt instance and records the ending so later stale snapshots cannot replay it.
+   */
+  end(playerId: string, startedAt: number, context: string): void {
+    if (this.context !== context) return;
+    let ended = this.ended.get(playerId);
+    if (!ended) {ended = new Set(); this.ended.set(playerId, ended);}
+    ended.add(startedAt);
+    const instance = this.active.get(playerId);
+    if (instance?.startedAt === startedAt) this.remove(playerId);
   }
 
   private remove(id: string): void {
@@ -63,6 +81,7 @@ export class AmmoBurnPresentation {
 
   clear(): void {
     for (const id of this.active.keys()) this.remove(id);
+    this.ended.clear();
     this.context = '';
   }
 }

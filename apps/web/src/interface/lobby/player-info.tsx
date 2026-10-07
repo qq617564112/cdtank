@@ -110,6 +110,7 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
     : name === 'txtPlayerOriginality' ? profile?.originality === undefined ? '' : String(profile.originality)
     : name === 'txtPlayerTech' ? profile?.tech === undefined ? '' : String(profile.tech)
     : name === 'txtPlayerScore' ? profile?.score === undefined ? '' : String(profile.score)
+    : name === 'txtPlayerFamily' ? profile && 'family' in profile ? profile.family?.name ?? '' : ''
     : name === 'txtRoomNumber' ? roomDetails?.roomId ?? '' : '';
   const description = roomDetails ? `${roomDetails.team}\n战车：${roomDetails.tankId}${roomDetails.petId ? `\n宠物：${roomDetails.petId}` : ''}\n${roomDetails.ready ? '已准备' : '未准备'}` : '';
   const writePending = pending || profilePending;

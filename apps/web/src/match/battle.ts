@@ -255,6 +255,14 @@ export class Battle {
         }
         this.itemInventory.event(event);
         this.originalHud.event(event);
+        const current = this.roomFeed.snapshot;
+        if (event.type === 'ammoBurnEnded' && event.playSkillEffect?.skillId === 4005
+            && event.playSkillEffect.effectIndex === 1 && event.value !== undefined
+            && current?.phase === 'PLAYING' && current.roomId === snapshot?.roomId
+            && current.match?.round === snapshot?.match?.round) {
+          this.ammoBurnPresentation?.end(event.targetId, event.value,
+            `${snapshot.roomId}:${snapshot.match?.round ?? 0}`);
+        }
         this.skillEffects?.event(event);
         // Ammo rejection carries the selected ammo table id; other itemRejected
         // reasons omit it. Drop any outstanding weapon-cycle intent so the next
