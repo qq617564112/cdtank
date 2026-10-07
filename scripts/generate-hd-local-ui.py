@@ -12,6 +12,7 @@ import sys
 import time
 
 from PIL import Image
+import numpy as np
 
 
 ASSET_DIR = Path('apps/web/src/assets/ui')
@@ -40,19 +41,21 @@ def prepare(root):
     logo.save(logo_folder / 'input.png')
     logo_prompt = '''Use case: precise-object-edit. Restore this exact original cartoon game logo as detailed, sharp high-resolution artwork. Preserve every existing Chinese character and all lettering exactly: no substitutions, invented text or spelling changes. Keep each contour, decoration, color, spacing and silhouette at the identical normalized position. Preserve the original visual identity and transparent background. Draw crisp high-resolution details from the reference rather than a blurred or filtered enlargement. Return only the logo on its unchanged canvas, with no added border, shadow, labels or background.'''
     (logo_folder / 'prompt.txt').write_text(logo_prompt + '\n')
-    icons_folder = art / 'jobs/cursor-icon'
+    icons_folder = art / 'jobs/cursor-icon-hd'
     icons_folder.mkdir(parents=True, exist_ok=True)
-    sheet = Image.new('RGBA', (1024, 512))
+    sheet = Image.new('RGB', (1024, 512), '#ff00ff')
     for index, name in enumerate(SOURCES[1:]):
         reference = source_image(original / name)
-        # Nearest-neighbor reference scaling establishes cell layout, not final artwork.
-        sheet.paste(reference.resize((512, 512), Image.Resampling.NEAREST), (index * 512, 0))
+        reference = reference.resize((512, 512), Image.Resampling.LANCZOS)
+        sheet.paste(reference, (index * 512, 0), reference.getchannel('A'))
     sheet.save(icons_folder / 'input.png')
-    icon_prompt = '''Use case: precise-object-edit. Restore this exact two-cell UI reference sheet as crisp high-resolution artwork. The canvas has two equal square cells in a single row, with no gap: left half is the original mouse cursor, right half is the original application icon. Keep both cells, each object's original normalized position, full shape, colors and transparent padding exactly unchanged. Keep the cursor hotspot at its original position, with no translation or recentering. Faithfully redraw the original icon without adding characters, text or decoration. Preserve transparency; do not add a solid background or grid separators. Draw true sharp detailed artwork, not a blur or filtered enlargement. Return only the complete two-cell sheet in a 2:1 ratio.'''
+    icon_prompt = '''Use case: precise-object-edit. Repaint this exact two-cell UI reference sheet as sharp, smooth high-resolution cartoon artwork. The two equal square cells in one row contain the original mouse cursor on the left and original application icon on the right. Keep every object, pose, size, color, normalized position and padding exactly. Keep the cursor hotspot with no translation or recentering.
+The source is a very low-resolution bitmap. Its visible pixel steps and square color blocks are sampling artifacts, not the intended art style. Replace those pixel staircases with clean continuous curved outlines, crisp antialiased diagonals, smooth painted shading and refined detail. Do not preserve square pixel cells; do not blur the reference or produce pixel art. Preserve the orange dog-head cursor with its black eye and white highlight, and the white animal atop the green tank with the same yellow burst. Add no characters, lettering, decorations or new objects.
+All existing magenta padding must remain exactly solid RGB 255,0,255 for color-key transparency. No shadows or painting in that magenta padding. Preserve the icon's original black areas and original color palette. Return only the complete two-cell sheet in the exact 2:1 ratio.'''
     (icons_folder / 'prompt.txt').write_text(icon_prompt + '\n')
     jobs = [
         {'id': 'logo', 'folder': logo_folder, 'ratio': f'{logo.width}:{logo.height}'},
-        {'id': 'cursor-icon', 'folder': icons_folder, 'ratio': '2:1'},
+        {'id': 'cursor-icon-hd', 'folder': icons_folder, 'ratio': '2:1'},
     ]
     (art / 'png').mkdir(exist_ok=True)
     return art, jobs
@@ -60,7 +63,7 @@ def prepare(root):
 
 def restore_alpha(artwork, original, size):
     result = artwork.convert('RGBA').resize(size, Image.Resampling.LANCZOS)
-    result.putalpha(original.getchannel('A').resize(size, Image.Resampling.NEAREST))
+    result.putalpha(original.getchannel('A').resize(size, Image.Resampling.LANCZOS))
     return result
 
 
@@ -74,8 +77,13 @@ def deliver(art, jobs):
     if sheet.width % 2 or abs(sheet.width / sheet.height - 2) > 0.05:
         raise ValueError('Cursor/icon output must be an equal two-cell 2:1 sheet')
     half = sheet.width // 2
-    cursor = restore_alpha(sheet.crop((0, 0, half, sheet.height)),
-                           source_image(art / 'original/normal-cursor.png'), (128, 128))
+    cursor = sheet.crop((0, 0, half, sheet.height)).resize((128, 128), Image.Resampling.LANCZOS)
+    pixels = np.asarray(cursor.convert('RGB'), dtype=np.float32)
+    keyed = np.clip(np.minimum(pixels[:, :, 0] - pixels[:, :, 1], pixels[:, :, 2] - pixels[:, :, 1]) / 255, 0, 1)
+    alpha = 1 - keyed
+    rgb = (pixels - keyed[:, :, None] * np.array([255, 0, 255])) / np.maximum(alpha[:, :, None], .001)
+    cursor = Image.fromarray(np.uint8(np.clip(rgb, 0, 255)))
+    cursor.putalpha(Image.fromarray(np.uint8(alpha * 255)))
     icon = restore_alpha(sheet.crop((half, 0, sheet.width, sheet.height)),
                          source_image(art / 'original/client-icon.ico'), (256, 256))
     cursor.save(art / 'png/normal-cursor-hd.png')
@@ -132,7 +140,7 @@ def run(art, jobs, base_url):
                     raise ValueError('API returned no image')
                 with Image.open(output) as image:
                     image.load()
-                    if job['id'] == 'cursor-icon' and (image.width % 2 or abs(image.width / image.height - 2) > 0.05):
+                    if job['id'] == 'cursor-icon-hd' and (image.width % 2 or abs(image.width / image.height - 2) > 0.05):
                         raise ValueError('Cursor/icon output must be a 2:1 sheet')
                     record['actualSize'] = list(image.size)
                 record['status'] = 'complete'
