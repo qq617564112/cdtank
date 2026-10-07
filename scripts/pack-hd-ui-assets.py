@@ -30,7 +30,8 @@ def prompt(columns, rows, occupied):
     return f'''Use case: precise-object-edit.
 Restore this exact game UI sprite sheet at high resolution, ideally 4096 pixels on its longest edge. The sheet contains EXACTLY {columns} columns by {rows} rows and {occupied} occupied independent slots. Preserve the black separators, empty slots, and all original empty margins exactly.
 Each slot is a separate original UI asset. Restore every slot independently in its original style, palette, aspect ratio and normalized position. Never combine neighboring slots, borrow their content, add slots, rearrange the grid, or draw a new interface layout.
-Preserve EVERY original Chinese character, Latin letter, digit, punctuation mark and symbol stroke by stroke. Do not substitute characters, change wording, simplify or invent strokes, replace a font, or reflow lettering. Keep all original spacing, blank areas, glyph shapes, button states, border contours, gradients and cursor shapes. Restore crisp readable original lettering and carefully refined painted UI details. Do not add labels, watermark, decorative borders, objects or new lettering. Return only the restored sprite sheet.'''
+Preserve EVERY original Chinese character, Latin letter, digit, punctuation mark and symbol stroke by stroke. Do not substitute characters, change wording, simplify or invent strokes, replace a font, or reflow lettering. Keep all original spacing, blank areas, glyph shapes, button states, border contours, gradients and cursor shapes. Restore crisp readable original lettering and carefully refined painted UI details. Do not add labels, watermark, decorative borders, objects or new lettering. Return only the restored sprite sheet.
+这些是低分辨率复古游戏 UI 素材。请在保持原美术和字体风格的情况下重绘为清晰的高清素材。低分辨率像素台阶、模糊和压缩噪点是采样痕迹，请恢复它们表达的连续轮廓；文字的斜线连贯，曲线自然，笔画完整，粗细稳定，保留字形、衬线、比例和原来的颜色。图标与控件保持相同的轮廓、图案、状态和配色，描边清楚，渐变平滑。不要复制大像素块，不要产生毛边、断笔、随机孔洞、额外纹理、光晕或浮雕。保持每个格子的位置、比例和留白。'''
 
 
 def font_prompt(columns, rows, occupied):
