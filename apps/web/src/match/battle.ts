@@ -18,6 +18,7 @@ import {GameConnection} from '../network/game-connection';
 import type {AccountContext} from '../network/accounts';
 import {LobbyChat} from '../network/lobby-chat';
 import {Friends} from '../network/friends';
+import {GmSupportInbox} from '../network/gm-support';
 import {LobbyPresence} from '../network/lobby-presence';
 import {ArcRotateCamera, Scene, Vector3} from '@babylonjs/core';
 import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
@@ -78,6 +79,7 @@ export class Battle {
   readonly trade = new Trade(this.connection);
   readonly friends = new Friends(this.connection);
   readonly blacklist = new Blacklist(this.connection);
+  readonly gmSupport = new GmSupportInbox(this.connection);
   private readonly client = this.connection.client;
   private readonly accounts = this.connection.accounts;
   private readonly rooms = this.connection.rooms;
@@ -343,6 +345,7 @@ export class Battle {
       if (this.pageMusic) this.pageMusic.dispose();
       else this.music.dispose();
       this.lobbyPresence.stop();
+      this.gmSupport.dispose();
       this.sceneEffects.clear();
       this.environmentSound?.dispose();
       this.environmentSound = undefined;

@@ -6,6 +6,7 @@ import {LobbySocialView} from './interface/lobby/lobby-social-view';
 import {BattleMatchView} from './interface/battle/battle-match';
 import {BattleChatView} from './interface/battle/battle-chat-view';
 import {BattleHudView} from './interface/battle/battle-hud-view';
+import {GmSupportView} from './interface/support/gm-support-view';
 import {VolumeSettingsView} from './interface/settings/volume-settings';
 import {KeySettingsView, KeyBindingsHint} from './interface/settings/key-settings';
 import {SettingsSourceView} from './interface/settings/settings-source-view';
@@ -134,6 +135,7 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
       chatContent={<LobbyChatView chat={battle.lobbyChat} presence={battle.lobbyPresence}/>} playerContent={<LobbySocialView battle={battle}/>} openInventory={openInventory}
       openEquipment={()=>{setEquipmentTankInstance(undefined);setEquipmentOpen(true);}} openRoles={()=>setRolesOpen(true)}
       openShop={openShop} openHistory={()=>setHistoryOpen(true)}/>
+    {!validation && <GmSupportView inbox={battle.gmSupport}/>}
     {validation && <aside className="controls">
       <h1>猫狗大作战 · 验证</h1>
       <button id="fullscreen" type="button" onClick={()=>{
