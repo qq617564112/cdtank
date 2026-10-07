@@ -33,7 +33,6 @@ export function LobbySocialView({battle}: {battle: Battle}) {
   const layout = ui ? new HomeSourceLayout(ui, 'playerlist.xml') : undefined;
   const queryPlayerProfile = useCallback((accountId: string) => battle.playerProfile(accountId), [battle]);
   const queryPlayerSearch = useCallback((name: string): Promise<ResPlayerSearch> => battle.playerSearch(name), [battle]);
-  const queryRoleProfile = useCallback(() => battle.roleProfile(), [battle]);
   useEffect(() => {battle.lobbyPresence.start(); return () => battle.lobbyPresence.stop();}, [battle]);
   useEffect(() => {
     if (presence.status === '连接已断开') {setSelected(null); setSearchOpen(false);}
@@ -124,7 +123,6 @@ export function LobbySocialView({battle}: {battle: Battle}) {
       cancel={() => void battle.trade.act(incomingTrade ? {operation: 'RESPOND', sessionId: tradeSession.id, accept: false}
         : {operation: 'CANCEL', sessionId: tradeSession.id})}/>} 
     {showTrade && tradeSession.phase !== 'INVITED' && tradeValue && <TradeSourcePage state={tradeValue}
-      pending={trade.pending} status={trade.status} act={request => void battle.trade.act(request)} close={closeTrade}
-      queryProfile={queryRoleProfile} accountGeneration={accountContext.generation}/>}
+      pending={trade.pending} status={trade.status} act={request => void battle.trade.act(request)} close={closeTrade}/>}
   </>;
 }

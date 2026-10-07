@@ -47,6 +47,9 @@ export function TradeCandidateRowContent({ui, catalog, record, current, offered}
     : equipmentGroup === 'hat' ? '坦克帽子'
       : equipmentGroup === 'balloon' ? '坦克气球'
         : equipmentGroup === 'mark' ? '坦克标志' : undefined;
-  return <HomeEquipmentCommonRowContent ui={ui} name={definition.name} iconId={definition.iconId}
-    itemTableId={item.itemTableId} ownedQuantity={item.ownedQuantity} kindLabel={kindLabel}/>;
+  return <>
+    <HomeEquipmentCommonRowContent ui={ui} name={definition.name} iconId={definition.iconId}
+      itemTableId={item.itemTableId} ownedQuantity={item.ownedQuantity} kindLabel={kindLabel} installed={current}/>
+    {!current && offered && <HomeRoleRowStatusBadge ui={ui} status="offered"/>}
+  </>;
 }
