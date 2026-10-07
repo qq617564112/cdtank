@@ -39,8 +39,11 @@ export function TradeCandidateRowContent({ui, catalog, record, current, offered}
   if (definition?.iconId === undefined) return null;
   const category = classifyInventoryCategory(item.itemTableId);
   if (category === 1 || category === 2 || category === 6) {
-    return <HomeItemRowContent ui={ui} name={definition.name} itemTableId={item.itemTableId}
-      iconId={definition.iconId} ownedQuantity={item.ownedQuantity}/>;
+    return <>
+      <HomeItemRowContent ui={ui} name={definition.name} itemTableId={item.itemTableId}
+        iconId={definition.iconId} ownedQuantity={item.ownedQuantity}/>
+      {!current && offered && <HomeRoleRowStatusBadge ui={ui} status="offered"/>}
+    </>;
   }
   const equipmentGroup = gameContent().items.get(item.itemTableId)?.runtime.equipmentGroup;
   const kindLabel = category === 7 ? '外观特效'
