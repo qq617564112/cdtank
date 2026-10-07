@@ -251,6 +251,30 @@ def batch_complete(batch, delivered):
                for index, cell in enumerate(batch['cells']))
 
 
+def assemble_font_tiles(sources):
+    if not sources:
+        return
+    textures = {e['source']: e for e in document(ART / 'inventory.json')['textures']}
+    batches = document(ART / 'plan.json')['batches']
+    for source in sources:
+        cells = [(other, index, cell) for other in batches
+                 for index, cell in enumerate(other['cells']) if cell['source'] == source and cell.get('sourceBox')]
+        with LOCK:
+            if not all(tile_path(other, index).exists() for other, index, _ in cells):
+                continue
+            entry = textures[source]
+            original = Image.open(ROOT / entry['original']).convert('RGBA')
+            composite = original.resize(tuple(n * 4 for n in original.size), Image.Resampling.LANCZOS)
+            for other, index, cell in cells:
+                composite.paste(Image.open(tile_path(other, index)).convert('RGBA'),
+                                (cell['sourceBox'][0] * 4, cell['sourceBox'][1] * 4))
+            destination = ROOT / entry['png']
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            temporary = destination.with_name(destination.name + '.tmp')
+            composite.save(temporary, format='PNG')
+            temporary.replace(destination)
+
+
 def extract(batch):
     inventory = document(ART / 'inventory.json')
     textures = {e['source']: e for e in inventory['textures']}
@@ -269,23 +293,7 @@ def extract(batch):
         temporary.replace(destination)
         if cell.get('sourceBox'):
             tiled.add(cell['source'])
-    for source in tiled:
-        cells = [(other, index, cell) for other in document(ART / 'plan.json')['batches']
-                 for index, cell in enumerate(other['cells']) if cell['source'] == source and cell.get('sourceBox')]
-        with LOCK:
-            if not all(tile_path(other, index).exists() for other, index, _ in cells):
-                continue
-            entry = textures[source]
-            original = Image.open(ROOT / entry['original']).convert('RGBA')
-            composite = original.resize(tuple(n * 4 for n in original.size), Image.Resampling.LANCZOS)
-            for other, index, cell in cells:
-                composite.paste(Image.open(tile_path(other, index)).convert('RGBA'),
-                                (cell['sourceBox'][0] * 4, cell['sourceBox'][1] * 4))
-            destination = ROOT / entry['png']
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            temporary = destination.with_name(destination.name + '.tmp')
-            composite.save(temporary, format='PNG')
-            temporary.replace(destination)
+    assemble_font_tiles(tiled)
 
 
 def generate(groups, concurrency, limit, retry_delay=300):
@@ -298,6 +306,8 @@ def generate(groups, concurrency, limit, retry_delay=300):
     batches = document(ART / 'plan.json')['batches']
     selected = [b for b in batches if not groups or b['group'] in groups]
     delivered = {e['source']: e['png'] for e in document(ART / 'inventory.json')['textures']}
+    assemble_font_tiles({cell['source'] for batch in selected for cell in batch['cells']
+                         if cell.get('sourceBox') and not (ROOT / delivered[cell['source']]).exists()})
     selected = [b for b in selected if not batch_complete(b, delivered)]
 
     def call(batch):
