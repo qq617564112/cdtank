@@ -74,6 +74,16 @@ mutex、receipt 或完整 hotkey 清理宣称为原 Windows 等价行为。
 
 本批一次集中gpt-5.6代码走查已执行，修复真实发射边界恢复与普通输入快照先于事件发送两项；实际双端施放/恢复、自然到期、合法与被拒开火、死亡/再战、高清、账户库存保存及真实重启仍待验收。FUNC-08及M4-10-I10/I11保持未完成。
 
+## 定时闹钟群体限制
+
+对应 M4-10-I3007、FUNC-03/04/05 及 M4-09。原 item 3007 为 category 4、itemType 4、inventoryCategory 2、BattleUseMax 10、零价格/getMethod 0、Shop/CPU/trade 不可用，地面资源为 modelId 9。4024/4025/4026 分别为 FuncType 3/4/5，TriggerType 1、Target 3、Range 80、T 5，首槽依次为 112/SE44、115/SE47、118/GA20。终态与采用说明见[定时闹钟群体限制](alarm-clock-client-business-design.md)。
+
+普通已合法 owned 实例沿现 category 4 placeTrap、CAS 先成功后 owned 与局内数量各减 1、再创建 00009 地面对象。零价不开放免费 BUY、不 gift、不 CPU 自动配给，也不以普通请求或目录存在作为取得来源。Range 80 采用为首个合格敌方 XZ 接触半径；Target 3 采用为触发瞬间当前 room 全部真实 alive/status 2 敌方且不再受 80 限制；60000 ms 为 Web 地面期限；owner 死亡或退出删除未触发对象且不退款。
+
+flags 9/10/11 是许可计数，初始 1，实际施加后扣为 0；同类限制已存在时不叠、不刷新 deadline，其他 lane 可新增，0/undefined 跳过，2→1 仍保留原许可。move/turn/fire 各自按 T 5 恢复自己的 1，旧贡献保持。每个实际成功 lane 只播首槽 effectIndex 0，move 附加门禁为 `hp > 0 && !flag6`，turn/fire 为 `hp > 0`；第二槽触发来源未取得，不播放。placement item 零效果不播 primary。
+
+现有 `GroundTrapsPresentation`、`ContentItemVisual` 与通用 `PlaySkillEffect` 已覆盖数值 item/model 和 skill/effect 查表，无需新增 UI、schema 或 API。完整原 writer、普通取得来源、原 group dispatcher、第二槽触发、网页联机与 HD 重启未实测或恢复，I3007、FUNC-03/04/05、M4-09 及父项保持未勾；3006/4027 独立缺引用保留。
+
 ## 空袭
 
 对应FUNC-16/FUNC-15及M4-10-I13、M6-06-I13。原物件13“救命啊”通讯器关联skill13，每局上限1，两个正价40金币/20软星币，GGet2；skill13为Trigger1/Target1/Range200、FuncType16 T0/X20/Y3013/Z0、首槽Effect10/SE02/Tag0/Method3。skill3013为Target4/Range200、FuncType15 T0/X0/Y3012/Z0、首槽Effect60/SE32/Tag0/Method1；3012为FuncType2 HP-300且无效果/声音。原表引用链 `item13 ItemSkill1 -> skill13 Func16 -> skill3013 Func15 -> skill3012` 及表loader槽步长是直接来源；原416f接收器486a09只消费消息+c技能、+10效果槽和+14 float32 XZ点数组，经向零截断提交world采样Y=0，不读FuncType、不扣库存、不写目标生命。
