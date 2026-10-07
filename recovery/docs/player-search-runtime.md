@@ -6,7 +6,7 @@
 
 匹配键为账户的有效昵称：优先已保存的 `account_display_names.name`，否则使用默认昵称 `坦克手-<accountId 前 6 位>`（`AccountDisplayName.get`/`find`）。查询对输入先 `trim`，再与有效昵称全等比较，既非前缀也非模糊，不折叠大小写；命中按 `accountId` 升序返回（`find` 的 `COALESCE` 与 `ORDER BY a.id`）。
 
-输入约束沿用昵称规则：空串、超过 16 个 Unicode 码元或含控制字符 `\u0000-\u001f\u007f` 拒绝。昵称本身仍为去首尾空白后的 1 至 16 字（`AccountDisplayName.set`）。
+输入约束沿用昵称规则：空串、超过 16 个 Unicode 码点或含控制字符 `\u0000-\u001f\u007f` 拒绝。昵称本身仍为去首尾空白后的 1 至 16 字（`AccountDisplayName.set`）；计数按码点，即 trim 后 `[...name].length`。
 
 同名：多个持久账户有效昵称相同时全部返回，页面逐条列出；每行以 `#<accountId 前 6 位>` 消歧，该标签不参与匹配。
 
@@ -24,7 +24,7 @@
 
 ## 界面到关系业务路线
 
-`查找玩家`（`lobby-player-search-launcher`/`PlayerSearchView`）→ `AccountConnection.playerSearch` → `Battle.playerSearch` → `PlayerSearch` RPC → `registerPlayerSearchApi` → `AccountStore.playerSearchIds` → `AccountDisplayName.find`。
+`查找玩家`（`lobby-player-search-launcher`/`PlayerSearchView`）→ `LobbySocialView` query callback → `Battle.playerSearch` → `AccountConnection.playerSearch` → `PlayerSearch` RPC → `registerPlayerSearchApi` → `AccountStore.playerSearchIds` → `AccountDisplayName.find`。
 
 选中候选后 `LobbySocialView.openFromSearch` 设为目标并打开 `PlayerInfoView`；资料页经 `PlayerProfile`（`battle.playerProfile`）读取目标公开资料，其 Add/Remove Friend、Blacklist、Exchange 分别接既有 `Friends`、`Blacklist`、`Trade` 业务。查找只负责确定目标，关系写入仍走既有权威模块；关闭资料返回 `查找玩家` 入口。
 
@@ -38,4 +38,4 @@
 
 ## 已知边界
 
-原查找来源未恢复；真实页面双端网络、服务器重启持久化与高清分辨率均未实测。既有好友关系证据（`friends-network.json` 等 QUERY/ADD/REMOVE）仅复用它原有范围，不把旧日志当作新查找的通过证据。
+原查找来源未恢复；真实页面双端网络、服务器重启持久化与高清分辨率均未实测。既有好友关系证据（`friends-network.json` 等 QUERY/ADD/REMOVE）仅复用它原有范围，不把旧日志当作新查找的通过证据。本批集中静态走查已完成；原来源、实测与高清仍未确认。
