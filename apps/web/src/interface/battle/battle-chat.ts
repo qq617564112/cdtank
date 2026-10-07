@@ -1,7 +1,7 @@
 import {DEFAULT_QUICK_CHAT_PREFERENCES, validateQuickChatPreferences} from '../settings/quick-chat-preferences';
 import type {QuickChatKey, QuickChatPreferences} from '../settings/quick-chat-preferences';
 import type {Family} from '../../network/family';
-import type {MsgFamilyChat} from '../../../shared/protocols/MsgFamilyChat';
+import type {MsgFamilyChat} from '../../../../shared/protocols/MsgFamilyChat';
 import {CHAT_NOTICE_FADE_MS, CHAT_NOTICE_FULL_MS} from './battle-chat-visibility';
 
 export interface BattleChatSnapshot {
@@ -136,6 +136,7 @@ export class BattleChat {
   }
   resetSession(): void {
     this.cancelNotice();
+    this.family.reset();
     this.familyMessageIds.clear();
     this.nextMessage = 0;
     this.update({editing: false, noticePhase: 'hidden', messages: [], draft: '', targetName: '',
@@ -163,6 +164,7 @@ export class BattleChat {
   }
   clear(): void {
     this.cancelNotice();
+    this.family.reset();
     this.familyMessageIds.clear();
     this.nextMessage = 0;
     this.update({visible: false, phase: '', sourceActive: false, editing: false, noticePhase: 'hidden',

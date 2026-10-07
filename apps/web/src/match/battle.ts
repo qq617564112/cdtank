@@ -517,6 +517,7 @@ export class Battle {
 
   private async enter(result: ResJoin, session: number): Promise<void> {
     if (session !== this.session) return;
+    this.family.reset();
     this.roomFeed.enter(result.room.id);
     this.playerId = result.playerId;
     this.mapId = result.room.mapId;
