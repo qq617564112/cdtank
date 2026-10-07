@@ -50,12 +50,12 @@ export interface MsgGmReply {
 
 - `afterId` 是安全整数且不小于 0。
 - 按回复 id 升序最多返回 50 条；`nextAfterId` 是最后返回 id，空页保持传入 afterId。
-- 服务端读取第 51 条判断 `hasMore`，为 true 时本轮不注册 live 游标；末页返回后，才以 `conn.id + accountId + afterId` 开始该连接的推送游标。
+- 服务端读取第 51 条判断 `hasMore`，为 true 时本轮不注册 live 游标；末页成功回复的 `postApiReturnFlow` 校验 `GmSupport`、`isSucc`、`!hasMore` 与当前账号后，才以 `conn.id + accountId + afterId` 开始该连接的推送游标。
 - 认证账户即使尚无角色资料也可以查询，查询不创建 profile。
 
 `registerGmSupportApi(server, accounts, accountByConnection)` 使用当前连接认证 ID 查询，公开 API 仅要求登录；大厅 `WAITING`、`PLAYING`、`FINISHED` 均可只读查询，不接受账户参数，也不授予 GM 身份或远程处理权限。
 
-服务端每秒执行一次单飞轮询，不使用每连接 timer 或无限并发；timer 随 server 生命周期并在 unref 后运行，房间阶段不影响。轮询按各连接保存的账号游标读取新回复，只向当前认证账户的连接逐条发送 `MsgGmReply`，不向房间广播，也不发送给其它账号。发送成功后才前移游标，失败保留重发；断连或认证身份变化移除旧游标。多页 backfill 期间不会让 push 游标越过尚未读取的页；每次 QUERY 开始都会清旧订阅，读当前分页后再订阅。多个只读连接可用同账号各自独立游标，UI 负责串行分页。
+服务端每秒执行一次单飞轮询，不使用每连接 timer 或无限并发；timer 随 server 生命周期并在 unref 后运行，房间阶段不影响。轮询按各连接保存的账号游标读取新回复，只向当前认证账户的连接逐条发送 `MsgGmReply`，不向房间广播，也不发送给其它账号。发送返回 `!isSucc` 时本连接本轮停止且不推进游标；成功才前移，失败保留重发；断连或认证身份变化移除旧游标。多页 backfill 期间不会让 push 游标越过尚未读取的页；每次 QUERY 开始都会清旧订阅，读当前分页后再订阅。多个只读连接可用同账号各自独立游标，UI 负责串行分页。
 
 服务端发送成功只表示该次 WebSocket 写成功，不记为持久已读，也不删除回复。玩家离线后重新登录，QUERY `afterId: 0` 可从同库完整读取既有回复；服务重启后仍从同一 SQLite 回复表恢复。
 
@@ -84,4 +84,4 @@ QUERY 单飞，按 `nextAfterId` 逐页读取直到 `hasMore` 为 false。backfi
 
 ## 范围与实测限制
 
-本批只实现 Web 采用的人工回复闭环，原大厅 GM 单独回调、原服务端人工处理程序、原客服回复推送和完整页面 1:1 仍开放。实际 operator 执行、玩家联机、每秒推送、离线重新登录、多连接、真实服务重启、HD 页面和最终静态走查均未在本 docs 任务中执行；`M6-08-GM-回复`、`M6-08`、`M5-12`、`UI-03` 及其父项保持未勾。
+本批只实现 Web 采用的人工回复闭环，原大厅 GM 单独回调、原服务端人工处理程序、原客服回复推送和完整页面 1:1 仍开放。整批唯一 gpt-5.6 集中静态走查已完成；发送返回 `!isSucc` 时本连接本轮停止且不推进游标，末页成功回复的 `postApiReturnFlow` 校验 `GmSupport`、`isSucc`、`!hasMore` 与当前账号后才建立订阅。实际 operator 执行、玩家联机、每秒推送、离线重新登录、多连接、真实服务重启、HD 页面和 source 实测仍未执行；`M6-08-GM-回复`、`M6-08`、`M5-12`、`UI-03` 及其父项保持未勾。
