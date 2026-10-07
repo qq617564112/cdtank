@@ -18,6 +18,8 @@ LAYOUTS = {'tiny': (32, 8, 128), 'small': (64, 4, 256),
 
 def category(entry):
     extent = max(entry['size'])
+    if entry['size'][0] > 256 and entry['size'][1] <= 64:
+        return 'strip'
     for name, (limit, _, _) in LAYOUTS.items():
         if extent <= limit:
             return name
@@ -86,6 +88,44 @@ def font_entries(root, textures):
                     tiles.append({**entry, 'size': [width, height], 'sourceBox': box})
         result[canonical] = tiles
     return result
+
+
+def strip_chunks(entries):
+    selection = []
+    y = 8
+    for entry in entries:
+        height = max(1, round(entry['size'][1] * 512 / entry['size'][0]))
+        if selection and y + height + 8 > 528:
+            yield selection
+            selection = []
+            y = 8
+        selection.append(entry)
+        y += height + 16
+    if selection:
+        yield selection
+
+
+def create_strip_batch(root, batch_id, entries, write):
+    canvas = Image.new('RGB', (528, 528), 'black') if write else None
+    cells = []
+    y = 8
+    for entry in entries:
+        height = max(1, round(entry['size'][1] * 512 / entry['size'][0]))
+        cells.append({'source': entry['canonical'], 'box': [8, y, 520, y + height]})
+        if write:
+            with Image.open(root / entry['original']) as original:
+                canvas.paste(original.convert('RGB').resize((512, height), Image.Resampling.NEAREST), (8, y))
+        y += height + 16
+    folder = Path('art/hd-assets/batches') / batch_id
+    if write:
+        (root / folder).mkdir(parents=True, exist_ok=True)
+        canvas.save(root / folder / 'input.png')
+        text = prompt(1, len(entries), len(entries))
+        text += '\nThe occupied slots form ONE column of independent horizontal strips with DIFFERENT heights. Keep every strip at its exact input coordinates, width, height and aspect ratio. Preserve the 16-pixel black gaps and all black space below the final strip. Do not resize rows to equal heights, combine strips, reflow text, add rows or turn this reference into an assembled interface.'
+        (root / folder / 'prompt.txt').write_text(text + '\n')
+    return {'id': batch_id, 'group': 'ui', 'input': str(folder / 'input.png'),
+            'inputSize': [528, 528], 'cells': cells, 'prompt': str(folder / 'prompt.txt'),
+            'output': str(folder / 'output-1.png'), 'ratio': '1:1'}
 
 
 def create_font_batch(root, batch_id, entries, write):
@@ -176,15 +216,20 @@ def main():
             counts['font'] += 1
     for (family, kind), entries in sorted(families.items()):
         entries.sort(key=lambda entry: entry['canonical'])
-        capacity = LAYOUTS[kind][1] ** 2
-        for start in range(0, len(entries), capacity):
+        if kind == 'strip':
+            selections = strip_chunks(entries)
+        else:
+            capacity = LAYOUTS[kind][1] ** 2
+            selections = (entries[start:start + capacity] for start in range(0, len(entries), capacity))
+        for selection in selections:
             sequence += 1
             batch_id = f'ui-packed-{sequence:04d}-{kind}'
             while batch_id in occupied_ids:
                 sequence += 1
                 batch_id = f'ui-packed-{sequence:04d}-{kind}'
             occupied_ids.add(batch_id)
-            batch = create_batch(root, batch_id, entries[start:start + capacity], kind, not args.dry_run)
+            batch = (create_strip_batch(root, batch_id, selection, not args.dry_run) if kind == 'strip'
+                     else create_batch(root, batch_id, selection, kind, not args.dry_run))
             batches.append(batch)
             counts[kind] += 1
     summary = {'previous_ui_batches': sum(batch['group'] == 'ui' for batch in plan['batches']),
