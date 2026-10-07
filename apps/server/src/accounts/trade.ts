@@ -19,7 +19,7 @@ export class AccountTrade {
       offers TEXT NOT NULL, receipt TEXT NOT NULL);`);
   }
 
-  account(accountId: string): TradeAccount {
+  private rawAccount(accountId: string): TradeAccount {
     if (!this.database.prepare('SELECT id FROM accounts WHERE id = ?').get(accountId)) throw new Error('账户不存在');
     const owned: TradeAccount['owned'] = {base: [], equipment: []};
     for (const row of this.database.prepare('SELECT kind, record FROM role_records WHERE account_id = ? ORDER BY instance_id').all(accountId)) {
@@ -40,8 +40,25 @@ export class AccountTrade {
     return result;
   }
 
+  account(accountId: string): TradeAccount {
+    const current = this.rawAccount(accountId);
+    const equipment = current.owned.equipment.map(record => {
+      const fields = new Map(record.fields), instanceId = fields.get(0x1c), storedMinutes = fields.get(0x34);
+      if (instanceId === undefined || storedMinutes === undefined) return record;
+      const remainingMinutes = currentMaintenanceMinutes(this.database, accountId, 'tank', instanceId, storedMinutes);
+      if (remainingMinutes === storedMinutes) return record;
+      fields.set(0x34, remainingMinutes);
+      return {name: record.name, fields: [...fields]};
+    });
+    const records = current.inventory.records.map(record => {
+      const ownedQuantity = currentMaintenanceMinutes(this.database, accountId, 'part', record.instanceId, record.ownedQuantity);
+      return ownedQuantity === record.ownedQuantity ? record : {...record, ownedQuantity};
+    });
+    return {...current, owned: {...current.owned, equipment}, inventory: {...current.inventory, records}};
+  }
+
   prepare(accountId: string, offered: TradeOffer): PreparedTradeOffer {
-    const current = this.account(accountId);
+    const current = this.rawAccount(accountId);
     if (!current.wallet) throw new Error('账户角色资料尚未建立');
     for (const key of ['money', 'originality', 'skillPoints'] as const) {
       const value = offered[key], maximum = key === 'money' ? 0xffffffff : 0xffff;
@@ -84,7 +101,7 @@ export class AccountTrade {
             || !isDeepStrictEqual(JSON.parse(String(previous.offers)), prepared)) throw new Error('交易确认已用于不同内容');
         this.database.exec('COMMIT'); return;
       }
-      const current = accountIds.map(id => this.account(id));
+      const current = accountIds.map(id => this.rawAccount(id));
       for (let index = 0; index < 2; index++) {
         if (!isDeepStrictEqual(this.prepare(accountIds[index], prepared[index].offer), prepared[index])) throw new Error('拥有资料已改变，请重新展示交易');
       }
@@ -151,7 +168,7 @@ export class AccountTrade {
         const recipient = accountIds[1 - index];
         for (const record of prepared[index].records) {
           if (record.item && classifyInventoryCategory(record.item.itemTableId) <= 2) {
-            const existing = this.account(recipient).inventory.records.find(item => item.itemTableId === record.item!.itemTableId);
+            const existing = this.rawAccount(recipient).inventory.records.find(item => item.itemTableId === record.item!.itemTableId);
             if (existing) {
               const ownedQuantity = existing.ownedQuantity + record.quantity!;
               if (ownedQuantity > 0xffffff) throw new Error('交易物品数量超出范围');
@@ -177,7 +194,6 @@ export class AccountTrade {
               record.kind === 'pet' ? 'base' : 'equipment', instanceId, JSON.stringify({name: record.role.name, fields: [...fields]}));
             if (timed) {
               setMaintenanceExpiry(this.database, recipient, timed.kind, instanceId, timed.expiresAtMs);
-              removeMaintenanceClock(this.database, accountIds[index], timed.kind, record.instanceId);
             }
           } else {
             const item = record.item!, stack = classifyInventoryCategory(item.itemTableId) <= 2;
@@ -188,7 +204,6 @@ export class AccountTrade {
                 : timed ? timed.currentMinutes : item.ownedQuantity}));
             if (timed) {
               setMaintenanceExpiry(this.database, recipient, 'part', instanceId, timed.expiresAtMs);
-              removeMaintenanceClock(this.database, accountIds[index], 'part', record.instanceId);
             }
           }
           received.push({accountId: recipient, kind: record.kind, fromInstanceId: record.instanceId, instanceId});
