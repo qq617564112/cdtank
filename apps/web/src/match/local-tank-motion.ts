@@ -89,18 +89,23 @@ export class LocalTankMotion {
     this.command = 0;
     if (command !== 0 && permitted) {
       let candidate: RoleMovementPose;
+      let acceptedCommand: RoleMovementMathInput['command'] = 0;
       if (command === 3 || command === 4) {
         candidate = turnStationaryRolePose(initial, axes.turn, movement.turn, dt);
-        if (!sampleRoleNavigation(grid, candidate, command, DIMENSIONS.width, DIMENSIONS.depth).accepted) candidate = initial;
+        if (sampleRoleNavigation(grid, candidate, command, DIMENSIONS.width, DIMENSIONS.depth).accepted) acceptedCommand = command;
+        else candidate = initial;
       } else if (movement.original) {
-        candidate = moveRoleThroughNavigation({...initial, command, tankType,
-          move: movement.speed, turn: movement.turn, dt}, grid, DIMENSIONS).pose;
+        const result = moveRoleThroughNavigation({...initial, command, tankType,
+          move: movement.speed, turn: movement.turn, dt}, grid, DIMENSIONS);
+        candidate = result.pose;
+        acceptedCommand = result.accepted ? result.command : 0;
       } else {
         candidate = turnStationaryRolePose(initial, axes.turn, movement.turn, dt);
         const distance = Math.sign(axes.move) * movement.speed * dt;
         candidate.position.x += candidate.look.x * distance;
         candidate.position.z += candidate.look.z * distance;
-        if (!sampleRoleNavigation(grid, candidate, command, DIMENSIONS.width, DIMENSIONS.depth).accepted) candidate = initial;
+        if (sampleRoleNavigation(grid, candidate, command, DIMENSIONS.width, DIMENSIONS.depth).accepted) acceptedCommand = command;
+        else candidate = initial;
       }
       const steps = Math.ceil(Math.hypot(candidate.position.x - initial.position.x, candidate.position.z - initial.position.z) / 6);
       const startYaw = Math.atan2(initial.forward.x, initial.forward.z);
@@ -113,15 +118,18 @@ export class LocalTankMotion {
           forward: direction(startYaw + delta * fraction)};
         if (!sampleRoleNavigation(grid, sample, command, DIMENSIONS.width, DIMENSIONS.depth).accepted) {
           candidate = initial;
+          acceptedCommand = 0;
           break;
         }
       }
       candidate.position.y = grid.sample(candidate.position.x, candidate.position.z)?.height ?? initial.position.y;
-      candidate = constrainTankPose(initial, candidate, tankObstacles(player.id, players));
+      const constrained = constrainTankPose(initial, candidate, tankObstacles(player.id, players));
+      if (constrained === initial) acceptedCommand = 0;
+      candidate = constrained;
       this.pose = candidate;
       this.yaw = Math.atan2(candidate.look.x, candidate.look.z);
       this.bodyYaw = Math.atan2(candidate.forward.x, candidate.forward.z);
-      this.command = candidate === initial ? 0 : command;
+      this.command = acceptedCommand;
     }
     this.advanceTurret(axes.aim, dt, players);
     this.moving = Math.hypot(this.pose!.position.x - initial.position.x, this.pose!.position.z - initial.position.z) > .0001;
