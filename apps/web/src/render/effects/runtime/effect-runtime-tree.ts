@@ -133,6 +133,7 @@ export class EffectRuntimeTree {
   dispose(): void {
     for (const node of this.nodes) {
       if (node.lifecycle.phase !== 0) node.sound?.end();
+      node.screen?.end();
       node.releaseState();
     }
   }

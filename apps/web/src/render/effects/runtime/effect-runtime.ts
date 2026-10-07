@@ -23,6 +23,7 @@ import {EffectModelNodeState} from '../models/effect-model-node';
 import {effectModelDraw} from '../models/effect-model-draw';
 import {effectModelEngineDelta} from '../models/effect-model-animation';
 import {EffectSkillSound, SkillSoundCatalog} from '../../../audio/effect-skill-sound';
+import {LegacyScreenEffectBackend} from './legacy-screen-effect';
 
 interface LinkRecord {field04String: string; field148String: EffectPrimaryTag; bindingMode: number;}
 interface Links {
@@ -64,8 +65,10 @@ export class EffectRuntime {
   private renderObserver?: Observer<Scene>;
   private readonly cameraShake: EffectCameraShakeView;
   private readonly skillSound: EffectSkillSound;
+  private readonly screenBackend: LegacyScreenEffectBackend;
 
   constructor(private readonly scene: Scene, private readonly camera: Camera) {
+    this.screenBackend = new LegacyScreenEffectBackend(scene);
     this.cameraShake = new EffectCameraShakeView(camera, () => this.random());
     this.skillSound = new EffectSkillSound(camera);
     scene.onDisposeObservable.addOnce(() => {
@@ -78,6 +81,7 @@ export class EffectRuntime {
       this.renderObserver = undefined;
       this.skillSound.dispose();
       this.textures.clear();
+      this.screenBackend.dispose();
     });
   }
 
@@ -300,7 +304,8 @@ export class EffectRuntime {
     const tree = new EffectRuntimeTree(this.library!, identifier, origin, parent,
       () => this.random(), this.sound, this.sound.shared, undefined, this.statePool,
       {shake: (parameter, duration, strength) => this.cameraShake.activate(parameter, duration, strength),
-        selectEffect: () => {throw new Error('Original screen postprocess index5 has no initialized backend');}, clearEffect: () => {}},
+        selectEffect: (index, parameter, owner) => this.screenBackend.selectEffect(index, parameter, owner),
+        clearEffect: owner => this.screenBackend.clearEffect(owner)},
       definition => {
         const reference = this.library!.modelControls.find(row => row.node === definition.index)!.reference;
         const backend = new EffectModelRenderer(this.scene, this.modelLibrary!.resources.find(row => row.reference === reference)!,
@@ -400,6 +405,7 @@ export class EffectRuntime {
     this.deltaSeconds = deltaSeconds;
     this.skillSound.update();
     this.cameraShake.update(deltaSeconds);
+    this.screenBackend.update();
     // Original manager 0x4790dc updates its active vector from last to first.
     for (let index = this.instances.length - 1; index >= 0; --index) {
       const instance = this.instances[index];
@@ -501,6 +507,7 @@ export class EffectRuntime {
     this.cameraShake.clear();
     this.skillSound.clear();
     while (this.instances.length) this.remove(this.instances.length - 1);
+    this.screenBackend.clear();
     this.sound.clear();
   }
 
