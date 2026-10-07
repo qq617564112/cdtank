@@ -17,11 +17,13 @@ import {BattleMinimap} from '../render/battle-minimap';
 import {GameConnection} from '../network/game-connection';
 import type {AccountContext} from '../network/accounts';
 import {LobbyChat} from '../network/lobby-chat';
+import {Family} from '../network/family';
 import {Friends} from '../network/friends';
 import {GmSupportInbox} from '../network/gm-support';
 import {LobbyPresence} from '../network/lobby-presence';
 import {ArcRotateCamera, Scene, Vector3} from '@babylonjs/core';
 import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
+import type {MsgFamilyChat} from '../../../shared/protocols/MsgFamilyChat';
 import type {MapOption, ResJoin, RoomSummary} from '../../../shared/protocols';
 import {ScenePreview} from '../assets/scenes/scene-preview';
 import {MapSceneEffects} from '../assets/scenes/map-scene-effects';
@@ -76,10 +78,14 @@ export class Battle {
   private readonly connection = new GameConnection();
   readonly lobbyChat = new LobbyChat(this.connection);
   readonly lobbyPresence = new LobbyPresence(this.connection);
+  readonly family = new Family(this.connection);
   readonly trade = new Trade(this.connection);
   readonly friends = new Friends(this.connection);
   readonly blacklist = new Blacklist(this.connection);
   readonly gmSupport = new GmSupportInbox(this.connection);
+  private readonly onFamilyChat = (message: MsgFamilyChat): void => {
+    if (this.active && this.roomFeed.snapshot?.match) this.chat.receivedFamily(message);
+  };
   private readonly client = this.connection.client;
   private readonly accounts = this.connection.accounts;
   private readonly rooms = this.connection.rooms;
@@ -140,12 +146,21 @@ export class Battle {
       if (!snapshot?.match) throw new Error('请先加入房间');
       const result = await this.client.callApi('FriendChat', {text, roomId: snapshot.roomId, round: snapshot.match.round});
       if (!result.isSucc) throw new Error(result.err.message);
+    } else if (channel === 5) {
+      const context = this.accountContext;
+      await this.connection.ensureConnected();
+      if (context !== this.accountContext || !context.identity) throw new Error('账户或连接已变化，请重新操作');
+      const snapshot = this.roomFeed.snapshot;
+      if (!snapshot?.match) throw new Error('请先加入房间');
+      const result = await this.client.callApi('FamilyChat', {text, roomId: snapshot.roomId, round: snapshot.match.round});
+      if (context !== this.accountContext || !this.active) throw new Error('账户或连接已变化，请重新操作');
+      if (!result.isSucc) throw new Error(result.err.message);
     } else if (channel === 2) {
       const snapshot = this.roomFeed.snapshot;
       if (!snapshot?.match) throw new Error('请先加入房间');
       await this.rooms.whisper({text, targetName: targetName ?? '', roomId: snapshot.roomId, round: snapshot.match.round});
     } else await this.rooms.chat(text, channel);
-  }, () => {this.input.clear();});
+  }, () => {this.input.clear();}, this.family, listener => this.connection.subscribeAccountContext(listener));
   private readonly players: BattlePlayers;
   private readonly battlefield: ScenePreview;
   private readonly minimap: BattleMinimap;
@@ -320,6 +335,7 @@ export class Battle {
     this.stopInventoryRefresh = this.itemInventory.subscribe(() => this.refreshDiscardSelection());
     this.client.flows.postDisconnectFlow.push(input => {
       this.input.clear();
+      this.chat.resetSession();
       if (this.active && !this.recovery) {
         this.originalHud.setConnected(false);
         this.input.stop();
@@ -338,6 +354,7 @@ export class Battle {
     this.client.listenMsg('LobbyWhisper', message => {
       if (this.active) this.chat.receivedPrivate(message.message);
     });
+    this.client.listenMsg('FamilyChat', this.onFamilyChat);
     scene.onBeforeRenderObservable.add(() => {this.render();});
     scene.onDisposeObservable.addOnce(() => {
       this.stopInventoryRefresh();
@@ -345,6 +362,9 @@ export class Battle {
       if (this.pageMusic) this.pageMusic.dispose();
       else this.music.dispose();
       this.lobbyPresence.stop();
+      this.client.unlistenMsg('FamilyChat', this.onFamilyChat);
+      this.lobbyChat.dispose();
+      this.chat.dispose();
       this.gmSupport.dispose();
       this.sceneEffects.clear();
       this.environmentSound?.dispose();

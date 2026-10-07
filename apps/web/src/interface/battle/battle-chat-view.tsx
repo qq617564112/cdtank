@@ -23,6 +23,7 @@ export function BattleChatView({chat, formal = false}: {chat: BattleChat; formal
 
 function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) {
   const state = useSyncExternalStore(chat.subscribe, chat.getSnapshot);
+  const family = useSyncExternalStore(chat.family.subscribe, chat.family.getSnapshot);
   const root = useRef<HTMLElement>(null), input = useRef<HTMLInputElement>(null), log = useRef<HTMLOListElement>(null);
   const targetInput = useRef<HTMLInputElement>(null);
   const composing = useRef(false), caret = useRef<number | undefined>(undefined);
@@ -123,6 +124,9 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   const caretLayout = formal && source && resources
     ? waitingLayout ?? new HomeSourceLayout(resources.layout.ui, 'game_main_chat_shrinked.xml') : undefined;
   const latest = state.messages.at(-1)?.id ?? 0;
+  const familyStatus = state.channel === 5
+    ? family.loading ? '正在读取家族…' : family.status || (family.membership ? `家族：${family.membership.name}` : '未加入家族')
+    : '';
   const presentation = {
     channel: state.channel, pending: state.pending, composing, input,
     players: state.players, selectedName: state.targetName, chooseTarget: (name: string) => {
@@ -130,7 +134,7 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
       chat.releaseInputKeys(); chat.setTargetName(name); caret.current = at;
       requestAnimationFrame(() => {input.current?.focus(); input.current?.setSelectionRange(at, at);});
     },
-    changeChannel: (value: 0 | 1 | 2 | 3) => {chat.releaseInputKeys(); chat.setChannel(value);},
+    changeChannel: (value: 0 | 1 | 2 | 3 | 5) => {chat.releaseInputKeys(); chat.setChannel(value);},
     releaseKeys: () => chat.releaseInputKeys(), insert: (glyph: string, at: number) => {
       if (state.draft.length >= 72) {chat.setStatus('输入已达72字符上限'); return;}
       const next = state.draft.slice(0, at) + glyph + state.draft.slice(at);
@@ -143,8 +147,8 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
       </ol>;
   const editor = <form onSubmit={event => {event.preventDefault(); if (!composing.current) chat.sendDraft();}}>
         <select data-chat-channel="" aria-label="聊天频道" value={state.channel} disabled={state.pending}
-          onFocus={() => chat.releaseInputKeys()} onChange={event => {chat.releaseInputKeys(); chat.setChannel(event.currentTarget.value === '3' ? 3 : event.currentTarget.value === '2' ? 2 : event.currentTarget.value === '1' ? 1 : 0);}}>
-          <option value="0">房间</option><option value="1">队伍</option><option value="2">密语</option><option value="3">好友</option>
+          onFocus={() => chat.releaseInputKeys()} onChange={event => {chat.releaseInputKeys(); chat.setChannel(event.currentTarget.value === '5' ? 5 : event.currentTarget.value === '3' ? 3 : event.currentTarget.value === '2' ? 2 : event.currentTarget.value === '1' ? 1 : 0);}}>
+          <option value="0">房间</option><option value="1">队伍</option><option value="2">密语</option><option value="3">好友</option><option value="5">家族</option>
         </select>
         {state.channel === 2 && <input ref={targetInput} {...targetPosition} data-chat-whisper-target aria-label="密语对象昵称"
           value={state.targetName} disabled={state.pending} autoComplete="off"
@@ -161,8 +165,8 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
               event.preventDefault();
             }
           }} onKeyUp={event => event.stopPropagation()}/>}
-        <input ref={input} {...position} data-chat-input="" aria-label={state.channel === 3 ? '好友聊天内容' : state.channel === 2 ? '密语内容' : state.channel ? '队伍聊天内容' : '房间聊天内容'}
-          placeholder={state.channel === 3 ? '好友（Enter发送）' : state.channel === 2 ? '密语（Enter发送）' : state.channel ? '队伍聊天（Enter发送，Esc返回）' : '房间聊天（Enter发送，Esc返回）'}
+        <input ref={input} {...position} data-chat-input="" aria-label={state.channel === 5 ? '家族聊天内容' : state.channel === 3 ? '好友聊天内容' : state.channel === 2 ? '密语内容' : state.channel ? '队伍聊天内容' : '房间聊天内容'}
+          placeholder={state.channel === 5 ? '家族（Enter发送）' : state.channel === 3 ? '好友（Enter发送）' : state.channel === 2 ? '密语（Enter发送）' : state.channel ? '队伍聊天（Enter发送，Esc返回）' : '房间聊天（Enter发送，Esc返回）'}
           maxLength={72} autoComplete="off" value={state.draft} onFocus={() => chat.releaseInputKeys()}
           onCompositionStart={() => {composing.current = true;}}
           onCompositionEnd={event => {composing.current = false; changeDraft(event.currentTarget.value,
@@ -190,7 +194,7 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   const content = <>
       {history}
       {editorVisible && editor}
-      <p role="status" data-waiting-chat-business-status={waiting || undefined}>{state.status}</p>
+      <p role="status" data-waiting-chat-business-status={waiting || undefined}>{state.status || familyStatus}</p>
       {active && resources && !notice && <SourceChatScrollbar log={log} layout={resources.layout} messageVersion={latest}
         releaseKeys={() => chat.releaseInputKeys()} />}
       {waiting && resources && <WaitingChatHistoryScrollbar list={log} ui={resources.layout.ui}

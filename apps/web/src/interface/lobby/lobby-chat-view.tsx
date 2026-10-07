@@ -22,6 +22,7 @@ export function LobbyChatView({chat, presence}: {chat: LobbyChat;
   const {ui} = useSourceUi(true, ['chat.xml', 'chat_channellist_lobby.xml', 'chat_emotelist.xml', 'chat_intimatelist.xml']);
   const layout = ui ? new HomeSourceLayout(ui, 'chat.xml') : undefined;
   const state = useSyncExternalStore(chat.subscribe, chat.getSnapshot);
+  const family = useSyncExternalStore(chat.family.subscribe, chat.family.getSnapshot);
   const directory = useSyncExternalStore(presence?.subscribe ?? emptyPresenceSubscribe, presence?.getSnapshot ?? emptyPresenceSnapshot);
   const composing = useRef(false);
   const input = useRef<HTMLInputElement>(null), target = useRef<HTMLInputElement>(null);
@@ -30,6 +31,9 @@ export function LobbyChatView({chat, presence}: {chat: LobbyChat;
   const closeIntimate = useCallback(() => setMenu(value => value === 'intimate' ? undefined : value), []);
   useEffect(() => {void chat.connect();}, [chat]);
   if (state.inRoom) return null;
+  const familyStatus = state.channel === 'family'
+    ? family.loading ? '正在读取家族…' : family.status || (family.membership ? `家族：${family.membership.name}` : '未加入家族')
+    : '';
   return <section className="lobby-chat" aria-label="大厅聊天" onKeyDownCapture={event => {
     if (event.key === 'Escape' && menu) {
       event.preventDefault(); event.stopPropagation();
@@ -77,7 +81,7 @@ export function LobbyChatView({chat, presence}: {chat: LobbyChat;
       </>}
     </>}
     <form onSubmit={event => {event.preventDefault(); if (!composing.current) void chat.sendDraft();}}>
-      <input ref={input} {...(ui && layout ? sourceProps(ui, layout, 'chat.xml', state.channel !== 'whisper' ? 'edtNormalUserInput' : 'edtIntimateChatInput') : {})} data-lobby-chat-input="" aria-label={state.channel === 'friend' ? '好友聊天内容' : state.channel === 'public' ? '大厅聊天内容' : state.channel === 'gm' ? 'GM问题内容' : '密语内容'} autoComplete="off" maxLength={72}
+      <input ref={input} {...(ui && layout ? sourceProps(ui, layout, 'chat.xml', state.channel !== 'whisper' ? 'edtNormalUserInput' : 'edtIntimateChatInput') : {})} data-lobby-chat-input="" aria-label={state.channel === 'family' ? '家族聊天内容' : state.channel === 'friend' ? '好友聊天内容' : state.channel === 'public' ? '大厅聊天内容' : state.channel === 'gm' ? 'GM问题内容' : '密语内容'} autoComplete="off" maxLength={72}
         value={state.draft} onChange={event => chat.setDraft(event.currentTarget.value)}
         onCompositionStart={() => {composing.current = true;}}
         onCompositionEnd={() => {composing.current = false;}}
@@ -91,6 +95,6 @@ export function LobbyChatView({chat, presence}: {chat: LobbyChat;
       {ui && layout && <LobbyChatSourceCaret input={input} ui={ui} layout={layout}
         name={state.channel === 'whisper' ? 'edtIntimateChatInput' : 'edtNormalUserInput'} value={state.draft}/>}
     </form>
-    <output data-lobby-chat-status="" role="status">{state.status}</output>
+    <output data-lobby-chat-status="" role="status">{state.status || familyStatus}</output>
   </section>;
 }

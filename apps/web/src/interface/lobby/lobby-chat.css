@@ -40,3 +40,16 @@
 .lobby-chat [data-lobby-whisper-target] {border: 0; margin: 0; padding: 0; background: transparent; color: #fff; font: 12px 'SimSun', serif;}
 .lobby-channel-menu {position: absolute; left: 0; top: 454px; width: 48px; height: 110px; z-index: 20;}
 .lobby-channel-menu > span {position: absolute; display: block; pointer-events: none;}
+.lobby-family-channel-option {
+  position: absolute;
+  left: 9px;
+  top: 100px;
+  width: 30px;
+  height: 15px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #fff;
+  background: #263b49;
+  font: 10px 'SimSun', serif;
+}

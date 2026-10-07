@@ -6,8 +6,8 @@ import {SourceStaticImage} from '../resources/source-static-image';
 
 /** Original lobby channel images; account channel routing is rebuilt. */
 export function LobbyChatChannel({ui, channel, pending, change, focusInput}: {
-  ui: HomeSourceUi; channel: 'public' | 'whisper' | 'friend' | 'gm'; pending: boolean;
-  change: (channel: 'public' | 'whisper' | 'friend' | 'gm') => void; focusInput: () => void;
+  ui: HomeSourceUi; channel: 'public' | 'whisper' | 'friend' | 'gm' | 'family'; pending: boolean;
+  change: (channel: 'public' | 'whisper' | 'friend' | 'gm' | 'family') => void; focusInput: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const menuElement = useRef<HTMLDivElement>(null);
@@ -26,7 +26,8 @@ export function LobbyChatChannel({ui, channel, pending, change, focusInput}: {
   const menu = new HomeSourceLayout(ui, 'chat_channellist_lobby.xml');
   return <>
     <SourceButton ui={ui} layout={layout} suffix="chat.xml"
-      source={channel === 'public' ? 'btnPublicChannel' : channel === 'friend' ? 'btnFriendChannel'
+      source={channel === 'public' ? 'btnPublicChannel' : channel === 'family' ? 'btnFamilyChannel'
+        : channel === 'friend' ? 'btnFriendChannel'
         : channel === 'gm' ? 'btnGMChannel' : 'btnPrivateChannel'}
       data-lobby-channel-toggle aria-label="聊天频道" aria-haspopup="menu" aria-expanded={open}
       disabled={pending} onClick={() => setOpen(value => !value)}/>
@@ -45,6 +46,9 @@ export function LobbyChatChannel({ui, channel, pending, change, focusInput}: {
           data-lobby-channel={value} aria-checked={channel === value}
           selected={channel === value} disabled={pending}
           onClick={() => {change(value); setOpen(false); focusInput();}}/>) }
+      <button type="button" className="lobby-family-channel-option" role="menuitemradio"
+        aria-label="家族" aria-checked={channel === 'family'} data-lobby-channel="family" disabled={pending}
+        onClick={() => {change('family'); setOpen(false); focusInput();}}>家族</button>
     </div>}
   </>;
 }

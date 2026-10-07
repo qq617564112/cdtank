@@ -1,5 +1,7 @@
 import {DEFAULT_QUICK_CHAT_PREFERENCES, validateQuickChatPreferences} from '../settings/quick-chat-preferences';
 import type {QuickChatKey, QuickChatPreferences} from '../settings/quick-chat-preferences';
+import type {Family} from '../../network/family';
+import type {MsgFamilyChat} from '../../../shared/protocols/MsgFamilyChat';
 import {CHAT_NOTICE_FADE_MS, CHAT_NOTICE_FULL_MS} from './battle-chat-visibility';
 
 export interface BattleChatSnapshot {
@@ -13,7 +15,7 @@ export interface BattleChatSnapshot {
   messages: readonly {id: number; text: string}[];
   draft: string;
   targetName: string;
-  channel: 0 | 1 | 2 | 3;
+  channel: 0 | 1 | 2 | 3 | 5;
   status: string;
   pending: boolean;
   generation: number;
@@ -28,9 +30,14 @@ export class BattleChat {
   private nextMessage = 0;
   private noticeTimer?: ReturnType<typeof setTimeout>;
   private readonly listeners = new Set<() => void>();
+  private readonly familyMessageIds = new Set<string>();
+  private readonly unsubscribeAccountContext: () => void;
   private quickChats: QuickChatPreferences = {...DEFAULT_QUICK_CHAT_PREFERENCES};
-  constructor(private readonly send: (text: string, channel: 0 | 1 | 2 | 3, targetName?: string) => Promise<void>,
-    private readonly releaseKeys: () => void) {}
+  constructor(private readonly send: (text: string, channel: 0 | 1 | 2 | 3 | 5, targetName?: string) => Promise<void>,
+    private readonly releaseKeys: () => void, readonly family: Family,
+    subscribeAccountContext: (listener: () => void) => () => void) {
+    this.unsubscribeAccountContext = subscribeAccountContext(() => this.resetSession());
+  }
 
   readonly getSnapshot = (): BattleChatSnapshot => this.state;
   readonly subscribe = (listener: () => void): (() => void) => {
@@ -41,12 +48,18 @@ export class BattleChat {
     this.state = {...this.state, ...next};
     for (const listener of this.listeners) listener();
   }
+  dispose(): void {
+    this.unsubscribeAccountContext();
+    this.family.dispose();
+  }
   releaseInputKeys(): void {this.releaseKeys();}
   setDraft(draft: string): void {this.update({draft});}
   setTargetName(targetName: string): void {if (!this.state.pending) this.update({targetName});}
   setStatus(status: string): void {this.update({status});}
-  setChannel(channel: 0 | 1 | 2 | 3): void {
-    if (!this.state.pending) this.update({channel});
+  setChannel(channel: 0 | 1 | 2 | 3 | 5): void {
+    if (this.state.pending) return;
+    this.update({channel});
+    if (channel === 5) void this.family.refresh();
   }
   /** Opens the editor when the battle source layout is the active presentation. */
   openEditor(): void {
@@ -114,6 +127,20 @@ export class BattleChat {
     });
   }
   receivedPrivate(text: string): void {if (this.state.visible) this.message(text);}
+  receivedFamily(message: MsgFamilyChat): void {
+    if (!this.state.visible) return;
+    const key = `${message.familyId}:${message.id}`;
+    if (this.familyMessageIds.has(key)) return;
+    this.familyMessageIds.add(key);
+    this.message(message.message);
+  }
+  resetSession(): void {
+    this.cancelNotice();
+    this.familyMessageIds.clear();
+    this.nextMessage = 0;
+    this.update({editing: false, noticePhase: 'hidden', messages: [], draft: '', targetName: '',
+      pending: false, status: '', generation: this.state.generation + 1});
+  }
   show(): void {this.update({visible: true});}
   message(text: string): void {
     this.update({messages: [...this.state.messages, {id: ++this.nextMessage, text}].slice(-50)});
@@ -136,6 +163,8 @@ export class BattleChat {
   }
   clear(): void {
     this.cancelNotice();
+    this.familyMessageIds.clear();
+    this.nextMessage = 0;
     this.update({visible: false, phase: '', sourceActive: false, editing: false, noticePhase: 'hidden',
       confirmedSends: 0, players: [], messages: [], draft: '', targetName: '', channel: 0,
       status: '', pending: false, generation: this.state.generation + 1});

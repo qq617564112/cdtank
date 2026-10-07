@@ -71,6 +71,19 @@
 .waiting-chat-emote-menu button {
   pointer-events: auto;
 }
+.waiting-chat-family-option {
+  position: absolute;
+  left: 9px;
+  top: 151px;
+  width: 30px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #fff;
+  background: #263b49;
+  font: inherit;
+}
 
 .source-waiting-chat [data-waiting-chat-business-status] {
   position: absolute;

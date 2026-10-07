@@ -62,6 +62,19 @@
   height: 123px;
   z-index: 2;
 }
+.source-battle-chat .source-chat-family-option {
+  position: absolute;
+  left: 9px;
+  top: 119px;
+  width: 30px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #fff;
+  background: #263b49;
+  font: inherit;
+}
 .source-battle-chat button {
   background-color: transparent;
 }

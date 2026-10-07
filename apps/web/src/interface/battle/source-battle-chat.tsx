@@ -15,9 +15,9 @@ export interface SourceChatResources {
  *  `active` is the editable editor; the read-only notice frame renders the ornaments only. */
 export function SourceBattleChat({resources, active, channel, pending, composing, input, changeChannel,
   insert, releaseKeys, players, selectedName, chooseTarget, children}: {
-  resources?: SourceChatResources; active: boolean; channel: 0 | 1 | 2 | 3; pending: boolean;
+  resources?: SourceChatResources; active: boolean; channel: 0 | 1 | 2 | 3 | 5; pending: boolean;
   composing: RefObject<boolean>; input: RefObject<HTMLInputElement | null>;
-  changeChannel: (channel: 0 | 1 | 2 | 3) => void; insert: (glyph: string, caret: number) => void;
+  changeChannel: (channel: 0 | 1 | 2 | 3 | 5) => void; insert: (glyph: string, caret: number) => void;
   releaseKeys: () => void; children: ReactNode;
   players: readonly RoomIntimatePlayer[]; selectedName: string; chooseTarget: (name: string) => void;
 }) {
@@ -31,7 +31,7 @@ export function SourceBattleChat({resources, active, channel, pending, composing
       if (!(event.target instanceof Element)) return;
       if (event.target.closest('[data-chat-emote-menu], [data-source-control="btnExpandEmotion"]')) return;
       if (event.target.closest('[data-room-intimate-menu], [data-room-intimate-toggle]')) return;
-      if (event.target.closest('[data-source-chat-menu], [data-source-control="btnPublic"], [data-source-control="btnTeam"], [data-source-control="btnPrivate"], [data-source-control="btnFriend"]')) return;
+      if (event.target.closest('[data-source-chat-menu], [data-source-control="btnPublic"], [data-source-control="btnTeam"], [data-source-control="btnPrivate"], [data-source-control="btnFriend"], [data-source-control="btnFamily"]')) return;
       setMenu(undefined);
     };
     const blur = () => setMenu(undefined);
@@ -64,7 +64,7 @@ export function SourceBattleChat({resources, active, channel, pending, composing
         event.preventDefault(); event.stopPropagation();
         if (!composing.current && !event.nativeEvent.isComposing) {
           const name = menu === 'intimate' ? 'btnExpandIntimate' : menu === 'emote' ? 'btnExpandEmotion'
-            : channel === 3 ? 'btnFriend' : channel === 2 ? 'btnPrivate' : channel ? 'btnTeam' : 'btnPublic';
+            : channel === 5 ? 'btnFamily' : channel === 3 ? 'btnFriend' : channel === 2 ? 'btnPrivate' : channel ? 'btnTeam' : 'btnPublic';
           setMenu(undefined);
           stage.current?.querySelector<HTMLButtonElement>(`[data-source-control="${name}"]`)?.focus();
         }
@@ -93,9 +93,9 @@ export function SourceBattleChat({resources, active, channel, pending, composing
           selectedName={selectedName} pending={pending} composing={composing}
           choose={name => {chooseTarget(name); setMenu(undefined);}} />}
       </>}
-      {(['btnPublic', 'btnTeam', 'btnPrivate', 'btnFriend'] as const).map((name, index) => <SourceButton key={name}
-        ui={resources.layout.ui} layout={sourceLayout!} suffix="game_main_chat_shrinked.xml" source={name} offsetY={-435} hidden={!active || channel !== index} disabled={pending}
-        aria-label={index === 3 ? '好友聊天频道' : index === 2 ? '密语频道' : index ? '队伍聊天频道' : '房间聊天频道'} aria-haspopup="menu" aria-expanded={menu === 'channel'}
+      {([['btnPublic', 0], ['btnTeam', 1], ['btnPrivate', 2], ['btnFriend', 3], ['btnFamily', 5]] as const).map(([name, value]) => <SourceButton key={name}
+        ui={resources.layout.ui} layout={sourceLayout!} suffix="game_main_chat_shrinked.xml" source={name} offsetY={-435} hidden={!active || channel !== value} disabled={pending}
+        aria-label={value === 5 ? '家族聊天频道' : value === 3 ? '好友聊天频道' : value === 2 ? '密语频道' : value ? '队伍聊天频道' : '房间聊天频道'} aria-haspopup="menu" aria-expanded={menu === 'channel'}
         onClick={() => {
           releaseKeys();
           setMenu(value => value === 'channel' ? undefined : 'channel');
@@ -104,7 +104,7 @@ export function SourceBattleChat({resources, active, channel, pending, composing
       <div className="source-chat-channel-menu" data-source-chat-menu="" role="menu" hidden={!active || menu !== 'channel'}
         onKeyDown={event => {event.stopPropagation(); if (event.key === 'Escape') {
           event.preventDefault(); event.stopPropagation(); setMenu(undefined);
-          stage.current?.querySelector<HTMLButtonElement>(`[data-source-control="${channel === 3 ? 'btnFriend' : channel === 2 ? 'btnPrivate' : channel ? 'btnTeam' : 'btnPublic'}"]`)?.focus();
+          stage.current?.querySelector<HTMLButtonElement>(`[data-source-control="${channel === 5 ? 'btnFamily' : channel === 3 ? 'btnFriend' : channel === 2 ? 'btnPrivate' : channel ? 'btnTeam' : 'btnPublic'}"]`)?.focus();
         }}} onKeyUp={event => event.stopPropagation()}>
         {['all', 'biaoqingfuhaokuang'].map(name =>
           <SourceStaticImage key={name} ui={resources.channels.ui} layout={channelLayout!}
@@ -120,6 +120,9 @@ export function SourceBattleChat({resources, active, channel, pending, composing
             data-chat-source-channel={value ?? undefined} aria-checked={checked} disabled={value === null || pending}
             onClick={() => {if (value !== null) {changeChannel(value); setMenu(undefined); input.current?.focus();}}} />;
         })}
+        <button type="button" className="source-chat-family-option" role="menuitemradio"
+          aria-label="家族" aria-checked={channel === 5} data-chat-source-channel="5" disabled={pending}
+          onClick={() => {changeChannel(5); setMenu(undefined); input.current?.focus();}}>家族</button>
       </div>
       </SourceImageScale>
       {active && <SourceImageScale value={scale}><SourceChatEmotes layout={resources.layout} menuLayout={resources.emotes} pending={pending}
