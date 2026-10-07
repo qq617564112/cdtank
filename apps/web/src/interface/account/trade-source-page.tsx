@@ -90,6 +90,7 @@ export function TradeSourcePage({state, pending, status, act, close, queryProfil
 
   useEffect(() => {
     if (!open) {setCurrentRoles(undefined); return;}
+    setCurrentRoles(undefined);
     let active = true;
     queryProfile().then(result => {
       if (!active) return;
