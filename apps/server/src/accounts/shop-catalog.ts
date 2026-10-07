@@ -4,7 +4,7 @@ import type {ShopItem} from '../../../shared/protocols/PtlShop';
 
 /** Bounded reconstructed availability: only items with integrated consumption workflows. */
 export function consumableShopItems(catalog: CombatCatalog): ShopItem[] {
-  return [1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 3001, 3002, 3003, 3004, 3005].map(id => {
+  return [1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 3001, 3002, 3003, 3004, 3005].map(id => {
     const item = catalog.items.find(row => row.itemTableId === id);
     if (!item || !Number.isInteger(item.iconId) || item.iconId! <= 0
         || ![item.moneyPrice, item.tokenPrice, item.getMethod, item.durable].every(price =>
