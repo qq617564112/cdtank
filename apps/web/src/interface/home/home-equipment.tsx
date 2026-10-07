@@ -77,6 +77,8 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
   const [page, setPage] = useState<EquipmentTarget>('PART');
   const [candidate, setCandidate] = useState<number>();
   const [busy, setBusy] = useState(false);
+  const [queryFailed, setQueryFailed] = useState(false);
+  const [queryAttempt, setQueryAttempt] = useState(0);
   const [resourceError, setResourceError] = useState<string>();
   const [status, setStatus] = useState('载入部件…');
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
@@ -101,7 +103,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
     setResourceError(undefined);
     setResources(undefined); setInventory(undefined); setEquipment(undefined); setOwned(undefined);
     setCurrentTankInstanceId(undefined); setCurrentPetInstanceId(undefined); setOriginality(undefined);
-    setPage('PART'); setCandidate(undefined); setBusy(true); setStatus('载入部件…');
+    setPage('PART'); setCandidate(undefined); setBusy(true); setQueryFailed(false); setStatus('载入部件…');
     void (async () => {
       const [uiResponse, catalogResponse] = await Promise.all([
         fetch('/ui.json', {signal: controller.signal}), fetch('/combat-catalog.json', {signal: controller.signal}),
@@ -132,10 +134,14 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
         ? new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0xa4, true) : undefined);
       setOriginality(confirmedProfile.growth?.originality ?? confirmedProfile.playerSummary?.originality);
       setStatus('选择拥有装备，再点击对应槽；Delete卸下装备');
-    })().catch(error => {if (current.active) setStatus(String(error));})
+    })().catch(error => {
+      if (!current.active) return;
+      setQueryFailed(true);
+      setStatus(error instanceof Error ? error.message : String(error));
+    })
       .finally(() => {if (current.active) setBusy(false);});
     return () => {current.active = false; controller.abort();};
-  }, [battle, tankInstanceId, accountGeneration]);
+  }, [battle, tankInstanceId, accountGeneration, queryAttempt]);
 
   useLayoutEffect(() => {
     if (!resources) return;
@@ -216,7 +222,8 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
       }} />;
   }
 
-  return <dialog ref={dialog} id="home-equipment" aria-label="我的家：战车部件" aria-busy={!equipment || busy || (!resources && !resourceError)}
+  return <dialog ref={dialog} id="home-equipment" aria-label="我的家：战车部件"
+    aria-busy={busy || (!equipment && !queryFailed) || (!resources && !resourceError)}
     style={{zoom: scale}} onCancel={event => {event.preventDefault(); requestClose();}}
     onKeyDown={event => {
       event.stopPropagation();
@@ -283,6 +290,9 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
       {!resources && <HomeResourceFeedback error={resourceError} close={requestClose} closeAttribute="data-equipment-close" />}
     </div>
     <output hidden={!resources} className="home-equipment-status" aria-live="polite">{status}</output>
+    {resources && queryFailed && <button type="button" className="home-equipment-retry" data-equipment-query-retry
+      aria-label="重试装备查询" disabled={busy}
+      onClick={() => setQueryAttempt(value => value + 1)}>重试</button>}
     </SourceImageScale>
   </dialog>;
 }
