@@ -16,7 +16,9 @@
 - `home-roles.tsx` 同 session 透传：`selectedBase=displayed`（候选或当前）、`currentTank`
   （`owned.equipment` 中 `fields.get(0x1c)==profile+0xa8` 的记录）、
   `currentPetInstance=profile+0xa4`、`equippedItemIds=masteryEquippedItemIds`、
-  `catalog=roleCatalog`。
+  `catalog=roleCatalog`。五装备确认结果存于 `PetMasteryEquipment` bundle，保存请求时的
+  `profile`/`battle`/`accountGeneration` 与 `itemIds?`；render 只在三者与当前同身份时才把
+  `itemIds` 透传为 `equippedItemIds`，否则传 `undefined`。
 - `txtType` 由 `home-pet-owned-details.tsx` 消费：`record.fields.get(8)` 查
   `catalog.petTypes`，经 `sourcePetKind(petSize, petType)` 出串。
 
@@ -53,8 +55,11 @@
   `mastery==0` 才渲染 0，不被抹。
 - 不新增请求/学习或协议事务；五装备复用 `home-roles.tsx` 现 `battle.inventory()` 结果，
   非零实例必须 `state===2 && ownedQuantity>0`，全确认才成立，否则整组 unknown。
-- 参数换 candidate、`profile` 更新或学习确认更新走同源 effect：换页/换 session 先
-  `setMasteryEquippedItemIds(undefined)`，再按当前 profile 重算。
+- candidate/page 变化由当前 `displayed` 在渲染直接重新派生，不触发 Inventory effect；该
+  effect 只依赖 `[battle, profile]`，身份变化时先清 `masteryEquipment` 并以 `active` 取消迟到
+  回调。确认 bundle 保存请求时的 `profile`/`battle`/`accountGeneration`，render 只在三者与当前
+  同身份时透传其 `itemIds`，否则 `undefined`；即便 effect 尚未清除，旧五装备也不会串入新
+  profile。
 
 ## 绘制更新
 
@@ -75,3 +80,5 @@
   进度是原 Home 显示投影，不是对战最终属性，本页等价来源亦未证。
 - `4d8c0b` 本地化 id 未证，现 `sourcePetKind` 为同原映射的 Web 采用。
 - 只覆盖四条熟练度与 `txtType`；HP/crit/lucky、六技能、学习等既有边界不在此重做。
+- 本批仅执行一次集中静态走查；五装备确认归属为渲染时按同身份透传的终态。source/页面/
+  网络/持久/HD 实际验收未执行，不据此关闭 M5-08/UI-34 父项。
