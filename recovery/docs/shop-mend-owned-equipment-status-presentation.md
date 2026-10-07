@@ -80,7 +80,7 @@ producer→consumer、字段等式、生命周期、分类精度与当前门禁�
 
 ## 当前门禁
 
-- 已 production 接线；普通 UI 实测、资源 decode、切页/切分类/重开与 HD 门禁均未完成。
+- 已 production 接线，一次集中静态走查已完成；原普通页面、资源 decode、生命周期、切页/切分类/重开与 HD 仍待实测。
 - 新 `#808080` 灰字与维修 `E` 均无实测；不复用旧 PNG 或 native 向量宣其通过。
 - 行几何与文本字体为 Web 采用：复用现 `Xiangjiao` 用户选字体与源布局；`E` 仍为静态原
   `SmallHT` `e.tga`（region `11/9`），不称原字库 renderer/像素或 HD 恢复。
