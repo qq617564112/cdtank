@@ -194,7 +194,7 @@ Repaint crisp natural contours and restrained fine material detail in the origin
                                 'inputSize': list(canvas.size), 'cells': records,
                                 'prompt': str((folder / 'prompt.txt').relative_to(ROOT)),
                                 'output': str((folder / 'output-1.png').relative_to(ROOT)),
-                                'ratio': '1:1' if columns == rows else '16:9'})
+                                'ratio': '1:1' if columns == rows else f'{columns}:{rows}'})
     save(ART / 'plan.json', {'baseUrl': 'https://gptimg.cloyd.fun/', 'model': 'gpt-image-2', 'groups': ordered_groups, 'batches': batches})
     print(f'{len(textures)} paths, {len(unique)} unique textures, {len(batches)} requests', flush=True)
     print(json.dumps(dict(Counter(b['group'] for b in batches)), ensure_ascii=False), flush=True)
