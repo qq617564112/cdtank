@@ -12,4 +12,4 @@ click、Enter与Space继续toggle当前候选。ArrowUp、ArrowDown、Home、End
 
 ## 限定
 
-本次只覆盖新Trade页面及两处名单本地资源重试，双端实际交互与HD布局尚未实测。原trade listfactory的完整恢复仍未确认；本页候选行是采用已确认Home行内容的Web呈现。
+本次变更已在生产Trade页面接入，并已完成针对该页面的集中静态走查。新页面、双端实际交互与HD布局尚未实测。原trade listfactory的完整恢复仍未确认；本页候选行是采用已确认Home行内容的Web呈现。

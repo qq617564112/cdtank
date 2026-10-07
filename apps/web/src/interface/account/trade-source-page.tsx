@@ -231,8 +231,8 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
               <button type="button" className="trade-source-candidate-row" role="option" aria-selected={!!selected}
                 aria-pressed={!!selected} disabled={!candidateAvailable(record)}
                 {...rowData} aria-label={display.name || undefined}
-                style={selected && candidateSelection ? {backgroundImage: candidateSelection.style.backgroundImage} : undefined}
-                data-source-selection-asset={selected ? candidateSelection?.['data-source-selection-asset'] : undefined}
+                style={!!selected && candidateSelection ? {backgroundImage: candidateSelection.style.backgroundImage} : undefined}
+                data-source-selection-asset={selected ? candidateSelection?.['data-source-asset'] : undefined}
                 onClick={() => toggle(record)} data-trade-record-toggle={keyOf(record)} onKeyDown={event => {
                   const next = event.key === 'ArrowDown' ? candidates.indexOf(record) + 1
                     : event.key === 'ArrowUp' ? candidates.indexOf(record) - 1
