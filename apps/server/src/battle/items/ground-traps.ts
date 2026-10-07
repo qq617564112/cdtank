@@ -8,6 +8,12 @@ import {applyTrapRestraint, expireTrapRestraint, readTrapRestraintRule, resetTra
 import {readOldBombRule, oldBombWorldEffect} from './old-bomb';
 import {readContactMineRule} from './contact-mine';
 import {readGroupTrapRule} from './group-trap-rule';
+import {readTeamFeedRule} from './team-feed-rule';
+
+export interface GroundTrapHealCallbacks {
+  canHeal(target: PlayerState): boolean;
+  heal(owner: PlayerState, target: PlayerState, amount: number): number;
+}
 
 function permission(player: PlayerState) {
   return {
@@ -34,6 +40,7 @@ function trapRule(itemTableId: number | undefined) {
   return itemTableId === 3001 ? readOldBombRule()
     : itemTableId === 3002 ? readContactMineRule()
     : itemTableId === 3007 ? readGroupTrapRule()
+    : itemTableId === 3006 ? readTeamFeedRule()
     : itemTableId === 3005 ? readTrapFireRestraintRule()
     : itemTableId === 3004 ? readTrapTurnRestraintRule() : readTrapRestraintRule();
 }
@@ -67,12 +74,13 @@ export function placeGroundTrap(room: RoomState, player: PlayerState,
   events.push({roomId: room.roomId, type: 'trapPlaced', message: '', playerId: player.id, targetId: trap.id,
     value: 0, x: trap.x, y: trap.y, z: trap.z, skillId: rule.placementSkillId,
     playSkillEffect: item.itemTableId === 3001 ? oldBombWorldEffect(rule.placementSkillId, trap.x, trap.z)
-      : item.itemTableId === 3007 ? undefined
+      : item.itemTableId === 3006 || item.itemTableId === 3007 ? undefined
       : {skillId: rule.placementSkillId, effectIndex: 0, duration: 0, roleId: Number(player.id.slice(1)), xBits: 0, zBits: 0}});
 }
 
-/** Single enemy contact consumes the object; one byte contribution expires on server time. */
-export function advanceGroundTraps(room: RoomState, now: number, events: MsgRoomEvent[]): void {
+/** Ordinary ground contacts consume their object once; restraint bytes expire on server time. */
+export function advanceGroundTraps(room: RoomState, now: number, events: MsgRoomEvent[],
+  healAuthority: GroundTrapHealCallbacks): void {
   for (const player of room.players.values()) {
     const change = expireTrapRestraint(player, now, permission(player));
     if (change?.kind === 'expired') events.push({roomId: room.roomId, type: 'trapRestraintEnded', message: '',
@@ -92,6 +100,30 @@ export function advanceGroundTraps(room: RoomState, now: number, events: MsgRoom
     const rule = trapRule(trap.itemTableId);
     if (!rule || rule.itemTableId === 3001) return false;
     if (now >= trap.expiresAt || !room.players.has(trap.ownerId)) return false;
+    if (trap.itemTableId === 3006 && 'healAmount' in rule) {
+      const owner = room.players.get(trap.ownerId)!;
+      const isRealAlly = (target: PlayerState) =>
+        target.id === trap.ownerId || ([1, 2, 3].includes(room.mode) && target.team === trap.team);
+      const contact = [...room.players.values()].find(target => isRealAlly(target)
+        && Math.hypot(target.x - trap.x, target.z - trap.z) <= rule.triggerRadius
+        && healAuthority.canHeal(target));
+      if (!contact) return true;
+      const targets = [...room.players.values()].filter(target =>
+        ([1, 2, 3].includes(room.mode) ? target.team === trap.team : target.id === trap.ownerId)
+        && healAuthority.canHeal(target));
+      events.push({roomId: room.roomId, type: 'trapTriggered', message: '', playerId: trap.ownerId,
+        targetId: contact.id, value: rule.healAmount, x: contact.x, y: contact.y, z: contact.z,
+        skillId: rule.placementSkillId});
+      for (const target of targets) {
+        const restored = healAuthority.heal(owner, target, rule.healAmount);
+        if (restored <= 0) continue;
+        events.push({roomId: room.roomId, type: 'playerHealed',
+          message: `${owner.name}的精品饲料罐头为${target.name}恢复${restored}生命`,
+          playerId: owner.id, targetId: target.id, value: restored,
+          x: target.x, y: target.y, z: target.z, skillId: rule.placementSkillId});
+      }
+      return false;
+    }
     if (trap.itemTableId === 3007 && 'move' in rule) {
       if (!room.players.get(trap.ownerId)?.alive) return false;
       for (const target of room.players.values()) {

@@ -104,7 +104,7 @@ import type {CommittedMatch, CommittedReceipt} from './settlement/history';
 import {readResultRewardModifiers} from './settlement/reward-modifiers';
 import type {ResultRewardModifiers} from './settlement/reward-modifiers';
 import type {ResultAward} from '../../shared/protocols/MsgRoomSnapshot';
-import {countShot} from './battle/round-statistics';
+import {countShot, recordHealing} from './battle/round-statistics';
 
 export type WorldEvent = MsgRoomEvent;
 
@@ -494,6 +494,26 @@ export class World {
     return player.attributesReady ? player.attributes.record.maxHp : baseTankMaxHp(player.tank);
   }
 
+  private groundTrapHealing(room: RoomState) {
+    const maximumHp = (player: PlayerState) =>
+      player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player);
+    return {
+      canHeal: (target: PlayerState) => {
+        const maximum = maximumHp(target);
+        return target.alive && target.combat.status === 2 && !target.lastStand
+          && target.hp > 0 && target.hp < maximum;
+      },
+      heal: (owner: PlayerState, target: PlayerState, amount: number) => {
+        const maximum = maximumHp(target);
+        const before = target.hp;
+        setBattleHealth(target, Math.min(maximum, before + amount), maximum);
+        const restored = Math.max(0, target.hp - before);
+        if (restored > 0 && this.isAlly(room, owner, target)) recordHealing(owner, restored);
+        return restored;
+      },
+    };
+  }
+
   equipmentSources(playerId: string): ReturnType<BattleRoleSources['equipment']> {
     const player = this.findPlayer(playerId)?.player;
     if (!player) throw new Error('角色不存在');
@@ -842,7 +862,7 @@ export class World {
     if (room.phase !== 'PLAYING') return;
     advanceContactMines(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
-    advanceGroundTraps(room, now, events);
+    advanceGroundTraps(room, now, events, this.groundTrapHealing(room));
     if (room.phase !== 'PLAYING') return;
     const rebirth = advanceObjectives(room, now);
     syncBreachCollision(room, now);
@@ -1012,7 +1032,7 @@ export class World {
     if (room.phase !== 'PLAYING') return;
     advanceContactMines(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
-    advanceGroundTraps(room, now, events);
+    advanceGroundTraps(room, now, events, this.groundTrapHealing(room));
     if (room.phase !== 'PLAYING') return;
     for (const player of room.players.values()) {
       advanceEquipmentSupply(room.roomId, room.phase, player, now,
