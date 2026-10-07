@@ -14,7 +14,6 @@
 
 .loading-stage {
   position: absolute;
-  width: 800px;
   height: 600px;
   transform-origin: top left;
 }
@@ -28,8 +27,17 @@
 .loading-background {
   top: 0;
   left: 0;
-  width: 1024px;
-  height: 1024px;
+  width: 100%;
+  height: 100%;
+}
+
+.loading-content {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 800px;
+  height: 600px;
+  transform: translateX(-50%);
 }
 
 .loading-tank {
@@ -63,7 +71,8 @@
   overflow-wrap: anywhere;
 }
 
-.image-loading-screen[aria-busy='true'] .loading-status {
+.image-loading-screen[aria-busy='true'] .loading-status,
+.battle-loading-page[aria-busy='true'] .loading-status {
   display: none;
 }
 

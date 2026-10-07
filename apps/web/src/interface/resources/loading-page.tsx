@@ -1,5 +1,5 @@
-import type {ComponentPropsWithoutRef, ReactNode} from 'react';
-import {useSourceScale} from '../lobby/source-react';
+import {useEffect, useState, type ComponentPropsWithoutRef, type ReactNode} from 'react';
+import {imageResourceUrl} from '../../assets/image-cache';
 import './loading-page.css';
 
 /** Embedded letter fills in the original 800×600 background content. */
@@ -25,7 +25,8 @@ const LOADING_WORDS: Record<number, {left: number; top: number; width: number; h
 export function getLoadingArtwork(background: number) {
   const word = LOADING_WORDS[background];
   return {
-    background: `/Data/ui/loading/${background}.png`,
+    backgroundClassic: `/hd-ui/loading/${background}-4-3.png`,
+    backgroundWide: `/hd-ui/loading/${background}-16-9.png`,
     tank: '/Data/ui/loading/tanke.png',
     progressEmpty: word.empty,
     progressFull: word.full,
@@ -41,34 +42,48 @@ interface LoadingPageProps extends Omit<ComponentPropsWithoutRef<'section'>, 'ch
   actions?: ReactNode;
 }
 
-/** Shared original 800×600 loading layout for startup and match resources. */
+function loadingViewport() {
+  const width = innerWidth / innerHeight >= 1.55 ? 600 * 16 / 9 : 800;
+  return {width, scale: Math.min(innerWidth / width, innerHeight / 600)};
+}
+
+/** Shared loading backdrop with centered 800×600 progress and actions. */
 export function LoadingPage({background, progress, status, details, artworkReady = true,
   actions, className, ...attributes}: LoadingPageProps) {
-  const {viewport, stage} = useSourceScale(800, 600, 0, 0, 0.1, Infinity);
+  const [{width: stageWidth, scale}, setViewport] = useState(loadingViewport);
+  useEffect(() => {
+    const resize = () => setViewport(loadingViewport());
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, []);
   const artwork = getLoadingArtwork(background);
   const {left, top, width, height} = LOADING_WORDS[background];
   const fraction = Math.max(0, Math.min(1, progress ?? 0));
   return <section {...attributes} className={`loading-page${className ? ` ${className}` : ''}`}>
-    <div className="loading-viewport" style={viewport}>
-      <div className="loading-stage" style={stage}>
-        <div hidden={!artworkReady}>
-          <img className="loading-background" src={artwork.background} alt="" draggable={false}/>
-          <img className="loading-tank" src={artwork.tank} alt="" draggable={false}/>
-          <div className="loading-word" style={{left, top, width, height}}
-            role="progressbar" aria-label="本机资源加载进度"
-            aria-valuemin={0} aria-valuemax={100}
-            aria-valuenow={progress === undefined ? undefined : Math.round(fraction * 100)}
-            aria-valuetext={status}>
-            <img src={artwork.progressEmpty} alt="" draggable={false}/>
-            <img src={artwork.progressFull} alt="" draggable={false}
-              style={{clipPath: `inset(0 ${(1 - fraction) * 100}% 0 0)`}}/>
-          </div>
+    <div className="loading-viewport" style={{width: stageWidth * scale, height: 600 * scale}}>
+      <div className="loading-stage" style={{width: stageWidth, transform: `scale(${scale})`}}>
+        {artworkReady && <img className="loading-background"
+          src={imageResourceUrl(stageWidth > 800 ? artwork.backgroundWide : artwork.backgroundClassic)}
+          alt="" draggable={false}/>}
+        <div className="loading-content">
+          {artworkReady && <>
+            <img className="loading-tank" src={imageResourceUrl(artwork.tank)} alt="" draggable={false}/>
+            <div className="loading-word" style={{left, top, width, height}}
+              role="progressbar" aria-label="本机资源加载进度"
+              aria-valuemin={0} aria-valuemax={100}
+              aria-valuenow={progress === undefined ? undefined : Math.round(fraction * 100)}
+              aria-valuetext={status}>
+              <img src={imageResourceUrl(artwork.progressEmpty)} alt="" draggable={false}/>
+              <img src={imageResourceUrl(artwork.progressFull)} alt="" draggable={false}
+                style={{clipPath: `inset(0 ${(1 - fraction) * 100}% 0 0)`}}/>
+            </div>
+          </>}
+          <output className="loading-status" role="status" aria-live="polite">
+            {status}
+            {details && <span className="loading-details">{details}</span>}
+          </output>
+          {actions && <div className="loading-actions">{actions}</div>}
         </div>
-        <output className="loading-status" role="status" aria-live="polite">
-          {status}
-          {details && <span className="loading-details">{details}</span>}
-        </output>
-        {actions && <div className="loading-actions">{actions}</div>}
       </div>
     </div>
   </section>;
