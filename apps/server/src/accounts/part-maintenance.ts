@@ -4,6 +4,7 @@ import {classifyItemId} from '../../../shared/combat/item-hotkeys';
 import {calculatePartMaintenanceCost, formatPartMaintenanceCost} from '../../../shared/combat/part-maintenance';
 import type {ReqPartMaintenance, ResPartMaintenance, PartMaintenanceQuote} from '../../../shared/protocols/PtlPartMaintenance';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
+import {anchorMaintenance, currentMaintenanceMinutes} from './maintenance-clock';
 import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 /** Rebuilt atomic authority; original49569f adds minutes to the durable item's +10. */
@@ -22,7 +23,11 @@ export class AccountPartMaintenance {
     if (multiplier === undefined) throw new Error('部件维修价格未载入');
     const response = (receipt?: ResPartMaintenance['maintained'], replayed?: boolean): ResPartMaintenance => {
       const records = this.database.prepare('SELECT record FROM inventory WHERE account_id = ? ORDER BY instance_id')
-        .all(accountId).map(row => JSON.parse(String(row.record)) as InventoryWireRecord);
+        .all(accountId).map(row => {
+          const record = JSON.parse(String(row.record)) as InventoryWireRecord;
+          return {...record, ownedQuantity: currentMaintenanceMinutes(this.database, accountId, 'part',
+            record.instanceId, record.ownedQuantity)};
+        });
       const hotkeys = Array<number>(7).fill(0);
       for (const row of this.database.prepare('SELECT slot, instance_id FROM hotkeys WHERE account_id = ?').all(accountId)) {
         hotkeys[Number(row.slot) - 1] = Number(row.instance_id);
@@ -68,7 +73,9 @@ export class AccountPartMaintenance {
       if (!part.canMaintain) throw new Error('该部件不能维修');
       const quote = part.quotes.find(row => row.days === request.days && row.currency === request.currency);
       if (!quote) throw new Error('部件维修价格不可用');
-      const remainingMinutes = part.remainingMinutes + request.days! * 1440;
+      const nowMs = Date.now();
+      const remainingMinutes = currentMaintenanceMinutes(this.database, accountId, 'part',
+        part.instanceId, part.remainingMinutes, nowMs) + request.days! * 1440;
       if (remainingMinutes > 367200) throw new Error('部件剩余期限不能超过255天');
       const balance = request.currency === 0 ? current.tokens : current.money;
       if (balance < quote.cost) throw new Error(request.currency === 0 ? '代币余额不足' : '金钱余额不足');
@@ -81,6 +88,7 @@ export class AccountPartMaintenance {
       const maintained = {instanceId: request.instanceId!, remainingMinutes, cost: quote.cost, currency: request.currency, days: request.days!};
       this.database.prepare('INSERT INTO part_maintenance VALUES (?, ?, ?, ?, ?, ?)')
         .run(accountId, request.requestId, request.instanceId!, request.days!, request.currency, JSON.stringify(maintained));
+      anchorMaintenance(this.database, accountId, 'part', request.instanceId!, remainingMinutes, nowMs);
       recordAccountSpending(this.database, accountId, 'part-maintenance', request.requestId,
         request.currency === 1 ? quote.cost : 0, request.currency === 0 ? quote.cost : 0);
       const result = response(maintained, false);

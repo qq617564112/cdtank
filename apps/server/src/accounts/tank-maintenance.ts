@@ -3,6 +3,7 @@ import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {calculateTankMaintenanceCost, formatTankMaintenanceCost} from '../../../shared/combat/tank-maintenance';
 import type {ReqTankMaintenance, ResTankMaintenance, TankMaintenanceQuote} from '../../../shared/protocols/PtlTankMaintenance';
 import type {OwnedRoleRecordData} from '../../../shared/protocols/PtlOwnedRoles';
+import {anchorMaintenance, currentMaintenanceMinutes} from './maintenance-clock';
 import {initializeAccountSpending, recordAccountSpending} from './spending';
 
 /** Rebuilt atomic account settlement; original495612 adds days*1440 to owned+34. */
@@ -32,12 +33,24 @@ export class AccountTankMaintenance {
       const saved = this.database.prepare('SELECT payload, strings FROM role_profiles WHERE account_id = ?').get(accountId);
       const owned: ResTankMaintenance['owned'] = {base: [], equipment: []};
       for (const row of this.database.prepare('SELECT kind, record FROM role_records WHERE account_id = ? ORDER BY instance_id').all(accountId)) {
-        owned[row.kind === 'base' ? 'base' : 'equipment'].push(JSON.parse(String(row.record)) as OwnedRoleRecordData);
+        const record = JSON.parse(String(row.record)) as OwnedRoleRecordData;
+        if (row.kind === 'equipment') {
+          const fields = new Map(record.fields);
+          const instanceId = fields.get(0x1c);
+          const remainingMinutes = fields.get(0x34);
+          if (instanceId !== undefined && remainingMinutes !== undefined) {
+            fields.set(0x34, currentMaintenanceMinutes(this.database, accountId, 'tank', instanceId, remainingMinutes));
+          }
+          owned.equipment.push({name: record.name, fields: [...fields]});
+        } else {
+          owned.base.push(record);
+        }
       }
       const tanks = owned.equipment.flatMap(record => {
         const fields = new Map(record.fields), instanceId = fields.get(0x1c), tankId = fields.get(0x24), remainingMinutes = fields.get(0x34);
-        return instanceId === undefined || tankId === undefined || remainingMinutes === undefined ? []
-          : [{instanceId, tankId, remainingMinutes, quotes: quotes(tankId)}];
+        if (instanceId === undefined || tankId === undefined || remainingMinutes === undefined) return [];
+        const projected = currentMaintenanceMinutes(this.database, accountId, 'tank', instanceId, remainingMinutes);
+        return [{instanceId, tankId, remainingMinutes: projected, quotes: quotes(tankId)}];
       });
       if (!saved) return {tanks, owned};
       const bytes = new Uint8Array(saved.payload as Uint8Array);
@@ -67,7 +80,9 @@ export class AccountTankMaintenance {
       if (!tank) throw new Error('该战车实例不属于当前账户');
       const quote = tank.quotes.find(row => row.days === request.days && row.currency === request.currency);
       if (!quote || quote.cost < 0) throw new Error('战车保养价格不可用');
-      const remainingMinutes = tank.remainingMinutes + request.days! * 1440;
+      const nowMs = Date.now();
+      const remainingMinutes = currentMaintenanceMinutes(this.database, accountId, 'tank',
+        tank.instanceId, tank.remainingMinutes, nowMs) + request.days! * 1440;
       if (remainingMinutes > 367200) throw new Error('战车剩余期限不能超过255天');
       const balance = request.currency === 0 ? current.tokens : current.money;
       if (balance < quote.cost) throw new Error(request.currency === 0 ? '代币余额不足' : '金钱余额不足');
@@ -81,6 +96,7 @@ export class AccountTankMaintenance {
       const maintained = {instanceId: request.instanceId!, remainingMinutes, cost: quote.cost, currency: request.currency, days: request.days!};
       this.database.prepare('INSERT INTO tank_maintenance VALUES (?, ?, ?, ?, ?, ?)')
         .run(accountId, request.requestId, request.instanceId!, request.days!, request.currency, JSON.stringify(maintained));
+      anchorMaintenance(this.database, accountId, 'tank', request.instanceId!, remainingMinutes, nowMs);
       recordAccountSpending(this.database, accountId, 'tank-maintenance', request.requestId,
         request.currency === 1 ? quote.cost : 0, request.currency === 0 ? quote.cost : 0);
       const result = response(maintained, false);

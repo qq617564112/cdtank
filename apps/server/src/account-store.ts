@@ -76,6 +76,11 @@ import type {PlayerTitle} from '../../shared/protocols/MsgRoomSnapshot';
 import {AccountValuableItemSale} from './accounts/valuable-item-sale';
 import type {ReqValuableItemSale, ResValuableItemSale} from '../../shared/protocols/PtlValuableItemSale';
 import {
+  currentMaintenanceMinutes,
+  initializeMaintenanceClocks,
+  removeMaintenanceClock,
+} from './accounts/maintenance-clock';
+import {
   GroundItemAccountRuntime,
   type GroundItemAcquireContext,
   type GroundItemDiscardContext,
@@ -128,6 +133,7 @@ export class AccountStore {
       CREATE TABLE IF NOT EXISTS role_profiles (account_id TEXT PRIMARY KEY,
         payload BLOB NOT NULL, strings TEXT NOT NULL);
     `);
+    initializeMaintenanceClocks(this.database);
     this.matchHistory = new AccountHistory(this.database);
     initializeAccountSpending(this.database);
     this.accountTitle = new AccountTitle(this.database);
@@ -313,7 +319,11 @@ export class AccountStore {
 
   inventory(accountId: string): AccountInventory {
     const records = this.database.prepare('SELECT record FROM inventory WHERE account_id = ? ORDER BY instance_id')
-      .all(accountId).map(row => JSON.parse(String(row.record)) as InventoryWireRecord);
+      .all(accountId).map(row => {
+        const record = JSON.parse(String(row.record)) as InventoryWireRecord;
+        return {...record, ownedQuantity: currentMaintenanceMinutes(this.database, accountId, 'part',
+          record.instanceId, record.ownedQuantity)};
+      });
     const hotkeys = Array<number>(7).fill(0);
     for (const row of this.database.prepare('SELECT slot, instance_id FROM hotkeys WHERE account_id = ?').all(accountId)) {
       hotkeys[Number(row.slot) - 1] = Number(row.instance_id);
@@ -330,7 +340,9 @@ export class AccountStore {
       const row = this.database.prepare('SELECT record FROM inventory WHERE account_id = ? AND instance_id = ?')
         .get(accountId, instanceId);
       const record = row ? JSON.parse(String(row.record)) as InventoryWireRecord : undefined;
-      if (!record || record.ownedQuantity !== expectedOwned || record.itemTableId !== itemTableId
+      const currentOwned = record ? currentMaintenanceMinutes(this.database, accountId, 'part',
+        record.instanceId, record.ownedQuantity) : undefined;
+      if (!record || currentOwned !== expectedOwned || record.itemTableId !== itemTableId
           || expectedOwned <= 0) {
         this.database.exec('ROLLBACK');
         return false;
@@ -340,6 +352,7 @@ export class AccountStore {
         // Last Func20 treasure unit: delete the empty instance and every shortcut in the same transaction.
         this.database.prepare('DELETE FROM inventory WHERE account_id = ? AND instance_id = ?').run(accountId, instanceId);
         this.database.prepare('DELETE FROM hotkeys WHERE account_id = ? AND instance_id = ?').run(accountId, instanceId);
+        removeMaintenanceClock(this.database, accountId, 'part', instanceId);
       } else {
         this.database.prepare('UPDATE inventory SET record = ? WHERE account_id = ? AND instance_id = ?')
           .run(JSON.stringify(record), accountId, instanceId);
@@ -368,8 +381,16 @@ export class AccountStore {
       'SELECT kind, instance_id, record FROM role_records WHERE account_id = ? ORDER BY instance_id',
     ).all(accountId)) {
       const saved = JSON.parse(String(row.record)) as {name: string; fields: [number, number][]};
+      const fields = new Map(saved.fields);
+      if (row.kind === 'equipment') {
+        const instanceId = fields.get(0x1c);
+        const remainingMinutes = fields.get(0x34);
+        if (instanceId !== undefined && remainingMinutes !== undefined) {
+          fields.set(0x34, currentMaintenanceMinutes(this.database, accountId, 'tank', instanceId, remainingMinutes));
+        }
+      }
       result[row.kind as keyof AccountRoleRecords].set(Number(row.instance_id),
-        {name: saved.name, fields: new Map(saved.fields)});
+        {name: saved.name, fields});
     }
     return result;
   }
