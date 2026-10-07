@@ -22,6 +22,7 @@ import {HomeOwnedRoleSourceList} from './home-owned-role-source-list';
 import {HomeTankUpgradeDialog} from './home-tank-upgrade-dialog';
 
 type RoleKind = 'tank' | 'pet';
+type PetMasteryEquipment = {profile: NonNullable<ResRoleProfile['profile']>; battle: Battle; accountGeneration: number; itemIds?: number[]};
 export interface HomeRolesViewProps {open: boolean; close: () => void; battle: Battle; initialKind?: RoleKind; onPlayerPage?: () => void; onEquipmentPage?: (instanceId?: number) => void; onTexturePage?: (instanceId: number) => void; initialSelectedInstance?: number;}
 
 function sourceProps(ui: HomeSourceUi, kind: RoleKind, name: string, picture?: string) {
@@ -72,7 +73,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const [playerSummary, setPlayerSummary] = useState<ResRoleProfile['playerSummary']>();
   const [growth, setGrowth] = useState<ResRoleProfile['growth']>();
   const [equippedItemIds, setEquippedItemIds] = useState<number[]>();
-  const [masteryEquippedItemIds, setMasteryEquippedItemIds] = useState<number[]>();
+  const [masteryEquipment, setMasteryEquipment] = useState<PetMasteryEquipment>();
   const [selected, setSelected] = useState<number>();
   const focusInitialSelection = useRef(initialSelectedInstance !== undefined);
   const [busy, setBusy] = useState(true);
@@ -163,8 +164,9 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   useEffect(() => {
     let active = true;
     setEquippedItemIds(undefined);
-    setMasteryEquippedItemIds(undefined);
+    setMasteryEquipment(undefined);
     if (profile) void battle.inventory().then(result => {
+      const requestProfile = profile;
       if (active) setEquippedItemIds(result.records.filter(record => record.state === 2).map(record => record.itemTableId));
       // Home mastery adopts the five installed instances for the current only; every non-zero
       // instance needs a confirmed record, otherwise the component stays unknown.
@@ -179,7 +181,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
         if (!record || record.state !== 2 || record.ownedQuantity <= 0) {unresolved = true; break;}
         confirmed.push(record.itemTableId);
       }
-      if (active) setMasteryEquippedItemIds(unresolved ? undefined : confirmed);
+      if (active) setMasteryEquipment({profile: requestProfile, battle, accountGeneration, itemIds: unresolved ? undefined : confirmed});
     }).catch(() => {});
     return () => {active = false;};
   }, [battle, profile]);
@@ -217,6 +219,8 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const currentTankInstance = profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0xa8, true) : undefined;
   const currentTank = currentTankInstance === undefined ? undefined
     : owned?.equipment.find(record => new Map(record.fields).get(0x1c) === currentTankInstance);
+  const masteryEquippedItemIds = masteryEquipment?.profile === profile && masteryEquipment.battle === battle
+    && masteryEquipment.accountGeneration === accountGeneration ? masteryEquipment.itemIds : undefined;
 
   function requestClose() {
     if (!session.current.active) return;
