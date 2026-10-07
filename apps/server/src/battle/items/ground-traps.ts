@@ -124,7 +124,7 @@ export function advanceGroundTraps(room: RoomState, now: number, events: MsgRoom
       }
       return false;
     }
-    if (trap.itemTableId === 3007 && 'move' in rule) {
+    if ('move' in rule) {
       if (!room.players.get(trap.ownerId)?.alive) return false;
       for (const target of room.players.values()) {
         if (target.id === trap.ownerId || !target.alive || target.combat.status !== 2
