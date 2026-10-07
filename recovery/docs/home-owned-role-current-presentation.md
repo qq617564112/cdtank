@@ -17,7 +17,7 @@
 
 ## 复用范围
 
-- 仅 Home 拥有名单传 `current`：商城战车行 `tank-shop-texture.tsx`、维修战车行 `mend-shop-source-page.tsx`、交易候选行 `trade-candidate-row-content.tsx` 复用同一 `HomeOwnedTankRowContent`/`HomeOwnedPetRowContent`，但不传 `current`，因此这些页面不显示当前使用标识，其它状态不被覆盖。
+- Home 拥有名单使用自己的 HomeRoles 确认链传 `current`；商城战车行 `tank-shop-texture.tsx`、维修战车行 `mend-shop-source-page.tsx` 复用同一 `HomeOwnedTankRowContent`/`HomeOwnedPetRowContent` 但仍不传 `current`。交易本方 tank/pet 候选改用自己只读的 `RoleProfile` 查询传 `current`，并叠加 draft B/N 优先合同，详 `trade-owned-row-status-presentation.md`；本 Home 文档不把旧 Home 图扩成 Trade 验收，其它页面不由此获得 N，其它状态仍不覆盖。
 
 ## 已具与边界
 
