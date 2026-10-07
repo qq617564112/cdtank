@@ -243,6 +243,8 @@ def main():
         temporary.replace(inventory_path)
     plan_path = root / 'art/hd-assets/plan.json'
     plan = json.loads(plan_path.read_text())
+    calls_path = root / 'art/hd-assets/calls.json'
+    attempted = {call['batch'] for call in json.loads(calls_path.read_text())} if calls_path.exists() else set()
     textures = {entry['source']: entry for entry in inventory['textures']}
     unique = {entry['canonical']: entry for entry in inventory['textures']
               if 'ui' in entry['groups'] and not entry.get('derived') and not entry.get('deferred')}
@@ -266,7 +268,7 @@ def main():
             continue
         saved = (root / batch['output']).exists()
         delivered = all((root / textures[cell['source']]['png']).exists() for cell in batch['cells'])
-        if (saved or delivered or any(cell['source'] in retained_fonts
+        if (saved or delivered or batch['id'] in attempted or any(cell['source'] in retained_fonts
                                      or textures[cell['source']].get('intermediate')
                                      for cell in batch['cells'])):
             retained.append(batch)
@@ -290,6 +292,7 @@ def main():
             families[(str(Path(canonical).parent), kind)].append(entry)
     batches, counts = [], Counter()
     occupied_ids = {batch['id'] for batch in plan['batches']}
+    occupied_ids.update(attempted)
     occupied_ids.update(path.parent.name for path in (root / 'art/hd-assets/batches').glob('ui-packed-*/output-1.png'))
     sequence = 0
     font_sequence = 0
