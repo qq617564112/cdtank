@@ -125,10 +125,8 @@ current/candidate 区分这两个按钮，资格只取决于下一等级是否�
 原来源与采用分开：以下为在现有 Web 数据上实现整页状态组的明确合同，不新增未知
 offset、钱包、免费 grant、权限或持久交易。
 
-- `txtTankStatus`：原页面无 producer，保持空字符串即与原控件一致，不作为缺失功能。
-  若产品需要状态文字，唯一有原依据的分类是「显示实例 `===` 当前出击目标」，可与
-  `picAlreadyUsed` 同条件渲染为台词；选择依据只能是已确认的 `OwnedRoles` 当前目标
-  （RoleProfile `a8`）或 `Inventory`/`Equipment` 已确认字段，不推断未知 offset。
+- `txtTankStatus`：原页面无 producer，保持空字符串即与原控件一致。整页不为该控件新增
+  setter、文字键、门禁或候选状态文字。
 - `txtListQuantity`：采用「当前活动名单行数 / 20」。战车模式用当前角色拥有的战车数
   （现 `owned.equipment` 或 `OwnedRoles` 已确认列表长度），装备模式用当前装备分类
   （Common/Hat/Mark）的已确认名单长度。渲染 `${rows}/20`；`rows` 超过分页容量时按
@@ -137,16 +135,18 @@ offset、钱包、免费 grant、权限或持久交易。
   `profile.bytes[0x70]` 金额与 `growth.originality ?? playerSummary.originality`
   原创（对应原 getter `0x1a`/`0x1f`），两模式都用同一生产者语义，不随显示实例变化。
 - `btnModifyFire`/`btnModifyPanzer` 与子等级：绑定当前显示战车记录，等级文本取记录
-  字段 `0x44`（火力）与 `0x54`（装甲），两模式都可见。点击复用现有 `TankUpgrade` API
-  （`PtlTankUpgrade` 的 `QUERY`/`UPGRADE`，`instanceId` + `action 1|2`）；是否存在下一
-  等级由已确认的 `tankup`/quote 决定，与 `HomeTankUpgradeEntries` 现有资格判断一致。
+  字段 `0x44`（火力）与 `0x54`（装甲），两模式都可见。原 source 门禁只是「`tankup`
+  下一等级记录存在」；现 Web 采用 `tank-modification-runtime.md` 的已确认业务：优先读
+  owned 资格位 `+0x38`/`+0x48`，并由 QUERY quote 给出是否可升级，二者不是同一个来源。
+  点击复用现有 `TankUpgrade` API（`PtlTankUpgrade` 的 `QUERY`/`UPGRADE`，`instanceId`
+  + `action 1|2`）。
 - `btnUse`/`picAlreadyUsed`：沿用「显示实例 `===` 已确认当前出击目标」判定。相等显示
   `picAlreadyUsed` 并禁用/隐藏 `btnUse`；不相等显示 `btnUse` 并复用现有 `selectRole`
   确认事务提交当前显示实例。装备模式显示实例为当前出击战车，因此默认显示
   `picAlreadyUsed`。
-- 装备页 `txtListQuantity` 与升级入口：`HomeEquipmentView` 已持有当前目标战车记录，
-  可直接复用 `HomeTankSourceRegions`/`HomeTankUpgradeEntries` 与 `HomeTankUpgradeDialog`，
-  数量沿用同一「名单行数 / 20」规则。装备模式 `alreadyUsed` 采用现
+- 装备模式：`HomeEquipmentView` 持有当前目标战车记录，`txtListQuantity` 沿用同一
+  「名单行数 / 20」规则，改装入口沿用 `HomeTankSourceRegions`/`HomeTankUpgradeEntries`
+  与 `HomeTankUpgradeDialog`。`alreadyUsed` 采用现
   `equipment.tankInstanceId === currentTankInstanceId`，不新增字段。
 
 ## 可接 props 与可复用事务
@@ -154,22 +154,21 @@ offset、钱包、免费 grant、权限或持久交易。
 `HomeTankSourcePage` 已接收 `money`、`originality`、`quantity`、`alreadyUsed`、
 `busy`、`canUse`、`record`、`openUpgrade`、`openEquipment`，可直接承载本片全部状态：
 
-- 数量：`quantity` 由调用方传入 `${rows}/20` 字符串化的行数（现传整数，改为按上述
-  合同计算即可）。
+- 数量：`quantity` 由调用方传入活动名单行数，按 `${rows}/20` 渲染。
 - 余额：`money`/`originality` 由现 `home-roles.tsx` 的 typed 余额与
   `home-equipment.tsx` 的 `equipment.profile`/`growth` 提供。
 - 升级：`openUpgrade(instanceId, action)` 复用既有 `HomeTankUpgradeDialog` 与
   `PtlTankUpgrade` 的 `QUERY`/`UPGRADE`，不需要新服务端方法。
-- 装备页：`HomeEquipmentView` 已有 `equipment`、`owned.equipment`、`currentTankInstanceId`
-  与 `HomeTankSourceRegions`/`HomeTankUpgradeEntries`，可补齐 `txtListQuantity` 消费者与
-  升级按钮消费，无需新 direct dep。
+- 装备模式：`HomeEquipmentView` 已有 `equipment`、`owned.equipment`、`currentTankInstanceId`
+  与 `HomeTankSourceRegions`/`HomeTankUpgradeEntries`，直接提供 `txtListQuantity` 与升级
+  按钮状态，无需新 direct dep。
 
-## 未完成
+## 整页实现边界
 
-- 当前 `home-tank-source-page.tsx` 与 `home-equipment.tsx` 的 `txtTankStatus` 均渲染空
-  字符串且无 producer；原页面同样为空，此项按现状保留。
-- 当前装备页没有 `txtListQuantity` 消费者，也没有 `btnModifyFire`/`btnModifyPanzer`
-  消费者；原共用页两模式都写 `txtListQuantity` 并在右侧常显改装入口，装备页补齐即达到
-  整页状态合同。
-- 原右侧/底部参数在装备模式的意义仅由显示实例驱动，未额外按模式过滤；装备页沿用同一
-  实例刷新即可。
+- `txtTankStatus` 保持空字符串，战车与装备两模式一致，不新增内容。
+- `txtListQuantity` 使用活动名单 `rows/20`；活动名单随 `rdoTank`/`rdoEquip` 与
+  Common/Hat/Mark 切换。
+- `btnModifyFire`/`btnModifyPanzer` 与子等级在战车、装备两模式都常显，等级取显示实例。
+- `picAlreadyUsed` 与 `btnUse` 互斥：显示实例等于已确认当前出击目标时显示当前标记，
+  否则显示 Use。
+- 实际接线与运行时状态见 `home-tank-page-state-runtime.md`。
