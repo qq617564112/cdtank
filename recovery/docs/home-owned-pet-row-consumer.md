@@ -8,4 +8,4 @@ browser-home-owned-pet-row-2026-10-05T15-22-13-608Z.json / session23283实际exi
 
 ## 未完成范围
 
-原E/S/N/B状态glyph消费者尚未恢复。完整HomePet/UI34与整页1:1父项保持未完成。角色保存、技能和滚动沿既有业务，当前未扩大其验收。
+已确认 current 使用标识（原状态3→`N`、`SmallHT`、point `(5,8)`、region `ui/regions/11/10.png`）已接入并随父 scale 显示，详 home-owned-role-current-presentation.md；原状态1/2/4的producer/含义与其它页面状态仍未恢复，普通UI实测/HD/实例确认/拒绝/重开待做。完整HomePet/UI34与整页1:1父项保持未完成。角色保存、技能和滚动沿既有业务，当前未扩大其验收；旧15-22三PNG只覆盖新名单行本身，不含本状态标识实测。

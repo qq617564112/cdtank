@@ -8,4 +8,4 @@ UI34 / M5-08。MyPet/lstPet字符串5d1ac4经4ddc84绑定controller+18c。4de3b6
 
 ## 未完成范围
 
-原状态1/2/3/4绘制E/S/N/B，完整状态和原glyph消费者待核；当前使用记录工厂调用4bd103(3)仅有具名证据，不外推其他政策。完整UI34与我的家Pet整页仍未完成。
+已确认 current 使用标识（原状态3→`N`、`SmallHT`、point `(5,8)`、region `ui/regions/11/10.png`）已接入并随父 scale 显示，详 home-owned-role-current-presentation.md。原状态1/2/4绘制E/S/B及完整状态producer待核；当前使用记录工厂调用4bd103(3)仅有具名证据，不外推其他政策。旧15-22三PNG只覆盖新名单行本身，不含本状态标识实测；完整UI34与我的家Pet整页仍未完成。
