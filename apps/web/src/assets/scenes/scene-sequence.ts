@@ -1,5 +1,5 @@
 import {
-  AbstractMesh, AssetContainer, InstantiatedEntries, LoadAssetContainerAsync, Material, Matrix,
+  AbstractMesh, AssetContainer, BaseTexture, InstantiatedEntries, LoadAssetContainerAsync, Material, Matrix,
   MultiMaterial, PBRMaterial, Quaternion, Scene, StandardMaterial, Texture, TransformNode, Vector3,
 } from '@babylonjs/core';
 import {loadStaticJson} from '../static-resources';
@@ -26,6 +26,7 @@ export class SceneSequence {
   private readonly roots: TransformNode[] = [];
   private readonly frameSlots: FrameSlot[] = [];
   private readonly clonedMaterials = new Set<Material>();
+  private readonly replacedBaseTextures = new Set<BaseTexture>();
   private disposed = false;
   private delaySeconds = 0;
   private frameIndex = 0;
@@ -92,6 +93,8 @@ export class SceneSequence {
       else material.dispose(true, true);
     }
     this.clonedMaterials.clear();
+    this.replacedBaseTextures.forEach(texture => {texture.dispose();});
+    this.replacedBaseTextures.clear();
     this.base?.dispose();
     this.base = undefined;
     this.screen?.dispose();
@@ -175,8 +178,10 @@ export class SceneSequence {
     const slots: FrameSlot[] = [];
     for (const material of materials) {
       if (material instanceof PBRMaterial && material.albedoTexture) {
+        this.replacedBaseTextures.add(material.albedoTexture);
         slots.push(texture => {material.albedoTexture = texture;});
       } else if (material instanceof StandardMaterial && material.diffuseTexture) {
+        this.replacedBaseTextures.add(material.diffuseTexture);
         slots.push(texture => {material.diffuseTexture = texture;});
       }
     }
