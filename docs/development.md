@@ -29,7 +29,7 @@
 
 ## 运行资源
 
-运行资源、字体和解码数据表已发布到 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.3.0)。普通开发与运行使用 Node.js 24.16 或更高版本及支持 `.tar.xz` 的 `tar`，执行 `npm ci` 和 `npm run assets:install` 后即可启动服务端和网页。主要目录为：
+高清运行资源、字体和解码数据表已发布到 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.9.0)。普通开发与运行使用 Node.js 24.16 或更高版本及支持 `.tar.xz` 的 `tar`，执行 `npm ci` 和 `npm run assets:install` 后即可启动服务端和网页。安装脚本直接解压已处理资源，源码引用的地图预览、角色缩略图和界面图片同步安装到 `apps/web/src/assets/`。主要目录为：
 
 | 目录 | 内容 |
 | --- | --- |

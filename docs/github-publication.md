@@ -2,15 +2,18 @@
 
 仓库包含应用代码、转换工具、开发与还原文档、现有验收入口、依赖锁文件和资源安装脚本。已提取并转换的运行资源、字体和解码数据表压缩为 `.tar.xz`，单独发布到 GitHub Releases。下载源码后按 README 安装依赖及资源并启动，无需原客户端。
 
-安装后运行资源位于 `recovery/output/web-assets/`，内容表位于 `recovery/output/verified/tables/`。原客户端、下载与恢复输出、依赖、构建产物、账户存档及本地配置由 `.gitignore` 排除。
+安装后运行资源位于 `recovery/output/web-assets/`，内容表位于 `recovery/output/verified/tables/`，源码引用的地图预览、角色缩略图与界面图片位于 `apps/web/src/assets/`。原客户端、下载与恢复输出、依赖、构建产物、账户存档及本地配置由 `.gitignore` 排除。
 
 ## 资源包
 
-- 发布页：[v0.3.0](https://github.com/qq617564112/cdtank/releases/tag/v0.3.0)。
-- 附件：`cdtank-assets-0.3.0.tar.xz`，使用 `xz -9e` 压缩。
+- 发布页：[v0.9.0](https://github.com/qq617564112/cdtank/releases/tag/v0.9.0)。
+- 附件：`cdtank-assets-0.9.0.tar.xz`，使用 `xz -9e` 压缩。
+- 内容：已安装的高清贴图、模型、界面图片、字体、音频、数据表、移动数据和自定义地图；解压后约 6.81 GB。
 - 安装命令：`npm run assets:install`，通过固定版本地址下载并解压到仓库根目录。
 
 更新资源版本时同步修改安装脚本中的版本、发布附件名和 README 下载链接。
+
+v0.3.0 资源包保留供旧版本使用；当前安装脚本下载 v0.9.0，解压即得到已处理的资源，不调用原客户端提取器或高清素材生成工具。
 
 ## 仓库首页
 

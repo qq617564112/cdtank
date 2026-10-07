@@ -10,7 +10,7 @@ import {fileURLToPath} from 'node:url';
 /** Downloads the versioned runtime bundle and extracts it into the workspace. */
 async function installAssets() {
   var workspace = fileURLToPath(new URL('../', import.meta.url));
-  var version = '0.3.0';
+  var version = '0.9.0';
   var filename = `cdtank-assets-${version}.tar.xz`;
   var url = `https://github.com/qq617564112/cdtank/releases/download/v${version}/${filename}`;
   var tar = spawnSync('tar', ['--version'], {stdio: 'ignore'});

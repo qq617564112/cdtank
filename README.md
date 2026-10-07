@@ -47,7 +47,7 @@
 
 ## 本地运行
 
-需要 **Node.js 24.16 或更高版本**、浏览器和支持 `.tar.xz` 的 `tar`。已提取的模型、贴图、音频、界面、字体和数据表通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.3.0) 提供，安装脚本自动下载解压，无需原客户端、Python 或另行准备字体。Windows 10/11 和 macOS 使用系统 `tar`；Linux 需安装 `tar` 和 `xz-utils`。以下命令在仓库根目录执行。
+需要 **Node.js 24.16 或更高版本**、浏览器和支持 `.tar.xz` 的 `tar`。高清贴图、模型、音频、界面、字体和数据表通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.9.0) 提供，安装脚本自动下载解压，无需原客户端、Python 或另行准备字体。Windows 10/11 和 macOS 使用系统 `tar`；Linux 需安装 `tar` 和 `xz-utils`。以下命令在仓库根目录执行。
 
 ### 1. 安装依赖和资源
 
@@ -58,7 +58,7 @@ npm ci
 npm run assets:install
 ```
 
-脚本下载 `cdtank-assets-0.3.0.tar.xz`，将运行资源解压到 `recovery/output/web-assets/`，内容表解压到 `recovery/output/verified/tables/`。基础资源包版本为 0.3.0，源码版本为 0.9.0。压缩包约 231 MB，解压后约占 933 MB，包含所需字体。已安装资源后直接启动即可。
+脚本下载 `cdtank-assets-0.9.0.tar.xz`，将运行资源解压到 `recovery/output/web-assets/`，内容表解压到 `recovery/output/verified/tables/`，地图预览、角色缩略图和界面图片解压到 `apps/web/src/assets/`。解压后约占 6.81 GB，包含所需字体、已转换的移动数据、测试地图和高清田野路。使用旧版资源包的用户重新运行 `npm run assets:install` 即可升级。
 
 ### 2. 启动服务端和网页
 
