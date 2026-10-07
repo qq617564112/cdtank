@@ -82,15 +82,19 @@ export class PetSkillLearningOwner {
   }
 
   learn(instanceId: number, slot: number): Promise<void> {
-    return this.enqueue(() => this.runLearn(instanceId, slot));
+    return this.enqueue(async () => {
+      if (!this.current()) return;
+      if (this.attempt) {
+        this.publish({actionError: '已有待确认的学习结果，请先确认、“重试本次学习”或放弃'});
+        return;
+      }
+      await this.runLearn(instanceId, slot);
+    });
   }
 
+  /** Reached only from retry(): reuses the confirmed-ABSENT attempt's original request fields. */
   private async runLearn(instanceId: number, slot: number): Promise<void> {
     if (!this.current()) return;
-    if (this.attempt && (this.attempt.instanceId !== instanceId || this.attempt.slot !== slot)) {
-      this.publish({actionError: '已有待确认的学习结果，请先确认或放弃'});
-      return;
-    }
     const attempt = this.attempt ?? {instanceId, slot, requestId: createRequestId()};
     this.attempt = attempt;
     const revision = ++this.revision;

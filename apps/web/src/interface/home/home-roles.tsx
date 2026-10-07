@@ -143,7 +143,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
 
   function learnPetSkill(instanceId: number, slot: number) {
     const quote = learning.quotes?.find(value => value.instanceId === instanceId && value.slot === slot);
-    if (busy || learningBusy || kind !== 'pet' || quote?.kind !== 'eligible') return;
+    if (busy || learningBusy || kind !== 'pet' || learning.attempt || quote?.kind !== 'eligible') return;
     void owner.learn(instanceId, slot);
   }
 
@@ -259,7 +259,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
           {kind === 'pet' && <HomePetOwnedDetails ui={ui} record={displayed} catalog={roleCatalog}
             quotes={learning.quotes} points={learning.points} busy={busy || learningBusy}
             status={learning.message || learning.actionError || status}
-            learn={(instanceId, slot) => {learnPetSkill(instanceId, slot);}}
+            learn={learning.attempt ? undefined : (instanceId, slot) => {learnPetSkill(instanceId, slot);}}
             description={sourcePetDescription(fields?.get(8))} />}
           <HomeOwnedRoleSourceList ui={ui} kind={kind} selected={selected}
             current={currentId} busy={busy || learningBusy} select={instanceId => {setSelected(instanceId); setStatus('');}}
@@ -279,20 +279,21 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
           {kind === 'pet' && displayed && fields && <PetModelPreview petId={fields.get(8)! >>> 0}
             kind="home" scale={scale} {...sourceProps(ui, kind, 'picModel')} data-home-pet-preview="" />}
         </>}
-      {kind === 'pet' && (learning.attempt || learning.confirmation === 'ABSENT' || learning.queryError) &&
-        <div className="home-role-web-tools" data-home-pet-learning-tools=""
-          style={{left: 224, top: 432, width: 365, display: 'flex', flexWrap: 'wrap', gap: 8}}>
-          {learning.attempt && <button type="button" data-pet-skill-confirm="" disabled={learningBusy}
-            onClick={() => {void owner.confirm();}}>确认学习结果</button>}
-          {learning.confirmation === 'ABSENT' && <>
-            <button type="button" data-pet-skill-retry="" disabled={learningBusy}
-              onClick={() => {void owner.retry();}}>重试本次学习</button>
-            <button type="button" data-pet-skill-abandon="" disabled={learningBusy}
-              onClick={() => owner.abandon()}>放弃本次学习</button>
-          </>}
-          {learning.queryError && <button type="button" data-pet-skill-query-retry="" disabled={learningBusy}
-            onClick={() => {void owner.query();}}>重试读取技能</button>}
-        </div>}
+      {kind === 'pet' && <div className="home-role-web-tools" data-home-pet-learning-tools=""
+        style={{left: 224, top: 432, width: 365, display: 'flex', flexWrap: 'wrap', gap: 8}}>
+        {learning.attempt && <button type="button" data-pet-skill-confirm="" disabled={learningBusy}
+          onClick={() => {void owner.confirm();}}>确认学习结果</button>}
+        {learning.confirmation === 'ABSENT' && <>
+          <button type="button" data-pet-skill-retry="" disabled={learningBusy}
+            onClick={() => {void owner.retry();}}>重试本次学习</button>
+          <button type="button" data-pet-skill-abandon="" disabled={learningBusy}
+            onClick={() => owner.abandon()}>放弃本次学习</button>
+        </>}
+        {learning.queryError && <button type="button" data-pet-skill-query-retry="" disabled={learningBusy}
+          onClick={() => {void owner.query();}}>重试读取技能</button>}
+        <output data-home-pet-learning-status="" aria-live="polite"
+          style={{flexBasis: '100%', minHeight: 16}}>{learning.actionError || learning.message || ''}</output>
+      </div>}
       <div className="home-role-web-tools" hidden={kind !== 'tank'}>
         
         <button type="button" disabled={busy || !displayed || !profile || !ui || !onTexturePage}
