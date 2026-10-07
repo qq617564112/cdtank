@@ -120,12 +120,15 @@ def main():
         runtime = root / runtime
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
     selected = [entry for entry in inventory['textures']
-                if args.group is None or args.group in entry.get('groups', [])]
+                if not entry.get('intermediate')
+                and (args.group is None or args.group in entry.get('groups', []))]
     completed = [entry for entry in selected if (root / entry['png']).is_file()]
     replacements = {entry['source'].lower(): entry for entry in completed}
     # A group install retains artwork installed by earlier groups in shared models.
     if args.group is not None:
         for entry in inventory['textures']:
+            if entry.get('intermediate'):
+                continue
             delivered = root / entry['png']
             installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
             if (entry['source'].lower() not in replacements and delivered.is_file()

@@ -56,7 +56,7 @@ def prepare():
         entry = {'source': source, 'canonical': source,
                  'original': str(original_path.relative_to(ROOT)),
                  'png': str((ART / 'png' / source).relative_to(ROOT)),
-                 'size': list(original.size), 'groups': ['loading']}
+                 'size': list(original.size), 'groups': ['loading'], 'intermediate': True}
         entries[source] = entry
         batch_id = f'loading-{page}-{name}'
         folder = ART / 'batches' / batch_id

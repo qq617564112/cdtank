@@ -35,7 +35,7 @@ def render(root):
             'hdSize': png_size(delivered) if ready else None,
             'original': relative_url(original, destination.parent),
             'hd': relative_url(delivered, destination.parent) if ready else None,
-            'layer': 'loading' in entry['groups'],
+            'layer': 'loading' in entry['groups'] or entry.get('intermediate', False),
         })
     previews = []
     preview_paths = list((root / 'art/hd-assets/previews').glob('*.png'))

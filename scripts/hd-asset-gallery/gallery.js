@@ -103,7 +103,7 @@
   }
   var base = assets.filter(asset => !asset.layer);
   var layers = assets.filter(asset => asset.layer);
-  document.getElementById('progress').textContent = `基础资源 ${base.filter(asset => asset.hd).length.toLocaleString()} / ${base.length.toLocaleString()} · 加载插画图层 ${layers.filter(asset => asset.hd).length} / ${layers.length}`;
+  document.getElementById('progress').textContent = `基础资源 ${base.filter(asset => asset.hd).length.toLocaleString()} / ${base.length.toLocaleString()} · 独立图层 ${layers.filter(asset => asset.hd).length} / ${layers.length}`;
   document.getElementById('updated').textContent = `资源快照：${new Date(data.updated).toLocaleString()} · 每组安装完成后更新，刷新页面查看最新进度。`;
   var previewList = document.getElementById('preview-list');
   for (var preview of data.previews) {

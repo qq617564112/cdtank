@@ -2,11 +2,15 @@
 import argparse
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 from PIL import Image
 
 
 def assemble(root):
+    subprocess.run([sys.executable, str(root / 'scripts/prepare-hd-layered-ui.py'),
+                    'assemble', '--root', str(root)], check=True)
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
     textures = {entry['source']: entry for entry in inventory['textures']}
     paths = {entry['source'].lower(): entry['source'] for entry in inventory['textures']}

@@ -213,6 +213,7 @@ Repaint crisp natural contours and restrained fine material detail in the origin
     save(ART / 'plan.json', {'baseUrl': 'https://gptimg.cloyd.fun/', 'model': 'gpt-image-2', 'groups': ordered_groups, 'batches': batches})
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'prepare'], check=True)
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-reference-hero.py')], check=True)
+    subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-layered-ui.py'), 'prepare'], check=True)
     textures = document(ART / 'inventory.json')['textures']
     batches = document(ART / 'plan.json')['batches']
     print(f"{len(textures)} paths, {len({entry['canonical'] for entry in textures})} unique textures, {len(batches)} requests", flush=True)

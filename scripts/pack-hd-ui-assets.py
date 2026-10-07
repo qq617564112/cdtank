@@ -183,7 +183,9 @@ def main():
             continue
         saved = (root / batch['output']).exists()
         delivered = all((root / textures[cell['source']]['png']).exists() for cell in batch['cells'])
-        if saved or delivered or any(cell['source'] in retained_fonts for cell in batch['cells']):
+        if (saved or delivered or any(cell['source'] in retained_fonts
+                                     or textures[cell['source']].get('intermediate')
+                                     for cell in batch['cells'])):
             retained.append(batch)
             covered.update(cell['source'] for cell in batch['cells'])
         elif len(batch['cells']) == 1:

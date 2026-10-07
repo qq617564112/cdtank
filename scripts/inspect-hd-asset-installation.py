@@ -24,7 +24,8 @@ def inspect(root, groups):
         runtime = root / runtime
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
     selected = [entry for entry in inventory['textures']
-                if not groups or any(group in entry['groups'] for group in groups)]
+                if not entry.get('intermediate')
+                and (not groups or any(group in entry['groups'] for group in groups))]
     report = {'updated': datetime.now(timezone.utc).isoformat(timespec='seconds'),
               'scope': {'groups': groups or 'all', 'paths': len(selected)},
               'delivered': 0, 'installed': 0, 'models': 0, 'embeddedImages': 0,
