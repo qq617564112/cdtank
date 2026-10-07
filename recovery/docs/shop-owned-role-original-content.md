@@ -16,8 +16,8 @@ Tank Owned模式新增原同名控件`txtAttack`0x3c、`txtAttackExtra`0x40、`t
 
 独立只读归属可加明确data-binding/offset/value，不改交互；runtime接线与门禁见`shop-owned-role-attributes-runtime.md`。
 
-静态走查范围为`f4b0d03..231c79c`，仅覆盖原说明批的两页说明实现、确认字段、原说明目录及相关说明文档。确认记录取值、Buy数据、预览清理、选择/刷新、pending事务和原坐标/缩放/字体/焦点链正确，未发现P1/P2问题。本次BH拥有属性改动不在该走查范围内，BH集中走查尚未发生。
+静态走查范围为`f4b0d03..231c79c`，仅覆盖原说明批的两页说明实现、确认字段、原说明目录及相关说明文档。确认记录取值、Buy数据、预览清理、选择/刷新、pending事务和原坐标/缩放/字体/焦点链正确，未发现P1/P2问题。本批集中静态走查已完成，八字段按确认拥有记录显示；新页面/切换/HD/原source/原server仍未实测。
 
 ## 未完成范围
 
-本批没有运行测试、浏览器、构建、类型检查或导出。新拥有说明、拥有Pet预览和商城未售定义的切换尚未做实际页面验收；新拥有属性（Pet txtCritical/txtLucky、Tank txtAttack/txtAttackExtra/txtPanzer/txtPanzerExtra/txtAttackLevel/txtPanzerLevel）只登记固定采用范围，尚未做页面/source/HD/runtime实测，不把旧说明或旧目录cap验收算作拥有属性通过。UI-56、UI-57、M5-10、M6-03、M6-04和完整商城1:1父项保持未完成。
+本批没有运行测试、浏览器、构建、类型检查或导出。新拥有说明、拥有Pet预览和商城未售定义的切换尚未做实际页面验收；新拥有属性（Pet txtCritical/txtLucky、Tank txtAttack/txtAttackExtra/txtPanzer/txtPanzerExtra/txtAttackLevel/txtPanzerLevel）本批集中静态走查已完成，八字段按确认拥有记录显示；新页面/切换/HD/原source/原server仍未实测，不把旧说明或旧目录cap验收算作拥有属性通过。UI-56、UI-57、M5-10、M6-03、M6-04和完整商城1:1父项保持未完成。
