@@ -77,8 +77,8 @@ export function parseChatSourceMarkup(text: string,
     if (node.text!==undefined) {items.push({text:node.text,colour});return;}
     if (node.name==='colour') {previous=colour;colour=rgba(node.attributes);}
     if (node.name==='emote') {
-      const id=Number(node.attributes.name);
-      if (Number.isInteger(id) && id>=1 && id<=EMOTE_COUNT) {
+      const name=node.attributes.name,id=Number(name);
+      if (Number.isInteger(id) && id>=1 && id<=EMOTE_COUNT && name===String(id).padStart(3,'0')) {
         items.push({text:String.fromCharCode(EMOTE_FIRST_CODEPOINT+id-1),emoteId:id,colour:rgba(node.attributes)});
       } else unsupported=true;
     }
