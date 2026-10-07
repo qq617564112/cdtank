@@ -54,7 +54,7 @@ UI 按原图集家族分组。32 像素以内的细碎素材最多排 8×8，64 
 - `art/hd-assets/original/` 与 `original-models/`：原图与模型备份。
 - `art/hd-assets/previews/`：使用同一份原模型离线绘制的原图与高清图对照。
 - `art/hd-assets/asset-gallery.html`：离线资源对照页，支持分类、路径搜索、完成状态筛选与原始像素放大；普通文字单列为“后续字体渲染”，排除在高清完成分母外。每组安装后自动刷新资源快照。
-- `art/hd-assets/installation-inspection.json`：指定范围内交付 PNG 与运行 PNG 的逐字节对比，以及 GLB 原数据与内嵌图片核对结果；未完成资源单独记录。
+- `art/hd-assets/installation-inspection.json`：指定范围内交付 PNG 与运行 PNG 的逐字节对比，以及 GLB 原数据与内嵌图片核对结果；未完成资源单独记录。全量核对还覆盖清单外资源、普通文字原图、两种比例界面布局、Logo、光标和应用图标。
 - `art/hd-ui/png/lobby/`：共用顶栏、底部剪影、目录板与连续玩家列表底图，以及本地组装的 4:3、16:9 大厅背景。
 - `art/hd-ui/loading/`：加载插画图层坐标及单角色请求预览；完成的两种比例背景安装到 `hd-ui/loading/`。
 - `art/hd-local-ui/`：本地图标和标志的原图、两份请求输入及交付。标志单独请求，光标与应用图标共用两格图集。

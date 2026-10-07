@@ -35,6 +35,32 @@ def inspect(root, groups):
               'delivered': 0, 'installed': 0, 'models': 0, 'embeddedImages': 0,
               'deferredTextPaths': [entry['source'] for entry in inventory['textures'] if entry.get('deferred')],
               'pendingPaths': [], 'uninstalledPaths': [], 'issues': []}
+    if not groups:
+        report['runtimePngPathsOutsideInventory'] = sorted(
+            path.relative_to(runtime).as_posix() for path in runtime.rglob('*.png')
+            if path.relative_to(runtime).parts[0] != 'hd-ui'
+            and path.relative_to(runtime).as_posix().lower() not in all_textures)
+        report['runtimeModelsOutsideInventory'] = sorted(
+            path.relative_to(runtime).as_posix() for path in runtime.rglob('*.glb')
+            if path.relative_to(runtime).as_posix() not in inventory['models'])
+        report['changedDeferredTextPaths'] = []
+        for entry in inventory['textures']:
+            if not entry.get('deferred'):
+                continue
+            installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
+            if not installed.is_file() or read_bytes(installed) != read_bytes(root / entry['original']):
+                report['changedDeferredTextPaths'].append(entry['source'])
+        report['uninstalledUiLayouts'] = []
+        for source in (root / 'art/hd-ui/png').rglob('*.png'):
+            installed = runtime / 'hd-ui' / source.relative_to(root / 'art/hd-ui/png')
+            if not installed.is_file() or read_bytes(installed) != read_bytes(source):
+                report['uninstalledUiLayouts'].append(source.relative_to(root).as_posix())
+        report['uninstalledLocalUi'] = []
+        for name in ('lobby-logo.png', 'normal-cursor.png', 'normal-cursor-hd.png', 'client-icon.ico'):
+            source = root / 'art/hd-local-ui/png' / name
+            installed = root / 'apps/web/src/assets/ui' / name
+            if not installed.is_file() or read_bytes(installed) != read_bytes(source):
+                report['uninstalledLocalUi'].append(name)
     ready = {}
     for entry in selected:
         delivered = root / entry['png']
