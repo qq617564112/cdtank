@@ -174,6 +174,14 @@ Func19的12501/12502/12503 domain、history/account与真实World来源冻结已
 
 过期保留owned/库存和装配关系，由现正量门禁按当前counter判断，不改变current battle frozen来源，不新增全局拒绝。初始化在既有inventory/role_records建表后一次执行；DELETE triggers统一清inventory删除的part clock与`role_records[kind=equipment]`删除的tank clock。显式导入替换沿用同一清理边界，普通profile、wallet、迷彩、改装和非owned/inventory删除不清clock。Shop/TankShop新BUY在创建真实新记录前清同空闲key陈旧clock，不创建clock、不改购入初值；Trade在物理删除前捕获原absolute expiry与当前projection，在recipient实际新id落盘后写原absolute expiry，与whole transfer同原Txn，普通stack不成为timed、不改merge。
 
+## 商城拥有战车部件
+
+对应UI-58、UI-57、M5-10与M6-01。原`shop_tankpage_part.xml`共15个`Window`：根、Hat/Mark两背景、五个PART背景及七个`pic*Icon`动态图；LabPage将根保存到`this+84`，Owned模式1挂到Tank根`this+8`，偏移`[0,36]`。原loader `43b62a`从TankTable第23列取得`TankPartSlot`，`4b2635`按该值显示前count组背景和对应动态图，剩余至5槽隐藏。原XML未给出七个动态图的`Image`或provider，旧的`Equipment QUERY`边界也不能替拥有名单中的非当前实例。
+
+Web采用当前已确认的三源只读链：对所选拥有战车实例查询`Equipment QUERY + tankInstanceId`，以真实Inventory把实例解析为`itemTableId`，再以现有CombatCatalog取`iconId ?? itemTableId`，并按Home装备页已用的`set:daoju0 image:data\ui\daoju\NNNNN.tga`规则显示图标。原七个`pic*Icon`控件名、原矩形和`offsetY=36`保持；`picHatIcon`读取装饰实例，`picMarkIcon`读取标记实例，`picInternalIcon0/1`与`picExternalIcon0/1/2`读取同一实例loadout中前`partSlotCount`个PART槽。背景和动态图同步按该目录值显隐，空槽不画图；Inventory实例或catalog定义缺一时不猜icon，不按`ownedQuantity`抹掉仍存在的binding。
+
+请求只读，不调用`selectRole`、不写装备、不临时切换出击战车，不新增后端、协议或schema。target、mode、AccountSource或显式刷新变化时清旧目标图和部件错误，迟到响应不回挂；Equipment/Inventory bundle 失败保留当前目标和正常只读背景，以独立part error沿现Owned status输出并由现刷新入口重试，不伪装成确认空loadout。原购买、余额、模型、纹理、selection、字体与源布局保持。原动态图provider未恢复，真实页面、保存与HD未实测；UI-58/M5-10/M6-01父项保持未勾。详`tank-shop-owned-part-client-business-design.md`。
+
 ## 大厅GM问题提交
 
 对应M6-08-GM-LOBBY、M5-12与UI-03。原大厅菜单`rdoGM`、原`chat.xml`的`btnGMChannel`、原频道6`UMsgChatGM`与gamestring810自动回复为来源事实；原大厅GM单独处理程序、人工处理页、客服回复推送和原`rdoGM`回调未取得，详见`lobby-gm-question-client-business-design.md`。
