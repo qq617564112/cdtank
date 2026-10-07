@@ -6,6 +6,7 @@ final restoration remains the responsibility of the image API and extractor.
 import argparse
 from collections import Counter, defaultdict
 import json
+import math
 from pathlib import Path
 
 from PIL import Image
@@ -31,9 +32,10 @@ Preserve EVERY original Chinese character, Latin letter, digit, punctuation mark
 
 
 def create_batch(root, batch_id, entries, kind, write):
-    _, columns, inner = LAYOUTS[kind]
-    rows = (len(entries) + columns - 1) // columns
-    # Full-width rows keep every asset at the same predictable preview scale.
+    _, maximum_columns, inner = LAYOUTS[kind]
+    columns = min(maximum_columns, math.ceil(math.sqrt(len(entries))))
+    rows = columns
+    # Square sheets preserve the API composition without stretching partial rows.
     pitch = inner + 16
     size = (columns * pitch, rows * pitch)
     canvas = Image.new('RGB', size, 'black') if write else None
@@ -79,7 +81,7 @@ def main():
             retained.append(batch)
             continue
         saved = (root / batch['output']).exists()
-        delivered = any((root / textures[cell['source']]['png']).exists() for cell in batch['cells'])
+        delivered = all((root / textures[cell['source']]['png']).exists() for cell in batch['cells'])
         if saved or delivered:
             retained.append(batch)
             covered.update(cell['source'] for cell in batch['cells'])
