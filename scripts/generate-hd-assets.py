@@ -22,7 +22,7 @@ import time
 
 import cv2
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageChops, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / 'art/hd-assets'
@@ -309,6 +309,23 @@ def assemble_tiles(sources):
             temporary.replace(destination)
 
 
+def restore_layer(original_path, generated):
+    original = Image.open(original_path).convert('RGBA')
+    pixels = np.asarray(generated.convert('RGB'))
+    rgb = pixels.astype(np.int16)
+    excluded = ((rgb[:, :, 0] - rgb[:, :, 1] > 80)
+                & (rgb[:, :, 2] - rgb[:, :, 1] > 80))
+    pixels = pixels.copy()
+    pixels[excluded] = 0
+    result = Image.fromarray(pixels)
+    result.putalpha(Image.fromarray(np.uint8(~excluded) * 255))
+    target = tuple(value * 4 for value in original.size)
+    result = result.resize(target, Image.Resampling.LANCZOS)
+    original_alpha = original.getchannel('A').resize(target, Image.Resampling.LANCZOS)
+    result.putalpha(ImageChops.multiply(result.getchannel('A'), original_alpha))
+    return result
+
+
 def extract(batch):
     inventory = document(ART / 'inventory.json')
     textures = {e['source']: e for e in inventory['textures']}
@@ -320,9 +337,12 @@ def extract(batch):
         box = [round(v * (sx if i % 2 == 0 else sy))
                for i, v in enumerate(cell.get('slotBox', cell['box']))]
         crop = image.crop(box)
-        result = restore(ROOT / entry['original'], crop, any(g.startswith('map-') for g in entry['groups']),
-                         cell.get('sourceBox'), entry.get('solidColor'), cell.get('kind') != 'texture',
-                         entry.get('inkReference'))
+        if entry.get('intermediate') and Path(entry['source']).stem != 'background':
+            result = restore_layer(ROOT / entry['original'], crop)
+        else:
+            result = restore(ROOT / entry['original'], crop, any(g.startswith('map-') for g in entry['groups']),
+                             cell.get('sourceBox'), entry.get('solidColor'), cell.get('kind') != 'texture',
+                             entry.get('inkReference'))
         destination = tile_path(batch, index) if cell.get('sourceBox') else ROOT / entry['png']
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_name(destination.name + '.tmp')
