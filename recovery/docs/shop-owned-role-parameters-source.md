@@ -76,8 +76,8 @@ SideDef,BackDef)对应Tank行`+0x50/+0x84/+0x88/+0x8c/+0x90/+0xa4/+0xa8`；函�
 
 因此商城owned剩余五项（txtPanzerSide/txtPanzerBack/txtMoveSpeed/txtRotateSpeed/
 txtShootInterval）可直接复用`homeTankParameters`，输入record=选中owned equipment、
-pet、catalog、equippedItemIds、alreadyUsed与Home一致；容量进度按helper的capacity/6，
-与Buy的TankBullet/6区分。
+pet、catalog、equippedItemIds、alreadyUsed与Home一致。`homeTankParameters`的capacity
+只是Home helper的独立输出；商城Owned无prgLoadingTime setter，不绘容量进度。
 
 ## 429e41入口参数与局部定义
 
@@ -140,11 +140,12 @@ pet、catalog、equippedItemIds、alreadyUsed与Home一致；容量进度按help
 
 `A`的两部分真实来源：
 
-- `429e8a push [ebp+0xc]; mov ecx,esi; call 429cf3`先把`this+0x44`清空，并在
-  `arg1[0]==427ba2(this)[0]`时用`arg1`的技能填充`this+0x44`：`429ded`起对
+- `429e8a push [ebp+0xc]; mov ecx,esi; call 429cf3`：先把`this+0x44`清空；
+  `429d3d jne 0x429ded`只在`arg1[0]==427ba2(this)[0]`成立时走入前面的`429d43`–
+  `429de1`分支，遍历`[0x633588+0x120]`一项角色技能表（经`+0x7c`取定义）调`429714`
+  累加；两条分支在`429ded`汇合后无条件执行六技能循环`429ded`–`429e2e`，对
   `arg1+0x44`的6个技能槽读`[esi]`(base)与`[esi+0x18]`(rank)合成索引，经
-  `[0x633588+0x114]+0x78`取技能定义，调`429714`累加；`429d65`另遍历
-  `[0x633588+0x120]`一项角色技能表，经`+0x7c`取定义后同样调`429714`。
+  `[0x633588+0x114]+0x78`取技能定义后调`429714`累加。
 - `429edb`–`429f66`对`arg2+0x58/+0x5c/+0x60`三个装备槽：`413c74`取物品定义，
   读物品`+0x108/+0x10c/+0x110`三个技能id，`413c65`取技能定义后调`429714`累加。
 
@@ -191,10 +192,12 @@ txtCritical=表+0x64、txtLucky=表+0x70，熟练度=表`+0x7c/+0x80/+0x84/+0x88
 `429e41`内`429f68`–`429fb7`：`arg1+8`宠物定义经`413c83`查Pet表行，聚合熟练度=Pet表
 `+0x7c/+0x80/+0x84/+0x88` + 累加器`A[21..24]`（`[edi+0x54..0x60]`）。对Pet页，
 `arg2=427bf9(this)`就是当前记录，`429eb6`门禁`arg2+0x1c==427bf9(this)+0x1c`恒成立，
-`A`保留`this+0x44`（由`arg1`=选中base的六技能`+0x44/+0x5c`与角色技能表`429cf3`填充），
+`A`保留`this+0x44`：六技能循环无条件并入`arg1`=选中base的`+0x44/+0x5c`；`429cf3`只在
+`arg1[0]==427ba2(this)[0]`（选中base即当前）时另并入角色技能表`[0x633588+0x120]`。
 再叠`arg2`三装备槽`+0x58/+0x5c/+0x60`的物品技能（物品`+0x108/+0x10c/+0x110`）。
 即Owned熟练度不是原目录纯值，而是Pet表基值叠选中宠技能与当前战车部件技能；Buy只给原
-目录值。当前`pet-shop-mastery.ts`与`petShopMastery(petId)`只映射Pet表目录值，等于Buy语义。
+目录值。本批已新增`petOwnedMastery`承接Owned聚合；`pet-shop-mastery.ts`的
+`petShopMastery(petId)`仍只映射Pet表目录值，只供Buy。
 
 对Tank页（`4b75ef`），`arg1=427ba2(this)`=当前宠物记录、`arg2=owned equipment`：
 `429eb6`门禁比较owned装备实例与当前装备实例，非当前则清空`arg1`带来的技能加成，只留
@@ -208,10 +211,9 @@ owned装备自身部件技能。故Tank页展示的精通来自当前宠物技�
   Pet Crit/Lucky读base `+0x34/+0x3c`，HP读base `+0x2c`。
 - 本批补：Tank owned txtPanzerSide/txtPanzerBack/txtMoveSpeed/txtRotateSpeed/
   txtShootInterval按`homeTankParameters`（`429e41`）接线；prgLoadingTime无mode1 setter，
-  容量标记原读TankPartSlot，故按helper的capacity或明确空，不发明mode1进度公式。
-- Pet熟练度：Owned需`429e41`聚合（目录+角色/成长），Buy为Pet表目录值。当前
-  `petShopMastery(petId)`仅能接Buy；若确认owned记录未含`429e41`聚合所需角色/成长字段，
-  保持现目录映射并明示，不猜偏移或成品数值。
+  商城Owned不绘容量进度，容量标记仍原读TankPartSlot，不发明mode1进度公式。
+- Pet熟练度：本批已接`petOwnedMastery`四组Owned聚合（Pet表基值+选中/当前技能与部件），
+  缺确认空；Buy保持Pet表目录值，不用`petShopMastery(petId)`回填Owned。
 - 现有确认`OwnedRoles`字段能接即接；不新增wire/API/cache/QUERY，不改费用/库存/学习/
   战斗规则。缺记录/缺字段留空，实际0显示0。
 
@@ -236,7 +238,7 @@ owned装备自身部件技能。故Tank页展示的精通来自当前宠物技�
 petOwnedMastery({selectedBase, currentTank, isCurrent, catalog, equippedItemIds})
   base[0..3] = petTable(selectedBase.fields.get(8))[0x7c,0x80,0x84,0x88]
   bonus = [0,0,0,0]
-  if (isCurrent)                       // 429eb6门禁通过
+  if (isCurrent)                       // Web采用资格: profile+a4
     for slot in 0..5:
       baseId=selectedBase.fields.get(0x44+slot*4); rank=selectedBase.fields.get(0x5c+slot*4)
       addSkillMastery(bonus, catalog.skill(rankedPetSkillId(baseId,rank)))   // 429cf3+429714
@@ -251,11 +253,12 @@ petOwnedMastery({selectedBase, currentTank, isCurrent, catalog, equippedItemIds}
 - 只有在`selectedBase`（当前选中base）与`currentTank`（当前出击/选中战车）都已确认为
   合法记录、且`catalog`已含相应技能精通属性与物品技能id时，才显示四组聚合值；某槽缺
   confirmation则该组保持unknown（空），不用纯目录值`petShopMastery(petId)`冒称Owned。
-- `isCurrent`=选中base/战车是否为当前角色实例（对应`429eb6`门禁：只有当前实例才并入
-  选中侧六技能加成；`4b1150`Pet页`arg2`恒为当前记录，故Pet页等价于恒并入）。
+- `429eb6`是原门禁：比较`arg2+0x1c`与`427bf9(this)+0x1c`，不等则清空累加器`A`。
+  本批Web`isCurrent`=`profile+a4`采用资格是独立决定，不与`429eb6`等同；`429eb6`
+  使用的原role表identity未证，采用按当前确认profile+a4判定，不用原门禁冒称已恢复。
 - 技能加成只取`skill+0x2c==0`被动技能四项坦克精通属性；物品取三部件槽`+0x58/+0x5c/+0x60`
-  的`+0x108/+0x10c/+0x110`三个技能id。`429cf3`另遍历角色技能表`[0x633588+0x120]`一项，
-  若现确认记录未覆盖该来源，该部分保持unknown，不猜偏移。
+  的`+0x108/+0x10c/+0x110`三个技能id。`429cf3`在`arg1[0]==427ba2(this)[0]`时另遍历
+  角色技能表`[0x633588+0x120]`一项，若现确认记录未覆盖该来源，该部分保持unknown，不猜偏移。
 - 现实0显示0；缺必需confirmation留空。不新增wire/API/cache/QUERY。
 
 ## 未证边界
