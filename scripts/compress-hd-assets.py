@@ -99,6 +99,25 @@ def embedded_image(model, binary, index):
     return binary[offset:offset + view['byteLength']]
 
 
+def inspect_runtime_sources(root, runtime, backup, inventory):
+    pairs = {}
+    for entry in inventory['textures']:
+        if entry.get('intermediate') or entry.get('deferred'):
+            continue
+        target = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
+        pairs[target] = root / entry['png']
+    for source in (root / 'art/hd-ui/png').rglob('*.png'):
+        pairs[runtime / 'hd-ui' / source.relative_to(root / 'art/hd-ui/png')] = source
+    for name in ('lobby-logo.png', 'normal-cursor.png', 'normal-cursor-hd.png'):
+        pairs[root / 'apps/web/src/assets/ui' / name] = root / 'art/hd-local-ui/png' / name
+    for target, source in pairs.items():
+        before = backup / target.relative_to(root)
+        reference = backup / source.relative_to(root)
+        if before.read_bytes() != reference.read_bytes():
+            raise ValueError(f'Runtime PNG differs from its uncompressed source: {target}')
+    return len(pairs)
+
+
 def inspect_models(root, runtime, backup, inventory):
     spec = importlib.util.spec_from_file_location('hd_install', root / 'scripts/install-hd-assets.py')
     installer = importlib.util.module_from_spec(spec)
@@ -207,6 +226,7 @@ def main():
     report['status'] = 'compressing'
     report['tool'] = subprocess.check_output([args.oxipng, '--version'], text=True).strip()
     report['options'] = ['-o', '2', '--threads', '1']
+    report['runtimeImageBaselinesVerified'] = inspect_runtime_sources(root, runtime, backup, inventory)
     completed = {record['path'] for record in report['pngs']}
     pending = [path for path in sources if path.relative_to(root).as_posix() not in completed]
     save(report_path, report)
