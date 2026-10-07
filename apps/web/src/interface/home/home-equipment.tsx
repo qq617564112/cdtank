@@ -19,6 +19,8 @@ import {SourceStaticText} from '../resources/source-static-text';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {HomeTankDescription, HomeTankOwnedAttributes, HomeTankOwnedParameters, HomeTankSourceRegions} from './home-tank-source-page';
 import {sourceTankDescription} from '../resources/role-source-descriptions';
+import {HomeTankUpgradeDialog} from './home-tank-upgrade-dialog';
+import {HomeTankUpgradeEntries, HomeTankUseControl, homeTankListQuantity} from './home-tank-page-state';
 
 type EquipmentTarget = 'PART' | 'DECORATION' | 'MARK';
 interface Resources {ui: HomeSourceUi; controls: HomeSourceControl[]; catalog: CombatCatalog;}
@@ -76,6 +78,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
   const [originality, setOriginality] = useState<number>();
   const [page, setPage] = useState<EquipmentTarget>('PART');
   const [candidate, setCandidate] = useState<number>();
+  const [upgrade, setUpgrade] = useState<{instanceId: number; action: 1 | 2}>();
   const [busy, setBusy] = useState(false);
   const [queryFailed, setQueryFailed] = useState(false);
   const [queryAttempt, setQueryAttempt] = useState(0);
@@ -182,6 +185,36 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
     }
   }
 
+  async function refreshTarget() {
+    if (!session.current.active) return;
+    const [confirmedEquipment, confirmedProfile] = await Promise.all([
+      battle.equipment({operation: 'QUERY', tankInstanceId}), battle.roleProfile(),
+    ]);
+    if (!session.current.active) return;
+    if (tankInstanceId !== undefined && confirmedEquipment.tankInstanceId !== tankInstanceId) return;
+    setEquipment(confirmedEquipment);
+    setCurrentTankInstanceId(confirmedProfile.profile
+      ? new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0xa8, true) : undefined);
+    setOriginality(confirmedProfile.growth?.originality ?? confirmedProfile.playerSummary?.originality);
+  }
+
+  async function useTarget(button: HTMLButtonElement) {
+    const current = session.current;
+    if (!current.active || current.pending || busy || !equipment || alreadyUsed) return;
+    focusAfterCommit.current = button;
+    current.pending = true; setBusy(true); setStatus('保存战车选择…');
+    try {
+      await battle.selectRole({kind: 'tank', instanceId: equipment.tankInstanceId});
+      if (!current.active) return;
+      setStatus('战车选择已保存');
+      await refreshTarget();
+    } catch (error) {
+      if (current.active) setStatus(String(error));
+    } finally {
+      if (current.active) {current.pending = false; setBusy(false);}
+    }
+  }
+
   const layout = resources ? new HomeSourceLayout(resources.ui, 'myhome_panzerpage.xml') : undefined;
   const definition = (instanceId: number) => {
     const record = inventory?.records.find(value => value.instanceId === instanceId);
@@ -244,12 +277,16 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
             else onRolePage?.(kind);
           }} />
         <HomeTankSourceRegions ui={resources.ui} />
+        <HomeTankUpgradeEntries ui={resources.ui} record={tank} busy={busy}
+          openUpgrade={(instanceId, action) => {setUpgrade({instanceId, action}); setStatus('');}} />
         <HomeTankDescription ui={resources.ui}
           description={sourceTankDescription(fields?.get(0x24))} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtMoney"
           text={equipment ? String(new DataView(Uint8Array.from(equipment.profile.bytes).buffer).getUint32(0x70, true)) : ''} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtOriginality"
           text={originality === undefined ? '' : String(originality)} />
+        <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtListQuantity"
+          text={inventory ? homeTankListQuantity(records.length) : ''} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtTankStatus" text="" />
         <SourceButton ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" source="rdoTank"
           aria-label="拥有战车" aria-pressed="false" disabled={busy || !onRolePage}
@@ -288,6 +325,9 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
           {['picInternalPart0', 'picInternalPart1', 'picExternalPart0', 'picExternalPart1', 'picExternalPart2']
             .map((sourceName, slot) => slotButton('PART', slot, equipment.slots[slot] ?? 0, sourceName))}
         </>}
+        <HomeTankUseControl ui={resources.ui} alreadyUsed={alreadyUsed} busy={busy}
+          canUse={equipment !== undefined && !queryFailed && !alreadyUsed}
+          selectedInstance={instanceId} use={event => {void useTarget(event.currentTarget);}} />
         <div className="home-equipment-detail">{selected ? `${selected.name}\n${selected.info}` : ''}</div>
       </>}
       {!resources && <HomeResourceFeedback error={resourceError} close={requestClose} closeAttribute="data-equipment-close" />}
@@ -296,6 +336,10 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
     {resources && queryFailed && <button type="button" className="home-equipment-retry" data-equipment-query-retry
       aria-label="重试装备查询" disabled={busy}
       onClick={() => setQueryAttempt(value => value + 1)}>重试</button>}
+    {resources && upgrade && <HomeTankUpgradeDialog ui={resources.ui} battle={battle}
+      instanceId={upgrade.instanceId} action={upgrade.action} close={() => setUpgrade(undefined)}
+      onState={result => {setOwned(result.owned); void refreshTarget();}}
+      onConfirmed={message => setStatus(message)} />}
     </SourceImageScale>
   </dialog>;
 }

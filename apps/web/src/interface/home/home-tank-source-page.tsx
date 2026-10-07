@@ -1,5 +1,5 @@
 import {sourceProps} from '../resources/source-ui-props';
-import {Fragment, type MouseEventHandler} from 'react';
+import {type MouseEventHandler} from 'react';
 import {SourceButton} from '../resources/source-button';
 import {SourceStaticImage} from '../resources/source-static-image';
 import {SourceStaticText} from '../resources/source-static-text';
@@ -9,6 +9,7 @@ import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {sourceOwnedTankDays} from './home-owned-tank-row-display';
 import {sourceTankKind} from '../account/tank-shop-row-display';
 import {HOME_TANK_PARAMETER_BASES, homeTankParameters} from './home-tank-parameters';
+import {HomeTankUpgradeEntries, HomeTankUseControl, homeTankListQuantity} from './home-tank-page-state';
 
 interface HomeTankSourcePageProps {
   ui: HomeSourceUi;
@@ -30,26 +31,6 @@ interface HomeTankSourcePageProps {
   equippedItemIds?: readonly number[];
 }
 
-function HomeTankUpgradeLevel({ui, layout, suffix, name, text, offset, value}: {
-  ui: HomeSourceUi; layout: HomeSourceLayout; suffix: string; name: string; text: string; offset: number;
-  value?: number;
-}) {
-  const props = sourceProps(ui, layout, suffix, name, undefined, 0, 0, true);
-  const properties = layout.control(name).properties;
-  const horizontal = properties.HorzFormatting ?? 'LeftAligned';
-  const vertical = properties.VertFormatting ?? 'VertCentred';
-  return <span {...props} className="source-static-text home-tank-upgrade-entry-level"
-    data-source-font="xiangjiao-brush" data-source-font-viewport="800,600" data-source-text-colour="FFFFFFFF"
-    data-source-horz-format={horizontal} data-source-vert-format={vertical} data-source-text-clip="text-area-intersect-window"
-    data-home-tank-owned-field={offset} data-owned-value={value}
-    style={{...props.style, display: 'flex', overflow: 'hidden', whiteSpace: 'nowrap', fontSize: 12,
-      lineHeight: '15px', color: '#fff',
-      justifyContent: horizontal === 'HorzCentred' ? 'center' : horizontal === 'RightAligned' ? 'flex-end' : 'flex-start',
-      alignItems: vertical === 'TopAligned' ? 'flex-start' : vertical === 'BottomAligned' ? 'flex-end' : 'center'}}>
-    <span data-source-text-content="" style={{textShadow: 'none'}}>{text}</span>
-  </span>;
-}
-
 /** The owned tank sheet keeps its original attribute, parameter and balance regions. */
 export function HomeTankSourceRegions({ui}: {ui: HomeSourceUi}) {
   const suffix = 'myhome_panzerpage.xml';
@@ -67,30 +48,6 @@ export function HomeTankSourceRegions({ui}: {ui: HomeSourceUi}) {
     {pictures.map(source => <SourceStaticImage key={source} ui={ui} layout={layout}
       suffix={suffix} name={source} className="home-tank-source-picture" aria-hidden="true" />)}
   </>;
-}
-
-function HomeTankUpgradeEntries({ui, record, busy, openUpgrade}: Pick<HomeTankSourcePageProps,
-    'ui' | 'record' | 'busy' | 'openUpgrade'>) {
-  const suffix = 'myhome_panzerpage.xml', layout = new HomeSourceLayout(ui, suffix);
-  const fields = record ? new Map(record.fields) : undefined;
-  const instanceId = fields?.get(0x1c);
-  return <>{(['btnModifyFire', 'btnModifyPanzer'] as const).map((source, index) => {
-    const action = index + 1 as 1 | 2;
-    const enabled = !!openUpgrade && instanceId !== undefined && (fields?.get(action === 1 ? 0x38 : 0x48) ?? 0) !== 0;
-    const level = action === 1 ? 'txtAttackLevel' : 'txtPanzerLevel';
-    const levelOffset = action === 1 ? 0x44 : 0x54;
-    return <Fragment key={source}>
-      <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name={source}
-        reference={layout.control(source).properties.NormalImage} className="home-tank-source-picture"
-        aria-hidden="true" />
-      <SourceButton ui={ui} layout={layout} suffix={suffix} source={source} disabled={busy || !enabled}
-        data-home-tank-modify-action={action} aria-label={action === 1 ? '火力改装' : '装甲改装'}
-        onClick={() => {if (enabled && instanceId !== undefined) openUpgrade?.(instanceId, action);}}>
-        <HomeTankUpgradeLevel ui={ui} layout={layout} suffix={suffix} name={level} offset={levelOffset}
-          value={fields?.get(levelOffset)} text={fields?.has(levelOffset) ? String(fields.get(levelOffset)) : ''} />
-      </SourceButton>
-    </Fragment>;
-  })}</>;
 }
 
 export function HomeTankOwnedAttributes({ui, record}: {ui: HomeSourceUi; record?: OwnedRoleRecordData}) {
@@ -154,7 +111,7 @@ export function HomeTankSourcePage({ui, name, money, quantity, description, alre
     <HomeTankOwnedParameters ui={ui} record={record} pet={pet} catalog={catalog}
       equippedItemIds={equippedItemIds} alreadyUsed={alreadyUsed} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtMoney" text={money === undefined ? '' : String(money)} />
-    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtListQuantity" text={quantity === undefined ? '' : String(quantity)} />
+    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtListQuantity" text={homeTankListQuantity(quantity)} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtOriginality"
       text={originality === undefined ? '' : String(originality)} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtTankStatus" text="" />
@@ -164,11 +121,7 @@ export function HomeTankSourcePage({ui, name, money, quantity, description, alre
     <SourceButton ui={ui} layout={layout} suffix={suffix} source="rdoEquip"
       aria-pressed="false" aria-label="装备部件" disabled={busy || !openEquipment}
       onClick={openEquipment} />
-    <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnUse"
-      className="home-role-use home-tank-source-use" aria-label="选择战车出击"
-      disabled={!canUse} data-selected-instance={selectedInstance ?? ''} onClick={use} />
-    {alreadyUsed && <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name="picAlreadyUsed"
-      className="home-tank-source-picture" aria-label="当前出击战车" role="img"
-      data-home-tank-already-used="" data-state-source="confirmed-profile-web-visibility" />}
+    <HomeTankUseControl ui={ui} alreadyUsed={alreadyUsed} busy={busy} canUse={canUse}
+      selectedInstance={selectedInstance} use={use} />
   </>;
 }
