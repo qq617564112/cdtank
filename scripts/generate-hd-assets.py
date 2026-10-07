@@ -202,12 +202,16 @@ def restore(original_path, generated, terrain, source_box=None):
     original = Image.open(original_path).convert('RGBA')
     if source_box:
         original = original.crop(source_box)
+    reference = original.convert('RGB')
+    if source_box:
+        reference = Image.new('RGB', original.size, 'black')
+        reference.paste(Image.new('RGB', original.size, 'white'), (0, 0), original.getchannel('A'))
     # Delivered texture dimensions retain the original atlas aspect ratio.
     target = tuple(value * 4 for value in original.size)
     generated = generated.convert('RGB').resize(target, Image.Resampling.LANCZOS)
     base = original.resize(target, Image.Resampling.LANCZOS)
     alignment = (512, max(64, round(512 * original.height / original.width)))
-    old = np.asarray(original.convert('RGB').resize(alignment))
+    old = np.asarray(reference.resize(alignment))
     new = np.asarray(generated.resize(alignment))
     old_gray = cv2.GaussianBlur(cv2.cvtColor(old, cv2.COLOR_RGB2GRAY), (0, 0), 1)
     new_gray = cv2.GaussianBlur(cv2.cvtColor(new, cv2.COLOR_RGB2GRAY), (0, 0), 1)
@@ -217,6 +221,12 @@ def restore(original_path, generated, terrain, source_box=None):
     pixels = cv2.remap(np.asarray(generated), xx + flow[:, :, 0], yy + flow[:, :, 1],
                        cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
     registered = Image.fromarray(pixels)
+    if source_box:
+        support = base.getchannel('A').filter(ImageFilter.MaxFilter(5)).point(lambda value: 255 if value else 0)
+        alpha = np.minimum(np.asarray(registered.convert('L')), np.asarray(support))
+        result = Image.new('RGBA', target, 'white')
+        result.putalpha(Image.fromarray(alpha))
+        return result
     radius = 12 if terrain else 24
     rgb = pixels.astype(np.float32)
     rgb += np.asarray(base.convert('RGB').filter(ImageFilter.GaussianBlur(radius)), dtype=np.float32)
