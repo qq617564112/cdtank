@@ -37,6 +37,8 @@ TriggerType现存0/1/2/3/4/5/6/7/8/9/11/12/13/14，Target现存1–6。coverage.
 
 原引用缺口：道具3006引用技能4027，当前skill.dat不存在该记录。缺口单独保留，不替换为4023等相近编号。
 
+当前有限生产条目：物件3006按原description“全队队友生命回复400。”采用普通category4地面单次团队治疗，接入现有owned实例、账户CAS、数量扣减、00009地面对象、World生命写入与round统计；4027原writer、Func2、效果及声音仍未恢复，也不以3006业务冒充该技能已补齐。详[精品饲料罐头团队治疗](team-feed-client-business-design.md)及tasklist M4-10-I3006；FUNC-02、3006原取得链、真实页面/联机/HD/持久重启和M4-10父项均保持未勾。
+
 每个FUNC子项按函数/目标/参数/持续的具体来源接入权威状态；原服务端入口缺失时按客户端请求、接收确认和表参数采用明确业务规则，详client-communication-business-rules.md。随后仍须用真人或CPU普通输入验收成功、失败、数量及真实事件。原432b29被动筛选和角色重算已有独立模块证据；不作为FuncType1主动施放完成证据。342技能及204道具的全量业务验收继续由M4-10追踪。
 
 FuncType1的2010雷达干扰弹登记：`skill2010`为`Trigger0/Target1/Range0`Func1`T0`，`skill4008`为`Trigger8/Target1/Range1`Func1`T15`、RadarA/B/C均999、首槽Effect13/SE14。命中后的15秒雷达干扰是独立服务端期限与状态，不是FuncType1全量执行器完成；Radar列保持字面、不相加为被动属性，也不把4008的Func1映射为其它FuncType。取得、期限、marker与注射解除采用规则见client-communication-business-rules.md及ammo10-radar-*.md，FUNC-01保持未勾选。

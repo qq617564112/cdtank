@@ -84,6 +84,20 @@ flags 9/10/11 是许可计数，初始 1，实际施加后扣为 0；同类限�
 
 现有 `GroundTrapsPresentation`、`ContentItemVisual` 与通用 `PlaySkillEffect` 已覆盖数值 item/model 和 skill/effect 查表，无需新增 UI、schema 或 API。完整原 writer、普通取得来源、原 group dispatcher、第二槽触发、网页联机与 HD 重启未实测或恢复，I3007、FUNC-03/04/05、M4-09 及父项保持未勾；3006/4027 独立缺引用保留。
 
+## 精品饲料罐头团队治疗
+
+对应M4-10-I3006，详[精品饲料罐头团队治疗](team-feed-client-business-design.md)。原item3006的definition说明为“全队队友生命回复400。”，category/itemType 4、inventoryCategory 2、BattleUseMax 10、价格0/0、getMethod 0、Shop/CPU/trade不可用、appearanceEffect false，三个itemeffect槽均为0，modelId 9；primary 4027及`unresolvedSkillReferences=[4027]`仍缺失。400是原说明量，4027的writer、Func2、效果及声音没有恢复，也不得据此造出这些记录。
+
+普通已有合法owned实例沿现category4 placeTrap路径，账户CAS先成功后才把ownedQuantity与battleQuantity各减1并创建00009地面对象；CAS失败不扣量不创建。零价不开放免费BUY、gift、CPU自动配给或交易取得，原取得来源仍未知。
+
+Web采用XZ 80接触、60000 ms地面期限和单次触发。mode1..3允许owner或当前同队合格目标接触；首次有效接触后选择触发瞬间当前room全部合格owner/同队目标，不再限距。mode4/5仅owner可接触和接受治疗，其他相同team数字的玩家也不算友方。满血、lastStand、死亡、非status 2或hp不大于0的接触继续等待，不消费地面对象。
+
+World两个advanceGroundTraps调用点提供同一治疗回调。资格要求真实alive、status 2、hp大于0、非lastStand且hp小于实际maximum；VIP maximum为`Math.max(1, room.map.vipHp)`，普通角色沿现三级playerMaxHp。恢复按`Math.min(maximum, before + amount)`计算，并显式调用`setBattleHealth(target, value, maximum)`，返回真实差额。`recordHealing(owner, restored)`仅用于mode1..3中非self同队的实际恢复量，owner自疗及mode4/5不统计。
+
+有效触发只发一次`trapTriggered`，保留原owner和真实接触者身份，value采用item规则量400；每个真实restored大于0的目标发`playerHealed`，targetId/坐标为目标，value为实际恢复量，playerId为原owner。省略`shotPlayerResult`与不存在来源的4027 play/技能槽/声音。
+
+触发或到期后对象移除；owner离房、clear、finish及newround均无退款。owner仍在room但死亡时，3006保持普通地面寿命，不新增3007式死亡删除，死亡角色自身不是治疗目标。多个3006对象各自独立且各最多触发一次。既有`GroundTrapsPresentation`经definition/model 9使用`ContentItemVisual`，并复用既有snapshot与playerHealed消费者，无新UI、协议或schema。原writer、4027字段效果、原取得、原触发及目标语义、真实页面、联机、HD和持久重启未实测，静态走查不替代这些证据，M4-10-I3006及父项保持未勾。
+
 ## 空袭
 
 对应FUNC-16/FUNC-15及M4-10-I13、M6-06-I13。原物件13“救命啊”通讯器关联skill13，每局上限1，两个正价40金币/20软星币，GGet2；skill13为Trigger1/Target1/Range200、FuncType16 T0/X20/Y3013/Z0、首槽Effect10/SE02/Tag0/Method3。skill3013为Target4/Range200、FuncType15 T0/X0/Y3012/Z0、首槽Effect60/SE32/Tag0/Method1；3012为FuncType2 HP-300且无效果/声音。原表引用链 `item13 ItemSkill1 -> skill13 Func16 -> skill3013 Func15 -> skill3012` 及表loader槽步长是直接来源；原416f接收器486a09只消费消息+c技能、+10效果槽和+14 float32 XZ点数组，经向零截断提交world采样Y=0，不读FuncType、不扣库存、不写目标生命。
