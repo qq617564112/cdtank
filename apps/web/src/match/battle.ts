@@ -403,8 +403,9 @@ export class Battle {
     return this.accounts.configureTankTextures(request);
   }
 
-  async petSkillLearning(request: ReqPetSkillLearning): Promise<ResPetSkillLearning> {
-    return this.accounts.petSkillLearning(request);
+  async petSkillLearning(request: ReqPetSkillLearning, context = this.accountContext,
+    isCurrent: (context: AccountContext) => boolean = candidate => candidate === this.accountContext): Promise<ResPetSkillLearning> {
+    return this.accounts.petSkillLearning(request, context, isCurrent);
   }
 
   async stackItemSale(request: ReqStackItemSale): Promise<ResStackItemSale> {

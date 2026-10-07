@@ -6866,6 +6866,13 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                     "type": "Literal",
                                     "literal": "LEARN"
                                 }
+                            },
+                            {
+                                "id": 2,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "CONFIRM"
+                                }
                             }
                         ]
                     }
@@ -7011,6 +7018,30 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "replayed",
                     "type": {
                         "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 6,
+                    "name": "confirmation",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "APPLIED"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "ABSENT"
+                                }
+                            }
+                        ]
                     },
                     "optional": true
                 }

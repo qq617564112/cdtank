@@ -123,10 +123,16 @@ export class AccountConnection {
     return result.res;
   }
 
-  async petSkillLearning(request: ReqPetSkillLearning): Promise<ResPetSkillLearning> {
+  async petSkillLearning(request: ReqPetSkillLearning, context: AccountContext,
+    isCurrent: (context: AccountContext) => boolean): Promise<ResPetSkillLearning> {
     await this.ensureConnected();
+    if (!isCurrent(context)) throw new Error('账户或连接已变化，请重新操作');
     const result = await this.client.callApi('PetSkillLearning', request);
-    if (!result.isSucc) throw new Error(result.err.message);
+    if (!result.isSucc) {
+      const error = new Error(result.err.message) as Error & {code?: string | number};
+      error.code = result.err.code;
+      throw error;
+    }
     return result.res;
   }
 

@@ -16,7 +16,7 @@ export function registerPetSkillLearningApi(server: WsServer<ServiceType>, accou
     }
     try {
       const result = accounts.petSkillLearning(accountId, call.req, catalog);
-      if (session && result.learned && !result.replayed) {
+      if (session && call.req.operation === 'LEARN' && result.learned && !result.replayed) {
         world.bindRoleSources(session.playerId, accounts.selectedRoleSources(accountId));
         world.bindEquipmentProfile(session.playerId, accounts.roleProfile(accountId)!);
         broadcast(session.roomId);
