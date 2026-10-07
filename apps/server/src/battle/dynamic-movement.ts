@@ -1,7 +1,7 @@
 import type {MsgPlayerInput} from '../../../shared/protocols';
 import type {Battlefield} from '../battlefield';
 import {battleMovementPose, originalMovementParameters, predictBattleMovement,
-  type MovingParticipant, type BattleMovementState} from './movement';
+  type MovingParticipant, type BattleMovementResult} from './movement';
 import {isRoleMovementAllowed, roleMovementCommand} from './roles/movement-permission';
 import {createRoleObbFromPose, predictRoleMovementObb} from './roles/movement-obb-prediction';
 import {isRoleControllerMovementAllowed, type RoleMovementCollider, type RoleStaticCollider} from './roles/movement-controller';
@@ -14,9 +14,6 @@ export interface DynamicMovingParticipant extends MovingParticipant {
   id: string;
   alive: boolean;
   movementCommand?: RoleMovementMathInput['command'];
-}
-interface ControlledMovementState extends BattleMovementState {
-  command: RoleMovementMathInput['command'];
 }
 
 export function createBattleMovementCollider(player: DynamicMovingParticipant): RoleMovementCollider {
@@ -37,7 +34,7 @@ export function createBattleMovementCollider(player: DynamicMovingParticipant): 
 /** Original movement permission is followed by a sweep against every living tank. */
 export function predictControlledBattleMovement(player: DynamicMovingParticipant,
   input: MsgPlayerInput, field: Battlefield, others: Iterable<DynamicMovingParticipant>,
-  elapsed: number, staticObjects: Iterable<RoleStaticCollider> = []): ControlledMovementState | undefined {
+  elapsed: number, staticObjects: Iterable<RoleStaticCollider> = []): BattleMovementResult | undefined {
   if (!originalMovementParameters(player)) return undefined;
   const command = roleMovementCommand(input.move, input.turn) as RoleMovementMathInput['command'];
   const permitted = isRoleMovementAllowed(player.combat, command);
@@ -50,7 +47,7 @@ export function predictControlledBattleMovement(player: DynamicMovingParticipant
   const start = battleMovementPose(player);
   const pose = constrainTankPose(start, state.pose, tankObstacles(player.id, peers));
   return {pose, yaw: Math.atan2(pose.look.x, pose.look.z), bodyYaw: Math.atan2(pose.forward.x, pose.forward.z),
-    command: pose === start ? 0 : command === 0 ? 0 : permitted ? command : player.movementCommand ?? 0};
+    command: pose === start ? 0 : state.command};
 }
 
 /** Pose installation checks all bodies again after each participant is placed. */
