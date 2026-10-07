@@ -156,6 +156,20 @@ Func19的12501/12502/12503 domain、history/account与真实World来源冻结已
 
 无房间与 WAITING 可提交；LOADING、PLAYING、FINISHED 在账户事务前拒绝。新提交在 WAITING 成功后重绑 inventory、角色来源和 equipment profile，取消 Ready 并广播；receipt replay 只返回历史 confirmation 并读取当前 owned/profile，不重扣、不重 roll、不回拨钱包/属性。当前 owned/quote 经 `roleRecords`、`selectedRoleSources`、`World.bindRoleSources` 与 profile 绑定进入现有战斗消费者。原 server 公式、普通自然伤害消费者、真实双端、持久重启、HD 与完整父项仍未实测或取得；M6-03/UI-33/M2-01/M6-06/M5-07 保持未勾。实现细节见 `tank-modification-client-business-design.md`、`tank-modification-runtime.md`、`tank-modification-client-presentation.md`、`tank-modification-implementation.md`。
 
+## 维修期限
+
+对应M6-03-CLOCK、M5-10与M7-07。原Tank owned `+34`与Part维修/耐久类ownedQuantity是分钟，原六按钮`1/7/30`天按`days×1440`增加，上限`367200`分钟（255天）；Tank/Part费用、余额、receipt与成功事务沿现维修模块。原server clock、provider与离线扣时writer未恢复，当前采用服务端持久绝对`expires_at_ms`墙钟，详见`maintenance-clock-client-business-design.md`。
+
+有clock时当前分钟为`max(0,ceil((expires_at_ms-now_ms)/60000))`。只有正常成功维修在同Txn中先读取当前分钟、校验费用/余额/owned与255天上限，再写回原counter并建立或更新clock；拒绝、失败或回滚不改clock、counter、余额和receipt。无clock的legacy记录保持原raw分钟与原资格，`0`不推断过期、不赠时、不回填；maintained历史receipt保持完整immutable，当前列表、交易账户视图和重放读取live projection，不扣费、不重锚、不回拨。
+
+过期保留owned/库存和装配关系，由现正量门禁按当前counter判断，不改变current battle frozen来源，不新增全局拒绝。初始化在既有inventory/role_records建表后一次执行；DELETE triggers统一清inventory删除的part clock与`role_records[kind=equipment]`删除的tank clock。显式导入替换沿用同一清理边界，普通profile、wallet、迷彩、改装和非owned/inventory删除不清clock。Shop/TankShop新BUY在创建真实新记录前清同空闲key陈旧clock，不创建clock、不改购入初值；Trade在物理删除前捕获原absolute expiry与当前projection，在recipient实际新id落盘后写原absolute expiry，与whole transfer同原Txn，普通stack不成为timed、不改merge。
+
+## 大厅GM问题提交
+
+对应M6-08-GM-LOBBY、M5-12与UI-03。原大厅菜单`rdoGM`、原`chat.xml`的`btnGMChannel`、原频道6`UMsgChatGM`与gamestring810自动回复为来源事实；原大厅GM单独处理程序、人工处理页、客服回复推送和原`rdoGM`回调未取得，详见`lobby-gm-question-client-business-design.md`。
+
+当前Web采用：无room的普通已认证大厅账户可选原GM菜单，发送复用既有`RoomChat { text, channel: 6 }`。服务端`rooms/chat.ts`在无session拒绝前处理已认证channel6，有session仍校验当前玩家真实存在；大厅提交以空字符串`room_id/player_id`复用`AccountStore.submitGmQuestion`与`gm_requests`，不新增GM身份、人工客服、收费、Family、API或schema。text继续要求string、raw length `1..72`、trim非空且无控制码；插入失败不成功，不广播，房间GM原准入保持。UI保持原四菜单、原toggle与normal input，成功后仅本人session log追加`[GM]`和`[系统]`两条，pending防重复、失败保稿、稿有新修改保留，离房/断线/迟到generation丢弃，不自动重试，不进入公共/好友/密语路由。原大厅GM server等价、人工处理和完整`M6-08`父项仍保持未勾。
+
 ## 未完成范围
 
 本批普通输入、消费、期限、目标、快照、Web表现和CPU接线已登记实现；本批一次集中gpt-5.6走查覆盖伪装、空袭与Func22/23，已修复发射边界恢复、普通输入快照先于事件发送，以及Func22/23的query options参数位、direct命中后效复用与Func23端点一致性三项真实问题。光学迷彩与建筑工具既有范围的集中走查与Castle重连稳态及修复事务共用损伤绘声清理保持原范围。确认已有库存的配置/自然施放、光学迷彩到期与死亡/结束/再战、建筑工具实际修复、双端绘声及库存重启恢复仍需实际验收；原未知字段、全部技能分派、五模式完整规则和M8-05不因这一合同关闭。FUNC-22/23只登记当前有限查询/射程执行器及采用的百分比政策，未执行实际玩家授予、取得或对局证据，不把source计算等同原server分派。
