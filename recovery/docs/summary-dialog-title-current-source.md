@@ -1,6 +1,6 @@
 # 结算称号与装备提示来源现态
 
-本文恢复 UI-21 `game_summary_dialog.xml` 与 UI-22 `game_summary_title.xml` 的原始布局、动态记录字段及当前正式消费链。UI-39 `myhome_playerpage_titlesummary.xml` 只作称号文档交叉引用；本文不重复称号 domain、装备 reward、结算 sequence、成长、奖项或声音实现。
+本文恢复 UI-21 `game_summary_dialog.xml` 与 UI-22 `game_summary_title.xml` 的原始布局、动态记录字段及当前正式消费链，并登记 UI-39 `myhome_playerpage_titlesummary.xml` 的当前 Home 实现。本文不重复称号 domain、装备 reward、结算 sequence、成长、奖项或声音实现。
 
 ## 原客户端依据
 
@@ -87,7 +87,7 @@ UI-22 的两个源控件已经全部进入正式称号提示：名称 `wndDialog
 
 因此，tasklist 中 UI-21/UI-22 的裸验收行不表示尚未接线；它们仍未完成的只是该行要求的实际页面业务验收。当前范围内没有“正常 result 字段已产出但缺 child consumer”的缺口。
 
-## UI-39 交叉引用
+## UI-39 当前 Home 实现
 
 `myhome_playerpage_titlesummary.xml` 只有三控件：
 
@@ -97,7 +97,24 @@ UI-22 的两个源控件已经全部进入正式称号提示：名称 `wndDialog
 | `bg` | `WindowsLook/StaticImage` | `l:4 t:2 r:371 b:125` | `gy0/data\ui\gy\huangtiao1.tga` |
 | `lstTitles` | `WindowsLook/Listbox` | `l:1 t:2 r:365 b:122` | `SelectionImage=lobby_ditu0/xuanzhong2.tga`，滚动条取 `gy0` 原图 |
 
-`title-client-presentation.md` 采用该页 `lstTitles` 几何显示账户权威 `owned` 称号，并沿 `RoleProfile.titles` 查询/佩戴，不造默认称号，也不新增重复 API。本文只保留这层交叉引用；Home 侧实际 consumer 文件不在本次 owned/只读依赖内，若 tasklist 要登记 UI-39 的当前实现文件，需要 root 提供该文件路径。
+Home `rdoTitleSummary` 由 `HomeInventoryView` 中的 `SourceButton` 承载，选中时切换到 `summaryTab === 'title'` 并渲染 `HomeTitleSummarySourcePage`。当前真实 props 为 `ui`、`titles`、`pending` 与 `select`；`titles` 是同一 Home session 首次 `battle.roleProfile()` 查询确认的 `ResRoleProfile.titles`。
+
+`PtlRoleProfile.ts` 的 `AccountTitles` 由 `owned` 与 `selectedTitleId` 组成；`OwnedTitle` 继承 `PlayerTitle` 并携带 `description`。`ReqRoleProfile.selectTitleId` 省略时是查询，传值时选择，`0` 主动清空。当前 Home 不本地授予或推算称号，只消费 RoleProfile 查询/选择确认结果。
+
+`HomeTitleSummarySourcePage` 的当前三控件消费如下：
+
+- `SheetWindow` 与 `bg` 由 `SourceStaticImage` 按原 XML 源图渲染。
+- `lstTitles` 由 `sourceProps` 取得原矩形与 `SelectionImage`；清单 `owned ?? []`，`selectedTitleId ?? 0`。
+- 每条拥有称号按 `owned` 顺序渲染为 `role="option"` 按钮，显示 `title.name` 与 `title.description`；清单为空时保持空列表，不造默认称号。
+- 选中状态只以确认后的 `selectedTitleId === title.id` 为准，并只在该行使用原 `xuanzhong2.tga` 选中图；未确认或选择失败不会提前改变选中身份。
+- 点击未选中行提交 `title.id`；再次点击已选中行提交 `0` 取消佩戴；右键已选中行或 Delete/Backspace 已选中行同样提交 `0`。
+- ArrowUp/ArrowDown/Home/End 只移动清单内焦点，不提交选择；pending 时清单设置 `aria-busy`，所有称号行为 disabled。
+
+选择行为由 Home session 的 `selectTitle` 收口：请求前记录当前 focus owner，设置 `titlePending`/`busy`，等待 `battle.roleProfile(titleId)` 确认；成功只以 `confirmed.titles` 更新 `titles`，失败保留原确认清单与选中值并通过原通知显示 `称号保存失败：...`。请求完成或失败后解除 pending 并按现有 `requestFocus` 生命周期恢复焦点；清单为空时没有可提交的称号行。
+
+UI-39 没有独立 dialog 生命周期，它是 Home inventory dialog 内的 `summaryTab` 子页。Home 关闭时 `HomeInventoryView` 卸载 session，session active 标记清除，父 dialog 关闭并恢复打开 Home 前的焦点；尚未返回的称号请求不能写回已关闭 session。首次 RoleProfile 查询失败时，Home 显示 `玩家资料读取失败` 且 `titles` 保持 undefined，称号页按空清单和未选中状态渲染，不伪造已选。
+
+因此 tasklist 的 UI-39 现态可登记为已接真实 Home consumer：`rdoTitleSummary -> HomeTitleSummarySourcePage -> RoleProfile.titles`，其页面业务/HD 验收仍按原父项范围保持未完。
 
 ## Known Issues
 
@@ -106,4 +123,3 @@ UI-22 的两个源控件已经全部进入正式称号提示：名称 `wndDialog
 - 原 XML 没有关闭控件；3400ms、Enter/Escape、dialog cancel 与焦点回退是当前 Web 采用，不等同于已恢复的原 callback 名。
 - 装备发放资格和概率仍缺原来源；当前正常回执只消费服务器已实际发放的记录。
 - 800×600 源几何、资源名和消费者链已登记；原高清/font/alpha/GPU 与三分辨率实际验收边界不变，本文不产生新的实测结论。
-- UI-39 只作 XML 与称号文档交叉引用；Home 实际 consumer 文件未纳入本次只读范围。
