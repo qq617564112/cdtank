@@ -40,6 +40,15 @@
   font-size: 12px;
   line-height: 18px;
 }
+.source-entry[data-entry-page='login'] .source-entry-input[type='password'] {
+  font-family: 'CDTank-Login-Password', 'CDTank-SIMSUN', serif;
+}
+
+@font-face {
+  font-family: 'CDTank-Login-Password';
+  src: url('/ui/fonts/SIMSUN-password.ttf') format('truetype');
+  font-display: swap;
+}
 .source-entry-checkbox {
   position: absolute;
   appearance: none;
