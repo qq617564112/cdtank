@@ -6,4 +6,6 @@ UI-60/61/62/63的当前生产消费者为 `apps/web/src/interface/account/trade-
 
 对方提供金额、创意点和技能点仍读取 `txtOtherMoney`、`txtOtherOriginality`、`txtOtherTech`。原浅条带上的白字对比不足，因此当前仅在该原始条带范围内加scoped深色backing（无shadow），保持当前shared `SourceStaticText`、用户选字体与原白字，不改全局字体、不改黑字、不用`!important`；原65×13坐标、右对齐与原图片几何不动，不声明原最终颜色。
 
+对方白字深色backing已接生产，集中静态代码走查已完成；页面、双端、持久与HD实测、原交易rowfactory及逐148控件父项保持未完。
+
 未改动 SHOW、UNSHOW、CONFIRM、CANCEL、draft重置、交易协议或服务端结算。未编写unit test，未运行测试、浏览器、构建或类型检查。
