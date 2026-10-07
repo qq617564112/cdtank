@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import struct
 import subprocess
 import sys
@@ -28,6 +29,7 @@ ART = ROOT / 'art/hd-assets'
 ASSETS = Path(os.environ.get('WEB_ASSETS', ROOT / 'recovery/output/web-assets'))
 SKILL = Path(os.environ.get('CHATGPT2API_SKILL', '/workspace/self-skills/chatgpt2api-image-api'))
 LOCK = threading.Lock()
+STOP = threading.Event()
 
 
 def save(path, value):
@@ -56,7 +58,7 @@ def prepare():
     groups = {}
     models = set()
     existing = {str(p.relative_to(ASSETS)).lower(): str(p.relative_to(ASSETS))
-                for p in ASSETS.rglob('*.png')}
+                for p in ASSETS.rglob('*.png') if p.relative_to(ASSETS).parts[0] != 'hd-ui'}
     local_sources = {f'local-ui/loading-words/{path.name}': path
                      for path in (ROOT / 'apps/web/src/interface/resources/loading-words').glob('*.png')}
     local_sources['local-art/reference-hero/reference-colors.png'] = (
@@ -100,7 +102,7 @@ def prepare():
     for path in existing.values():
         if path not in groups:
             add(path, 'art')
-    for file in (ASSETS / 'Data').rglob('*.glb'):
+    for file in ASSETS.rglob('*.glb'):
         models.add(str(file.relative_to(ASSETS)))
     # Material image paths also cover frames and effects nested in scene libraries.
     directory_groups = {}
@@ -323,13 +325,14 @@ def extract(batch):
     assemble_tiles(tiled)
 
 
-def generate(groups, concurrency, limit, retry_delay=300):
+def generate(groups, concurrency, limit, retry_delay=300, ledger=None):
     sys.path.insert(0, str(SKILL / 'scripts'))
     import common
     key = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
     base_url = common.resolve_base_url(os.environ.get('CHATGPT2API_BASE_URL', 'https://gptimg.cloyd.fun/'))
     ledger_path = ART / 'calls.json'
-    ledger = document(ledger_path) if ledger_path.exists() else []
+    if ledger is None:
+        ledger = document(ledger_path) if ledger_path.exists() else []
     batches = document(ART / 'plan.json')['batches']
     selected = [b for b in batches if not groups or b['group'] in groups]
     delivered = {e['source']: e['png'] for e in document(ART / 'inventory.json')['textures']}
@@ -401,18 +404,23 @@ def generate(groups, concurrency, limit, retry_delay=300):
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
             pending = {}
             while queue or pending:
+                if STOP.is_set():
+                    queue.clear()
                 exhausted = limit is not None and len(ledger) >= limit
                 quota_deadline, lanes = quota_wait()
-                while queue and len(pending) < lanes and not exhausted and max(queue[0][0], quota_deadline) <= time.time():
+                while (queue and len(pending) < lanes and not exhausted and not STOP.is_set()
+                       and max(queue[0][0], quota_deadline) <= time.time()):
                     _, _, batch = heapq.heappop(queue)
                     pending[executor.submit(call, batch)] = batch
                 if not pending:
+                    if not queue:
+                        break
                     if exhausted:
                         print(f'{group}: request limit reached', flush=True)
                         return
                     remaining = max(0, max(queue[0][0], quota_deadline) - time.time())
                     print(f'{group}: {len(queue)} batches waiting; next retry in {round(remaining)} seconds', flush=True)
-                    time.sleep(min(30, remaining))
+                    STOP.wait(min(30, remaining))
                     continue
                 timeout = 30
                 if queue and len(pending) < lanes and not exhausted:
@@ -421,51 +429,81 @@ def generate(groups, concurrency, limit, retry_delay=300):
                 for future in completed:
                     batch = pending.pop(future)
                     print(future.result(), flush=True)
-                    if not batch_complete(batch, delivered):
+                    if not STOP.is_set() and not batch_complete(batch, delivered):
                         sequence += 1
                         deadline = eligible_at(batch['id'])
                         heapq.heappush(queue, (deadline, sequence, batch))
                         print(f"{batch['id']}: retry after {round(max(0, deadline - time.time()))} seconds", flush=True)
+        if STOP.is_set():
+            print(f'{group}: stopped after saving in-flight results', flush=True)
+            return
         print(f'{group}: completed', flush=True)
+
+
+def install_group(group):
+    if group == 'loading':
+        subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'assemble'], check=True)
+    if group == 'ui':
+        subprocess.run([sys.executable, str(ROOT / 'scripts/assemble-hd-ui-atlases.py')], check=True)
+    inventory = document(ART / 'inventory.json')
+    missing = [e for e in inventory['textures'] if group in e['groups'] and not (ROOT / e['png']).exists()]
+    if missing:
+        print(f'{group}: {len(missing)} PNG paths unfinished', flush=True)
+        return False
+    subprocess.run([sys.executable, str(ROOT / 'scripts/install-hd-assets.py'), '--group', group], check=True)
+    if group in ['pets', 'tanks']:
+        preview = ['--group', group, '--size', '256']
+    elif group.startswith('map-'):
+        preview = ['--map', group[4:], '--size', '768']
+    else:
+        preview = None
+    if preview:
+        subprocess.run([sys.executable, str(ROOT / 'scripts/render-hd-asset-previews.py'), *preview, '--publish'], check=True)
+    print(f'DELIVERED {group}', flush=True)
+    return True
+
+
+def run(groups, concurrency, ui_concurrency, limit, retry_delay):
+    os.environ['CHATGPT2API_AUTH_KEY'] = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
+    ledger_path = ART / 'calls.json'
+    ledger = document(ledger_path) if ledger_path.exists() else []
+    selected = [group for group in document(ART / 'plan.json')['groups'] if not groups or group in groups]
+    parallel_ui = ui_concurrency > 0 and 'ui' in selected
+    with ThreadPoolExecutor(max_workers=1) as auxiliary:
+        ui = auxiliary.submit(generate, ['ui'], ui_concurrency, limit, retry_delay, ledger) if parallel_ui else None
+        if parallel_ui:
+            print(f'Processing: {concurrency} main workers + {ui_concurrency} dedicated UI workers', flush=True)
+        for group in selected:
+            if STOP.is_set():
+                break
+            if parallel_ui and group == 'ui':
+                continue
+            generate([group], concurrency, limit, retry_delay, ledger)
+            if STOP.is_set() or not install_group(group):
+                break
+        if ui:
+            ui.result()
+            if not STOP.is_set():
+                install_group('ui')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['prepare', 'generate', 'extract', 'run'])
     parser.add_argument('--groups', nargs='*')
-    parser.add_argument('--concurrency', type=int, default=4)
+    parser.add_argument('--concurrency', type=int, default=8)
+    parser.add_argument('--ui-concurrency', type=int, default=2,
+                        help='Dedicated UI workers used alongside the main workers in run mode')
     parser.add_argument('--limit', type=int)
     parser.add_argument('--retry-delay', type=int, default=300)
     args = parser.parse_args()
+    signal.signal(signal.SIGINT, lambda *_: STOP.set())
     if args.action == 'prepare':
         prepare()
     elif args.action == 'generate':
         generate(args.groups, args.concurrency, args.limit, args.retry_delay)
     elif args.action == 'run':
-        os.environ['CHATGPT2API_AUTH_KEY'] = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
-        for group in document(ART / 'plan.json')['groups']:
-            if args.groups and group not in args.groups:
-                continue
-            generate([group], args.concurrency, args.limit, args.retry_delay)
-            if group == 'loading':
-                subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'assemble'], check=True)
-            if group == 'ui':
-                subprocess.run([sys.executable, str(ROOT / 'scripts/assemble-hd-ui-atlases.py')], check=True)
-            inventory = document(ART / 'inventory.json')
-            missing = [e for e in inventory['textures'] if group in e['groups'] and not (ROOT / e['png']).exists()]
-            if missing:
-                print(f'{group}: {len(missing)} PNG paths unfinished', flush=True)
-                return
-            subprocess.run([sys.executable, str(ROOT / 'scripts/install-hd-assets.py'), '--group', group], check=True)
-            if group in ['pets', 'tanks']:
-                preview = ['--group', group, '--size', '256']
-            elif group.startswith('map-'):
-                preview = ['--map', group[4:], '--size', '768']
-            else:
-                preview = None
-            if preview:
-                subprocess.run([sys.executable, str(ROOT / 'scripts/render-hd-asset-previews.py'), *preview, '--publish'], check=True)
-            print(f'DELIVERED {group}', flush=True)
+        run(args.groups, args.concurrency, args.ui_concurrency, args.limit, args.retry_delay)
     else:
         for batch in document(ART / 'plan.json')['batches']:
             if (not args.groups or batch['group'] in args.groups) and (ROOT / batch['output']).exists():

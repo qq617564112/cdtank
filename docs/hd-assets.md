@@ -56,9 +56,9 @@ UI 按原图集家族分组。32 像素以内的细碎素材最多排 8×8，64 
 ```sh
 python3 scripts/generate-hd-assets.py prepare
 python3 scripts/pack-hd-ui-assets.py
-python3 scripts/generate-hd-assets.py run --concurrency 4
-python3 scripts/generate-hd-assets.py generate --groups tanks pets --concurrency 4
-python3 scripts/generate-hd-assets.py generate --groups map-0001 --concurrency 4
+python3 scripts/generate-hd-assets.py run --concurrency 8 --ui-concurrency 2
+python3 scripts/generate-hd-assets.py generate --groups tanks pets --concurrency 8
+python3 scripts/generate-hd-assets.py generate --groups map-0001 --concurrency 8
 python3 scripts/generate-hd-local-ui.py run
 python3 scripts/generate-hd-ui-layouts.py run --group entry
 python3 scripts/prepare-hd-loading.py prepare
@@ -68,7 +68,7 @@ python3 scripts/inspect-hd-asset-installation.py --groups pets tanks map-0001
 npm run assets:hd
 ```
 
-生成器跳过已交付贴图，记录失败请求；每个失败批次自失败时间起等待 300 秒后重试，其余独立批次继续生成。等待分成不超过 30 秒的片段。重新执行时复用已保存结果及每个批次的剩余等待时间。`--limit` 可设置累计提交上限。`run` 按组生成、安装并绘制模型与地图预览，同时替换本地角色缩略图与小地图图标。
+生成器跳过已交付贴图，记录失败请求；每个失败批次自失败时间起等待 300 秒后重试，其余独立批次继续生成。等待分成不超过 30 秒的片段。重新执行时复用已保存结果及每个批次的剩余等待时间。`--limit` 可设置累计提交上限。`run` 默认以 8 路处理地图及其他美术，另外 2 路专门生成 UI；两路共用同一份调用账本。各组完成后安装并绘制模型与地图预览，替换本地角色缩略图与小地图图标；UI 生成完成后等主队列结束，再组装并安装图集。Ctrl-C 会停止新增请求，保存所有在途结果后退出。
 
 恢复 UI 生成时，已齐全的字符图块先按原坐标拼装为字体条，再跳过相应请求批次；尚未返回的字符继续生成。
 
