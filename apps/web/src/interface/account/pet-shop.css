@@ -96,3 +96,5 @@
   height: 26px;
   text-align: center;
 }
+
+.pet-shop-mastery-progress {pointer-events: none;}

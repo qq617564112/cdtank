@@ -5,6 +5,8 @@ import {TankShopOwnedPartSourceRegions} from './tank-shop-owned-part-source-regi
 import {SourceImageScale} from '../resources/source-static-image';
 import {TANK_SHOP_SOURCE_ATTRIBUTES} from './tank-shop-source-attributes';
 import {TankShopBuyParametersView} from './tank-shop-buy-parameters-view';
+import {TankShopOwnedParametersView} from './tank-shop-owned-parameters-view';
+import {tankShopOwnedParameters} from './tank-shop-owned-parameters';
 import {TankShopTextureView, type TankTextureOwner} from './tank-shop-texture';
 import './tank-shop.css';
 import {RoleShopSourceList} from './role-shop-source-list';
@@ -71,6 +73,8 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const previewTextures = mode === 'Owned' && ownedRecord
     ? readOwnedTankTextures({name: ownedRecord.name, fields: new Map(ownedRecord.fields)}) : product?.textures;
   const ownedPartEquipment = partEquipment?.tankInstanceId === ownedSelection ? partEquipment : undefined;
+  const ownedParameters = tankShopOwnedParameters({owned, record: ownedRecord, profile: sale?.profile,
+    partEquipment: ownedPartEquipment, inventory: partInventory, catalog});
   useEffect(() => {if (mode !== 'Texture') onBusy(busy);}, [busy, onBusy, mode]);
   useEffect(() => {
     setPartError(undefined);
@@ -214,6 +218,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
       partSlotCount={catalog?.tankTypes?.find(value => value.tankId === displayedTankId)?.partSlotCount}
       equipment={ownedPartEquipment} inventory={partInventory} catalog={catalog} />}
     {mode === 'Buy' && product && <TankShopBuyParametersView ui={ui} tankId={product.tankId} />}
+    {mode === 'Owned' && <TankShopOwnedParametersView ui={ui} values={ownedParameters} />}
     {mode === 'Buy' && product && Object.entries(TANK_SHOP_SOURCE_ATTRIBUTES[product.tankId] ?? {}).map(([name, value]) =>
       <SourceStaticText key={name} ui={ui} layout={layout} suffix="shop_tankpage.xml" name={name}
         text={String(value)} className="tank-shop-source-attribute" data-tank-source-attribute={name}

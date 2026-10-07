@@ -88,3 +88,6 @@
 .tank-shop-buy-parameters { display: contents; }
 .tank-shop-buy-parameters > * { position: absolute; }
 .tank-shop-buy-capacity { background-size: 100% 100%; pointer-events: none; }
+
+.tank-shop-owned-parameters { display: contents; }
+.tank-shop-owned-parameters > * { position: absolute; }

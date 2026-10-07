@@ -4,16 +4,25 @@ import type {CombatCatalog, CombatSkillDefinition} from '../../../../shared/comb
 import {SourceButton} from '../resources/source-button';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {PetSkillSourceView} from '../home/pet-skill-source-view';
-import {PET_SHOP_MASTERY} from './pet-shop-mastery';
+import {PET_SHOP_MASTERY, petOwnedMastery} from './pet-shop-mastery';
 import {sourceProps} from '../resources/source-ui-props';
 import {PET_SHOP_DIRECTORY_DETAILS} from './pet-shop-directory-metadata';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-feedback-text';
 
+/** Owned mastery progress controls in the original STank/MTank/LTank/Stug order. */
+const OWNED_MASTERY_PROGRESS = [
+  {name: 'prgLightTank', label: '轻型坦克熟练度'},
+  {name: 'prgMediumTank', label: '中型坦克熟练度'},
+  {name: 'prgHeavyTank', label: '重型坦克熟练度'},
+  {name: 'prgCruiser', label: '巡洋坦克熟练度'},
+] as const;
+
 /** Directory information for a product confirmed by the current shop query. */
-export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRecord}: {
+export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRecord, profile, currentTank}: {
   ui: HomeSourceUi; petId: number; mode?: 'directory' | 'owned'; ownedRecord?: OwnedRoleRecordData;
+  profile?: {bytes: number[]}; currentTank?: OwnedRoleRecordData;
 }) {
   const [catalog, setCatalog] = useState<CombatCatalog>();
   const [opened, setOpened] = useState<{skill: CombatSkillDefinition; level: number}>();
@@ -30,6 +39,10 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
   useEffect(() => {setOpened(undefined);}, [petId, mode, ownedSkillIdentity]);
   const details = PET_SHOP_DIRECTORY_DETAILS[petId];
   if (!details && mode === 'directory') return null;
+  const currentPetInstance = profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0xa4, true) : undefined;
+  const selectedInstance = ownedRecord ? new Map(ownedRecord.fields).get(0) : undefined;
+  const ownedMastery = mode === 'owned' ? petOwnedMastery({selectedBase: ownedRecord, currentTank,
+    isCurrent: currentPetInstance !== undefined && currentPetInstance === selectedInstance, catalog}) : undefined;
   const skills = mode === 'owned' ? Array.from({length: 6}, (_, index) => {
     const base = fields?.get(0x44 + index * 4), level = fields?.get(0x5c + index * 4);
     const id = base !== undefined && level !== undefined ? base + Math.max(0, level - 1) : undefined;
@@ -57,13 +70,28 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
         text={skill.name && skill.level !== undefined ? String(skill.level) : ''} />
     </span>)}
     <div {...sourceProps(ui, layout, suffix, 'tankecanshuqu')} className="pet-shop-mastery-values"
-      data-pet-shop-mastery="" data-mastery-binding="original-pet-table-directory">
-      {(PET_SHOP_MASTERY[petId] ?? []).map((value, index) => <span key={index}
+      data-pet-shop-mastery="" data-mastery-binding={mode === 'owned' ? 'web-confirmed-owned-aggregate' : 'original-pet-table-directory'}>
+      {(mode === 'owned' ? ownedMastery?.mastery ?? [] : PET_SHOP_MASTERY[petId] ?? []).map((value, index) => <span key={index}
         data-mastery-index={index} data-mastery-value={value}
         style={{left: index % 2 ? 184 : 77, top: index < 2 ? 37 : 63}}>
         <SourceFeedbackText text={String(value)} />
       </span>)}
     </div>
+    {mode === 'owned' && ownedMastery && OWNED_MASTERY_PROGRESS.map(({name, label}, index) => {
+      const control = layout.control(name);
+      const bounds = sourceProps(ui, layout, suffix, name, control.properties.BackgroundImage);
+      const fill = sourceProps(ui, layout, suffix, name, control.properties.ProgressImage);
+      const value = ownedMastery.mastery[index]!, fraction = Math.max(0, Math.min(1, ownedMastery.progress[index]!));
+      const width = Number(bounds.style.width), height = Number(bounds.style.height);
+      const extent = Math.floor(width * fraction + .5);
+      return <div key={name} {...bounds} className="pet-shop-mastery-progress"
+        data-pet-shop-mastery-progress={name} data-mastery-value={value} data-mastery-fraction={ownedMastery.progress[index]}
+        role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={Math.max(5, value)} aria-valuenow={value}>
+        <span aria-hidden="true" style={{position: 'absolute', inset: 0, width, height,
+          clipPath: `inset(0 ${width - extent}px 0 0)`, backgroundImage: fill.style.backgroundImage,
+          backgroundSize: '100% 100%'}} />
+      </div>;
+    })}
     {opened && <PetSkillSourceView ui={ui} skill={opened.skill} level={opened.level}
       binding={mode === 'owned' ? 'web-confirmed-owned-skill' : 'web-confirmed-directory-skill'} close={() => setOpened(undefined)} />}
   </SourceImageScale>;

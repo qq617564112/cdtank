@@ -55,6 +55,10 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
   const displayedDescription = mode === 'owned' ? sourcePetDescription(displayedPetId) : product?.info;
   const descriptionText = mode === 'owned' ? displayedDescription : product ? `${product.name} — ${product.info}` : undefined;
   const previewPetId = mode === 'owned' ? displayedPetId : product?.petId;
+  const currentTankInstance = mode === 'owned' && sale?.profile
+    ? new DataView(Uint8Array.from(sale.profile.bytes).buffer).getUint32(0xa8, true) : undefined;
+  const currentTank = currentTankInstance === undefined ? undefined
+    : owned?.equipment.find(record => new Map(record.fields).get(0x1c) === currentTankInstance);
   useEffect(() => {onBusy(busy);}, [busy, onBusy]);
   useEffect(() => {
     const current = {active: true, query: false, identity: {}}; session.current = current;
@@ -174,7 +178,8 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
   return <SourceImageScale value={1}>
     <PetShopSourceRegions ui={ui} />
     {displayedPetId !== undefined && <PetShopDirectoryDetails ui={ui} petId={displayedPetId}
-      mode={mode === 'owned' ? 'owned' : 'directory'} ownedRecord={mode === 'owned' ? ownedRecord : undefined} />}
+      mode={mode === 'owned' ? 'owned' : 'directory'} ownedRecord={mode === 'owned' ? ownedRecord : undefined}
+      profile={mode === 'owned' ? sale?.profile : undefined} currentTank={mode === 'owned' ? currentTank : undefined} />}
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtMoney" text={confirmed?.money === undefined ? '' : String(confirmed.money)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtCoin" text={confirmed?.tokens === undefined ? '' : String(confirmed.tokens)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtName" text={displayedName}/>
