@@ -53,6 +53,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const [partEquipment, setPartEquipment] = useState<ResEquipment>();
   const [partInventory, setPartInventory] = useState<ResInventory>();
   const [partQuerySequence, setPartQuerySequence] = useState(0);
+  const [partError, setPartError] = useState<string>();
   const [confirmed, setConfirmed] = useState<ResTankShop>();
   const [selected, setSelected] = useState(owner.pending?.tankId ?? owner.selected);
   const [busy, setBusy] = useState(true);
@@ -72,8 +73,8 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const ownedPartEquipment = partEquipment?.tankInstanceId === ownedSelection ? partEquipment : undefined;
   useEffect(() => {if (mode !== 'Texture') onBusy(busy);}, [busy, onBusy, mode]);
   useEffect(() => {
+    setPartError(undefined);
     setPartEquipment(undefined); setPartInventory(undefined);
-    setStatus(value => value === '部件信息载入失败，请重试' ? '' : value);
     if (mode !== 'Owned' || ownedSelection === undefined) return;
     if (!source.equipment || !source.inventory) return;
     let active = true;
@@ -83,9 +84,10 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     ]).then(([equipment, inventory]) => {
       if (!active) return;
       if (equipment.tankInstanceId !== ownedSelection) return;
+      setPartError(undefined);
       setPartEquipment(equipment); setPartInventory(inventory);
     }).catch(() => {
-      if (active) {setPartEquipment(undefined); setPartInventory(undefined); setStatus('部件信息载入失败，请重试');}
+      if (active) {setPartEquipment(undefined); setPartInventory(undefined); setPartError('部件信息载入失败，请重试');}
     });
     return () => {active = false;};
   }, [mode, ownedSelection, partQuerySequence, source]);
@@ -263,6 +265,6 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
         else owner.session?.refresh();
       }}>刷新余额</button>
     <output className="tank-shop-status" data-tank-shop-status="" data-purchased-tank-instance={owner.purchasedInstance}
-      role="status" aria-live="polite">{status}</output>
+      role="status" aria-live="polite">{partError ? `${partError}${status ? `；${status}` : ''}` : status}</output>
   </SourceImageScale>;
 }

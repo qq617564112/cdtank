@@ -17,7 +17,8 @@ function iconReference(inventory: ResInventory | undefined, catalog: CombatCatal
   const record = inventory?.records.find(value => value.instanceId === instanceId);
   if (!record) return undefined;
   const item = catalog?.items.find(value => value.itemTableId === record.itemTableId);
-  const iconId = item?.iconId ?? record.itemTableId;
+  if (!item) return undefined;
+  const iconId = item.iconId ?? item.itemTableId;
   return `set:daoju0 image:data\\ui\\daoju\\${String(iconId).padStart(5, '0')}.tga`;
 }
 
