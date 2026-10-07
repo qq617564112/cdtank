@@ -16,6 +16,7 @@ interface HomeTankSourcePageProps {
   money?: number;
   quantity?: number;
   description?: string;
+  originality?: number;
   alreadyUsed: boolean;
   busy: boolean;
   canUse: boolean;
@@ -142,7 +143,7 @@ export function HomeTankDescription({ui, description}: {ui: HomeSourceUi; descri
 }
 
 export function HomeTankSourcePage({ui, name, money, quantity, description, alreadyUsed, busy, canUse, use, selectedInstance,
-  openUpgrade, openEquipment, record, pet, catalog, equippedItemIds}: HomeTankSourcePageProps) {
+  originality, openUpgrade, openEquipment, record, pet, catalog, equippedItemIds}: HomeTankSourcePageProps) {
   const suffix = 'myhome_panzerpage.xml';
   const layout = new HomeSourceLayout(ui, suffix);
   return <>
@@ -154,6 +155,9 @@ export function HomeTankSourcePage({ui, name, money, quantity, description, alre
       equippedItemIds={equippedItemIds} alreadyUsed={alreadyUsed} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtMoney" text={money === undefined ? '' : String(money)} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtListQuantity" text={quantity === undefined ? '' : String(quantity)} />
+    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtOriginality"
+      text={originality === undefined ? '' : String(originality)} />
+    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtTankStatus" text="" />
     <HomeTankDescription ui={ui} description={description} />
     <SourceButton ui={ui} layout={layout} suffix={suffix} source="rdoTank"
       selected aria-pressed="true" aria-label="拥有战车" disabled={busy} />

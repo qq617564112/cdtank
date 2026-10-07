@@ -1,6 +1,6 @@
 import './home.css';
 import {HomeResourceFeedback} from './home-resource-feedback';
-import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties} from 'react';
 import {readOwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import type {Battle} from '../../match/battle';
 import type {ReqEquipment, ResEquipment} from '../../../../shared/protocols/PtlEquipment';
@@ -17,13 +17,14 @@ import {SourceImageScale, SourceStaticImage} from '../resources/source-static-im
 import {SourceButton} from '../resources/source-button';
 import {SourceStaticText} from '../resources/source-static-text';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {HomeTankDescription, HomeTankOwnedAttributes, HomeTankSourceRegions} from './home-tank-source-page';
+import {HomeTankDescription, HomeTankOwnedAttributes, HomeTankOwnedParameters, HomeTankSourceRegions} from './home-tank-source-page';
 import {sourceTankDescription} from '../resources/role-source-descriptions';
 
 type EquipmentTarget = 'PART' | 'DECORATION' | 'MARK';
 interface Resources {ui: HomeSourceUi; controls: HomeSourceControl[]; catalog: CombatCatalog;}
 export interface HomeEquipmentViewProps {
   open: boolean; close: () => void; battle: Battle;
+  tankInstanceId?: number;
   onPlayerPage?: () => void; onRolePage?: (kind: 'tank' | 'pet') => void;
 }
 
@@ -51,11 +52,17 @@ function sourceProps(resources: Resources, name: string, reference?: string) {
 }
 
 /** Every opening starts on PART with a fresh authority query and preview. */
-export function HomeEquipmentView({open, close, battle, onPlayerPage, onRolePage}: HomeEquipmentViewProps) {
-  return open ? <EquipmentSession close={close} battle={battle} onPlayerPage={onPlayerPage} onRolePage={onRolePage} /> : null;
+export function HomeEquipmentView({open, close, battle, onPlayerPage, onRolePage, tankInstanceId}: HomeEquipmentViewProps) {
+  return open ? <EquipmentSession close={close} battle={battle} onPlayerPage={onPlayerPage} onRolePage={onRolePage}
+    tankInstanceId={tankInstanceId} /> : null;
 }
 
-function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEquipmentViewProps, 'open'>) {
+function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstanceId}: Omit<HomeEquipmentViewProps, 'open'>) {
+  const accountGeneration = useSyncExternalStore(
+    listener => battle.subscribeAccountContext(listener),
+    () => battle.accountContext.generation,
+    () => 0,
+  );
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
   const session = useRef({active: false, pending: false});
@@ -64,6 +71,9 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
   const [inventory, setInventory] = useState<ResInventory>();
   const [equipment, setEquipment] = useState<ResEquipment>();
   const [owned, setOwned] = useState<ResOwnedRoles>();
+  const [currentTankInstanceId, setCurrentTankInstanceId] = useState<number>();
+  const [currentPetInstanceId, setCurrentPetInstanceId] = useState<number>();
+  const [originality, setOriginality] = useState<number>();
   const [page, setPage] = useState<EquipmentTarget>('PART');
   const [candidate, setCandidate] = useState<number>();
   const [busy, setBusy] = useState(false);
@@ -90,6 +100,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
     const controller = new AbortController();
     setResourceError(undefined);
     setResources(undefined); setInventory(undefined); setEquipment(undefined); setOwned(undefined);
+    setCurrentTankInstanceId(undefined); setCurrentPetInstanceId(undefined); setOriginality(undefined);
     setPage('PART'); setCandidate(undefined); setBusy(true); setStatus('载入部件…');
     void (async () => {
       const [uiResponse, catalogResponse] = await Promise.all([
@@ -105,17 +116,26 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
       setResources({ui, catalog, controls});
     })().catch(error => {if (current.active) setResourceError(error instanceof Error ? error.message : String(error));});
     void (async () => {
-      const [confirmedInventory, confirmedEquipment, confirmedOwned] = await Promise.all([
-        battle.inventory(), battle.equipment({operation: 'QUERY'}), battle.ownedRoles(),
+      const [confirmedInventory, confirmedEquipment, confirmedOwned, confirmedProfile] = await Promise.all([
+        battle.inventory(), battle.equipment({operation: 'QUERY', tankInstanceId}),
+        battle.ownedRoles(), battle.roleProfile(),
       ]);
       if (!current.active) return;
+      if (tankInstanceId !== undefined && confirmedEquipment.tankInstanceId !== tankInstanceId) {
+        throw new Error('装备目标实例确认不一致');
+      }
       setInventory(confirmedInventory);
       setEquipment(confirmedEquipment); setOwned(confirmedOwned);
+      setCurrentTankInstanceId(confirmedProfile.profile
+        ? new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0xa8, true) : undefined);
+      setCurrentPetInstanceId(confirmedProfile.profile
+        ? new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0xa4, true) : undefined);
+      setOriginality(confirmedProfile.growth?.originality ?? confirmedProfile.playerSummary?.originality);
       setStatus('选择拥有装备，再点击对应槽；Delete卸下装备');
     })().catch(error => {if (current.active) setStatus(String(error));})
       .finally(() => {if (current.active) setBusy(false);});
     return () => {current.active = false; controller.abort();};
-  }, [battle]);
+  }, [battle, tankInstanceId, accountGeneration]);
 
   useLayoutEffect(() => {
     if (!resources) return;
@@ -141,7 +161,8 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
     const current = session.current;
     if (!current.active || current.pending || !equipment || (!remove && candidate === undefined)) return;
     const request: ReqEquipment = {operation: remove ? 'UNEQUIP' : 'EQUIP', target,
-      slot: target === 'PART' ? slot : undefined, instanceId: remove ? undefined : candidate};
+      slot: target === 'PART' ? slot : undefined, instanceId: remove ? undefined : candidate,
+      tankInstanceId: equipment.tankInstanceId};
     focusAfterCommit.current = button;
     current.pending = true; setBusy(true); setStatus('保存部件…');
     try {
@@ -170,9 +191,15 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
     return page === 'PART' ? category >= 8 && category <= 12
       : page === 'DECORATION' ? category === 5 || category === 6 : category === 7;
   }) ?? [];
-  const instanceId = equipment ? new DataView(Uint8Array.from(equipment.profile.bytes).buffer).getUint32(0xa8, true) : 0;
+  const instanceId = equipment?.tankInstanceId ?? 0;
   const tank = owned?.equipment.find(record => new Map(record.fields).get(0x1c) === instanceId);
   const fields = tank ? new Map(tank.fields) : undefined;
+  const pet = owned?.base.find(record => new Map(record.fields).get(0) === currentPetInstanceId);
+  const equippedItemIds = equipment?.slots.map(id => {
+    const record = inventory?.records.find(item => item.instanceId === id && item.state === 2 && item.ownedQuantity > 0);
+    return record?.itemTableId ?? 0;
+  });
+  const alreadyUsed = equipment !== undefined && equipment.tankInstanceId === currentTankInstanceId;
   const selected = candidate === undefined ? undefined : definition(candidate);
 
   function slotButton(target: EquipmentTarget, slot: number, value: number, sourceName: string) {
@@ -214,6 +241,9 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
           description={sourceTankDescription(fields?.get(0x24))} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtMoney"
           text={equipment ? String(new DataView(Uint8Array.from(equipment.profile.bytes).buffer).getUint32(0x70, true)) : ''} />
+        <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtOriginality"
+          text={originality === undefined ? '' : String(originality)} />
+        <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtTankStatus" text="" />
         <SourceButton ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" source="rdoTank"
           aria-label="拥有战车" aria-pressed="false" disabled={busy || !onRolePage}
           onClick={() => onRolePage?.('tank')} />
@@ -228,6 +258,9 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage}: Omit<HomeEq
             textures={readOwnedTankTextures({name: tank.name, fields})} scale={scale} {...sourceProps(resources, 'picModel')} />
           <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtTankName" text={tank.name} />
           <HomeTankOwnedAttributes ui={resources.ui} record={tank} />
+          <HomeTankOwnedParameters ui={resources.ui} record={tank} pet={pet}
+            catalog={resources.catalog} equippedItemIds={equippedItemIds}
+            alreadyUsed={alreadyUsed} />
         </>}
         {([['PART', 'rdoCommon', '一般部件'], ['DECORATION', 'rdoHat', '装饰'], ['MARK', 'rdoMark', '标记']] as const)
           .map(([target, sourceName, label]) => <SourceButton key={target} ui={resources.ui} layout={layout!}

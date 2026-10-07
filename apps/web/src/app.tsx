@@ -1,4 +1,4 @@
-import {useRef, useState} from 'react';
+import {useEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {Battle} from './match/battle';
 import {LobbyView} from './interface/lobby/room-controls';
 import {LobbyChatView} from './interface/lobby/lobby-chat-view';
@@ -29,6 +29,7 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
   const login = useLoginNavigation(battle, validation);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
+  const [equipmentTankInstance, setEquipmentTankInstance] = useState<number>();
   const [rolesKind, setRolesKind] = useState<'tank' | 'pet'>('tank');
   const [rolesOpen, setRolesOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
@@ -38,6 +39,15 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
   const [keysOpen, setKeysOpen] = useState(false);
   const [quickChatOpen, setQuickChatOpen] = useState(false);
   const [keyBindings, setKeyBindings] = useState(settings.keys.bindings);
+  const accountGeneration = useSyncExternalStore(
+    listener => battle.subscribeAccountContext(listener),
+    () => battle.accountContext.generation,
+    () => 0,
+  );
+  useEffect(() => {
+    setEquipmentTankInstance(undefined);
+    setTextureOriginInstance(undefined);
+  }, [login.phase, accountGeneration]);
   const settingsOrigin = useRef<HTMLButtonElement | null>(null);
   function closeKeys(): void {
     document.querySelector<HTMLDialogElement>('#key-settings')?.close();
@@ -88,6 +98,7 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
   function closeEquipment(): void {
     document.querySelector<HTMLDialogElement>('#home-equipment')?.close();
     setEquipmentOpen(false);
+    setEquipmentTankInstance(undefined);
     const origin = document.querySelector<HTMLButtonElement>('#home-inventory[open] #open-equipment')
       ?? document.querySelector<HTMLButtonElement>(validation ? '#battle-controls #open-equipment' : '[data-room-card-home]');
     origin?.focus();
@@ -121,7 +132,7 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
     <LobbyView battle={battle} canvas={canvas} hud={hud} validation={validation}
       headerContent={<TutorialSettingsBar onSettings={openSettingsFromHeader} onExit={login.exit}/>}
       chatContent={<LobbyChatView chat={battle.lobbyChat} presence={battle.lobbyPresence}/>} playerContent={<LobbySocialView battle={battle}/>} openInventory={openInventory}
-      openEquipment={()=>setEquipmentOpen(true)} openRoles={()=>setRolesOpen(true)}
+      openEquipment={()=>{setEquipmentTankInstance(undefined);setEquipmentOpen(true);}} openRoles={()=>setRolesOpen(true)}
       openShop={openShop} openHistory={()=>setHistoryOpen(true)}/>
     {validation && <aside className="controls">
       <h1>猫狗大作战 · 验证</h1>
@@ -144,17 +155,21 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
       <button id="open-key-settings" type="button" onClick={()=>setKeysOpen(true)}>键位设置</button>
       <button id="open-quick-chat-settings" type="button" onClick={()=>setQuickChatOpen(true)}>系统设置</button>
     </> : undefined}/>
-    <HomeEquipmentView battle={battle} open={equipmentOpen} close={closeEquipment}
+    <HomeEquipmentView battle={battle} open={equipmentOpen} close={closeEquipment} tankInstanceId={equipmentTankInstance}
       onPlayerPage={() => {closeEquipment();openInventory();}}
-      onRolePage={kind => {setRolesKind(kind);closeEquipment();setRolesOpen(true);}}/>
+      onRolePage={kind => {
+        setRolesKind(kind);setTextureOriginInstance(kind === 'tank' ? equipmentTankInstance : undefined);
+        closeEquipment();setRolesOpen(true);
+      }}/>
     <HomeRolesView initialSelectedInstance={textureOriginInstance} onTexturePage={instanceId => {
       closeRoles();
       setTextureOriginInstance(instanceId);
       setShopOpen(true);
-    }} onEquipmentPage={() => {closeRoles();setEquipmentOpen(true);}} onPlayerPage={() => {closeRoles();openInventory();}} initialKind={rolesKind} battle={battle} open={rolesOpen} close={closeRoles}/>
+    }} onEquipmentPage={instanceId => {closeRoles();setEquipmentTankInstance(instanceId);setEquipmentOpen(true);}} onPlayerPage={() => {closeRoles();openInventory();}} initialKind={rolesKind} battle={battle} open={rolesOpen} close={closeRoles}/>
     <AccountShopView onEquipmentPage={() => {
       document.querySelector<HTMLDialogElement>('#account-shop')?.close();
       setShopOpen(false);
+      setEquipmentTankInstance(undefined);
       setTextureOriginInstance(undefined);
       setEquipmentOpen(true);
     }} initialTextureInstance={textureOriginInstance} source={battle} open={shopOpen} close={closeShop}/>
