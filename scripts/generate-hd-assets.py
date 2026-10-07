@@ -124,7 +124,9 @@ def prepare():
         identity = (image.size, image.tobytes())
         canonical = unique.setdefault(identity, previous_entries.get(source, {}).get('canonical', source))
         destination = ART / 'png' / canonical
-        approved = reused_paths.get(source.lower())
+        approved = reused_paths.get(source.lower().removeprefix('custom-maps/1002/'))
+        if source.lower() == 'custom-maps/1002/preview.png':
+            approved = ROOT / 'art/field-road-hd/map-preview.png'
         if approved and approved.exists() and not destination.exists():
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(approved, destination)
