@@ -1,4 +1,4 @@
-# 当前 tasklist 生产入口缺口与下一有限业务合同
+# 当前 tasklist 生产入口与战车装饰采用合同
 
 本文按 `/workspace/cdtank` 的 main actual 核对 M2-04、M2-05、M4-03、M6-01
 原文及直接链接，不把 `recovery/evidence` 中的独立对照模块误当成生产入口。
@@ -13,7 +13,7 @@
 | M6-01 拥有战车纹理 | `accounts/tank-shop.ts` 的 BUY 写默认 U/M/XY 到 `0x28/0x2c/0x30`；`accounts/tank-texture-change.ts` 与 `account-store.ts` 完成确认、扣费、状态和持久化；shared reader、snapshot、TankView 与 Home 预览均已消费 | 原属性32 producer、特殊车型和完整原商店事件仍可能未知，但这些不等于当前购买或换色缺少 writer/入口 | 已有完整普通购买、配置和显示入口 |
 | M4-03 role array | `RoleCombatState` 建数组0/1/2/4；`battle/preparation.ts` 绑定快捷槽与部件；`battle/attributes.ts`、`roles/skills.ts`、`rooms/snapshot.ts` 消费当前技能、部件和快捷槽；标记从 profile 独立读取 | `recovery/evidence/combat/role-array-property.ts` 证明原 544c70/544950 编解码，当前 main 的普通生产链直接绑定账户确认结果。完整原网络接收/施放仍未验 | 已有实际 production 消费者，只余原 wire/World 组合等价 |
 
-以上五项都不应再新增一套同名入口。下一有限业务取 M6-01/M6-03 仍有明确缺口的一项：
+以上五项都不应再新增一套同名入口。本批采用 M6-01/M6-03 仍有明确缺口的一项：
 **我的家已确认装备的装饰物，在普通战斗房间实际骑乘/炮塔模型上显示。**
 
 ## 选择依据
