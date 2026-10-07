@@ -8,7 +8,6 @@ from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 import getpass
-import heapq
 import json
 import os
 from pathlib import Path
@@ -429,9 +428,7 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
         work = [b for b in selected if b['group'] == group]
         if not work:
             continue
-        sequence = len(work)
         queue = [(eligible_at(b['id']), index, b) for index, b in enumerate(work)]
-        heapq.heapify(queue)
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
             pending = {}
             while queue or pending:
@@ -440,30 +437,34 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
                 exhausted = limit is not None and len(ledger) >= limit
                 api_deadline, lanes = api_wait()
                 while (queue and len(pending) < lanes and not exhausted and not STOP.is_set()
-                       and max(queue[0][0], api_deadline) <= time.time()):
-                    _, _, batch = heapq.heappop(queue)
-                    pending[executor.submit(call, batch)] = batch
+                       and api_deadline <= time.time()):
+                    eligible = [(position, item) for position, item in enumerate(queue)
+                                if item[0] <= time.time()]
+                    if not eligible:
+                        break
+                    position, (_, index, batch) = min(eligible, key=lambda item: item[1][1])
+                    queue.pop(position)
+                    pending[executor.submit(call, batch)] = (index, batch)
                 if not pending:
                     if not queue:
                         break
                     if exhausted:
                         print(f'{group}: request limit reached', flush=True)
                         return
-                    remaining = max(0, max(queue[0][0], api_deadline) - time.time())
+                    remaining = max(0, max(min(item[0] for item in queue), api_deadline) - time.time())
                     print(f'{group}: {len(queue)} batches waiting; next retry in {round(remaining)} seconds', flush=True)
                     STOP.wait(min(30, remaining))
                     continue
                 timeout = 30
                 if queue and len(pending) < lanes and not exhausted:
-                    timeout = min(timeout, max(.1, max(queue[0][0], api_deadline) - time.time()))
+                    timeout = min(timeout, max(.1, max(min(item[0] for item in queue), api_deadline) - time.time()))
                 completed, _ = wait(pending, timeout=timeout, return_when=FIRST_COMPLETED)
                 for future in completed:
-                    batch = pending.pop(future)
+                    index, batch = pending.pop(future)
                     print(future.result(), flush=True)
                     if not STOP.is_set() and not batch_complete(batch, delivered):
-                        sequence += 1
                         deadline = eligible_at(batch['id'])
-                        heapq.heappush(queue, (deadline, sequence, batch))
+                        queue.append((deadline, index, batch))
                         print(f"{batch['id']}: retry after {round(max(0, deadline - time.time()))} seconds", flush=True)
         if STOP.is_set():
             print(f'{group}: stopped after saving in-flight results', flush=True)
