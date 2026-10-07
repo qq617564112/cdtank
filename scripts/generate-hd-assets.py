@@ -142,6 +142,8 @@ def prepare():
         if source in local_sources:
             textures[-1]['installPath'] = str(local_sources[source].relative_to(ROOT))
             textures[-1]['solidColor'] = list(image.getpixel((0, 0))[:3])
+        if source.lower() in {f'data/ui/loading/{index}.png' for index in range(1, 6)}:
+            textures[-1]['derived'] = 'loading-layout'
     by_source = {entry['source'].lower(): entry for entry in textures}
     ui = document(ASSETS / 'ui.json')
     for imageset in ui['imagesets']:
