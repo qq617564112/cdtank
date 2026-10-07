@@ -1,9 +1,10 @@
 import {combatItems, combatSkills} from '../catalog';
+import {readGroupTrapRule} from './group-trap-rule';
 
 export interface TrapTurnRestraintRule {
-  itemTableId: 3004;
+  itemTableId: number;
   placementSkillId: number;
-  effectSkillId: 4002;
+  effectSkillId: number;
   groundModelId: number;
   groundDurationMs: number;
   triggerRadius: number;
@@ -11,8 +12,15 @@ export interface TrapTurnRestraintRule {
 }
 
 /** Source fields are confirmed; Func12 time/radius/model interpretation is rebuilt. */
-export function readTrapTurnRestraintRule(): TrapTurnRestraintRule | undefined {
-  const item = combatItems.get(3004);
+export function readTrapTurnRestraintRule(itemId = 3004): TrapTurnRestraintRule | undefined {
+  if (itemId === 3007) {
+    const group = readGroupTrapRule(itemId);
+    return group ? {itemTableId: group.itemTableId, placementSkillId: group.placementSkillId,
+      effectSkillId: group.turn.effectSkillId, groundModelId: group.groundModelId,
+      groundDurationMs: group.groundDurationMs, triggerRadius: group.turn.triggerRadius,
+      restraintDurationMs: group.turn.restraintDurationMs} : undefined;
+  }
+  const item = combatItems.get(itemId);
   const placement = item ? combatSkills.get(item.skillIds[0]) : undefined;
   const create = placement?.functions[0];
   const effect = create ? combatSkills.get(create.y) : undefined;
@@ -20,14 +28,14 @@ export function readTrapTurnRestraintRule(): TrapTurnRestraintRule | undefined {
   if (!item || item.itemType !== 4 || !placement || placement.skillId !== 3004
       || !create || create.type !== 12 || create.z !== item.itemTableId
       || !effect || effect.skillId !== 4002 || !restraint || restraint.type !== 4) return undefined;
-  return {itemTableId: 3004, placementSkillId: placement.skillId, effectSkillId: 4002,
+  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId, effectSkillId: 4002,
     groundModelId: create.z, groundDurationMs: create.t * 1000,
     triggerRadius: create.x, restraintDurationMs: restraint.t * 1000};
 }
 
 export interface TrapTurnRestraintState {
-  itemTableId: 3004;
-  skillId: 4002;
+  itemTableId: number;
+  skillId: number;
   expiresAt: number;
   removedTurnPermission: 1;
 }
@@ -52,13 +60,13 @@ export interface TrapTurnRestraintChange {
 
 /** Rebuilt single-contact authority removes one original uint8 turn permission. */
 export function applyTrapTurnRestraint(target: TrapTurnRestraintParticipant, now: number,
-    permission: TrapTurnPermissionProvider): TrapTurnRestraintChange | undefined {
+    permission: TrapTurnPermissionProvider, itemId = 3004): TrapTurnRestraintChange | undefined {
   if (!target.alive || target.combat.status !== 2 || target.trapTurnRestraint) return undefined;
-  const rule = readTrapTurnRestraintRule();
+  const rule = readTrapTurnRestraintRule(itemId);
   const count = permission.readTurnPermissionCount();
   if (!rule || count === undefined || count <= 0) return undefined;
   const next = (count - 1) & 255;
-  const state: TrapTurnRestraintState = {itemTableId: 3004, skillId: 4002,
+  const state: TrapTurnRestraintState = {itemTableId: rule.itemTableId, skillId: rule.effectSkillId,
     expiresAt: now + rule.restraintDurationMs, removedTurnPermission: 1};
   permission.writeTurnPermissionCount(next);
   target.trapTurnRestraint = state;

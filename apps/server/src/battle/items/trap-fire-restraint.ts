@@ -1,9 +1,10 @@
 import {combatItems, combatSkills} from '../catalog';
+import {readGroupTrapRule} from './group-trap-rule';
 
 export interface TrapFireRestraintRule {
-  itemTableId: 3005;
+  itemTableId: number;
   placementSkillId: number;
-  effectSkillId: 4003;
+  effectSkillId: number;
   groundModelId: number;
   groundDurationMs: number;
   triggerRadius: number;
@@ -11,8 +12,15 @@ export interface TrapFireRestraintRule {
 }
 
 /** Source fields are confirmed; Func12 time/radius/model interpretation is rebuilt. */
-export function readTrapFireRestraintRule(): TrapFireRestraintRule | undefined {
-  const item = combatItems.get(3005);
+export function readTrapFireRestraintRule(itemId = 3005): TrapFireRestraintRule | undefined {
+  if (itemId === 3007) {
+    const group = readGroupTrapRule(itemId);
+    return group ? {itemTableId: group.itemTableId, placementSkillId: group.placementSkillId,
+      effectSkillId: group.fire.effectSkillId, groundModelId: group.groundModelId,
+      groundDurationMs: group.groundDurationMs, triggerRadius: group.fire.triggerRadius,
+      restraintDurationMs: group.fire.restraintDurationMs} : undefined;
+  }
+  const item = combatItems.get(itemId);
   const placement = item ? combatSkills.get(item.skillIds[0]) : undefined;
   const create = placement?.functions[0];
   const effect = create ? combatSkills.get(create.y) : undefined;
@@ -20,14 +28,14 @@ export function readTrapFireRestraintRule(): TrapFireRestraintRule | undefined {
   if (!item || item.itemType !== 4 || !placement || placement.skillId !== 3005
       || !create || create.type !== 12 || create.z !== item.itemTableId
       || !effect || effect.skillId !== 4003 || !restraint || restraint.type !== 5) return undefined;
-  return {itemTableId: 3005, placementSkillId: placement.skillId, effectSkillId: 4003,
+  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId, effectSkillId: 4003,
     groundModelId: create.z, groundDurationMs: create.t * 1000,
     triggerRadius: create.x, restraintDurationMs: restraint.t * 1000};
 }
 
 export interface TrapFireRestraintState {
-  itemTableId: 3005;
-  skillId: 4003;
+  itemTableId: number;
+  skillId: number;
   expiresAt: number;
   removedFirePermission: 1;
 }
@@ -52,13 +60,13 @@ export interface TrapFireRestraintChange {
 
 /** Rebuilt single-contact authority removes one original uint8 fire permission. */
 export function applyTrapFireRestraint(target: TrapFireRestraintParticipant, now: number,
-    permission: TrapFirePermissionProvider): TrapFireRestraintChange | undefined {
+    permission: TrapFirePermissionProvider, itemId = 3005): TrapFireRestraintChange | undefined {
   if (!target.alive || target.combat.status !== 2 || target.trapFireRestraint) return undefined;
-  const rule = readTrapFireRestraintRule();
+  const rule = readTrapFireRestraintRule(itemId);
   const count = permission.readFirePermissionCount();
   if (!rule || count === undefined || count <= 0) return undefined;
   const next = (count - 1) & 255;
-  const state: TrapFireRestraintState = {itemTableId: 3005, skillId: 4003,
+  const state: TrapFireRestraintState = {itemTableId: rule.itemTableId, skillId: rule.effectSkillId,
     expiresAt: now + rule.restraintDurationMs, removedFirePermission: 1};
   permission.writeFirePermissionCount(next);
   target.trapFireRestraint = state;
