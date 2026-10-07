@@ -4,7 +4,7 @@
 
 账户 PetSkillLearning QUERY 不创建角色资料或成长记录。LEARN 验证实例归属、槽索引、原表报价、等级上限及余额，SQLite 事务同时扣减 account_growth.skill_points、增加等级并保存请求确认；保留其它成长字段和原角色资料字节。相同账户和请求ID重复提交返回原确认，不重复扣点；不同实例或槽不能复用该请求ID。失败回滚点数、拥有记录及确认。
 
-CONFIRM 按认证账户和 requestId 读取 pet_skill_learning receipt。实例与槽匹配时返回 confirmation APPLIED、历史 learned 与 replayed true，并同时返回当前 points、quotes、owned 和 profile；learned 是确认时保存的历史结果，当前 points 不回写成该次历史余额。无 receipt 返回 ABSENT 且无 learned；同 requestId 的异实例或槽拒绝。CONFIRM 不 BEGIN 写事务，不扣点、不增级、不改资料、Ready、bind 或 broadcast，可在任意房间阶段读取；mutation hook 仍只处理 LEARN 新确认。
+CONFIRM 按认证账户和 requestId 读取 pet_skill_learning receipt。实例与槽匹配时返回 confirmation APPLIED、历史 learned 与 replayed true，并同时返回当前 points、quotes、owned 和 profile；learned 是确认时保存的历史结果，当前 points 不回写成该次历史余额。无 receipt 返回 ABSENT 且无 learned；同 requestId 的异实例或槽拒绝。CONFIRM 不 BEGIN 写事务，不扣点、不增级、不改资料、Ready、bind 或 broadcast，可在任意房间阶段读取；mutation hook 仍只处理 LEARN 新确认。本确认链已完成集中静态走查；当前 account_growth ledger 与新增确认交互尚未实测，原服务端点数生产仍未恢复。
 
 正式页面消费服务端报价、下级技能介绍和确认后的 OwnedRoles/Profile。零级显示首级元数据供学习入口使用，费用缺失、封顶、点数不足或请求处理中禁止提交。准备阶段成功重新冻结所选宠物来源并取消准备状态；PLAYING 与 FINISHED 不允许学习。现有 current16 技能槽保持原配置，宠物主动技能未加入战斗输入。
 

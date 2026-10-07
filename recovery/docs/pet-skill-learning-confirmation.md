@@ -18,10 +18,10 @@ M5-08、UI-35 与 M6-04 的本批有限交付覆盖学习请求的权威确认�
 
 LEARN 成功后消费确认的 `OwnedRoles`、`Profile` 与 `points`，结束本次 attempt，下一次用户新动作才可创建新 ID。处理中不乐观修改等级或余额。技能弹窗、整个 Home 或页签关闭后，未确定结果的 attempt 保留；重新打开可继续确认，单纯 QUERY 不视为确认。
 
-“确认学习结果”入口保持可见和键盘可用，与当前报价是否 eligible、是否封顶及当前选中宠物无关；成功学习后报价可能已经封顶，仍需能确认原 attempt。APPLIED 后显示已确认，用权威投影更新页面并结束 attempt；CONFIRM 失败保留 attempt，可再次确认。ABSENT 后仅用户明确选择“重试本次学习”时，才用原 `instanceId/slot/requestId` 发 LEARN；重试前读取当前报价并遵守服务端资格，不自动重新 LEARN。
+“确认学习结果”入口保持可见和键盘可用，与当前报价是否 eligible、是否封顶及当前选中宠物无关；成功学习后报价可能已经封顶，仍需能确认原 attempt。APPLIED 后显示已确认，Home 主页面同时显示确认成功文字，用权威投影更新页面并结束 attempt；CONFIRM 失败保留 attempt，可再次确认。普通学习 attempt 存在时禁止再次提交；只有确认 ABSENT 且当前报价 eligible 时，专用“重试本次学习”才可用原 `instanceId/slot/requestId` 发 LEARN，其他情况不自动重新 LEARN。
 
 owner 串行 `QUERY/LEARN/CONFIRM`，或用 revision 隔离，防止旧 QUERY 覆盖新学习回复。组件在关闭后的 inflight 更新 owner，重新挂载时消费最新快照，旧回包不污染重开或新账户。初次报价 QUERY 失败提供可见重试；可恢复错误不永久留空，未知值保持空白。原 Source 布局、鼠标键盘、焦点、缩放和 portal 行为不变。
 
 ## 证据边界
 
-本批新增范围仅静态实现，尚未实测。既有 raw+80 余额链的联机、页面与重启证据仍只覆盖当时限定范围，不证明当前 `account_growth` 扣点、CONFIRM、关闭重开或显式重试的实际网页、双端、持久重启与高清行为。原服务端点数生产、学习事务、全宠物成长和主动施放仍未恢复；M5-08、UI-35、M6-04 父项保持未完成。
+本确认链已完成整批唯一集中静态走查；当前 account_growth ledger 与新增确认交互尚未实测。既有 raw+80 余额链的联机、页面与重启证据仍只覆盖当时限定范围，不证明当前 `account_growth` 扣点、CONFIRM、关闭重开或显式重试的实际网页、双端、持久重启与高清行为。原服务端点数生产、学习事务、全宠物成长和主动施放仍未恢复；M5-08、UI-35、M6-04 父项保持未完成。
