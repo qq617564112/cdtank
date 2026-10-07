@@ -56,6 +56,7 @@ peer 在正常收到文本中发送字面 `A<emote name=01/>B`（或 `name=1`/`n
 
 ## Known Issues
 
+- 本批集中静态走查已完成；原 SequenceImageManager 运行向量、原异常外层及本接线受影响双端/高清实测仍待完成。
 - 原 `UnknownObjectException` 在 `formatText`/`onTextChanged`/setter 之后的显示未取得；Web 保持既有 `unsupported-source` 字面回退，不冒充原行为。
 - 原 SequenceImageManager 精确名称成功/失败执行向量未取得。
 - 精确名称采用后的原名称/parser 对照、受影响双端消息、动画与高清验收未实测。
