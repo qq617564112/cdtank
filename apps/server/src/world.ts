@@ -888,6 +888,15 @@ export class World {
       advanceAmmoBurn(target, now, id => room.players.has(id), (ownerId, damage) => {
         const owner = room.players.get(ownerId)!;
         this.applyPlayerDamage(room, owner, target, damage, events, undefined, 4005);
+      }, burn => {
+        // Ordinary natural completion only; the ended instance must still own a playing target.
+        if (room.phase !== 'PLAYING' || !target.alive || target.hp <= 0 ||
+            target.combat.status !== 2 || !room.players.has(burn.ownerId)) return;
+        events.push({roomId: room.roomId, type: 'ammoBurnEnded', message: '',
+          playerId: burn.ownerId, targetId: target.id, value: burn.startedAt,
+          x: target.x, y: target.y, z: target.z, skillId: 4005,
+          playSkillEffect: {skillId: 4005, effectIndex: 1, duration: 0,
+            roleId: Number(target.id.slice(1)), xBits: 0, zBits: 0}});
       });
     }
     if (room.phase !== 'PLAYING') return;

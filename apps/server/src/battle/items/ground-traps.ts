@@ -45,6 +45,13 @@ function trapRule(itemTableId: number | undefined) {
     : itemTableId === 3004 ? readTrapTurnRestraintRule() : readTrapRestraintRule();
 }
 
+/** Natural server-time expiry plays the restored permission's second slot for the live holder. */
+function restraintRelease(player: PlayerState, skillId: number) {
+  if (!player.alive || player.hp <= 0 || player.combat.status !== 2) return undefined;
+  return {skillId, effectIndex: 1, duration: 0,
+    roleId: Number(player.id.slice(1)), xBits: 0, zBits: 0};
+}
+
 /** Durable placement authority, after the original shortcut request gates. */
 export function placeGroundTrap(room: RoomState, player: PlayerState,
   request: {kind: string; instanceId: number}, now: number, allocateId: () => string,
@@ -85,15 +92,18 @@ export function advanceGroundTraps(room: RoomState, now: number, events: MsgRoom
     const change = expireTrapRestraint(player, now, permission(player));
     if (change?.kind === 'expired') events.push({roomId: room.roomId, type: 'trapRestraintEnded', message: '',
       playerId: player.id, targetId: player.id, value: change.movePermissionCount!,
-      x: player.x, y: player.y, z: player.z, skillId: change.state.skillId});
+      x: player.x, y: player.y, z: player.z, skillId: change.state.skillId,
+      playSkillEffect: restraintRelease(player, change.state.skillId)});
     const turn = expireTrapTurnRestraint(player, now, turnPermission(player));
     if (turn?.kind === 'expired') events.push({roomId: room.roomId, type: 'trapRestraintEnded', message: '',
       playerId: player.id, targetId: player.id, value: turn.turnPermissionCount!,
-      x: player.x, y: player.y, z: player.z, skillId: turn.state.skillId});
+      x: player.x, y: player.y, z: player.z, skillId: turn.state.skillId,
+      playSkillEffect: restraintRelease(player, turn.state.skillId)});
     const fire = expireTrapFireRestraint(player, now, firePermission(player));
     if (fire?.kind === 'expired') events.push({roomId: room.roomId, type: 'trapRestraintEnded', message: '',
       playerId: player.id, targetId: player.id, value: fire.firePermissionCount!,
-      x: player.x, y: player.y, z: player.z, skillId: fire.state.skillId});
+      x: player.x, y: player.y, z: player.z, skillId: fire.state.skillId,
+      playSkillEffect: restraintRelease(player, fire.state.skillId)});
   }
   room.groundTraps = room.groundTraps.filter(trap => {
     if (trap.itemTableId === 3001 || trap.itemTableId === 3002) return room.players.has(trap.ownerId);

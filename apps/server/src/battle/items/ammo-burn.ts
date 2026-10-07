@@ -23,7 +23,8 @@ export function clearAmmoBurn(target: AmmoBurnParticipant): void {
 
 /** Source description supplies70 HP at3/6/9 seconds; damage authority is external. */
 export function advanceAmmoBurn(target: AmmoBurnParticipant, now: number,
-  ownerExists: (id: string) => boolean, damage: (ownerId: string, amount: number) => void): void {
+  ownerExists: (id: string) => boolean, damage: (ownerId: string, amount: number) => void,
+  onNaturalEnd?: (burn: AmmoBurnState) => void): void {
   const burn = target.burn;
   if (!burn) return;
   if (!target.alive || !ownerExists(burn.ownerId)) {
@@ -39,5 +40,8 @@ export function advanceAmmoBurn(target: AmmoBurnParticipant, now: number,
       return;
     }
   }
-  if (burn.nextTick > 3) clearAmmoBurn(target);
+  if (burn.nextTick > 3) {
+    clearAmmoBurn(target);
+    onNaturalEnd?.(burn);
+  }
 }
