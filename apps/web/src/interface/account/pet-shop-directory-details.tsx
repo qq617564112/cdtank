@@ -40,7 +40,9 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
   return <SourceImageScale value={1}>
     {(['Critical', 'Lucky'] as const).map(name => <SourceStaticText key={name}
       ui={ui} layout={layout} suffix={suffix} name={`txt${name}`} className="pet-shop-directory-text"
-      text={details ? String(name === 'Critical' ? details.critical : details.lucky) : ''} data-pet-directory-attribute={name} />)}
+      text={mode === 'owned'
+        ? fields?.has(name === 'Critical' ? 0x34 : 0x3c) ? String(fields.get(name === 'Critical' ? 0x34 : 0x3c)) : ''
+        : details ? String(name === 'Critical' ? details.critical : details.lucky) : ''} data-pet-directory-attribute={name} />)}
     {skills.map((skill, index) => <span key={index} className="pet-shop-directory-skill"
       data-pet-directory-skill={index} data-pet-shop-skill-binding={mode === 'owned' ? 'confirmed-owned-base-rank' : 'pet-table-directory'} data-skill-id={skill.id} data-skill-level={skill.level}>
       <SourceButton ui={ui} layout={layout} suffix={suffix} source={`btnViewSkill${index}`}

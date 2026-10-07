@@ -218,6 +218,11 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
       <SourceStaticText key={name} ui={ui} layout={layout} suffix="shop_tankpage.xml" name={name}
         text={String(value)} className="tank-shop-source-attribute" data-tank-source-attribute={name}
         data-tank-source-value={value} data-tank-source-product={product.tankId} />)}
+    {mode === 'Owned' && ownedRecord && ([['txtAttack', 0x3c], ['txtAttackExtra', 0x40],
+      ['txtPanzer', 0x4c], ['txtPanzerExtra', 0x50], ['txtAttackLevel', 0x44], ['txtPanzerLevel', 0x54]] as const)
+      .map(([name, offset]) => <SourceStaticText key={name} ui={ui} layout={layout} suffix="shop_tankpage.xml" name={name}
+        className="tank-shop-source-attribute" text={ownedFields?.has(offset) ? String(ownedFields.get(offset)) : ''}
+        data-tank-owned-field={offset} data-owned-value={ownedFields?.get(offset)} />)}
     <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoTexture"
       data-tank-shop-texture-tab="" aria-label="更换拥有战车迷彩" disabled={busy || !source.ownedRoles || !source.roleProfile || !source.configureTankTextures}
       onClick={() => {generation.current++; setSaleConfirm(false); setMode('Texture');}} />
