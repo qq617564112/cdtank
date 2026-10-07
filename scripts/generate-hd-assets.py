@@ -336,8 +336,13 @@ def extract(batch):
         box = [round(v * (sx if i % 2 == 0 else sy))
                for i, v in enumerate(cell.get('slotBox', cell['box']))]
         crop = image.crop(box)
-        if entry.get('intermediate') and Path(entry['source']).stem != 'background':
-            result = restore_layer(ROOT / entry['original'], crop)
+        if entry.get('intermediate'):
+            if Path(entry['source']).stem == 'background':
+                result = crop.convert('RGBA').resize(tuple(value * 4 for value in entry['size']),
+                                                     Image.Resampling.LANCZOS)
+                result.putalpha(255)
+            else:
+                result = restore_layer(ROOT / entry['original'], crop)
         else:
             result = restore(ROOT / entry['original'], crop, any(g.startswith('map-') for g in entry['groups']),
                              cell.get('sourceBox'), entry.get('solidColor'), cell.get('kind') != 'texture',

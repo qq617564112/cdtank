@@ -18,6 +18,11 @@ ASSETS = ROOT / 'recovery/output/web-assets'
 WIDTH = 1067
 LEFT = (WIDTH - 800) // 2
 DENSITY = 4
+LOADING_WORDS = {
+    '1': (425, 537, 342, 39), '2': (24, 533, 342, 39),
+    '3': (8, 523, 342, 39), '4': (439, 530, 342, 39),
+    '5': (11, 554, 302, 36),
+}
 
 
 def write_json(path, value):
@@ -66,9 +71,10 @@ def prepare():
             box = [0, 0, original.width, original.height]
             prompt = '''Use case: precise-object-edit.
 Restore ONLY this existing game loading-screen backdrop at high resolution. Characters have already been removed and will be restored individually as separate layers. Do not draw any tank, pet, character, face or new object in the erased areas. Continue the local painted background, paper, frame, skyline or flat color naturally through those areas.
-The central original artwork spans x=12.465% through x=87.442% of this extended canvas. Preserve its exact composition, silhouettes, photograph borders, logo lettering, Chinese characters, English words, digits, colors, linework and perspective. Do not move or resize any existing motif. The side extensions are edge placeholders: naturally extend only the existing background colors and simple decorative lines. Add no main motifs in those side strips. Make the original painted contours and lettering sharper without changing the design.
-Return exactly this horizontal backdrop edge to edge, with no margins, new panels, extra lettering or watermark. The same result will be cropped locally for 4:3 and used whole for 16:9.'''
-            ratio = f'{WIDTH}:600'
+The fixed LOADING lettering and dots have also been erased. Repaint that area as a clean continuation of the underlying background. Do not draw LOADING, loading text, progress dots, numbers or a progress bar: the application adds its own dynamic progress lettering.
+The central original artwork spans x=12.465% through x=87.442% of this extended canvas. Preserve its exact composition, silhouettes, photograph borders, existing logo lettering, Chinese characters, other English words, digits, colors, linework and perspective. Do not move or resize any existing motif. Expand this artwork naturally into a full 16:9 widescreen background. The side strips are placeholders, not finished artwork: extend the existing painted background, colors, texture and simple decorative lines through them with no vertical seams or stretched edge bands. Add no main motifs in those side strips. Make the original painted contours and lettering sharper without changing the design.
+Return exactly this 16:9 horizontal backdrop edge to edge, with no margins, new panels, extra lettering or watermark. The same result will be cropped locally for 4:3 and used whole for 16:9.'''
+            ratio = '16:9'
         else:
             canvas = Image.new('RGB', (528, 528), '#ff00ff')
             image = original.convert('RGB')
@@ -111,6 +117,9 @@ Preserve the visible original pose, contour, tiny face markings, eyes, fur or me
             layers.append(add(page, name, patch, list(box[:2]), region['kind']))
         pixels = np.asarray(original)
         holes = cv2.dilate(np.asarray(claimed), np.ones((5, 5), dtype=np.uint8))
+        left, top, width, height = LOADING_WORDS[page]
+        holes[max(0, top - 10):min(600, top + height + 10),
+              max(0, left - 10):min(800, left + width + 10)] = 255
         background = Image.fromarray(cv2.inpaint(pixels, holes, 5, cv2.INPAINT_TELEA))
         wide = Image.new('RGB', (WIDTH, 600))
         wide.paste(background.crop((0, 0, 1, 600)).resize((LEFT, 600)), (0, 0))
@@ -128,7 +137,8 @@ Preserve the visible original pose, contour, tiny face markings, eyes, fur or me
     write_json(plan_path, plan)
     write_json(LAYOUT / 'layers.json', pages)
     preview_inputs(pages)
-    print(f'Prepared {len(batches)} independent loading requests: 5 backgrounds and {len(batches) - 5} single-character layers', flush=True)
+    counts = Counter(layer['kind'] for page in pages for layer in page['layers'])
+    print(f'Prepared {len(batches)} independent loading requests: {dict(counts)}', flush=True)
 
 
 def preview_inputs(pages):
