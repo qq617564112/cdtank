@@ -34,7 +34,9 @@ def inspect(root, groups):
               'scope': {'groups': groups or 'all', 'paths': len(selected)},
               'delivered': 0, 'installed': 0, 'models': 0, 'embeddedImages': 0,
               'deferredTextPaths': [entry['source'] for entry in inventory['textures'] if entry.get('deferred')],
-              'pendingPaths': [], 'uninstalledPaths': [], 'issues': []}
+              'pendingPaths': [], 'uninstalledPaths': [], 'unusedEmbeddedImages': [], 'issues': []}
+    coverage = {'inventoryModels': len(inventory['models']), 'textureModels': 0,
+                'untexturedModels': [], 'unmatchedTexturedModels': []}
     if not groups:
         report['runtimePngPathsOutsideInventory'] = sorted(
             path.relative_to(runtime).as_posix() for path in runtime.rglob('*.png')
@@ -61,6 +63,12 @@ def inspect(root, groups):
             installed = root / 'apps/web/src/assets/ui' / name
             if not installed.is_file() or read_bytes(installed) != read_bytes(source):
                 report['uninstalledLocalUi'].append(name)
+        report['uninstalledMapPreviews'] = []
+        preview = 'custom-maps/1001/preview.svg'
+        delivered = root / 'art/hd-assets/png' / preview
+        installed = runtime / preview
+        if not delivered.is_file() or not installed.is_file() or read_bytes(delivered) != read_bytes(installed):
+            report['uninstalledMapPreviews'].append(preview)
     ready = {}
     for entry in selected:
         delivered = root / entry['png']
@@ -89,6 +97,22 @@ def inspect(root, groups):
         original_path = snapshot if snapshot.is_file() else target
         metadata = installer.read_glb_metadata(original_path)
         scoped_matches = installer.image_matches(metadata, source, ready)
+        known_images = installer.image_matches(metadata, source, all_textures)
+        referenced = installer.referenced_images(metadata)
+        missing = referenced - known_images.keys()
+        if not groups:
+            if not referenced:
+                coverage['untexturedModels'].append(source)
+            elif missing:
+                coverage['unmatchedTexturedModels'].append(source)
+            else:
+                coverage['textureModels'] += 1
+        if not groups or scoped_matches or str(PurePosixPath(source.lower()).parent) in directories:
+            for index in sorted(missing):
+                issue(source, f'Referenced image {index} has no PNG inventory reference')
+            unused = set(range(len(metadata.get('images', [])))) - referenced
+            if unused:
+                report['unusedEmbeddedImages'].append({'model': source, 'indices': sorted(unused)})
         if not scoped_matches:
             continue
         current, binary, _ = installer.read_glb(target.read_bytes())
@@ -123,16 +147,14 @@ def inspect(root, groups):
             issue(source, 'Original buffer metadata differs')
         images = current.get('images', [])
         original_images = original.get('images', [])
-        known_images = installer.image_matches(original, source, all_textures)
-        for index in range(len(original_images)):
-            if index not in known_images:
-                issue(source, f'Image {index} has no PNG inventory reference')
         if len(images) != len(original_images):
             issue(source, 'Original image count differs')
         for index, before in enumerate(original_images):
             if index >= len(images):
                 break
             after = images[index]
+            if index not in matches and after != before:
+                issue(source, f'Unreplaced image {index} differs from the original')
             allowed = {'uri', 'bufferView', 'mimeType'}
             if ({key: value for key, value in after.items() if key not in allowed}
                     != {key: value for key, value in before.items() if key not in allowed}):
@@ -157,6 +179,11 @@ def inspect(root, groups):
     temporary = path.with_suffix('.tmp')
     temporary.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     temporary.replace(path)
+    if not groups:
+        coverage_path = path.with_name('model-image-coverage.json')
+        temporary = coverage_path.with_suffix('.tmp')
+        temporary.write_text(json.dumps(coverage, ensure_ascii=False, indent=2) + '\n')
+        temporary.replace(coverage_path)
     print(f'Compared {report["installed"]}/{report["delivered"]} installed PNGs, '
           f'{report["models"]} models and {report["embeddedImages"]} embedded images; '
           f'{len(report["pendingPaths"])} pending, {len(report["uninstalledPaths"])} uninstalled, '

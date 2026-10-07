@@ -2,6 +2,7 @@
 """Install completed HD PNGs and repack matching GLB images in runtime assets."""
 
 import argparse
+import base64
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -13,6 +14,11 @@ import sys
 
 JSON_CHUNK = 0x4E4F534A
 BIN_CHUNK = 0x004E4942
+TEST_MAP_TEXTURES = {
+    'custom-maps/1001/brick.glb': 'Data/scnobj/obj05443/obj05443.png',
+    'custom-maps/1001/ground.glb': 'Data/map/0014/tiandi.png',
+    'custom-maps/1001/steel.glb': 'Data/map/0018/dimian01.png',
+}
 
 
 def read_glb_metadata(path):
@@ -75,7 +81,56 @@ def image_matches(model, source, textures):
             texture = model['textures'][color['index']]
             if 'source' in texture:
                 matches[texture['source']] = entry
+    # The test map embeds these existing textures under its own material names.
+    asset = TEST_MAP_TEXTURES.get(source)
+    if asset and asset.lower() in textures:
+        matches[0] = textures[asset.lower()]
     return matches
+
+
+def referenced_images(model):
+    indices = set()
+
+    def visit(value):
+        if isinstance(value, dict):
+            for name, child in value.items():
+                if name.endswith('Texture') and isinstance(child, dict) and 'index' in child:
+                    indices.add(child['index'])
+                else:
+                    visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    visit(model.get('materials', []))
+    return {model['textures'][index]['source'] for index in indices}
+
+
+def install_test_map_preview(root, runtime, textures):
+    source = 'custom-maps/1001/preview.svg'
+    target = runtime / source
+    if not target.is_file():
+        return
+    original = root / 'art/hd-assets/original' / source
+    if not original.is_file():
+        original.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(target, original)
+    artwork = original.read_text()
+    assets = list(TEST_MAP_TEXTURES.values()) + [
+        'Data/scnobj/obj05424/obj05424.png',
+        'Data/scnobj/obj05413/obj05413.png',
+    ]
+    for asset in assets:
+        entry = textures.get(asset.lower())
+        if entry:
+            before = base64.b64encode((root / entry['original']).read_bytes()).decode()
+            after = base64.b64encode((root / entry['png']).read_bytes()).decode()
+            artwork = artwork.replace('data:image/png;base64,' + before,
+                                      'data:image/png;base64,' + after)
+    delivered = root / 'art/hd-assets/png' / source
+    delivered.parent.mkdir(parents=True, exist_ok=True)
+    delivered.write_text(artwork)
+    shutil.copyfile(delivered, target)
 
 
 def repack(data, source, textures, root):
@@ -167,6 +222,7 @@ def main():
         target = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / entry['png'], target)
+    install_test_map_preview(root, runtime, replacements)
     # Shared UI parts and locally composed backgrounds are consumed directly.
     for source in (root / 'art/hd-ui/png').rglob('*.png'):
         target = runtime / 'hd-ui' / source.relative_to(root / 'art/hd-ui/png')
