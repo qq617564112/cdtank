@@ -18,6 +18,25 @@ REGULAR_FONTS = {'baiseheitizi', 'cheapfont', 'daheitizi', 'fangjianbianhao',
                  'hongseheitizi', 'xiaoheitizi'}
 REGULAR_LABELS = {'huofeichuangyi', 'xianyoujineng', 'xianyouchuangyi',
                   'huafeijineng', 'huafeidaibidian', 'huofeichuangyidianshu', 'huofeidaibi'}
+REGULAR_TEXT_REGIONS = {
+    'gy': {'daibi2', 'jinqian', 'xingbi', 'chuangyidianshu', 'daibi', 'jinengdianshu'},
+    'lobby_ditu2': {
+        'huolidengji', 'zhuangjiadengji', 'dituguize2', 'mima', 'fangming', 'renshu',
+        'dituguize', 'huafeidaibi2', 'beimianzhuangjia', 'cemianzhuangjia',
+        'lingjiantanwei', 'huixuansudu', 'yidongsudu', 'zhuangdanxiuzheng',
+        'fashejiange', 'diaobaoshengming', 'qingtanke', 'shuliandu', 'tujipao',
+        'shumingzhi', 'zhongtanke', 'zhongtanke2', 'tankecunliang', 'fangjian',
+        'naijiudu', 'meijushijian', 'baifenbi', 'jineng', 'haoyun', 'sudu',
+        'xiongmeng', 'sec3', 'baifenbi2', 'sec2', 'km', 'daos', 'dao_s',
+    },
+    'mycabin0': {
+        'yongyouchenghao3', 'zhandoutongji3', 'huojiangtongji3', 'zhuangjiadengji',
+        'huoli', 'xuanzhuansudu', 'shengyutianshu', 'yidongsudu', 'fashejiange',
+        'cemianzhuangjia', 'beimianzhuangjia', 'zhuangdanxiuzheng', 'shuliandu',
+        'shengmiangzhi', 'jineng', 'xiongmeng', 'haoyun', 'xiegang_sec', 'sec',
+        'baifenbijiahao', 'baifenbi', 'km',
+    },
+}
 
 
 def defer_regular_text(root, inventory):
@@ -35,7 +54,8 @@ def defer_regular_text(root, inventory):
             sources.add(str(Path(path).with_suffix('.png')))
         for region in imageset['images']:
             name = Path(region['Name'].replace('\\', '/')).stem
-            if regular_font or name in REGULAR_LABELS:
+            if (regular_font or name in REGULAR_LABELS
+                    or name in REGULAR_TEXT_REGIONS.get(family, set())):
                 sources.add(region['asset'])
     sources = {source.lower() for source in sources}
     canonical = {entry['canonical'] for entry in inventory['textures'] if entry['source'].lower() in sources}

@@ -137,7 +137,7 @@ def main():
     # A group install retains artwork installed by earlier groups in shared models.
     if args.group is not None:
         for entry in inventory['textures']:
-            if entry.get('intermediate'):
+            if entry.get('intermediate') or entry.get('deferred'):
                 continue
             delivered = root / entry['png']
             installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
