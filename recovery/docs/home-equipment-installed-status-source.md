@@ -50,10 +50,11 @@ factory 来源的其它分类不扩入 Common 合同。
 - `43ed18` 先经 `4269c4` 取当前角色；遍历 `[ebp+8]+0x10` 记录树，将记录
   `+0x1c` 清零，并按 `43bd09` 分类投放到同一角色结构
   `+0xc/+0x1c/+0x2c/+0x3c/+0x4c/+0x5c/+0x6c/+0x7c` 各分组。
-- `43ee80..43ee91` 使用 `[role]+0x2c`，`43eeb6..43eec7` 使用
-  `[role]+0x3c`，`43eeec..43ef28` 使用 `[role]+0x40` 的 `1/2` 数组，
-  `43ef3f..43ef73` 使用 `[role]+0x48` 的 `2` 数组；命中项写
-  `[record+0x1c] = 2`。对应 shared `applyInventoryQuery` 的
+- `43ee80..43ee91` 以 getter ID `0x2c`、`43eeb6..43eec7` 以 getter ID
+  `0x2d` 经 vtable `+0x18` 调用，分别对应 `field44/field45`；
+  `43eeec..43ef28` 以数组 ID `1`、`43ef3f..43ef73` 以数组 ID `2`
+  经 vtable `+0x20` 调用，分别对应 `array1/array2`。这些 getter 对应实例
+  匹配后写 `[record+0x1c] = 2`。对应 shared `applyInventoryQuery` 的
   `InventoryRoleBindings {field44, field45, array1, array2}`。
 - 因此原 Common factory 消费的 `MyItem+0x1c = 2` 是当前角色的查询结果，
   不是账户内任意战车或所有 inventory `state 2` 的全局集合。`4e8a65`
