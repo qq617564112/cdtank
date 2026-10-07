@@ -22,7 +22,7 @@ export class AccountPetSkillLearning {
         owned[row.kind === 'base' ? 'base' : 'equipment'].push(JSON.parse(String(row.record)) as OwnedRoleRecordData);
       }
       const saved = this.database.prepare('SELECT payload, strings FROM role_profiles WHERE account_id = ?').get(accountId);
-      if (!saved) return {owned, quotes: []};
+      if (!saved) return {owned, quotes: [], learned, replayed, confirmation};
       const bytes = new Uint8Array(saved.payload as Uint8Array);
       const growth = this.database.prepare('SELECT skill_points FROM account_growth WHERE account_id = ?').get(accountId);
       const points = Number(growth?.skill_points ?? 0);
