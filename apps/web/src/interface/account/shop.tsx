@@ -24,12 +24,13 @@ import {sourceShopItemCategory} from './shop-item-category';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
+import type {ReqEquipment, ResEquipment} from '../../../../shared/protocols/PtlEquipment';
 import {ShopItemSourceList} from './shop-item-source-list';
 import {ShopItemDescriptionSource} from './shop-item-description-source';
 import {MendShopSourcePage} from './mend-shop-source-page';
 import {ShopResourceFeedback} from './shop-resource-feedback';
 
-export interface ShopSource {stackItemSale?(request: ReqStackItemSale): Promise<ResStackItemSale>; partSale?(request: ReqPartSale): Promise<ResPartSale>; partMaintenance?(request: ReqPartMaintenance): Promise<ResPartMaintenance>; ownedRoleSale?(request: ReqOwnedRoleSale): Promise<ResOwnedRoleSale>; tankMaintenance?(request: ReqTankMaintenance): Promise<ResTankMaintenance>; ownedRoles?(): Promise<ResOwnedRoles>; roleProfile?(): Promise<ResRoleProfile>; configureTankTextures?(request: ReqTankTextures): Promise<ResTankTextures>; shop(request: ReqShop): Promise<ResShop>; inventory?(): Promise<ResInventory>; tankShop?(request: ReqTankShop): Promise<ResTankShop>; petShop?(request: ReqPetShop): Promise<ResPetShop>;}
+export interface ShopSource {stackItemSale?(request: ReqStackItemSale): Promise<ResStackItemSale>; partSale?(request: ReqPartSale): Promise<ResPartSale>; partMaintenance?(request: ReqPartMaintenance): Promise<ResPartMaintenance>; ownedRoleSale?(request: ReqOwnedRoleSale): Promise<ResOwnedRoleSale>; tankMaintenance?(request: ReqTankMaintenance): Promise<ResTankMaintenance>; ownedRoles?(): Promise<ResOwnedRoles>; roleProfile?(): Promise<ResRoleProfile>; configureTankTextures?(request: ReqTankTextures): Promise<ResTankTextures>; equipment?(request: ReqEquipment): Promise<ResEquipment>; shop(request: ReqShop): Promise<ResShop>; inventory?(): Promise<ResInventory>; tankShop?(request: ReqTankShop): Promise<ResTankShop>; petShop?(request: ReqPetShop): Promise<ResPetShop>;}
 export interface AccountShopViewProps {open: boolean; close: () => void; source: ShopSource; initialTextureInstance?: number; onEquipmentPage?: () => void;}
 interface PurchaseOwner {
   page?: 'Item' | 'Tank' | 'Pet' | 'Part' | 'Mend';

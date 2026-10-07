@@ -13,6 +13,8 @@ import type {ReqTankShop, ResTankShop} from '../../../../shared/protocols/PtlTan
 import type {ShopSource} from './shop';
 import type {ResOwnedRoles} from '../../../../shared/protocols/PtlOwnedRoles';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
+import type {ResEquipment} from '../../../../shared/protocols/PtlEquipment';
+import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import {readOwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {TankShopSourceRegions} from './tank-shop-source-regions';
@@ -48,6 +50,9 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const generation = useRef(0);
   const [catalog, setCatalog] = useState<CombatCatalog>();
   const [ownedSelection, setOwnedSelection] = useState<number>();
+  const [partEquipment, setPartEquipment] = useState<ResEquipment>();
+  const [partInventory, setPartInventory] = useState<ResInventory>();
+  const [partQuerySequence, setPartQuerySequence] = useState(0);
   const [confirmed, setConfirmed] = useState<ResTankShop>();
   const [selected, setSelected] = useState(owner.pending?.tankId ?? owner.selected);
   const [busy, setBusy] = useState(true);
@@ -64,7 +69,26 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const descriptionText = mode === 'Owned' ? displayedDescription : product ? `${product.name} — ${product.info}` : undefined;
   const previewTextures = mode === 'Owned' && ownedRecord
     ? readOwnedTankTextures({name: ownedRecord.name, fields: new Map(ownedRecord.fields)}) : product?.textures;
+  const ownedPartEquipment = partEquipment?.tankInstanceId === ownedSelection ? partEquipment : undefined;
   useEffect(() => {if (mode !== 'Texture') onBusy(busy);}, [busy, onBusy, mode]);
+  useEffect(() => {
+    setPartEquipment(undefined); setPartInventory(undefined);
+    setStatus(value => value === '部件信息载入失败，请重试' ? '' : value);
+    if (mode !== 'Owned' || ownedSelection === undefined) return;
+    if (!source.equipment || !source.inventory) return;
+    let active = true;
+    void Promise.all([
+      source.equipment({operation: 'QUERY', tankInstanceId: ownedSelection}),
+      source.inventory(),
+    ]).then(([equipment, inventory]) => {
+      if (!active) return;
+      if (equipment.tankInstanceId !== ownedSelection) return;
+      setPartEquipment(equipment); setPartInventory(inventory);
+    }).catch(() => {
+      if (active) {setPartEquipment(undefined); setPartInventory(undefined); setStatus('部件信息载入失败，请重试');}
+    });
+    return () => {active = false;};
+  }, [mode, ownedSelection, partQuerySequence, source]);
   useEffect(() => {
     const current = {active: true, query: false, identity: {}}; session.current = current;
     let queued = false;
@@ -185,7 +209,8 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   return <SourceImageScale value={1}>
     <TankShopSourceRegions ui={ui} />
     {mode === 'Owned' && <TankShopOwnedPartSourceRegions ui={ui}
-      partSlotCount={catalog?.tankTypes?.find(value => value.tankId === displayedTankId)?.partSlotCount} />}
+      partSlotCount={catalog?.tankTypes?.find(value => value.tankId === displayedTankId)?.partSlotCount}
+      equipment={ownedPartEquipment} inventory={partInventory} catalog={catalog} />}
     {mode === 'Buy' && product && <TankShopBuyParametersView ui={ui} tankId={product.tankId} />}
     {mode === 'Buy' && product && Object.entries(TANK_SHOP_SOURCE_ATTRIBUTES[product.tankId] ?? {}).map(([name, value]) =>
       <SourceStaticText key={name} ui={ui} layout={layout} suffix="shop_tankpage.xml" name={name}
@@ -232,7 +257,11 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
       message="你确定出售这辆坦克吗？" pending={busy} disabled={!saleQuote?.canSell || saleQuote.selected}
       status={status} confirm={() => {void sell();}} cancel={() => {setSaleConfirm(false);}} />}
     <button type="button" className="tank-shop-refresh" data-tank-shop-refresh="" disabled={busy}
-      onClick={event => {focusAfterCommit.current = event.currentTarget; mode === 'Owned' ? void openOwned() : owner.session?.refresh();}}>刷新余额</button>
+      onClick={event => {
+        focusAfterCommit.current = event.currentTarget;
+        if (mode === 'Owned') {setPartQuerySequence(value => value + 1); void openOwned();}
+        else owner.session?.refresh();
+      }}>刷新余额</button>
     <output className="tank-shop-status" data-tank-shop-status="" data-purchased-tank-instance={owner.purchasedInstance}
       role="status" aria-live="polite">{status}</output>
   </SourceImageScale>;
