@@ -10,6 +10,8 @@ import json
 import re
 from pathlib import Path
 import struct
+import subprocess
+import sys
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -373,6 +375,9 @@ def main():
     destination.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(destination)
     print(destination, flush=True)
+    if args.publish:
+        subprocess.run([sys.executable, str(renderer.root / 'scripts/render-hd-asset-gallery.py'),
+                        '--root', str(renderer.root)], check=True)
 
 
 if __name__ == '__main__':
