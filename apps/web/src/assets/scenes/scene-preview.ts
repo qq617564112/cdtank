@@ -17,6 +17,7 @@ import type {CastleDamageResult} from './scene-castle-state';
 import {SceneCrushPresentation} from './scene-crush-presentation';
 import {sceneCrushTransform} from './scene-crush-transform';
 import {SceneWater} from './scene-water';
+import {SceneSequence} from './scene-sequence';
 import {ScenePlantSway} from './scene-plant-sway';
 import {SceneTerrainMaterial} from './scene-terrain-material';
 import {SceneGeneralMaterial} from './scene-general-material';
@@ -76,6 +77,7 @@ export class ScenePreview {
   private readonly movementGeometry = new Map<string, SceneMovementSurface>();
   get movementSurfaces(): readonly SceneMovementSurface[] {return [...this.movementGeometry.values()];}
   private water?: SceneWater;
+  private sequence?: SceneSequence;
   private plants?: ScenePlantSway;
   private terrainMaterial?: SceneTerrainMaterial;
   private generalMaterial?: SceneGeneralMaterial;
@@ -105,6 +107,8 @@ export class ScenePreview {
     this.movementGeometry.clear();
     this.water?.dispose();
     this.water = undefined;
+    this.sequence?.clear();
+    this.sequence = undefined;
     this.plants?.dispose();
     this.plants = undefined;
     this.plantRoots.clear();
@@ -268,7 +272,25 @@ export class ScenePreview {
         throw error;
       }
     }
+    if ((id === '0008' || id === '0013') &&
+      entry.records.some(placement => placement.className === 'SYcScnObjSequence' &&
+        placement.model === 'obj05023')) {
+      const sequence = new SceneSequence(this.scene);
+      this.sequence = sequence;
+      try {
+        await sequence.load(id, entry.records);
+      } catch (error) {
+        if (revision === this.revision) this.clear();
+        else sequence.clear();
+        throw error;
+      }
+      if (revision !== this.revision) {
+        sequence.clear();
+        return '';
+      }
+    }
     for (const placement of placements) {
+      if (placement.className === 'SYcScnObjSequence') continue;
       const castle = castleResources.find(value => value.sourcePlacementId === placement.id);
       if (castle && runtime) {
         const visual = new SceneCastleVisual(this.scene, castle);
@@ -405,6 +427,7 @@ export class ScenePreview {
   /** Frame-driven CVD playback; independent of network snapshot frequency. */
   advance(deltaSeconds: number): void {
     this.water?.advance(deltaSeconds);
+    this.sequence?.advance(deltaSeconds);
     this.plants?.advance(deltaSeconds);
     this.animations.forEach(animation => {animation.advance(deltaSeconds);});
     this.castles.forEach(value => value.visual.update(deltaSeconds));
