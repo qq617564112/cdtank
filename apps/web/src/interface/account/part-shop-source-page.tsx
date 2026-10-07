@@ -5,9 +5,9 @@ import {SourceButton} from '../resources/source-button';
 export type PartShopCategory = 'Common' | 'Hat' | 'Mark';
 
 /** Original part sheet regions and confirmed ownership categories. */
-export function PartShopSourcePage({ui, money, tokens, quantity, ownedCategory, category, busy, markAvailable, selectOwned, selectCategory}: {
+export function PartShopSourcePage({ui, money, tokens, quantity, ownedCategory, category, busy, hatAvailable, markAvailable, selectOwned, selectCategory}: {
   ui: HomeSourceUi; money?: number; tokens?: number; quantity?: number; ownedCategory: PartShopCategory;
-  category: PartShopCategory; busy: boolean; markAvailable: boolean; selectOwned: (category: PartShopCategory) => void;
+  category: PartShopCategory; busy: boolean; hatAvailable: boolean; markAvailable: boolean; selectOwned: (category: PartShopCategory) => void;
   selectCategory: (category: PartShopCategory) => void;
 }) {
   const suffix = 'shop_partpage.xml', layout = new HomeSourceLayout(ui, suffix);
@@ -25,7 +25,7 @@ export function PartShopSourcePage({ui, money, tokens, quantity, ownedCategory, 
     {(['Common', 'Hat', 'Mark'] as const).map((kind, index) => <SourceButton key={'shop'+kind} ui={ui} layout={layout}
       suffix={suffix} source={`rdoShop${kind}Page`} selected={category === kind} aria-pressed={category === kind}
       aria-label={['部件商品', '装饰商品', '标记商品'][index]} data-part-shop-category={kind}
-      disabled={busy || kind === 'Hat' || kind === 'Mark' && !markAvailable}
+      disabled={busy || kind === 'Hat' && !hatAvailable || kind === 'Mark' && !markAvailable}
       onClick={() => selectCategory(kind)} />)}
   </>;
 }

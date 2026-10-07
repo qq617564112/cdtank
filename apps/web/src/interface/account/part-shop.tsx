@@ -24,6 +24,9 @@ const inCategory = (id: number, category: PartShopCategory) => {
 const MARK_CATALOG_IDS = [12501, 12502, 12503] as const;
 const hasMarkCatalog = (items: readonly {itemTableId: number}[]) =>
   MARK_CATALOG_IDS.every(id => items.some(item => item.itemTableId === id && inCategory(item.itemTableId, 'Mark')));
+const HAT_CATALOG_IDS = Array.from({length: 40}, (_, index) => 10001 + index);
+const hasHatCatalog = (items: readonly {itemTableId: number}[]) =>
+  HAT_CATALOG_IDS.every(id => items.some(item => item.itemTableId === id && inCategory(item.itemTableId, 'Hat')));
 const categoryForItem = (id: number): PartShopCategory => {
   const type = classifyItemId(id);
   return type >= 8 && type <= 12 ? 'Common' : type === 5 ? 'Hat' : type === 7 ? 'Mark' : 'Common';
@@ -56,6 +59,7 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
   categoryRef.current = category;
   const products = confirmed?.items.filter(item => inCategory(item.itemTableId, category)) ?? [];
   const product = products.find(item => item.itemTableId === selected);
+  const hatAvailable = confirmed ? hasHatCatalog(confirmed.items) : false;
   const markAvailable = confirmed ? hasMarkCatalog(confirmed.items) : false;
   const moneyPrice = product && positivePrice(product.moneyPrice) ? product.moneyPrice : undefined;
   const tokenPrice = product && positivePrice(product.tokenPrice) ? product.tokenPrice : undefined;
@@ -87,8 +91,10 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
         setConfirmed(saleResult?.money === undefined ? shop : {...shop, money: saleResult.money});
         setInventory(items); setSale(saleResult); setCatalog(definitions);
         if (saleResult?.money !== undefined) onMoney?.(saleResult.money);
+        const hatCatalogComplete = hasHatCatalog(shop.items);
         const markCatalogComplete = hasMarkCatalog(shop.items);
-        const nextCategory = categoryRef.current === 'Mark' && !markCatalogComplete ? 'Common' : categoryRef.current;
+        const nextCategory = categoryRef.current === 'Hat' && !hatCatalogComplete ? 'Common'
+          : categoryRef.current === 'Mark' && !markCatalogComplete ? 'Common' : categoryRef.current;
         categoryRef.current = nextCategory; setCategory(nextCategory);
         setSelected(value => {const id = shop.items.some(item => item.itemTableId === value
           && inCategory(item.itemTableId, nextCategory)) ? value
@@ -140,7 +146,7 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
     setStatus(''); setSaleConfirm(true);
   }
   function selectProductCategory(kind: PartShopCategory) {
-    if (busy || kind === 'Hat' || kind === 'Mark' && !markAvailable) return;
+    if (busy || kind === 'Hat' && !hatAvailable || kind === 'Mark' && !markAvailable) return;
     categoryRef.current = kind; setCategory(kind);
     const id = confirmed?.items.find(item => inCategory(item.itemTableId, kind))?.itemTableId;
     owner.selected = id; setSelected(id);
@@ -171,7 +177,7 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
   }
   return <>
     <PartShopSourcePage ui={ui} money={confirmed?.money} tokens={confirmed?.tokens} quantity={inventory ? owned.length : undefined}
-      category={category} ownedCategory={ownedCategory} busy={busy} markAvailable={markAvailable} selectCategory={selectProductCategory}
+      category={category} ownedCategory={ownedCategory} busy={busy} hatAvailable={hatAvailable} markAvailable={markAvailable} selectCategory={selectProductCategory}
       selectOwned={value => {generation.current++; setSaleConfirm(false); setOwnedCategory(value); setOwnedSelected(undefined);}} />
     <PartShopSourceList ui={ui} source="lstShopEquip" selected={selected} busy={busy}
       select={id => {owner.selected = id; setSelected(id);}}
@@ -202,7 +208,7 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
       disabled={busy || !product || effectiveCurrency === undefined || unitPrice === undefined}
       onClick={event => {void purchase(event.currentTarget);}}>购买一件</button>
     <button type="button" className="part-shop-equipment" data-part-equipment="" disabled={busy || !onEquipmentPage}
-      onClick={onEquipmentPage}>装备拥有部件</button>
+      onClick={onEquipmentPage}>{category === 'Hat' ? '装备拥有装饰' : '装备拥有部件'}</button>
     <button type="button" className="part-shop-refresh" data-part-refresh="" disabled={busy}
       onClick={() => owner.session?.refresh()}>刷新</button>
     {saleConfirm && <SourceConfirmView label="出售零件" binding="owned-part-sale"
