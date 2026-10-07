@@ -25,11 +25,13 @@
 - Server 按账户、战车实例、库存归属、`ownedQuantity` 和 `equipmentTarget` 校验；确认回包为
   `ResEquipment.decorationInstanceId`。
 - 持久槽是原资料 selector44，`readRoleProfileCosmetics` 固定读取 `payload+0x118`；替换/卸下由
-  `AccountTankEquipment` 和现有 profile writer 原子保存。
+  `AccountTankEquipment` 和现有 profile writer 原子保存。`+0x118` 只作为账户资料声明和持久来源，
+  不作为战斗拥有战车记录字段。
 
-缺口只在战斗表现输入：当前 `playerSnapshot` 没有公开已装备装饰物的模型身份。已有
+战斗表现输入在现有 `playerSnapshot` 上补公开模型身份：当前
+`player.ownedRoles.equipment().decorationInstanceId` 提供确认槽，已有
 `appearanceInstanceId` 仅用于 `isAppearanceEffectItem` 的被动外观效果选择，不能替代模型装饰。
-因此下一片只补“已确认装饰槽 -> 房间公开描述 -> 双方 TankView 挂点”的普通消费者。
+本片采用“已确认装饰槽 -> 房间公开描述 -> 双方 TankView 挂点”的普通消费者。
 
 ## 客户端通信采用合同
 
@@ -63,9 +65,12 @@ interface PlayerSnapshot {
 ```
 
 Server 产生 `decoration` 的唯一条件是：当前战车确认资料
-`decorationInstanceId` 指向本房间库存中的实例，实例 `state===2`、`ownedQuantity>0`，
+`player.ownedRoles.equipment().decorationInstanceId` 指向本房间库存中的实例，实例
+`state===2`、`ownedQuantity>0`，
 且共享 item 定义的 `equipmentTarget==='DECORATION'`。不满足时字段缺失，不发空对象，
 不发占位模型。
+手工 schema117 中 `PlayerSnapshot.decoration` 为 property id48，公开对象仅含
+`TankDecorationSnapshot.itemTableId`（id0）；既有字段编号保持不变。
 
 Web 以 `itemTableId` 查同一共享 item 定义：
 
@@ -93,8 +98,10 @@ Web 以 `itemTableId` 查同一共享 item 定义：
    `HomeTankDecoration` 已采用的转换：矩阵索引 `1/2/3/4/8/12` 取反，再乘
    `TankView.root.getWorldMatrix()`。
 3. 模型 owner 持有 `AssetContainer`、anchor、纹理和 `onBeforeRenderObservable` 回调。
+   纹理在 `new Texture(...)` 创建后、加载 await 前立即登记到 owner；此时 owner dispose
+   已能立即释放加载中的纹理。
    `clear()`、玩家移除、离房、换局或场景 dispose 时全部释放；加载晚返回若 generation、
-   player 或 `decoration.itemTableId` 已变化，立即 dispose，不挂到新场景。
+   player 或 `decoration.itemTableId` 已变化，立即 dispose，不重新挂接。
 4. 装饰物跟随本模型原挂点矩阵和现有 `TankView` 位置、旋转；不改变战斗碰撞、NAV、
    炮口或伤害。
 
@@ -148,6 +155,7 @@ Home 预览现有 `HomeTankDecoration`、`HomeEquipmentPreview` 和 “装饰”
 ## 真实剩余限制
 
 - 当前没有执行网络、浏览器、构建、类型检查、native 或生成器；本文只固定生产合同。
+- 本批集中静态走查已完成。
 - 原完整装备装饰物的 3D 挂点像素、全部 hat/多部件车型组合、双方远距离观察、死亡/复活/换图
   时模型切换和高清性能仍需实际对局验证。
 - 原客户端完整 attach callback、GPU/像素精度及全部原装备分类未恢复；本片只接已确认的

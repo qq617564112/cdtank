@@ -7,7 +7,8 @@
 战车实例、库存归属、数量和 `equipmentTarget` 校验，确认结果为
 `ResEquipment.decorationInstanceId`。持久槽复用原资料 selector44，
 `readRoleProfileCosmetics` 固定读取 `payload+0x118`；更换或卸下继续由
-`AccountTankEquipment` 和现有 profile writer 原子保存。
+`AccountTankEquipment` 和现有 profile writer 原子保存。该 `+0x118` 只属于账户资料
+声明与持久来源，不是战斗拥有战车记录字段。
 
 房间只公开模型身份，不公开实例归属或资料字节：
 
@@ -24,7 +25,9 @@ interface PlayerSnapshot {
 `PlayerSnapshot.decoration` 仅在当前战车确认资料指向房间库存中的实例，且实例
 `state===2`、`ownedQuantity>0`、共享 item 定义
 `equipmentTarget==='DECORATION'` 时存在；任一条件不满足时字段缺失，不发空对象、不发占位模型。
-该可选字段手工并入 schema117，既有编号保持不变。
+房间投影从当前 `player.ownedRoles.equipment().decorationInstanceId` 读取确认槽，再从房间
+库存解析公开的 `itemTableId`。该可选字段手工并入 schema117：`PlayerSnapshot.decoration`
+为 property id48，公开对象只含 `TankDecorationSnapshot.itemTableId`（id0），既有字段编号保持不变。
 
 ## Web 消费
 
@@ -49,8 +52,10 @@ owner 直接在 `TankView.root` 下建立 anchor，逐帧调用 `view.decoration
 旋转，不改变碰撞、NAV、炮口、伤害或 HUD 状态。
 
 owner 持有 `AssetContainer`、anchor、纹理和 `onBeforeRenderObservable` 回调。
+纹理在 `new Texture(...)` 创建后、加载 await 前立即登记到 owner，因此此时
+`dispose()` 已能释放加载中的纹理。
 `clear()`、玩家移除、离房、换局或场景 dispose 时全部释放；加载晚返回若 generation、
-player 或 `decoration.itemTableId` 已变化，立即 dispose，不挂到新场景。
+player 或 `decoration.itemTableId` 已变化，立即 dispose，不重新挂接。
 
 同一次入场中，服务端向所有参与者发送同一 `TankDecorationSnapshot`，因此双方从同一公开
 定义显示。Home 现有 `HomeTankDecoration`、`HomeEquipmentPreview` 和“装饰”槽不改行为，
@@ -81,4 +86,4 @@ player 或 `decoration.itemTableId` 已变化，立即 dispose，不挂到新场
 当前没有执行网络、浏览器、持久、构建、类型检查、native 或生成器；实际双端入场、换装、
 死亡/复活/换图和跨房间显示仍需真实验收。原客户端完整 attach callback、挂点像素、
 GPU 精度、全部 hat/多部件车型组合和高清性能未证；本文不把静态合同或现有 Home 证据当作
-原像素完成。本批实现结束后执行一次集中静态走查，父项保持未勾。
+原像素完成。本批集中静态走查已完成，父项保持未勾。
