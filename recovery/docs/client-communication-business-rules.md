@@ -158,6 +158,25 @@ Func19的12501/12502/12503 domain、history/account与真实World来源冻结已
 
 未验收边界：原服务端键位回调与实际扣量/落点/技能成功结果仍未取得，不能声明为已恢复；上述为客户端采用规则，未做实际对局、双网页、高清或持久重启验收，也不把静态来源与client链等同原server分派。运行期接口见 battle-cycle-controls-runtime.md，设置与消费见 settings-cycle-controls-client.md。
 
+## Home 所选实例装备
+
+对应M5-07-EQUIPTARGET、M5-07/UI-32与M6-01。Home 战车列表当前展示的 owned 实例经
+`onEquipmentPage(instanceId)` 上报 App，App 以 `tankInstanceId` 传入装备页；无 target
+的普通装备入口显式清除旧目标并进入服务端正式当前实例，Close/返回/账户或连接世代
+变化清本次目标。装备页对同一目标并行首查 `Equipment {operation:'QUERY',
+tankInstanceId}`、`Inventory`、`OwnedRoles` 与普通 `RoleProfile`，显式目标要求响应
+`Res.tankInstanceId` 严格匹配；真实当前出击实例只取普通 `RoleProfile.profile+0xa8`，
+`alreadyUsed` 与 Equipment 目标比较，不使用 Equipment 投影 profile 自比。非当前目标
+保持 helper 的 owned-only 显示投影，仅 `alreadyUsed` 时并入 current 宠物与已装部件
+加成。既有 targeted `EQUIP`/`UNEQUIP` 请求保持原 `tankInstanceId` 与槽位写入规则，
+不调用 `selectRole`，不新增 API/schema/后端/wallet/grant。查询失败为独立终态，资源
+就绪时结束 `aria-busy` 并以现错误区按同一 `tankInstanceId` 重试四请求，失败不当确认
+空数据。两页 `txtOriginality` 取普通 `RoleProfile` 的 `growth.originality`，其次真实
+`playerSummary.originality`，真 `0` 显示、缺留空，明确为 Web 采用的账户成长而非原
+producer 恢复；`txtTankStatus` 未知保持留空。详
+`home-selected-tank-equipment-client-business-design.md`。完整页面/HD/持久及原
+producer 未实测或取得，M5-07/UI-32/M6-01 父项保持未勾。
+
 ## 战车改装
 
 对应M6-03/UI-33/M6-06-TU。直接来源为原双 action 改装入口、TankUp 表费用/等级行、owned `+38/+48` 资格与 `+44/+54` 等级、`+3c/+40` 或 `+4c/+50` 攻防/加成字段，以及原3f94/3f95请求确认：请求只带 action 8位和 owned instance 32位，确认先替换完整 money/originality，再按 result 写等级和对应攻防/加成。原服务器结果抽样、返回 attribute/bonus 生成公式和 owned 资格位 producer 未取得。

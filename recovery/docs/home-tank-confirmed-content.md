@@ -2,9 +2,9 @@
 
 UI-32正式整页现在消费现RoleProfile确认金币+70、OwnedRoles.equipment确认记录数与TankShop QUERY匹配车型的原说明。原txtMoney/txtListQuantity/edtTankDesc位置沿既有HomeSourceLayout完整父链；余额来自角色资料，不从商城价格推造。数量为已确认列表投影，未声明原数量producer完全还原。来源字段与原控件保存在home-tank-confirmed-content-source.json。
 
-说明查询单独读取Battle.tankShop({operation:QUERY})，不阻拥有资料/出击/原导航；只有产品tankId匹配当前拥有记录+24才显示info。未返回车型或查询失败留空，不从现重建标签生成说明。原edtTankDesc采用标記Web-readable的#253740深色文字、普通滚动；原最终色、字体和滚动条绘制未证明。txtOriginality创意点映射及全部未知参数留空，未用软星币冒充。
+说明查询单独读取Battle.tankShop({operation:QUERY})，不阻拥有资料/出击/原导航；只有产品tankId匹配当前拥有记录+24才显示info。未返回车型或查询失败留空，不从现重建标签生成说明。原edtTankDesc采用标記Web-readable的#253740深色文字、普通滚动；原最终色、字体和滚动条绘制未证明。本批将txtOriginality接到普通RoleProfile的growth.originality优先、真实playerSummary.originality兜底，真0显示/缺留空；该显示明确为Web采用的账户成长，不是原Home txtOriginality producer恢复，未用软星币冒充；txtTankStatus仍未知留空。
 
-归属：home-roles.tsx仅Tank readonly catalogue消费及props、home-tank-source-page.tsx三个原文字区域、home.css仅Tank描述、专属browser/source/doc。没有修改Pet、App、网络、账户事务、参数数值或Babylon生命周期。
+归属：home-roles.tsx仅Tank readonly catalogue消费及props、home-tank-source-page.tsx三个原文字区域、home.css仅Tank描述、专属browser/source/doc。没有修改Pet、网络、账户事务、参数数值或Babylon生命周期；本批新增的Home显示实例→App→装备页目标接线及查询失败重试归属home-selected-tank-equipment-client-business-design.md，不在本片实测。
 
 ## 实际整页与操作
 
@@ -21,4 +21,4 @@ node --import tsx tests/browser-home-tank-confirmed-content.mjs --navigation-onl
 
 ## 未完成
 
-限定实际已购tank3/4说明与确认金币/数量；全部车型说明、原动态数量producer、创意点、属性/技能/参数、原说明色字形/滚动控件和完整93控件1:1仍未完成。说明查询失败的非阻塞分支已实现，本轮未模拟API失败，不称该分支已实测。该片不能代我的家整页完全还原，UI-32保持未勾。
+限定实际已购tank3/4说明与确认金币/数量；全部车型说明、原动态数量producer、原txtOriginality producer、属性/技能/参数、原说明色字形/滚动控件和完整93控件1:1仍未完成。说明查询失败的非阻塞分支已实现，本轮未模拟API失败，不称该分支已实测；本片新增的实例目标链、两页创意点与查询失败重试未做新页面实测，既有三res/导航证据不覆盖该范围。该片不能代我的家整页完全还原，UI-32保持未勾。
