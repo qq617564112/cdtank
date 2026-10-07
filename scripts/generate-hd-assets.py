@@ -59,6 +59,8 @@ def prepare():
                 for p in ASSETS.rglob('*.png')}
     local_sources = {f'local-ui/loading-words/{path.name}': path
                      for path in (ROOT / 'apps/web/src/interface/resources/loading-words').glob('*.png')}
+    local_sources['local-art/reference-hero/reference-colors.png'] = (
+        ROOT / 'apps/web/src/models/reference-hero/reference-colors.png')
     existing.update({source.lower(): source for source in local_sources})
     previous = document(ART / 'inventory.json') if (ART / 'inventory.json').exists() else {'textures': []}
     previous_entries = {entry['source']: entry for entry in previous['textures']}
@@ -94,7 +96,7 @@ def prepare():
     directory('ui', 'ui')
     directory('Data/ui', 'ui')
     for source in local_sources:
-        add(source, 'ui')
+        add(source, 'ui' if source.startswith('local-ui/') else 'art')
     for path in existing.values():
         if path not in groups:
             add(path, 'art')
@@ -141,7 +143,10 @@ def prepare():
                          'size': list(image.size), 'groups': sorted(membership)})
         if source in local_sources:
             textures[-1]['installPath'] = str(local_sources[source].relative_to(ROOT))
-            textures[-1]['solidColor'] = list(image.getpixel((0, 0))[:3])
+            if source.startswith('local-ui/loading-words/'):
+                textures[-1]['solidColor'] = list(image.getpixel((0, 0))[:3])
+            else:
+                textures[-1]['derived'] = 'texture-panels'
         if source.lower() in {f'data/ui/loading/{index}.png' for index in range(1, 6)}:
             textures[-1]['derived'] = 'loading-layout'
     by_source = {entry['source'].lower(): entry for entry in textures}
@@ -207,18 +212,19 @@ Repaint crisp natural contours and restrained fine material detail in the origin
                                 'ratio': '1:1' if columns == rows else f'{columns}:{rows}'})
     save(ART / 'plan.json', {'baseUrl': 'https://gptimg.cloyd.fun/', 'model': 'gpt-image-2', 'groups': ordered_groups, 'batches': batches})
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'prepare'], check=True)
+    subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-reference-hero.py')], check=True)
     textures = document(ART / 'inventory.json')['textures']
     batches = document(ART / 'plan.json')['batches']
     print(f"{len(textures)} paths, {len({entry['canonical'] for entry in textures})} unique textures, {len(batches)} requests", flush=True)
     print(json.dumps(dict(Counter(b['group'] for b in batches)), ensure_ascii=False), flush=True)
 
 
-def restore(original_path, generated, terrain, source_box=None, solid_color=None):
+def restore(original_path, generated, terrain, source_box=None, solid_color=None, font_tile=True):
     original = Image.open(original_path).convert('RGBA')
     if source_box:
         original = original.crop(source_box)
     reference = original.convert('RGB')
-    if source_box or solid_color:
+    if (source_box and font_tile) or solid_color:
         reference = Image.new('RGB', original.size, 'black')
         reference.paste(Image.new('RGB', original.size, tuple(solid_color) if solid_color else 'white'),
                         (0, 0), original.getchannel('A'))
@@ -237,7 +243,7 @@ def restore(original_path, generated, terrain, source_box=None, solid_color=None
     pixels = cv2.remap(np.asarray(generated), xx + flow[:, :, 0], yy + flow[:, :, 1],
                        cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
     registered = Image.fromarray(pixels)
-    if source_box or solid_color:
+    if (source_box and font_tile) or solid_color:
         support = base.getchannel('A').filter(ImageFilter.MaxFilter(5)).point(lambda value: 255 if value else 0)
         color = np.array(solid_color or [255, 255, 255], dtype=np.float32)
         coverage = np.sum(pixels.astype(np.float32) * color, axis=2) / np.sum(color * color)
@@ -267,7 +273,7 @@ def batch_complete(batch, delivered):
                for index, cell in enumerate(batch['cells']))
 
 
-def assemble_font_tiles(sources):
+def assemble_tiles(sources):
     if not sources:
         return
     textures = {e['source']: e for e in document(ART / 'inventory.json')['textures']}
@@ -302,7 +308,7 @@ def extract(batch):
         box = [round(v * (sx if i % 2 == 0 else sy)) for i, v in enumerate(cell['box'])]
         crop = image.crop(box)
         result = restore(ROOT / entry['original'], crop, any(g.startswith('map-') for g in entry['groups']),
-                         cell.get('sourceBox'), entry.get('solidColor'))
+                         cell.get('sourceBox'), entry.get('solidColor'), cell.get('kind') != 'texture')
         destination = tile_path(batch, index) if cell.get('sourceBox') else ROOT / entry['png']
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_name(destination.name + '.tmp')
@@ -310,7 +316,7 @@ def extract(batch):
         temporary.replace(destination)
         if cell.get('sourceBox'):
             tiled.add(cell['source'])
-    assemble_font_tiles(tiled)
+    assemble_tiles(tiled)
 
 
 def generate(groups, concurrency, limit, retry_delay=300):
@@ -323,8 +329,8 @@ def generate(groups, concurrency, limit, retry_delay=300):
     batches = document(ART / 'plan.json')['batches']
     selected = [b for b in batches if not groups or b['group'] in groups]
     delivered = {e['source']: e['png'] for e in document(ART / 'inventory.json')['textures']}
-    assemble_font_tiles({cell['source'] for batch in selected for cell in batch['cells']
-                         if cell.get('sourceBox') and not (ROOT / delivered[cell['source']]).exists()})
+    assemble_tiles({cell['source'] for batch in selected for cell in batch['cells']
+                    if cell.get('sourceBox') and not (ROOT / delivered[cell['source']]).exists()})
     selected = [b for b in selected if not batch_complete(b, delivered)]
 
     def call(batch):
