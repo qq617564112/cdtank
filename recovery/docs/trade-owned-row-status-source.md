@@ -170,10 +170,9 @@ const sameRecord = (a: TradeRecordRef, b: TradeRecordRef) =>
 
 采用规则：
 
-1. OwnedTank/OwnedPet 的 N 继续使用 Home 已确认的当前角色投影；Web 没有原角色记录指针，
-   只能用当前角色的 `kind + instanceId` 身份等式。现有 `PtlTrade` 不携带该当前角色字段，
-   因此应由 Home 共用投影/现有账户查询提供；缺失时保持无 N，不从候选第一项、selected 或
-   trade draft 推断。
+1. OwnedTank/OwnedPet 的 N 使用同一确认 `TradeAccount.profile.bytes`；Web 没有原角色记录
+   指针，只能用当前角色的 `kind + instanceId` 身份等式。缺失 profile、bytes 短于字段或字段
+   不命中时保持无 N，不从候选第一项、selected 或 trade draft 推断。
 2. 原 B 的直接来源是 `page+0x140` 本方本地 SHOW 草稿。Web 对应物是本地
    `draft.records` 的 `kind + instanceId` 成员关系，不是 `aria-selected`/候选选中背景，
    不是 `party.confirmed`，也不是 `own.offer` 之外的猜测。
@@ -193,20 +192,20 @@ const sameRecord = (a: TradeRecordRef, b: TradeRecordRef) =>
 
 下列最小生产改动边界已按当前正式接线落地：
 
-- `apps/web/src/interface/lobby/lobby-social-view.tsx` / `apps/web/src/interface/account/trade-source-page.tsx`：
-  稳定 `battle.roleProfile()` 纯 QUERY 与 `accountContext.generation` 传入页面，页面在 open/
-  session id/generation/query identity 变化时读取 `profile.bytes`（小端 tank `+0xa8`、pet `+0xa4`），
-  以 `kind + (instanceId>>>0)` 相等计算 current（N）；`draft.records` 保持为唯一 B 来源，
-  N 优先。
+- `apps/web/src/interface/account/trade-source-page.tsx`：每次 render 从确认
+  `TradeAccount.profile.bytes` 读取当前实例（小端 tank `+0xa8`、pet `+0xa4`），以
+  `kind + (instanceId>>>0)` 相等计算 current（N）；`draft.records` 保持为唯一 B 来源，
+  N 优先。页面不再使用专用 `RoleProfile` QUERY effect、`currentRoles`、query props 或
+  `LobbySocialView` query callback。
 - `apps/web/src/interface/account/trade-candidate-row-content.tsx`：接收 current/offered，
   OwnedTank/OwnedPet 渲染 N 或 B，物品/装备行不把 Trade B 扩成 E/S；`!current && offered`
   时才渲染 B。
-- `apps/web/src/interface/home/home-role-row-status-badge.tsx` 及其 CSS：复用既有 N glyph，
-  按原 trade 字体资源表增加 `offered`（`b.tga`）glyph，仅在 `.trade-source-candidate-row`
-  Trade 作用域内应用 `point 5,8`、14×14 几何。
+- `apps/web/src/interface/home/home-role-row-status-badge.tsx` 及其 CSS：N/`offered` glyph
+  均已存在，直接复用 `n.tga`/`b.tga`，仅在 `.trade-source-candidate-row` Trade 作用域内
+  应用 `point 5,8`、14×14 几何。
 
 无需新增 server API、协议 schema、轮询、缓存、费用或取得链。`PtlTrade`/`MsgTradeState`
-已是当前确认状态合同；当前角色投影是唯一外部依赖，且已接到 Trade 本方候选。
+已是当前确认状态合同；当前角色投影随同一确认快照进入 Trade 本方候选。
 
 ## Known Issues
 
@@ -217,7 +216,7 @@ const sameRecord = (a: TradeRecordRef, b: TradeRecordRef) =>
   `TradeRecordRef.kind`，不据此猜道具/装备分类名。
 - OwnedTank/OwnedPet 的状态 `1`/`2` 在本页候选链没有 producer；不把 S/E、当前角色、
   selected 或确认状态填到这两个状态。
-- 当前角色 getter 在 Web 侧没有来自 `PtlTrade` 的字段，已复用 Home 现有投影并经
-  `LobbySocialView` 稳定 `battle.roleProfile()` 接到 Trade；无 profile 或 QUERY 失败时保持
-  无 N，N 不由 B、selected 或 draft 推导。
+- 原角色 getter 在 Web 侧没有独立字段；当前实例直接取自同一确认
+  `TradeAccount.profile.bytes`。无 profile、bytes 短于字段或字段不命中时保持无 N，N 不由
+  B、selected 或 draft 推导。
 - 本来源是有限静态结论，不称原交易流程、HD、导出或持久化已完成。

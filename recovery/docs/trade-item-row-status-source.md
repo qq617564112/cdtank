@@ -175,7 +175,7 @@ E 的 per-role producer 不在本页：原查询结果处理 `43ed18` 只对当�
   被点行对应的槽号，再调 `4fab20`。整表清空与撤回保留沿用 `4fcbe9`/`4fc495`（见
   `trade-owned-row-status-source.md`）。
 
-## 现确认库存投影与采用合同
+## 当前确认 profile 投影与采用合同
 
 ### 原 fact
 
@@ -217,33 +217,30 @@ E 的 per-role producer 不在本页：原查询结果处理 `43ed18` 只对当�
 5. 不给非角色行造 S（`2`）或 N（`3`）；未知状态保持无。
 6. E 判定不要附加 `OWNEDqty>0` 或支付/费用 gate。
 
-现端可复用字段已足够，不需新增独立 query/cache/API/schema/poll/费用/取得：E 走
-`state.account.profile.bytes` + `state.account.owned.equipment` 的当前战车实例；B 走既有
-本地 `draft.records`。若某消费者没有 `profile.bytes`，最小读是既有 `Equipment` QUERY
-（`apps/web/src/network/accounts.ts` 的 `equipment({operation:'QUERY', tankInstanceId})`，
-返回 `bindings:{instanceId,tankInstanceId,target,slot}[]`），按 `binding.instanceId=== row.
-instanceId && binding.tankInstanceId===profile+0xa8` 判定；不新增接口。
+现端已接生产的数据入口是每次 render 读取同一确认 `state.account.profile.bytes`，B 走既有
+本地 `draft.records`；不新增独立 query、cache、API、schema、poll、费用或取得。消费者没有
+`profile.bytes`、bytes 短于字段或字段不命中时直接不画对应标识，不另发 `Equipment` QUERY
+或其它 fallback，也不由 selected、`bindingName`、`state===2`、peer 或数量 gate 补值。
 
 ### 未知原 authorization
 
 原服务端对 `3f9e`/`3fa1`/`3fa2` 的资格、失败与事务字段，以及 12 草稿表的服务端校验，
 不在本来源内。Web 的权威状态来自现有重建服务；本条只限定客户端行状态来源。
 
-## 可实施 UI 范围
+## 当前生产接线
 
-本页非角色候选状态的完整可实现边界：
+本页非角色候选状态已接生产：
 
 - 物品子页（`rdoItem`/`rdoWeapon`/`rdoValuable`）与装备子页（`rdoCommon`/`rdoHat`/
   `rdoMark`）继续复用 `apps/web/src/interface/account/trade-source-page.tsx` 的候选筛选与
   `trade-candidate-row-content.tsx` 的行内容。
-- `trade-candidate-row-content.tsx`：`kind==='item'` 行在 `current`（E，来自纯投影）与
-  `offered`（B，来自 `draft.records`）命中时渲染状态 glyph；`!current && offered` 才画 B。
-  `kind==='tank'/'pet'` 沿用既有 N/B。
-- glyph 复用既有共享 `HomeRoleRowStatusBadge` 与 `SmallHT` 资源（E=`e.tga` / `ui/regions/11/9.png`，
-  B=`b.tga` / `ui/regions/11/8.png`），几何沿用 Trade 作用域 `point (5,8)`、14×14。
-- 最小文件：`trade-source-page.tsx`（传入 item 行的 `current`/`offered`）、
-  `trade-candidate-row-content.tsx`（item 行状态渲染）、`home-role-row-status-badge.tsx`/`.css`
-  （仅新增 `installed`/`offered` 映射，若尚未存在）。必要依赖：
+- `trade-candidate-row-content.tsx`：`kind==='item'` 行在 `current`（E，来自同一确认 profile
+  投影）与 `offered`（B，来自 `draft.records`）命中时渲染状态 glyph；E 优先，`!current && offered`
+  才画 B。`kind==='tank'/'pet'` 沿用既有 N/B。
+- glyph 直接复用既有共享 `HomeRoleRowStatusBadge` 与 `SmallHT` 资源（E=`e.tga` /
+  `ui/regions/11/9.png`，B=`b.tga` / `ui/regions/11/8.png`），几何沿用 Trade 作用域
+  `point (5,8)`、14×14；`installed`/`offered` refs 已在共享 consumer 中存在，无新增 mapping。
+- 生产入口为 `trade-source-page.tsx` 与 `trade-candidate-row-content.tsx`。必要依赖：
   `apps/shared/combat/inventory-query.ts`（`classifyInventoryCategory` 与 per-role 等价）、
   `apps/server/src/accounts/trade.ts`/`profile/equipment.ts`/`profile/cosmetics.ts`
   （`profile.bytes` 装备槽）、`apps/shared/protocols/PtlTrade.ts`。
