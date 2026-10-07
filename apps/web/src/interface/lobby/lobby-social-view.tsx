@@ -9,8 +9,8 @@ import {useSourceUi} from './source-react';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {SourceButton} from '../resources/source-button';
 import {SourceStaticImage} from '../resources/source-static-image';
-import type {FriendRecord} from '../../../shared/protocols/PtlFriends';
-import type {ResPlayerSearch} from '../../../shared/protocols/PtlPlayerSearch';
+import type {FriendRecord} from '../../../../shared/protocols/PtlFriends';
+import type {ResPlayerSearch} from '../../../../shared/protocols/PtlPlayerSearch';
 
 type SelectedPlayer = {accountId: string; name: string; online?: boolean; inRoom?: boolean;
   title?: FriendRecord['title']; fromSearch?: boolean};

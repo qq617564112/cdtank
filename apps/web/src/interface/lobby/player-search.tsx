@@ -1,7 +1,7 @@
 import './player-search.css';
-import {useEffect, useRef, useState, type FormEvent} from 'react';
-import type {FriendRecord} from '../../../shared/protocols/PtlFriends';
-import type {ResPlayerSearch} from '../../../shared/protocols/PtlPlayerSearch';
+import {useEffect, useRef, useState, type FormEvent, type KeyboardEvent} from 'react';
+import type {FriendRecord} from '../../../../shared/protocols/PtlFriends';
+import type {ResPlayerSearch} from '../../../../shared/protocols/PtlPlayerSearch';
 
 export interface PlayerSearchViewProps {
   open: boolean;
@@ -68,27 +68,32 @@ function PlayerSearchSession({query, onSelect, onClose}: PlayerSearchViewProps) 
     submit();
   }
   const close = () => {if (!pending && !inFlight.current) onClose();};
-  return <dialog ref={dialog} data-player-search="" aria-label="查找玩家" aria-busy={pending}
-    onCancel={event => {event.preventDefault(); close();}}
-    onKeyDown={event => {
-      event.stopPropagation();
-      if (event.key !== 'Escape') return;
+  function handleKeyDown(event: KeyboardEvent<HTMLElement>): void {
+    event.stopPropagation();
+    if (event.key === 'Escape') {
       event.preventDefault();
       if (!event.nativeEvent.isComposing && !composing.current && !pending) escapePending.current = true;
-    }} onKeyUp={event => {
-      event.stopPropagation();
-      if (event.key === 'Escape' && escapePending.current) {escapePending.current = false; close();}
-    }}>
+      return;
+    }
+    if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current)) event.preventDefault();
+  }
+  function handleKeyUp(event: KeyboardEvent<HTMLElement>): void {
+    event.stopPropagation();
+    if (event.key === 'Escape' && escapePending.current) {escapePending.current = false; close();}
+  }
+  return <dialog ref={dialog} data-player-search="" aria-label="查找玩家" aria-busy={pending}
+    onCancel={event => {
+      event.preventDefault();
+      if (!composing.current && !pending) escapePending.current = true;
+    }}
+    onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}>
     <div className="player-search-stage">
       <form className="player-search-form" onSubmit={onSubmit}>
         <label className="player-search-label" htmlFor="player-search-name">玩家昵称</label>
         <input ref={input} id="player-search-name" className="player-search-input" type="text" name="name"
           autoComplete="off" autoCorrect="off" spellCheck={false} value={name}
           onChange={event => setName(event.target.value)}
-          onKeyDown={event => {
-            event.stopPropagation();
-            if (event.key === 'Enter' && (event.nativeEvent.isComposing || composing.current)) event.preventDefault();
-          }} onKeyUp={event => event.stopPropagation()}
+          onKeyDown={handleKeyDown} onKeyUp={handleKeyUp}
           onCompositionStart={() => {composing.current = true;}}
           onCompositionEnd={() => {composing.current = false;}}/>
         <button className="player-search-submit" type="submit" disabled={pending}>查找</button>
