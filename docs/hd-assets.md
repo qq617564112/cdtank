@@ -18,7 +18,7 @@ UI 按原图集家族分组。32 像素以内的细碎素材最多排 8×8，64 
 
 加载页的十份进度文字纳入 UI 拼图请求，以原文字颜色和真实透明笔画铺在黑底上；返回笔画生成高清透明遮罩，安装器按清单的 `installPath` 替换本地图片。
 
-含多角色的五张加载背景标记为 `loading-layout`，保留独立的拆层与布局交付路径，不纳入整图接口请求。
+含多角色的五张加载背景标记为 `loading-layout`，由 `scripts/prepare-hd-loading.py` 拆为 5 份底图与 62 份单角色图层。角色区域按 `scripts/hd-loading-layers.json` 的坐标隔离，底图先移除角色；每个角色图层单独请求，并保留原裁切与遮挡轮廓。全部图层作为 `loading` 组加入同一生成队列，完成后自动组装共用素材的 4:3、16:9 背景及原加载图集。
 
 原 UI 图集从已经完成的高清区域按原始坐标重新组装，避免把多个坦克或宠物作为整幅图集交给接口；其它空白区域沿用原布局。图集组装使用 `scripts/assemble-hd-ui-atlases.py`，输出同样纳入安装清单。
 
@@ -36,6 +36,7 @@ UI 按原图集家族分组。32 像素以内的细碎素材最多排 8×8，64 
 - `art/hd-assets/original/` 与 `original-models/`：原图与模型备份。
 - `art/hd-assets/previews/`：使用同一份原模型离线绘制的原图与高清图对照。
 - `art/hd-ui/png/lobby/`：共用顶栏、底部剪影、目录板与连续玩家列表底图，以及本地组装的 4:3、16:9 大厅背景。
+- `art/hd-ui/loading/`：加载插画图层坐标及单角色请求预览；完成的两种比例背景安装到 `hd-ui/loading/`。
 - `art/hd-local-ui/`：本地图标和标志的原图、两份请求输入及交付。标志单独请求，光标与应用图标共用两格图集。
 
 ## 使用
@@ -50,6 +51,8 @@ python3 scripts/generate-hd-assets.py generate --groups tanks pets --concurrency
 python3 scripts/generate-hd-assets.py generate --groups map-0001 --concurrency 4
 python3 scripts/generate-hd-local-ui.py run
 python3 scripts/generate-hd-ui-layouts.py run --group entry
+python3 scripts/prepare-hd-loading.py prepare
+python3 scripts/prepare-hd-loading.py assemble
 npm run assets:hd
 ```
 

@@ -206,7 +206,10 @@ Repaint crisp natural contours and restrained fine material detail in the origin
                                 'output': str((folder / 'output-1.png').relative_to(ROOT)),
                                 'ratio': '1:1' if columns == rows else f'{columns}:{rows}'})
     save(ART / 'plan.json', {'baseUrl': 'https://gptimg.cloyd.fun/', 'model': 'gpt-image-2', 'groups': ordered_groups, 'batches': batches})
-    print(f'{len(textures)} paths, {len(unique)} unique textures, {len(batches)} requests', flush=True)
+    subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'prepare'], check=True)
+    textures = document(ART / 'inventory.json')['textures']
+    batches = document(ART / 'plan.json')['batches']
+    print(f"{len(textures)} paths, {len({entry['canonical'] for entry in textures})} unique textures, {len(batches)} requests", flush=True)
     print(json.dumps(dict(Counter(b['group'] for b in batches)), ensure_ascii=False), flush=True)
 
 
@@ -434,6 +437,8 @@ def main():
             if args.groups and group not in args.groups:
                 continue
             generate([group], args.concurrency, args.limit, args.retry_delay)
+            if group == 'loading':
+                subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'assemble'], check=True)
             if group == 'ui':
                 subprocess.run([sys.executable, str(ROOT / 'scripts/assemble-hd-ui-atlases.py')], check=True)
             inventory = document(ART / 'inventory.json')
