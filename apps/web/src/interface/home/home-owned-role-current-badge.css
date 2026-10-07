@@ -1,0 +1,11 @@
+#home-roles .home-owned-role-current-badge {
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  width: 14px;
+  height: 14px;
+  background-position: left top;
+  background-size: 14px 14px;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}

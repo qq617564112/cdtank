@@ -40,8 +40,8 @@ export function HomeOwnedRoleSourceList({ui, kind, entries, selected, current, b
           if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
         }}>
         {kind === 'tank' ? <HomeOwnedTankRowContent ui={ui} name={entry.name} tankId={entry.tankId}
-          tankType={entry.tankType} durationMinutes={entry.durationMinutes}/> : <HomeOwnedPetRowContent ui={ui} name={entry.name}
-          petId={entry.petId} petType={entry.petType} petSize={entry.petSize}/>}
+          tankType={entry.tankType} durationMinutes={entry.durationMinutes} current={current === entry.instanceId}/> : <HomeOwnedPetRowContent ui={ui} name={entry.name}
+          petId={entry.petId} petType={entry.petType} petSize={entry.petSize} current={current === entry.instanceId}/>}
       </button>)}
     </div>
     <HomeOwnedRoleListScrollbar list={list} ui={ui} properties={control.properties}/>
