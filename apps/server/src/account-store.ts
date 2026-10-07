@@ -89,6 +89,7 @@ import {
 import {readPersistedAccountGrowth, readPersistedPlayerSummary} from './accounts/player-profile';
 import type {ResGmSupport} from '../../shared/protocols/PtlGmSupport';
 import {GmSupportStore} from './support/gm-support';
+import {FamilyStore} from './social/family';
 
 export interface AccountSession {accountId: string; token: string;}
 export interface AccountInventory {records: InventoryWireRecord[]; hotkeys: number[];}
@@ -121,6 +122,7 @@ export class AccountStore {
   private readonly credentials: AccountCredentials;
   private readonly groundItems: GroundItemAccountRuntime;
   private readonly gmSupport: GmSupportStore;
+  private readonly families: FamilyStore;
   constructor(path: string) {
     this.database = new DatabaseSync(path);
     // Append commits instead of rewriting the rollback journal during concurrent room settlements.
@@ -162,9 +164,30 @@ export class AccountStore {
     this.credentials = new AccountCredentials(this.database, token => this.open(token));
     this.groundItems = new GroundItemAccountRuntime(this.database);
     this.gmSupport = new GmSupportStore(this.database);
+    this.families = new FamilyStore(this.database);
   }
 
   authenticate(request: ReqAccount): ResAccount {return this.credentials.authenticate(request);}
+
+  family(accountId: string): {id: string; name: string} | undefined {
+    return this.families.family(accountId);
+  }
+
+  familyAccounts(familyId: string): string[] {
+    return this.families.familyAccounts(familyId);
+  }
+
+  assignFamily(accountId: string, familyId: string, familyName: string): void {
+    this.families.assign(accountId, familyId, familyName);
+  }
+
+  removeFamily(accountId: string): boolean {
+    return this.families.remove(accountId);
+  }
+
+  listFamilies(familyId?: string): Array<{accountId: string; familyId: string; familyName: string; assignedAt: number}> {
+    return this.families.list(familyId);
+  }
 
   /** Store an authenticated player's question for subsequent operator handling. */
   submitGmQuestion(accountId: string, roomId: string, playerId: string, text: string): void {

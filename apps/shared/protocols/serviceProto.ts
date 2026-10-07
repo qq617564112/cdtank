@@ -1,5 +1,6 @@
 import { ServiceProto } from 'tsrpc-proto';
 import { MsgChat } from './MsgChat';
+import { MsgFamilyChat } from './MsgFamilyChat';
 import { MsgFriendChat } from './MsgFriendChat';
 import { MsgGmReply } from './MsgGmReply';
 import { MsgLobbyChat } from './MsgLobbyChat';
@@ -24,6 +25,8 @@ import { ReqKickRoomPlayer, ResKickRoomPlayer } from './PtlKickRoomPlayer';
 import { ReqDisplayName, ResDisplayName } from './PtlDisplayName';
 import { ReqEquipment, ResEquipment } from './PtlEquipment';
 import { ReqFriendChat, ResFriendChat } from './PtlFriendChat';
+import { ReqFamily, ResFamily } from './PtlFamily';
+import { ReqFamilyChat, ResFamilyChat } from './PtlFamilyChat';
 import { ReqGmSupport, ResGmSupport } from './PtlGmSupport';
 import { ReqFriends, ResFriends } from './PtlFriends';
 import { ReqHistory, ResHistory } from './PtlHistory';
@@ -110,6 +113,14 @@ export interface ServiceType {
         "FriendChat": {
             req: ReqFriendChat,
             res: ResFriendChat
+        },
+        "Family": {
+            req: ReqFamily,
+            res: ResFamily
+        },
+        "FamilyChat": {
+            req: ReqFamilyChat,
+            res: ResFamilyChat
         },
         "GmSupport": {
             req: ReqGmSupport,
@@ -258,6 +269,7 @@ export interface ServiceType {
     },
     msg: {
         "Chat": MsgChat,
+        "FamilyChat": MsgFamilyChat,
         "FriendChat": MsgFriendChat,
         "GmReply": MsgGmReply,
         "LobbyChat": MsgLobbyChat,
@@ -274,7 +286,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 115,
+    "version": 116,
     "services": [
         {
             "id": 55,
@@ -580,6 +592,21 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "id": 60,
             "name": "GmReply",
             "type": "msg"
+        },
+        {
+            "id": 61,
+            "name": "Family",
+            "type": "api"
+        },
+        {
+            "id": 62,
+            "name": "FamilyChat",
+            "type": "api"
+        },
+        {
+            "id": 63,
+            "name": "FamilyChat",
+            "type": "msg"
         }
     ],
     "types": {
@@ -650,6 +677,76 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 },
                 {
                     "id": 6,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "MsgFamilyChat/MsgFamilyChat": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "id",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "accountId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "senderName",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "familyId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "familyName",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "text",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "message",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "roomId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 8,
                     "name": "round",
                     "type": {
                         "type": "Number"
@@ -5270,6 +5367,93 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Reference",
                         "target": "MsgFriendChat/MsgFriendChat"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "recipientCount",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "PtlFamily/ReqFamily": {
+            "type": "Interface"
+        },
+        "PtlFamily/ResFamily": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "accountId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "family",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "id",
+                                "type": {
+                                    "type": "String"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "name",
+                                "type": {
+                                    "type": "String"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlFamilyChat/ReqFamilyChat": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "text",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "roomId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 2,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlFamilyChat/ResFamilyChat": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "message",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgFamilyChat/MsgFamilyChat"
                     }
                 },
                 {

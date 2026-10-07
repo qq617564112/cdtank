@@ -27,6 +27,8 @@ import {dirname} from 'node:path';
 import {serverRuntimeConfig} from './runtime/config';
 import {accountMatchHistory} from './settlement/history';
 import {registerGmSupportApi} from './support/gm-support-api';
+import {registerFamilyApi} from './social/family';
+import {registerFamilyChatApi} from './social/family-chat';
 
 const runtime = serverRuntimeConfig();
 const accountPath = runtime.accountPath;
@@ -98,6 +100,8 @@ registerBlacklistApi(server, accounts, accountByConnection, sessionByConnection)
 registerPlayerProfileApi(server, accounts, accountByConnection);
 registerFriendChatApi(server, accounts, world, accountByConnection, sessionByConnection);
 registerGmSupportApi(server, accounts, accountByConnection);
+registerFamilyApi(server, accounts, accountByConnection);
+registerFamilyChatApi(server, accounts, world, accountByConnection, sessionByConnection);
 registerLobbyPresenceApi(server, accountByConnection, sessionByConnection,
   accountId => accounts.displayName(accountId), accountId => accounts.currentTitle(accountId));
 startWorldTicks(world, TICK_RATE, transport, () => world.publishReceipts(history.flush()));
