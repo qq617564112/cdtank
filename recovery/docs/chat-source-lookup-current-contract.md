@@ -1,13 +1,13 @@
 # 收到聊天 emote/image 名称查询：来源事实与当前 Web 采用
 
-状态：原 emote 精确名称的成功/失败执行向量未取得；来源事实取自既有 disasm/source，不新增原执行向量。
+状态：精确名称采用生产接线已完成；原 manager 名称向量及异常外层、新受影响实测待完成。来源事实取自既有 disasm/source，不新增原执行向量。
 
 ## 结论
 
-- 原 `SequenceImageManager::getSequenceImage(name)` 以精确字符串为键，键为 `001`–`030`。命中从节点 `+0xa4` 取原序列指针；未命中构造并抛出 `UnknownObjectException`。缺键在 `formatText`/`onTextChanged`/setter 之后的显示无直接来源。
-- 当前 Web emote consumer 未做精确同名查找：`parseChatSourceMarkup` 用 `Number(name)` 转整数后按 id 取序列，接受 `1`/`01`/`1.0`/`0x1`/`1e0`/含空白等数字等价别名，与原精确键不符。该行为可经正常收到文本/标签到达，是真实未接线缺口。
-- 当前 Web image consumer 已做精确同名查找：`ChatImageCatalog.image(set,name)` 对 imageset 名与 image 名做 Map 精确 get。缺资源回退为现有 Web 字面策略，原异常跨调用者显示保持未取得。
-- E-X-U 仍有真实 production 缺口（emote 精确名称）；E-X-I 成功资源业务保持已交付、缺资源显示保持父门禁，均不虚构原异常显示。
+- 原 `SequenceImageManager::getSequenceImage(name)` 以精确字符串为键，键为 `001`–`030`。命中从节点 `+0xa4` 取原序列指针；未命中构造并抛出 `UnknownObjectException`。
+- 当前 Web emote producer → parser 已按原精确名称采用：只有 `name` 严格等于 id 的 `001`–`030` 三位 canonical 名称才进入序列/布局/动画/清理链；缺 name 和未知/近似名一起走既有 `unsupported-source` 字面回退。
+- 当前 Web image consumer 保持精确同名查找：`ChatImageCatalog.image(set,name)` 对 imageset 名与 image 名做 Map 精确 get。成功资源业务保持已交付，缺资源显示保持父门禁。
+- 原异常跨 `formatText`/`onTextChanged`/setter 的外层显示未取得，Web 采用 `unsupported-source` 字面回退不作为原行为声明。
 
 ## 原来源事实
 
@@ -35,35 +35,29 @@
 ### 路径
 
 - producer/parser：`chatSourceMarkup()`（glyph 展开）→ `parseChatSourceMarkup()`（内嵌 TinyXML 等价解析）。
-- emote 名称→序列：`parseChatSourceMarkup` emote 分支 `Number(node.attributes.name)` → 整数 → `chat-emotes.ts` `this.sequences?.get(item.emoteId)`；序列目录 `chat-emote-sequences.json` 由 `loadChatEmoteSequences` 按 id 建 map，name 仅做 `001`–`030` 校验。
+- emote 名称→序列：`chatSourceMarkup()` 对内部表情码点展开固定三位 `<emote name=001 …/>`；`parseChatSourceMarkup` emote 分支确认 `Number(name)` 为整数、落在 `1`–`EMOTE_COUNT`，且 `name` 严格等于 `String(id).padStart(3,'0')`，再按 id 交给 `chat-emotes.ts` 的 `this.sequences?.get(item.emoteId)`；序列目录 `chat-emote-sequences.json` 由 `loadChatEmoteSequences` 按 id 建 map。
 - image 名称→资源：`parseChatSourceMarkup` image 分支 `resolveImage(set,name)` → `ChatImageCatalog.image` → 对 set Name / image Name 精确 Map get。
 - layout：`chat-rich-text.ts` `layoutChatRichText`；animation：`chat-emote-animation.ts` `ChatEmoteSequence` 与 `chat-emotes.ts` `tick/paint`；cleanup：`ChatEmotes.clear/remove` 与 `loadChatEmoteSequences` 缓存。
 
 ### 精确性
 
 - image：精确同名，已对齐原 getImageset/getImage 精确键。
-- emote：非精确。`name=001` 正确；`name=1`/`01`/`1.0`/`0x1`/`1e0`/含空白 被 `Number()` 归一到 1，Web 渲染 001，而原精确键 `001`–`030` 不会命中。
-- 缺 name 或超范围（如 `999`）在 Web 记为 `unsupported-source`，整条字面回退（现有 Web 政策）；原精确查找的异常显示未被采用。
+- emote：精确名称。`name=001`–`030` 正确；`1`/`01`/`1.0`/`0x1`/`1e0`/含空白数字不再等价命中，缺 name/未知/近似名一起在 Web 记为 `unsupported-source`，整条字面回退（现有 Web 政策）；原精确查找的异常显示未被采用。
+- `invalidsyntax` 既有空 items / flags 语义保持；合法 glyph、typed token、`001`–`030` provider、颜色、layout、identity/rawtext、字体与资源 owner cleanup 行为保持。
 
-## 尚未接线的完整正常场景
+## 采用后的完整正常场景
 
 peer 在正常收到文本中发送字面 `A<emote name=01/>B`（或 `name=1`/`name=1.0`/`name=0x1`/`name=1e0`）：
 
 - 原：name 非 `001`–`030` 精确键 → getSequenceImage 未命中 → 构造抛 `UnknownObjectException`（跨调用者显示未取得）。
-- 当前 Web：`Number('01')=1` → 渲染 001 序列。
+- 当前 Web：已采用精确名称比对，不命中 → `unsupported-source` 字面回退，不渲染 001 序列。
 
 精确 `001`–`030` 的双端渲染/动画/清理保持已交付，不重做；image 精确同名已交付。
-
-## 下批 owned/deps
-
-- owned：`apps/web/src/interface/battle/chat-source-markup.ts`（emote 分支改为对已恢复精确名称集合比对，`001`–`030` 之外不作数字等价回退）；必要时 `apps/web/src/interface/battle/chat-emotes.ts`（传入精确 name→sequence 解析）、`apps/web/src/interface/battle/chat-emote-animation.ts`（按 name 暴露序列）。
-- deps（只读）：`recovery/docs/chat-sequence-lookup-source.md`、`recovery/docs/chat-emote-render-source.md`、`recovery/output/chat-emote-render-source.json`、`recovery/output/web-assets/chat-emote-sequences.json`。
-- 不改：`chat-image-catalog.ts`（已精确）、`chat-rich-text.ts` layout、`chat-emote-colour.ts`、`source-ui-*`，以及消息身份/rawtext/用户字体。
-- 不造 cache/error framework/wrapper/generic 执行器；不新增语法。
 
 ## Known Issues
 
 - 原 `UnknownObjectException` 在 `formatText`/`onTextChanged`/setter 之后的显示未取得；Web 保持既有 `unsupported-source` 字面回退，不冒充原行为。
 - 原 SequenceImageManager 精确名称成功/失败执行向量未取得。
+- 精确名称采用后的原名称/parser 对照、受影响双端消息、动画与高清验收未实测。
 - server 原来源缺时按客户端发送/接收规则推采用；本范围客户端异常显示来源亦缺，不作原恢复声明。
 - 原消息 authority/identity/rawtext、已接颜色与 geometry、用户字体不改；未取得 source/实测/HD 项保持未完成。
