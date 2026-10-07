@@ -160,16 +160,32 @@ def assemble(root):
     pages = json.loads(manifest.read_text())
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
     entries = {entry['source']: entry for entry in inventory['textures']}
+    batches = {batch['id']: batch for batch in json.loads(
+        (root / 'art/hd-assets/plan.json').read_text())['batches']}
     completed = 0
     for page in pages:
         if any(not (root / layer['png']).is_file() for layer in page['layers']):
             continue
-        canvas = Image.open(root / page['layers'][0]['png']).convert('RGBA')
+        entry = entries[page['source']]
+        original = Image.open(root / entry['original']).convert('RGBA')
+        background = batches[f'ui-banner-{Path(page["source"]).stem}-background']
+        generated = Image.open(root / background['output']).convert('RGB')
+        pixels = np.asarray(generated).astype(np.int16)
+        blank = np.median(pixels[-32:].reshape(-1, 3), axis=0)
+        # The source banners have an opaque 512x80 strip above transparent padding.
+        artwork_rows = np.flatnonzero((np.max(np.abs(pixels - blank), axis=2) > 32).mean(axis=1) > .02)
+        if not len(artwork_rows):
+            raise ValueError(f'Banner background has no visible artwork: {page["source"]}')
+        generated = generated.crop((0, int(artwork_rows[0]), generated.width, int(artwork_rows[-1]) + 1))
+        left, top, right, bottom = [value * DENSITY for value in original.getchannel('A').getbbox()]
+        canvas = Image.new('RGBA', tuple(value * DENSITY for value in original.size))
+        canvas.paste(generated.resize((right - left, bottom - top), Image.Resampling.LANCZOS), (left, top))
         # Earlier masks own overlapping pixels in the original illustration.
         for layer in page['layers'][1:]:
             patch = Image.open(root / layer['png']).convert('RGBA')
             x, y = layer['position']
             canvas.alpha_composite(patch, (x * DENSITY, y * DENSITY))
+        canvas.putalpha(original.getchannel('A').resize(canvas.size, Image.Resampling.NEAREST))
         destination = root / entries[page['source']]['png']
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_suffix('.assembling.tmp')
