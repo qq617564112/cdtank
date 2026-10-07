@@ -26,6 +26,7 @@ import {mkdirSync} from 'node:fs';
 import {dirname} from 'node:path';
 import {serverRuntimeConfig} from './runtime/config';
 import {accountMatchHistory} from './settlement/history';
+import {registerGmSupportApi} from './support/gm-support-api';
 
 const runtime = serverRuntimeConfig();
 const accountPath = runtime.accountPath;
@@ -96,6 +97,7 @@ registerFriendsApi(server, accounts, accountByConnection, sessionByConnection);
 registerBlacklistApi(server, accounts, accountByConnection, sessionByConnection);
 registerPlayerProfileApi(server, accounts, accountByConnection);
 registerFriendChatApi(server, accounts, world, accountByConnection, sessionByConnection);
+registerGmSupportApi(server, accounts, accountByConnection);
 registerLobbyPresenceApi(server, accountByConnection, sessionByConnection,
   accountId => accounts.displayName(accountId), accountId => accounts.currentTitle(accountId));
 startWorldTicks(world, TICK_RATE, transport, () => world.publishReceipts(history.flush()));

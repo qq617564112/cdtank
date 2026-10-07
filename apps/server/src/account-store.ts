@@ -87,6 +87,8 @@ import {
   type GroundItemDiscardResult,
 } from './accounts/ground-items';
 import {readPersistedAccountGrowth, readPersistedPlayerSummary} from './accounts/player-profile';
+import type {ResGmSupport} from '../../shared/protocols/PtlGmSupport';
+import {GmSupportStore} from './support/gm-support';
 
 export interface AccountSession {accountId: string; token: string;}
 export interface AccountInventory {records: InventoryWireRecord[]; hotkeys: number[];}
@@ -118,6 +120,7 @@ export class AccountStore {
   private readonly accountBlacklist: AccountBlacklist;
   private readonly credentials: AccountCredentials;
   private readonly groundItems: GroundItemAccountRuntime;
+  private readonly gmSupport: GmSupportStore;
   constructor(path: string) {
     this.database = new DatabaseSync(path);
     // Append commits instead of rewriting the rollback journal during concurrent room settlements.
@@ -132,6 +135,9 @@ export class AccountStore {
         instance_id INTEGER NOT NULL, record TEXT NOT NULL, PRIMARY KEY(account_id, kind, instance_id));
       CREATE TABLE IF NOT EXISTS role_profiles (account_id TEXT PRIMARY KEY,
         payload BLOB NOT NULL, strings TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS gm_requests (id INTEGER PRIMARY KEY,
+        account_id TEXT NOT NULL, room_id TEXT NOT NULL, player_id TEXT NOT NULL,
+        text TEXT NOT NULL, created_at INTEGER NOT NULL);
     `);
     initializeMaintenanceClocks(this.database);
     this.matchHistory = new AccountHistory(this.database);
@@ -155,9 +161,21 @@ export class AccountStore {
     this.accountBlacklist = new AccountBlacklist(this.database);
     this.credentials = new AccountCredentials(this.database, token => this.open(token));
     this.groundItems = new GroundItemAccountRuntime(this.database);
+    this.gmSupport = new GmSupportStore(this.database);
   }
 
   authenticate(request: ReqAccount): ResAccount {return this.credentials.authenticate(request);}
+
+  /** Store an authenticated player's question for subsequent operator handling. */
+  submitGmQuestion(accountId: string, roomId: string, playerId: string, text: string): void {
+    this.database.prepare(`INSERT INTO gm_requests
+      (account_id, room_id, player_id, text, created_at) VALUES (?, ?, ?, ?, ?)`)
+      .run(accountId, roomId, playerId, text, Date.now());
+  }
+
+  gmSupportReplies(accountId: string, afterId = 0): ResGmSupport {
+    return this.gmSupport.replies(accountId, afterId);
+  }
 
   blacklist(accountId: string, request: ReqBlacklist): string[] {
     return this.accountBlacklist.request(accountId, request);

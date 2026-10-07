@@ -1,6 +1,7 @@
 import { ServiceProto } from 'tsrpc-proto';
 import { MsgChat } from './MsgChat';
 import { MsgFriendChat } from './MsgFriendChat';
+import { MsgGmReply } from './MsgGmReply';
 import { MsgLobbyChat } from './MsgLobbyChat';
 import { MsgLobbyWhisper } from './MsgLobbyWhisper';
 import { MsgPlayerAction } from './MsgPlayerAction';
@@ -23,6 +24,7 @@ import { ReqKickRoomPlayer, ResKickRoomPlayer } from './PtlKickRoomPlayer';
 import { ReqDisplayName, ResDisplayName } from './PtlDisplayName';
 import { ReqEquipment, ResEquipment } from './PtlEquipment';
 import { ReqFriendChat, ResFriendChat } from './PtlFriendChat';
+import { ReqGmSupport, ResGmSupport } from './PtlGmSupport';
 import { ReqFriends, ResFriends } from './PtlFriends';
 import { ReqHistory, ResHistory } from './PtlHistory';
 import { ReqInventory, ResInventory } from './PtlInventory';
@@ -108,6 +110,10 @@ export interface ServiceType {
         "FriendChat": {
             req: ReqFriendChat,
             res: ResFriendChat
+        },
+        "GmSupport": {
+            req: ReqGmSupport,
+            res: ResGmSupport
         },
         "Friends": {
             req: ReqFriends,
@@ -253,6 +259,7 @@ export interface ServiceType {
     msg: {
         "Chat": MsgChat,
         "FriendChat": MsgFriendChat,
+        "GmReply": MsgGmReply,
         "LobbyChat": MsgLobbyChat,
         "LobbyWhisper": MsgLobbyWhisper,
         "PlayerAction": MsgPlayerAction,
@@ -267,7 +274,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 114,
+    "version": 115,
     "services": [
         {
             "id": 55,
@@ -563,6 +570,16 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "id": 58,
             "name": "ValuableItemSale",
             "type": "api"
+        },
+        {
+            "id": 59,
+            "name": "GmSupport",
+            "type": "api"
+        },
+        {
+            "id": 60,
+            "name": "GmReply",
+            "type": "msg"
         }
     ],
     "types": {
@@ -638,6 +655,26 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "type": "Number"
                     },
                     "optional": true
+                }
+            ]
+        },
+        "MsgGmReply/MsgGmReply": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "accountId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "reply",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlGmSupport/GmSupportReply"
+                    }
                 }
             ]
         },
@@ -5379,6 +5416,103 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "type": "Number"
                     },
                     "optional": true
+                }
+            ]
+        },
+        "PtlGmSupport/GmSupportReply": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "id",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "requestId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "question",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "requestedAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "text",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "repliedAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "PtlGmSupport/ReqGmSupport": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "afterId",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlGmSupport/ResGmSupport": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "accountId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "replies",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "PtlGmSupport/GmSupportReply"
+                        }
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "nextAfterId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "hasMore",
+                    "type": {
+                        "type": "Boolean"
+                    }
                 }
             ]
         },
