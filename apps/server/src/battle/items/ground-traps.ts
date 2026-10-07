@@ -93,6 +93,7 @@ export function advanceGroundTraps(room: RoomState, now: number, events: MsgRoom
     if (!rule || rule.itemTableId === 3001) return false;
     if (now >= trap.expiresAt || !room.players.has(trap.ownerId)) return false;
     if (trap.itemTableId === 3007 && 'move' in rule) {
+      if (!room.players.get(trap.ownerId)?.alive) return false;
       for (const target of room.players.values()) {
         if (target.id === trap.ownerId || !target.alive || target.combat.status !== 2
             || ([1, 2, 3].includes(room.mode) && target.team === trap.team)
