@@ -18,7 +18,9 @@ owner 仅由当前连接认证账户决定。target 必须是已经建立的账�
 
 LobbySocialView 拥有页签与资料选择，PlayerInfoView 拥有窗口、源资源、键盘及焦点；Friends 客户端 store 拥有权威列表、写入 pending 和请求代次，GameConnection 拥有唯一认证连接。迟到查询不覆盖较新的写入，拒绝保留已确认列表，断线清状态并隔离旧响应。大厅独立查询，进入房间暂停、离开页面清除计时器；战斗逐帧快照不驱动目录。
 
-原资料未知称号、家族、积分、房号及描述等保持空白；统计子页附着、QQ、黑名单与交易业务仍属未完成父项。页面实际验收归M5-13-R-PAGE，好友闭环归M6-09-B；客户端请求隔离证据见friends-client-rules.log，正式网页与持久证据见对应任务和friends-browser.md。
+大厅另有 Web 查找入口：`查找玩家` 提交精确昵称经 `PlayerSearch` 列出候选，选中候选打开同一 `PlayerProfile` 资料页，其 Add/Remove Friend、Blacklist、Exchange 分别接既有 Friends/Blacklist/Trade 业务；该入口为 Web 重建，未恢复原查找界面或原通信字段，实际验收归 M6-09-FIND。
+
+原资料公开 profile 的称号与积分已按选中目标映射，未知时保持空白；家族、房号及描述保持空白。统计子页附着与 QQ 仍缺；黑名单与交易已由既有 `apps/server/src/social/blacklist.ts`、`apps/server/src/accounts/social/blacklist.ts`、`PtlBlacklist` 与 `apps/server/src/social/trade.ts`、`apps/server/src/accounts/trade.ts`、`PtlTrade` 承载。页面实际验收归M5-13-R-PAGE，好友闭环归M6-09-B；客户端请求隔离证据见friends-client-rules.log，正式网页与持久证据见对应任务和friends-browser.md。
 
 ## 原客户端依据
 
