@@ -77,7 +77,7 @@ export function LobbyChatView({chat, presence}: {chat: LobbyChat;
       </>}
     </>}
     <form onSubmit={event => {event.preventDefault(); if (!composing.current) void chat.sendDraft();}}>
-      <input ref={input} {...(ui && layout ? sourceProps(ui, layout, 'chat.xml', state.channel !== 'whisper' ? 'edtNormalUserInput' : 'edtIntimateChatInput') : {})} data-lobby-chat-input="" aria-label={state.channel === 'friend' ? '好友聊天内容' : state.channel === 'public' ? '大厅聊天内容' : '密语内容'} autoComplete="off" maxLength={72}
+      <input ref={input} {...(ui && layout ? sourceProps(ui, layout, 'chat.xml', state.channel !== 'whisper' ? 'edtNormalUserInput' : 'edtIntimateChatInput') : {})} data-lobby-chat-input="" aria-label={state.channel === 'friend' ? '好友聊天内容' : state.channel === 'public' ? '大厅聊天内容' : state.channel === 'gm' ? 'GM问题内容' : '密语内容'} autoComplete="off" maxLength={72}
         value={state.draft} onChange={event => chat.setDraft(event.currentTarget.value)}
         onCompositionStart={() => {composing.current = true;}}
         onCompositionEnd={() => {composing.current = false;}}

@@ -2,21 +2,29 @@ import type {GameConnection} from './game-connection';
 import type {MsgLobbyWhisper} from '../../../shared/protocols/MsgLobbyWhisper';
 import type {MsgLobbyChat} from '../../../shared/protocols/MsgLobbyChat';
 
+type LobbyChatMessage =
+  | (MsgLobbyChat & {channel: 'public'})
+  | (MsgLobbyWhisper & {channel: 'whisper'})
+  | (import('../../../shared/protocols/MsgFriendChat').MsgFriendChat & {channel: 'friend'})
+  | (import('../../../shared/protocols/MsgRoomWhisper').MsgRoomWhisper & {channel: 'room-whisper'})
+  | {id: number; accountId: string; message: string; channel: 'gm'};
+
 interface LobbyChatState {
   generation: number;
   inRoom: boolean;
   draft: string;
-  channel: 'public' | 'whisper' | 'friend';
+  channel: 'public' | 'whisper' | 'friend' | 'gm';
   targetName: string;
   targetAccountId?: string;
   pending: boolean;
   status: string;
-  messages: readonly ((MsgLobbyChat | MsgLobbyWhisper | import('../../../shared/protocols/MsgFriendChat').MsgFriendChat | import('../../../shared/protocols/MsgRoomWhisper').MsgRoomWhisper) & {channel: 'public' | 'whisper' | 'room-whisper' | 'friend'})[];
+  messages: readonly LobbyChatMessage[];
 }
 
 /** Session-only lobby messages on the existing authenticated transport. */
 export class LobbyChat {
   private state: LobbyChatState = {generation: 0, inRoom: false, draft: '', channel: 'public', targetName: '', pending: false, status: '', messages: []};
+  private localMessageId = -1;
   private readonly listeners = new Set<() => void>();
   readonly getSnapshot = (): LobbyChatState => this.state;
   readonly subscribe = (listener: () => void): (() => void) => {
@@ -62,7 +70,7 @@ export class LobbyChat {
 
   setDraft(draft: string): void {this.update({draft});}
 
-  setChannel(channel: 'public' | 'whisper' | 'friend'): void {
+  setChannel(channel: 'public' | 'whisper' | 'friend' | 'gm'): void {
     if (!this.state.pending) this.update({channel, status: ''});
   }
 
@@ -101,6 +109,17 @@ export class LobbyChat {
     try {
       await this.connection.ensureConnected();
       if (generation !== this.state.generation) return;
+      if (channel === 'gm') {
+        const result = await this.connection.client.callApi('RoomChat', {text, channel: 6});
+        if (generation !== this.state.generation) return;
+        if (!result.isSucc) throw new Error(result.err.message);
+        const accountId = this.connection.accountContext.identity?.accountId ?? '';
+        const question = {id: this.localMessageId--, accountId, message: `[GM] ${text.trim()}`, channel: 'gm' as const};
+        const reply = {id: this.localMessageId--, accountId, message: `[系统] ${result.res.message}`, channel: 'gm' as const};
+        this.update({messages: [...this.state.messages, question, reply].slice(-100),
+          draft: this.state.draft === text ? '' : this.state.draft, status: ''});
+        return;
+      }
       const result = channel === 'public'
         ? await this.connection.client.callApi('LobbyChat', {text})
         : channel === 'friend' ? await this.connection.client.callApi('FriendChat', {text})
