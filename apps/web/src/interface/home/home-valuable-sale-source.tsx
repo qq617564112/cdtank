@@ -1,26 +1,42 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {ReqValuableItemSale, ResValuableItemSale} from '../../../../shared/protocols/PtlValuableItemSale';
 import type {Battle} from '../../match/battle';
+import type {AccountContext} from '../../network/accounts';
 import {createRequestId} from '../../network/request-id';
 import {InventorySaleQuantityDialog} from '../account/stack-item-sale-source';
-import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
+import type {HomeSourceUi} from '../resources/source-ui-layout';
 
 export interface ValuableItemSaleOwner {
-  account?: object;
+  account?: AccountContext;
   pending?: ReqValuableItemSale;
   inFlight?: Promise<ResValuableItemSale>;
 }
 
+function explicitNotSold(error: unknown): boolean {
+  const candidate = error as {code?: string; message?: string};
+  if (candidate.code !== 'VALUABLE_ITEM_SALE_REJECTED' || !candidate.message) return false;
+  return /不属于当前贵重品账户|出售数量超过拥有量|原出售价格不可用|账户角色资料尚未建立|出售贵重品实例无效|出售数量须/.test(candidate.message);
+}
+
 /** Confirmed valuable-sale projection is installed by the Home page owner. */
 export function ValuableItemSaleSource({ui, battle, refreshKey, activation, owner, onConfirmed, onBusy, disabled = false}: {
-  ui: HomeSourceUi; battle: Pick<Battle, 'accountContext' | 'valuableItemSale'>;
+  ui: HomeSourceUi;
+  battle: Pick<Battle, 'accountContext' | 'subscribeAccountContext' | 'valuableItemSale' | 'matchPanel'
+    | 'valuableSaleRoomContext' | 'subscribeValuableSaleRoom'>;
   refreshKey?: number; activation?: {instanceId: number; sequence: number};
   owner: ValuableItemSaleOwner; onConfirmed: (response: ResValuableItemSale) => void;
   onBusy: (busy: boolean) => void; disabled?: boolean;
 }) {
   const callbacks = useRef({onConfirmed, onBusy}); callbacks.current = {onConfirmed, onBusy};
-  const account = battle.accountContext;
+  const account = useSyncExternalStore(
+    listener => battle.subscribeAccountContext(listener), () => battle.accountContext, () => battle.accountContext);
+  const roomContext = useSyncExternalStore(
+    listener => battle.subscribeValuableSaleRoom(listener), () => battle.valuableSaleRoomContext, () => battle.valuableSaleRoomContext);
+  const match = useSyncExternalStore(
+    battle.matchPanel.subscribe, battle.matchPanel.getSnapshot, battle.matchPanel.getSnapshot);
+  const saleAllowed = !match?.phase || match.phase === 'WAITING';
+  const roomContextRef = useRef(roomContext); roomContextRef.current = roomContext;
   const generation = useRef(0);
   const [response, setResponse] = useState<ResValuableItemSale>();
   const [busy, setBusy] = useState(false);
@@ -33,54 +49,78 @@ export function ValuableItemSaleSource({ui, battle, refreshKey, activation, owne
 
   useEffect(() => {
     const current = ++generation.current;
+    const requestRoomContext = roomContext;
     if (owner.account !== account) {
       owner.account = account;
       owner.pending = undefined;
       owner.inFlight = undefined;
+      callbacks.current.onBusy(false);
     }
     setSaleInstance(undefined);
+    setResponse(undefined);
     setStatus('');
     setPending(true);
     void (async () => {
       if (owner.inFlight) {try {await owner.inFlight;} catch { /* QUERY restores confirmation. */ }}
-      return await battle.valuableItemSale({operation: 'QUERY'});
+      return await battle.valuableItemSale({operation: 'QUERY'}, account,
+        candidate => candidate === account && owner.account === account
+          && roomContextRef.current === requestRoomContext);
     })().then(result => {
-      if (generation.current !== current || owner.account !== account) return;
+      if (generation.current !== current || owner.account !== account || roomContextRef.current !== requestRoomContext) return;
       setResponse(result); callbacks.current.onConfirmed(result);
     }).catch(error => {
-      if (generation.current === current) setStatus(error instanceof Error ? error.message : String(error));
-    }).finally(() => {if (generation.current === current) setPending(false);});
+      if (generation.current === current && roomContextRef.current === requestRoomContext) {
+        setStatus(error instanceof Error ? error.message : String(error));
+      }
+    }).finally(() => {if (generation.current === current && roomContextRef.current === requestRoomContext) setPending(false);});
     return () => {generation.current++; locked.current = false; callbacks.current.onBusy(false);};
-  }, [account, battle, owner, refreshKey]);
+  }, [account, battle, owner, refreshKey, roomContext]);
 
   useEffect(() => {
-    if (!activation || handledActivation.current === activation.sequence || disabled || locked.current) return;
+    handledActivation.current = activation?.sequence;
+    setSaleInstance(undefined);
+    setResponse(undefined);
+    setStatus('');
+  }, [account, roomContext]);
+
+  useEffect(() => {
+    if (!activation || !saleAllowed || handledActivation.current === activation.sequence || disabled || locked.current) return;
+    if (owner.pending && owner.pending.instanceId !== activation.instanceId) {
+      setSaleInstance(undefined);
+      setStatus('请先确认未完成出售');
+      return;
+    }
     const quote = response?.quotes.find(value => value.instanceId === activation.instanceId);
     if (!quote?.canSell || (quote.itemTableId !== 20001 && quote.itemTableId !== 20002)) return;
     handledActivation.current = activation.sequence;
     setSaleInstance(activation.instanceId);
     setQuantity(String(owner.pending?.instanceId === activation.instanceId ? owner.pending.quantity ?? 1 : 1));
     setStatus('');
-  }, [activation, busy, disabled, response, owner]);
+  }, [activation, busy, disabled, response, owner, saleAllowed]);
 
   const quote = response?.quotes.find(value => value.instanceId === saleInstance);
   const count = Number(quantity);
   const exact = quote?.itemTableId === 20001 || quote?.itemTableId === 20002;
+  const pendingReceipt = Boolean(owner.pending && owner.pending.instanceId === saleInstance);
   const valid = Boolean(quote?.canSell && exact && Number.isInteger(count) && count > 0
     && count <= Math.min(quote.ownedQuantity, 0xffffff) && response?.money !== undefined
     && response.money + quote.unitPrice * count <= 999999999);
+  const confirmable = pendingReceipt ? true : owner.pending ? false : valid;
 
-  async function sell() {
-    if (disabled || locked.current || !valid || !quote || !exact) return;
+  async function confirm(request: ReqValuableItemSale) {
+    if (disabled || !saleAllowed || locked.current || owner.account !== account) return;
     const current = generation.current;
-    if (owner.account !== account) return;
-    if (!owner.pending || owner.pending.instanceId !== quote.instanceId || owner.pending.quantity !== count) {
-      owner.pending = {operation: 'SELL', instanceId: quote.instanceId, quantity: count,
-        requestId: createRequestId()};
-    }
-    const request = owner.pending;
     setPending(true); setStatus('');
-    const promise = owner.inFlight ?? battle.valuableItemSale(request);
+    if (owner.inFlight) {
+      try {await owner.inFlight;} catch { /* Retry the same request below. */ }
+      if (owner.inFlight) {
+        if (generation.current === current && owner.account === account) setPending(false);
+        return;
+      }
+    }
+    const requestRoomContext = roomContext;
+    const promise = battle.valuableItemSale(request, account,
+      candidate => candidate === account && owner.account === account && roomContextRef.current === requestRoomContext);
     owner.inFlight = promise;
     try {
       const result = await promise;
@@ -90,6 +130,7 @@ export function ValuableItemSaleSource({ui, battle, refreshKey, activation, owne
       if (generation.current !== current || owner.account !== account) return;
       setResponse(result); callbacks.current.onConfirmed(result); setSaleInstance(undefined);
     } catch (error) {
+      if (owner.pending === request && explicitNotSold(error)) owner.pending = undefined;
       if (generation.current === current && owner.account === account) {
         setStatus(error instanceof Error ? error.message : String(error));
       }
@@ -99,16 +140,29 @@ export function ValuableItemSaleSource({ui, battle, refreshKey, activation, owne
     }
   }
 
+  async function sell() {
+    if (disabled || !saleAllowed || locked.current || owner.account !== account) return;
+    if (pendingReceipt) {await confirm(owner.pending!); return;}
+    if (!valid || !quote || !exact) return;
+    if (!owner.pending || owner.pending.instanceId !== quote.instanceId || owner.pending.quantity !== count) {
+      owner.pending = {operation: 'SELL', instanceId: quote.instanceId, quantity: count,
+        requestId: createRequestId()};
+    }
+    await confirm(owner.pending);
+  }
+
   return <>
-    {saleInstance !== undefined && <InventorySaleQuantityDialog ui={ui} quantity={quantity} change={setQuantity}
-      busy={busy} disabled={disabled || !valid} status={status} confirm={() => void sell()}
-      cancel={() => {
-        if (locked.current) return;
-        if (owner.pending?.instanceId === saleInstance) owner.pending = undefined;
-        setSaleInstance(undefined);
-      }} label="出售贵重品数量" dataAttribute="data-valuable-sale-confirm"
+    {saleInstance !== undefined && <InventorySaleQuantityDialog ui={ui} quantity={quantity}
+      change={value => {if (!owner.pending || owner.pending.instanceId !== saleInstance) setQuantity(value);}}
+      busy={busy} disabled={disabled || !saleAllowed || !confirmable} status={status} confirm={() => void sell()}
+      cancel={() => {if (!locked.current) setSaleInstance(undefined);}}
+      label="出售贵重品数量" dataAttribute="data-valuable-sale-confirm"
       inputAttribute="data-valuable-sale-quantity" okAttribute="data-valuable-sale-ok"
       cancelAttribute="data-valuable-sale-cancel"/>}
-    {saleInstance === undefined && status && <output role="status" data-valuable-sale-status=""><SourceFeedbackText text={status}/></output>}
+    {saleInstance === undefined && owner.pending && <>
+      <output role="status" data-valuable-sale-status=""><SourceFeedbackText text={status || '出售结果尚未确认'}/></output>
+      <button type="button" className="valuable-sale-receipt-confirm" data-valuable-sale-receipt-confirm=""
+        disabled={disabled || !saleAllowed || busy} onClick={() => void confirm(owner.pending!)}>确认未完成出售</button>
+    </>}
   </>;
 }

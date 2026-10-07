@@ -1,6 +1,6 @@
 import './home.css';
 import {HomeResourceFeedback} from './home-resource-feedback';
-import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode} from 'react';
 import {HomeSourceRoot} from './home-source-root';
 import {HomePlayerSourcePage} from './home-player-source-page';
 import {HomeInventorySourceList} from './home-inventory-source-list';
@@ -71,6 +71,9 @@ interface InventorySessionProps extends Omit<HomeInventoryViewProps, 'open'> {
 
 function InventorySession({close, battle, page, changePage, navigation, onRolePage, valuableOwner}: InventorySessionProps) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const accountContext = useSyncExternalStore(
+    listener => battle.subscribeAccountContext(listener), () => battle.accountContext, () => battle.accountContext);
+  const accountGeneration = accountContext.generation;
   const escapePending = useRef(false);
   const session = useRef<{active: boolean; pending: boolean}>({active: false, pending: false});
   const [resources, setResources] = useState<Resources>();
@@ -148,7 +151,7 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
     }).catch(error => {if (current.active) setStatus(`物品资料读取失败：${String(error)}`);})
       .finally(() => {if (current.active) setBusy(false);});
     return () => {current.active = false; controller.abort();};
-  }, [battle]);
+  }, [battle, accountContext]);
 
   useLayoutEffect(() => {
     if (busy || !requestFocus.current) return;
@@ -301,7 +304,7 @@ function InventorySession({close, battle, page, changePage, navigation, onRolePa
               info: item?.info ?? '', ownedQuantity: record.ownedQuantity,
               iconId: item?.iconId ?? record.itemTableId};
           })} />
-        {page === 'valuable' && <ValuableItemSaleSource ui={resources.ui} battle={battle} instanceId={selected}
+        {page === 'valuable' && <ValuableItemSaleSource ui={resources.ui} battle={battle}
           activation={valuableActivation} owner={valuableOwner} refreshKey={selected}
           onConfirmed={installValuableSale} onBusy={setBusy} />}
         {page !== 'valuable' && [0, 1, 2, 3].map(index => {

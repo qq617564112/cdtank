@@ -1,6 +1,6 @@
 import {WsClient} from 'tsrpc-browser';
 import {serviceProto, type ServiceType} from '../../../shared/protocols/serviceProto';
-import {AccountConnection} from './accounts';
+import {AccountConnection, type AccountContext} from './accounts';
 import {RoomConnection} from './rooms';
 import type {ReqAccount, ResAccount} from '../../../shared/protocols/PtlAccount';
 import type {ResChannel} from '../../../shared/protocols/PtlChannel';
@@ -21,8 +21,16 @@ export class GameConnection {
   private connectionReady?: Promise<void>;
   private transportReady?: Promise<void>;
   private identity?: ResAccount;
+  private transportGeneration = 0;
+  private accountContextValue: AccountContext = {generation: 0};
+  private readonly accountContextListeners = new Set<() => void>();
 
   get hasSavedIdentity(): boolean {return !!this.tokenStore.getItem('cdtank-account-token');}
+  get accountContext(): AccountContext {return this.accountContextValue;}
+  subscribeAccountContext(listener: () => void): () => void {
+    this.accountContextListeners.add(listener);
+    return () => {this.accountContextListeners.delete(listener);};
+  }
 
   async authenticate(credentials?: ReqAccount['credentials']): Promise<ResAccount> {
     await this.disconnect();
@@ -55,6 +63,7 @@ export class GameConnection {
     this.client.flows.postDisconnectFlow.push(input => {
       if (this.connectionReady === this.transportReady) this.connectionReady = undefined;
       this.transportReady = undefined;
+      if (!this.connectionReady) this.publishAccountContext();
       return input;
     });
   }
@@ -84,11 +93,12 @@ export class GameConnection {
     if (this.connectionReady !== readiness()) throw new Error('连接已取消，请重试');
     if (!account.isSucc) throw new Error(account.err.message);
     this.tokenStore.setItem('cdtank-account-token', account.res.token);
-    this.identity = account.res;
+    this.publishAccountContext(account.res);
   }
 
   disconnect(): Promise<void> {
     this.connectionReady = undefined;
+    this.publishAccountContext();
     if (!this.disconnecting) {
       this.disconnecting = true;
       this.disconnection = this.client.disconnect().finally(() => {
@@ -96,5 +106,11 @@ export class GameConnection {
       });
     }
     return this.disconnection;
+  }
+
+  private publishAccountContext(identity?: ResAccount): void {
+    this.identity = identity;
+    this.accountContextValue = {identity, generation: ++this.transportGeneration};
+    this.accountContextListeners.forEach(listener => listener());
   }
 }

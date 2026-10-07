@@ -114,7 +114,7 @@ export function InventorySaleQuantityDialog({ui, quantity, change, busy, disable
     const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
     window.addEventListener('resize', resize); return () => window.removeEventListener('resize', resize);
   }, []);
-  return createPortal(<dialog ref={dialog} {...{[dataAttribute]: ''}} aria-label={label} aria-busy={busy}
+  return createPortal(<dialog ref={dialog} className="stack-sale-dialog" {...{[dataAttribute]: ''}} aria-label={label} aria-busy={busy}
     style={{width: 307 * scale, height: 120 * scale}} onCancel={event => {event.preventDefault(); if (!busy) cancel();}}
     onKeyDown={event => {event.stopPropagation(); if (event.key === 'Enter') {event.preventDefault(); if (!busy && !disabled) confirm();}}}
     onKeyUp={event => event.stopPropagation()}>

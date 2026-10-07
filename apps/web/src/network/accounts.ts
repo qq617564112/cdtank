@@ -20,6 +20,12 @@ import type {ResHistory} from '../../../shared/protocols/PtlHistory';
 import type {ReqTankUpgrade, ResTankUpgrade} from '../../../shared/protocols/PtlTankUpgrade';
 import type {ResPlayerProfile} from '../../../shared/protocols/PtlPlayerProfile';
 import type {ReqValuableItemSale, ResValuableItemSale} from '../../../shared/protocols/PtlValuableItemSale';
+import type {ResAccount} from '../../../shared/protocols/PtlAccount';
+
+export interface AccountContext {
+  readonly identity?: ResAccount;
+  readonly generation: number;
+}
 
 /** Account operations over the authenticated transport owned by GameConnection. */
 export class AccountConnection {
@@ -131,10 +137,16 @@ export class AccountConnection {
     return result.res;
   }
 
-  async valuableItemSale(request: ReqValuableItemSale): Promise<ResValuableItemSale> {
+  async valuableItemSale(request: ReqValuableItemSale, context: AccountContext,
+    isCurrent: (context: AccountContext) => boolean): Promise<ResValuableItemSale> {
     await this.ensureConnected();
+    if (!isCurrent(context)) throw new Error('账户或连接已变化，请重新操作');
     const result = await this.client.callApi('ValuableItemSale', request);
-    if (!result.isSucc) throw new Error(result.err.message);
+    if (!result.isSucc) {
+      const error = new Error(result.err.message) as Error & {code?: string};
+      error.code = result.err.code;
+      throw error;
+    }
     return result.res;
   }
 

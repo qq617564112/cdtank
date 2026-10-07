@@ -15,6 +15,7 @@ import {configureBattleCamera} from '../render/battle-camera';
 import {BattlePlayers} from '../render/battle-players';
 import {BattleMinimap} from '../render/battle-minimap';
 import {GameConnection} from '../network/game-connection';
+import type {AccountContext} from '../network/accounts';
 import {LobbyChat} from '../network/lobby-chat';
 import {Friends} from '../network/friends';
 import {LobbyPresence} from '../network/lobby-presence';
@@ -80,21 +81,24 @@ export class Battle {
   private readonly client = this.connection.client;
   private readonly accounts = this.connection.accounts;
   private readonly rooms = this.connection.rooms;
-  private readonly emptyAccountContext = {};
-  private accountIdentity?: import('../../../shared/protocols/PtlAccount').ResAccount;
-  get accountContext(): object {return this.accountIdentity ?? this.emptyAccountContext;}
+  get accountContext(): AccountContext {return this.connection.accountContext;}
+  subscribeAccountContext(listener: () => void): () => void {return this.connection.subscribeAccountContext(listener);}
+  get valuableSaleRoomContext(): string {
+    const snapshot = this.roomFeed.snapshot;
+    return `${this.session}:${this.roomFeed.roomId ?? ''}:${snapshot?.match?.round ?? 0}:${snapshot?.phase ?? ''}`;
+  }
+  subscribeValuableSaleRoom(listener: () => void): () => void {
+    this.saleContextListeners.add(listener);
+    return () => {this.saleContextListeners.delete(listener);};
+  }
   get hasSavedIdentity(): boolean {return this.connection.hasSavedIdentity;}
   authenticate(credentials?: import('../../../shared/protocols/PtlAccount').ReqAccount['credentials']) {
     if (this.inRoom) throw new Error('请先离开房间');
-    return this.connection.authenticate(credentials).then(identity => {
-      this.accountIdentity = identity;
-      return identity;
-    });
+    return this.connection.authenticate(credentials);
   }
   channels(channelId?: string) {return this.connection.channels(channelId);}
   disconnectAccount(): Promise<void> {
     if (this.inRoom) throw new Error('请先离开房间');
-    this.accountIdentity = undefined;
     this.lobbyPresence.stop();
     return this.connection.disconnect();
   }
@@ -183,6 +187,8 @@ export class Battle {
   private exiting?: Promise<void>;
   private reconnecting = false;
   private recovery?: Promise<void>;
+  private readonly saleContextListeners = new Set<() => void>();
+  private publishValuableSaleRoom(): void {this.saleContextListeners.forEach(listener => listener());}
 
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
               private readonly hud: HTMLOutputElement) {
@@ -405,8 +411,9 @@ export class Battle {
     return this.accounts.stackItemSale(request);
   }
 
-  async valuableItemSale(request: ReqValuableItemSale): Promise<ResValuableItemSale> {
-    return this.accounts.valuableItemSale(request);
+  async valuableItemSale(request: ReqValuableItemSale, context = this.accountContext,
+    isCurrent: (context: AccountContext) => boolean = candidate => candidate === this.accountContext): Promise<ResValuableItemSale> {
+    return this.accounts.valuableItemSale(request, context, isCurrent);
   }
 
   async partSale(request: ReqPartSale): Promise<ResPartSale> {
@@ -497,6 +504,7 @@ export class Battle {
     this.hud.value = '等待房间快照…';
     this.chat.show();
     this.input.start();
+    this.publishValuableSaleRoom();
   }
 
   private async loadBattleResources(round: number): Promise<void> {
@@ -770,6 +778,7 @@ export class Battle {
     this.targets.clear();
     this.hud.value = '';
     delete this.hud.dataset.world;
+    this.publishValuableSaleRoom();
   }
 
   get isConnected(): boolean {return this.client.isConnected;}
@@ -1011,6 +1020,7 @@ export class Battle {
     this.ammoBurnPresentation?.reconcile(snapshot.players,
       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`, snapshot.phase === 'PLAYING');
     this.matchPanel.setReadyAvailable(snapshot.phase === 'WAITING' && !this.reconnecting);
+    this.publishValuableSaleRoom();
     this.battlefield.reconcileCrushes(snapshot.match?.sceneCrushes ?? [], snapshot.match?.round ?? 0);
     this.battlefield.reconcilePlants(snapshot.match?.scenePlants ?? [], snapshot.match?.round ?? 0);
     this.chat.setPhase(snapshot.phase);
