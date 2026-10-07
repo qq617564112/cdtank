@@ -1,4 +1,5 @@
-#home-roles .home-owned-role-current-badge {
+#home-roles .home-role-row-status-badge,
+#home-equipment .home-role-row-status-badge {
   position: absolute;
   left: 5px;
   top: 8px;

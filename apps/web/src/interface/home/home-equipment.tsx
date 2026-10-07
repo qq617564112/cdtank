@@ -278,7 +278,8 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
           select={setCandidate} entries={records.map(record => ({instanceId: record.instanceId, itemTableId: record.itemTableId,
             name: name(record.instanceId), info: definition(record.instanceId)?.info ?? '',
             iconId: definition(record.instanceId)?.iconId ?? record.itemTableId,
-            ownedQuantity: record.ownedQuantity}))} />
+            ownedQuantity: record.ownedQuantity,
+            installed: equipment?.slots.includes(record.instanceId) ?? false}))} />
         {equipment && <>
           {slotButton('DECORATION', 0, equipment.decorationInstanceId, 'picHatIcon')}
           {slotButton('MARK', 0, equipment.markInstanceId, 'picMarkIcon')}
