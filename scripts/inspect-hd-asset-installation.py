@@ -53,16 +53,20 @@ def inspect(root, groups):
         report['issues'].append({'model': source, 'reason': reason})
 
     for source in inventory['models']:
-        if str(PurePosixPath(source.lower()).parent) not in directories:
-            continue
         target = runtime / source
         snapshot = root / 'art/hd-assets/original-models' / source
         if not target.is_file():
-            issue(source, 'Runtime model is missing')
+            if not groups or str(PurePosixPath(source.lower()).parent) in directories:
+                issue(source, 'Runtime model is missing')
+            continue
+        original_path = snapshot if snapshot.is_file() else target
+        metadata = installer.read_glb_metadata(original_path)
+        scoped_matches = installer.image_matches(metadata, source, ready)
+        if not scoped_matches:
             continue
         current, binary, _ = installer.read_glb(target.read_bytes())
         original, original_binary, _ = installer.read_glb(
-            snapshot.read_bytes() if snapshot.is_file() else target.read_bytes())
+            original_path.read_bytes())
         matches = installer.image_matches(original, source, available)
         if not matches:
             continue
