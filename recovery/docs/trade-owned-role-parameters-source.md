@@ -91,8 +91,8 @@ ItemTurn/Delay/MaxBullet，对应 `agg+0x1c..+0x40`。即战车详情的聚合�
 
 | 控件(成员) | setter VA | 原传入/算术 |
 | --- | --- | --- |
-| edtDescription (0x348) | `0x5017d7` | ItemInfo 名串（`record+0xc` 查表） |
-| txtType (0x34c) | `0x5017f5` | `4d8366(record, 名串)`：物品类别名 + 说明 |
+| edtDescription (0x348) | `0x5017d7` | `record+0xc` 查定义行 ItemInfo 说明串（定义 `+0x34`，长度 `+0x44`） |
+| txtType (0x34c) | `0x5017f5` | `4d8366`→`43bda2`→`4d7e58` 取得的 ItemName（定义 `+0x14`，长度 `+0x24`） |
 | shengyutianshu (0x350) | `0x501873` / `0x5018fe` | 按 `43bd09(record)` 类别写单位字形（非 1/2 用 `0xb2`，1/2 用 `0x293`） |
 | txtDurable (0x354) | `0x501947` | 类别 1/2 取 `record+0x10`；其余取 `ceil(record+0x10 / 0x5a0)`，`%d` |
 
