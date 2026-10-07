@@ -102,9 +102,9 @@ World两个advanceGroundTraps调用点提供同一治疗回调。资格要求真
 
 对应M4-09-PET-TRIGGER-FX，详[宠物技能触发运行时](pet-trigger-effect-runtime.md)、[宠物技能触发表现](pet-trigger-effect-presentation.md)。既有`pet-lifecycle`按受击/击毁/死亡/复活原资格分发属性；仅某受益者`receiveAttributeSkill`实际接受并安装或刷新timed来源后，才向该受益者发送一次首槽通知。低级被较高级未到期拒绝、死者、零HP、无Func1或无有效T均不通知；同级被接受的刷新通知一次。通知使用当前源真实rank技能ID、该目标roleId、slot0及duration0/xBits0/zBits0；原`effects[0].effectId=0`不发送。
 
-`copy`仅在实际`copyPassiveSkillAfterKill`返回true并完成原来源切换后，向复制者发送模仿源10711首槽；不假发被复制技能激活，不改来源冻结、copy末序、候选、随机或清理。首次合格`lastStand`建立原latch后，以同次选中的实际lethal技能首槽向target发送duration0；重复hit不通知，不改expiresAt、治疗门禁、归属、最终死亡或复活。表10441为Effect43/sound0/tag0/method3，Web只消费首槽通知，不推断爆炸伤害、第二槽或retained。
+`copy`仅在实际`copyPassiveSkillAfterKill`返回true并完成原来源切换及copy末序后，以真实复制源向复制者发送首槽；不假发被复制技能激活，不改来源冻结、候选、随机或清理。首次合格`lastStand`由`qualifiedLastStand`同次选中的source/duration建立原latch，随后以该source首槽向target发送duration0，旧`qualifiedLastStandDuration`导出保留；重复hit不通知，不改expiresAt、治疗门禁、归属、最终死亡或复活。表10441为Effect43/sound0/tag0/method3，现有通用Web consumer只消费首槽通知，不推断爆炸伤害、第二槽或retained。
 
-复用`MsgRoomEvent.playSkillEffect`及通用Web consumer，不新增API或schema。新独立事件采用`type='petSkillTriggered'`、value0、playerId施放源、targetId受益者、XYZ受益者和skillId实际技能；原服务器producer未知，以上为Web采用规则。hit/kill/death/respawn属性成功、实际copy及首次lastStand首槽producer生产待交付；本批新实测和整批走查尚未完成。
+复用`MsgRoomEvent.playSkillEffect`及现有通用Web consumer，无需新增TS分支，不新增API或schema。新独立事件采用`type='petSkillTriggered'`、value0、playerId施放源、targetId受益者、XYZ受益者和skillId实际技能；本批生产已实际接入。原服务器producer未知，实际heal保持既有BE范围；runtime及HD表现仍未证，集中走查尚未开始。
 
 ## 空袭
 
