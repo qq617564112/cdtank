@@ -27,7 +27,8 @@ def render(root):
     for entry in inventory['textures']:
         original = root / entry['original']
         delivered = root / entry['png']
-        ready = delivered.is_file()
+        deferred = entry.get('deferred')
+        ready = not deferred and delivered.is_file()
         records.append({
             'source': entry['source'],
             'groups': entry['groups'],
@@ -35,6 +36,7 @@ def render(root):
             'hdSize': png_size(delivered) if ready else None,
             'original': relative_url(original, destination.parent),
             'hd': relative_url(delivered, destination.parent) if ready else None,
+            'deferred': deferred,
             'layer': 'loading' in entry['groups'] or entry.get('intermediate', False),
         })
     previews = []
@@ -55,8 +57,10 @@ def render(root):
     temporary = destination.with_suffix('.tmp')
     temporary.write_text(html)
     temporary.replace(destination)
-    base = [entry for entry in records if not entry['layer']]
-    print(f'Gallery: {sum(bool(entry["hd"]) for entry in base)}/{len(base)} base assets; {destination}')
+    base = [entry for entry in records if not entry['layer'] and not entry['deferred']]
+    deferred = sum(bool(entry['deferred']) for entry in records)
+    print(f'Gallery: {sum(bool(entry["hd"]) for entry in base)}/{len(base)} base assets; '
+          f'{deferred} deferred for font rendering; {destination}')
 
 
 def main():

@@ -130,7 +130,7 @@ def main():
         runtime = root / runtime
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
     selected = [entry for entry in inventory['textures']
-                if not entry.get('intermediate')
+                if not entry.get('intermediate') and not entry.get('deferred')
                 and (args.group is None or args.group in entry.get('groups', []))]
     completed = [entry for entry in selected if (root / entry['png']).is_file()]
     replacements = {entry['source'].lower(): entry for entry in completed}

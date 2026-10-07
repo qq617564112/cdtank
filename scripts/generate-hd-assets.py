@@ -145,6 +145,8 @@ def prepare():
                          'original': str(original.relative_to(ROOT)),
                          'png': str(destination.relative_to(ROOT)),
                          'size': list(image.size), 'groups': sorted(membership)})
+        if previous_entries.get(source, {}).get('deferred'):
+            textures[-1]['deferred'] = previous_entries[source]['deferred']
         if source in local_sources:
             textures[-1]['installPath'] = str(local_sources[source].relative_to(ROOT))
             if source.startswith('local-ui/loading-words/'):
@@ -166,7 +168,7 @@ def prepare():
     assigned = {cell['source'] for batch in batches for cell in batch['cells']}
     for group in ordered_groups:
         entries = [entry for entry in textures if group in entry['groups']
-                   and not entry.get('derived')
+                   and not entry.get('derived') and not entry.get('deferred')
                    and entry['canonical'] not in assigned and not (ROOT / entry['png']).exists()]
         singles = {entry['canonical']: entry for entry in entries}
         categories = {}
@@ -333,12 +335,6 @@ def extract(batch):
     tiled = set()
     for index, cell in enumerate(batch['cells']):
         entry = textures[cell['source']]
-        if cell.get('reuseTile'):
-            destination = tile_path(batch, index)
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(ROOT / cell['reuseTile'], destination)
-            tiled.add(cell['source'])
-            continue
         box = [round(v * (sx if i % 2 == 0 else sy))
                for i, v in enumerate(cell.get('slotBox', cell['box']))]
         crop = image.crop(box)
@@ -364,7 +360,7 @@ def extract(batch):
 
 
 def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
-             initial_concurrency=None, released_workers=None):
+             initial_concurrency=None, released_workers=None, request_slots=None, release_pool=None):
     sys.path.insert(0, str(SKILL / 'scripts'))
     import common
     key = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
@@ -373,16 +369,26 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
     if ledger is None:
         ledger = document(ledger_path) if ledger_path.exists() else []
     batches = document(ART / 'plan.json')['batches']
-    selected = [b for b in batches if not groups or b['group'] in groups]
-    delivered = {e['source']: e['png'] for e in document(ART / 'inventory.json')['textures']}
+    textures = document(ART / 'inventory.json')['textures']
+    deferred = {entry['source'] for entry in textures if entry.get('deferred')}
+    selected = [b for b in batches if (not groups or b['group'] in groups)
+                and any(cell['source'] not in deferred for cell in b['cells'])]
+    delivered = {e['source']: e['png'] for e in textures}
     assemble_tiles({cell['source'] for batch in selected for cell in batch['cells']
                     if cell.get('sourceBox') and not (ROOT / delivered[cell['source']]).exists()})
     selected = [b for b in selected if not batch_complete(b, delivered)]
+    slots = request_slots or threading.Semaphore(concurrency)
 
     def call(batch):
         if (ROOT / batch['output']).exists():
             extract(batch)
             return batch['id'] + ': restored saved result'
+        with slots:
+            if STOP.is_set():
+                return batch['id'] + ': stopped before request'
+            return request(batch)
+
+    def request(batch):
         with LOCK:
             if limit is not None and len(ledger) >= limit:
                 return batch['id'] + ': request limit reached'
@@ -446,6 +452,8 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
             while queue or pending:
                 if STOP.is_set():
                     queue.clear()
+                if release_pool is not None and len(queue) + len(pending) <= concurrency:
+                    release_pool.set()
                 exhausted = limit is not None and len(ledger) >= limit
                 api_deadline, lanes = api_wait()
                 while (queue and len(pending) < lanes and not exhausted and not STOP.is_set()
@@ -490,7 +498,8 @@ def install_group(group):
     if group == 'ui':
         subprocess.run([sys.executable, str(ROOT / 'scripts/assemble-hd-ui-atlases.py')], check=True)
     inventory = document(ART / 'inventory.json')
-    missing = [e for e in inventory['textures'] if group in e['groups'] and not (ROOT / e['png']).exists()]
+    missing = [e for e in inventory['textures'] if group in e['groups'] and not e.get('deferred')
+               and not (ROOT / e['png']).exists()]
     if missing:
         print(f'{group}: {len(missing)} PNG paths unfinished', flush=True)
         return False
@@ -514,20 +523,24 @@ def run(groups, concurrency, ui_concurrency, limit, retry_delay):
     selected = [group for group in document(ART / 'plan.json')['groups'] if not groups or group in groups]
     parallel_ui = ui_concurrency > 0 and 'ui' in selected
     released_workers = threading.Event()
+    request_slots = threading.Semaphore(concurrency + ui_concurrency if parallel_ui else concurrency)
+    main_groups = [group for group in selected if not (parallel_ui and group == 'ui')]
     with ThreadPoolExecutor(max_workers=1) as auxiliary:
         ui = auxiliary.submit(generate, ['ui'], concurrency + ui_concurrency, limit, retry_delay,
-                              ledger, ui_concurrency, released_workers) if parallel_ui else None
+                              ledger, ui_concurrency, released_workers, request_slots) if parallel_ui else None
         if parallel_ui:
             print(f'Processing: {concurrency} main workers + {ui_concurrency} dedicated UI workers', flush=True)
-        for group in selected:
-            if STOP.is_set():
-                break
-            if parallel_ui and group == 'ui':
-                continue
-            generate([group], concurrency, limit, retry_delay, ledger)
-            if STOP.is_set() or not install_group(group):
-                break
-        released_workers.set()
+        try:
+            for group in main_groups:
+                if STOP.is_set():
+                    break
+                release_pool = released_workers if parallel_ui and group == main_groups[-1] else None
+                generate([group], concurrency, limit, retry_delay, ledger,
+                         request_slots=request_slots, release_pool=release_pool)
+                if STOP.is_set() or not install_group(group):
+                    break
+        finally:
+            released_workers.set()
         if ui:
             if not STOP.is_set() and not ui.done():
                 print(f'Main workers released: UI can now use {concurrency + ui_concurrency} workers', flush=True)

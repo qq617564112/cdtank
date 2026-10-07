@@ -25,11 +25,14 @@ def assemble(root):
     completed = 0
     for canonical, imageset in atlases.items():
         entry = textures[canonical]
-        if any(not (root / textures[image['asset']]['png']).exists() for image in imageset['images']):
+        if any(not textures[image['asset']].get('deferred')
+               and not (root / textures[image['asset']]['png']).exists() for image in imageset['images']):
             continue
         original = Image.open(root / entry['original']).convert('RGBA')
-        atlas = original.resize(tuple(n * 4 for n in original.size), Image.Resampling.LANCZOS)
+        atlas = original.resize(tuple(n * 4 for n in original.size), Image.Resampling.NEAREST)
         for region in imageset['images']:
+            if textures[region['asset']].get('deferred'):
+                continue
             artwork = Image.open(root / textures[region['asset']]['png']).convert('RGBA')
             size = (int(region['Width']) * 4, int(region['Height']) * 4)
             atlas.paste(artwork.resize(size, Image.Resampling.LANCZOS),

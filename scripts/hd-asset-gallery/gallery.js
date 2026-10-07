@@ -25,10 +25,11 @@
 
   function dimensions(asset) {
     var original = asset.size.join(' × ');
+    if (asset.deferred) return `${original} · 后续字体渲染`;
     return asset.hdSize ? `${original} → ${asset.hdSize.join(' × ')}` : `${original} · 待处理`;
   }
 
-  function figure(url, label, source, lazy) {
+  function figure(url, label, source, lazy, missingLabel) {
     var node = element('figure');
     node.append(element('figcaption', label));
     var area = element('div', undefined, 'image-area');
@@ -40,10 +41,15 @@
       if (lazy) image.loading = 'lazy';
       area.append(image);
     } else {
-      area.append(element('span', '待处理', 'muted'));
+      area.append(element('span', missingLabel || '待处理', 'muted'));
     }
     node.append(area);
     return node;
+  }
+
+  function hdFigure(asset, lazy) {
+    return figure(asset.hd, asset.deferred ? '后续字体渲染' : '高清图', asset.source,
+      lazy, asset.deferred ? '沿用原图，后续改为字体渲染' : undefined);
   }
 
   function openAsset(asset) {
@@ -52,7 +58,7 @@
     document.getElementById('zoom-mode').value = 'fit';
     zoomPair.classList.remove('pixels');
     zoomPair.replaceChildren(figure(asset.original, '原图', asset.source, false),
-      figure(asset.hd, '高清图', asset.source, false));
+      hdFigure(asset, false));
     zoom.showModal();
   }
 
@@ -65,7 +71,7 @@
       item.append(element('h2', asset.source));
       var pair = element('div', undefined, 'pair');
       pair.append(figure(asset.original, '原图', asset.source, true),
-        figure(asset.hd, '高清图', asset.source, true));
+        hdFigure(asset, true));
       item.append(pair);
       var footer = element('footer');
       footer.append(element('span', dimensions(asset), 'dimensions'));
@@ -77,7 +83,8 @@
       list.append(item);
     });
     var completed = filtered.filter(asset => asset.hd).length;
-    document.getElementById('results').textContent = `${filtered.length.toLocaleString()} 项 · 已完成 ${completed.toLocaleString()} 项`;
+    var deferred = filtered.filter(asset => asset.deferred).length;
+    document.getElementById('results').textContent = `${filtered.length.toLocaleString()} 项 · 已完成 ${completed.toLocaleString()} 项 · 后续字体渲染 ${deferred.toLocaleString()} 项`;
     document.getElementById('page').textContent = `${page + 1} / ${pages}`;
     document.getElementById('previous').disabled = page === 0;
     document.getElementById('next').disabled = page === pages - 1;
@@ -88,7 +95,10 @@
     var query = search.value.trim().toLowerCase();
     filtered = assets.filter(asset => (!group.value || asset.groups.includes(group.value))
       && (!query || asset.source.toLowerCase().includes(query))
-      && (status.value === 'all' || (status.value === 'complete' ? asset.hd : !asset.hd)));
+      && (status.value === 'all'
+        || (status.value === 'font-rendering' && asset.deferred)
+        || (status.value === 'complete' && !asset.deferred && asset.hd)
+        || (status.value === 'pending' && !asset.deferred && !asset.hd)));
     page = 0;
     render();
   }
@@ -96,14 +106,17 @@
   var groups = [...new Set(assets.flatMap(asset => asset.groups))];
   for (var value of groups) {
     var members = assets.filter(asset => asset.groups.includes(value));
+    var planned = members.filter(asset => !asset.deferred);
     var complete = members.filter(asset => asset.hd).length;
-    var option = element('option', `${groupName(value)} (${complete}/${members.length})`);
+    var deferred = members.length - planned.length;
+    var option = element('option', `${groupName(value)} (${complete}/${planned.length})${deferred ? ` · 字体渲染 ${deferred}` : ''}`);
     option.value = value;
     group.append(option);
   }
-  var base = assets.filter(asset => !asset.layer);
+  var base = assets.filter(asset => !asset.layer && !asset.deferred);
   var layers = assets.filter(asset => asset.layer);
-  document.getElementById('progress').textContent = `基础资源 ${base.filter(asset => asset.hd).length.toLocaleString()} / ${base.length.toLocaleString()} · 独立图层 ${layers.filter(asset => asset.hd).length} / ${layers.length}`;
+  var deferred = assets.filter(asset => asset.deferred);
+  document.getElementById('progress').textContent = `基础资源 ${base.filter(asset => asset.hd).length.toLocaleString()} / ${base.length.toLocaleString()} · 独立图层 ${layers.filter(asset => asset.hd).length} / ${layers.length} · 后续字体渲染 ${deferred.length}`;
   document.getElementById('updated').textContent = `资源快照：${new Date(data.updated).toLocaleString()} · 每组安装完成后更新，刷新页面查看最新进度。`;
   var previewList = document.getElementById('preview-list');
   for (var preview of data.previews) {

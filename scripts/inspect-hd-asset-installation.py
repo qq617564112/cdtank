@@ -26,13 +26,14 @@ def inspect(root, groups):
     all_textures = {entry['source'].lower(): entry for entry in inventory['textures']
                     if not entry.get('intermediate')}
     available = {source: entry for source, entry in all_textures.items()
-                 if (root / entry['png']).is_file()}
+                 if not entry.get('deferred') and (root / entry['png']).is_file()}
     selected = [entry for entry in inventory['textures']
-                if not entry.get('intermediate')
+                if not entry.get('intermediate') and not entry.get('deferred')
                 and (not groups or any(group in entry['groups'] for group in groups))]
     report = {'updated': datetime.now(timezone.utc).isoformat(timespec='seconds'),
               'scope': {'groups': groups or 'all', 'paths': len(selected)},
               'delivered': 0, 'installed': 0, 'models': 0, 'embeddedImages': 0,
+              'deferredTextPaths': [entry['source'] for entry in inventory['textures'] if entry.get('deferred')],
               'pendingPaths': [], 'uninstalledPaths': [], 'issues': []}
     ready = {}
     for entry in selected:

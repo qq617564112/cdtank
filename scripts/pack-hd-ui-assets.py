@@ -14,6 +14,35 @@ from PIL import Image
 
 LAYOUTS = {'tiny': (32, 8, 128), 'small': (64, 4, 256),
            'medium': (256, 2, 512)}
+REGULAR_FONTS = {'baiseheitizi', 'cheapfont', 'daheitizi', 'fangjianbianhao',
+                 'hongseheitizi', 'xiaoheitizi'}
+REGULAR_LABELS = {'huofeichuangyi', 'xianyoujineng', 'xianyouchuangyi',
+                  'huafeijineng', 'huafeidaibidian', 'huofeichuangyidianshu', 'huofeidaibi'}
+
+
+def defer_regular_text(root, inventory):
+    runtime = root / 'recovery/output/web-assets'
+    ui = json.loads((runtime / 'ui.json').read_text())
+    sources = set()
+    for filename in ['ui-font-raster.json', 'five-page-font-raster.json']:
+        for face in json.loads((runtime / filename).read_text())['faces']:
+            sources.add(face['atlas']['asset'])
+    for imageset in ui['imagesets']:
+        family = Path(imageset['path']).stem.removesuffix('_0')
+        regular_font = imageset['path'].startswith('ui/fonts/') and family in REGULAR_FONTS
+        if regular_font:
+            path = imageset['attributes']['Imagefile'].replace('\\', '/')
+            sources.add(str(Path(path).with_suffix('.png')))
+        for region in imageset['images']:
+            name = Path(region['Name'].replace('\\', '/')).stem
+            if regular_font or name in REGULAR_LABELS:
+                sources.add(region['asset'])
+    sources = {source.lower() for source in sources}
+    canonical = {entry['canonical'] for entry in inventory['textures'] if entry['source'].lower() in sources}
+    for entry in inventory['textures']:
+        if entry['source'].lower() in sources or entry['canonical'] in canonical:
+            entry['deferred'] = 'font-rendering'
+    return sum(entry.get('deferred') == 'font-rendering' for entry in inventory['textures'])
 
 
 def category(entry):
@@ -85,6 +114,8 @@ def font_entries(root, textures):
         metadata = json.loads((root / 'recovery/output/web-assets' / filename).read_text())
         for face in metadata['faces']:
             entry = textures[face['atlas']['asset']]
+            if entry.get('deferred'):
+                continue
             faces.setdefault(entry['canonical'], (entry, face['glyphs']))
     result = {}
     for canonical, (entry, glyphs) in faces.items():
@@ -184,11 +215,17 @@ def main():
     args = parser.parse_args()
     root = args.root.resolve()
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
+    deferred = defer_regular_text(root, inventory)
+    if not args.dry_run:
+        inventory_path = root / 'art/hd-assets/inventory.json'
+        temporary = inventory_path.with_suffix('.scope.tmp')
+        temporary.write_text(json.dumps(inventory, ensure_ascii=False, indent=2) + '\n')
+        temporary.replace(inventory_path)
     plan_path = root / 'art/hd-assets/plan.json'
     plan = json.loads(plan_path.read_text())
     textures = {entry['source']: entry for entry in inventory['textures']}
     unique = {entry['canonical']: entry for entry in inventory['textures']
-              if 'ui' in entry['groups'] and not entry.get('derived')}
+              if 'ui' in entry['groups'] and not entry.get('derived') and not entry.get('deferred')}
     fonts = font_entries(root, textures)
     # Keep every batch of a font together once any output or tile is saved.
     retained_fonts = set()
@@ -202,6 +239,10 @@ def main():
     for batch in plan['batches']:
         if batch['group'] != 'ui':
             retained.append(batch)
+            continue
+        batch = {**batch, 'cells': [cell for cell in batch['cells']
+                                   if not textures[cell['source']].get('deferred')]}
+        if not batch['cells']:
             continue
         saved = (root / batch['output']).exists()
         delivered = all((root / textures[cell['source']]['png']).exists() for cell in batch['cells'])
@@ -228,7 +269,8 @@ def main():
         else:
             families[(str(Path(canonical).parent), kind)].append(entry)
     batches, counts = [], Counter()
-    occupied_ids = {batch['id'] for batch in retained}
+    occupied_ids = {batch['id'] for batch in plan['batches']}
+    occupied_ids.update(path.parent.name for path in (root / 'art/hd-assets/batches').glob('ui-packed-*/output-1.png'))
     sequence = 0
     font_sequence = 0
     for canonical, entries in sorted(fonts.items()):
@@ -262,6 +304,7 @@ def main():
             batches.append(batch)
             counts[kind] += 1
     summary = {'previous_ui_batches': sum(batch['group'] == 'ui' for batch in plan['batches']),
+               'deferred_text_paths': deferred,
                'retained_ui_batches': sum(batch['group'] == 'ui' for batch in retained),
                'new_ui_batches': dict(counts),
                'total_ui_batches': sum(batch['group'] == 'ui' for batch in retained) + len(batches),
