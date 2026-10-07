@@ -11,6 +11,7 @@ import {SourceStaticText} from '../resources/source-static-text';
 import {sourceProps} from '../resources/source-ui-props';
 import {loadSourceUiFonts} from '../resources/source-ui-fonts';
 import {TradeSourceDetail, hasTradeRecordDetail, tradeRecordPresentation} from './trade-source-detail';
+import {TradeCandidateRowContent} from './trade-candidate-row-content';
 
 export interface TradeSourcePageProps {
   state: ResTrade; pending: boolean; status: string; act(request: ReqTrade): void; close(): void;
@@ -19,6 +20,27 @@ type Tab = 'item' | 'equipment' | 'pet' | 'tank';
 const suffix = 'trade.xml';
 const keyOf = (record: TradeRecordRef) => `${record.kind}:${record.instanceId}`;
 const partyStatus = (party?: TradeParty) => party?.confirmed ? '已确认' : party?.shown ? '已展示' : party ? '编辑中' : '';
+type TradeCandidateRowData = {
+  'data-home-owned-tank-row'?: number;
+  'data-home-owned-pet-row'?: number;
+  'data-home-source-item-row'?: number;
+  'data-home-source-weapon-row'?: number;
+  'data-home-source-valuable-row'?: number;
+  'data-home-equipment-common-row'?: number;
+  'data-home-equipment-hat-mark-row'?: number;
+};
+const candidateRowData = (record: TradeRecordView): TradeCandidateRowData | undefined => {
+  if (record.kind === 'tank') return {'data-home-owned-tank-row': record.instanceId};
+  if (record.kind === 'pet') return {'data-home-owned-pet-row': record.instanceId};
+  if (!record.item) return undefined;
+  const category = classifyInventoryCategory(record.item.itemTableId);
+  if (category === 1) return {'data-home-source-item-row': record.instanceId};
+  if (category === 2) return {'data-home-source-weapon-row': record.instanceId};
+  if (category === 6) return {'data-home-source-valuable-row': record.instanceId};
+  if (category === 5 || category === 7) return {'data-home-equipment-common-row': record.instanceId};
+  if (category === 3 || category === 4) return {'data-home-equipment-hat-mark-row': record.instanceId};
+  return undefined;
+};
 
 /** Source Trade regions consume confirmed party state; editable offers remain local drafts. */
 export function TradeSourcePage({state, pending, status, act, close}: TradeSourcePageProps) {
@@ -28,6 +50,8 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
   const [ui, setUi] = useState<HomeSourceUi>();
   const [catalog, setCatalog] = useState<CombatCatalog>();
   const [resourceError, setResourceError] = useState('');
+  const [resourceLoading, setResourceLoading] = useState(true);
+  const [resourceAttempt, setResourceAttempt] = useState(0);
   const [localError, setLocalError] = useState('');
   const [tab, setTab] = useState<Tab>('item');
   const [subtab, setSubtab] = useState(1);
@@ -36,6 +60,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
   const [detail, setDetail] = useState<TradeRecordView>();
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
   const dialog = useRef<HTMLDialogElement>(null);
+  const retryFocus = useRef(false);
   const open = session?.phase === 'OPEN' && !!own;
   const dirty = !!own && (JSON.stringify(draft.records) !== JSON.stringify(own.offer.records)
     || (['money', 'originality', 'skillPoints'] as const).some(name => Number(amounts[name]) !== own.offer[name]));
@@ -62,18 +87,26 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
 
   useEffect(() => {
     const controller = new AbortController();
-    void Promise.all([fetch('/ui.json', {signal: controller.signal}), loadSourceUiFonts()]).then(async ([response]) => {
+    setResourceLoading(true);
+    const fonts = loadSourceUiFonts();
+    const sourceUi = fetch('/ui.json', {signal: controller.signal}).then(async response => {
       if (!response.ok) throw new Error('交易界面资源载入失败');
       const value = await response.json() as HomeSourceUi;
       if (!controller.signal.aborted) setUi(value);
-    }).catch(error => {if (!controller.signal.aborted) setResourceError(String(error));});
-    void fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
+    });
+    const combatCatalog = fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
       if (!response.ok) throw new Error('交易物品资料载入失败');
       const value = await response.json() as CombatCatalog;
       if (!controller.signal.aborted) setCatalog(value);
-    }).catch(error => {if (!controller.signal.aborted) setResourceError(String(error));});
+    });
+    void Promise.allSettled([fonts, sourceUi, combatCatalog]).then(results => {
+      if (controller.signal.aborted) return;
+      const errors = results.flatMap(result => result.status === 'rejected' ? [String(result.reason)] : []);
+      setResourceError(errors.join('；'));
+      setResourceLoading(false);
+    });
     return () => controller.abort();
-  }, []);
+  }, [resourceAttempt]);
 
   useLayoutEffect(() => {
     const element = dialog.current!, previous = document.activeElement;
@@ -91,12 +124,19 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
     if (ui && dialog.current?.open) dialog.current.querySelector<HTMLButtonElement>('[data-trade-close]')?.focus();
   }, [ui]);
 
+  useLayoutEffect(() => {
+    if (!retryFocus.current || resourceLoading) return;
+    retryFocus.current = false;
+    const target = resourceError ? '[data-trade-resource-retry]:not(:disabled)' : '[data-trade-close]:not(:disabled)';
+    dialog.current?.querySelector<HTMLButtonElement>(target)?.focus();
+  }, [resourceLoading, resourceError]);
+
   function action(operation: 'SHOW' | 'UNSHOW' | 'CONFIRM' | 'CANCEL') {
     if (!session || pending) return;
     act({operation, sessionId: session.id, expectedRevision: session.revision});
   }
   function showOffer() {
-    if (!session || !open || pending) return;
+    if (!session || !open || pending || !businessReady) return;
     if (own?.shown && !dirty) {action('UNSHOW'); return;}
     const values = {money: Number(amounts.money), originality: Number(amounts.originality), skillPoints: Number(amounts.skillPoints)};
     if (Object.values(values).some(value => !Number.isInteger(value) || value < 0)) {
@@ -106,6 +146,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
     act({operation: 'SHOW', sessionId: session.id, expectedRevision: session.revision, offer: {...values, records: draft.records}});
   }
   function toggle(record: TradeRecordView) {
+    if (!businessReady) return;
     const found = draft.records.some(value => keyOf(value) === keyOf(record));
     if (!found && draft.records.length >= 12) {setLocalError('交易提供物最多12项'); return;}
     const quantity = record.item && classifyInventoryCategory(record.item.itemTableId) <= 2 ? record.item.ownedQuantity : 1;
@@ -123,6 +164,10 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
     }).map(item => ({kind: 'item', instanceId: item.instanceId, item}));
 
   const layout = ui ? new HomeSourceLayout(ui, suffix) : undefined;
+  const businessReady = !!ui && !!catalog && !!layout;
+  const candidateList = tab === 'item' ? 'lstMyItem' : tab === 'equipment' ? 'lstMyEquip' : 'lstMyTankMyPet';
+  const candidateSelection = ui && layout
+    ? sourceProps(ui, layout, suffix, candidateList, layout.control(candidateList).properties.SelectionImage) : undefined;
   const controls = ui?.layouts.find(value => value.path.endsWith(suffix))?.windows ?? [];
   const visible = (name: string): boolean => {
     for (let control = layout?.control(name); control; control = control.parent ? layout?.control(control.parent) : undefined) {
@@ -144,10 +189,20 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
     const props = sourceProps(ui, layout, suffix, name, layout.control(name).properties.CheckMarkImage);
     return <i data-trade-checkmark={name} data-source-asset={props['data-source-asset']} style={{backgroundImage: props.style.backgroundImage}}/>;
   };
+  const candidateAvailable = (record: TradeRecordView) => {
+    const display = tradeRecordPresentation(record, catalog);
+    return !pending && open && businessReady && !!display.name && !!display.reference && !!candidateRowData(record);
+  };
+  const retryResources = () => {
+    if (resourceLoading) return;
+    retryFocus.current = true;
+    setResourceLoading(true);
+    setResourceAttempt(value => value + 1);
+  };
 
   return createPortal(<dialog ref={dialog} className="trade-source-dialog" data-trade-page=""
     data-trade-session={session?.id} data-trade-revision={session?.revision} data-trade-phase={session?.phase}
-    aria-label="玩家交易" aria-busy={pending} style={{width: 615 * scale, height: 485 * scale}}
+    aria-label="玩家交易" aria-busy={pending || resourceLoading} style={{width: 615 * scale, height: 485 * scale}}
     onCancel={event => {event.preventDefault(); if (!pending) close();}}>
     <div className="trade-source-stage" style={{transform: `scale(${scale})`}}>
       {ui && layout && <SourceImageScale value={scale}>
@@ -165,26 +220,57 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
           : tab === 'equipment' ? [[5, 'rdoCommon', '零件'], [3, 'rdoHat', '帽子'], [4, 'rdoMark', '标志']] as const : []).map(([value, source, label]) =>
           <SourceButton key={source} ui={ui} layout={layout} suffix={suffix} source={source} selected={subtab === value}
             disabled={pending} aria-label={label} onClick={() => setSubtab(value)}/>)}
-        <div {...sourceProps(ui, layout, suffix, tab === 'item' ? 'lstMyItem' : tab === 'equipment' ? 'lstMyEquip' : 'lstMyTankMyPet')}
-          className="trade-source-candidates" data-trade-candidates={tab}>
+        <div {...sourceProps(ui, layout, suffix, candidateList)}
+          className="trade-source-candidates" data-trade-candidates={tab} role="listbox" aria-multiselectable="true"
+          aria-busy={resourceLoading || pending} aria-label={`${tab === 'item' ? '道具' : tab === 'equipment' ? '装备' : '宠物和战车'}候选`}>
           {candidates.map(record => {
-            const display = tradeRecordPresentation(record, catalog), selected = draft.records.find(value => keyOf(value) === keyOf(record));
-            const icon = sourceProps(ui, layout, suffix, 'picMyItem0', display.reference);
+            const display = tradeRecordPresentation(record, catalog);
+            const selected = draft.records.find(value => keyOf(value) === keyOf(record));
+            const rowData = candidateRowData(record);
             return <div key={keyOf(record)} className="trade-source-candidate" data-trade-candidate={keyOf(record)}>
-              <button type="button" aria-pressed={!!selected} disabled={!open || pending || !display.name}
-                onClick={() => toggle(record)} data-trade-record-toggle={keyOf(record)}>
-                <span className="trade-source-record-icon" data-source-asset={icon['data-source-asset']} style={{backgroundImage: icon.style.backgroundImage}}/>
-                <span>{display.name}</span>{record.item && <span>{record.item.ownedQuantity}</span>}
+              <button type="button" className="trade-source-candidate-row" role="option" aria-selected={!!selected}
+                aria-pressed={!!selected} disabled={!candidateAvailable(record)}
+                {...rowData} aria-label={display.name || undefined}
+                style={selected && candidateSelection ? {backgroundImage: candidateSelection.style.backgroundImage} : undefined}
+                data-source-selection-asset={selected ? candidateSelection?.['data-source-selection-asset'] : undefined}
+                onClick={() => toggle(record)} data-trade-record-toggle={keyOf(record)} onKeyDown={event => {
+                  const next = event.key === 'ArrowDown' ? candidates.indexOf(record) + 1
+                    : event.key === 'ArrowUp' ? candidates.indexOf(record) - 1
+                      : event.key === 'Home' ? 0 : event.key === 'End' ? candidates.length - 1 : undefined;
+                  if (next !== undefined) {
+                    event.preventDefault(); event.stopPropagation();
+                    const direction = event.key === 'ArrowUp' || event.key === 'End' ? -1 : 1;
+                    let nextIndex = Math.max(0, Math.min(candidates.length - 1, next));
+                    while (nextIndex >= 0 && nextIndex < candidates.length && !candidateAvailable(candidates[nextIndex])) {
+                      nextIndex += direction;
+                    }
+                    const candidate = candidates[nextIndex];
+                    if (!candidate) return;
+                    const button = dialog.current?.querySelector<HTMLButtonElement>(
+                      `[data-trade-record-toggle="${keyOf(candidate)}"]`);
+                    button?.focus();
+                    button?.scrollIntoView({block: 'nearest'});
+                    return;
+                  }
+                  if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
+                }} onKeyUp={event => {
+                  if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter', ' '].includes(event.key)) event.stopPropagation();
+                }}>
+                {catalog && rowData && <TradeCandidateRowContent ui={ui} catalog={catalog} record={record}/>}
               </button>
-              {hasTradeRecordDetail(record) && <button type="button" disabled={pending} aria-label={`${display.name}详情`}
-                data-trade-record-detail={keyOf(record)} onClick={() => setDetail(record)}>详情</button>}
-              {selected && record.item && classifyInventoryCategory(record.item.itemTableId) <= 2 && <input type="number" min={1}
-                max={record.item.ownedQuantity} step={1} aria-label={`${display.name}提供数量`} value={selected.quantity ?? record.item.ownedQuantity}
-                disabled={pending || !open} onChange={event => {
-                  const quantity = event.currentTarget.valueAsNumber;
-                  if (Number.isInteger(quantity) && quantity > 0 && quantity <= record.item!.ownedQuantity)
-                    setDraft(value => ({...value, records: value.records.map(ref => keyOf(ref) === keyOf(record) ? {...ref, quantity} : ref)}));
-                }}/>}</div>;
+              {(hasTradeRecordDetail(record) || selected && record.item && classifyInventoryCategory(record.item.itemTableId) <= 2)
+                && <div className="trade-source-candidate-actions">
+                  {hasTradeRecordDetail(record) && <button type="button" disabled={pending || !businessReady}
+                    aria-label={`${display.name}详情`} data-trade-record-detail={keyOf(record)} onClick={() => setDetail(record)}>详情</button>}
+                  {selected && record.item && classifyInventoryCategory(record.item.itemTableId) <= 2 && <input type="number" min={1}
+                    max={record.item.ownedQuantity} step={1} aria-label={`${display.name}提供数量`} value={selected.quantity ?? record.item.ownedQuantity}
+                    disabled={pending || !open || !businessReady} onChange={event => {
+                      const quantity = event.currentTarget.valueAsNumber;
+                      if (Number.isInteger(quantity) && quantity > 0 && quantity <= record.item!.ownedQuantity)
+                        setDraft(value => ({...value, records: value.records.map(ref => keyOf(ref) === keyOf(record) ? {...ref, quantity} : ref)}));
+                    }}/>}
+                </div>}
+            </div>;
           })}
         </div>
         {([['My', own], ['Other', peer]] as const).map(([side, party]) => Array.from({length: 12}, (_, index) => {
@@ -204,15 +290,15 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
           <span key={field}>
             <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name={button} reference={layout.control(button).properties.NormalImage} aria-hidden="true"/>
             <input {...sourceProps(ui, layout, suffix, text)} className="trade-source-amount" type="number" min={0} step={1}
-              value={amounts[field]} aria-label={label} data-trade-amount={field} disabled={!open || pending}
+              value={amounts[field]} aria-label={label} data-trade-amount={field} disabled={!open || pending || !businessReady}
               onChange={event => {const amount = event.currentTarget.value; setAmounts(value => ({...value, [field]: amount}));}}/>
           </span>)}
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnShow" aria-label={own?.shown && !dirty ? '撤回展示' : '展示'}
-          data-trade-show="" disabled={!open || pending} onClick={showOffer}>
+          data-trade-show="" disabled={!open || pending || !businessReady} onClick={showOffer}>
           {checkmark('btnShow', !!own?.shown)}
         </SourceButton>
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnExchange" aria-label="确认交易" data-trade-confirm=""
-          disabled={!open || pending || dirty || !own?.shown || !peer?.shown || own.confirmed} onClick={() => action('CONFIRM')}>
+          disabled={!open || pending || !businessReady || dirty || !own?.shown || !peer?.shown || own.confirmed} onClick={() => action('CONFIRM')}>
           {checkmark('btnExchange', !!own?.confirmed)}
         </SourceButton>
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnCancel" aria-label="取消交易" data-trade-cancel=""
@@ -220,7 +306,10 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnClose" aria-label="关闭交易" data-trade-close="" disabled={pending} onClick={close}/>
       </SourceImageScale>}
       <div className="trade-source-web-tools">
-        {!ui && <button type="button" disabled={pending} onClick={close}>关闭交易</button>}
+        {resourceError && <button type="button" data-trade-resource-retry="" disabled={resourceLoading} onClick={retryResources}>
+          {resourceLoading ? '重试中' : '重试交易资源'}
+        </button>}
+        {!ui && <button type="button" data-trade-web-close="" disabled={pending} onClick={close}>关闭交易</button>}
         <output aria-live="polite" data-trade-status="">{localError || resourceError || status || session?.reason
           || (session?.phase === 'COMPLETED' ? '交易已完成' : session?.phase === 'CANCELLED' ? '交易已取消' : dirty ? '提供物尚未提交' : '')}</output>
       </div>

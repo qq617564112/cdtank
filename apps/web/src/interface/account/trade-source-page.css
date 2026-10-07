@@ -51,54 +51,64 @@
 }
 
 .trade-source-candidate {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
+  width: 161px;
   margin-bottom: 3px;
 }
 
-.trade-source-candidate > button:first-child {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 3px;
-  min-width: 0;
-  min-height: 30px;
-  padding: 2px;
-  border: 1px solid transparent;
+.trade-source-candidate-row[data-home-owned-tank-row],
+.trade-source-candidate-row[data-home-owned-pet-row],
+.trade-source-candidate-row[data-home-source-item-row],
+.trade-source-candidate-row[data-home-source-weapon-row],
+.trade-source-candidate-row[data-home-source-valuable-row],
+.trade-source-candidate-row[data-home-equipment-common-row],
+.trade-source-candidate-row[data-home-equipment-hat-mark-row] {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 161px;
+  height: 56px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
   color: white;
-  background: transparent;
+  background-color: transparent;
+  background-position: left top;
+  background-repeat: no-repeat;
+  background-size: 161px 51px;
+  font: inherit;
   text-align: left;
 }
 
-.trade-source-candidate > button[aria-pressed='true'] {
-  border-color: #ffe76b;
+.trade-source-candidate-row > span {
+  position: absolute;
+  white-space: nowrap;
 }
 
-.trade-source-candidate > button:first-child > span:nth-child(2) {
-  flex: 1;
-  overflow: hidden;
+.trade-source-candidate-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 161px;
+  min-height: 24px;
+  padding: 2px 0;
+  box-sizing: border-box;
 }
 
-.trade-source-record-icon {
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-}
-
-.trade-source-candidate > button:not(:first-child) {
-  padding: 0 2px;
+.trade-source-candidate-actions button {
+  padding: 1px 5px;
   border: 0;
   color: white;
   background: #193652;
+  font: inherit;
 }
 
-.trade-source-candidate input {
-  width: 65px;
-  margin-left: 30px;
+.trade-source-candidate-actions input {
+  flex: 0 0 72px;
+  width: 72px;
+  min-width: 0;
+  margin-left: auto;
+  box-sizing: border-box;
 }
 
 .trade-source-amount {
@@ -111,6 +121,7 @@
 .trade-source-stage [data-source-control='txtOtherMoney'],
 .trade-source-stage [data-source-control='txtOtherOriginality'],
 .trade-source-stage [data-source-control='txtOtherTech'] {
+  background-color: #17334c;
   text-shadow: none;
 }
 
