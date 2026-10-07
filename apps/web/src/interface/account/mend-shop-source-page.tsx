@@ -63,15 +63,19 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
   }, [source, onBusy]);
   const entries: MendEntry[] = page === 'Tank' ? (owned?.equipment ?? []).map(record => {
     const fields = new Map(record.fields), tankId = fields.get(0x24);
-    return {id: fields.get(0x1c)!, name: record.name, tankId, durationMinutes: fields.get(0x34),
+    const instanceId = fields.get(0x1c)!;
+    const currentTank = maintenance?.tanks.find(tank => tank.instanceId === instanceId);
+    return {id: instanceId, name: record.name, tankId, durationMinutes: currentTank?.remainingMinutes ?? fields.get(0x34),
       tankType: catalog?.tankTypes?.find(tank => tank.tankId === tankId)?.tankType};
   }) : (inventory?.records ?? []).filter(record => {
     const type = classifyItemId(record.itemTableId);
     return category === 'Common' ? type >= 8 && type <= 12 : type === (category === 'Hat' ? 5 : 7);
   }).map(record => {
     const item = catalog?.items.find(item => item.itemTableId === record.itemTableId);
+    const currentPart = partMaintenance?.parts.find(part => part.instanceId === record.instanceId);
     return {id: record.instanceId, name: item?.name ?? String(record.itemTableId),
-      itemTableId: record.itemTableId, iconId: item?.iconId, ownedQuantity: record.ownedQuantity};
+      itemTableId: record.itemTableId, iconId: item?.iconId,
+      ownedQuantity: currentPart?.remainingMinutes ?? record.ownedQuantity};
   });
   const selectedPart = partMaintenance?.parts.find(part => part.instanceId === selected);
   const selectedQuotes = page === 'Tank'
