@@ -104,6 +104,16 @@ CPU仅从真实owned/equipped/selected 2005/17051来源消费同一普通链，�
 
 修饰不改变确认后的真实弹药ID、消耗/装填时序或第二条400ms队列，不生成item2022/2023结果，也不新增效果、声音、资源或第二条400ms队列；战斗伤害数字继续使用既有原图片。每次权威重算先清除再由当前来源重建，离开已选来源后恢复普通行为。原server分派、原始X单位及完整玩家授予/取得链仍未恢复，保持FUNC-22/23未勾。
 
+## 红包拿来弹药
+
+对应M4-10-I2016、M6-06及FUNC-02。完整普通链与源边界见[道具2016红包拿来普通弹药客户端业务设计与服务端实现合同](ammo2016-client-business-design.md)。原`item2016`为`ItemType=3`、`ItemMoney/ItemCoin=50/50`、`BattleUseMax=30`、`skillIds=[2016,4014,0]`，首槽`53/GA08/tag0/method3`；`skill2016`为`Trigger0/Target1/Range0`普通持有技能，`skill4014`为`Trigger8/Target1/Range1`、FuncType2、HP0，首槽`effectId=25/SE50/tag0/method3`。
+
+取得与配置采用普通链：精确`2016`进入现`consumableShopItems`，沿现`Shop QUERY`/`Shop BUY`账户原子事务、`MONEY`或`TOKENS`正价`50`、`quantity`1..10、余额不足拒绝、同`requestId`重放返回既有receipt，成功才建owned；Home category2按现`ASSIGN`配置武器槽2..4，槽1保持默认`2001`，本局量按`min(owned,30)`初始化。不新增API、schema或免费grant。
+
+普通`class3`选弹写`selectedAmmoSlot`/`currentAmmoTableId`并重算技能，失败恢复不消费；`beforeFire`的`consumeConfirmedAmmo`先持久CAS再扣本局量，成功后`fireProjectile`携`ammoItemId=2016`，权威命中写`shotPlayerResult.itemId=2016`。受害者端经4014首槽挂原025（retention0）一次并播SE50 selector1；remote scene endpoint与scene声音资格完整接入。原`4014`HP0不用于推导damage公式，普通现damage沿既有采用链。
+
+原`025`树完整11节点、10个drawable，含`2807 type6 lifetime0`；controller0在`0..0.5s`以1000/s发射、capacity30、particlelife1，controller1从`0.5s`起emit0/end0，树无type4声音。现Web资源回收仅精确作用于`EffectRuntimeTree.quiescent`的`025/2807`：最后controller实际生效、当前与后续emitter不再发射、真实particle pool已drained且lifecycle不再产生未来emission时才回收，其余节点沿现finite结束；不改原phase/duration/controller/random/retained，不设任意expiry或新timer。该政策是Web资源回收，不声称原025 stop writer或SourceTree自然release恢复。普通双端实测、原stop caller与HD仍待完成，M4-10/FUNC-02及M6-06父项保持未勾。
+
 ## 雷达干扰弹
 
 对应M2-02/M4-10及FUNC-01/FUNC-10/FUNC-21。原`item2010`为`ItemType`3、`ItemMoney/ItemCoin/GGet`均0、`BattleUseMax`15、`skillIds`2010/4008；`skill2010`为`Trigger0/Target1/Range0`Func1`T0`，`skill4008`为`Trigger8/Target1/Range1`Func1`T15`、RadarA/B/C均999、首槽Effect13/SE14。原完整432951既有合同不把RadarA/B/C相加为被动属性，原4008施加Radar字段的写地址与期限writer未取得；Radar列保持字面，不用它证明原列单位，也不把4008的Func1映射为Func21 grant。
