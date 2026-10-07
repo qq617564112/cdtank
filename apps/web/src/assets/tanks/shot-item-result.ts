@@ -15,7 +15,7 @@ export class TankShotItemResult {
   /** Original423956 endpoint precedes423092 feedback, separate from BeforeShot. */
   show(message: ShotDisplayMessage, attackerId: string, localId: string,
     shotResult: () => void): void {
-    if (attackerId === localId || ![2001, 2002, 2003, 2004, 2005, 2006, 2008, 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021].includes(message.itemId)) return;
+    if (attackerId === localId || ![2001, 2002, 2003, 2004, 2005, 2006, 2008, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021].includes(message.itemId)) return;
     this.display.show(message);
     shotResult();
   }

@@ -33,13 +33,14 @@ export class BattleSound {
   private active = false;
   private volume?: number;
   private listenerPosition: Position = {x: 0, y: 0, z: 0};
+  private readonly interaction = (): void => {this.resume();};
 
   constructor() {
     this.status.hidden = true;
     this.status.dataset.sourceAudio = 'battle-sound';
     document.body.append(this.status);
-    window.addEventListener('pointerdown', () => {this.resume();});
-    window.addEventListener('keydown', () => {this.resume();});
+    window.addEventListener('pointerdown', this.interaction);
+    window.addEventListener('keydown', this.interaction);
     this.publish();
   }
 
@@ -50,7 +51,7 @@ export class BattleSound {
     if (!response.ok) throw new Error('原战斗音效目录载入失败');
     const catalog = await response.json() as SoundCatalog;
     if (generation !== this.generation) return;
-    this.context ??= new AudioContext();
+    const context = this.context ??= new AudioContext();
     if (!this.gain) {
       this.gain = this.context.createGain();
       this.gain.connect(this.context.destination);
@@ -64,7 +65,7 @@ export class BattleSound {
       if (!entry) throw new Error(`缺少原战斗声音：${id}`);
       const response = await fetch(`/${entry.asset}`);
       if (!response.ok) throw new Error(`原战斗声音载入失败：${id}`);
-      return [id, await this.context!.decodeAudioData(await response.arrayBuffer())] as const;
+      return [id, await context.decodeAudioData(await response.arrayBuffer())] as const;
     }));
     if (generation !== this.generation) return;
     decoded.forEach(([id, buffer]) => this.buffers.set(id, buffer));
@@ -83,7 +84,7 @@ export class BattleSound {
   /** Original4247aa remote tail calls423092 with message+10, without BeforeShot. */
   shotItemResult(event: MsgRoomEvent, snapshot: MsgRoomSnapshot, localId: string,
     itemId: number): void {
-    if (event.playerId === localId || ![2001, 2002, 2003, 2004, 2005, 2006, 2008, 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021].includes(itemId)) return;
+    if (event.playerId === localId || ![2001, 2002, 2003, 2004, 2005, 2006, 2008, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021].includes(itemId)) return;
     this.playEvent(event, snapshot, localId, itemId);
   }
 
@@ -196,6 +197,18 @@ export class BattleSound {
     this.history.length = 0;
     if (this.gain) this.gain.gain.value = 0;
     this.publish();
+  }
+
+  dispose(): void {
+    this.stop();
+    window.removeEventListener('pointerdown', this.interaction);
+    window.removeEventListener('keydown', this.interaction);
+    this.gain?.disconnect();
+    if (this.context) void this.context.close();
+    this.gain = undefined;
+    this.context = undefined;
+    this.buffers.clear();
+    this.status.remove();
   }
 
   private publish(): void {

@@ -144,6 +144,23 @@ export class EffectRuntimeTree {
 
   /** Empty source containers remain native-active; reclaim their Web render resources. */
   get quiescent(): boolean {
-    return this.nodes.every(node => node.definition.type === 0 ? node.lifecycle.phase !== 1 : node.lifecycle.phase === 0);
+    return this.nodes.every(node => node.definition.type === 0 ? node.lifecycle.phase !== 1 :
+      node.lifecycle.phase === 0 || this.webExhausted025Particle(node));
+  }
+
+  /** Original online025/2807 has no future emission after its final controller becomes active. */
+  private webExhausted025Particle(node: EffectRuntimeNode): boolean {
+    if (this.root.definition.name !== '_root\\online\\025' || node.definition.index !== 2807 ||
+        node.definition.type !== 6 || node.lifecycle.phase !== 2) {
+      return false;
+    }
+    const particle = node.particle;
+    const controls = particle?.controls;
+    const controller = node.lifecycle.controller;
+    if (!particle || !controls || controls.length === 0 || controller !== controls.length - 1 ||
+        particle.controller !== controller) {
+      return false;
+    }
+    return controls[controller].emitter.countRange[1] <= 0 && particle.pool.particles.length === 0;
   }
 }
