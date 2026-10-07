@@ -23,6 +23,10 @@ def inspect(root, groups):
     if not runtime.is_absolute():
         runtime = root / runtime
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
+    all_textures = {entry['source'].lower(): entry for entry in inventory['textures']
+                    if not entry.get('intermediate')}
+    available = {source: entry for source, entry in all_textures.items()
+                 if (root / entry['png']).is_file()}
     selected = [entry for entry in inventory['textures']
                 if not entry.get('intermediate')
                 and (not groups or any(group in entry['groups'] for group in groups))]
@@ -59,7 +63,7 @@ def inspect(root, groups):
         current, binary, _ = installer.read_glb(target.read_bytes())
         original, original_binary, _ = installer.read_glb(
             snapshot.read_bytes() if snapshot.is_file() else target.read_bytes())
-        matches = installer.image_matches(original, source, ready)
+        matches = installer.image_matches(original, source, available)
         if not matches:
             continue
         report['models'] += 1
@@ -88,6 +92,10 @@ def inspect(root, groups):
             issue(source, 'Original buffer metadata differs')
         images = current.get('images', [])
         original_images = original.get('images', [])
+        known_images = installer.image_matches(original, source, all_textures)
+        for index in range(len(original_images)):
+            if index not in known_images:
+                issue(source, f'Image {index} has no PNG inventory reference')
         if len(images) != len(original_images):
             issue(source, 'Original image count differs')
         for index, before in enumerate(original_images):

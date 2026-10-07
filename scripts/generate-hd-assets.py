@@ -115,6 +115,9 @@ def prepare():
             image = str(Path(path).parent / (Path(material.get('name', '')).stem + '.png'))
             for group in model_groups:
                 add(image, group)
+                adopted = material.get('extras', {}).get('terrainTextureAdoption', {}).get('asset')
+                if adopted:
+                    add(adopted, group)
 
     textures, unique = [], {}
     reused = document(ROOT / 'art/field-road-hd/inventory.json')

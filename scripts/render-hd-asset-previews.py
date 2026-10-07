@@ -92,6 +92,9 @@ class Renderer:
         source = overrides.get(name.lower()) or overrides.get('*')
         if source:
             return self.image(source, hd)
+        adopted = material.get('extras', {}).get('terrainTextureAdoption', {}).get('asset')
+        if adopted:
+            return self.image(adopted, hd)
         candidate = str(Path(path).parent / (Path(name).stem + '.png'))
         if candidate.lower() in self.textures or (self.assets / candidate).exists():
             return self.image(candidate, hd)

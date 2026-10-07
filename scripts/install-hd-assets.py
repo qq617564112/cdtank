@@ -15,6 +15,15 @@ JSON_CHUNK = 0x4E4F534A
 BIN_CHUNK = 0x004E4942
 
 
+def read_glb_metadata(path):
+    with path.open('rb') as stream:
+        header = stream.read(20)
+        size, kind = struct.unpack_from('<II', header, 12)
+        if kind != JSON_CHUNK:
+            raise ValueError('GLB JSON chunk is missing')
+        return json.loads(stream.read(size))
+
+
 def read_glb(data):
     magic, version, length = struct.unpack_from('<III', data)
     if magic != 0x46546C67 or version != 2 or length != len(data):
@@ -54,7 +63,8 @@ def image_matches(model, source, textures):
         if entry:
             matches[index] = entry
     for material in model.get('materials', []):
-        entry = lookup(material.get('name'))
+        adopted = material.get('extras', {}).get('terrainTextureAdoption', {}).get('asset')
+        entry = lookup(adopted) or lookup(material.get('name'))
         if not entry:
             continue
         color = material.get('pbrMetallicRoughness', {}).get('baseColorTexture')
@@ -135,18 +145,16 @@ def main():
                     and installed.is_file() and installed.read_bytes() == delivered.read_bytes()):
                 replacements[entry['source'].lower()] = entry
     selected_paths = {entry['source'].lower() for entry in completed}
-    selected_directories = {str(PurePosixPath(path).parent) for path in selected_paths}
     model_count = 0
     for source in inventory.get('models', []):
-        if str(PurePosixPath(source.lower()).parent) not in selected_directories:
-            continue
         target = runtime / source
         snapshot = root / 'art/hd-assets/original-models' / source
-        original = snapshot.read_bytes() if snapshot.exists() else target.read_bytes()
-        model, _, _ = read_glb(original)
+        original_path = snapshot if snapshot.exists() else target
+        model = read_glb_metadata(original_path)
         matches = image_matches(model, source, replacements)
         if not any(entry['source'].lower() in selected_paths for entry in matches.values()):
             continue
+        original = original_path.read_bytes()
         packed = repack(original, source, replacements, root)
         if not snapshot.exists():
             snapshot.parent.mkdir(parents=True, exist_ok=True)
