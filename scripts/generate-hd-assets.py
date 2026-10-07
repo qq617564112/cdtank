@@ -231,13 +231,25 @@ def restore(original_path, generated, terrain, source_box=None, solid_color=None
     original = Image.open(original_path).convert('RGBA')
     if source_box:
         original = original.crop(source_box)
-    reference = original.convert('RGB')
-    if (source_box and font_tile) or solid_color:
-        reference = Image.new('RGB', original.size, 'black')
-        reference.paste(Image.new('RGB', original.size, tuple(ink_reference or solid_color or [255, 255, 255])),
-                        (0, 0), original.getchannel('A'))
     # Delivered texture dimensions retain the original atlas aspect ratio.
     target = tuple(value * 4 for value in original.size)
+    if (source_box and font_tile) or solid_color:
+        color = np.array(ink_reference or solid_color or [255, 255, 255], dtype=np.float32)
+        coverage = np.sum(np.asarray(generated.convert('RGB'), dtype=np.float32) * color, axis=2)
+        coverage /= np.sum(color * color)
+        coverage = np.clip((coverage - .04) / .92, 0, 1)
+        alpha = Image.fromarray(np.uint8(coverage * 255))
+        generated_box = alpha.point(lambda value: 255 if value >= 128 else 0).getbbox()
+        original_box = original.getchannel('A').point(lambda value: 255 if value >= 128 else 0).getbbox()
+        result = Image.new('RGBA', target, tuple(solid_color) if solid_color else 'white')
+        placed = Image.new('L', target)
+        if generated_box and original_box:
+            left, top, right, bottom = [value * 4 for value in original_box]
+            glyph = alpha.crop(generated_box).resize((right - left, bottom - top), Image.Resampling.LANCZOS)
+            placed.paste(glyph, (left, top))
+        result.putalpha(placed)
+        return result
+    reference = original.convert('RGB')
     generated = generated.convert('RGB').resize(target, Image.Resampling.LANCZOS)
     base = original.resize(target, Image.Resampling.LANCZOS)
     alignment = (512, max(64, round(512 * original.height / original.width)))
@@ -251,14 +263,6 @@ def restore(original_path, generated, terrain, source_box=None, solid_color=None
     pixels = cv2.remap(np.asarray(generated), xx + flow[:, :, 0], yy + flow[:, :, 1],
                        cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT_101)
     registered = Image.fromarray(pixels)
-    if (source_box and font_tile) or solid_color:
-        support = base.getchannel('A').filter(ImageFilter.MaxFilter(5)).point(lambda value: 255 if value else 0)
-        color = np.array(ink_reference or solid_color or [255, 255, 255], dtype=np.float32)
-        coverage = np.sum(pixels.astype(np.float32) * color, axis=2) / np.sum(color * color)
-        alpha = np.minimum(np.clip(coverage * 255, 0, 255), np.asarray(support))
-        result = Image.new('RGBA', target, tuple(solid_color) if solid_color else 'white')
-        result.putalpha(Image.fromarray(np.uint8(alpha)))
-        return result
     radius = 12 if terrain else 24
     rgb = pixels.astype(np.float32)
     rgb += np.asarray(base.convert('RGB').filter(ImageFilter.GaussianBlur(radius)), dtype=np.float32)
@@ -313,7 +317,8 @@ def extract(batch):
     tiled = set()
     for index, cell in enumerate(batch['cells']):
         entry = textures[cell['source']]
-        box = [round(v * (sx if i % 2 == 0 else sy)) for i, v in enumerate(cell['box'])]
+        box = [round(v * (sx if i % 2 == 0 else sy))
+               for i, v in enumerate(cell.get('slotBox', cell['box']))]
         crop = image.crop(box)
         result = restore(ROOT / entry['original'], crop, any(g.startswith('map-') for g in entry['groups']),
                          cell.get('sourceBox'), entry.get('solidColor'), cell.get('kind') != 'texture',

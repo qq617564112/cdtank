@@ -12,6 +12,7 @@ import sys
 import time
 
 from PIL import Image
+import cv2
 import numpy as np
 
 
@@ -67,6 +68,26 @@ def restore_alpha(artwork, original, size):
     return result
 
 
+def cursor_cutout(artwork):
+    pixels = np.asarray(artwork.convert('RGB'))
+    rgb = pixels.astype(np.int16)
+    keyed = ((rgb[:, :, 0] - rgb[:, :, 1] > 80)
+             & (rgb[:, :, 2] - rgb[:, :, 1] > 80))
+    _, labels, stats, _ = cv2.connectedComponentsWithStats(
+        np.uint8(~keyed), connectivity=8)
+    component = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+    mask = np.uint8(labels == component) * 255
+    outside = mask.copy()
+    cv2.floodFill(outside, None, (0, 0), 255)
+    mask |= 255 - outside
+    pixels = pixels.copy()
+    pixels[keyed & (mask > 0)] = 0
+    pixels[mask == 0] = 0
+    result = Image.fromarray(pixels)
+    result.putalpha(Image.fromarray(mask))
+    return result
+
+
 def deliver(art, jobs):
     logo_source = source_image(art / 'original/lobby-logo.png')
     with Image.open(jobs[0]['folder'] / 'output-1.png') as generated:
@@ -77,13 +98,8 @@ def deliver(art, jobs):
     if sheet.width % 2 or abs(sheet.width / sheet.height - 2) > 0.05:
         raise ValueError('Cursor/icon output must be an equal two-cell 2:1 sheet')
     half = sheet.width // 2
-    cursor = sheet.crop((0, 0, half, sheet.height)).resize((128, 128), Image.Resampling.LANCZOS)
-    pixels = np.asarray(cursor.convert('RGB'), dtype=np.float32)
-    keyed = np.clip(np.minimum(pixels[:, :, 0] - pixels[:, :, 1], pixels[:, :, 2] - pixels[:, :, 1]) / 255, 0, 1)
-    alpha = 1 - keyed
-    rgb = (pixels - keyed[:, :, None] * np.array([255, 0, 255])) / np.maximum(alpha[:, :, None], .001)
-    cursor = Image.fromarray(np.uint8(np.clip(rgb, 0, 255)))
-    cursor.putalpha(Image.fromarray(np.uint8(alpha * 255)))
+    cursor = cursor_cutout(sheet.crop((0, 0, half, sheet.height)))
+    cursor = cursor.resize((128, 128), Image.Resampling.LANCZOS)
     icon = restore_alpha(sheet.crop((half, 0, sheet.width, sheet.height)),
                          source_image(art / 'original/client-icon.ico'), (256, 256))
     cursor.save(art / 'png/normal-cursor-hd.png')

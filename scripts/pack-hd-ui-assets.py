@@ -33,6 +33,14 @@ Each slot is a separate original UI asset. Restore every slot independently in i
 Preserve EVERY original Chinese character, Latin letter, digit, punctuation mark and symbol stroke by stroke. Do not substitute characters, change wording, simplify or invent strokes, replace a font, or reflow lettering. Keep all original spacing, blank areas, glyph shapes, button states, border contours, gradients and cursor shapes. Restore crisp readable original lettering and carefully refined painted UI details. Do not add labels, watermark, decorative borders, objects or new lettering. Return only the restored sprite sheet.'''
 
 
+def font_prompt(columns, rows, occupied):
+    return f'''这是一张低分辨率复古游戏字体的参考拼图，{columns}列×{rows}行，{occupied}个独立字形。请在保持原字体风格的情况下重绘为真正清晰的高清文字。
+保留每个字符的身份、原字形、笔画粗细、窄长或方正比例、衬线、开口、字内空间、汉字结构和复古风格。不换字体，不改字，不补字，不省略笔画。
+本次重点是重新构建采样前的连续字形，不是原图放大。参考的大方块与阶梯是低分辨率栅格采样结果，不能作为高清轮廓保留下来。把阶梯斜笔画画成稳定粗细的连续斜线，把分块转弯连成完整自然的曲线。允许消除像素台阶、恢复弧线与平滑转角；不能直接复制大像素块，不能输出像素字，不能模糊处理。
+直线必须笔直，曲线顺滑，所有笔画完整清楚，转角干净，粗细稳定。禁止毛边、模糊、断笔、随机孔洞、颗粒、纹理、阴影和浮雕。纯白实心字、纯黑背景，无其他颜色。
+每格只保留原来一个字形；保留原格位置、字符外框的宽高与空白，不重排网格，不增加标签。只返回完整高清拼图。字形和风格相同，分辨率与绘制精度提升。'''
+
+
 def create_batch(root, batch_id, entries, kind, write):
     _, maximum_columns, inner = LAYOUTS[kind]
     columns = min(maximum_columns, math.ceil(math.sqrt(len(entries))))
@@ -89,7 +97,8 @@ def font_entries(root, textures):
                 x, y = glyph['x'], glyph['y']
                 box = [x, y, x + width, y + height]
                 if alpha.crop(box).getbbox() is not None:
-                    tiles.append({**entry, 'size': [width, height], 'sourceBox': box})
+                    tiles.append({**entry, 'size': [width, height], 'sourceBox': box,
+                                  'character': glyph['character']})
         result[canonical] = tiles
     return result
 
@@ -141,8 +150,12 @@ def create_strip_batch(root, batch_id, entries, write):
 def create_font_batch(root, batch_id, entries, write):
     batch = create_batch(root, batch_id, entries, 'tiny', False)
     canvas = Image.new('RGB', tuple(batch['inputSize']), 'black') if write else None
-    for cell, entry in zip(batch['cells'], entries):
+    for index, (cell, entry) in enumerate(zip(batch['cells'], entries)):
         cell['sourceBox'] = entry['sourceBox']
+        cell['character'] = entry['character']
+        columns = batch['inputSize'][0] // 144
+        x, y = index % columns * 144, index // columns * 144
+        cell['slotBox'] = [x, y, x + 144, y + 144]
         if write:
             with Image.open(root / entry['original']) as original:
                 alpha = original.convert('RGBA').getchannel('A').crop(entry['sourceBox'])
@@ -154,8 +167,11 @@ def create_font_batch(root, batch_id, entries, write):
         folder.mkdir(parents=True, exist_ok=True)
         canvas.save(root / batch['input'])
         columns = batch['inputSize'][0] // 144
-        text = prompt(columns, columns, len(entries))
-        text += '\nEach occupied slot contains ONE original white font glyph on black. Keep its exact strokes and silhouette. Do not infer a different character, typeset replacement letters, combine glyphs, or add text. Preserve the black background.'
+        text = font_prompt(columns, columns, len(entries))
+        text += '\n字符身份按下列每行的 JSON 列表确定，列表和引号不画入图片：\n'
+        text += '\n'.join(json.dumps([entry['character'] for entry in entries[start:start + columns]],
+                                     ensure_ascii=False)
+                          for start in range(0, len(entries), columns))
         (root / batch['prompt']).write_text(text + '\n')
     return batch
 
