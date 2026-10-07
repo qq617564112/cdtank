@@ -13,6 +13,8 @@ import {followBattleCamera} from './battle-camera';
 import {TankView} from '../assets/tanks/tank-view';
 import {BattleRoleDisguises} from './battle-role-disguises';
 import {BattlePlayerLabels} from './battle-player-labels';
+import {BattleTankDecoration} from './battle-tank-decoration';
+import {gameContent} from '../../../shared/content/catalog';
 
 interface PlayerEffects {
   attach(view: TankView): void;
@@ -34,6 +36,8 @@ export class BattlePlayers {
   private criticalTextRenderer?: TankCriticalTextRenderer;
   private damageTextLoading?: Promise<void>;
   private readonly loading = new Set<string>();
+  private readonly decorations = new Map<string, BattleTankDecoration>();
+  private readonly selectedDecoration = new Map<string, number>();
   private readonly previousPositions = new Map<string, {x: number; z: number; alive: boolean}>();
   private readonly presentedLife = new Map<string, boolean>();
   private readonly moving = new Set<string>();
@@ -64,7 +68,9 @@ export class BattlePlayers {
   }
 
   get resourcesReady(): boolean {
-    return this.snapshot !== undefined && this.snapshot.every(player => this.players.has(player.id));
+    return this.snapshot !== undefined && !this.error
+      && this.snapshot.every(player => this.players.has(player.id))
+      && [...this.decorations.values()].every(decoration => decoration.ready);
   }
 
   get loadingError(): string {return this.disguises.loadingError || this.error;}
@@ -78,9 +84,14 @@ export class BattlePlayers {
     this.damageTexts.forEach(queue => queue.clear());
     this.benefitTexts.forEach(queue => queue.clear());
     this.previousHp.clear();
+    this.decorations.forEach(decoration => decoration.dispose());
+    this.decorations.clear();
+    this.selectedDecoration.clear();
     for (const player of players) {
       const view = this.players.get(player.id);
-      if (view) this.resetPose(view, player);
+      if (!view) continue;
+      this.resetPose(view, player);
+      this.applyDecoration(player, view);
     }
   }
 
@@ -109,6 +120,7 @@ export class BattlePlayers {
         this.damageTexts.delete(id);
         this.benefitTexts.get(id)?.dispose();
         this.benefitTexts.delete(id);
+        this.disposeDecoration(id);
         this.players.delete(id);
         this.previousPositions.delete(id);
         this.presentedLife.delete(id);
@@ -118,16 +130,22 @@ export class BattlePlayers {
     for (const player of players) {
       const loaded = this.players.get(player.id);
       if (loaded && !this.sameSelection(loaded, player)) {
-        this.effects.remove(player.id);
-        this.effects.detach(loaded);
-        loaded.dispose();
-        this.damageTexts.get(player.id)?.dispose();
-        this.damageTexts.delete(player.id);
-        this.benefitTexts.get(player.id)?.dispose();
-        this.benefitTexts.delete(player.id);
-        this.previousHp.delete(player.id);
-        this.players.delete(player.id);
-        this.presentedLife.delete(player.id);
+        if (this.sameModel(loaded, player)) {
+          // Only the confirmed decoration changed; release its owner before loading the replacement.
+          this.disposeDecoration(player.id);
+        } else {
+          this.effects.remove(player.id);
+          this.effects.detach(loaded);
+          loaded.dispose();
+          this.damageTexts.get(player.id)?.dispose();
+          this.damageTexts.delete(player.id);
+          this.benefitTexts.get(player.id)?.dispose();
+          this.benefitTexts.delete(player.id);
+          this.disposeDecoration(player.id);
+          this.previousHp.delete(player.id);
+          this.players.delete(player.id);
+          this.presentedLife.delete(player.id);
+        }
       }
       const previousHp = this.previousHp.get(player.id);
       this.previousHp.set(player.id, player.hp);
@@ -138,6 +156,7 @@ export class BattlePlayers {
       if (view) {
         this.applyAmmoEffect(view, player);
         this.applyVisibility(view, player);
+        this.applyDecoration(player, view);
       }
       const previous = this.previousPositions.get(player.id);
       if (view && previous?.alive && !player.alive) {
@@ -216,10 +235,54 @@ export class BattlePlayers {
     queue.show(Math.trunc(point.x), Math.trunc(point.y), increase, isLocal);
   }
 
+  /** TankView owns no confirmed decoration field, so the loaded identity is tracked alongside it. */
   private sameSelection(view: Pick<PlayerSnapshot, 'tankId' | 'tankTextures'>,
                         player: PlayerSnapshot): boolean {
+    return this.sameModel(view, player)
+      && this.selectedDecoration.get(player.id) === player.decoration?.itemTableId;
+  }
+
+  private sameModel(view: Pick<PlayerSnapshot, 'tankId' | 'tankTextures'>,
+                    player: PlayerSnapshot): boolean {
     return view.tankId === player.tankId &&
       JSON.stringify(view.tankTextures) === JSON.stringify(player.tankTextures);
+  }
+
+  private disposeDecoration(id: string): void {
+    this.decorations.get(id)?.dispose();
+    this.decorations.delete(id);
+    this.selectedDecoration.delete(id);
+  }
+
+  /** Consumes the authoritative decoration identity once the actor model is present. */
+  private applyDecoration(player: PlayerSnapshot, view: TankView): void {
+    const itemTableId = player.decoration?.itemTableId;
+    if (this.selectedDecoration.get(player.id) === itemTableId) return;
+    this.disposeDecoration(player.id);
+    if (itemTableId === undefined) return;
+    const item = gameContent().items.get(itemTableId);
+    if (!item) {
+      this.error = `饰品定义缺失：${itemTableId}`;
+      return;
+    }
+    // Record the choice before loading so a later snapshot compares against it.
+    this.selectedDecoration.set(player.id, itemTableId);
+    if (item.appearanceEffect) return;
+    let decoration: BattleTankDecoration;
+    try {
+      decoration = BattleTankDecoration.create(this.scene, view, item);
+    } catch (error) {
+      this.error = `饰品载入失败：${String(error)}`;
+      return;
+    }
+    this.decorations.set(player.id, decoration);
+    void decoration.load().then(ready => {
+      if (!ready && this.decorations.get(player.id) === decoration) this.disposeDecoration(player.id);
+    }).catch(error => {
+      if (this.decorations.get(player.id) === decoration) {
+        this.error = `饰品载入失败：${String(error)}`;
+      }
+    });
   }
 
   private async loadPlayer(player: PlayerSnapshot): Promise<void> {
@@ -235,7 +298,7 @@ export class BattlePlayers {
       await this.ammoCatalogLoading;
       const view = await TankView.load(this.scene, `player-${player.id}`, player.tankId, player.tankTextures);
       const current = this.snapshot?.find(value => value.id === player.id);
-      if (generation !== this.generation || !current || !this.sameSelection(player, current)) {
+      if (generation !== this.generation || !current || !this.sameModel(player, current)) {
         view.dispose();
         return;
       }
@@ -250,14 +313,19 @@ export class BattlePlayers {
         this.benefitTexts.set(player.id, new TankBenefitText(this.benefitTextRenderer));
       }
       this.effects.attach(view);
+      this.applyDecoration(current, view);
     } catch (error) {
       const current = this.snapshot?.find(value => value.id === player.id);
-      if (generation === this.generation && current && this.sameSelection(player, current)) {
+      if (generation === this.generation && current && this.sameModel(player, current)) {
         this.error = `战车载入失败：${String(error)}`;
       }
     } finally {
       if (generation === this.generation) {
         this.loading.delete(player.id);
+        const current = this.snapshot?.find(value => value.id === player.id);
+        if (current && !this.players.has(player.id) && !this.sameModel(player, current)) {
+          void this.loadPlayer(current);
+        }
       }
     }
   }
@@ -380,6 +448,9 @@ export class BattlePlayers {
     this.playing = true;
     this.players.forEach(view => {this.effects.detach(view); view.dispose();});
     this.players.clear();
+    this.decorations.forEach(decoration => decoration.dispose());
+    this.decorations.clear();
+    this.selectedDecoration.clear();
     this.damageTexts.forEach(queue => queue.dispose());
     this.damageTexts.clear();
     this.benefitTexts.forEach(queue => queue.dispose());
