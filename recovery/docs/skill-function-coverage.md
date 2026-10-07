@@ -57,6 +57,8 @@ FuncType2恢复前置已新增原生命赋值合同：433250 selector15先通过
 
 Func13的物件3001定时炸弹沿old-bomb-policy.md的既有有限普通购买/放置/直接伤害、双端原资源和同库重启证据；不以该子范围替代原执行器、未知X30或全部函数完成。342技能/204道具的完整状态继续按tasklist.md追踪。
 
+宠物技能属性、`copy`及首次`lastStand`的首槽通知按[宠物技能触发运行时](pet-trigger-effect-runtime.md)与[宠物技能触发表现](pet-trigger-effect-presentation.md)采用：仅当前源对真实受益者实际接受并安装或刷新timed来源后发送；`copyPassiveSkillAfterKill`实际成功并完成来源切换后使用模仿源10711；10441的Effect43/sound0/tag0/method3只表示当前首槽通知，不推断爆炸伤害、第二槽或retained。hit/kill/death/respawn属性成功、实际copy及首次lastStand producer生产待交付，实际验收与整批走查未完成。
+
 物件3007/skill4024/4025/4026的Func3/4/5已接普通category4 placeTrap、CAS先成功后两数量单减、00009地面对象、Range80首敌接触后当前room全敌三lane、许可count/期限/生命周期和首槽通用通知；原flag observer与完整Func3/4/5父项保留，终态见[定时闹钟群体限制](alarm-clock-client-business-design.md)。
 
 Func6的复活保护domain 6b05507/P life 73ae1a2与World桥88b726a已接：真实复活完成后授予5秒、首次spawn不授、真实时钟推进到期，死亡/Leave/finish/round/loading清理，统一shot/DOT/direct/trap/airstrike免伤predicate共用；实际验收待做，FUNC-06保持未勾。Func19的12501/12502/12503商城取得入口fea0765与商城UI d2c3a66已接，Home MARKER装配后profile0x13c三mark实例按owned实例解析ItemSkill1进入selectedSkills，snapshot与World冻结共同消费（a40e38d）；实际验收待做。Func20的20001/20002拾取数量入账随ground acquire账户事务与World桥真接；普通use不再加一，ItemSkill2=30005按普通request→既有CAS→治疗clamp→两量单减接入，失败不扣，成功itemUsed带definition.name沿现HUD。最后一份在同一AccountStore CAS事务删空实例与引用快捷槽并清当前角色零量记录/七槽/数组0；CPU真实CONFIGURE精确接受20001/20002到消耗槽5..8，正有限uint32是库存表示界而非每轮上限，无autoassign/gift；实际验收待做。Func21纯关系规则aeafb02及当前小地图消费已接，13111 jammer/13112 detector读取真实selected来源；本人/同队可见、敌对仅detector解radar jam且不破解optical invisibility；本批范围仅13111/13112关系读取、无新grant，合法取得链与验收待做。地面掉落shared/schema106 83f138f、account事务be579f9、domain fda9ebb（source 49b9ce6）、World桥88b726a与UI呈现fc83778均已集成，OP唯一集中静态走查四项finding均已交付（服务器O-S01/P-S01 a40e38d、UI main8b70bfe/source 8bdafe1d）；M2-10实际验收待做。

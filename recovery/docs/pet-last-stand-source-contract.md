@@ -1,12 +1,12 @@
 # Pet4最后一搏10441来源合同
 
-M4-10/FUNC-11/M6-04具名尚缺玩家消费者。原Pet4普通价格4500金币，六槽baseIds为10411/10421/10431/10441/10451/10461，各槽上限6/5/5/1/1/0。slot3技能10441/group10441/level1的原学习费用200。现有PetShop普通购买、SelectRole和PetSkillLearning可提供合法新Pet4与slot3/rank1；新购六rank0为既有Web建档政策。技能点取得仍缺来源，验收若使用预服务Point200须明确非earned，不降旧等级或注入拥有记录。
+M4-10/FUNC-11/M6-04已有有限玩家consumer与生产接线，完整原来源及父项未完成。原Pet4普通价格4500金币，六槽baseIds为10411/10421/10431/10441/10451/10461，各槽上限6/5/5/1/1/0。slot3技能10441/group10441/level1的原学习费用200。现有PetShop普通购买、SelectRole和PetSkillLearning可提供合法新Pet4与slot3/rank1；新购六rank0为既有Web建档政策。结算技能点已接入`account_growth.skill_points`，与宠物学习扣款共用同一余额；原技能点source及“新earned→learn”端到端证据尚未取得。验收若使用预服务Point200须明确非earned，不降旧等级或注入拥有记录。
 
-原skill10441名为“最后一搏”，Info为“就算生命=0，还可以再多活3秒才爆炸。” Trigger6、Target1、Range0，Func11 T3/X0/Y0/Z0，其余两函数槽为0；全部数值attributes为0。T3与原文案共同提供3秒持续输入，但尚未恢复原Trigger6调度与Func11时间写入/最终爆炸调用。效果表effect43/sound0本身不证明实际视觉或爆炸伤害。
+原skill10441名为“最后一搏”，Info为“就算生命=0，还可以再多活3秒才爆炸。” Trigger6、Target1、Range0，Func11 T3/X0/Y0/Z0，其余两函数槽为0；全部数值attributes为0。T3与原文案共同提供3秒持续输入，但原Trigger6调度与Func11时间写入/最终爆炸调用仍未恢复。effect43/sound0/tag0/method3仅登记Web首槽通知，没有爆炸伤害、第二槽或retained推断。
 
 所选拥有base的slot3字段为baseId+50、rank+68，来自六槽+44+slot*4与+5c+slot*4。base+68是此拥有记录的rank字段，区别于combat.roleFloatFields+68的Critical概率。合法实例由profile+a4与完整OwnedRoles确认，BattleRoleSources.snapshot().base.fields和公开roleSkillSources.equipmentSkills[3]已有同源provider。读取base10441/rank1可以提出新Web资格，不能宣称原boundGear安装producer已恢复。
 
-10441不是Trigger0/Func1 Tffff属性被动，不进入原selectedSkillIds合成，也不能补塞current16来构造资格。正式Web资格consumer `battle/last-stand.ts` 已接入10441所选拥有源；root正在完成life/health/World生命周期工程。普通死亡和3秒复活已有证据不能证明“HP0仍活3秒”，该新终点已取得下述普通首次实际证据，原执行器范围另保。新终点须由自然致死触发、在HP0时保留明确的临时存活行为，然后唯一最终死亡/击毁/得分及复活双端同步。
+10441不是Trigger0/Func1 Tffff属性被动，不进入原selectedSkillIds合成，也不能补塞current16来构造资格。正式Web资格consumer `battle/last-stand.ts` 已接入10441所选拥有源，life/health/World生命周期生产接线已接。普通死亡和3秒复活历史证据不能证明“HP0仍活3秒”；下述普通首次实际证据保留其旧受测版本范围，不替代当前生产接线后的新实测。新终点须由自然致死触发、在HP0时保留明确的临时存活行为，然后唯一最终死亡/击毁/得分及复活双端同步。
 
 ## 正式Web时序
 
@@ -54,4 +54,4 @@ M4-10/FUNC-11/M6-04具名尚缺玩家消费者。原Pet4普通价格4500金币�
 
 页面必要尾段17658 actualexit0，raw `recovery/output/browser-pet-last-stand-2026-10-06T00-41-01-750Z.json`。首Home及六方向权威证据严格复用，另建正常新房补终点，不恢复旧session。六自然命中使目标HP650归零，HP0alive阶段本人原生Space106ms产生唯一fire，两页TankView.fire均接受；归零后server3016ms最终单destroy/death/kill，双TankView.life完成false动作09，再server3040ms自然复活true动作01、HP650与freshfire。完整选定samekey快照及各页自身connectiontick的players全文相等。各页retained927/832、共同832是保留窗口，不称完整session快照数量。
 
-原peerPLAYING Leave→hostFINISHED summary Leave及双StrictHomeClose完成，Runtime异常0，未新增交易/heal/itemUsed。原生表全文保持，仅普通结算settled_matches+1/match_history+2；checkpoint212992B及private均0600，四finally清理与三端口空由独立页面主审确认。首64968 FAIL与方向采样边界独立保留；周期、食品、医疗、吸收拒绝及离开射手归属属于root工程证据，网络真实同库重启独立复用。原Trigger6/Func11调度、effect43触发、Point取得、绑定producer及全部父范围仍开放。
+原peerPLAYING Leave→hostFINISHED summary Leave及双StrictHomeClose完成，Runtime异常0，未新增交易/heal/itemUsed。原生表全文保持，仅普通结算settled_matches+1/match_history+2；checkpoint212992B及private均0600，四finally清理与三端口空由独立页面主审确认。首64968 FAIL与方向采样边界独立保留；周期、食品、医疗、吸收拒绝及离开射手归属属于root工程证据，网络真实同库重启独立复用。原Trigger6/Func11调度/爆炸调用、Point原始取得与new earned→learn、boundGear安装producer仍开放；effect43仅登记Web首槽通知采用规则，首次合格lastStand首槽producer生产待交付，不推断爆炸伤害、第二槽或retained。下述历史网络/页面实测范围与旧受测版本保持，全部父项不勾。

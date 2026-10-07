@@ -98,6 +98,14 @@ World两个advanceGroundTraps调用点提供同一治疗回调。资格要求真
 
 触发或到期后对象移除；owner离房、clear、finish及newround均无退款。owner仍在room但死亡时，3006保持普通地面寿命，不新增3007式死亡删除，死亡角色自身不是治疗目标。多个3006对象各自独立且各最多触发一次。既有`GroundTrapsPresentation`经definition/model 9使用`ContentItemVisual`，并复用既有snapshot与playerHealed消费者，无新UI、协议或schema。原writer、4027字段效果、原取得、原触发及目标语义、真实页面、联机、HD和持久重启未实测，静态走查不替代这些证据，M4-10-I3006及父项保持未勾。
 
+## 宠物技能触发首槽通知
+
+对应M4-09-PET-TRIGGER-FX，详[宠物技能触发运行时](pet-trigger-effect-runtime.md)、[宠物技能触发表现](pet-trigger-effect-presentation.md)。既有`pet-lifecycle`按受击/击毁/死亡/复活原资格分发属性；仅某受益者`receiveAttributeSkill`实际接受并安装或刷新timed来源后，才向该受益者发送一次首槽通知。低级被较高级未到期拒绝、死者、零HP、无Func1或无有效T均不通知；同级被接受的刷新通知一次。通知使用当前源真实rank技能ID、该目标roleId、slot0及duration0/xBits0/zBits0；原`effects[0].effectId=0`不发送。
+
+`copy`仅在实际`copyPassiveSkillAfterKill`返回true并完成原来源切换后，向复制者发送模仿源10711首槽；不假发被复制技能激活，不改来源冻结、copy末序、候选、随机或清理。首次合格`lastStand`建立原latch后，以同次选中的实际lethal技能首槽向target发送duration0；重复hit不通知，不改expiresAt、治疗门禁、归属、最终死亡或复活。表10441为Effect43/sound0/tag0/method3，Web只消费首槽通知，不推断爆炸伤害、第二槽或retained。
+
+复用`MsgRoomEvent.playSkillEffect`及通用Web consumer，不新增API或schema。新独立事件采用`type='petSkillTriggered'`、value0、playerId施放源、targetId受益者、XYZ受益者和skillId实际技能；原服务器producer未知，以上为Web采用规则。hit/kill/death/respawn属性成功、实际copy及首次lastStand首槽producer生产待交付；本批新实测和整批走查尚未完成。
+
 ## 空袭
 
 对应FUNC-16/FUNC-15及M4-10-I13、M6-06-I13。原物件13“救命啊”通讯器关联skill13，每局上限1，两个正价40金币/20软星币，GGet2；skill13为Trigger1/Target1/Range200、FuncType16 T0/X20/Y3013/Z0、首槽Effect10/SE02/Tag0/Method3。skill3013为Target4/Range200、FuncType15 T0/X0/Y3012/Z0、首槽Effect60/SE32/Tag0/Method1；3012为FuncType2 HP-300且无效果/声音。原表引用链 `item13 ItemSkill1 -> skill13 Func16 -> skill3013 Func15 -> skill3012` 及表loader槽步长是直接来源；原416f接收器486a09只消费消息+c技能、+10效果槽和+14 float32 XZ点数组，经向零截断提交world采样Y=0，不读FuncType、不扣库存、不写目标生命。
