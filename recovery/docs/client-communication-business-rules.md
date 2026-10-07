@@ -104,7 +104,7 @@ World两个advanceGroundTraps调用点提供同一治疗回调。资格要求真
 
 `copy`仅在实际`copyPassiveSkillAfterKill`返回true并完成原来源切换及copy末序后，以真实复制源向复制者发送首槽；不假发被复制技能激活，不改来源冻结、候选、随机或清理。首次合格`lastStand`由`qualifiedLastStand`同次选中的source/duration建立原latch，随后以该source首槽向target发送duration0，旧`qualifiedLastStandDuration`导出保留；重复hit不通知，不改expiresAt、治疗门禁、归属、最终死亡或复活。表10441为Effect43/sound0/tag0/method3，现有通用Web consumer只消费首槽通知，不推断爆炸伤害、第二槽或retained。
 
-复用`MsgRoomEvent.playSkillEffect`及现有通用Web consumer，无需新增TS分支，不新增API或schema。新独立事件采用`type='petSkillTriggered'`、value0、playerId施放源、targetId受益者、XYZ受益者和skillId实际技能；本批生产已实际接入。原服务器producer未知，实际heal保持既有BE范围；runtime及HD表现仍未证，集中走查尚未开始。
+复用`MsgRoomEvent.playSkillEffect`及现有通用Web consumer，无需新增TS分支，不新增API或schema。新独立事件采用`type='petSkillTriggered'`、value0、playerId施放源、targetId受益者、XYZ受益者和skillId实际技能；本批生产已实际接入。原服务器producer未知，实际heal保持既有BE范围；runtime及HD表现仍未证，集中静态走查已完成。
 
 ## 空袭
 

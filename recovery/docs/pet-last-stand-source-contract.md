@@ -12,7 +12,7 @@ M4-10/FUNC-11/M6-04已有有限玩家consumer与生产接线，完整原来源�
 
 政策由 `pet-last-stand-policy.md` 与任务表登记。当前attributesReady及所选Pet4 slot3 base10441/rank1合格时，首次自然HP归零记录authority serverNow+3000，保持alive/status2并允许现正常move/aim/fire，重复hit不延长期限。食物、医疗、周期与吸收禁止恢复，食物拒绝不扣库存。到期只一次destroy/目标death；原致死射手仍在房时才给个人kill/destroyScore，已离开时仍执行目标死亡与团队生命链但不给离开射手个人奖励。原3秒respawn从最终death开始；Leave/FINISHED/start/respawn清阶段，FINISHED不额外制造死亡奖励。
 
-这些组合是明确Web时序重建，原Trigger6/Func11调度、治疗组合及爆炸调用仍未恢复，不猜effect43爆炸伤害或新增视觉。原status2由root工程消费者验证，网络只使用现公开alive/HP与真实输入，不增加诊断API或wire。模拟tick、serverTime及接收墙钟分别记录。
+这些组合是明确Web时序重建。首次latch已按同次选中来源发送一次首槽Effect43通知，表现未实测；原Trigger6/Func11调度、治疗组合及原爆炸伤害来源仍未恢复，不新增爆炸伤害或第二槽。原status2由root工程消费者验证，网络只使用现公开alive/HP与真实输入，不增加诊断API或wire。模拟tick、serverTime及接收墙钟分别记录。
 
 数值线canonical `roles/qualified-last-stand-duration.ts` 导出 `resolveQualifiedLastStandDuration(qualified:boolean,durationSeconds:number):number|undefined`，仅qualified返回seconds*1000，否则undefined。caller负责当前拥有源和attributesReady，纯函数不查询宠物、rank、HP、RNG或时钟。专属 `tests/qualified-last-stand-duration.cts` 唯一actualexit0，3→3000、无资格undefined及0/1.5秒转换通过，输出 `recovery/output/qualified-last-stand-duration.json`。
 
@@ -54,4 +54,4 @@ M4-10/FUNC-11/M6-04已有有限玩家consumer与生产接线，完整原来源�
 
 页面必要尾段17658 actualexit0，raw `recovery/output/browser-pet-last-stand-2026-10-06T00-41-01-750Z.json`。首Home及六方向权威证据严格复用，另建正常新房补终点，不恢复旧session。六自然命中使目标HP650归零，HP0alive阶段本人原生Space106ms产生唯一fire，两页TankView.fire均接受；归零后server3016ms最终单destroy/death/kill，双TankView.life完成false动作09，再server3040ms自然复活true动作01、HP650与freshfire。完整选定samekey快照及各页自身connectiontick的players全文相等。各页retained927/832、共同832是保留窗口，不称完整session快照数量。
 
-原peerPLAYING Leave→hostFINISHED summary Leave及双StrictHomeClose完成，Runtime异常0，未新增交易/heal/itemUsed。原生表全文保持，仅普通结算settled_matches+1/match_history+2；checkpoint212992B及private均0600，四finally清理与三端口空由独立页面主审确认。首64968 FAIL与方向采样边界独立保留；周期、食品、医疗、吸收拒绝及离开射手归属属于root工程证据，网络真实同库重启独立复用。原Trigger6/Func11调度/爆炸调用、Point原始取得与new earned→learn、boundGear安装producer仍开放；本批首槽通知生产已接，首latch后只发一次原首槽，不推断爆炸伤害、第二槽或retained。runtime及HD表现仍未证，集中走查尚未开始；下述历史网络/页面实测范围与旧受测版本保持，全部父项不勾。
+原peerPLAYING Leave→hostFINISHED summary Leave及双StrictHomeClose完成，Runtime异常0，未新增交易/heal/itemUsed。原生表全文保持，仅普通结算settled_matches+1/match_history+2；checkpoint212992B及private均0600，四finally清理与三端口空由独立页面主审确认。首64968 FAIL与方向采样边界独立保留；周期、食品、医疗、吸收拒绝及离开射手归属属于root工程证据，网络真实同库重启独立复用。原Trigger6/Func11调度/爆炸调用、Point原始取得与new earned→learn、boundGear安装producer仍开放；本批首槽通知生产已接，首latch后只发一次原首槽，不推断爆炸伤害、第二槽或retained。runtime及HD表现仍未证，集中静态走查已完成；下述历史网络/页面实测范围与旧受测版本保持，全部父项不勾。

@@ -57,7 +57,7 @@ FuncType2恢复前置已新增原生命赋值合同：433250 selector15先通过
 
 Func13的物件3001定时炸弹沿old-bomb-policy.md的既有有限普通购买/放置/直接伤害、双端原资源和同库重启证据；不以该子范围替代原执行器、未知X30或全部函数完成。342技能/204道具的完整状态继续按tasklist.md追踪。
 
-宠物技能属性、`copy`及首次`lastStand`的首槽通知已按[宠物技能触发运行时](pet-trigger-effect-runtime.md)与[宠物技能触发表现](pet-trigger-effect-presentation.md)接入生产：仅当前源对真实受益者实际接受并安装或刷新timed来源后发送；`copyPassiveSkillAfterKill`实际成功并完成来源切换及copy末序后使用真实复制源；首次`lastStand`由`qualifiedLastStand`同次选中的source/duration建立latch并发送该source首槽，旧`qualifiedLastStandDuration`导出保留。10441的Effect43/sound0/tag0/method3只表示当前首槽通知，不推断爆炸伤害、第二槽或retained。实际heal保持既有BE范围；原服务器producer、runtime及HD仍未证，集中走查尚未开始。
+宠物技能属性、`copy`及首次`lastStand`的首槽通知已按[宠物技能触发运行时](pet-trigger-effect-runtime.md)与[宠物技能触发表现](pet-trigger-effect-presentation.md)接入生产：仅当前源对真实受益者实际接受并安装或刷新timed来源后发送；`copyPassiveSkillAfterKill`实际成功并完成来源切换及copy末序后使用真实复制源；首次`lastStand`由`qualifiedLastStand`同次选中的source/duration建立latch并发送该source首槽，旧`qualifiedLastStandDuration`导出保留。10441的Effect43/sound0/tag0/method3只表示当前首槽通知，不推断爆炸伤害、第二槽或retained。实际heal保持既有BE范围；原服务器producer、runtime及HD仍未证，集中静态走查已完成。
 
 物件3007/skill4024/4025/4026的Func3/4/5已接普通category4 placeTrap、CAS先成功后两数量单减、00009地面对象、Range80首敌接触后当前room全敌三lane、许可count/期限/生命周期和首槽通用通知；原flag observer与完整Func3/4/5父项保留，终态见[定时闹钟群体限制](alarm-clock-client-business-design.md)。
 
