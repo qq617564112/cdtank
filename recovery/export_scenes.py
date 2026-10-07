@@ -50,6 +50,7 @@ from export_scene_terrain06_material import export as export_scene_terrain06_mat
 from export_scene_terrain14_material import export as export_scene_terrain14_material
 from export_scene_terrain17_material import export as export_scene_terrain17_material
 from export_scene_terrain04_material import export as export_scene_terrain04_material
+from export_scene_sequence05023 import export as export_scene_sequence05023
 
 root = Path('recovery/output/verified/assets/data')
 out = Path('recovery/output/web-assets')
@@ -101,6 +102,8 @@ export_scene_terrain06_material()
 export_scene_terrain14_material()
 export_scene_terrain17_material()
 export_scene_terrain04_material()
+sequence_placements = {(placement['mapId'], placement['sourcePlacementId'])
+    for placement in export_scene_sequence05023()}
 scenes = []
 for path in sorted((root / 'Data/scn').rglob('*.obj')):
     records = read_scene(path)
@@ -134,7 +137,8 @@ for path in sorted((root / 'Data/scn').rglob('*.obj')):
             record['asset'] = animated[model_path.relative_to(root).as_posix().lower()]
     entry = dict(id=path.stem, terrain=f'Data/map/{path.stem}/{path.stem}.glb',
         records=records, castles=castles, collisionBoxes=collision_boxes,
-        resolved=sum(bool(r.get('asset') or r.get('animation')) for r in records + castles))
+        resolved=sum(bool(r.get('asset') or r.get('animation')
+            or (path.stem, r['id']) in sequence_placements) for r in records + castles))
     scenes.append(entry)
 export_scene_breach_catalog(scenes, root, out)
 (out / 'scene-placements.json').write_text(json.dumps(scenes,ensure_ascii=False,indent=2),encoding='utf-8')
