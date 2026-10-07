@@ -138,24 +138,28 @@ def repack(data, source, textures, root):
     matches = image_matches(model, source, textures)
     if not matches:
         return None
-    # Keep every original buffer byte and view; replacement images get new views.
-    payload = bytearray(binary)
+    # Retain view indices and geometry bytes, replacing old image payloads in place.
+    payload = bytearray()
     views = model.setdefault('bufferViews', [])
-    shared = {}
+    replacements = {}
     for index, entry in matches.items():
-        key = entry['source'].lower()
+        replacements[model['images'][index]['bufferView']] = entry
+    shared = {}
+    for index, view in enumerate(views):
+        entry = replacements.get(index)
+        offset = view.get('byteOffset', 0)
+        key = ('png', entry['png']) if entry else ('original', offset, view['byteLength'])
         if key not in shared:
-            image_bytes = (root / entry['png']).read_bytes()
-            if not image_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
+            value = (root / entry['png']).read_bytes() if entry else binary[offset:offset + view['byteLength']]
+            if entry and not value.startswith(b'\x89PNG\r\n\x1a\n'):
                 raise ValueError(f"Not a PNG: {entry['png']}")
             payload.extend(b'\0' * (-len(payload) % 4))
-            shared[key] = len(views)
-            views.append({'buffer': 0, 'byteOffset': len(payload),
-                          'byteLength': len(image_bytes)})
-            payload.extend(image_bytes)
+            shared[key] = (len(payload), len(value))
+            payload.extend(value)
+        view['byteOffset'], view['byteLength'] = shared[key]
+    for index in matches:
         image = model['images'][index]
         image.pop('uri', None)
-        image['bufferView'] = shared[key]
         image['mimeType'] = 'image/png'
     buffers = model.setdefault('buffers', [{'byteLength': 0}])
     buffers[0]['byteLength'] = len(payload)

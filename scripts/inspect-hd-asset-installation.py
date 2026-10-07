@@ -131,10 +131,22 @@ def inspect(root, groups):
             issue(source, 'Geometry, UV, animation or other original metadata differs')
         views = current.get('bufferViews', [])
         original_views = original.get('bufferViews', [])
-        if views[:len(original_views)] != original_views:
-            issue(source, 'Original buffer views differ')
-        if binary[:len(original_binary)] != original_binary:
-            issue(source, 'Original buffer bytes differ')
+        image_views = {image['bufferView'] for image in original.get('images', [])
+                       if 'bufferView' in image}
+        for index, before in enumerate(original_views):
+            if index >= len(views):
+                issue(source, f'Original buffer view {index} is missing')
+                continue
+            after = views[index]
+            mutable_view = {'byteOffset', 'byteLength'} if index in image_views else {'byteOffset'}
+            if ({key: value for key, value in before.items() if key not in mutable_view}
+                    != {key: value for key, value in after.items() if key not in mutable_view}):
+                issue(source, f'Original buffer view {index} metadata differs')
+            if index not in image_views:
+                old_offset, new_offset = before.get('byteOffset', 0), after.get('byteOffset', 0)
+                if (original_binary[old_offset:old_offset + before['byteLength']]
+                        != binary[new_offset:new_offset + after['byteLength']]):
+                    issue(source, f'Geometry or animation buffer view {index} bytes differ')
         buffers = current.get('buffers', [])
         original_buffers = original.get('buffers', [])
         clean_buffers = [{key: value for key, value in buffer.items()
@@ -155,6 +167,12 @@ def inspect(root, groups):
             after = images[index]
             if index not in matches and after != before:
                 issue(source, f'Unreplaced image {index} differs from the original')
+            if index not in matches and 'bufferView' in before and 'bufferView' in after:
+                old_view, new_view = original_views[before['bufferView']], views[after['bufferView']]
+                old_offset, new_offset = old_view.get('byteOffset', 0), new_view.get('byteOffset', 0)
+                if (original_binary[old_offset:old_offset + old_view['byteLength']]
+                        != binary[new_offset:new_offset + new_view['byteLength']]):
+                    issue(source, f'Unreplaced image {index} bytes differ from the original')
             allowed = {'uri', 'bufferView', 'mimeType'}
             if ({key: value for key, value in after.items() if key not in allowed}
                     != {key: value for key, value in before.items() if key not in allowed}):
