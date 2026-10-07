@@ -64,6 +64,52 @@ def create_batch(root, batch_id, entries, kind, write):
             'ratio': '1:1' if columns == rows else '16:9'}
 
 
+def font_entries(root, textures):
+    faces = {}
+    for filename in ('ui-font-raster.json', 'five-page-font-raster.json'):
+        metadata = json.loads((root / 'recovery/output/web-assets' / filename).read_text())
+        for face in metadata['faces']:
+            entry = textures[face['atlas']['asset']]
+            faces.setdefault(entry['canonical'], (entry, face['glyphs']))
+    result = {}
+    for canonical, (entry, glyphs) in faces.items():
+        tiles = []
+        with Image.open(root / entry['original']) as original:
+            alpha = original.convert('RGBA').getchannel('A')
+            for glyph in glyphs:
+                width, height = glyph['width'], glyph['height']
+                if not width or not height:
+                    continue
+                x, y = glyph['x'], glyph['y']
+                box = [x, y, x + width, y + height]
+                if alpha.crop(box).getbbox() is not None:
+                    tiles.append({**entry, 'size': [width, height], 'sourceBox': box})
+        result[canonical] = tiles
+    return result
+
+
+def create_font_batch(root, batch_id, entries, write):
+    batch = create_batch(root, batch_id, entries, 'tiny', False)
+    canvas = Image.new('RGB', tuple(batch['inputSize']), 'black') if write else None
+    for cell, entry in zip(batch['cells'], entries):
+        cell['sourceBox'] = entry['sourceBox']
+        if write:
+            with Image.open(root / entry['original']) as original:
+                alpha = original.convert('RGBA').getchannel('A').crop(entry['sourceBox'])
+                x, y, right, bottom = cell['box']
+                alpha = alpha.resize((right - x, bottom - y), Image.Resampling.NEAREST)
+                canvas.paste(Image.new('RGB', alpha.size, 'white'), (x, y), alpha)
+    if write:
+        folder = (root / batch['input']).parent
+        folder.mkdir(parents=True, exist_ok=True)
+        canvas.save(root / batch['input'])
+        columns = batch['inputSize'][0] // 144
+        text = prompt(columns, columns, len(entries))
+        text += '\nEach occupied slot contains ONE original white font glyph on black. Keep its exact strokes and silhouette. Do not infer a different character, typeset replacement letters, combine glyphs, or add text. Preserve the black background.'
+        (root / batch['prompt']).write_text(text + '\n')
+    return batch
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
@@ -75,6 +121,15 @@ def main():
     plan = json.loads(plan_path.read_text())
     textures = {entry['source']: entry for entry in inventory['textures']}
     unique = {entry['canonical']: entry for entry in inventory['textures'] if 'ui' in entry['groups']}
+    fonts = font_entries(root, textures)
+    # Keep every batch of a font together once any output or tile is saved.
+    retained_fonts = set()
+    for batch in plan['batches']:
+        if batch['group'] == 'ui' and any('sourceBox' in cell for cell in batch['cells']):
+            tiles = root / 'art/hd-assets/tiles' / batch['id']
+            if (root / batch['output']).exists() or any(
+                    (tiles / f'{index:03}.png').exists() for index in range(len(batch['cells']))):
+                retained_fonts.update(cell['source'] for cell in batch['cells'])
     retained, covered, original_large = [], set(), {}
     for batch in plan['batches']:
         if batch['group'] != 'ui':
@@ -82,7 +137,7 @@ def main():
             continue
         saved = (root / batch['output']).exists()
         delivered = all((root / textures[cell['source']]['png']).exists() for cell in batch['cells'])
-        if saved or delivered:
+        if saved or delivered or any(cell['source'] in retained_fonts for cell in batch['cells']):
             retained.append(batch)
             covered.update(cell['source'] for cell in batch['cells'])
         elif len(batch['cells']) == 1:
@@ -92,6 +147,8 @@ def main():
         if canonical in covered or (root / entry['png']).exists():
             continue
         kind = category(entry)
+        if canonical in fonts:
+            continue
         if kind == 'large':
             # Preserve existing single-request layout and prompt for large assets.
             batch = original_large.get(canonical)
@@ -103,6 +160,19 @@ def main():
     batches, counts = [], Counter()
     occupied_ids = {batch['id'] for batch in retained}
     sequence = 0
+    font_sequence = 0
+    for canonical, entries in sorted(fonts.items()):
+        if canonical in covered or (root / unique[canonical]['png']).exists():
+            continue
+        for start in range(0, len(entries), 64):
+            font_sequence += 1
+            batch_id = f'ui-font-{font_sequence:04d}'
+            while batch_id in occupied_ids:
+                font_sequence += 1
+                batch_id = f'ui-font-{font_sequence:04d}'
+            occupied_ids.add(batch_id)
+            batches.append(create_font_batch(root, batch_id, entries[start:start + 64], not args.dry_run))
+            counts['font'] += 1
     for (family, kind), entries in sorted(families.items()):
         entries.sort(key=lambda entry: entry['canonical'])
         capacity = LAYOUTS[kind][1] ** 2
