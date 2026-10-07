@@ -8,7 +8,13 @@ export function createRoleTrackTextureState(): RoleTrackTextureState {
   return {elapsed: 0, index: 0};
 }
 
-/** Caller supplies the pending-position gate, independently of visual actions. */
+/** Only accepted straight and arced commands translate the actor; 0/3/4 freeze. */
+export function roleTrackCommandMoves(command: number): boolean {
+  return command === 1 || command === 2 || command === 5 || command === 6 ||
+    command === 7 || command === 8;
+}
+
+/** Caller supplies the accepted-command gate, independently of visual actions. */
 export function advanceRoleTrackTexture(
     state: RoleTrackTextureState, deltaSeconds: number): RoleTrackTextureState {
   const total = Math.fround(state.elapsed) + Math.fround(deltaSeconds);

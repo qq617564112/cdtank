@@ -409,7 +409,8 @@ export class BattlePlayers {
       const pose = manual ? localPose : player;
       const poseAlpha = revived || manual || !playing ? 1 : alpha;
       if (revived || !playing) view.position(pose.x, pose.y, pose.z);
-      view.trackMovementTarget(pose.x, pose.z);
+      const trackCommand = manual ? localPose.command : (player.movement?.command ?? 0);
+      view.trackMovementCommand(this.playing ? trackCommand : 0);
       view.root.position = Vector3.Lerp(view.root.position, new Vector3(-pose.x, pose.y, pose.z), poseAlpha);
       const bodyYaw = pose.bodyYaw ?? pose.yaw;
       const delta = Math.atan2(Math.sin(-bodyYaw - view.root.rotation.y), Math.cos(-bodyYaw - view.root.rotation.y));

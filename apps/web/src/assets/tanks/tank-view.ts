@@ -5,7 +5,7 @@ import {loadEmbeddedTrackTextures, loadTankTextures, tankComponentTexture} from 
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {ShaderMaterial} from '@babylonjs/core';
 import type {Texture} from '@babylonjs/core';
-import {advanceRoleTrackTexture, createRoleTrackTextureState} from './role-track-texture';
+import {advanceRoleTrackTexture, createRoleTrackTextureState, roleTrackCommandMoves} from './role-track-texture';
 import {AssetContainer, LoadAssetContainerAsync, Observable, Scene, TransformNode, Vector3} from '@babylonjs/core';
 
 import {EffectActorActionClock} from './effect-actor-clock';
@@ -348,13 +348,11 @@ export class TankView {
     return messages;
   }
 
-  /** Rebuilt RoomSnapshot position is the renderer's pending interpolation target.
-   * It is not an original 3aa6 command or a movement-action/keyboard predicate.
+  /** The accepted movement command is the only source of track A/B advancement.
+   * Straight 1/2 and arced 5-8 translate; stop 0 and in-place turns 3/4 freeze.
    */
-  trackMovementTarget(x: number, z: number): void {
-    // Test before the frame's spatial update, as the original target gate does.
-    this.trackMovementPending =
-      Math.hypot(this.root.position.x + x, this.root.position.z - z) > Math.fround(.001);
+  trackMovementCommand(command: number): void {
+    this.trackMovementPending = !this.disposed && this.alive && roleTrackCommandMoves(command);
   }
 
   private applyTrackTexture(): void {
