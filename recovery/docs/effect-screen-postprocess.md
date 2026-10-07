@@ -6,7 +6,7 @@
 
 vtable(0x5c9e70)的create(0x485560)返回true，update(0x46888b)返回true，render(0x485459)直接从所选vector项调用virtual+8，下一方法(0x49cc05)直接return。没有这些初始化回调创建index5对象的代码。全EXE executable section的singleton global(0x6d2958)只有getter内的一次写入／一次读取；getter(0x4855ec)只有两个直接call，分别来自type10 start(0x47ee9a)与end(0x47eea7)。class vtable与factory name只被构造与getter注册引用。
 
-生产`EffectRuntimeTree`保留type10节点及原start／end backend调用；无实际初始化backend时，在Select激活处给出明确错误。四个type10与30个type11全source／306tick现均通过生产tree对照。没有为原空列表填充替代后处理，也没有把backend调用对照作为后处理绘制验收。
+生产`EffectRuntimeTree`保留type10节点及原start／end backend调用。生产已采用每 scene 唯一的 Web 屏幕效果 backend：`legacy-screen-effect.ts` 绘制常量全屏 25% 黑遮罩作为明确可见的采用反馈，`EffectScreenNodeState` 每次 type10 activation 生成 owner 并调 `selectEffect(5,0,owner)`，`end` 以当前 owner 调 `clearEffect`；replacement 先释放当前 overlay 再建新 owner，非当前 owner 的 clear 为 stale no-op，`EffectRuntimeTree.dispose`、`EffectRuntime.clear` 与 scene dispose 分别 end/clear/dispose，尺寸变化按 render 前 resize 重提交。四个type10与30个type11全source／306tick现均通过生产tree对照。没有为原空列表填充原后处理，也没有把backend调用对照作为原像素绘制验收；该遮罩不是原像素等价。
 
 四个source位于other\\1000\\11014、11007、11008、11013的旧效果分支。当前skill.dat的342条技能记录有51个Effect1／2／3数值(含0)，按原_root\\online\\%03d根名收集全部source后代并遍历实际child ID可达371个节点，type10数量为0。当前技能表未引用这四个旧type10分支。type5 online019对应当前SkillTableID12「扫光光（扫把）」、TriggerType1、Target1、Effect1=19。
 

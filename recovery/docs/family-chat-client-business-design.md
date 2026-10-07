@@ -175,6 +175,8 @@ apps/shared/protocols/serviceProto.ts
 
 `social/family.ts` 实现只读 `Family` API。`social/family-chat.ts` 实现 `FamilyChat` API、origin 资格和当前 DB membership 路由。`index.ts` 在现有社交注册链中注册两者。`social/family-operator.ts` 只调用 AccountStore 方法。
 
+生产接线、operator 运行方式与客户端生命周期见 `family-chat-runtime.md`。
+
 ## UI 与 Battle 通道 adapter
 
 UI 消费者包含 `apps/web/src/network/family.ts`、既有 `lobby-chat.ts`、Battle 与三页 chat 接线；网络账号合同保持不变，不要求修改 `accounts.ts` 或 `game-connection.ts`。

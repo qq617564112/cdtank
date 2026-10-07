@@ -4,7 +4,7 @@
 
 原 type10 四个旧 source 的原生命周期已经恢复：激活调用 `SYcScreenEffect::Select(5,0)`，结束调用 `Clear`。当前二进制没有初始化 index5 子效果列表，也没有可取得的 index5 原 shader、纹理或参数，因此不能把这四个节点声明为原 postprocess 像素恢复。
 
-生产 Web 当前在 `apps/web/src/render/effects/runtime/effect-runtime.ts` 的 `createTree` 中把 type10 的 `selectEffect` 写成显式 throw。该 throw 应移除，并替换为每 scene 唯一的 Web 屏幕效果后端。后端采用一个明确标注的全屏中性黑 25% 遮罩，不冒充原模糊、闪光、烟雾或其他未恢复语义。
+生产 Web 在 `apps/web/src/render/effects/runtime/effect-runtime.ts` 的 `createTree` 中把 type10 接到每 scene 唯一的 Web 屏幕效果后端 `apps/web/src/render/effects/runtime/legacy-screen-effect.ts`。后端采用一个明确标注的全屏中性黑 25% 遮罩，不冒充原模糊、闪光、烟雾或其他未恢复语义。
 
 当前 342 条技能记录中没有可达 type10 节点，现有可达 371 节点中 type10 数量为 0。本设计不新增战斗入口、技能、调试按钮或测试入口，也不宣称像素等价。
 
@@ -136,9 +136,9 @@ end(): void {
 
 不修改现有 `EffectOverlayMesh` 的原 type8 语义。若需要无纹理颜色，优先给该 mesh 一个专用 pass 或使用 1x1 白 texture 乘以固定顶点色，不能改变 type8 的纹理采样、UV 或原 pass 状态。
 
-## 实现范围
+## 实现路径
 
-后续生产实现限定在以下文件：
+生产实现落在以下文件：
 
 - 新增 `apps/web/src/render/effects/runtime/legacy-screen-effect.ts`，只实现 scene 唯一后端、常量全屏遮罩、owner、失败清理和 dispose。
 - `apps/web/src/render/effects/runtime/effect-screen-node.ts`，只增加 activation owner 并保持 type10 的 `Select(5,0)`、`Clear` 顺序。
