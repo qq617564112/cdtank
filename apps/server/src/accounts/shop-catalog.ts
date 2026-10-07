@@ -18,13 +18,22 @@ export function consumableShopItems(catalog: CombatCatalog): ShopItem[] {
 
 const MARKER_SHOP_ITEM_IDS = new Set([12501, 12502, 12503]);
 
-/** Original parts and the three Func19 marker items; availability is a rebuilt server policy. */
+const DECORATION_SHOP_ITEM_IDS = new Set([
+  10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009, 10010,
+  10011, 10012, 10013, 10014, 10015, 10016, 10017, 10018, 10019, 10020,
+  10021, 10022, 10023, 10024, 10025, 10026, 10027, 10028, 10029, 10030,
+  10031, 10032, 10033, 10034, 10035, 10036, 10037, 10038, 10039, 10040,
+]);
+
+/** Original parts, decoration parts, and Func19 marker items; availability is a rebuilt server policy. */
 export function partShopItems(catalog: CombatCatalog): ShopItem[] {
   return catalog.items.filter(item => {
     const category = classifyItemId(item.itemTableId);
     const ordinaryPart = category >= 8 && category <= 12
       && (item.moneyPrice ?? 0) > 0 && (item.tokenPrice ?? 0) > 0;
-    return ordinaryPart || (category === 7 && MARKER_SHOP_ITEM_IDS.has(item.itemTableId));
+    const decorationPart = category === 5 && DECORATION_SHOP_ITEM_IDS.has(item.itemTableId)
+      && (item.moneyPrice ?? 0) > 0 && (item.tokenPrice ?? 0) > 0;
+    return ordinaryPart || decorationPart || (category === 7 && MARKER_SHOP_ITEM_IDS.has(item.itemTableId));
   }).map(item => {
     if (!Number.isInteger(item.iconId) || item.iconId! <= 0 ||
         ![item.moneyPrice, item.tokenPrice, item.getMethod, item.durable].every(price =>
