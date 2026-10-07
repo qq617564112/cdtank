@@ -219,20 +219,22 @@ Repaint crisp natural contours and restrained fine material detail in the origin
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'prepare'], check=True)
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-reference-hero.py')], check=True)
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-layered-ui.py'), 'prepare'], check=True)
+    subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-monochrome-ui.py')], check=True)
     textures = document(ART / 'inventory.json')['textures']
     batches = document(ART / 'plan.json')['batches']
     print(f"{len(textures)} paths, {len({entry['canonical'] for entry in textures})} unique textures, {len(batches)} requests", flush=True)
     print(json.dumps(dict(Counter(b['group'] for b in batches)), ensure_ascii=False), flush=True)
 
 
-def restore(original_path, generated, terrain, source_box=None, solid_color=None, font_tile=True):
+def restore(original_path, generated, terrain, source_box=None, solid_color=None, font_tile=True,
+            ink_reference=None):
     original = Image.open(original_path).convert('RGBA')
     if source_box:
         original = original.crop(source_box)
     reference = original.convert('RGB')
     if (source_box and font_tile) or solid_color:
         reference = Image.new('RGB', original.size, 'black')
-        reference.paste(Image.new('RGB', original.size, tuple(solid_color) if solid_color else 'white'),
+        reference.paste(Image.new('RGB', original.size, tuple(ink_reference or solid_color or [255, 255, 255])),
                         (0, 0), original.getchannel('A'))
     # Delivered texture dimensions retain the original atlas aspect ratio.
     target = tuple(value * 4 for value in original.size)
@@ -251,7 +253,7 @@ def restore(original_path, generated, terrain, source_box=None, solid_color=None
     registered = Image.fromarray(pixels)
     if (source_box and font_tile) or solid_color:
         support = base.getchannel('A').filter(ImageFilter.MaxFilter(5)).point(lambda value: 255 if value else 0)
-        color = np.array(solid_color or [255, 255, 255], dtype=np.float32)
+        color = np.array(ink_reference or solid_color or [255, 255, 255], dtype=np.float32)
         coverage = np.sum(pixels.astype(np.float32) * color, axis=2) / np.sum(color * color)
         alpha = np.minimum(np.clip(coverage * 255, 0, 255), np.asarray(support))
         result = Image.new('RGBA', target, tuple(solid_color) if solid_color else 'white')
@@ -314,7 +316,8 @@ def extract(batch):
         box = [round(v * (sx if i % 2 == 0 else sy)) for i, v in enumerate(cell['box'])]
         crop = image.crop(box)
         result = restore(ROOT / entry['original'], crop, any(g.startswith('map-') for g in entry['groups']),
-                         cell.get('sourceBox'), entry.get('solidColor'), cell.get('kind') != 'texture')
+                         cell.get('sourceBox'), entry.get('solidColor'), cell.get('kind') != 'texture',
+                         entry.get('inkReference'))
         destination = tile_path(batch, index) if cell.get('sourceBox') else ROOT / entry['png']
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_name(destination.name + '.tmp')

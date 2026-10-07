@@ -51,9 +51,13 @@ def create_batch(root, batch_id, entries, kind, write):
         cells.append({'source': entry['canonical'], 'box': [x, y, x + width, y + height]})
         if write:
             with Image.open(root / entry['original']) as original:
-                # Dropping alpha retains original RGB under transparent pixels;
-                # compositing onto black would discard that original content.
-                preview = original.convert('RGB').resize((width, height), Image.Resampling.NEAREST)
+                if entry.get('inkReference'):
+                    preview = Image.new('RGB', original.size, 'black')
+                    preview.paste(Image.new('RGB', original.size, tuple(entry['inkReference'])),
+                                  (0, 0), original.getchannel('A'))
+                else:
+                    preview = original.convert('RGB')
+                preview = preview.resize((width, height), Image.Resampling.NEAREST)
                 canvas.paste(preview, (x, y))
     folder = Path('art/hd-assets/batches') / batch_id
     if write:
@@ -116,7 +120,8 @@ def create_strip_batch(root, batch_id, entries, write):
             with Image.open(root / entry['original']) as original:
                 if entry.get('solidColor'):
                     preview = Image.new('RGB', original.size, 'black')
-                    preview.paste(original.convert('RGB'), (0, 0), original.getchannel('A'))
+                    ink = Image.new('RGB', original.size, tuple(entry['inkReference'])) if entry.get('inkReference') else original.convert('RGB')
+                    preview.paste(ink, (0, 0), original.getchannel('A'))
                 else:
                     preview = original.convert('RGB')
                 canvas.paste(preview.resize((512, height), Image.Resampling.NEAREST), (8, y))
