@@ -28,4 +28,4 @@ TankView加载时按实际有动作的组件请求选定目录资源，XY同时�
 
 ## 剩余验收
 
-原购买/赠送/迷彩改装授权和费用、specialtank到拥有记录转换、角色属性32来源，以及全部源皮肤组合的原D3D像素仍待恢复。履带运动A/B的既有选定XY实例加载、共享相位、每动作重应用与释放consumer与当前已接受命令门禁（本人`ClientTankPose.command`、远端`PlayerSnapshot.movement.command`；仅PLAYING存活且1/2/5/6/7/8推进，0/3/4冻结并保留`elapsed`/`index`）已接；原`0x4660a5`目标曲线门禁、QPC时钟、原D3D像素以及实际page/movement/HD实测仍未恢复。此接入可使用明确导入账户来源，不使M3-03/M5-07/M6-01整项完成。
+原购买/赠送/迷彩改装授权和费用、specialtank到拥有记录转换、角色属性32来源，以及全部源皮肤组合的原D3D像素仍待恢复。履带运动A/B的既有选定XY实例加载、共享相位、每动作重应用与释放consumer与当前已接受命令门禁（本人`ClientTankPose.command`、远端`PlayerSnapshot.movement.command`，命令取自移动wrapper实际`result.command`/`accepted`）已接：仅PLAYING存活且1/2/5/6/7/8推进，0/3/4冻结并保留`elapsed`/`index`；原`0x4660a5`目标曲线门禁、QPC时钟、原D3D像素以及实际page/movement/HD实测仍未恢复。此接入可使用明确导入账户来源，不使M3-03/M5-07/M6-01整项完成。

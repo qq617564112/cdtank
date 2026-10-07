@@ -2,7 +2,7 @@
 
 ## 采用结论
 
-履带 A/B 的资源加载、共享相位、动作切换后的材质重应用和实例释放已经有生产 consumer；仍未恢复的是原 actor 目标空间门禁的等价来源。当前 `TankView.trackMovementTarget(x,z)` 使用重建 snapshot 坐标与 renderer 插值目标之间的水平距离大于 `f32(0.001)`，这是 Web 重建规则，不是原 `0x4660a5` 目标曲线门禁，也不是权威移动命令消费者，所以不能把它记录为原履带运动已恢复。
+履带 A/B 的资源加载、共享相位、动作切换后的材质重应用和实例释放已经有生产 consumer；仍未恢复的是原 actor 目标空间门禁的等价来源。当前生产入口是 `TankView.trackMovementCommand(command)`：`BattlePlayers` 每帧把本人手动 `ClientTankPose.command` 或远端/非手动 `PlayerSnapshot.movement.command` 写入 pending，只有房间 PLAYING、玩家存活且命令属于 `{1,2,5,6,7,8}` 时推进共享相位，`0/3/4` 停止并保留相位与 `elapsed`。该 Web 采用不是原 `0x4660a5` 目标曲线门禁的等价证明，所以不能把它记录为原履带运动已恢复。
 
 现行采用合同：使用现有权威 `movement.command` / `ClientTankPose.command` 作为已接受移动状态的来源；只对产生平移的命令推进共享 A/B 相位，停止和原地转向冻结相位。该规则是重建客户端对原 actor 目标门禁的业务等价采用，不把网页位移差、动作名、按键或 `moving` 布尔值当作原来源。不新增协议字段、不改普通移动数学、碰撞、炮口、HP、账户或纹理选择事务。
 
@@ -40,7 +40,7 @@
 | 当前相位 | `RoleTrackTextureState {elapsed, index}` | [role-track-texture.ts](../../apps/web/src/assets/tanks/role-track-texture.ts) 保留原严格阈值和单切换规则。 |
 | 当前资源 | `Map<string, Texture>`，键为 `XY` / `XY-B` | [tank-textures.ts](../../apps/web/src/assets/tanks/tank-textures.ts) 按 selected XY 记录精确加载 A/B。 |
 | 当前材质切换 | X/Y 组件的 `originalMV3` `ShaderMaterial.sourceTexture` | [tank-view.ts](../../apps/web/src/assets/tanks/tank-view.ts) 在动作激活和相位变化时重应用。 |
-| 当前触发 | `trackMovementTarget(x,z)` 的 snapshot 水平距离 | [battle-players.ts](../../apps/web/src/render/battle-players.ts) 每帧调用；该路径明确不采用为本合同来源。 |
+| 当前触发 | `trackMovementCommand(command)` 的 pending 写入 | [battle-players.ts](../../apps/web/src/render/battle-players.ts) 每帧按本人手动 `localPose.command`、远端/非手动 `player.movement?.command ?? 0` 写入；[tank-view.ts](../../apps/web/src/assets/tanks/tank-view.ts) 在同一 scene tick 消费一次。 |
 
 拥有 XY 的请求路径是 `/tank-textures.json`，按 `recordId === ids.XY`、`part === 'XY'`、`tankId === 当前坦克定义` 选择同一目录行的 `textures.A.asset` 与 `textures.B.asset`。A 加载后写入 `XY`，B 写入 `XY-B`；未选 XY 时，已转换模型带原纹理引用则由 `loadEmbeddedTrackTextures` 按原嵌入文件名的精确 basename 查同一张 XY 目录行。两种情况均不按近似文件名、旧材质名或其他战车资源寻找替代。
 
@@ -60,7 +60,7 @@
 | 5 / 6 | 前进弧线，需要移动和转向权限 | true |
 | 7 / 8 | 后退弧线，需要移动和转向权限 | true |
 
-服务端快照的 `movement.command` 和本人提交的 `ClientTankPose.command` 已经在来源端表示实际接受后的命令；命令被碰撞、权限或停止拒绝时来源写 0。消费者不得再次用 snapshot 位移差、动作 01/02、`moving` 或键盘状态覆盖该命令。`movement.canMove` / `movement.canTurn` 用来解释命令权限边界，不作为第二套逐帧纹理门禁，避免同一已接受命令因快照时刻差异闪烁。
+服务端快照的 `movement.command` 和本人提交的 `ClientTankPose.command` 已经在来源端表示实际接受后的命令；命令被碰撞、权限或停止拒绝时来源写 0。命令元数据取自移动 wrapper 的实际接受结果：wrapper 返回 `result.command` 与 `accepted`，NAV 拒绝弧线时把 `5/6/7/8` 降级为原地转向 `3/4`、最终拒绝平移写 `0`；本人预测 [local-tank-motion.ts](../../apps/web/src/match/local-tank-motion.ts)、服务端 [client-movement.ts](../../apps/server/src/battle/client-movement.ts)、[dynamic-movement.ts](../../apps/server/src/battle/dynamic-movement.ts) 与 [actors.ts](../../apps/server/src/battle/actors.ts) 沿同一接受命令保存与投影。消费者不得再次用 snapshot 位移差、动作 01/02、`moving` 或键盘状态覆盖该命令。`movement.canMove` / `movement.canTurn` 用来解释命令权限边界，不作为第二套逐帧纹理门禁，避免同一已接受命令因快照时刻差异闪烁。
 
 `movement.original` 继续区分原参数路径和重建参数路径。两种路径都保留真实的已接受 command；履带 Web 采用规则使用 command，不能把该效果宣称为原目标曲线门禁已经恢复。
 
@@ -98,13 +98,15 @@
 - 不缩放、不重排像素、不建立固定尺寸；目录中的 256×256、128×128、512×512、512×256 等原始 PNG 尺寸保持。采样限制仍属于原 D3D 上传、完整 mesh UV 和像素验收边界。
 - 不设置 UV offset、UV scale、动画速度或另一层 sampler；A/B 切换不携带材质时间。
 
-## 最小 owned 建议
+## 最终接线职责
 
-1. `core` owner 修改 [role-track-texture.ts](../../apps/web/src/assets/tanks/role-track-texture.ts)：增加一个只把现有 command 映射为 `{1,2,5,6,7,8}` 的纯函数；不改变现有 `advanceRoleTrackTexture` 的阈值、归零和单切换语义。
-2. `core` owner 修改 [tank-view.ts](../../apps/web/src/assets/tanks/tank-view.ts)：将 `trackMovementTarget(x,z)` 的位移触发替换为明确的 `trackMovementCommand(command)` pending 写入；保留 `applyTrackTexture()`、实例 texture map、动作重应用和 dispose 合同。方法不接收新的协议对象，不读取 `root.position`。
-3. `core` owner 在 [battle-players.ts](../../apps/web/src/render/battle-players.ts) 中只替换履带命令来源：本人手动姿态使用 `localPose.command`，远端和非手动路径使用 `player.movement?.command ?? 0`；调用发生在同一帧 `view.motion` 和场景 render 之前。保留 action 01/02、collision、炮口和现有 snapshot 插值路径。该文件当前属于其他 UI 集成 lane 时，由后续 core consumer owner 串行领取，不在并行批次直接编辑。
-4. shared/server owner 不新增字段：现有 `PlayerSnapshot.movement.command`、`ClientTankPose.command`、`RoleMovementMathInput['command']` 和 `OwnedTankTextures.XY` 已足够。
-5. UI owner 不需要新入口。战车与迷彩页面已经使用同一三槽拥有记录和目录；本批不新建 UI、不改选择/购买/确认流程。
+生产链路已按本节合入，不再有待领取的修改项：
+
+1. [role-track-texture.ts](../../apps/web/src/assets/tanks/role-track-texture.ts)：`roleTrackCommandMoves(command)` 只把现有 command 映射为 `{1,2,5,6,7,8}`，`advanceRoleTrackTexture` 的阈值、归零和单切换语义不变。
+2. [tank-view.ts](../../apps/web/src/assets/tanks/tank-view.ts)：`trackMovementCommand(command)` 写 pending，不接收新的协议对象、不读取 `root.position`；`applyTrackTexture()`、实例 texture map、动作重应用和 dispose 合同保留。
+3. [battle-players.ts](../../apps/web/src/render/battle-players.ts)：履带命令来源为本人手动姿态 `localPose.command`、远端和非手动路径 `player.movement?.command ?? 0`；调用发生在同一帧 `view.motion` 和场景 render 之前，action 01/02、collision、炮口和现有 snapshot 插值路径保留。
+4. 不新增字段：现有 `PlayerSnapshot.movement.command`、`ClientTankPose.command`、`RoleMovementMathInput['command']` 和 `OwnedTankTextures.XY` 已足够。
+5. 战车与迷彩页面继续使用同一三槽拥有记录和目录；本片不新增 UI 入口、不改选择/购买/确认流程。
 
 ## 真实剩余限制
 
