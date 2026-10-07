@@ -51,6 +51,10 @@ Web selector `room-map-selector.tsx` 消费 `ListMaps`，按模式取八槽分�
    asset 匹配走现有 audio catalog，不在场景代码内造声音。
 7. 12 图未发布 `scene-terrain-material-<id>.json` 的图保持当前 GLB 材质，不补写同色
    替代材质。
+8. `export_scene_sequence05023.py` 为 0008/0013 导出四条精确 `obj05023`
+   `SYcScnObjSequence` placement；`export_scenes.py` 只用这些键扩展 `resolved`，
+   不向记录写伪造 `asset`/`animation`。静态主体、screen 模型和 `001–004` 帧 PNG 复用
+   已出版资源，详 `scene-sequence-runtime.md`。
 
 ## Server/shared 合同
 
@@ -84,7 +88,11 @@ Web selector `room-map-selector.tsx` 消费 `ListMaps`，按模式取八槽分�
    `destroyObject` 消费；Plant 图按 `scene-plant-<id>.json` 进入 `ScenePlantSway`
    与本图 root/height/material 记录。
 4. `MapSceneEffects` 与 `MapEnvironmentSound` 保持现有协议和 catalog 形状。
-5. 未发布图级 JSON 或新增材质/catalog 的场景在 `load()` 边界显式失败并清理，不宣称为
+5. 0008/0013 的 `SceneSequence` 只通过 `ScenePreview` 现有普通 `load()`/`advance()`/
+   `clear()` 边界消费四条精确 `obj05023` placement，并同时实例化 base 与 screen；
+   screen 实例克隆的既有原基色纹理在首次换帧前登记 owner，正常 clear 与失败清理释放。
+   不增加 server 目标、RPC、UI 表单、碰撞或 grant 字段。
+6. 未发布图级 JSON 或新增材质/catalog 的场景在 `load()` 边界显式失败并清理，不宣称为
    ready；已有已出版 GLB 的普通静态内容仍按现消费者复用。
 
 ## 出版边界
@@ -93,6 +101,8 @@ Web selector `room-map-selector.tsx` 消费 `ListMaps`，按模式取八槽分�
 `scene-castle-0023.json`、0003/0008/0012/0016/0019/0023/0024/0025 的
 `scene-plant-*.json`、05416 Plant 材质/catalog 增量，以及 05440/05441/05438 和
 05446/05463 的 destruction 字段/库，都是 producer 接线完成但尚未实际出版。
+`scene-sequence05023.json` 同样只有 producer 代码，尚未实际执行出版；其四条
+0008/0013 placement 的生产消费已接线，但不能据此声称实际页面资源已可加载。
 旧 25 图已 published JSON 模型、效果、环境声音和 GLB terrain 保持原范围复用。
 未出版资源不得宣称为 ready；可见、破损、摆动、cleanup 和整图开局未实测。
 
@@ -111,4 +121,7 @@ Limitations / Known Issues:
 - 原 Windows 逐像素等价、原服务器完整伤害/资格规则、全 GPU 材质和全部原回调未恢复。
 - 05440/05441/05438 与 05446/05463 的新库、0023 本图 Castle JSON、八图 Plant JSON
   与 05416 材质/catalog 增量未在本轮出版。
+- `scene-sequence05023.json` metadata 未出版；0008/0013 Sequence 的实际页面加载、
+  逐项像素、双端 phase、高清与 GPU 精度未在本轮验证。原 Windows provider/单位与首帧
+  未恢复，Web 侧采用 `performance.now()/1000`。本批最终范围已完成一次集中静态走查。
 - 无 Castle 的图不支持占领模式；G0 缺失点不人工补点。

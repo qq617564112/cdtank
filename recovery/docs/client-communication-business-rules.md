@@ -171,3 +171,7 @@ Func19的12501/12502/12503 domain、history/account与真实World来源冻结已
 Web消费为`AccountConnection.playerProfile→Battle.playerProfile`薄代理。`LobbySocialView`只传稳定查询函数，`PlayerInfoSession`按目标维护generation、pending和迟到响应清理；错误保当前目标和response并可局部重试，pending禁好友/黑名单/交易写，Close/原生Escape与原player row焦点恢复保持。35控件几何不改，family、个人介绍、level icon和原公开role icon继续明确未知。两统计radio读取所选目标response并挂接既有`myhome_playerpage_battlesummary.xml`/`myhome_playerpage_awardsummary.xml`原图片和文字控件；这是明确Web父容器附着，不复用owner history RPC fallback，也不声称原统计子页附着恢复。summary自身用`prepareSourceUi([suffix])`准备真实图片decode，失败保目标并局部retry，只重准备该页资源，不重发`PlayerProfile`。
 
 本次未实测目标generation、error retry和resource处理；真实页面、真实联机、持久重启、高清和原QQ/原统计附着继续开放，M5-13/M6-09/UI-41/UI-42/UI-43完整父项不勾。
+
+## 场景客户端资产
+
+0008/0013的`obj05023` Sequence是客户端场景资产消费者，不新增客户端请求、服务端业务、RPC或授权规则。四条精确placement沿现有`ScenePreview` load/advance/clear边界消费已发布base、screen与`001–004`帧；screen实例克隆的既有原基色纹理在首次换帧前登记owner并在正常clear/失败清理释放。`scene-sequence05023.json` metadata尚未出版，实际页面资源加载、普通对局、像素、双端phase和高清未验；原Windows时钟provider不等同Web `performance.now()`采用。本批最终范围已完成一次集中静态走查，详`scene-sequence-runtime.md`。

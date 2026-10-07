@@ -9,3 +9,7 @@
 scene-sequence05023-source.py/json/log保存原精确指令范围、三虚槽、路径模板、INI时基乘数及0008/0013原四placement。状态STATIC_SEQUENCE_LOADER_CLOCK_SOURCE_PLAYER_ENTRY_GAP仅为静态来源，不是完整loader/native/module或玩家表现PASS。
 
 当前正式MAPS不允许8/13。没有合法普通玩家入口，不注册新图、不接进口renderer、不执行非法图actual。原完整计时单位provider、初始材质赋值及screen POL绑定仍需要消费者合同；该项保留为M3-08来源/入口缺口，不扩大底层执行或将资源存在当作正式交付。
+
+## 当前实现边界
+
+0008/0013已进入当前正式扩展地图目录，原四条placement为`0008/446`、`0008/447`、`0013/204`、`0013/205`。当前实现新增publisher并消费已发布`obj05023.glb`静态主体、`scr.glb` screen模型与`001–004`帧PNG；shared类型和`ScenePreview`只接load/advance/clear，不改变本文上面的原虚槽、路径、delay乘数和计时代码事实。screen实例克隆的既有原基色纹理在首次换帧前登记owner，正常clear与失败清理释放。Web `performance.now()/1000`是采用时钟，不等同原Windows provider、单位或首帧恢复。当前producer代码尚未执行，`scene-sequence05023.json`及实际页面加载、逐像素、双端phase、高清和GPU行为均未验，详`scene-sequence-runtime.md`。

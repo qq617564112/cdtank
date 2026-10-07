@@ -1,29 +1,37 @@
 # 全内容交付范围
 
-M8-04的原内容闭集来自现解码原表、布局和选定资源目录。本文对照现任务清单与已有产物定位剩余范围，不替代每条内容的原规则和真实业务证据。
+M8-04的原内容闭集来自现解码原表、布局和选定资源目录。目录、正式消费者、来源恢复与实际验收分别登记；资源存在不能替代对应业务和实测。
 
 | 内容 | 当前来源与目录 | 交付任务 |
 | --- | --- | --- |
 | 4665个选定安装逻辑路径 | `output/catalog/inventory.json`；`output/asset-usage-index.json` | M3-01/02/12 |
 | 65个原布局 | `output/catalog/layouts.json` | M5-01至M5-16、UI-01至UI-65 |
 | 25图原放置 | `output/web-assets/scene-placements.json` | M3-05至M3-09 |
-| 26个模式地图组合、13张授权图 | `output/verified/tables/m001.json`至`m005.json`；各表7/5/7/4/3行 | M2-06至M2-13、附录MAP |
-| 21战车 | `output/verified/tables/tank.json`；`combat-catalog.json.tankTypes` | M3-03/04、M6-01/03/06、附录TANK |
-| 10宠物定义 | `output/verified/tables/pet.json`；`combat-catalog.json.petTypes` | M3-03/04、M6-01/04/06 |
-| 342技能 | `output/verified/tables/skill.json`；`combat-catalog.json.skills` | M2-01至M2-05、M4、M6-04、附录SKILL |
-| 204道具 | `output/verified/tables/item.json`；`combat-catalog.json.items` | M1、M4、M6-01/03/06、附录ITEM |
+| 原13图26模式组合；当前25图111模式组合，另保留测试图1001 | 原m001–m005；当前目录见[可玩地图](../../docs/playable-maps.md) | M2-06至M2-13、附录MAP |
+| 21战车、10宠物定义 | `output/verified/tables/tank.json`、`pet.json`；`combat-catalog.json` | M3-03/04、M6-01/03/04/06、附录TANK |
+| 342技能、204道具 | 原skill.dat/item.dat；`combat-catalog.json` | M1、M2-01至M2-05、M4、M6、附录SKILL/ITEM |
 | 12字体定义 | `output/web-assets/ui-fonts.json` | M3-10、M5-16、M7-01 |
+
+## 当前正式实现
+
+0001–0025已有正常房间入口。团队、擒王、混战和破坏各25图，占领仅开放真实Castle所在的11图。原26组合参数有直接来源；新增组合采用同模式首条原记录参数，人数范围是当前项目政策。原`cpu-all-maps/summary.json`只覆盖原26组合的50ms模拟时钟两局，不覆盖新增组合或实时双网页。
+
+碰撞使用实际渲染模型三角面及对应NAV占用，动态物件隐藏后释放其占用贡献，详`render-model-collision.md`。手动运动由`LocalTankMotion`按当前NAV推进并上报pose，服务器接受后施加坦克碰撞；托管消费普通输入。出生/复活使用已恢复的分侧、近友远敌与49×52构造尺寸规则，见[出生规则](../../docs/spawn-rules.md)。当前速度和转速保持用户0.7标定，普通复活时间使用共享10秒常量。0008/0013四条`obj05023` Sequence已接普通base+screen、四帧、delay、精确resolved与ScenePreview生产链；screen实例克隆的既有原基色纹理在首次换帧前登记owner并在正常clear/失败清理释放。`scene-sequence05023.json` producer未执行、metadata未出版且实际页面/像素/双端phase/高清/GPU未验，本批最终范围已完成一次集中静态走查，详`scene-sequence-runtime.md`；Hook/WaterFall仍缺原loader/update/draw、节点赋值、挂点、材质或循环合同，Gate/Switch及部分General也未取得。
+
+普通2001沿原03定时约0.4秒后查询，不创建独立飞行bullet；特殊弹药、技能修饰、临时状态和范围伤害按各自真实执行器接入。Func15已有3009定时炸弹、3013空袭、4004爆发弹及13151死亡自爆四条有限链，3007/3008的实际入口仍缺。Func22/23只从真实技能来源选择，不创建相同编号商品或免费授予。342技能和204道具的逐项范围以tasklist为准。
+
+Type5模型后端已经由`EffectRuntime.createTree`接入`EffectModelRenderer`，保留原矩阵、CVD动画、材质与生命周期；模型后端实装不代表22种引用全有资源或全部技能实测。移动烟尘、开火/受击相机震动和基础相机已有消费者。Type10的index5缺后端，但当前342技能可达371节点中没有Type10，详`effect-screen-postprocess.md`。
+
+结算奖励、实际装备奖励、退出处罚、账户成长、统计、九奖章、称号与佩戴已有正式事务/快照/页面消费者。原server producer缺失的部分按客户端请求、确认、原表和冻结结算数据采用业务规则，见`client-communication-business-rules.md`、`battle-equipment-exit-melee-rules.md`等专题。该实现状态不替代对应条目的实际对局、双端或重启验收。
 
 ## 未完成范围
 
-资源目录和加载入口已经建立，尚缺逐资源实际加载/表现证据及原引用缺口结论；来源索引没有重新生成以包含当前破损绑定。Breach共1144个放置中，1046个可复用已发布原库，17个等待新库发布，81个缺自身c9，详`scene-breach-catalog.md`。未授权地图的Sequence、Hook、WaterFall、Gate/Switch及部分General仍缺原入口或行为合同，详各场景入口缺口文档。其它地形、模型、纹理和声音的剩余缺口继续由M3各项记录。
+- 原最终伤害、侧背防御与暴击公式、原弹丸出生/速度/寿命/轨迹和完整垂直/坡面/滑动处理仍缺直接来源。当前采用算法必须继续与原属性来源分列。
+- 原AI决策、部分技能触发/取得/目标分派及全技能实测尚未完成。3006引用的4027在当前技能表缺记录；13111/13112和Func22/23的实际取得来源不由目录存在或零价授权。
+- Breach共1144个放置，25个已发布型号覆盖1046个实例；05446/05463共17个实例待新共享库发布，05438/05440/05441共81个实例缺自身c9。详`scene-breach-catalog.md`。扩展图的专属地形、水面、Sequence/Hook/WaterFall与部分General行为尚未全部恢复；不能把未证明的Gate/Switch名称登记成真实可交互类。
+- Type5的22种模型引用只有8种有可解析实物，bat/bianfu.cvd、bing_1..13.pol及youlincat的m120纹理仍缺；map0018的BG07 WAV缺失。缺失资源不使用替代模型、占位纹理或其它声音冒充原资源。
+- 全场景光照/fog、设备状态继承与模型priority排序仍未完整恢复。原资源逐实例表现、原挂点/动作完整性和高清验收继续由M3/M4/M7追踪。
+- 65布局的逐控件业务、21战车和10宠物的全部拥有/成长/改装/维修/技能仍有未完成条目。动态文字沿用户附件字体，战斗伤害/治疗/暴击数字沿原图片。
+- 全资源干净环境重建、独立设备访问、全部业务重启恢复、1920/3840自然对局性能、最大人数服务节拍、长时清理和掉线重连仍按M7/M8开放。已有独立发行、反代和备份恢复证据只保留其限定范围。
 
-`output/cpu-all-maps/summary.json`已有26组合的4人普通CPU输入各两局证据，限定50ms模拟时钟。原团队、占领、擒王、混战、破坏规则尚未全部恢复；结算奖励已按客户端请求/接收/确认字段/原表参数还原业务（非负四舍五入combatScore基数、DataScale 31–42各outcome率、coin无基数授权0、money走profile 0x70、积分/等级/创意/技能写独立`account_growth`、同一场一历史事务exactly-once、重试成功late award、FORFEIT与普通中途离场冻结并入一次），已提交59d8272并main5ae1561，UI最终焦点/提示位置/同round一次已提交4818b0c并maina385f0c，原reward producer未取得且实际对局/双网页/重启未测；称号归属/佩戴/查询/快照服务端通路已按`title.dat`158条目录与真实`match_history`累计统计落地（typed`account_titles`/`account_title_selection`/`account_title_playtime`、结算同事务exactly-once、`startedAt→结束/离场`真实时长、缺producer不授予、选择后按认证账户刷新同账户现有房间角色typed badge并在新round从`currentTitle`重读），实际网络/双网页/HD/持久重启/原producer未测，M6-05父项保持未勾；该证据不覆盖实时双网页、原最大人数或高清性能。本批账户统计与九奖章已集成schema 101的`RoundStats`/`RoundAward`/`AccountStatistics`/`AwardCounts`（489da54）、原地图九奖项enable/score与纯评分器`settlement/awards.ts`（60183b3）及Home十四个统计控件/九计数/结算五图槽消费者（6a864ee）；battle producer 9f2293ae已接真实每局统计与评奖（shots仅真实发射、hits按唯一shot identity至多一次、DOT/空袭/陷阱计damage不计hits、damage/damageTaken/友伤/治疗/背伤分列、killCombo真实无死亡连杀、中途离场者深冻结roundStats与真实playedSeconds，每项award只加一次combatScore/totalScore且outcomeBonus不变、全部awards保存），account producer bdfbccf（main87966ac）已接RoleProfile统计/奖章/称号查询，基础累计取全部`match_history`、captured optional统计/奖章只汇总真实producer行、旧legacy缺项记unknown不补零且窗口不完整时ratio/少于阈值条件不授予。账户支出账本已在purchase/maintenance/trade原事务接实际扣款receipt（30c5841）及迷彩真实扣费，旧收据不回填保持unknown。本批唯一集中gpt-5.6走查尚未执行。网络/双网页/持久/HD/原producer实测条件保持未验。各附录MAP保持其明确验收范围，地图0002沿接受基线，不重开局部验收。
-
-技能与道具目录全量存在，不等于全部玩法获得权威施放、成功消耗、失败不扣量、原效果、CPU和持久闭环。光学迷彩9已接普通输入/CAS、权威10秒及清理、快照/Web敌对模型隐藏与CPU观察；南瓜/木桶10/11已接普通输入/CAS、临时技能与10秒状态、原4173/4174显示字段、快照/双方替身显示、合法开火恢复及CPU有限配置；建筑工具502已接真实本队Castle5000限幅恢复、普通消费与修复事件、CPU有限配置；空袭13已接原正价Shop取得、槽5–8、普通CAS消费、20个configured tick、3013范围与3012 direct HP统一死亡链、010/060世界表现及有限CPU库存策略；FUNC22/23已从真实技能来源重算射击修饰，Func22查询忽略静态遮挡并取half-width25最近非自己alive单目标，Func22 direct命中复用普通ammo后效启动真实2007/2008燃烧/减速，Func23 X200按总范围200%政策将1000对应2000，增程bullet按中心剩余距离截到查询同一端点。本批一次集中gpt-5.6走查覆盖空袭与Func22/23并修复三项实际finding，业务按客户端通信补全，原直接字段与推导政策分列`client-communication-business-rules.md`；零价/GGet0不开放免费取得，FUNC22/23原server分派、原始X单位和玩家grant仍开放。四项新增链路尚无实际对局、双端绘声或重启验收。空袭roleId0 Play继续使用floatbits，未据此宣称恢复原416f整数截断、world sampling与sender；M1-08至M1-13、M4和附录SKILL/ITEM仍有开放项。21战车与10宠物定义不能替代所有拥有、成长、装备、改装、维修、技能和场景动作业务。
-
-65个原布局已有逐页任务，完整逐控件映射和父页业务尚未全部验收。交易主页面的有限双端与重启证据见`output/trade-root-review.json`；当前详情字段实现范围见`trade-detail-fields-implementation.md`，不借用旧主页面证据关闭新详情。Home与商城拥有页按确认定义ID显示完整21战车/10宠物原说明，商城拥有Pet生命值和预览沿确认记录，详`home-role-original-descriptions.md`与`shop-owned-role-original-content.md`；新展示范围尚无实际页面验收。动态文字沿用户附件字体，战斗伤害/治疗/暴击数字沿原图片。
-
-独立发行、本机nginx反代和SQLite备份恢复已有各自限定证据：`standalone-release-accepted.json`、`release-proxy-accepted.json`、`account-backup-restore-accepted.json`。全资源干净环境重建、真实独立设备访问、全业务重启恢复和浏览器本地设置范围尚未全部完成，M8-01至M8-03保持原状态。结算奖励/账户成长的新链路尚无实际重启恢复证据，不并入既有备份恢复范围。
-
-M7要求的1920/3840完整自然对局性能、最大人数服务节拍、长时清理、掉线重连及全部多人状态一致范围仍开放。当前执行仅允许代码走查，尚无这些缺项的新实测证据。M8-04与M8-05保持未完成。完整交付需要上述原权威规则和资源缺口解决，并满足正文要求的实际验收；静态走查不能代替这些条件。
+当前执行只允许静态走查，不运行测试、构建、类型检查或浏览器。本轮战斗非UI实现和具体剩余项见`battle-non-ui-runtime.md`；新范围尚无实测，不据静态实现或走查关闭正文要求原来源/实测/高清的父项。地图0002沿接受基线，不追加局部补证。
