@@ -328,7 +328,8 @@ def extract(batch):
     assemble_tiles(tiled)
 
 
-def generate(groups, concurrency, limit, retry_delay=300, ledger=None):
+def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
+             initial_concurrency=None, released_workers=None):
     sys.path.insert(0, str(SKILL / 'scripts'))
     import common
     key = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
@@ -386,15 +387,17 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None):
                     and r['status'] == 'failed' and r.get('finished')]
         return max(failures, default=0) + retry_delay
 
-    def quota_wait():
+    def api_wait():
         failures = [datetime.fromisoformat(r['finished']).timestamp() for r in ledger
-                    if r['status'] == 'failed' and r.get('finished') and 'insufficient_quota' in r.get('error', '')]
+                    if r['status'] == 'failed' and r.get('finished') and not r.get('actualSize')]
+        lanes = (initial_concurrency if released_workers is not None and not released_workers.is_set()
+                 else concurrency)
         if not failures:
-            return 0, concurrency
+            return 0, lanes
         failed_at = max(failures)
         recovered = any(r['status'] == 'complete' and datetime.fromisoformat(r['started']).timestamp() > failed_at
                         for r in ledger)
-        return (0, concurrency) if recovered else (failed_at + retry_delay, 1)
+        return (0, lanes) if recovered else (failed_at + retry_delay, 1)
 
     # Finish priority groups before starting the next map. Calls within a group share sheets.
     for group in document(ART / 'plan.json')['groups']:
@@ -410,9 +413,9 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None):
                 if STOP.is_set():
                     queue.clear()
                 exhausted = limit is not None and len(ledger) >= limit
-                quota_deadline, lanes = quota_wait()
+                api_deadline, lanes = api_wait()
                 while (queue and len(pending) < lanes and not exhausted and not STOP.is_set()
-                       and max(queue[0][0], quota_deadline) <= time.time()):
+                       and max(queue[0][0], api_deadline) <= time.time()):
                     _, _, batch = heapq.heappop(queue)
                     pending[executor.submit(call, batch)] = batch
                 if not pending:
@@ -421,13 +424,13 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None):
                     if exhausted:
                         print(f'{group}: request limit reached', flush=True)
                         return
-                    remaining = max(0, max(queue[0][0], quota_deadline) - time.time())
+                    remaining = max(0, max(queue[0][0], api_deadline) - time.time())
                     print(f'{group}: {len(queue)} batches waiting; next retry in {round(remaining)} seconds', flush=True)
                     STOP.wait(min(30, remaining))
                     continue
                 timeout = 30
                 if queue and len(pending) < lanes and not exhausted:
-                    timeout = min(timeout, max(.1, max(queue[0][0], quota_deadline) - time.time()))
+                    timeout = min(timeout, max(.1, max(queue[0][0], api_deadline) - time.time()))
                 completed, _ = wait(pending, timeout=timeout, return_when=FIRST_COMPLETED)
                 for future in completed:
                     batch = pending.pop(future)
@@ -472,8 +475,10 @@ def run(groups, concurrency, ui_concurrency, limit, retry_delay):
     ledger = document(ledger_path) if ledger_path.exists() else []
     selected = [group for group in document(ART / 'plan.json')['groups'] if not groups or group in groups]
     parallel_ui = ui_concurrency > 0 and 'ui' in selected
+    released_workers = threading.Event()
     with ThreadPoolExecutor(max_workers=1) as auxiliary:
-        ui = auxiliary.submit(generate, ['ui'], ui_concurrency, limit, retry_delay, ledger) if parallel_ui else None
+        ui = auxiliary.submit(generate, ['ui'], concurrency + ui_concurrency, limit, retry_delay,
+                              ledger, ui_concurrency, released_workers) if parallel_ui else None
         if parallel_ui:
             print(f'Processing: {concurrency} main workers + {ui_concurrency} dedicated UI workers', flush=True)
         for group in selected:
@@ -484,7 +489,10 @@ def run(groups, concurrency, ui_concurrency, limit, retry_delay):
             generate([group], concurrency, limit, retry_delay, ledger)
             if STOP.is_set() or not install_group(group):
                 break
+        released_workers.set()
         if ui:
+            if not STOP.is_set() and not ui.done():
+                print(f'Main workers released: UI can now use {concurrency + ui_concurrency} workers', flush=True)
             ui.result()
             if not STOP.is_set():
                 install_group('ui')
