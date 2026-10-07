@@ -6,7 +6,7 @@ import {applyShotLifeDrain} from './shot-life-drain';
 import {consumeShotCancellation} from './shot-cancellation';
 import {resolveShotCritical} from './shot-critical';
 import {resolveShotBackCriticalBonus} from './shot-back-critical';
-import {qualifiedLastStandDuration} from './last-stand';
+import {qualifiedLastStand} from './last-stand';
 import {isBattleInvincible} from './items/invincibility';
 import {RESPAWN_PROTECTION_SKILL_ID, clearRespawnProtection,
   type RespawnProtectionState} from './respawn-protection';
@@ -150,14 +150,21 @@ function resolvePlayerLethalState(room: Parameters<typeof damagePlayer>[0],
   attacker: LifePlayer, target: LifePlayer, friendly: boolean, now: number,
   events: MsgRoomEvent[]): ModeOutcome | undefined {
   if (target.hp > 0 || target.lastStand) return;
-  const duration = qualifiedLastStandDuration(target);
-  if (duration !== undefined) {
-    target.lastStand = {expiresAt: now + duration, attackerId: attacker.id,
-      attackerName: attacker.name, friendly};
-    clearAmmoBurn(target);
-    return;
+  const lethal = qualifiedLastStand(target);
+  if (!lethal) return finalizePlayerDeath(room, attacker, target, friendly, now, events);
+  target.lastStand = {expiresAt: now + lethal.duration, attackerId: attacker.id,
+    attackerName: attacker.name, friendly};
+  clearAmmoBurn(target);
+  const skill = lethal.skill;
+  if ((skill.effects[0]?.effectId ?? 0) !== 0) {
+    events.push({roomId: room.roomId, type: 'petSkillTriggered',
+      message: `${target.name}触发${skill.name}`,
+      playerId: target.id, targetId: target.id, value: 0,
+      x: target.x, y: target.y, z: target.z, skillId: skill.skillId,
+      playSkillEffect: {skillId: skill.skillId, effectIndex: 0, duration: 0,
+        roleId: Number(target.id.slice(1)), xBits: 0, zBits: 0}});
   }
-  return finalizePlayerDeath(room, attacker, target, friendly, now, events);
+  return;
 }
 
 /** Expiration commits the same death chain once, before that tick's actor inputs. */
