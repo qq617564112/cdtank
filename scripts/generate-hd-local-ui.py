@@ -87,12 +87,14 @@ def deliver(art, jobs):
     icon = restore_alpha(sheet.crop((half, 0, sheet.width, sheet.height)),
                          source_image(art / 'original/client-icon.ico'), (256, 256))
     cursor.save(art / 'png/normal-cursor-hd.png')
+    cursor.resize(source_image(art / 'original/normal-cursor.png').size,
+                  Image.Resampling.LANCZOS).save(art / 'png/normal-cursor.png')
     icon.save(art / 'png/client-icon.png')
     icon.save(art / 'png/client-icon.ico', format='ICO', sizes=ICON_SIZES)
 
 
 def install(root, art):
-    for name in ('lobby-logo.png', 'normal-cursor-hd.png', 'client-icon.ico'):
+    for name in ('lobby-logo.png', 'normal-cursor.png', 'normal-cursor-hd.png', 'client-icon.ico'):
         shutil.copyfile(art / 'png' / name, root / ASSET_DIR / name)
     print('Installed logo, 128px HD cursor and 7-size application icon', flush=True)
 

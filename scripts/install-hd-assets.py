@@ -173,7 +173,7 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
     local_ui = root / 'art/hd-local-ui/png'
-    for name in ('lobby-logo.png', 'normal-cursor-hd.png', 'client-icon.ico'):
+    for name in ('lobby-logo.png', 'normal-cursor.png', 'normal-cursor-hd.png', 'client-icon.ico'):
         source = local_ui / name
         if source.is_file():
             shutil.copyfile(source, root / 'apps/web/src/assets/ui' / name)
