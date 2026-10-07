@@ -1,5 +1,4 @@
-import type {ResPetSkillLearning} from '../../../../shared/protocols/PtlPetSkillLearning';
-import {createRequestId} from '../../network/request-id';
+import {petSkillLearningOwner} from './pet-skill-learning-owner';
 import {HomeResourceFeedback} from './home-resource-feedback';
 import './home.css';
 import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties} from 'react';
@@ -76,11 +75,10 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const focusInitialSelection = useRef(initialSelectedInstance !== undefined);
   const [busy, setBusy] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
-  const [learning, setLearning] = useState<ResPetSkillLearning>();
-  const [learningBusy, setLearningBusy] = useState(false);
+  const owner = petSkillLearningOwner(battle);
+  const learning = useSyncExternalStore(owner.subscribe, owner.getSnapshot, owner.getSnapshot);
+  const learningBusy = learning.busy;
   const [upgrade, setUpgrade] = useState<{instanceId: number; action: 1 | 2}>();
-  const learningGeneration = useRef(0);
-  const learningPending = useRef(false);
   const [resourceError, setResourceError] = useState<string>();
   const [status, setStatus] = useState('载入战车与宠物…');
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
@@ -103,7 +101,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
     const controller = new AbortController();
     setResourceError(undefined);
     setUi(undefined); setOwned(undefined); setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined); setSelected(undefined);
-    setRolesLoaded(false); setLearning(undefined);
+    setRolesLoaded(false);
     setBusy(true); setStatus('载入战车与宠物…');
     void (async () => {
       const [response] = await Promise.all([
@@ -134,39 +132,19 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   }, [battle, accountGeneration]);
 
   useEffect(() => {
-    const generation = ++learningGeneration.current;
-    setLearning(undefined);
-    if (kind !== 'pet' || !rolesLoaded) {setLearningBusy(false); return;}
-    setLearningBusy(true);
-    void battle.petSkillLearning({operation: 'QUERY'}).then(result => {
-      if (!session.current.active || learningGeneration.current !== generation) return;
-      setLearning(result); setOwned(result.owned); setProfile(result.profile);
-    }).catch(error => {
-      if (session.current.active && learningGeneration.current === generation) setStatus(String(error));
-    }).finally(() => {
-      if (session.current.active && learningGeneration.current === generation) setLearningBusy(false);
-    });
-    return () => {++learningGeneration.current;};
-  }, [battle, kind, rolesLoaded]);
+    if (kind !== 'pet' || !rolesLoaded) return;
+    void owner.query();
+  }, [owner, kind, rolesLoaded]);
 
-  async function learnPetSkill(instanceId: number, slot: number) {
-    const current = session.current;
-    const quote = learning?.quotes.find(value => value.instanceId === instanceId && value.slot === slot);
-    if (!current.active || current.pending || learningPending.current || busy || learningBusy ||
-        kind !== 'pet' || quote?.kind !== 'eligible') return;
-    const generation = learningGeneration.current;
-    learningPending.current = true; setLearningBusy(true); setStatus('学习技能…');
-    try {
-      const result = await battle.petSkillLearning({operation: 'LEARN', instanceId, slot,
-        requestId: createRequestId()});
-      if (!current.active || learningGeneration.current !== generation) return;
-      setLearning(result); setOwned(result.owned); setProfile(result.profile); setStatus('技能学习已确认');
-    } catch (error) {
-      if (current.active && learningGeneration.current === generation) setStatus(String(error));
-    } finally {
-      learningPending.current = false;
-      if (current.active && learningGeneration.current === generation) setLearningBusy(false);
-    }
+  useEffect(() => {
+    if (learning.owned) setOwned(learning.owned);
+    if (learning.profile) setProfile(learning.profile);
+  }, [learning.owned, learning.profile]);
+
+  function learnPetSkill(instanceId: number, slot: number) {
+    const quote = learning.quotes?.find(value => value.instanceId === instanceId && value.slot === slot);
+    if (busy || learningBusy || kind !== 'pet' || quote?.kind !== 'eligible') return;
+    void owner.learn(instanceId, slot);
   }
 
   useEffect(() => {
@@ -279,8 +257,9 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
               canUse={!busy && !learningBusy && !!profile && selected !== undefined && currentId !== selected}
               use={event => {void save(event.currentTarget);}} />}
           {kind === 'pet' && <HomePetOwnedDetails ui={ui} record={displayed} catalog={roleCatalog}
-            quotes={learning?.quotes} points={learning?.points} busy={busy || learningBusy}
-            status={status} learn={(instanceId, slot) => {void learnPetSkill(instanceId, slot);}}
+            quotes={learning.quotes} points={learning.points} busy={busy || learningBusy}
+            status={learning.message || learning.actionError || status}
+            learn={(instanceId, slot) => {learnPetSkill(instanceId, slot);}}
             description={sourcePetDescription(fields?.get(8))} />}
           <HomeOwnedRoleSourceList ui={ui} kind={kind} selected={selected}
             current={currentId} busy={busy || learningBusy} select={instanceId => {setSelected(instanceId); setStatus('');}}
@@ -300,13 +279,27 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
           {kind === 'pet' && displayed && fields && <PetModelPreview petId={fields.get(8)! >>> 0}
             kind="home" scale={scale} {...sourceProps(ui, kind, 'picModel')} data-home-pet-preview="" />}
         </>}
+      {kind === 'pet' && (learning.attempt || learning.confirmation === 'ABSENT' || learning.queryError) &&
+        <div className="home-role-web-tools" data-home-pet-learning-tools=""
+          style={{left: 224, top: 432, width: 365, display: 'flex', flexWrap: 'wrap', gap: 8}}>
+          {learning.attempt && <button type="button" data-pet-skill-confirm="" disabled={learningBusy}
+            onClick={() => {void owner.confirm();}}>确认学习结果</button>}
+          {learning.confirmation === 'ABSENT' && <>
+            <button type="button" data-pet-skill-retry="" disabled={learningBusy}
+              onClick={() => {void owner.retry();}}>重试本次学习</button>
+            <button type="button" data-pet-skill-abandon="" disabled={learningBusy}
+              onClick={() => owner.abandon()}>放弃本次学习</button>
+          </>}
+          {learning.queryError && <button type="button" data-pet-skill-query-retry="" disabled={learningBusy}
+            onClick={() => {void owner.query();}}>重试读取技能</button>}
+        </div>}
       <div className="home-role-web-tools" hidden={kind !== 'tank'}>
         
         <button type="button" disabled={busy || !displayed || !profile || !ui || !onTexturePage}
           data-source-control="btnChangeTexture" data-source-layout="ui/layouts/shop_tankpage.xml"
           data-home-open-texture="" onClick={() => {if (displayed) onTexturePage?.(id(displayed));}}>更换迷彩</button>
       </div>
-      <output hidden={!ui} className="home-role-status" aria-live="polite">{status || (!records.length ? '暂无拥有角色' : !profile ? '尚无角色资料' : '选择角色后点击出击')}</output>
+      <output hidden={!ui} className="home-role-status" aria-live="polite">{learning.actionError || learning.message || status || (!records.length ? '暂无拥有角色' : !profile ? '尚无角色资料' : '选择角色后点击出击')}</output>
       {!ui && <HomeResourceFeedback error={resourceError} close={requestClose} closeAttribute="data-roles-close" />}
       {ui && upgrade && <HomeTankUpgradeDialog ui={ui} battle={battle} instanceId={upgrade.instanceId}
         action={upgrade.action} close={() => setUpgrade(undefined)}
