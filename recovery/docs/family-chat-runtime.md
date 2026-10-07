@@ -81,7 +81,7 @@ origin 资格允许 WAITING、PLAYING、FINISHED 连接发送和接收，只校�
 
 UI 三页用原 Family 按钮作当前频道 toggle：大厅/WAITING 沿用 `chat.xml/btnFamilyChannel`，PLAYING/FINISHED 沿用 `game_main_chat_shrinked.xml/btnFamily`。原频道列表没有 `rdoFamily`，菜单新增明确可键盘操作的最小 `role="menuitemradio"`“家族”项，不复用 `rdoGM`，不重叠旧 entry，fallback select 加入 Family。Battle 固定新增 `5=Family`，`4=GM` 保持独立。普通输入与快捷输入共用 pending 门禁，发送期间锁定输入与频道切换；选择 Family 时提交只读 `Family` 刷新，可显示确认名字或“未加入家族”，网络失败 status 可 retry，发送仍按服务器实时归属。
 
-所有新 Family 状态、日志与确认随 `accountContext` generation、断线、入离房按现 chat lifecycle 清理并拒绝迟到回包：账号切换清旧消息/草稿/pending，进入房间停止大厅 consumer，离开房间清房间状态，断线清 session 状态并递增 generation，重连后重新读取归属。UI 读到 family 与消息 sender 的 account 含义不同，不用 senderId 作为 recipient 身份。关闭时解除新增 subscribe/listen，保持现 chat 其它生命周期、原字体与原数字图片不变。家族归属变更不推送也不轮询，选择或重开时刷新；被移除后旧显示不能继续发送，返回 `FAMILY_CHAT_NO_FAMILY`。
+所有新 Family 状态、日志与确认随 `accountContext` generation、断线、入离房与 `resetSession` 按现 chat lifecycle 清理并拒绝迟到回包：账号切换清旧消息/草稿/pending，进入房间停止大厅 consumer，离开房间经 `clear()`/`resetSession` 重置房内 `family` 缓存与 revision 并清房间状态，断线清 session 状态并递增 generation，重连后重新读取归属。UI 读到 family 与消息 sender 的 account 含义不同，不用 senderId 作为 recipient 身份。关闭时解除新增 subscribe/listen，保持现 chat 其它生命周期、原字体与原数字图片不变。家族归属变更不推送也不轮询，选择或重开时刷新；被移除后旧显示不能继续发送，返回 `FAMILY_CHAT_NO_FAMILY`。
 
 ## 局限
 
