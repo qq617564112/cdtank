@@ -16,6 +16,7 @@ import {HomeEquipmentPreview} from './home-equipment-preview';
 import {PetModelPreview} from '../resources/pet-model-preview';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {HomePetOwnedDetails} from './home-pet-owned-details';
+import {HomePetOwnedMastery} from './home-pet-owned-mastery';
 import {sourcePetDescription, sourceTankDescription} from '../resources/role-source-descriptions';
 import {HomeOwnedRoleSourceList} from './home-owned-role-source-list';
 import {HomeTankUpgradeDialog} from './home-tank-upgrade-dialog';
@@ -71,6 +72,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const [playerSummary, setPlayerSummary] = useState<ResRoleProfile['playerSummary']>();
   const [growth, setGrowth] = useState<ResRoleProfile['growth']>();
   const [equippedItemIds, setEquippedItemIds] = useState<number[]>();
+  const [masteryEquippedItemIds, setMasteryEquippedItemIds] = useState<number[]>();
   const [selected, setSelected] = useState<number>();
   const focusInitialSelection = useRef(initialSelectedInstance !== undefined);
   const [busy, setBusy] = useState(true);
@@ -161,8 +163,23 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   useEffect(() => {
     let active = true;
     setEquippedItemIds(undefined);
+    setMasteryEquippedItemIds(undefined);
     if (profile) void battle.inventory().then(result => {
       if (active) setEquippedItemIds(result.records.filter(record => record.state === 2).map(record => record.itemTableId));
+      // Home mastery adopts the five installed instances for the current only; every non-zero
+      // instance needs a confirmed record, otherwise the component stays unknown.
+      const view = new DataView(Uint8Array.from(profile.bytes).buffer);
+      const installed = new Set(Array.from({length: 5}, (_, slot) => view.getUint32(0x148 + slot * 4, true)));
+      const byInstance = new Map(result.records.map(record => [record.instanceId, record]));
+      const confirmed: number[] = [];
+      let unresolved = false;
+      for (const instanceId of installed) {
+        if (instanceId === 0) continue;
+        const record = byInstance.get(instanceId);
+        if (!record || record.state !== 2 || record.ownedQuantity <= 0) {unresolved = true; break;}
+        confirmed.push(record.itemTableId);
+      }
+      if (active) setMasteryEquippedItemIds(unresolved ? undefined : confirmed);
     }).catch(() => {});
     return () => {active = false;};
   }, [battle, profile]);
@@ -196,6 +213,10 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const id = (record: OwnedRoleRecordData) => new Map(record.fields).get(kind === 'tank' ? 0x1c : 0)! >>> 0;
   const displayed = records.find(record => id(record) === selected) ?? records.find(record => id(record) === currentId);
   const fields = displayed ? new Map(displayed.fields) : undefined;
+  const currentPetInstance = profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0xa4, true) : undefined;
+  const currentTankInstance = profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0xa8, true) : undefined;
+  const currentTank = currentTankInstance === undefined ? undefined
+    : owned?.equipment.find(record => new Map(record.fields).get(0x1c) === currentTankInstance);
 
   function requestClose() {
     if (!session.current.active) return;
@@ -261,6 +282,9 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
             status={learning.message || learning.actionError || status}
             learn={learning.attempt ? undefined : (instanceId, slot) => {learnPetSkill(instanceId, slot);}}
             description={sourcePetDescription(fields?.get(8))} />}
+          {kind === 'pet' && <HomePetOwnedMastery ui={ui} selectedBase={displayed}
+            currentTank={currentTank} currentPetInstance={currentPetInstance}
+            equippedItemIds={masteryEquippedItemIds} catalog={roleCatalog} />}
           <HomeOwnedRoleSourceList ui={ui} kind={kind} selected={selected}
             current={currentId} busy={busy || learningBusy} select={instanceId => {setSelected(instanceId); setStatus('');}}
             entries={records.map(record => {

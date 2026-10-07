@@ -7,6 +7,7 @@ import {SourceStaticText} from '../resources/source-static-text';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {PetSkillSourceView} from './pet-skill-source-view';
+import {sourcePetKind} from '../account/pet-shop-row-display';
 
 /** Current confirmed ownership projected into the source pet information regions. */
 export function HomePetOwnedDetails({ui, record, catalog, description, quotes, points, busy = false, status, learn}: {
@@ -27,9 +28,14 @@ export function HomePetOwnedDetails({ui, record, catalog, description, quotes, p
   const nextSkill = quote && quote.kind !== 'rankLimit'
     ? catalog?.skills.find(skill => skill.skillId === quote.nextSkillId) : undefined;
   const value = (offset: number) => fields?.get(offset);
+  const definitionId = fields?.get(8);
+  const petDefinition = definitionId === undefined ? undefined : catalog?.petTypes?.find(pet => pet.petId === definitionId);
   return <>
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtTech"
       text={points === undefined ? '' : String(points)} data-home-pet-skill-points={points} />
+    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtType"
+      text={sourcePetKind(petDefinition?.petSize, petDefinition?.petType)}
+      data-home-pet-type="" data-pet-type-source="confirmed-owned-definition" />
     {([['txtLife', 0x2c], ['txtCritical', 0x34], ['txtLucky', 0x3c]] as const).map(([name, offset]) =>
       <SourceStaticText key={name} ui={ui} layout={layout} suffix={suffix} name={name}
         className="home-pet-owned-number" text={value(offset) === undefined ? '' : String(value(offset))}
