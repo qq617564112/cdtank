@@ -312,8 +312,8 @@ def restore_layer(original_path, generated):
     original = Image.open(original_path).convert('RGBA')
     pixels = np.asarray(generated.convert('RGB'))
     rgb = pixels.astype(np.int16)
-    excluded = ((rgb[:, :, 0] - rgb[:, :, 1] > 80)
-                & (rgb[:, :, 2] - rgb[:, :, 1] > 80))
+    excluded = ((rgb[:, :, 0] > 215) & (rgb[:, :, 2] > 215)
+                & (rgb[:, :, 1] < 100))
     pixels = pixels.copy()
     pixels[excluded] = 0
     result = Image.fromarray(pixels)
@@ -418,7 +418,8 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
 
     def api_wait():
         failures = [datetime.fromisoformat(r['finished']).timestamp() for r in ledger
-                    if r['status'] == 'failed' and r.get('finished') and not r.get('actualSize')]
+                    if r['status'] == 'failed' and r.get('finished')
+                    and 'insufficient_quota' in r.get('error', '')]
         lanes = (initial_concurrency if released_workers is not None and not released_workers.is_set()
                  else concurrency)
         if not failures:

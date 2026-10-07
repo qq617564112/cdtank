@@ -1,7 +1,9 @@
 """Prepare single-character loading layers and compose shared screen layouts."""
 
 import argparse
+import base64
 from collections import Counter
+from io import BytesIO
 import json
 from pathlib import Path
 import shutil
@@ -22,6 +24,13 @@ LOADING_WORDS = {
     '1': (425, 537, 342, 39), '2': (24, 533, 342, 39),
     '3': (8, 523, 342, 39), '4': (439, 530, 342, 39),
     '5': (11, 554, 302, 36),
+}
+BACKGROUND_COMPOSITIONS = {
+    '1': 'Keep the four separate blue rectangular pictures in a 2 by 2 grid, their thin straight dark frames and the brown horizontal and vertical cross-shaped gaps. Keep their exact positions. Do not merge the four pictures into one panel, round or skew their frames, or remove the cross-shaped gaps. Preserve the white stencil illustrations and the central game logo.',
+    '2': 'Keep all six overlapping tilted photo cards, their white borders, original rotations and positions on the green backdrop. Keep the central logo and the paper collage. Do not merge or rearrange the cards.',
+    '3': 'Keep the original windmill, pink house, blue sky, green hills and white railings at their exact positions and sizes. Preserve the central logo. Extend only the landscape into the side strips.',
+    '4': 'Keep the original orange radial backdrop, straight central blue vertical band, orange explosion shapes and game logo near the top. Preserve the band width and the direction of the orange rays.',
+    '5': 'Keep the original overlapping photo collage, individual photo borders, rotations and positions, blue and white background marks, and game logo. Do not rearrange the photographs.',
 }
 
 
@@ -74,6 +83,7 @@ Restore ONLY this existing game loading-screen backdrop at high resolution. Char
 The fixed LOADING lettering and dots have also been erased. Repaint that area as a clean continuation of the underlying background. Do not draw LOADING, loading text, progress dots, numbers or a progress bar: the application adds its own dynamic progress lettering.
 The central original artwork spans x=12.465% through x=87.442% of this extended canvas. Preserve its exact composition, silhouettes, photograph borders, existing logo lettering, Chinese characters, other English words, digits, colors, linework and perspective. Do not move or resize any existing motif. Expand this artwork naturally into a full 16:9 widescreen background. The side strips are placeholders, not finished artwork: extend the existing painted background, colors, texture and simple decorative lines through them with no vertical seams or stretched edge bands. Add no main motifs in those side strips. Make the original painted contours and lettering sharper without changing the design.
 Return exactly this 16:9 horizontal backdrop edge to edge, with no margins, new panels, extra lettering or watermark. The same result will be cropped locally for 4:3 and used whole for 16:9.'''
+            prompt += '\nPage-specific composition: ' + BACKGROUND_COMPOSITIONS[page]
             ratio = '16:9'
         else:
             canvas = Image.new('RGB', (528, 528), '#ff00ff')
@@ -87,6 +97,10 @@ Return exactly this 16:9 horizontal backdrop edge to edge, with no margins, new 
             prompt = f'''Use case: precise-object-edit.
 Restore this precise cropped illustration of ONLY ONE {kind}. This request contains one individual {kind}; the other characters and neighboring objects have been masked out in solid magenta. Treat every magenta pixel as excluded space and keep it solid RGB 255,0,255. Never fill the excluded areas, complete occluded parts, assemble a scene, or add another character.
 Preserve the visible original pose, contour, tiny face markings, eyes, fur or mechanical parts, paint, shading, color palette and exact normalized coordinates. Sharpen and refine the existing illustration with meticulous detail. Keep existing occlusion boundaries and small background fragments inside the crop unchanged. Do not move, recenter, redesign or enlarge the subject. No extra text, labels, objects, borders or watermark. Return the same one-character reference sheet with all original padding.'''
+            if page == '4' and name == 'tank-07':
+                prompt += '\nRemove the black and yellow letter L embedded at the lower right of this tank. Repaint ONLY that letter as a continuation of the existing tank tread, white sticker outline and blue background. Keep every mechanical part, tank marking and all other pixels in place. Do not draw any LOADING lettering or dots.'
+            if page == '1' and name == 'pet-08':
+                prompt += '\nThe cap and scarf are deep raspberry pink, magenta-red and burgundy with white spots, and the irises are teal blue. Preserve these exact original colors. The exclusion key is bright RGB 255,0,255 outside the circular portrait only. Do not turn the cap blue, teal, purple or orange; do not exclude the pink painted cap or scarf.'
             ratio = '1:1'
         canvas.save(folder / 'input.png')
         (folder / 'prompt.txt').write_text(prompt + '\n')
@@ -125,6 +139,9 @@ Preserve the visible original pose, contour, tiny face markings, eyes, fur or me
         wide.paste(background.crop((0, 0, 1, 600)).resize((LEFT, 600)), (0, 0))
         wide.paste(background, (LEFT, 0))
         wide.paste(background.crop((799, 0, 800, 600)).resize((WIDTH - LEFT - 800, 600)), (LEFT + 800, 0))
+        reference = LAYOUT / f'page-{page}-background-reference.png'
+        if reference.exists():
+            wide = Image.open(reference).convert('RGB').resize((WIDTH, 600), Image.Resampling.LANCZOS)
         layers.insert(0, add(page, 'background', wide, [0, 0], 'background'))
         pages.append({'page': page, 'layers': layers})
     sources = {layer['source'] for page in pages for layer in page['layers']}
@@ -186,7 +203,71 @@ def assemble():
     runtime.mkdir(parents=True, exist_ok=True)
     for path in destination.glob('*.png'):
         shutil.copyfile(path, runtime / path.name)
+    preview_outputs(destination)
     print(f'Assembled and installed {completed}/5 loading screens from shared layers', flush=True)
+
+
+def preview_outputs(destination):
+    pages = [page for page in range(1, 6)
+             if all((destination / f'{page}-{ratio}.png').exists() for ratio in ['4-3', '16-9'])]
+    if not pages:
+        return
+    sheet = Image.new('RGB', (1152, len(pages) * 392), '#17222a')
+    draw = ImageDraw.Draw(sheet)
+    rows = []
+    for row, page in enumerate(pages):
+        pictures = []
+        for ratio, width, left in [('4-3', 480, 8), ('16-9', 640, 504)]:
+            artwork = Image.open(destination / f'{page}-{ratio}.png').convert('RGB')
+            small = artwork.resize((width, 360), Image.Resampling.LANCZOS)
+            top = row * 392
+            draw.text((left, top + 6), f"Loading {page} / {ratio.replace('-', ':')}", fill='white')
+            sheet.paste(small, (left, top + 24))
+            preview = artwork.resize((round(width * 2), 720), Image.Resampling.LANCZOS)
+            preview.save(LAYOUT / f'page-{page}-{ratio}-preview.png')
+            buffer = BytesIO()
+            preview.save(buffer, format='PNG')
+            encoded = base64.b64encode(buffer.getvalue()).decode('ascii')
+            pictures.append(f'<figure><figcaption>{ratio.replace("-", ":")}</figcaption>'
+                            f'<img src="data:image/png;base64,{encoded}" alt="加载背景 {page}，{ratio.replace("-", ":")}"/></figure>')
+        rows.append(f'<section><h2>加载背景 {page}</h2><div class="pair">{"".join(pictures)}</div></section>')
+    sheet.save(LAYOUT / 'clean-loading-layouts-preview.png')
+    (LAYOUT / 'preview.html').write_text('''<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>加载背景</title><style>
+body {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #17222a;
+  color: #fff;
+  font-family: sans-serif;
+}
+h1 { font-size: 24px; }
+h2 {
+  margin-top: 28px;
+  font-size: 18px;
+}
+.pair {
+  display: grid;
+  grid-template-columns: 3fr 4fr;
+  gap: 16px;
+}
+figure { margin: 0; }
+figcaption {
+  margin-bottom: 8px;
+  color: #bacbd7;
+}
+img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@media (max-width: 750px) {
+  .pair { grid-template-columns: 1fr; }
+}
+</style><h1>加载背景</h1><p>4:3 与 16:9 使用相同图案，背景不包含固定进度文字。</p>'''
+                                       + ''.join(rows) + '</html>\n')
 
 
 def main():
