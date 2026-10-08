@@ -93,7 +93,10 @@ def optimize_png(source, backup, root, oxipng):
         temporary.unlink(missing_ok=True)
 
 
-def embedded_image(model, binary, index):
+def embedded_image(model, binary, index, directory):
+    image = model['images'][index]
+    if 'uri' in image:
+        return (directory / image['uri']).read_bytes()
     view = model['bufferViews'][model['images'][index]['bufferView']]
     offset = view.get('byteOffset', 0)
     return binary[offset:offset + view['byteLength']]
@@ -160,11 +163,11 @@ def inspect_models(root, runtime, backup, inventory):
             raise ValueError(f'Image count differs: {source}')
         for index, before in enumerate(old.get('images', [])):
             after = new['images'][index]
-            if ({k: v for k, v in before.items() if k != 'bufferView'}
-                    != {k: v for k, v in after.items() if k != 'bufferView'}):
+            if ({k: v for k, v in before.items() if k not in ('bufferView', 'uri')}
+                    != {k: v for k, v in after.items() if k not in ('bufferView', 'uri')}):
                 raise ValueError(f'Image metadata differs: {source}/{index}')
-            old_image = embedded_image(old, old_binary, index)
-            new_image = embedded_image(new, new_binary, index)
+            old_image = embedded_image(old, old_binary, index, old_path.parent)
+            new_image = embedded_image(new, new_binary, index, target.parent)
             if old_image != new_image and image_pixels(io.BytesIO(old_image)) != image_pixels(io.BytesIO(new_image)):
                 raise ValueError(f'Embedded pixels differ: {source}/{index}')
         records.append({'path': relative, 'beforeBytes': old_path.stat().st_size,
@@ -200,6 +203,11 @@ def main():
             report = json.loads(report_path.read_text())
             report['status'] = 'restored'
             save(report_path, report)
+        painted_report = art / 'painted-compression.json'
+        if painted_report.is_file():
+            report = json.loads(painted_report.read_text())
+            report['status'] = 'restored'
+            save(painted_report, report)
         print(f'Restored {len(snapshot["files"])} uncompressed HD files; backup retained', flush=True)
         return
     if not args.oxipng:

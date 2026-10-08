@@ -142,16 +142,21 @@ def repack(data, source, textures, root):
     payload = bytearray()
     views = model.setdefault('bufferViews', [])
     replacements = {}
+    external = {}
+    directory = PurePosixPath(source).parent
     for index, entry in matches.items():
         replacements[model['images'][index]['bufferView']] = entry
+        if PurePosixPath(entry['source']).is_relative_to(directory):
+            external[index] = PurePosixPath(entry['source']).relative_to(directory).as_posix()
+    external_views = {model['images'][index]['bufferView'] for index in external}
     shared = {}
     for index, view in enumerate(views):
         entry = replacements.get(index)
         offset = view.get('byteOffset', 0)
-        key = ('png', entry['png']) if entry else ('original', offset, view['byteLength'])
+        key = ('external',) if index in external_views else ('png', entry['png']) if entry else ('original', offset, view['byteLength'])
         if key not in shared:
-            value = (root / entry['png']).read_bytes() if entry else binary[offset:offset + view['byteLength']]
-            if entry and not value.startswith(b'\x89PNG\r\n\x1a\n'):
+            value = b'\0' * 4 if index in external_views else (root / entry['png']).read_bytes() if entry else binary[offset:offset + view['byteLength']]
+            if entry and index not in external_views and not value.startswith(b'\x89PNG\r\n\x1a\n'):
                 raise ValueError(f"Not a PNG: {entry['png']}")
             payload.extend(b'\0' * (-len(payload) % 4))
             shared[key] = (len(payload), len(value))
@@ -159,7 +164,11 @@ def repack(data, source, textures, root):
         view['byteOffset'], view['byteLength'] = shared[key]
     for index in matches:
         image = model['images'][index]
-        image.pop('uri', None)
+        if index in external:
+            image.pop('bufferView', None)
+            image['uri'] = external[index]
+        else:
+            image.pop('uri', None)
         image['mimeType'] = 'image/png'
     buffers = model.setdefault('buffers', [{'byteLength': 0}])
     buffers[0]['byteLength'] = len(payload)

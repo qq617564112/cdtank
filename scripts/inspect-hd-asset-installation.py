@@ -32,7 +32,7 @@ def inspect(root, groups):
                 and (not groups or any(group in entry['groups'] for group in groups))]
     report = {'updated': datetime.now(timezone.utc).isoformat(timespec='seconds'),
               'scope': {'groups': groups or 'all', 'paths': len(selected)},
-              'delivered': 0, 'installed': 0, 'models': 0, 'embeddedImages': 0,
+              'delivered': 0, 'installed': 0, 'models': 0, 'embeddedImages': 0, 'externalImages': 0,
               'deferredTextPaths': [entry['source'] for entry in inventory['textures'] if entry.get('deferred')],
               'pendingPaths': [], 'uninstalledPaths': [], 'unusedEmbeddedImages': [], 'issues': []}
     coverage = {'inventoryModels': len(inventory['models']), 'textureModels': 0,
@@ -181,6 +181,15 @@ def inspect(root, groups):
             if index >= len(images):
                 continue
             after = images[index]
+            if 'uri' in after:
+                image_path = target.parent / after['uri']
+                expected = runtime / entry['source']
+                if ('bufferView' in after or after.get('mimeType') != 'image/png'
+                        or image_path.resolve() != expected.resolve()
+                        or not image_path.is_file() or read_bytes(image_path) != read_bytes(root / entry['png'])):
+                    issue(source, f'Image {index} external PNG differs from delivered {entry["source"]}')
+                report['externalImages'] += 1
+                continue
             view_index = after.get('bufferView')
             if (view_index is None or not 0 <= view_index < len(views)
                     or after.get('mimeType') != 'image/png' or 'uri' in after):
@@ -203,7 +212,7 @@ def inspect(root, groups):
         temporary.write_text(json.dumps(coverage, ensure_ascii=False, indent=2) + '\n')
         temporary.replace(coverage_path)
     print(f'Compared {report["installed"]}/{report["delivered"]} installed PNGs, '
-          f'{report["models"]} models and {report["embeddedImages"]} embedded images; '
+          f'{report["models"]} models, {report["embeddedImages"]} embedded and {report["externalImages"]} external images; '
           f'{len(report["pendingPaths"])} pending, {len(report["uninstalledPaths"])} uninstalled, '
           f'{len(report["issues"])} model issues')
     print(path)
