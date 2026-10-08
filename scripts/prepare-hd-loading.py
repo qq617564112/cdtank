@@ -1,36 +1,35 @@
-"""Prepare single-character loading layers and compose shared screen layouts."""
+"""Redraw complete original loading illustrations and publish both aspect ratios."""
 
 import argparse
 import base64
-from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from io import BytesIO
 import json
 from pathlib import Path
 import shutil
+import time
+import urllib.request
 
-import cv2
-import numpy as np
-from PIL import Image, ImageChops, ImageDraw
+from PIL import Image, ImageDraw
 
+import hd_image_api
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / 'art/hd-assets'
 LAYOUT = ROOT / 'art/hd-ui/loading'
-ASSETS = ROOT / 'recovery/output/web-assets'
+JOBS = LAYOUT / 'whole-backgrounds'
+DELIVERY = ROOT / 'art/hd-ui/png/loading'
+RUNTIME = ROOT / 'recovery/output/web-assets'
 WIDTH = 1067
 LEFT = (WIDTH - 800) // 2
 DENSITY = 4
-LOADING_WORDS = {
-    '1': (425, 537, 342, 39), '2': (24, 533, 342, 39),
-    '3': (8, 523, 342, 39), '4': (439, 530, 342, 39),
-    '5': (11, 554, 302, 36),
-}
-BACKGROUND_COMPOSITIONS = {
-    '1': 'Keep the four separate blue rectangular pictures in a 2 by 2 grid, their thin straight dark frames and the brown horizontal and vertical cross-shaped gaps. Keep their exact positions. Do not merge the four pictures into one panel, round or skew their frames, or remove the cross-shaped gaps. Preserve the white stencil illustrations and the central game logo.',
-    '2': 'Keep all six overlapping tilted photo cards, their white borders, original rotations and positions on the green backdrop. Keep the central logo and the paper collage. Do not merge or rearrange the cards.',
-    '3': 'Keep the original windmill, pink house, blue sky, green hills and white railings at their exact positions and sizes. Preserve the central logo. Extend only the landscape into the side strips.',
-    '4': 'Keep the original orange radial backdrop, straight central blue vertical band, orange explosion shapes and game logo near the top. Preserve the band width and the direction of the orange rays.',
-    '5': 'Keep the original overlapping photo collage, individual photo borders, rotations and positions, blue and white background marks, and game logo. Do not rearrange the photographs.',
+COMPOSITIONS = {
+    1: 'Orange surround; four blue rectangular panels in a 2 by 2 grid with straight thin dark frames and orange cross-shaped gaps; round original pet portraits, white stencil illustrations, and the game logo at their intersection. Keep every portrait and panel in place.',
+    2: 'Yellow-orange backdrop with repeated winged barrels; six overlapping tilted photo cards with blue outer edges, black or white frames, their original tank-and-pet pictures, a central winged barrel, and the game logo at the lower right. Preserve every card rotation and overlap.',
+    3: 'Flat teal-blue field with the game logo in the upper left; a white windmill silhouette and its shadow behind an orange-roofed timber house and green tree in the lower right; all tiny original characters, tanks, notes, white ground shapes and railings remain in place.',
+    4: 'Orange radial field, straight central dark teal-blue vertical band, original red and yellow explosion silhouettes, game logo near the top, and the entire overlapping tank-and-pet sticker group below. Keep the white sticker contours and every original overlap, including the big yellow tank at the bottom.',
+    5: 'Blue top and bottom bands; left framed panel of overlapping sepia photo cards and paw prints; original stacked green tanks and muzzle flash in front of the red-yellow explosion; green right panel with the game logo; original No.1 caption at the bottom. Preserve the pin, frame lines, card rotations and every existing pet.',
 }
 
 
@@ -41,170 +40,150 @@ def write_json(path, value):
     temporary.replace(path)
 
 
-def component_mask(region):
-    mask = Image.new('L', (800, 600))
-    draw = ImageDraw.Draw(mask)
-    if 'ellipse' in region:
-        draw.ellipse(tuple(region['ellipse']), fill=255)
-    else:
-        draw.polygon([tuple(point) for point in region['polygon']], fill=255)
-    return mask
-
-
 def prepare():
-    shapes = json.loads((ROOT / 'scripts/hd-loading-layers.json').read_text())
+    jobs = []
+    for page in range(1, 6):
+        folder = JOBS / str(page)
+        folder.mkdir(parents=True, exist_ok=True)
+        original = Image.open(ART / f'original/Data/ui/loading/{page}.png').convert('RGB')
+        original = original.crop((0, 0, 800, 600))
+        original.save(folder / 'original.png')
+        reference = Image.new('RGB', (WIDTH, 600))
+        reference.paste(original, (LEFT, 0))
+        reference.paste(original.crop((0, 0, 1, 600)).resize((LEFT, 600)), (0, 0))
+        reference.paste(original.crop((799, 0, 800, 600)).resize((WIDTH - LEFT - 800, 600)),
+                        (LEFT + 800, 0))
+        reference.save(folder / 'input.png')
+        prompt = f'''Use case: precise-object-edit.
+Asset type: one complete original game loading-screen illustration.
+Input image: the original complete composition, with ALL original pets, tanks, objects, logo and background already together. Restore this WHOLE illustration coherently at high resolution. Keep the exact original cartoon rendering, original restrained cel shading, original printed linework and palette consistent across characters, vehicles and backdrop.
+Composition: {COMPOSITIONS[page]}
+The original 800x600 composition occupies x={LEFT / WIDTH * 100:.6f}% to {(LEFT + 800) / WIDTH * 100:.6f}% of this 1067x600 reference. Keep EVERY original motif, character, face, costume, tank, contour, outline, occlusion and logo at its exact normalized coordinate and original size in that central area. Keep the complete central composition suitable for a 4:3 crop. The narrow side extensions are stretched edge placeholders: repaint them as a seamless natural continuation of the original quiet backdrop in the same style. Do not add characters, photo cards, logos or other main objects to the sides.
+Remove ALL original LOADING lettering and its three progress dots. Repair the underlying background or illustration, including any tank or sticker contour hidden by those letters. Do not print LOADING, Loading, loading, progress dots, progress bars or new captions anywhere. Preserve every OTHER original letter, original game logo and No.1 caption exactly, including their irregular shapes, colors, outlines and shadows.
+Repaint crisp, smooth, anti-aliased contours and legible original markings. Preserve original small facial expressions and recognizability. No pixel blocks, stair-step edges, blur, photoreal fur, glossy 3D redesign, new lighting, new shadows, extra decoration, added borders, extra characters, missing subjects, rearrangement or collage of inconsistent styles. Keep original white sticker borders where they already exist.
+Return one complete edge-to-edge 16:9 PNG illustration, ideally 4096x2304 or larger. No margins or watermark.'''
+        (folder / 'prompt.txt').write_text(prompt + '\n')
+        jobs.append({'page': page, 'input': str((folder / 'input.png').relative_to(ROOT)),
+                     'original': str((folder / 'original.png').relative_to(ROOT)),
+                     'prompt': str((folder / 'prompt.txt').relative_to(ROOT)),
+                     'output': str((folder / 'output-1.png').relative_to(ROOT)),
+                     'composition': 'complete-original', 'removeLoading': True})
+    write_json(JOBS / 'jobs.json', jobs)
     inventory_path = ART / 'inventory.json'
     inventory = json.loads(inventory_path.read_text())
-    entries = {entry['source']: entry for entry in inventory['textures']}
+    inventory['textures'] = [entry for entry in inventory['textures']
+                             if not entry['source'].startswith(('hd-ui/loading/parts/', 'hd-ui/loading/whole/'))]
     plan_path = ART / 'plan.json'
     plan = json.loads(plan_path.read_text())
-    existing = {batch['id']: batch for batch in plan['batches']}
-    pages = []
-    batches = []
-
-    def add(page, name, original, location, kind):
-        source = f'hd-ui/loading/parts/{page}/{name}.png'
-        original_path = ART / 'original' / source
-        original_path.parent.mkdir(parents=True, exist_ok=True)
-        original.save(original_path)
-        entry = {'source': source, 'canonical': source,
-                 'original': str(original_path.relative_to(ROOT)),
-                 'png': str((ART / 'png' / source).relative_to(ROOT)),
-                 'size': list(original.size), 'groups': ['loading'], 'intermediate': True}
-        entries[source] = entry
-        batch_id = f'loading-{page}-{name}'
-        folder = ART / 'batches' / batch_id
-        folder.mkdir(parents=True, exist_ok=True)
-        if kind == 'background':
-            canvas = original.convert('RGB')
-            box = [0, 0, original.width, original.height]
-            prompt = '''Use case: precise-object-edit.
-Restore ONLY this existing game loading-screen backdrop at high resolution. Characters have already been removed and will be restored individually as separate layers. Do not draw any tank, pet, character, face or new object in the erased areas. Continue the local painted background, paper, frame, skyline or flat color naturally through those areas.
-The fixed LOADING lettering and dots have also been erased. Repaint that area as a clean continuation of the underlying background. Do not draw LOADING, loading text, progress dots, numbers or a progress bar: the application adds its own dynamic progress lettering.
-The central original artwork spans x=12.465% through x=87.442% of this extended canvas. Preserve its exact composition, silhouettes, photograph borders, existing logo lettering, Chinese characters, other English words, digits, colors, linework and perspective. Do not move or resize any existing motif. Expand this artwork naturally into a full 16:9 widescreen background. The side strips are placeholders, not finished artwork: extend the existing painted background, colors, texture and simple decorative lines through them with no vertical seams or stretched edge bands. Add no main motifs in those side strips. Make the original painted contours and lettering sharper without changing the design.
-Return exactly this 16:9 horizontal backdrop edge to edge, with no margins, new panels, extra lettering or watermark. The same result will be cropped locally for 4:3 and used whole for 16:9.'''
-            prompt += '\nPage-specific composition: ' + BACKGROUND_COMPOSITIONS[page]
-            ratio = '16:9'
-        else:
-            canvas = Image.new('RGB', (528, 528), '#ff00ff')
-            image = original.convert('RGB')
-            scale = 512 / max(image.size)
-            size = tuple(max(1, round(value * scale)) for value in image.size)
-            image = image.resize(size, Image.Resampling.NEAREST)
-            x, y = (528 - image.width) // 2, (528 - image.height) // 2
-            canvas.paste(image, (x, y))
-            box = [x, y, x + image.width, y + image.height]
-            prompt = f'''Use case: precise-object-edit.
-Restore this precise cropped illustration of ONLY ONE {kind}. This request contains one individual {kind}; the other characters and neighboring objects have been masked out in solid magenta. Treat every magenta pixel as excluded space and keep it solid RGB 255,0,255. Never fill the excluded areas, complete occluded parts, assemble a scene, or add another character.
-Preserve the visible original pose, contour, tiny face markings, eyes, fur or mechanical parts, paint, shading, color palette and exact normalized coordinates. Sharpen and refine the existing illustration with meticulous detail. Keep existing occlusion boundaries and small background fragments inside the crop unchanged. Do not move, recenter, redesign or enlarge the subject. No extra text, labels, objects, borders or watermark. Return the same one-character reference sheet with all original padding.'''
-            if page == '4' and name == 'tank-07':
-                prompt += '\nRemove the black and yellow letter L embedded at the lower right of this tank. Repaint ONLY that letter as a continuation of the existing tank tread, white sticker outline and blue background. Keep every mechanical part, tank marking and all other pixels in place. Do not draw any LOADING lettering or dots.'
-            if page == '1' and name == 'pet-08':
-                prompt += '\nThe cap and scarf are deep raspberry pink, magenta-red and burgundy with white spots, and the irises are teal blue. Preserve these exact original colors. The exclusion key is bright RGB 255,0,255 outside the circular portrait only. Do not turn the cap blue, teal, purple or orange; do not exclude the pink painted cap or scarf.'
-            ratio = '1:1'
-        canvas.save(folder / 'input.png')
-        (folder / 'prompt.txt').write_text(prompt + '\n')
-        batch = {'id': batch_id, 'group': 'loading', 'input': str((folder / 'input.png').relative_to(ROOT)),
-                 'inputSize': list(canvas.size), 'cells': [{'source': source, 'box': box}],
-                 'prompt': str((folder / 'prompt.txt').relative_to(ROOT)),
-                 'output': str((folder / 'output-1.png').relative_to(ROOT)), 'ratio': ratio}
-        saved = existing.get(batch_id)
-        batches.append(saved if saved and ((ROOT / saved['output']).exists() or (ROOT / entry['png']).exists()) else batch)
-        return {'source': source, 'png': entry['png'], 'position': location, 'kind': kind}
-
-    for page, regions in shapes.items():
-        original = Image.open(ART / f'original/Data/ui/loading/{page}.png').convert('RGB').crop((0, 0, 800, 600))
-        claimed = Image.new('L', original.size)
-        layers = []
-        count = Counter()
-        for region in regions:
-            mask = ImageChops.subtract(component_mask(region), claimed)
-            claimed = ImageChops.lighter(claimed, mask)
-            box = mask.getbbox()
-            crop = original.crop(box)
-            alpha = mask.crop(box)
-            patch = Image.new('RGBA', crop.size, '#ff00ff')
-            patch.paste(crop, (0, 0), alpha)
-            patch.putalpha(alpha)
-            count[region['kind']] += 1
-            name = f"{region['kind']}-{count[region['kind']]:02}"
-            layers.append(add(page, name, patch, list(box[:2]), region['kind']))
-        pixels = np.asarray(original)
-        holes = cv2.dilate(np.asarray(claimed), np.ones((5, 5), dtype=np.uint8))
-        left, top, width, height = LOADING_WORDS[page]
-        holes[max(0, top - 10):min(600, top + height + 10),
-              max(0, left - 10):min(800, left + width + 10)] = 255
-        background = Image.fromarray(cv2.inpaint(pixels, holes, 5, cv2.INPAINT_TELEA))
-        wide = Image.new('RGB', (WIDTH, 600))
-        wide.paste(background.crop((0, 0, 1, 600)).resize((LEFT, 600)), (0, 0))
-        wide.paste(background, (LEFT, 0))
-        wide.paste(background.crop((799, 0, 800, 600)).resize((WIDTH - LEFT - 800, 600)), (LEFT + 800, 0))
-        reference = LAYOUT / f'page-{page}-background-reference.png'
-        if reference.exists():
-            wide = Image.open(reference).convert('RGB').resize((WIDTH, 600), Image.Resampling.LANCZOS)
-        layers.insert(0, add(page, 'background', wide, [0, 0], 'background'))
-        pages.append({'page': page, 'layers': layers})
-    sources = {layer['source'] for page in pages for layer in page['layers']}
-    inventory['textures'] = [entry for entry in entries.values()
-                             if not entry['source'].startswith('hd-ui/loading/parts/') or entry['source'] in sources]
-    write_json(inventory_path, inventory)
-    plan['batches'] = [batch for batch in plan['batches'] if batch['group'] != 'loading'] + batches
+    plan['batches'] = [batch for batch in plan['batches'] if batch['group'] != 'loading']
+    for job in jobs:
+        source = f"hd-ui/loading/whole/{job['page']}/background.png"
+        inventory['textures'].append({'source': source, 'canonical': source,
+                                      'original': job['input'],
+                                      'png': f'art/hd-assets/png/{source}',
+                                      'size': [WIDTH, 600], 'groups': ['loading'],
+                                      'intermediate': True})
+        plan['batches'].append({'id': f"loading-whole-{job['page']}", 'group': 'loading',
+                                'input': job['input'], 'inputSize': [WIDTH, 600],
+                                'prompt': job['prompt'], 'output': job['output'], 'ratio': '16:9',
+                                'cells': [{'source': source, 'box': [0, 0, WIDTH, 600]}]})
     if 'loading' not in plan['groups']:
         plan['groups'].insert(plan['groups'].index('art'), 'loading')
+    write_json(inventory_path, inventory)
     write_json(plan_path, plan)
-    write_json(LAYOUT / 'layers.json', pages)
-    preview_inputs(pages)
-    counts = Counter(layer['kind'] for page in pages for layer in page['layers'])
-    print(f'Prepared {len(batches)} independent loading requests: {dict(counts)}', flush=True)
+    print('Prepared five complete original loading illustrations', flush=True)
+    return jobs
 
 
-def preview_inputs(pages):
-    layers = [(page['page'], layer) for page in pages for layer in page['layers'] if layer['kind'] != 'background']
-    sheet = Image.new('RGB', (1024, ((len(layers) + 7) // 8) * 150), '#29333d')
-    draw = ImageDraw.Draw(sheet)
-    for index, (page, layer) in enumerate(layers):
-        entry = Image.open(ART / 'original' / layer['source']).convert('RGBA')
-        entry.thumbnail((120, 120), Image.Resampling.NEAREST)
-        x, y = index % 8 * 128, index // 8 * 150
-        sheet.paste(entry, (x + (128 - entry.width) // 2, y + 22), entry.getchannel('A'))
-        draw.text((x + 4, y + 4), f"{page}/{Path(layer['source']).stem}", fill='white')
-    sheet.save(LAYOUT / 'single-character-inputs.png')
+def generate(workers, pages):
+    jobs = json.loads((JOBS / 'jobs.json').read_text())
+    jobs = [job for job in jobs if not pages or job['page'] in pages]
+    key = hd_image_api.auth_key()
+
+    def request(job):
+        folder = ROOT / job['output']
+        state_path = folder.with_name('request.json')
+        if folder.exists():
+            print(f"Loading {job['page']}: saved output available", flush=True)
+            return
+        while True:
+            state = json.loads(state_path.read_text()) if state_path.exists() else {}
+            retry_at = state.get('retryAt', 0)
+            while time.time() < retry_at:
+                time.sleep(min(30, retry_at - time.time()))
+            print(f"Loading {job['page']}: requesting complete illustration", flush=True)
+            state = {'page': job['page'], 'started': datetime.now(timezone.utc).isoformat(),
+                     'status': 'submitted'}
+            write_json(state_path, state)
+            try:
+                status, payload = hd_image_api.edit(hd_image_api.DEFAULT_BASE_URL, key,
+                                                   (ROOT / job['prompt']).read_text(),
+                                                   ROOT / job['input'])
+                url = payload['data'][0]['url']
+                temporary = folder.with_suffix('.download')
+                with urllib.request.urlopen(url, timeout=1300) as response, temporary.open('wb') as target:
+                    shutil.copyfileobj(response, target)
+                with Image.open(temporary) as image:
+                    state['nativeSize'] = list(image.size)
+                    image.convert('RGB').save(folder, format='PNG')
+                temporary.unlink()
+                state.update(status='complete', http=status,
+                             finished=datetime.now(timezone.utc).isoformat())
+                write_json(state_path, state)
+                print(f"Loading {job['page']}: received {state['nativeSize']}", flush=True)
+                return
+            except Exception as error:
+                state.update(status='failed', error=str(error), retryAt=time.time() + 300)
+                write_json(state_path, state)
+                print(f"Loading {job['page']}: {error}; retry in five minutes", flush=True)
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        list(executor.map(request, jobs))
 
 
 def assemble():
-    pages = json.loads((LAYOUT / 'layers.json').read_text())
-    inventory = json.loads((ART / 'inventory.json').read_text())
-    textures = {entry['source']: entry for entry in inventory['textures']}
-    destination = ROOT / 'art/hd-ui/png/loading'
-    destination.mkdir(parents=True, exist_ok=True)
-    completed = 0
-    for page in pages:
-        if any(not (ROOT / layer['png']).exists() for layer in page['layers']):
-            continue
-        canvas = Image.open(ROOT / page['layers'][0]['png']).convert('RGBA')
-        for layer in page['layers'][1:]:
-            patch = Image.open(ROOT / layer['png']).convert('RGBA')
-            x, y = layer['position']
-            canvas.alpha_composite(patch, ((LEFT + x) * DENSITY, y * DENSITY))
-        wide = destination / f"{page['page']}-16-9.png"
-        canvas.save(wide)
-        classic = canvas.crop((LEFT * DENSITY, 0, (LEFT + 800) * DENSITY, 600 * DENSITY))
-        classic.save(destination / f"{page['page']}-4-3.png")
-        entry = textures[f"Data/ui/loading/{page['page']}.png"]
-        full_atlas = Image.open(ROOT / entry['original']).convert('RGBA')
-        full_atlas = full_atlas.resize(tuple(value * DENSITY for value in full_atlas.size), Image.Resampling.LANCZOS)
-        full_atlas.paste(classic, (0, 0))
-        delivered = ROOT / entry['png']
-        delivered.parent.mkdir(parents=True, exist_ok=True)
-        full_atlas.save(delivered)
-        shutil.copyfile(delivered, ASSETS / entry['source'])
-        completed += 1
-    runtime = ASSETS / 'hd-ui/loading'
-    runtime.mkdir(parents=True, exist_ok=True)
-    for path in destination.glob('*.png'):
-        shutil.copyfile(path, runtime / path.name)
-    preview_outputs(destination)
-    print(f'Assembled and installed {completed}/5 loading screens from shared layers', flush=True)
+    jobs = json.loads((JOBS / 'jobs.json').read_text())
+    entries = {row['source']: row for row in json.loads((ART / 'inventory.json').read_text())['textures']}
+    DELIVERY.mkdir(parents=True, exist_ok=True)
+    previous = JOBS / 'previous'
+    records = []
+    for job in jobs:
+        output = ROOT / job['output']
+        with Image.open(output) as generated:
+            native_size = list(generated.size)
+            wide = generated.convert('RGB').resize((WIDTH * DENSITY, 600 * DENSITY),
+                                                   Image.Resampling.LANCZOS)
+        classic = wide.crop((LEFT * DENSITY, 0, (LEFT + 800) * DENSITY, 600 * DENSITY))
+        entry = entries[f"Data/ui/loading/{job['page']}.png"]
+        with Image.open(ROOT / entry['original']) as atlas:
+            atlas = atlas.convert('RGBA').resize(tuple(value * DENSITY for value in atlas.size),
+                                                Image.Resampling.LANCZOS)
+        atlas.paste(classic, (0, 0))
+        targets = [(ART / f"png/hd-ui/loading/whole/{job['page']}/background.png", wide),
+                   (DELIVERY / f"{job['page']}-16-9.png", wide),
+                   (DELIVERY / f"{job['page']}-4-3.png", classic),
+                   (ROOT / entry['png'], atlas)]
+        targets += [(RUNTIME / 'hd-ui/loading' / path.name, image) for path, image in targets[1:3]]
+        # The original atlas is retained outside the published image directory.
+        atlas_runtime = RUNTIME / entry['source']
+        if atlas_runtime.exists():
+            targets.append((atlas_runtime, atlas))
+        for target, image in targets:
+            backup = previous / target.relative_to(ROOT)
+            if target.exists() and not backup.exists():
+                backup.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(target, backup)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            temporary = target.with_suffix('.tmp')
+            image.save(temporary, format='PNG')
+            temporary.replace(target)
+        records.append({'page': job['page'], 'nativeSize': native_size,
+                        'wide': list(wide.size), 'classic': list(classic.size),
+                        'composition': 'complete-original', 'removeLoading': True,
+                        'classicCrop': [LEFT * DENSITY, 0, (LEFT + 800) * DENSITY, 600 * DENSITY]})
+    write_json(LAYOUT / 'installation.json', records)
+    preview_outputs(DELIVERY)
+    print('Installed five whole illustrations in 4:3 and 16:9', flush=True)
 
 
 def preview_outputs(destination):
@@ -272,10 +251,14 @@ img {
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['prepare', 'assemble'])
+    parser.add_argument('action', choices=['prepare', 'generate', 'assemble'])
+    parser.add_argument('--workers', type=int, default=2)
+    parser.add_argument('--pages', type=int, nargs='+')
     args = parser.parse_args()
     if args.action == 'prepare':
         prepare()
+    elif args.action == 'generate':
+        generate(args.workers, args.pages)
     else:
         assemble()
 

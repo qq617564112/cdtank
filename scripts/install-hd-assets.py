@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""Install completed HD PNGs and repack matching GLB images in runtime assets."""
+"""Install completed HD model textures and retain original non-model artwork."""
 
 import argparse
-import base64
 import json
+import importlib.util
 import os
 from pathlib import Path, PurePosixPath
 import shutil
 import struct
-import subprocess
-import sys
 
 
 JSON_CHUNK = 0x4E4F534A
@@ -106,33 +104,6 @@ def referenced_images(model):
     return {model['textures'][index]['source'] for index in indices}
 
 
-def install_test_map_preview(root, runtime, textures):
-    source = 'custom-maps/1001/preview.svg'
-    target = runtime / source
-    if not target.is_file():
-        return
-    original = root / 'art/hd-assets/original' / source
-    if not original.is_file():
-        original.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(target, original)
-    artwork = original.read_text()
-    assets = list(TEST_MAP_TEXTURES.values()) + [
-        'Data/scnobj/obj05424/obj05424.png',
-        'Data/scnobj/obj05413/obj05413.png',
-    ]
-    for asset in assets:
-        entry = textures.get(asset.lower())
-        if entry:
-            before = base64.b64encode((root / entry['original']).read_bytes()).decode()
-            after = base64.b64encode((root / entry['png']).read_bytes()).decode()
-            artwork = artwork.replace('data:image/png;base64,' + before,
-                                      'data:image/png;base64,' + after)
-    delivered = root / 'art/hd-assets/png' / source
-    delivered.parent.mkdir(parents=True, exist_ok=True)
-    delivered.write_text(artwork)
-    shutil.copyfile(delivered, target)
-
-
 def repack(data, source, textures, root):
     model, binary, chunks = read_glb(data)
     matches = image_matches(model, source, textures)
@@ -197,15 +168,20 @@ def main():
     if not runtime.is_absolute():
         runtime = root / runtime
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
+    spec = importlib.util.spec_from_file_location('original_assets', root / 'scripts/restore-original-assets.py')
+    original_assets = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(original_assets)
+    model_textures = original_assets.model_texture_paths(root, runtime, inventory)
     selected = [entry for entry in inventory['textures']
-                if not entry.get('intermediate') and not entry.get('deferred')
+                if entry['source'] in model_textures
+                and not entry.get('intermediate') and not entry.get('deferred')
                 and (args.group is None or args.group in entry.get('groups', []))]
     completed = [entry for entry in selected if (root / entry['png']).is_file()]
     replacements = {entry['source'].lower(): entry for entry in completed}
     # A group install retains artwork installed by earlier groups in shared models.
     if args.group is not None:
         for entry in inventory['textures']:
-            if entry.get('intermediate') or entry.get('deferred'):
+            if entry['source'] not in model_textures or entry.get('intermediate') or entry.get('deferred'):
                 continue
             delivered = root / entry['png']
             installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
@@ -237,28 +213,8 @@ def main():
         target = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / entry['png'], target)
-    install_test_map_preview(root, runtime, replacements)
-    # Shared UI parts and locally composed backgrounds are consumed directly.
-    for source in (root / 'art/hd-ui/png').rglob('*.png'):
-        target = runtime / 'hd-ui' / source.relative_to(root / 'art/hd-ui/png')
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, target)
-    for source in (root / 'art/hd-ui-redraw/button-backgrounds').glob('*.png'):
-        target = runtime / 'hd-ui/buttons' / source.name
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source, target)
-    local_ui = root / 'art/hd-local-ui/png'
-    for name in ('lobby-logo.png', 'normal-cursor.png', 'normal-cursor-hd.png', 'client-icon.ico'):
-        source = local_ui / name
-        if source.is_file():
-            shutil.copyfile(source, root / 'apps/web/src/assets/ui' / name)
-    print(f'Installed {len(completed)} PNGs, {model_count} models; '
-          f'skipped {len(selected) - len(completed)} incomplete PNGs')
-    subprocess.run([sys.executable, str(root / 'scripts/render-hd-asset-gallery.py'),
-                    '--root', str(root)], check=True)
-    if (runtime / 'sprite-images.json').is_file():
-        subprocess.run([sys.executable, str(root / 'scripts/clean-image-assets.py'),
-                        '--root', str(root)], check=True)
+    print(f'Installed {len(completed)} model PNGs and {model_count} models')
+    original_assets.restore(root, runtime)
 
 
 if __name__ == '__main__':

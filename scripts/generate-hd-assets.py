@@ -62,8 +62,6 @@ def prepare():
                 for p in ASSETS.rglob('*.png') if p.relative_to(ASSETS).parts[0] != 'hd-ui'}
     local_sources = {f'local-ui/loading-words/{path.name}': path
                      for path in (ROOT / 'apps/web/src/interface/resources/loading-words').glob('*.png')}
-    local_sources['local-art/reference-hero/reference-colors.png'] = (
-        ROOT / 'apps/web/src/models/reference-hero/reference-colors.png')
     existing.update({source.lower(): source for source in local_sources})
     previous = document(ART / 'inventory.json') if (ART / 'inventory.json').exists() else {'textures': []}
     previous_entries = {entry['source']: entry for entry in previous['textures']}
@@ -151,7 +149,7 @@ def prepare():
         if previous_entries.get(source, {}).get('deferred'):
             textures[-1]['deferred'] = previous_entries[source]['deferred']
         if source in simple:
-            textures[-1]['deferred'] = 'html-css-rendering'
+            textures[-1]['deferred'] = 'unlettered-button'
         if source in local_sources:
             textures[-1]['installPath'] = str(local_sources[source].relative_to(ROOT))
             if source.startswith('local-ui/loading-words/'):
@@ -223,7 +221,6 @@ Repaint crisp natural contours and restrained fine material detail in the origin
                                 'ratio': '1:1' if columns == rows else f'{columns}:{rows}'})
     save(ART / 'plan.json', {'baseUrl': hd_image_api.DEFAULT_BASE_URL, 'model': hd_image_api.MODEL, 'groups': ordered_groups, 'batches': batches})
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'prepare'], check=True)
-    subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-reference-hero.py')], check=True)
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-layered-ui.py'), 'prepare'], check=True)
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-monochrome-ui.py')], check=True)
     textures = document(ART / 'inventory.json')['textures']

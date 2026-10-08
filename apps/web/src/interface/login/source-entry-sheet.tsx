@@ -3,7 +3,6 @@ import {SourceImageScale, SourceStaticImage} from '../resources/source-static-im
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
-import {imageResourceUrl} from '../../assets/image-cache';
 import './source-entry.css';
 
 export function SourceEntrySheet({page, ui, error, busy, status, children}: {
@@ -24,8 +23,6 @@ export function SourceEntrySheet({page, ui, error, busy, status, children}: {
     <div className="source-entry-viewport" style={{width: width * scale, height: 600 * scale}}>
       <div className="source-entry-stage" style={{width, transform: `scale(${scale})`,
         '--entry-width': `${width}px`, '--entry-width-extension': `${width - 800}px`} as CSSProperties}>
-        {page === 'login' && <img className="source-entry-background"
-          src={imageResourceUrl(`/hd-ui/entry/login-background-${width > 800 ? '16-9' : '4-3'}.png`)} alt="" draggable={false}/>}
         <div className="source-entry-content">
           <SourceImageScale value={scale}>{children}</SourceImageScale>
           <output className={`source-entry-status source-entry-status-${page}`} role="status" aria-live="polite">
@@ -41,8 +38,7 @@ export function SourceEntryPictures({ui, layout, suffix, dynamicText = []}: {
   ui: HomeSourceUi; layout: HomeSourceLayout; suffix: string; dynamicText?: string[];
 }) {
   const controls = ui.layouts.find(item => item.path.endsWith(suffix))!.windows;
-  return <>{controls.filter(control => control.type === 'WindowsLook/StaticImage' && control.name !== 'all'
-    && !(suffix.endsWith('login.xml') && control.name === 'ditu'))
+  return <>{controls.filter(control => control.type === 'WindowsLook/StaticImage' && control.name !== 'all')
     .map(control => <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix}
       name={control.name} reference={control.properties.Image || control.properties.BackgroundImage}
       className="source-entry-picture" aria-hidden="true"/>)}

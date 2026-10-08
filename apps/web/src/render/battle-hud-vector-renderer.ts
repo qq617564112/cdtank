@@ -2,8 +2,7 @@ import {Vector2} from '@babylonjs/core';
 import type {Scene} from '@babylonjs/core';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import type {ResInventory} from '../../../shared/protocols/PtlInventory';
-import {decodeImage} from '../assets/image-resources';
-import {isSimpleUiImage} from '../assets/simple-ui-artwork';
+import {decodeImageRegion} from '../assets/image-resources';
 import type {BattleHud, SourceWindow} from '../interface/battle/battle-hud';
 import {hudItemSlots} from '../interface/battle/hud-item-slots';
 import {absoluteRect} from '../interface/battle/hud-source-controls';
@@ -36,8 +35,7 @@ export class BattleHudVectorRenderer {
       import('./battle-hud-vector-geometry'), import('./battle-notice-vector-geometry'),
     ]);
     await Promise.all([...Object.values(hud.BATTLE_HUD_VECTORS), ...Object.values(notices.BATTLE_NOTICE_VECTORS)]
-      .filter(shape => !isSimpleUiImage(shape.asset))
-      .map(shape => decodeImage(`/${shape.asset}`)));
+      .map(shape => decodeImageRegion(`/${shape.asset}`)));
     this.geometry = hud.BATTLE_HUD_VECTORS;
     this.notices = notices.BATTLE_NOTICE_VECTORS;
   }

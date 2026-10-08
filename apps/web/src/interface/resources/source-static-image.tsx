@@ -1,27 +1,12 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {backgroundStyle, imageBackgroundStyle} from '../../assets/image-artwork';
 import './source-static-image.css';
 import {createContext, useContext, type CSSProperties, type ComponentPropsWithoutRef} from 'react';
 import type {HomeSourceUi, HomeSourceLayout} from './source-ui-layout';
 import {sourceProps} from './source-ui-props';
 import {sourceTextArtwork, SourceTextArtwork} from './source-text-artwork';
-import {buttonArtwork} from '../../assets/button-artwork';
-import {isSimpleUiImage} from '../../assets/simple-ui-artwork';
+import {ImageArtwork} from './image-artwork';
 
 export const SourceImageScale = createContext(1);
-
-/** Crop stray atlas pixels and their filtered neighbours at blue-strip joins. */
-function blueStripBackground(reference?: string): CSSProperties {
-  switch (reference) {
-    case 'set:gy0 image:data\\ui\\gy\\lantiao1.tga':
-      return {backgroundSize: `${51 / 49 * 100}% 100%`, backgroundPosition: 'left top'};
-    case 'set:gy0 image:data\\ui\\gy\\lantiao2.tga':
-      return {backgroundSize: `${51 / 49 * 100}% 100%`, backgroundPosition: 'right top'};
-    case 'set:gy0 image:data\\ui\\gy\\lantiao3.tga':
-      return {backgroundSize: `${51 / 46 * 100}% 100%`, backgroundPosition: '60% top'};
-    default:
-      return {};
-  }
-}
 
 function region(ui: HomeSourceUi, reference?: string) {
   const match = /^set:(\S+) image:(.+)$/.exec(reference ?? '');
@@ -58,17 +43,19 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
   const bottom = size('Bottom', 'Height');
   const textAsset = props['data-source-asset'];
   const text = sourceTextArtwork(textAsset);
+  const thumbnail = props['data-tank-icon-mark'] !== undefined || props['data-pet-thumbnail'] !== undefined;
   return <span {...props} {...attributes} className={`source-static-image ${className}`}
-    style={{...props.style, backgroundImage: undefined}}>
-    {(!text || buttonArtwork(textAsset!) || isSimpleUiImage(textAsset!)) && props['data-source-asset'] && <i data-source-image="" data-source-horz-format="HorzStretched" data-source-vert-format="VertStretched"
+    style={{...props.style, ...attributes.style, backgroundImage: undefined, filter: undefined}}>
+    {props['data-source-asset'] && <i data-source-image="" data-source-horz-format="HorzStretched" data-source-vert-format="VertStretched"
       data-source-offset="0,0" data-source-clip="inner-rectangle" data-source-asset={props['data-source-asset']}
       data-source-button-label={text ? 'external' : undefined}
-      style={{inset: `${top}px ${right}px ${bottom}px ${left}px`, backgroundImage: props.style.backgroundImage,
-        backgroundSize: props.style.backgroundSize, backgroundPosition: props.style.backgroundPosition,
-        backgroundRepeat: props.style.backgroundRepeat, ...blueStripBackground(imageReference)}} />}
+      style={{inset: `${top}px ${right}px ${bottom}px ${left}px`, ...backgroundStyle(props.style),
+        ...(thumbnail ? {backgroundImage: 'none'} : {})}}>
+      {thumbnail && <ImageArtwork asset={`/${textAsset}`} fit="contain"
+        style={{position: 'absolute', inset: 0}} aria-hidden="true"/>}
+    </i>}
     {pieces.filter(piece => piece.image?.asset).map(({position, image}) => {
-      const style: CSSProperties = {backgroundImage: imageResourceBackground(`/${image!.asset}`),
-        ...blueStripBackground(properties[`${position}FrameImage`])};
+      const style: CSSProperties = imageBackgroundStyle(`/${image!.asset}`);
       if (position.includes('Left')) {style.left = 0; style.width = dimension(image!, 'Width');}
       else if (position.includes('Right')) {style.right = 0; style.width = dimension(image!, 'Width');}
       else {

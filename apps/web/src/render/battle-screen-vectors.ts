@@ -1,7 +1,5 @@
 import type {Scene, Vector2} from '@babylonjs/core';
 import {battleUiLayer, type BattleImageEntry} from './battle-ui-layer';
-import {isSimpleUiImage} from '../assets/simple-ui-artwork';
-import {buttonArtwork} from '../assets/button-artwork';
 
 /** Published original image and its source coordinate system. */
 export interface BattleVectorShape {
@@ -27,10 +25,6 @@ export class BattleScreenVector {
   draw(shape: BattleVectorShape, viewport: Vector2, rectangle: VectorRectangle,
     clip: VectorRectangle = [0, 0, shape.width, shape.height], tint: VectorRectangle = [1, 1, 1, 1]): void {
     if (this.disposed) return;
-    if (isSimpleUiImage(shape.asset) || buttonArtwork(shape.asset)) {
-      this.clear();
-      return;
-    }
     if (rectangle[2] <= 0 || rectangle[3] <= 0 || viewport.x <= 0 || viewport.y <= 0
       || clip[2] <= clip[0] || clip[3] <= clip[1]) {
       this.clear();

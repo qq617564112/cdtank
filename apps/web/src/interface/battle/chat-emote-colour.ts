@@ -4,7 +4,7 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 let filterId = 0;
 
 /** Apply the sequence item's colour without changing its shared animation image. */
-export function applyChatEmoteColour(image: HTMLImageElement, colour: ChatColour,
+export function applyChatEmoteColour(image: HTMLElement, colour: ChatColour,
   owner: HTMLElement): void {
   image.style.opacity = String(colour[3]);
   if (colour[0] === 1 && colour[1] === 1 && colour[2] === 1) return;

@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {useEffect, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {sourceProps} from '../resources/source-ui-props';
 import type {HomeSourceLayout, HomeSourceUi} from '../resources/source-ui-layout';
@@ -66,6 +66,6 @@ export function RoomChatSourceCaret({input, ui, layout, name, value, scale, suff
     data-room-chat-caret={name} data-source-asset={undefined} data-source-caret-width={width}
     data-source-caret-index={view.index} data-source-scroll={view.scroll} data-source-focused={String(view.focused)}
     style={{...sourceProps(ui, layout, suffix, name, undefined, 0, offsetY).style, visibility: view.focused ? 'visible' : 'hidden'}}>
-    <i ref={brush} data-source-asset={image.asset} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
+    <i ref={brush} data-source-asset={image.asset} style={{left: view.left, width, ...imageBackgroundStyle(`/${image.asset}`)}}/>
   </span>;
 }

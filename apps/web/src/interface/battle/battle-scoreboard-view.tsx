@@ -4,7 +4,7 @@ import {useSourceUi} from '../lobby/source-react';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
-import {imageResourceUrl} from '../../assets/image-cache';
+import {ImageArtwork} from '../resources/image-artwork';
 import type {BattleHud, SourceUi} from './battle-hud';
 import type {ScoreboardPlayer, ScoreboardSnapshot} from './battle-scoreboard';
 
@@ -93,7 +93,7 @@ function Scoreboard({state}: {state: ScoreboardSnapshot}) {
                 <SourceStaticImage ui={ui} layout={layout!} suffix={SUFFIX} name={name}
                   reference={self ? layout!.control('lusetiao1').properties.Image : undefined}
                   offsetX={-Number(origin.style.left)} offsetY={-Number(origin.style.top)} aria-hidden="true"/>
-                {portrait && <img {...rowPlace(`pic${side}Icon${row}`, name)} src={imageResourceUrl(`/${portrait}`)} alt=""/>}
+                {portrait && <ImageArtwork {...rowPlace(`pic${side}Icon${row}`, name)} asset={`/${portrait}`} aria-hidden="true"/>}
                 <span {...rowPlace(`txt${side}PlayerName${row}`, name)} className="battle-scoreboard-name"
                   title={player.name}>{player.name}</span>
                 <span {...rowPlace(`txt${side}Score${row}`, name)} className="battle-scoreboard-number"

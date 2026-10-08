@@ -15,7 +15,7 @@ import {sourceProps} from '../resources/source-ui-props';
 import {loadUiFont} from '../resources/source-ui-fonts';
 import {loadSourceUi} from '../resources/source-ui-resources';
 import {SourceProgress} from '../resources/source-progress';
-import {SourceNumericText} from '../resources/source-text-artwork';
+import {SourceNumericText} from '../resources/source-bitmap-font';
 
 export interface BattleSummaryPageProps {
   results: readonly ResultPlayer[];

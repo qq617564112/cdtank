@@ -23,7 +23,7 @@ function HomeTankUpgradeLevel({ui, layout, name, text, offset, value}: {
   const horizontal = properties.HorzFormatting ?? 'LeftAligned';
   const vertical = properties.VertFormatting ?? 'VertCentred';
   return <span {...props} className="source-static-text home-tank-upgrade-entry-level"
-    data-source-font="xiangjiao-brush" data-source-font-viewport="800,600" data-source-text-colour="FFFFFFFF"
+    data-source-font="SIMSUN" data-source-font-viewport="800,600" data-source-text-colour="FFFFFFFF"
     data-source-horz-format={horizontal} data-source-vert-format={vertical} data-source-text-clip="text-area-intersect-window"
     data-home-tank-owned-field={offset} data-owned-value={value}
     style={{...props.style, display: 'flex', overflow: 'hidden', whiteSpace: 'nowrap', fontSize: 12,

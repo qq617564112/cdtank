@@ -1,10 +1,11 @@
+import {drawImageRegion} from '../assets/image-resources';
 import {ArcRotateCamera, DynamicTexture, Scene, Texture, Vector2, Vector4} from '@babylonjs/core';
 import type {UtilityLayerRenderer} from '@babylonjs/core';
 import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 import {isHiddenFromOpponent} from '../../../shared/combat/optical-camouflage';
 import {canObserveRadarMarker} from '../../../shared/combat/radar-observation';
 import type {TankView} from '../assets/tanks/tank-view';
-import {decodeImage} from '../assets/image-resources';
+import {decodeImageRegion} from '../assets/image-resources';
 import {tankMinimapIcons, type TankMinimapSide} from '../assets/tanks/minimap-icons';
 import type {SourceUi} from '../interface/battle/battle-hud';
 import {sourceAsset} from '../interface/battle/hud-source-controls';
@@ -90,20 +91,20 @@ export class BattleMinimapRenderer {
           return loadBattleOverlayImage(asset);
         })),
         Promise.all(Object.entries(tankMinimapIcons).flatMap(([tankId, variants]) =>
-          TANK_SIDES.map(async side => ({key: `${tankId}:${side}`, image: await decodeImage(variants[side])})))),
+          TANK_SIDES.map(async side => ({key: `${tankId}:${side}`, image: await decodeImageRegion(variants[side])})))),
       ]);
       if (this.disposed) return;
       const context = this.icons.getContext();
       context.clearRect(0, 0, ATLAS_WIDTH, ATLAS_HEIGHT);
       MARKERS.forEach((marker, index) => {
-        context.drawImage(images[index], marker.x * ATLAS_DENSITY, 0,
+        drawImageRegion(context, images[index], marker.x * ATLAS_DENSITY, 0,
           marker.width * ATLAS_DENSITY, marker.height * ATLAS_DENSITY);
       });
       tanks.forEach((tank, index) => {
         const left = (index % TANK_ICON_COLUMNS * TANK_ICON_CELL + 4) * ATLAS_DENSITY;
         const top = (32 + Math.floor(index / TANK_ICON_COLUMNS) * TANK_ICON_CELL + 4) * ATLAS_DENSITY;
         const size = TANK_ICON_SIZE * ATLAS_DENSITY;
-        context.drawImage(tank.image, left, top, size, size);
+        drawImageRegion(context, tank.image, left, top, size, size);
         this.tankUvs.set(tank.key, [left / ATLAS_WIDTH, top / ATLAS_HEIGHT,
           (left + size) / ATLAS_WIDTH, (top + size) / ATLAS_HEIGHT]);
       });

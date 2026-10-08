@@ -97,6 +97,8 @@ def matte_artwork(artwork, colour):
 
 def framed_artwork(generated, cell, job):
     artwork = generated.crop(frame_interior(generated, cell, job))
+    if artwork.getchannel('A').getextrema()[0] == 0:
+        return transparent_artwork(artwork, remove_fringes=bool(cell.get('panelBox')))
     if job.get('matteColor'):
         return matte_artwork(artwork, job['matteColor'])
     return transparent_artwork(artwork, remove_fringes=bool(cell.get('panelBox')))
@@ -140,25 +142,38 @@ def publish_sprites(records, inventory, originals):
     directory_path = runtime / 'sprite-images.json'
     directory = json.loads(directory_path.read_text())
     restored = [record for record in records if record['installed'] and
-                '/' + record['source'] not in directory['images']]
+                ('/' + record['source'] not in directory['images'] or
+                 record['size'] != [directory['images']['/' + record['source']][key] for key in ('width', 'height')])]
     if restored:
-        width = sum(record['size'][0] for record in restored)
-        height = max(record['size'][1] for record in restored)
-        atlas = f'/sprites/ui-restored-{len(directory["sheets"]):03}.png'
-        target = runtime / atlas.lstrip('/')
-        image = Image.new('RGBA', (width, height))
-        x = 0
-        for record in restored:
-            previous = ART / 'previous' / inventory[record['source']]['png']
-            with Image.open(previous) as original:
-                image.paste(original.convert('RGBA'), (x, 0))
-            w, h = record['size']
-            directory['images']['/' + record['source']] = dict(atlas=atlas, x=x, y=0, width=w, height=h)
-            x += w
-        image.save(target, optimize=True)
-        directory['sheets'].append(dict(path=atlas.lstrip('/'), width=width, height=height,
-                                        cells=len(restored), references=len(restored),
-                                        bytes=target.stat().st_size))
+        remaining = sorted(restored, key=lambda record: (-record['size'][1], -record['size'][0]))
+        while remaining:
+            atlas = f'/sprites/ui-restored-{len(directory["sheets"]):03}.png'
+            target = runtime / atlas.lstrip('/')
+            image = Image.new('RGBA', (4096, 4096))
+            x = y = row_height = width = height = count = 0
+            pending = []
+            for record in remaining:
+                w, h = record['size']
+                if w > 4096 or h > 4096:
+                    raise ValueError(f"UI sprite exceeds 4096 pixels: {record['source']}")
+                if x + w > 4096:
+                    x = 0
+                    y += row_height
+                    row_height = 0
+                if y + h > 4096:
+                    pending.append(record)
+                    continue
+                with Image.open(ROOT / record['candidate']) as candidate:
+                    image.paste(candidate.convert('RGBA'), (x, y))
+                directory['images']['/' + record['source']] = dict(atlas=atlas, x=x, y=y, width=w, height=h)
+                width, height = max(width, x + w), max(height, y + h)
+                row_height = max(row_height, h)
+                x += w
+                count += 1
+            image.crop((0, 0, width, height)).save(target, compress_level=6)
+            directory['sheets'].append(dict(path=atlas.lstrip('/'), width=width, height=height,
+                                            cells=count, references=count, bytes=target.stat().st_size))
+            remaining = pending
     updates = {}
     for record in records:
         if not record['installed']:
@@ -201,7 +216,7 @@ def publish_sprites(records, inventory, originals):
                 delivery = ROOT / inventory[source]['png']
                 backup = ART / 'previous' / inventory[source]['png']
                 backup.parent.mkdir(parents=True, exist_ok=True)
-                if not backup.exists():
+                if not backup.exists() and delivery.exists():
                     shutil.copyfile(delivery, backup)
                 shutil.copyfile(candidate, delivery)
             if source in originals:
@@ -240,7 +255,7 @@ def extract(job, cell, entry):
     with Image.open(ROOT / entry['original']) as original:
         original = original.convert('RGBA')
     target = tuple(size * 4 for size in original.size)
-    if cell['source'] in ('ui/regions/74/41.png', 'ui/regions/74/42.png'):
+    if cell['source'] in ('ui/regions/74/41.png', 'ui/regions/74/42.png') and not job.get('framed'):
         x, y, width, height = wood_box(generated)
         left, top, native_width, native_height = wood_box(original)
         artwork = generated.crop((x, y, x + width, y + height))
@@ -276,7 +291,7 @@ def extract(job, cell, entry):
         result = artwork.resize(target, Image.Resampling.LANCZOS)
     elif job.get('framed'):
         artwork = framed_artwork(generated, cell, job)
-        result = place_artwork(artwork, original, target)
+        result = Image.new('RGBA', target) if cell.get('emptyButton') else place_artwork(artwork, original, target)
     else:
         slot = [round(value * (generated.width / 1024 if index % 2 == 0 else generated.height / 768))
                 for index, value in enumerate(cell['slot'])]
@@ -307,6 +322,10 @@ def extract(job, cell, entry):
         result = match_level_colours(result, original)
     if cell['source'] in ('ui/regions/59/4.png', 'ui/regions/59/5.png', 'ui/regions/59/10.png'):
         result = match_result_colours(result, original)
+    if cell.get('solidColour'):
+        fill = Image.new('RGBA', result.size, tuple(cell['solidColour']) + (255,))
+        fill.putalpha(result.getchannel('A'))
+        result = fill
     return result
 
 
@@ -358,7 +377,7 @@ def main():
                 delivery = ROOT / entry['png']
                 previous = ART / 'previous' / entry['png']
                 previous.parent.mkdir(parents=True, exist_ok=True)
-                if not previous.exists():
+                if not previous.exists() and delivery.exists():
                     shutil.copyfile(delivery, previous)
                 shutil.copyfile(candidate, delivery)
                 if source in originals:

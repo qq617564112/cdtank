@@ -1,6 +1,8 @@
+import {drawImageRegion, type ImageRegion} from '../assets/image-resources';
+import {imageResourceUrl, spriteImage} from '../assets/image-cache';
+
 type Tint = readonly [number, number, number];
-type ImageSource = HTMLImageElement | HTMLCanvasElement;
-export type BattleUiImage = (url: string, tint?: Tint) => ImageSource | undefined;
+export type BattleUiImage = (url: string, tint?: Tint) => ImageRegion | undefined;
 
 const number = (value: string): number => parseFloat(value) || 0;
 const transparent = (value: string): boolean => value === 'transparent' || value === 'rgba(0, 0, 0, 0)';
@@ -44,9 +46,11 @@ export class BattleUiRaster {
     const scaleX = element.offsetWidth ? rect.width / element.offsetWidth : 1;
     const scaleY = element.offsetHeight ? rect.height / element.offsetHeight : scaleX;
     this.clip(style, rect, scaleX, scaleY);
-    this.box(style, rect, scaleX, scaleY, nextTint, mirroredX, mirroredY);
+    this.box(style, rect, scaleX, scaleY, nextTint, mirroredX, mirroredY, element.dataset.sourceAsset);
     this.pseudo(element, '::before', rect, scaleX, scaleY, nextTint);
-    if (element instanceof HTMLImageElement) {
+    if (element.hasAttribute('data-image-artwork')) {
+      this.artwork(element, rect, mirroredX, mirroredY, nextTint);
+    } else if (element instanceof HTMLImageElement) {
       if (element.complete && element.naturalWidth) this.picture(element, rect, mirroredX, mirroredY, nextTint);
     } else if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
       this.input(element, style, rect, scaleX, scaleY, nextTint);
@@ -86,15 +90,19 @@ export class BattleUiRaster {
   }
 
   private box(style: CSSStyleDeclaration, rect: DOMRect, scaleX: number, scaleY: number,
-    tint: Tint, flipX = false, flipY = false): void {
+    tint: Tint, flipX = false, flipY = false, asset?: string): void {
     const context = this.context;
     if (!transparent(style.backgroundColor)) {
       context.fillStyle = colour(style.backgroundColor, tint);
       context.fillRect(rect.left, rect.top, rect.width, rect.height);
     }
     const url = /^url\(["']?(.*?)["']?\)$/.exec(style.backgroundImage)?.[1];
-    const image = url ? this.image(url, tint) : undefined;
-    if (image) {
+    const sprite = asset ? spriteImage(`/${asset.replace(/^\//, '')}`) : undefined;
+    const colouredCell = sprite && tint.some(value => value !== 1)
+      && url === imageResourceUrl(sprite.atlas) ? sprite : undefined;
+    const image = url ? this.image(url, colouredCell ? undefined : tint) : undefined;
+    const painted = colouredCell ? this.image(`/${asset!.replace(/^\//, '')}`, tint) : image;
+    if (image && painted) {
       const dimensions = style.backgroundSize.split(' ');
       const size = (value: string | undefined, extent: number, scale: number, native: number) =>
         !value || value === 'auto' ? native * scale
@@ -113,7 +121,11 @@ export class BattleUiRaster {
       const repeatY = ['repeat', 'repeat-y'].includes(style.backgroundRepeat);
       for (let top = y; top < rect.height && height > 0; top += height) {
         for (let left = x; left < rect.width && width > 0; left += width) {
-          context.drawImage(image, left, top, width, height);
+          if (colouredCell) {
+            drawImageRegion(context, painted,
+              left + colouredCell.x / image.width * width, top + colouredCell.y / image.height * height,
+              colouredCell.width / image.width * width, colouredCell.height / image.height * height);
+          } else drawImageRegion(context, painted, left, top, width, height);
           if (!repeatX) break;
         }
         if (!repeatY) break;
@@ -154,7 +166,33 @@ export class BattleUiRaster {
     context.save();
     context.translate(rect.left + (flipX ? rect.width : 0), rect.top + (flipY ? rect.height : 0));
     context.scale(flipX ? -1 : 1, flipY ? -1 : 1);
-    context.drawImage(source, 0, 0, rect.width, rect.height);
+    drawImageRegion(context, source, 0, 0, rect.width, rect.height);
+    context.restore();
+  }
+
+  private artwork(element: HTMLElement, rect: DOMRect, flipX: boolean, flipY: boolean, tint: Tint): void {
+    const source = this.image(`/${element.dataset.sourceAsset}`, tint);
+    if (!source) return;
+    const context = this.context;
+    const scaleX = element.offsetWidth ? rect.width / element.offsetWidth : 1;
+    const scaleY = element.offsetHeight ? rect.height / element.offsetHeight : 1;
+    const tileWidth = Number(element.dataset.imageRepeatWidth) * scaleX;
+    const tileHeight = Number(element.dataset.imageRepeatHeight) * scaleY;
+    const factor = Math.min(rect.width / source.width, rect.height / source.height);
+    const contain = element.dataset.imageFit === 'contain';
+    const width = tileWidth || (contain ? source.width * factor : rect.width);
+    const height = tileHeight || (contain ? source.height * factor : rect.height);
+    context.save();
+    context.beginPath(); context.rect(rect.left, rect.top, rect.width, rect.height); context.clip();
+    context.translate(rect.left + (flipX ? rect.width : 0), rect.top + (flipY ? rect.height : 0));
+    context.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+    for (let top = contain ? (rect.height - height) / 2 : 0; top < rect.height && height > 0; top += height) {
+      for (let left = contain ? (rect.width - width) / 2 : 0; left < rect.width && width > 0; left += width) {
+        drawImageRegion(context, source, left, top, width, height);
+        if (!tileWidth) break;
+      }
+      if (!tileHeight) break;
+    }
     context.restore();
   }
 

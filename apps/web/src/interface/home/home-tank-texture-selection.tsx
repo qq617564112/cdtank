@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {loadTankTextureCatalog} from '../../content';
 import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
 import {loadStaticJson} from '../../assets/static-resources';
@@ -53,7 +53,7 @@ function sourceProps(ui: HomeSourceUi, suffix: string, name: string, picture = f
   const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
   const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
   const style: CSSProperties = {left, top, width: box[2] - box[0], height: box[3] - box[1],
-    backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined};
+    ...(asset ? imageBackgroundStyle(`/${asset}`) : {})};
   return {style, 'data-source-control': name, 'data-source-layout': `ui/layouts/${suffix}`, 'data-source-asset': asset};
 }
 

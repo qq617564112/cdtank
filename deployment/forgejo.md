@@ -15,7 +15,7 @@ git remote add forgejo http://192.168.10.140:13000/13352889546/cdtank.git
 git push forgejo HEAD:main
 ```
 
-流水线使用 Node.js 24.16，安装锁定依赖，构建 Web 与服务端，再组装独立发行目录。运行资源来自目标 Docker 上的 `cdtank-assets:1.0.0-20261008-ui2` 镜像，包含重绘界面、按钮背景和 27 张彩铅小地图，后续源码更新直接复用。首次构建需要访问 npm 和 Docker 镜像源。
+流水线使用 Node.js 24.16，安装锁定依赖，构建 Web 与服务端，再组装独立发行目录。运行资源来自目标 Docker 上的 `cdtank-assets:1.0.0-20261008-original` 镜像，包含原版界面素材、模型贴图和 27 张彩铅小地图，后续源码更新直接复用。首次构建需要访问 npm 和 Docker 镜像源。
 
 ## 运行资源与 runner
 
@@ -25,7 +25,7 @@ git push forgejo HEAD:main
 bash deployment/import-assets.sh
 ```
 
-脚本只打包 `recovery/output/web-assets/` 和 `recovery/output/verified/tables/`，约 2.76 GB。固定资源镜像与源码分别保存。资源更新时修改导入脚本及 Dockerfile 中的资源版本，重新导入目标 Docker。
+脚本只打包 `recovery/output/web-assets/` 和 `recovery/output/verified/tables/`，约 2.3 GB。固定资源镜像与源码分别保存。资源更新时修改导入脚本及 Dockerfile 中的资源版本，重新导入目标 Docker。
 
 `cdtank-runner` 容器使用本机的 `coding-node22:ssh-20260624` 镜像和已安装的 Forgejo runner。注册范围为此仓库，标签为 `cdtank-deploy:host`；注册信息保存在 `cdtank-runner` 卷中，启动配置保存在 `config.yml`。Docker socket 挂载到 `/var/run/docker.sock`。迁移设备时需先导入运行资源并注册相同标签的仓库 runner。
 

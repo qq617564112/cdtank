@@ -1,36 +1,30 @@
 # 高清贴图
 
+当前运行资源仅对 3D 模型材质保留高清交付；UI、按钮整图、表情和肖像使用原始资产，小地图保留涂鸦手绘风。安装范围与命令见 [运行美术资源](original-assets.md)。
+
 图片生成与编辑统一使用 `scripts/hd_image_api.py`，请求 `http://192.168.10.140:13999/v1/images/edits` 的 `gpt-image-2.5-sunburst` 模型。密钥从 `CHATGPT2API_KEY` 或终端隐藏输入读取，不写入项目文件。
 
-优先处理 21 款坦克的基础、炮塔、车身、履带及迷彩贴图与 10 只宠物；两类资源完成后按地图编号逐张处理，再完成其他美术、特效、图标与界面资源。运行资源、本地加载文字及参考角色颜色图共 7778 个 PNG 路径，其中 226 个普通字体、数字和标签路径由字体渲染替代，本轮高清交付范围为 7552 个 PNG 路径。原运行目录的 7767 个路径按尺寸及 RGBA 像素去重后为 6041 份图像。已完成的田野路素材直接复用。
+优先处理坦克、宠物和地图贴图，再完成美术、特效、图标与全部界面图片。已确认的田野路交付直接复用。静态文字和数字同样纳入高清图片范围。
 
 独立地图 `1002` 的 85 张高清贴图及地图预览也直接复用已确认的田野路交付，保留其现有高清尺寸。
 
 测试地图 `1001` 的砖墙、钢墙和地面模型分别复用 `obj05443.png`、`dimian01.png` 与 `tiandi.png` 的高清交付。地图选择预览 SVG 的地面、墙体、木箱和草丛同步替换内嵌图片，保留原布局，不增加图片接口调用。
 
-每次宠物请求只包含一只宠物；坦克请求只包含同一款坦克的贴图。其他小素材和艺术字按家族拼成图集后通过图片接口重绘，大型图集独立生成。简单控件使用 HTML/CSS；复杂切片先按原布局拼成完整控件，再请求无字底图。保留图集布局与透明边缘。
+每次宠物请求只包含一只宠物；坦克请求只包含同一款坦克的贴图。UI 碎片先按原布局拼成完整面板、条带或控件再请求高清重绘，返回后按原坐标切片。所有图案使用图片；带文字按钮使用无字高清 PNG，并按原文字位置叠加字体。
 
-普通中文、常规数字和标签在清单中标记为 `deferred: "font-rendering"`，生成队列和安装器均跳过它们，原图片文件保留备份，页面改为轮廓字体渲染。普通字体图集、货币和技能点标签、房间字段、坦克属性及常规单位，连同它们的同像素别名均沿用此范围；艺术标题、Logo、倒计时和加载进度艺术字继续高清化。迁移实现、字体许可和离线对照见 [普通 UI 文字与数字](ui-text-rendering.md)。
-
-简单界面素材按原图逐张目视排查后，用 CSS 绘制 808 个素材，覆盖面板九宫格、色块、进度条、滚动条、基础箭头、准星和鼠标符号。498 个带字按钮的文字由 HTML 字体独立渲染；简单按钮直接绘制底面，复杂按钮按造型共用 19 张无字底图，以 CSS 滤镜呈现颜色和交互状态；音乐与音效标签保留两张无字猫狗插画。滤镜只作用于底图层，文字保持自己的颜色与描边。选项的圆点和勾选状态使用 CSS 绘制。这些源图标记为 `deferred: "html-css-rendering"`，保留原图与原高清交付。
-
-335 个 UI 问题来源均有最终去向：194 个聊天表情和 23 个其他美术使用已安装图片，57 个简单控件使用 CSS，50 个按钮使用 HTML 文字，11 个来源随虚拟键盘功能移除。217 个图片格子与交付 PNG、候选 PNG 逐像素一致，涉及 7 张运行精灵图；21 张无字底图与候选一致，原图及受影响资源的原高清备份齐全。记录位于 `art/hd-ui-redraw/final-installation-check.json` 和 `resolved-ui-sources.json`。
-
-高清交付目录包含全部 7552 个目标 PNG，运行端按图片与 HTML/CSS 清单加载。956 个模型中的 4447 处贴图引用已替换，其中 4442 处使用模型目录中的现有 PNG，5 处跨目录贴图保留内嵌。模型的几何、UV、动画及其缓冲区内容一致。交付与模型安装核对无缺失；HTML/CSS 替代来源的原图及原高清版本保留备份。界面两种比例布局、本地 Logo、光标、应用图标和测试地图选择预览均已安装。
+运行端按图片清单加载高清交付。模型几何、UV、动画和缓冲区沿用原资源。已确认的界面布局、Logo、光标、应用图标与角色肖像继续复用；原图及原高清版本保留备份。
 
 界面中的坦克和宠物肖像从高清模型离线重绘，同时写入原 UI 区域和本地缩略图目录。这些肖像使用各角色单独生成的贴图，不再放进多角色 UI 拼图请求。
 
 剩余修正及高清化请求中的多素材拼图统一使用宽留白和定位边框。1024×768 参考图的外留白为 40 像素、格间距为 64 像素，每格使用 6 像素蓝色矩形框，素材距框至少 48 像素；同组原图使用统一放大比例，保留完整画布与透明留白。每批按同一图集家族和美术风格分组，通常最多四格，大型素材独立请求。聊天表情按动画家族分组，大尺寸气泡、小尺寸圆脸各自请求，保持每一帧的五官、文字及空白差异。
 
-请求要求接口保持蓝框、间距和纯洋红底。返回后识别各格实际蓝框内沿，裁掉定位框与间距，再去除洋红透明区，等比缩放回原图占位；闭合边框无法识别时保留原响应，并按实际素材边界裁切。复杂插画与艺术字由图片接口绘制，本地图片处理使用参考拼接、裁切、透明处理、缩放和安装；基础 UI 与按钮文字由 HTML/CSS 绘制。
+请求要求接口保持蓝框、间距和纯洋红底。返回后识别各格实际蓝框内沿，裁掉定位框与间距，再去除洋红透明区，等比缩放回原图占位；闭合边框无法识别时保留原响应，并按实际素材边界裁切。复杂插画与艺术字由图片接口绘制，本地图片处理使用参考拼接、裁切、透明处理、缩放和安装。带文字按钮只在无字图片上叠加字体文字。
 
 已核对的候选按接受清单发布，安装器同步高清交付、原独立图片备份及运行精灵图中的对应格子，保留原映射和尺寸；同格别名同步使用同一候选。原高清交付和受影响的原运行精灵图保存在 `art/hd-ui-redraw/previous/`。
 
 艺术字请求使用专用提示词，以白字黑底呈现真实笔画，保留原字体的比例、粗细、衬线和复古风格，重绘完整的连续轮廓。艺术字和单色控件的透明轮廓直接来自接口图像，扣除黑底后恢复原色。输入处理使用 `scripts/prepare-hd-monochrome-ui.py`，保留现有拼图坐标和批次。
 
 加载页的十份进度文字纳入 UI 拼图请求，以白色真实透明笔画铺在黑底上；返回笔画生成高清透明遮罩并恢复原文字颜色，安装器按清单的 `installPath` 替换本地图片。
-
-本地参考角色的颜色图按前、后、侧三个投影视图分别请求，保留原边缘延展色及角色图案。返回图片按原坐标组装为完整颜色图，颜色采样仍使用原模型投影尺寸。
 
 含多个坦克或宠物的四张宣传横幅按原坐标分层，底图单独生成，每个坦克、宠物或人物分别请求；高清图层齐全后组装原横幅。只含人物的横幅保持整图独立请求。图层配置位于 `scripts/hd-banner-layers.json`。
 
@@ -40,11 +34,11 @@
 
 独立角色图层直接提取接口绘制的颜色，去除洋红色排除区域，并与原裁切遮罩相交。遮挡关系和位置按原图层坐标保持。
 
-含多角色的五张加载背景标记为 `loading-layout`，由 `scripts/prepare-hd-loading.py` 拆为 5 份底图、62 份单角色图层及独立道具图层。角色区域按 `scripts/hd-loading-layers.json` 的坐标隔离，每个角色图层单独请求，并保留原裁切与遮挡轮廓。底图移除角色与固定 LOADING 字样后，让接口修复并自然扩展为 16:9；4:3 从同一张图的中央原稿区域裁出。界面单独叠加动态进度文字。全部图层作为 `loading` 组加入同一生成队列，完成后自动组装两种比例背景及原加载图集。
+五张加载背景标记为 `loading-layout`，由 `scripts/prepare-hd-loading.py` 从原图恢复完整的 800×600 画面，每张画面中的角色、坦克、Logo 与背景一起请求高清重绘。接口保留原版卡通画风、构图和遮挡关系，去掉固定 LOADING 字样与点号，并补全字下画面；两侧自然扩展为 16:9。4:3 从同一张完整重绘结果的中央原稿区域裁出。五个整图请求作为 `loading` 组加入生成队列。
 
-五张加载背景的 16:9 交付尺寸为 4268×2400，4:3 为 3200×2400。两种比例共用角色、Logo 和原构图。页面按窗口比例选择背景，进度文字、坦克、状态与操作按钮放在居中的 800×600 逻辑区域；启动与对局加载共用此布局。成品预览位于 `art/hd-ui/loading/preview.html`，同目录的 `installation.json` 记录两种布局的裁切关系与实际安装文件比对。
+五张加载背景的接口原生尺寸为 1672×940 或 1672×941，统一缩放为 4268×2400 的 16:9 交付图；中央 4:3 交付尺寸为 3200×2400。两种比例共用完整画面。页面按窗口比例选择背景，进度文字、坦克、状态与操作按钮放在居中的 800×600 逻辑区域；启动与对局加载共用此布局。成品预览位于 `art/hd-ui/loading/preview.html`，同目录的 `installation.json` 记录原生尺寸及两种布局的裁切关系，`whole-backgrounds/inspection.json` 记录交付与发布文件核对。
 
-原 UI 图集从已经完成的高清区域按原始坐标重新组装，避免把多个坦克或宠物作为整幅图集交给接口；其它空白区域沿用原布局。DDS 原图的扫描线与 UI 区域坐标相反，组装时先翻至 UI 坐标，完成后翻回原贴图方向。混合图集中的普通文字保留原像素，按整数倍复制到原区域。图集组装使用 `scripts/assemble-hd-ui-atlases.py`，输出同样纳入安装清单。
+原 UI 图集从已经完成的高清区域按原始坐标重新组装，避免把多个坦克或宠物作为整幅图集交给接口；其它空白区域沿用原布局。DDS 原图的扫描线与 UI 区域坐标相反，组装时先翻至 UI 坐标，完成后翻回原贴图方向。混合图集中的静态文字与数字使用各自的高清图片。图集组装使用 `scripts/assemble-hd-ui-atlases.py`，输出同样纳入安装清单。
 
 图集组装只覆盖具有原始 XPos/YPos 的区域。地图列表引用的独立 SVG 与 PNG 预览继续直接加载。
 
@@ -65,16 +59,15 @@
 - `art/hd-assets/uncompressed/`：压缩前的高清交付、运行 PNG、GLB、地图选择预览及本地缩略图，按项目相对路径保存；`manifest.json` 记录文件范围和原体积。
 - `art/hd-assets/lossless-compression.json`：逐份 PNG 像素与色彩配置核对、模型内嵌图片与几何核对，以及压缩前后体积统计。
 - `art/hd-assets/previews/`：使用同一份原模型离线绘制的原图与高清图对照。
-- `art/hd-assets/asset-gallery.html`：离线资源对照页，支持分类、路径搜索、完成状态筛选与原始像素放大；普通文字单列为“字体渲染”，链接到独立字体对照页，排除在高清完成分母外。每组安装后自动刷新资源快照。
+- `art/hd-assets/asset-gallery.html`：离线资源对照页，支持分类、路径搜索、完成状态筛选与原始像素放大；静态文字与数字纳入图片资源范围。每组安装后自动刷新资源快照。
 - `art/hd-assets/installation-inspection.json`：指定范围内交付 PNG 与运行 PNG 的逐字节对比，以及 GLB 原数据与内嵌图片核对结果；未完成资源单独记录。全量核对还覆盖清单外资源、普通文字原图、两种比例界面布局、Logo、光标和应用图标。
 - `art/hd-assets/model-image-coverage.json`：全量模型的实际材质贴图关联情况。田野路模型合并重复材质引用后留下的 34 份未引用内嵌图片保留原数据；核对报告单独记录这些图片，所有材质实际引用的图片均须关联库存。
 - `art/hd-ui/png/lobby/`：共用顶栏、底部剪影、目录板与连续玩家列表底图，以及本地组装的 4:3、16:9 大厅背景。
-- `art/hd-ui/loading/`：加载插画图层坐标及单角色请求预览；完成的两种比例背景安装到 `hd-ui/loading/`。
+- `art/hd-ui/loading/whole-backgrounds/`：加载背景完整原图、整图请求及原生返回结果；完成的两种比例背景安装到 `hd-ui/loading/`。
 - `art/hd-local-ui/`：本地图标和标志的原图、两份请求输入及交付。标志单独请求，光标与应用图标共用两格图集。
 - `art/hd-ui-redraw/`：UI 横向核对、家族提示词、带边框修正请求、原始响应和切图候选；`framed-review/` 为原图与候选对照。
-- `art/hd-ui-redraw/html-ui-preview.html`：原始控件与共用底图、CSS 滤镜、HTML 字体的离线对照。
-- `art/hd-ui-redraw/button-backgrounds/`：19 张共用按钮底图及 2 张设置猫狗插画，安装到 `hd-ui/buttons/`。
-- `apps/web/src/assets/simple-ui-artwork.json` 与 `button-artwork.json`：HTML/CSS 替换范围及字体、颜色、状态数据。
+- `art/hd-ui-redraw/button-backgrounds/`：原按钮各状态的无字高清底图，安装到 `hd-ui/buttons/`。
+- `apps/web/src/assets/button-artwork.json`：带字按钮的无字图片路径、字体、颜色及文字位置。
 
 ## 使用
 
@@ -89,6 +82,7 @@ python3 scripts/generate-hd-assets.py generate --groups map-0001 --concurrency 8
 python3 scripts/generate-hd-local-ui.py run
 python3 scripts/generate-hd-ui-layouts.py run --group entry
 python3 scripts/prepare-hd-loading.py prepare
+python3 scripts/prepare-hd-loading.py generate --workers 2
 python3 scripts/prepare-hd-loading.py assemble
 python3 scripts/render-hd-asset-gallery.py
 python3 scripts/inspect-hd-asset-installation.py --groups pets tanks map-0001
@@ -109,25 +103,23 @@ python3 scripts/preview-hd-ui-redraw.py --candidate-dir art/hd-ui-redraw/framed-
 
 图片生成脚本共用 `scripts/hd_image_api.py`：请求 `http://192.168.10.140:13999/v1/images/edits`，使用 `gpt-image-2.5-sunburst`。multipart 字段为 `model`、`image`、`prompt`、`n=1` 和 `response_format=url`，请求最长等待 1300 秒，再下载返回的 `data[0].url`。`CHATGPT2API_BASE_URL` 可覆盖服务器地址；密钥从 `CHATGPT2API_KEY` 或终端隐藏输入读取。UI 修正器保存响应 URL，下载失败后复用响应，避免重新生图。
 
-UI 文字与图形参数由 `scripts/ui-manual-*.json` 保存，逐张目视读取原图，记录文字、墨迹位置、描边、牌面颜色及透明留白；不使用 OCR。字体导出读取这份清单，并保留动态数值之间的分段空白。复杂按钮复用无字底图，颜色滤镜只作用于底图；控件与富聊天共用文字坐标。F5–F12 使用原位置的独立衬线文字；进度填充、列表选中态与音量滑条均消费同一套 CSS 图形。登录密码使用标准输入框。
+按钮文字参数由 `scripts/ui-manual-*.json` 保存，逐张目视读取原图，记录文字、墨迹位置、描边及透明留白。每个真实按钮状态独立请求完整原图，不使用 OCR。普通静态文字与数字使用高清图片。
 
-简单 UI 与带字按钮先生成 HTML/CSS 清单。普通拼图只要包含这些素材就退出生图队列，重新准备与打包时按剩余图片范围组图。无字底图队列独立请求，只安装到共用目录；运行图片目录由 Vite 的图片清单插件自动收录，预载器复用已缓存底图。`assets:hd` 会从无字底图交付目录恢复这些资源。
+`scripts/prepare-raster-button-backgrounds.py` 从实际按钮状态引用准备完整无字按钮请求；`scripts/prepare-raster-ui.py` 按完整控件准备其余 UI 图片。图片请求统一最多 10 路并发。运行图片目录由 Vite 的图片清单插件收录。
 
-图片清理器将 HTML/CSS 清单内的旧 PNG 排除在运行图片引用之外，保留用于控件定位的原图元数据。`--unused-only` 删除闲置图片与精灵映射，仅重组受影响的图集，保留其它运行图片及原图、原高清备份。当前使用 808 个 CSS 图形、498 个字体按钮、225 个独立字图和 21 张无字底图，覆盖 1,523 个原图来源；逐张目视清单覆盖 1,837 个来源。此次清理运行图片减少 31,251,923 字节，重组的 781 个保留格子逐像素一致，图片引用、图集边界及备份核对无缺失。
+图片清理器仅将带文字按钮的原图排除在运行引用之外，运行时引用其无字底图。静态文字、数字、图标与界面切片保留图片引用。`--unused-only` 删除闲置运行图片并重组受影响图集，原图及原高清备份继续保留。
 
 ```sh
-recovery/.venv/bin/python scripts/export-ui-text-rendering.py
-python3 scripts/prepare-simple-ui-artwork.py
+python3 scripts/prepare-raster-button-backgrounds.py
+python3 scripts/redraw-hd-ui.py --jobs art/hd-ui-redraw/raster-button-jobs.json --workers 10
+python3 scripts/install-redrawn-ui.py --jobs art/hd-ui-redraw/raster-button-jobs.json --candidate-dir art/hd-ui-redraw/raster-button-candidates
 python3 scripts/prepare-button-artwork.py
-python3 scripts/redraw-hd-ui.py --jobs art/hd-ui-redraw/blank-button-jobs.json
-python3 scripts/install-redrawn-ui.py --jobs art/hd-ui-redraw/blank-button-jobs.json --candidate-dir art/hd-ui-redraw/blank-button-candidates --publish-backgrounds
-python3 scripts/preview-html-ui-artwork.py
 python3 scripts/inspect-hd-ui-installation.py
 python3 scripts/clean-image-assets.py --unused-only
 python3 scripts/inspect-clean-image-assets.py
 ```
 
-生成器跳过已交付贴图和普通文字，记录失败请求；失败批次自失败时间起等待 300 秒后重试。等待分成不超过 30 秒的片段。重新执行时复用已保存结果及每个批次的剩余等待时间。`--limit` 可设置累计提交上限。`run` 默认以 8 路处理地图及其他美术，另外 2 路专门生成 UI；两队列共用同一份调用账本和 10 路请求容量。最后一个主组剩余批次不超过 8 个时，UI 提前使用空闲容量；主组安装期间也继续处理 UI。各组完成后安装并绘制模型与地图预览，替换本地角色缩略图与小地图图标；UI 生成完成后等主队列结束，再组装并安装图集。Ctrl-C 会停止新增请求，保存所有在途结果后退出。
+生成器跳过已交付贴图，记录失败请求；失败批次自失败时间起等待 300 秒后重试。等待分成不超过 30 秒的片段。重新执行时复用已保存结果及每个批次的剩余等待时间。`--limit` 可设置累计提交上限。`run` 默认以 8 路处理地图及其他美术，另外 2 路专门生成 UI；两队列共用同一份调用账本和 10 路请求容量。最后一个主组剩余批次不超过 8 个时，UI 提前使用空闲容量；主组安装期间也继续处理 UI。各组完成后安装并绘制模型与地图预览，替换本地角色缩略图与小地图图标；UI 生成完成后等主队列结束，再组装并安装图集。Ctrl-C 会停止新增请求，保存所有在途结果后退出。
 
 图片接口失败时，失败批次等待五分钟后重试，其余批次继续处理。服务返回额度不足时，两队列共同等待五分钟，随后降低并发尝试恢复；成功后继续原并发数。已返回图片的本地提取失败保留原响应，按批次重新处理。主队列结束后，其空闲线程自动加入 UI 队列，UI 最多使用两队列的总并发数。
 

@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import type {CSSProperties} from 'react';
 import type {SourceRegion, SourceUi, SourceWindow} from './battle-hud';
 
@@ -17,7 +17,7 @@ export function sourceAsset(data: SourceUi, reference?: string): string | undefi
 
 export function sourcePicture(data: SourceUi, reference?: string): CSSProperties {
   const asset = sourceAsset(data, reference);
-  return asset ? {backgroundImage: imageResourceBackground(`/${asset}`), backgroundSize: '100% 100%'} : {};
+  return asset ? imageBackgroundStyle(`/${asset}`) : {};
 }
 
 export function absoluteRect(control: SourceWindow): {left: number; top: number; width: number; height: number} {

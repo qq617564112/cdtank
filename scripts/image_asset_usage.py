@@ -15,22 +15,22 @@ def image_usage(root, runtime, names):
     names = set(names)
     scan = json.loads(subprocess.check_output(
         ['node', str(root / 'scripts/image-resource-references.mjs'), str(root)], text=True))
-    text = json.loads((root / 'apps/web/src/interface/resources/source-text-artwork.json').read_text())
     html_artwork = html_ui_sources()
-    retired = set(text['replacedImages']) | html_artwork
+    retired = html_artwork
     reasons = defaultdict(set)
     missing = []
 
     def add(path, reason):
         path = unquote(path).lstrip('/')
-        if path in retired:
+        if Path(path).suffix.lower() not in IMAGE_EXTENSIONS or path in retired:
             return
-        if path in names:
-            reasons[path].add(reason)
+        reasons[path].add(reason)
 
     def references(value, reason):
         if isinstance(value, dict):
-            for child in value.values():
+            for field, child in value.items():
+                if reason == 'catalog:scene-actor-toon.json' and field == 'source':
+                    continue
                 references(child, reason)
         elif isinstance(value, list):
             for child in value:

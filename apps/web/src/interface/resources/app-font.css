@@ -1,16 +1,18 @@
 @font-face {
-  font-family: 'CDTank-Xiangjiao';
-  src: url('/ui/fonts/xiangjiao-brush.ttf') format('truetype');
+  font-family: 'CDTank-SIMSUN';
+  src: url('/ui/fonts/SIMSUN.ttf') format('truetype');
   font-style: normal;
-  font-weight: 100 900;
+  font-weight: normal;
   font-display: swap;
 }
 
-/* The selected font applies to text and form controls, including portal dialogs. */
-html, body, body *, body *::before, body *::after {
-  font-family: 'CDTank-Xiangjiao', sans-serif !important;
-  -webkit-text-stroke: 0.08em #000;
-  paint-order: stroke fill;
+/* Original dynamic face is shared by page text and form controls. */
+html, body {
+  font-family: 'CDTank-SIMSUN', serif;
+}
+
+button, input, textarea, select {
+  font-family: inherit;
 }
 
 input::placeholder, textarea::placeholder {

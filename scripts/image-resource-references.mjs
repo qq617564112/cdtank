@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import ts from 'typescript';
 
 var root = resolve(process.argv[2] ?? fileURLToPath(new URL('../', import.meta.url)));
-var pending = [resolve(root, 'apps/web/src/main.ts'), resolve(root, 'apps/web/src/models/reference-hero/main.ts')];
+var pending = [resolve(root, 'apps/web/src/main.ts')];
 var visited = new Set();
 var patterns = new Set();
 var localImages = new Set();

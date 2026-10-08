@@ -1,6 +1,4 @@
 import {loadStaticJson} from './static-resources';
-import {isSimpleUiImage} from './simple-ui-artwork';
-import {buttonArtwork} from './button-artwork';
 
 export interface ImageAsset {url: string; bytes: number; modifiedAt: number;}
 
@@ -20,8 +18,13 @@ let database: Promise<IDBDatabase> | undefined;
 let sprites: Promise<SpriteDirectory> | undefined;
 const spriteImages = new Map<string, SpriteImage>();
 const atlasImages = new Map<string, Promise<ImageBitmap>>();
+const atlasCrops = new Map<string, number>();
 
 const imageKey = (url: string) => new URL(url, location.href).href;
+
+export function spriteImage(url: string): SpriteImage | undefined {
+  return spriteImages.get(imageKey(url));
+}
 
 /** Identical atlas cells share one prepared URL and decoded image. */
 export function imageResourceKey(url: string): string {
@@ -44,23 +47,30 @@ function imageVersion(key: string): number | string {
 }
 
 async function spriteBody(sprite: SpriteImage, source: PreparedImage): Promise<Blob> {
-  let atlas = atlasImages.get(source.url);
-  if (!atlas) {
-    atlas = createImageBitmap(source.blob!).catch(error => {atlasImages.delete(source.url); throw error;});
-    atlasImages.set(source.url, atlas);
+  atlasCrops.set(source.url, (atlasCrops.get(source.url) ?? 0) + 1);
+  try {
+    let atlas = atlasImages.get(source.url);
+    if (!atlas) {
+      atlas = createImageBitmap(source.blob!).catch(error => {atlasImages.delete(source.url); throw error;});
+      atlasImages.set(source.url, atlas);
+    }
+    const image = await atlas;
+    const canvas = document.createElement('canvas');
+    canvas.width = sprite.width; canvas.height = sprite.height;
+    const context = canvas.getContext('2d')!;
+    context.imageSmoothingEnabled = false;
+    context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height,
+      0, 0, sprite.width, sprite.height);
+    return await new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => {
+      canvas.width = 0; canvas.height = 0;
+      if (blob) resolve(blob);
+      else reject(new Error('精灵图裁切失败，请重试'));
+    }, 'image/png'));
+  } finally {
+    const remaining = atlasCrops.get(source.url)! - 1;
+    if (remaining) atlasCrops.set(source.url, remaining);
+    else {atlasCrops.delete(source.url); releaseAtlasBitmap(source.url);}
   }
-  const image = await atlas;
-  const canvas = document.createElement('canvas');
-  canvas.width = sprite.width; canvas.height = sprite.height;
-  const context = canvas.getContext('2d')!;
-  context.imageSmoothingEnabled = false;
-  context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height,
-    0, 0, sprite.width, sprite.height);
-  return new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => {
-    canvas.width = 0; canvas.height = 0;
-    if (blob) resolve(blob);
-    else reject(new Error('精灵图裁切失败，请重试'));
-  }, 'image/png'));
 }
 
 function releaseAtlasBitmap(key: string): void {
@@ -232,7 +242,6 @@ export function imageResourceUrl(url: string): string {
 }
 
 export function imageResourceBackground(url: string): string {
-  if (isSimpleUiImage(url) || buttonArtwork(url)) return 'none';
   return `url("${imageResourceUrl(url)}")`;
 }
 

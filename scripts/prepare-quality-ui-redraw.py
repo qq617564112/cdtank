@@ -59,6 +59,8 @@ def prepare(identifier, subject, references):
                             frame[2] - stroke, frame[3] - stroke])
         for asset in reference['sources']:
             cell = dict(common, source=asset, size=list(original(asset).size))
+            if asset in reference.get('solidColours', {}):
+                cell['solidColour'] = reference['solidColours'][asset]
             if reference.get('panel'):
                 cell.update(panelBox=reference['panelBoxes'][asset], panelSize=reference['panelSize'],
                             panelInkBounds=list(image.getchannel('A').getbbox()))
@@ -94,6 +96,10 @@ def prepare(identifier, subject, references):
 def main():
     pairs = lambda indices: copies(44, indices) + copies(77, indices)
     references = [
+        ('quality-bullet-capacity', '坦克弹药容量的六枚子弹条', [
+            dict(sources=copies(69, [125, 126]), solidColours={source('69/126'): [145, 122, 79]},
+                 description='横向一排严格六枚竖直铜红色子弹，尖头朝上；保持原来六枚的等距位置、长短比例、铜红色弹壳、浅桃色高光与深棕黑细外沿。整条没有文字、底板或外框，不能多画、漏画或切掉边缘子弹，不能添加弹匣、标记或额外投影'),
+        ]),
         ('quality-result-draw', 'DRAW平局结算提示', [
             dict(sources=copies(59, [4]), description='严格保留大写DRAW四个原版不规则粗字，D/R/A/W各自的宽度、倾斜和轮廓保持；青蓝填色、白色描边、深色阴影、整幅占位与透明留白保持；禁止替换成规整字体'),
         ]),

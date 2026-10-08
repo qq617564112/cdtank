@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import './source-chat-intimate.css';
 import {useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
@@ -39,7 +40,7 @@ export function SourceChatIntimate({ui, waiting, players, selectedName, pending,
         data-room-intimate-player={player.id} aria-selected={player.id === active}
         tabIndex={player.id === active ? 0 : -1} disabled={pending} title={player.name}
         data-source-selection-asset={player.id === active ? selection['data-source-asset'] : undefined}
-        style={player.id === active ? {backgroundImage: selection.style.backgroundImage} : undefined}
+        style={player.id === active ? {...backgroundStyle(selection.style)} : undefined}
         onFocus={() => setCandidate(player.id)} onClick={() => {
           if (!pending && !composing.current) choose(player.name);
         }} onKeyDown={event => {

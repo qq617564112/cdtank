@@ -2,7 +2,7 @@ import {createElement} from 'react';
 import type {Root} from 'react-dom/client';
 import type {ImageLoadingProgress} from '../../assets/preload-images';
 import {getLoadingArtwork, LoadingPage} from './loading-page';
-import {decodeImage} from '../../assets/image-resources';
+import {decodeImageRegion} from '../../assets/image-resources';
 
 export class ImageLoadingScreen {
   private readonly background = 1 + Math.floor(Math.random() * 5);
@@ -19,7 +19,7 @@ export class ImageLoadingScreen {
 
   async prepare(signal: AbortSignal): Promise<void> {
     signal.throwIfAborted();
-    await Promise.all(this.images.map(url => decodeImage(url, signal)));
+    await Promise.all(this.images.map(url => decodeImageRegion(url, signal)));
     signal.throwIfAborted();
     this.artworkReady = true;
     this.render();

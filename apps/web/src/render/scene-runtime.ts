@@ -1,12 +1,14 @@
 import {ArcRotateCamera,Color3,Color4,Engine,HemisphericLight,Scene,Tools,Vector3} from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import {imageResourceUrl} from '../assets/image-cache';
+import {installModelImageLoader} from '../assets/model-image-loader';
 import {getDisplayPreferences, subscribeDisplayPreferences} from '../interface/settings/display-preferences';
 import {battleUiLayer} from './battle-ui-layer';
 
 /** Babylon owns its frame loop and resources independently of React. */
 export function createSceneRuntime(canvas: HTMLCanvasElement) {
   Tools.PreprocessUrl=imageResourceUrl;
+  installModelImageLoader();
   const engine=new Engine(canvas,true,{},true),scene=new Scene(engine);
   const battleUi=battleUiLayer(scene);
   const displayScale=(): number => (getDisplayPreferences().highPrecision ? 1 : 2)

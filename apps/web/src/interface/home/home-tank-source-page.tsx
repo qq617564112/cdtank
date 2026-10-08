@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {sourceProps} from '../resources/source-ui-props';
 import {type MouseEventHandler} from 'react';
 import {SourceButton} from '../resources/source-button';
@@ -84,8 +85,7 @@ export function HomeTankOwnedParameters({ui, record, pet, catalog, equippedItemI
     <div {...background} className="home-tank-capacity" data-home-tank-capacity=""
       role="meter" aria-label="炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values.capacity}>
       <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, width, height,
-        clipPath: `inset(0 ${width - extent}px 0 0)`, backgroundImage: fill.style.backgroundImage,
-        backgroundSize: '100% 100%'}} />
+        clipPath: `inset(0 ${width - extent}px 0 0)`, ...backgroundStyle(fill.style)}} />
     </div>
   </>;
 }

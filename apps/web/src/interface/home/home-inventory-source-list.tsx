@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {useRef} from 'react';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -36,7 +37,7 @@ export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, 
           data-home-source-valuable-row={valuableRows ? '' : undefined}
           aria-pressed={selected === entry.instanceId}
           aria-describedby={described === entry.instanceId ? 'home-item-description' : undefined}
-          style={selected === entry.instanceId ? {backgroundImage: selection.style.backgroundImage} : undefined}
+          style={selected === entry.instanceId ? {...backgroundStyle(selection.style)} : undefined}
           data-source-selection-asset={selected === entry.instanceId ? selection['data-source-asset'] : undefined}
           onMouseEnter={event => describe?.(entry, event.currentTarget)}
           onFocus={event => describe?.(entry, event.currentTarget)}

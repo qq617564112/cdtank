@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import type {SyntheticEvent} from 'react';
 import type {PlayerSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
@@ -20,7 +21,7 @@ export function WaitingRoomSlotActions({ui, layout, index, player, disabled, can
   const plaqueLayout = new HomeSourceLayout(ui, 'playerlist.xml');
   const plaque = sourceProps(ui, plaqueLayout, 'playerlist.xml', 'datingmingchengditu',
     plaqueLayout.control('datingmingchengditu').properties.Image);
-  const buttonStyle = {backgroundImage: plaque.style.backgroundImage};
+  const buttonStyle = {...backgroundStyle(plaque.style)};
   return <div {...sourceProps(ui, layout, 'room_main.xml', `PlayerPanel${index}`)}
     className="waiting-room-slot-actions" role="group" aria-label={`${player.name}的操作`} tabIndex={0}
     data-waiting-slot-actions={player.id}>

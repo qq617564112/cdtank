@@ -23,12 +23,16 @@ def relative_url(path, directory):
 def render(root):
     destination = root / 'art/hd-assets/asset-gallery.html'
     inventory = json.loads((destination.parent / 'inventory.json').read_text())
+    buttons = json.loads((root / 'apps/web/src/assets/button-artwork.json').read_text())['assets']
     records = []
     for entry in inventory['textures']:
         original = root / entry['original']
         delivered = root / entry['png']
-        deferred = entry.get('deferred')
-        ready = not deferred and delivered.is_file()
+        button = buttons.get(entry['source'])
+        if button and button['background']:
+            delivered = root / 'recovery/output/web-assets' / button['background'].lstrip('/')
+        deferred = 'unlettered-button' if button and button['background'] else None
+        ready = delivered.is_file()
         records.append({
             'source': entry['source'],
             'groups': entry['groups'],
@@ -57,10 +61,10 @@ def render(root):
     temporary = destination.with_suffix('.tmp')
     temporary.write_text(html)
     temporary.replace(destination)
-    base = [entry for entry in records if not entry['layer'] and not entry['deferred']]
+    base = [entry for entry in records if not entry['layer']]
     deferred = sum(bool(entry['deferred']) for entry in records)
     print(f'Gallery: {sum(bool(entry["hd"]) for entry in base)}/{len(base)} base assets; '
-          f'{deferred} deferred for font rendering; {destination}')
+          f'{deferred} unlettered button backgrounds; {destination}')
 
 
 def main():

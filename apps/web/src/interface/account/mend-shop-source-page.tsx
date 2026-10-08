@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import type {ResPartMaintenance} from '../../../../shared/protocols/PtlPartMaintenance';
 import {createRequestId} from '../../network/request-id';
 import './mend-shop-source.css';
@@ -169,7 +170,7 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
           data-mend-owned-instance={entry.id} data-home-owned-tank-row={page === 'Tank' ? entry.id : undefined}
           data-mend-owned-tank-row={page === 'Tank' ? entry.id : undefined} data-mend-owned-part-row={page === 'Part' ? '' : undefined} aria-selected={entry.id === selected} disabled={busy}
           tabIndex={selected === entry.id || selected === undefined && index === 0 ? 0 : -1}
-          style={entry.id === selected ? {backgroundImage: selection.style.backgroundImage} : undefined}
+          style={entry.id === selected ? {...backgroundStyle(selection.style)} : undefined}
           data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
           onClick={() => setSelected(entry.id)} onKeyDown={event => {
             const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1

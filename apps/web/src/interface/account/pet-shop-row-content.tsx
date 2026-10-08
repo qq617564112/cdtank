@@ -1,3 +1,4 @@
+import {ImageArtwork} from '../resources/image-artwork';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -14,7 +15,10 @@ export function PetShopRowContent({ui, petId, name, petType, petSize, tokenPrice
   return <>
     <span className="pet-shop-row-icon" aria-hidden="true" data-pet-row-icon=""
       data-pet-thumbnail={icon?.['data-pet-thumbnail']}
-      data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: icon?.style.backgroundImage}} />
+      data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: 'none'}}>
+      {icon?.['data-source-asset'] && <ImageArtwork asset={`/${icon['data-source-asset']}`} fit="contain"
+        style={{width: '100%', height: '100%'}} aria-hidden="true"/>}
+    </span>
     <span className="pet-shop-row-name" data-pet-row-name=""><SourceFeedbackText text={name}/></span>
     <span className="pet-shop-row-secondary" data-pet-row-secondary="" data-source-binding="pet-table-size-type"><SourceFeedbackText text={sourcePetKind(petSize, petType)}/></span>
     <span className="pet-shop-row-tertiary" data-pet-row-tertiary="" data-source-binding={owned ? 'pet-table-money-owned-display' : 'pet-table-coin-original-display'}><SourceFeedbackText text={owned ? sourcePetOwnedPrice(petMoney) : sourcePetPrice(tokenPrice)}/></span>

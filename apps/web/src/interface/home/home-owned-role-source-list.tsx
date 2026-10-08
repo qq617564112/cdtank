@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {HomeOwnedPetRowContent} from './home-owned-pet-row-content';
 import {HomeOwnedTankRowContent} from './home-owned-tank-row-content';
 import {useRef} from 'react';
@@ -25,7 +26,7 @@ export function HomeOwnedRoleSourceList({ui, kind, entries, selected, current, b
       {entries.map((entry, index) => <button key={entry.instanceId} type="button" role="option"
         data-owned-role={entry.instanceId} data-home-owned-tank-row={kind === 'tank' ? entry.instanceId : undefined} data-home-owned-pet-row={kind === 'pet' ? entry.instanceId : undefined} disabled={busy} aria-selected={selected === entry.instanceId}
         aria-pressed={selected === entry.instanceId}
-        style={selected === entry.instanceId ? {backgroundImage: selection.style.backgroundImage} : undefined}
+        style={selected === entry.instanceId ? {...backgroundStyle(selection.style)} : undefined}
         data-source-selection-asset={selected === entry.instanceId ? selection['data-source-asset'] : undefined}
         onClick={() => select(entry.instanceId)} onKeyDown={event => {
           const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1

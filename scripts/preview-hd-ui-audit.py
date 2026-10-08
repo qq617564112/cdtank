@@ -12,7 +12,7 @@ ART = ROOT / 'art/hd-ui-redraw'
 def main():
     inventory = json.loads((ROOT / 'art/hd-assets/inventory.json').read_text())
     sprites = json.loads((ROOT / 'recovery/output/web-assets/sprite-images.json').read_text())['images']
-    text = json.loads((ROOT / 'apps/web/src/interface/resources/source-text-artwork.json').read_text())['assets']
+    buttons = json.loads((ROOT / 'apps/web/src/assets/button-artwork.json').read_text())['assets']
     ui = json.loads((ROOT / 'recovery/output/web-assets/ui.json').read_text())
     names = defaultdict(list)
     for imageset in ui['imagesets']:
@@ -23,7 +23,7 @@ def main():
     seen = set()
     for entry in inventory['textures']:
         source = entry['source']
-        if 'ui' not in entry.get('groups', []) or entry.get('intermediate') or source in text:
+        if 'ui' not in entry.get('groups', []) or entry.get('intermediate') or source in buttons:
             continue
         if '/' + source not in sprites and not (ROOT / 'recovery/output/web-assets' / source).is_file():
             continue

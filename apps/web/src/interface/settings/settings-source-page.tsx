@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import type {ComponentPropsWithoutRef} from 'react';
 import {SourceButton} from '../resources/source-button';
 import {SourceStaticImage} from '../resources/source-static-image';
@@ -25,7 +26,7 @@ export function SettingsSourceButton({ui, source, disabled, ...attributes}: Butt
     disabled={disabled} className="settings-source-button"
     data-settings-disabled-presentation={disabled && !properties.DisabledImage ? 'web-normal-opacity' : undefined}>
     {disabled && !properties.DisabledImage && <i aria-hidden="true" data-room-button-image="WebDisabledNormal"
-      data-source-asset={normal['data-source-asset']} style={{backgroundImage: normal.style.backgroundImage}} />}
+      data-source-asset={normal['data-source-asset']} style={{...backgroundStyle(normal.style)}} />}
   </SourceButton>;
 }
 

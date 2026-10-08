@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -15,7 +16,7 @@ export function HomeEquipmentCommonRowContent({ui, name, iconId, itemTableId, ow
     `set:daoju0 image:data\\ui\\daoju\\${String(iconId).padStart(5, '0')}.tga`);
   return <>
     <span className="home-equipment-common-row-icon" data-home-equipment-common-icon="" aria-hidden="true"
-      data-source-asset={icon['data-source-asset']} style={{backgroundImage: icon.style.backgroundImage}} />
+      data-source-asset={icon['data-source-asset']} style={{...backgroundStyle(icon.style)}} />
     {installed && <HomeRoleRowStatusBadge ui={ui} status="installed"/>}
     <span className="home-equipment-common-row-name" data-home-equipment-common-name=""><SourceFeedbackText text={name}/></span>
     <span className="home-equipment-common-row-kind" data-home-equipment-common-kind=""><SourceFeedbackText text={kindLabel ?? sourcePartOwnedKind(itemTableId)}/></span>

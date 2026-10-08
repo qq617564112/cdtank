@@ -5,7 +5,7 @@ import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import type {HudCombatSnapshot, SourceUi, SourceWindow} from './battle-hud';
 import {hudItemSlots} from './hud-item-slots';
 import {absoluteRect, sourceAsset} from './hud-source-controls';
-import {SourceNumericText} from '../resources/source-text-artwork';
+import {SourceNumericText} from '../resources/source-bitmap-font';
 
 /** Original shortcut interaction and vector-font layer over the source artwork. */
 export function HudItemSourceView({data, combat, catalog, inventory, selectedItemSlot, reloadFraction, onUseSlot}: {

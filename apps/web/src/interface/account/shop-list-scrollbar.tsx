@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import './shop-list-scrollbar.css';
 import {useEffect, useRef, useState, type RefObject, type PointerEvent} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
@@ -19,7 +19,7 @@ export function ShopListScrollbar({list, ui, properties}: {
     const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
     const image = set?.images.find(image => image.Name === match?.[2]);
     const asset = image?.asset;
-    return {'data-source-asset': asset, style: {backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined,
+    return {'data-source-asset': asset, style: {...(asset ? imageBackgroundStyle(`/${asset}`) : {}),
       ...(image && property.endsWith('BackgroundImage') ? {
         backgroundSize: `${image.Width}px ${image.Height}px`, backgroundPosition: 'left top', backgroundRepeat: 'repeat',
       } : {})}};

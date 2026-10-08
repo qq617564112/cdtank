@@ -40,12 +40,9 @@ export class HomeSourceLayout {
   }
 
   picture(element: HTMLElement, reference: string | undefined): void {
-    const {asset, backgroundImage, tankThumbnail, petThumbnail, tankMark} = sourceUiImage(this.ui, reference);
-    element.style.backgroundImage = backgroundImage ?? '';
-    if (tankThumbnail || petThumbnail) {
-      element.style.backgroundSize = 'contain';
-      element.style.backgroundPosition = 'center';
-      element.style.backgroundRepeat = 'no-repeat';
+    const {asset, style, petThumbnail, tankMark} = sourceUiImage(this.ui, reference);
+    for (const name of ['backgroundImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat'] as const) {
+      element.style[name] = String(style[name] ?? '');
     }
     if (asset) element.dataset.sourceAsset = asset;
     else delete element.dataset.sourceAsset;

@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {gameContent} from '../../../../shared/content/catalog';
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import type {ShopItem} from '../../../../shared/protocols/PtlShop';
@@ -50,7 +51,7 @@ export function PartShopSourceList({ui, source, entries, selected, busy, select,
         {...(originalOwnedRow ? {'data-part-owned-source-row': entry.id} : originalProductRow ? {'data-part-product-source-row': entry.id} : {})}
         {...(source === 'lstShopEquip' ? {'data-part-product-id': entry.id} : {'data-part-owned-instance': entry.id})}
         tabIndex={entry.id === selected || selected === undefined && index === 0 ? 0 : -1}
-        style={entry.id === selected ? {backgroundImage: selection.style.backgroundImage} : undefined}
+        style={entry.id === selected ? {...backgroundStyle(selection.style)} : undefined}
         data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
         onMouseEnter={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
         onFocus={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
@@ -71,7 +72,7 @@ export function PartShopSourceList({ui, source, entries, selected, busy, select,
         {originalOwnedRow || originalProductRow ? <PartShopRowContent ui={ui} name={entry.name} iconId={entry.iconId}
           itemTableId={entry.itemTableId!} ownedQuantity={entry.ownedQuantity} moneyPrice={entry.moneyPrice}
           installed={originalProductRow ? undefined : entry.installed} product={originalProductRow ? entry.product : undefined}/> : <>
-        <span className="shop-list-icon" aria-hidden="true" style={{backgroundImage: icon.style.backgroundImage}}
+        <span className="shop-list-icon" aria-hidden="true" style={{...backgroundStyle(icon.style)}}
           data-source-asset={icon['data-source-asset']} />
         <span className="shop-list-text"><span>{entry.name}</span><span>{entry.detail}</span></span>
         </>}

@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {isTreasureItem} from '../../../../shared/combat/treasure-items';
 import {defaultAmmoId} from '../../../../shared/content/catalog';
 import {loadCombatCatalog} from '../../content';
@@ -44,7 +44,7 @@ function imageProps(ui: HomeUi, reference: string) {
   const sets = ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
   const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
   const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-  return {style: {backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined}, 'data-source-asset': asset};
+  return {style: {...(asset ? imageBackgroundStyle(`/${asset}`) : {})}, 'data-source-asset': asset};
 }
 
 function sourceProps(resources: Resources, name: string, reference: string) {
