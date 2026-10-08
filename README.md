@@ -141,6 +141,7 @@ tests/                  现有资产、规则、联机和页面验收入口
 | 当前还原状态与专题导航 | [还原文档索引](recovery/docs/README.md) |
 | 可选：从原客户端重新生成资源 | [资源重建](recovery/docs/reproducible-assets.md) |
 | 生产部署与账户备份恢复 | [运行与账户存档](deployment/operations.md) |
+| Forgejo CI/CD 与 Docker 部署 | [自动部署](deployment/forgejo.md) |
 | GitHub 源码发布 | [发布说明](docs/github-publication.md) |
 
 ## 素材与许可

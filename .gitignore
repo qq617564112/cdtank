@@ -4,6 +4,8 @@
 /recovery/output/
 /recovery/client-local/
 /recovery/captures/
+/art/
+/b/
 
 # Dependencies, build products and caches.
 node_modules/
