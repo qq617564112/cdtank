@@ -1,13 +1,13 @@
 import {Constants, Material, ShaderMaterial} from '@babylonjs/core';
+import {invalidateMaterialDrawBundles} from './webgpu-draw-cache';
 
 /**
  * Original D3D device state inheritance.
  *
  * `Data/gfxscript/default.gbf` is applied by `0x10027660`/`0x10020466` and
  * leaves a baseline device state; each selected GBF only overrides the states
- * it names. WebGL has no persistent device state, so the same result is
- * produced per material: the resolved state is `default.gbf` overlaid with the
- * pass overrides. No feature flag or shared global is involved.
+ * it names. Each material applies the resolved `default.gbf` state overlaid
+ * with the pass overrides.
  */
 
 export interface SceneDevicePassState {
@@ -50,6 +50,7 @@ export function resolveDeviceState(pass: Partial<SceneDevicePassState>): SceneDe
  */
 export function applyDeviceState(material: ShaderMaterial,
   state: SceneDevicePassState): void {
+  invalidateMaterialDrawBundles(material);
   material.backFaceCulling = state.cull !== 'NONE';
   material.sideOrientation = state.cull === 'CCW' ?
     Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;

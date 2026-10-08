@@ -35,7 +35,7 @@ async function enterGame(): Promise<void> {
     const {startGame}=await import('./start-game');
     if (controller.signal.aborted) return;
     canvas.hidden=false;
-    disposeGame=startGame(canvas,root);
+    disposeGame=await startGame(canvas,root,controller.signal);
   } catch (error) {
     canvas.hidden=true;
     if (!controller.signal.aborted) screen.fail(error);

@@ -6,8 +6,9 @@ import {createSceneRuntime} from './render/scene-runtime';
 import {initializeSettings} from './interface/settings/settings-startup';
 
 /** Create the scene and page only after startup images are ready. */
-export function startGame(canvas: HTMLCanvasElement, root: Root): () => void {
-  const runtime = createSceneRuntime(canvas);
+export async function startGame(canvas: HTMLCanvasElement, root: Root, signal: AbortSignal): Promise<() => void> {
+  const runtime = await createSceneRuntime(canvas);
+  if (signal.aborted) {runtime.dispose(); signal.throwIfAborted();}
   const hud = document.createElement('output');
   hud.id = 'battle-status';
   hud.setAttribute('aria-live', 'polite');

@@ -1,6 +1,7 @@
 import './tank-product-preview.css';
 import {useEffect, useLayoutEffect, useRef, useState, type ComponentPropsWithoutRef} from 'react';
-import {ArcRotateCamera, Color3, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
+import {ArcRotateCamera, Color3, Color4, HemisphericLight, Scene, Vector3, type WebGPUEngine} from '@babylonjs/core';
+import {createWebGpuEngine} from '../../render/webgpu-engine';
 import {TankView} from '../../assets/tanks/tank-view';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 
@@ -12,7 +13,7 @@ interface ProductPreviewProps extends ComponentPropsWithoutRef<'div'> {
 
 interface PreviewRuntime {
   active: boolean;
-  engine: Engine;
+  engine: WebGPUEngine;
   scene: Scene;
   camera: ArcRotateCamera;
   view?: TankView;
@@ -23,71 +24,79 @@ interface PreviewRuntime {
 export function TankProductPreview({tankId, textures, scale, ...props}: ProductPreviewProps) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const runtime = useRef<PreviewRuntime | undefined>(undefined);
+  const [runtime, setRuntime] = useState<PreviewRuntime>();
   const [message, setMessage] = useState('载入战车模型…');
   const {U, M, XY} = textures;
 
-  useLayoutEffect(() => {runtime.current?.resize();}, [scale]);
+  useLayoutEffect(() => {runtime?.resize();}, [scale, runtime]);
 
   useEffect(() => {
     const element = host.current!;
-    const engine = new Engine(canvas.current!, true, {alpha: true}, true);
-    const scene = new Scene(engine);
-    scene.clearColor = new Color4(0, 0, 0, 0);
-    scene.ambientColor = Color3.White();
-    const camera = new ArcRotateCamera('shop-product-camera', -Math.PI / 2.5,
-      Math.PI / 3, 100, Vector3.Zero(), scene);
-    camera.minZ = 10; camera.maxZ = 5000;
-    camera.attachControl(canvas.current!, true);
-    camera.inputs.removeByType('ArcRotateCameraKeyboardMoveInput');
-    camera.inputs.removeByType('ArcRotateCameraMouseWheelInput');
-    let dragging = false;
-    const startDrag = () => {dragging = true;};
-    const finishDrag = () => {dragging = false;};
     const surface = canvas.current!;
-    surface.addEventListener('pointerdown', startDrag);
-    surface.addEventListener('pointerup', finishDrag);
-    surface.addEventListener('pointercancel', finishDrag);
-    surface.addEventListener('lostpointercapture', finishDrag);
-    new HemisphericLight('shop-product-light', new Vector3(0, 1, 0), scene).intensity = 1.2;
-    const resize = () => {
-      const box = element.getBoundingClientRect();
-      if (box.width > 0 && box.height > 0) engine.setSize(Math.round(box.width), Math.round(box.height));
-    };
-    const mounted: PreviewRuntime = {active: true, engine, scene, camera, resize};
-    runtime.current = mounted;
-    let frames = 0;
-    engine.runRenderLoop(() => {
-      if (!dragging) camera.alpha += .0075;
-      element.dataset.orbitYaw = String(camera.alpha);
-      element.dataset.orbitPitch = String(camera.beta);
-      scene.render();
-      element.dataset.frames = String(++frames);
-      if (mounted.view) element.dataset.renderedTankId = String(mounted.view.tankId);
+    let active = true;
+    let dispose = () => {};
+    void (async () => {
+      const engine = await createWebGpuEngine(surface, true);
+      if (!active) {engine.dispose(); return;}
+      const scene = new Scene(engine);
+      scene.clearColor = new Color4(0, 0, 0, 0);
+      scene.ambientColor = Color3.White();
+      const camera = new ArcRotateCamera('shop-product-camera', -Math.PI / 2.5,
+        Math.PI / 3, 100, Vector3.Zero(), scene);
+      camera.minZ = 10; camera.maxZ = 5000;
+      camera.attachControl(surface, true);
+      camera.inputs.removeByType('ArcRotateCameraKeyboardMoveInput');
+      camera.inputs.removeByType('ArcRotateCameraMouseWheelInput');
+      let dragging = false;
+      const startDrag = () => {dragging = true;};
+      const finishDrag = () => {dragging = false;};
+      surface.addEventListener('pointerdown', startDrag);
+      surface.addEventListener('pointerup', finishDrag);
+      surface.addEventListener('pointercancel', finishDrag);
+      surface.addEventListener('lostpointercapture', finishDrag);
+      new HemisphericLight('shop-product-light', new Vector3(0, 1, 0), scene).intensity = 1.2;
+      const resize = () => {
+        const box = element.getBoundingClientRect();
+        if (box.width > 0 && box.height > 0) engine.setSize(Math.round(box.width), Math.round(box.height));
+      };
+      const mounted: PreviewRuntime = {active: true, engine, scene, camera, resize};
+      let frames = 0;
+      engine.runRenderLoop(() => {
+        if (!dragging) camera.alpha += .0075;
+        element.dataset.orbitYaw = String(camera.alpha);
+        element.dataset.orbitPitch = String(camera.beta);
+        scene.render();
+        element.dataset.frames = String(++frames);
+        if (mounted.view) element.dataset.renderedTankId = String(mounted.view.tankId);
+      });
+      const observer = new ResizeObserver(resize);
+      observer.observe(element);
+      resize();
+      dispose = () => {
+        mounted.active = false;
+        observer.disconnect();
+        camera.detachControl();
+        surface.removeEventListener('pointerdown', startDrag);
+        surface.removeEventListener('pointerup', finishDrag);
+        surface.removeEventListener('pointercancel', finishDrag);
+        surface.removeEventListener('lostpointercapture', finishDrag);
+        engine.stopRenderLoop();
+        mounted.view?.dispose(); mounted.view = undefined;
+        scene.dispose(); engine.dispose();
+        element.dataset.status = 'empty'; element.dataset.meshes = '0';
+        delete element.dataset.renderedTankId;
+      };
+      setRuntime(mounted);
+    })().catch(error => {
+      if (!active) return;
+      element.dataset.status = 'error'; setMessage(`模型载入失败：${String(error)}`);
     });
-    const observer = new ResizeObserver(resize);
-    observer.observe(element);
-    resize();
-    return () => {
-      mounted.active = false;
-      runtime.current = undefined;
-      observer.disconnect();
-      camera.detachControl();
-      surface.removeEventListener('pointerdown', startDrag);
-      surface.removeEventListener('pointerup', finishDrag);
-      surface.removeEventListener('pointercancel', finishDrag);
-      surface.removeEventListener('lostpointercapture', finishDrag);
-      engine.stopRenderLoop();
-      mounted.view?.dispose(); mounted.view = undefined;
-      scene.dispose(); engine.dispose();
-      element.dataset.status = 'empty'; element.dataset.meshes = '0';
-      delete element.dataset.renderedTankId;
-    };
+    return () => {active = false; dispose();};
   }, []);
 
   useEffect(() => {
-    const current = runtime.current;
-    if (!current) return;
+    const current = runtime;
+    if (!current?.active) return;
     const element = host.current!;
     let active = true;
     let loaded: TankView | undefined;
@@ -120,7 +129,7 @@ export function TankProductPreview({tankId, textures, scale, ...props}: ProductP
       active = false;
       if (loaded && current.view === loaded) {loaded.dispose(); current.view = undefined;}
     };
-  }, [tankId, U, M, XY]);
+  }, [runtime, tankId, U, M, XY]);
 
   return <div {...props} ref={host} className="tank-product-preview" data-tank-id={tankId}
     data-tank-textures={JSON.stringify(textures)}>

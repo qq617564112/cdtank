@@ -1,5 +1,4 @@
 import {Camera, Scene, Texture} from '@babylonjs/core';
-import {effectCameraCorners, effectCameraUv} from '../camera/effect-camera';
 import {packEffectColor} from '../common/effect-color';
 import {EffectParticleState} from './effect-particle-state';
 import {EffectRenderPass, EffectSpriteMesh} from '../common/effect-sprite-mesh';
@@ -10,16 +9,17 @@ export class EffectParticleRenderer {
 
   constructor(scene: Scene, pass: EffectRenderPass, texture: Texture,
     private readonly frames: readonly [number, number, number, number][]) {
-    this.sprite = new EffectSpriteMesh(scene, pass, texture);
+    this.sprite = new EffectSpriteMesh(scene, pass, texture, true);
   }
 
-  update(camera: Camera, particles: readonly EffectParticleState[]): void {
-    this.sprite.updateQuads(particles.filter(particle => particle.visible).map(particle => ({
-      corners: effectCameraCorners(camera, particle.position,
-        [particle.scale, particle.scale, 0], particle.angles[2]),
-      uv: effectCameraUv(this.frames[particle.frame]),
-      packedColor: packEffectColor(particle.color),
-    })));
+  update(_camera: Camera, particles: readonly EffectParticleState[]): void {
+    this.sprite.beginBillboards();
+    for (const particle of particles) {
+      if (!particle.visible) continue;
+      this.sprite.billboardQuad(particle.position, particle.scale, particle.angles[2],
+        this.frames[particle.frame], packEffectColor(particle.color));
+    }
+    this.sprite.endBillboards();
   }
 
   dispose(): void {

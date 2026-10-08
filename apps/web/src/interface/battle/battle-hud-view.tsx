@@ -248,7 +248,7 @@ function ReloadControl({hud, style, scale, ...props}: {
   const state = useSyncExternalStore(hud.subscribeReload, hud.getReloadSnapshot);
   const height = Number(style.height), extent = Math.floor(Math.fround(height * scale) * state.fraction + .5);
   return <div {...props} data-source-asset={undefined} className="source-control" style={{...style, backgroundImage: 'none'}}
-    hidden={!state.visible} role="progressbar" data-crosshair-renderer="html"
+    hidden={!state.visible} role="progressbar" data-crosshair-renderer="webgpu"
     data-source-progress-fraction={state.fraction} aria-label="装填" aria-valuemin={0} aria-valuemax={100}
     aria-valuenow={Math.round(state.fraction * 100)} aria-valuetext={state.fraction < 1 ? '装填中' : '装填完成'}>
     <i data-source-asset="ui/regions/77/47.png" aria-hidden="true" style={{position: 'absolute', inset: 0}}/>

@@ -10,6 +10,7 @@ import {
   SCENE_ENVIRONMENT_UNIFORMS, SCENE_ENVIRONMENT_VERTEX_DECLARATION,
 } from '../scene-environment';
 import type {SceneActorToonBinding} from './actor-toon';
+import {invalidateMaterialDrawBundles} from '../webgpu-draw-cache';
 
 /** Original 1001b6f0 parameter4, ordinary MV3 with no selected lights/fog. */
 export function mv3Ambient(properties: readonly number[], opacity = 1,
@@ -41,8 +42,12 @@ varying float actorToonLight;` : '';
   const material = new ShaderMaterial('original-mv3-material', scene, {
     vertexSource: `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
 ${actorToonVertex}
-attribute vec3 position; attribute vec3 normal; attribute vec2 uv;
-uniform mat4 world; uniform mat4 worldViewProjection; uniform vec4 sourceAmbient;
+attribute vec3 position;
+attribute vec3 normal;
+attribute vec2 uv;
+uniform mat4 world;
+uniform mat4 worldViewProjection;
+uniform vec4 sourceAmbient;
 varying vec2 vUV;
 #include<morphTargetsVertexGlobalDeclaration>
 #include<morphTargetsVertexDeclaration>[0..maxSimultaneousMorphTargets]
@@ -58,7 +63,10 @@ ${actorToon ? 'actorToonLight=actorToonEnabled>0.5?max(dot(worldNormal,actorToon
 gl_Position=worldViewProjection*vec4(positionUpdated,1.0);vUV=uv;}`,
     fragmentSource: `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
 ${actorToonFragment}
-varying vec2 vUV; varying vec3 sceneLitColor; uniform vec4 sourceAmbient; uniform float actorOpacity;
+varying vec2 vUV;
+varying vec3 sceneLitColor;
+uniform vec4 sourceAmbient;
+uniform float actorOpacity;
 ${texture ? 'uniform sampler2D sourceTexture;' : ''}
 void main(){
 vec4 base=${texture ? 'texture2D(sourceTexture,vUV)' : 'vec4(1.0)'};
@@ -82,12 +90,17 @@ ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
       ...SCENE_ENVIRONMENT_UNIFORMS],
     samplers: [...(texture ? ['sourceTexture'] : []), ...(actorToon ? ['actorToonTexture'] : [])],
     needAlphaBlending: transparent});
+  const ambientColor = new Vector4();
+  let red = NaN, green = NaN, blue = NaN;
   const updateAmbient = (): void => {
+    const current = scene.ambientColor;
+    if (red === current.r && green === current.g && blue === current.b) return;
+    red = current.r; green = current.g; blue = current.b;
     const ambient = scene.ambientColor.equalsFloats(0, 0, 0)
       ? [0.2, 0.2, 0.2] : scene.ambientColor.asArray();
-    const color = Vector4.FromArray(mv3Ambient(properties, opacity, ambient));
-    material.setVector4('sourceAmbient', color);
-    material.getEffect()?.setVector4('sourceAmbient', color);
+    Vector4.FromArrayToRef(mv3Ambient(properties, opacity, ambient), 0, ambientColor);
+    material.setVector4('sourceAmbient', ambientColor);
+    material.getEffect()?.setVector4('sourceAmbient', ambientColor);
     if (material.metadata?.originalMV3) material.metadata.originalMV3.ambient = ambient;
   };
   updateAmbient();
@@ -102,10 +115,11 @@ ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
   }
   if (actorToon) {
     material.setTexture('actorToonTexture', actorToon.texture);
+    const toonLight = new Vector3();
     const updateActorToon = (): void => {
       const enabled = actorToon.active() && getDisplayPreferences().silhouette;
       const direction = enabled ? actorToon.lightDirection() : undefined;
-      const light = direction ? new Vector3(direction[0], direction[1], direction[2]) : undefined;
+      const light = direction ? toonLight.set(direction[0], direction[1], direction[2]) : undefined;
       material.setFloat('actorToonEnabled', enabled ? 1 : 0);
       if (light) material.setVector3('actorToonLightDirection', light);
       // ShaderMaterial uploads its cached uniforms before onBindObservable fires,
@@ -137,9 +151,11 @@ ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
 /** Actor opacity is applied after source alpha rejection and restores the source blend mode. */
 export function setMv3ActorOpacity(material: ShaderMaterial, opacity: number): void {
   const transparent = opacity < 1 || material.metadata?.originalMV3?.script === 'geom_t';
+  const mode = transparent ? ShaderMaterial.MATERIAL_ALPHABLEND : ShaderMaterial.MATERIAL_OPAQUE;
+  if (material.transparencyMode !== mode) invalidateMaterialDrawBundles(material);
   material.setFloat('actorOpacity', opacity);
   material.alpha = opacity;
-  material.transparencyMode = transparent ? ShaderMaterial.MATERIAL_ALPHABLEND : ShaderMaterial.MATERIAL_OPAQUE;
+  material.transparencyMode = mode;
   material.alphaMode = transparent ? Constants.ALPHA_COMBINE : Constants.ALPHA_DISABLE;
 }
 

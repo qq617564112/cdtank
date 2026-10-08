@@ -1,15 +1,19 @@
-import {ArcRotateCamera,Color3,Color4,Engine,HemisphericLight,Scene,Tools,Vector3} from '@babylonjs/core';
+import {ArcRotateCamera,Color3,Color4,HemisphericLight,Scene,Tools,Vector3} from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import {imageResourceUrl} from '../assets/image-cache';
 import {installModelImageLoader} from '../assets/model-image-loader';
 import {getDisplayPreferences, subscribeDisplayPreferences} from '../interface/settings/display-preferences';
 import {battleUiLayer} from './battle-ui-layer';
+import {createWebGpuEngine} from './webgpu-engine';
+import {selectEnabledMeshCandidates} from './scene-mesh-candidates';
+import {webGpuFrameStats} from './webgpu-frame-stats';
 
 /** Babylon owns its frame loop and resources independently of React. */
-export function createSceneRuntime(canvas: HTMLCanvasElement) {
+export async function createSceneRuntime(canvas: HTMLCanvasElement) {
   Tools.PreprocessUrl=imageResourceUrl;
   installModelImageLoader();
-  const engine=new Engine(canvas,true,{},true),scene=new Scene(engine);
+  const engine=await createWebGpuEngine(canvas),scene=new Scene(engine);
+  selectEnabledMeshCandidates(scene);
   const battleUi=battleUiLayer(scene);
   const displayScale=(): number => (getDisplayPreferences().highPrecision ? 1 : 2)
     / (window.devicePixelRatio || 1);
@@ -28,7 +32,11 @@ export function createSceneRuntime(canvas: HTMLCanvasElement) {
     if (engine.getHardwareScalingLevel() !== scale) engine.setHardwareScalingLevel(scale);
   };
   window.addEventListener('resize',resize);
-  engine.runRenderLoop(()=>{scene.render();battleUi.render();});
+  const recordFrame=webGpuFrameStats(canvas,scene,engine);
+  engine.runRenderLoop(()=>{
+    const startedAt=performance.now();
+    scene.render();battleUi.render();recordFrame(startedAt);
+  });
   return {scene,camera,dispose(): void {
     window.removeEventListener('resize',resize);
     unsubscribeDisplay();

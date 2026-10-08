@@ -1,4 +1,4 @@
-import {Color3, Scene, ShaderMaterial, Vector3} from '@babylonjs/core';
+import {Color3, Scene, ShaderMaterial, UniformBuffer} from '@babylonjs/core';
 import {ORIGINAL_SCENE_AMBIENT, type SceneEnvironment} from '../../../shared/maps/scene-environment';
 
 /**
@@ -7,8 +7,8 @@ import {ORIGINAL_SCENE_AMBIENT, type SceneEnvironment} from '../../../shared/map
  * The original actor selector (`0x1000d570`) folds the fog flag
  * (`+0x590` = 1/2/3 -> `geom_f1`/`geom_F2`/`geom_f3`) and the selected light
  * records (`+0xe4`/`+0xe8` -> `geom_1L`/`geom_2L`) into the GBF choice. This
- * helper keeps one shader per material and supplies the same registers at
- * bind time instead of copying every GBF combination.
+ * helper keeps one shader per material and shares the scene registers in
+ * one uniform buffer.
  */
 
 export interface SceneShaderEnvironment {
@@ -23,13 +23,37 @@ export interface SceneShaderEnvironment {
   }[];
 }
 
-/** Uniform names every environment-aware material must declare. */
-export const SCENE_ENVIRONMENT_UNIFORMS = [
-  'sceneFogEnabled', 'sceneFogMode', 'sceneFogColor', 'sceneFogParams',
-  'cameraPosition',
-  'sceneLightCount', 'sceneLight0Pos', 'sceneLight0Atten', 'sceneLight0Diffuse',
-  'sceneLight1Pos', 'sceneLight1Atten', 'sceneLight1Diffuse',
-];
+/** Camera values are supplied by Babylon for the current render pass. */
+export const SCENE_ENVIRONMENT_UNIFORMS = ['cameraPosition'];
+
+const ENVIRONMENT_FIELDS = ['sourceFogSettings', 'sourceFogColor', 'sourceFogParams',
+  'sourceLight0Position', 'sourceLight0Attenuation', 'sourceLight0Diffuse',
+  'sourceLight1Position', 'sourceLight1Attenuation', 'sourceLight1Diffuse'];
+
+const ENVIRONMENT_DECLARATION = `
+uniform SourceEnvironment {
+  vec4 sourceFogSettings;
+  vec4 sourceFogColor;
+  vec4 sourceFogParams;
+  vec4 sourceLight0Position;
+  vec4 sourceLight0Attenuation;
+  vec4 sourceLight0Diffuse;
+  vec4 sourceLight1Position;
+  vec4 sourceLight1Attenuation;
+  vec4 sourceLight1Diffuse;
+};
+#define sceneFogEnabled sourceFogSettings.x
+#define sceneFogMode sourceFogSettings.y
+#define sceneLightCount int(sourceFogSettings.z)
+#define sceneFogColor sourceFogColor.xyz
+#define sceneFogParams sourceFogParams.xyz
+#define sceneLight0Pos sourceLight0Position.xyz
+#define sceneLight0Atten sourceLight0Attenuation.xyz
+#define sceneLight0Diffuse sourceLight0Diffuse.xyz
+#define sceneLight1Pos sourceLight1Position.xyz
+#define sceneLight1Atten sourceLight1Attenuation.xyz
+#define sceneLight1Diffuse sourceLight1Diffuse.xyz
+`;
 
 /**
  * Vertex-stage declaration; compute `sceneLitColor` and `sceneFogFactor`.
@@ -38,18 +62,8 @@ export const SCENE_ENVIRONMENT_UNIFORMS = [
  * their own to avoid a duplicate uniform error.
  */
 export const SCENE_ENVIRONMENT_VERTEX_DECLARATION = `precision highp float;
-uniform float sceneFogEnabled;
-uniform float sceneFogMode;
-uniform vec3 sceneFogColor;
-uniform vec3 sceneFogParams;
+${ENVIRONMENT_DECLARATION}
 uniform vec3 cameraPosition;
-uniform int sceneLightCount;
-uniform vec3 sceneLight0Pos;
-uniform vec3 sceneLight0Atten;
-uniform vec3 sceneLight0Diffuse;
-uniform vec3 sceneLight1Pos;
-uniform vec3 sceneLight1Atten;
-uniform vec3 sceneLight1Diffuse;
 varying float sceneFogFactor;
 varying vec3 sceneLitColor;
 vec3 sceneLight(vec3 ambient, vec3 worldPosition, vec3 worldNormal) {
@@ -81,8 +95,7 @@ float sceneFog(vec3 worldPosition) {
 
 /** Fragment-stage declaration and fog blend toward the original fog color. */
 export const SCENE_ENVIRONMENT_FRAGMENT_DECLARATION = `precision highp float;
-uniform float sceneFogEnabled;
-uniform vec3 sceneFogColor;
+${ENVIRONMENT_DECLARATION}
 varying float sceneFogFactor;
 `;
 
@@ -94,10 +107,41 @@ export const SCENE_ENVIRONMENT_FRAGMENT_APPLY =
  * so a later scene never inherits the previous map's fog or lights.
  */
 const sceneEnvironments = new WeakMap<Scene, SceneShaderEnvironment>();
+const environmentBuffers = new WeakMap<Scene, UniformBuffer>();
+
+function environmentBuffer(scene: Scene): UniformBuffer {
+  let buffer = environmentBuffers.get(scene);
+  if (!buffer) {
+    buffer = new UniformBuffer(scene.getEngine(), undefined, false, 'source-environment', false, false);
+    for (const name of ENVIRONMENT_FIELDS) buffer.addUniform(name, 4);
+    buffer.create();
+    environmentBuffers.set(scene, buffer);
+    scene.onDisposeObservable.addOnce(() => {buffer!.dispose(); environmentBuffers.delete(scene);});
+    updateEnvironmentBuffer(buffer, sceneEnvironments.get(scene));
+  }
+  return buffer;
+}
+
+function updateEnvironmentBuffer(buffer: UniformBuffer, environment?: SceneShaderEnvironment): void {
+  buffer.updateFloat4('sourceFogSettings', environment?.fogEnabled ?? 0,
+    environment?.fogMode ?? 0, environment?.lights.length ?? 0, 0);
+  buffer.updateFloat4('sourceFogColor', ...(environment?.fogColor ?? [0, 0, 0] as const), 0);
+  buffer.updateFloat4('sourceFogParams', ...(environment?.fogParams ?? [0, 0, 0] as const), 0);
+  for (let index = 0; index < 2; index++) {
+    const light = environment?.lights[index];
+    buffer.updateFloat4(`sourceLight${index}Position`, -(light?.position[0] ?? 0),
+      light?.position[1] ?? 0, light?.position[2] ?? 0, 0);
+    buffer.updateFloat4(`sourceLight${index}Attenuation`, ...(light?.attenuation ?? [0, 0, 0] as const), 0);
+    buffer.updateFloat4(`sourceLight${index}Diffuse`, ...(light?.diffuse ?? [0, 0, 0] as const), 0);
+  }
+  buffer.update();
+}
 
 /** Drop the registered environment; the next map registers its own. */
 export function resetSceneShaderEnvironment(scene: Scene): void {
   sceneEnvironments.delete(scene);
+  const buffer = environmentBuffers.get(scene);
+  if (buffer) updateEnvironmentBuffer(buffer);
   scene.fogMode = Scene.FOGMODE_NONE;
   scene.ambientColor = Color3.FromArray(ORIGINAL_SCENE_AMBIENT);
 }
@@ -105,16 +149,7 @@ export function resetSceneShaderEnvironment(scene: Scene): void {
 /** Bind a material to the current scene environment if the scene has one. */
 export function bindSceneEnvironmentIfPresent(material: ShaderMaterial,
   scene: Scene): boolean {
-  const update = (): void => {
-    const environment = sceneEnvironments.get(scene);
-    if (environment) bindSceneShaderEnvironment(material, environment);
-    else {
-      material.setFloat('sceneFogEnabled', 0);
-      material.setInt('sceneLightCount', 0);
-    }
-  };
-  update();
-  material.onBindObservable.add(update);
+  material.setUniformBuffer('SourceEnvironment', environmentBuffer(scene));
   return sceneEnvironments.has(scene);
 }
 
@@ -129,26 +164,14 @@ export function sceneShaderEnvironment(environment: SceneEnvironment): SceneShad
   };
 }
 
-/** Bind the helper's registers; called from each material's bind observer. */
+/** Publish the environment once for all custom materials in this scene. */
 export function bindSceneShaderEnvironment(material: ShaderMaterial,
   environment: SceneShaderEnvironment): void {
-  material.setFloat('sceneFogEnabled', environment.fogEnabled);
-  material.setFloat('sceneFogMode', environment.fogMode);
-  material.setVector3('sceneFogColor', new Vector3(environment.fogColor[0],
-    environment.fogColor[1], environment.fogColor[2]));
-  material.setVector3('sceneFogParams', new Vector3(environment.fogParams[0],
-    environment.fogParams[1], environment.fogParams[2]));
-  material.setInt('sceneLightCount', environment.lights.length);
-  for (let index = 0; index < 2; index++) {
-    const light = environment.lights[index];
-    if (!light) continue;
-    material.setVector3(`sceneLight${index}Pos`, new Vector3(-light.position[0],
-      light.position[1], light.position[2]));
-    material.setVector3(`sceneLight${index}Atten`, new Vector3(light.attenuation[0],
-      light.attenuation[1], light.attenuation[2]));
-    material.setVector3(`sceneLight${index}Diffuse`, new Vector3(light.diffuse[0],
-      light.diffuse[1], light.diffuse[2]));
-  }
+  const scene = material.getScene();
+  sceneEnvironments.set(scene, environment);
+  const buffer = environmentBuffer(scene);
+  material.setUniformBuffer('SourceEnvironment', buffer);
+  updateEnvironmentBuffer(buffer, environment);
 }
 
 /**
@@ -169,4 +192,5 @@ export function applySceneEnvironment(scene: Scene, environment: SceneEnvironmen
     scene.fogMode = Scene.FOGMODE_NONE;
   }
   sceneEnvironments.set(scene, sceneShaderEnvironment(environment));
+  updateEnvironmentBuffer(environmentBuffer(scene), sceneEnvironments.get(scene));
 }

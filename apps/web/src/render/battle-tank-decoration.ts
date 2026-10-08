@@ -3,6 +3,7 @@ import {AssetContainer, Constants, LoadAssetContainerAsync, Matrix, PBRMaterial,
 import type {ItemDefinition} from '../../../shared/content/types';
 import {TANK_DECORATION_TAGS, TankView, type TankDecorationTag} from '../assets/tanks/tank-view';
 import {applyCartoonOutlines} from './materials/cartoon-outline';
+import {invalidateMaterialDrawBundles} from './webgpu-draw-cache';
 
 /** Original accessory attached to a battle actor's cosmetic attachment track. */
 export class BattleTankDecoration {
@@ -19,6 +20,7 @@ export class BattleTankDecoration {
     if (this.opacity !== this.view.opacity) {
       this.opacity = this.view.opacity;
       for (const [material, state] of this.materialStates) {
+        invalidateMaterialDrawBundles(material);
         material.alpha = state.alpha * this.opacity;
         material.transparencyMode = this.opacity < 1 ? PBRMaterial.MATERIAL_ALPHABLEND : state.transparencyMode;
         material.alphaMode = this.opacity < 1 ? Constants.ALPHA_COMBINE : state.alphaMode;

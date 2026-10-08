@@ -1,5 +1,7 @@
 import {useEffect, useLayoutEffect, useRef, useState, type ComponentPropsWithoutRef} from 'react';
-import {ArcRotateCamera, Color3, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
+import {ArcRotateCamera, Color3, Color4, HemisphericLight, Scene, Vector3, type WebGPUEngine} from '@babylonjs/core';
+import {createWebGpuEngine} from '../../render/webgpu-engine';
+import {selectEnabledMeshCandidates} from '../../render/scene-mesh-candidates';
 import {TankView} from '../../assets/tanks/tank-view';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import type {CombatItemDefinition} from '../../../../shared/combat/catalog';
@@ -25,7 +27,7 @@ interface PreviewRuntime {
 export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, scale, ...props}: PreviewProps) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const runtime = useRef<PreviewRuntime | undefined>(undefined);
+  const [runtime, setRuntime] = useState<PreviewRuntime>();
   const resizeAfterCommit = useRef<(() => void) | undefined>(undefined);
   const [message, setMessage] = useState('载入战车模型…');
   const U = textures?.U, M = textures?.M, XY = textures?.XY;
@@ -36,7 +38,9 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, 
 
   useEffect(() => {
     const element = host.current!;
-    let engine: Engine | undefined;
+    const surface = canvas.current!;
+    let active = true;
+    let engine: WebGPUEngine | undefined;
     let current: PreviewRuntime | undefined;
     let observer: ResizeObserver | undefined;
     let resizeFrame = 0;
@@ -48,16 +52,19 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, 
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(resize);
     };
-    try {
-      engine = new Engine(canvas.current!, true, {alpha: true}, true);
+    void (async () => {
+      const renderer = await createWebGpuEngine(surface, true);
+      if (!active) {renderer.dispose(); return;}
+      engine = renderer;
       const scene = new Scene(engine); scene.clearColor = new Color4(0, 0, 0, 0);
+      selectEnabledMeshCandidates(scene);
       scene.ambientColor = Color3.White();
       const camera = new ArcRotateCamera('home-equipment-camera', -Math.PI / 2.5, Math.PI / 3, 100, Vector3.Zero(), scene);
       camera.minZ = HOME_PREVIEW_CLIP_PLANES.near; camera.maxZ = HOME_PREVIEW_CLIP_PLANES.far;
-      camera.attachControl(canvas.current!, true);
+      camera.attachControl(surface, true);
       new HemisphericLight('home-equipment-light', new Vector3(0, 1, 0), scene).intensity = 1.2;
       const mounted: PreviewRuntime = {active: true, scene, camera};
-      current = mounted; runtime.current = mounted;
+      current = mounted;
       resizeAfterCommit.current = resize;
       const orbit = {pitch: 0, yaw: 0, orbitYaw: 0};
       let frames = 0;
@@ -72,12 +79,15 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, 
       observer = new ResizeObserver(resize); observer.observe(element);
       window.addEventListener('resize', scheduleResize);
       resize();
-    } catch (error) {
+      setRuntime(mounted);
+    })().catch(error => {
+      if (!active) return;
       element.dataset.status = 'error'; setMessage(`模型载入失败：${String(error)}`);
-    }
+    });
     return () => {
+      active = false;
       if (current) current.active = false;
-      runtime.current = undefined; resizeAfterCommit.current = undefined;
+      resizeAfterCommit.current = undefined;
       observer?.disconnect(); window.removeEventListener('resize', scheduleResize);
       cancelAnimationFrame(resizeFrame);
       engine?.stopRenderLoop();
@@ -90,8 +100,8 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, 
   }, []);
 
   useEffect(() => {
-    const current = runtime.current;
-    if (!current) return;
+    const current = runtime;
+    if (!current?.active) return;
     const element = host.current!;
     let active = true;
     let loaded: TankView | undefined;
@@ -135,7 +145,7 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, 
       loaded?.dispose();
       if (current.view === loaded) current.view = undefined;
     };
-  }, [tankId, instanceId, U, M, XY, decoration]);
+  }, [runtime, tankId, instanceId, U, M, XY, decoration]);
 
   return <div {...props} ref={host} className="home-tank-preview" data-role-preview=""
     data-tank-id={tankId} data-instance-id={instanceId} data-tank-textures={JSON.stringify(textures ?? null)}>

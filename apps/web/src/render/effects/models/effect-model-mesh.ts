@@ -1,11 +1,11 @@
-import {Constants, Material, Mesh, Scene, ShaderMaterial, Texture, VertexData} from '@babylonjs/core';
-import {EffectNativeMatrix, transformEffectPosition} from '../common/effect-native-space';
-import {EffectVec3} from '../common/types';
+import {Constants, Material, Matrix, Mesh, Scene, ShaderMaterial, Texture, Vector4} from '@babylonjs/core';
+import type {EffectNativeMatrix} from '../common/effect-native-space';
 import {orderSceneModels} from '../../scene-model-order';
 import {
   bindSceneEnvironmentIfPresent, SCENE_ENVIRONMENT_FRAGMENT_DECLARATION,
   SCENE_ENVIRONMENT_UNIFORMS, SCENE_ENVIRONMENT_VERTEX_DECLARATION,
 } from '../../scene-environment';
+import {EffectModelVertices} from './effect-model-vertices';
 
 export interface EffectModelDeviceState {
   cull: 'CW' | 'CCW' | 'NONE';
@@ -19,29 +19,56 @@ export interface EffectModelDeviceState {
 export class EffectModelMesh {
   readonly mesh: Mesh;
   readonly material: ShaderMaterial;
-  constructor(scene: Scene, texture: Texture, state: EffectModelDeviceState) {
+  private readonly matrix = Matrix.Identity();
+  private readonly reflectedMatrix = new Float32Array(16);
+  private readonly ambient = new Vector4();
+  constructor(scene: Scene, texture: Texture, state: EffectModelDeviceState,
+    vertices: EffectModelVertices, indices: readonly number[]) {
     this.material = new ShaderMaterial('original-effect-model', scene, {
       vertexSource: `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
-attribute vec3 position; attribute vec2 uv; attribute vec4 color;
-uniform mat4 worldViewProjection; varying vec2 vUV; varying vec4 vColor;
+attribute vec3 position;
+attribute vec2 uv;
+${vertices.colors ? 'attribute vec4 color;' : 'uniform vec4 sourceAmbient;'}
+${vertices.animated ? `attribute float sourceVertexId;
+uniform sampler2D sourceFrames;
+uniform vec2 sourceFrameSize;
+uniform vec4 sourceFrameSample;
+vec4 modelTexel(float index) {
+  vec2 texel = vec2(mod(index, sourceFrameSize.x), floor(index / sourceFrameSize.x));
+  return texelFetch(sourceFrames, ivec2(texel), 0);
+}` : ''}
+uniform mat4 worldViewProjection;
+varying vec2 vUV;
+varying vec4 vColor;
 uniform mat4 world;
 void main(){
-  vec4 worldPosition=world*vec4(position,1.0);
-  gl_Position=worldViewProjection*worldPosition;
-  vUV=uv;vColor=clamp(color,0.0,1.0);
+${vertices.animated ? `  float first = (sourceFrameSample.x + sourceVertexId) * 2.0;
+  float second = (sourceFrameSample.y + sourceVertexId) * 2.0;
+  vec3 nativePosition = sourceFrameSample.w * modelTexel(first).xyz
+    + sourceFrameSample.z * modelTexel(second).xyz;
+  vec3 localPosition = vec3(-nativePosition.x, nativePosition.yz);
+  vUV = sourceFrameSample.w * modelTexel(first + 1.0).xy
+    + sourceFrameSample.z * modelTexel(second + 1.0).xy;` : '  vec3 localPosition = position; vUV = uv;'}
+  vec4 worldPosition=world*vec4(localPosition,1.0);
+  gl_Position=worldViewProjection*vec4(localPosition,1.0);
+  vColor=clamp(${vertices.colors ? 'color' : 'sourceAmbient'},0.0,1.0);
   sceneFogFactor=sceneFog(worldPosition.xyz);
 }`,
       fragmentSource: `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
-varying vec2 vUV; varying vec4 vColor; uniform sampler2D modelTexture;
+varying vec2 vUV;
+varying vec4 vColor;
+uniform sampler2D modelTexture;
 void main(){
   vec4 color=texture2D(modelTexture,vUV)*vColor;
 ${state.alphaTest ? 'if(color.a<=100.0/255.0)discard;' : ''}
   if(sceneFogEnabled>0.5)color.rgb=mix(sceneFogColor,color.rgb,sceneFogFactor);
   gl_FragColor=color;
 }`,
-    }, {attributes: ['position', 'uv', 'color'],
-      uniforms: ['world', 'worldViewProjection', ...SCENE_ENVIRONMENT_UNIFORMS],
-      samplers: ['modelTexture'], needAlphaBlending: state.blend});
+    }, {attributes: ['position', 'uv', ...(vertices.colors ? ['color'] : []),
+      ...(vertices.animated ? ['sourceVertexId'] : [])],
+      uniforms: ['world', 'worldViewProjection', 'sourceAmbient',
+        ...(vertices.animated ? ['sourceFrameSize', 'sourceFrameSample'] : []), ...SCENE_ENVIRONMENT_UNIFORMS],
+      samplers: ['modelTexture', ...(vertices.animated ? ['sourceFrames'] : [])], needAlphaBlending: state.blend});
     this.material.setTexture('modelTexture', texture);
     this.material.backFaceCulling = state.cull !== 'NONE';
     // GBF names the culled winding; Babylon names the retained front face.
@@ -55,20 +82,22 @@ ${state.alphaTest ? 'if(color.a<=100.0/255.0)discard;' : ''}
     bindSceneEnvironmentIfPresent(this.material, scene);
     this.mesh.material = this.material;
     this.mesh.isPickable = false;
+    vertices.geometry(indices).applyToMesh(this.mesh);
+    if (vertices.animated) this.mesh.setVerticesData('sourceVertexId', vertices.vertexIds, false, 1);
+    this.mesh.setBoundingInfo(vertices.bounds());
+    for (const subMesh of this.mesh.subMeshes) subMesh.setBoundingInfo(vertices.bounds());
+    vertices.bind(this.material);
     orderSceneModels(scene, [{mesh: this.mesh, priority: 0}]);
   }
 
-  update(vertices: readonly number[][], indices: readonly number[], matrix: EffectNativeMatrix,
-    ambient: readonly number[], colors?: readonly number[][]): void {
-    const data = new VertexData();
-    data.positions = vertices.flatMap(vertex => {
-      const position = transformEffectPosition(matrix, vertex.slice(0, 3) as EffectVec3);
-      return [-position[0], position[1], position[2]];
-    });
-    data.uvs = vertices.flatMap(vertex => vertex.slice(6, 8));
-    data.colors = vertices.flatMap((_, index) => [...(colors?.[index] ?? ambient)]);
-    data.indices = [...indices];
-    data.applyToMesh(this.mesh, true);
+  update(matrix: EffectNativeMatrix, ambient: readonly number[]): void {
+    // R * nativeWorld * R maps the native local/world X reflection to Babylon.
+    this.reflectedMatrix.set(matrix);
+    for (const index of [1, 2, 3, 4, 8, 12]) this.reflectedMatrix[index] *= -1;
+    Matrix.FromArrayToRef(this.reflectedMatrix, 0, this.matrix);
+    this.mesh.freezeWorldMatrix(this.matrix);
+    Vector4.FromArrayToRef(ambient, 0, this.ambient);
+    this.material.setVector4('sourceAmbient', this.ambient);
   }
 
   dispose(): void {this.mesh.dispose(); this.material.dispose(false, false);}

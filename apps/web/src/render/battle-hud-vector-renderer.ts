@@ -2,12 +2,13 @@ import {Vector2} from '@babylonjs/core';
 import type {Scene} from '@babylonjs/core';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import type {ResInventory} from '../../../shared/protocols/PtlInventory';
-import {decodeImageRegion} from '../assets/image-resources';
 import type {BattleHud, SourceWindow} from '../interface/battle/battle-hud';
 import {hudItemSlots} from '../interface/battle/hud-item-slots';
 import {absoluteRect} from '../interface/battle/hud-source-controls';
 import {lifeProgress} from '../interface/battle/life-progress';
 import {BattleScreenVector, type BattleVectorShape, type VectorRectangle} from './battle-screen-vectors';
+import {battleUiLayer} from './battle-ui-layer';
+import {CROSSHAIR_BACKGROUND, CROSSHAIR_FILL} from './battle-crosshair-geometry';
 
 interface ScreenRect {left: number; top: number; width: number; height: number;}
 interface Projection {
@@ -34,8 +35,8 @@ export class BattleHudVectorRenderer {
     const [hud, notices] = await Promise.all([
       import('./battle-hud-vector-geometry'), import('./battle-notice-vector-geometry'),
     ]);
-    await Promise.all([...Object.values(hud.BATTLE_HUD_VECTORS), ...Object.values(notices.BATTLE_NOTICE_VECTORS)]
-      .map(shape => decodeImageRegion(`/${shape.asset}`)));
+    await battleUiLayer(this.scene).prepare([...Object.values(hud.BATTLE_HUD_VECTORS),
+      ...Object.values(notices.BATTLE_NOTICE_VECTORS), CROSSHAIR_BACKGROUND, CROSSHAIR_FILL]);
     this.geometry = hud.BATTLE_HUD_VECTORS;
     this.notices = notices.BATTLE_NOTICE_VECTORS;
   }

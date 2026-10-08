@@ -1,10 +1,11 @@
-import {ArcRotateCamera, Color3, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
+import {ArcRotateCamera, Color3, Color4, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import './style.css';
 import {createAssetViewer} from './asset-viewer';
+import {createWebGpuEngine} from '../../apps/web/src/render/webgpu-engine';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#world')!;
-const engine = new Engine(canvas, true, {}, true);
+const engine = await createWebGpuEngine(canvas);
 const scene = new Scene(engine);
 scene.clearColor = new Color4(0.25, 0.36, 0.44, 1);
 const camera = new ArcRotateCamera('camera', -Math.PI / 2, Math.PI / 3, 100, Vector3.Zero(), scene);
