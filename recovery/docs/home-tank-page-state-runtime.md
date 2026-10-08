@@ -35,16 +35,22 @@
 `tankup` 下一等级记录存在，与现采用资格不是同一来源，二者分别登记。
 
 `useTarget` 复用现 `selectRole({kind:'tank', instanceId})` 确认事务提交当前显示实例，
-不新增交易。`refreshTarget` 以 `session.current.active` 与 Equipment `tankInstanceId`
-严格校验目标，旧 target/账号/会话的迟到响应不回挂。
+不新增交易。`refreshTarget` 在发起刷新时捕获当前 owner／session 与已确认 target，await
+返回后仅在该捕获 session 仍是当前 `session.current` 且 `active`、响应实例与捕获 target
+一致时才写 state；旧 target、账号或会话的迟到响应不回挂。
 
 ## 刷新、pending 与焦点
 
 - 打开装备页并行首查 `Equipment {operation:'QUERY', tankInstanceId}`、`Inventory`、
   `OwnedRoles`、`RoleProfile`；`tankInstanceId` 与确认目标不一致时抛确认不一致错误，
   不当作空数据。
-- 升级确认 `onState` 以 `result.owned` 覆盖 owned，再走 `refreshTarget` 重查
-  Equipment 与 RoleProfile 刷新余额、创意点与目标投影。
+- 改装状态绑定打开时的 owner 与 target；会话失效／重建即清改装状态，当前背景 target
+  与弹窗 target 不匹配时不挂载子 modal，重建后由用户从当前 target 入口重新打开。
+- 升级确认 `onState` 由同一次 `TankUpgrade` 响应直接更新 owned 与已确认金额、
+  `growth.originality`，保持候选 target 的装备／slots 投影；较早的 refresh 不覆盖较新的
+  改装确认钱包。
+- `Equipment`／`RoleProfile` 查询失败时保留已确认钱包并显示本页反馈，不使钱包依赖额外
+  round-trip 成功；补充 refresh 沿用发起时的 owner 与 target 绑定。
 - 装载/卸下保存以 `session.current.pending` 串行化，先服务端 CAS 确认再更新确认投影，
   失败保确认值并提示，不乐观写入。
 - 子 modal 由 `HomeTankUpgradeDialog` 经 body 级 portal 打开，`SourceNoticeView` 同样 portal；
