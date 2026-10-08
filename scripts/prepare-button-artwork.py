@@ -40,6 +40,7 @@ BASES = {
     'mode-zhanlingmoshi': '65/13', 'mode-qinwangmoshi': '65/7',
     'rule-maogouyouhao': '65/28', 'rule-maogouduikang': '65/22',
     'rule-duiyoushanghai': '65/18', 'rule-yizhiduiwai': '65/30',
+    'settings-sound': '74/56', 'settings-music': '74/66',
 }
 
 
@@ -143,6 +144,7 @@ def main():
             body = 'rectangle' if stem == 'btnback' or group == 59 else 'pill'
         if plain:
             background = None
+        background = manual.get('background', background)
         with Image.open(ROOT / 'art/hd-assets/original' / asset) as original:
             original = original.convert('RGBA')
         family = background or ('text' if plain else body)
@@ -160,10 +162,11 @@ def main():
             with Image.open(ART / 'button-backgrounds' / f'{background}.png') as shared:
                 shared = shared.convert('RGBA')
                 target = np.array(tuple(bytes.fromhex(manual['bodyColour'].lstrip('#')))) if manual.get('bodyColour') else body_colour(original)
-                filter_value = colour_filter(body_colour(shared), target)
-                left, top, right, bottom = shared.getchannel('A').getbbox()
-                geometry.update({'background-size': f'{shared.width / (right - left) * 100:.6f}% {shared.height / (bottom - top) * 100:.6f}%',
-                                 'background-position': f'{left / max(1, shared.width - (right - left)) * 100:.6f}% {top / max(1, shared.height - (bottom - top)) * 100:.6f}%'})
+                filter_value = 'none' if manual.get('preserveColours') else colour_filter(body_colour(shared), target)
+                if not manual.get('preserveCanvas'):
+                    left, top, right, bottom = shared.getchannel('A').getbbox()
+                    geometry.update({'background-size': f'{shared.width / (right - left) * 100:.6f}% {shared.height / (bottom - top) * 100:.6f}%',
+                                     'background-position': f'{left / max(1, shared.width - (right - left)) * 100:.6f}% {top / max(1, shared.height - (bottom - top)) * 100:.6f}%'})
         else:
             filter_value = 'none'
         surface_colour = manual.get('bodyColour') or ('#000000' if plain else
@@ -173,7 +176,7 @@ def main():
                          'bodyColour': surface_colour,
                          'bodyStyle': manual.get('bodyStyle', {}),
                          'geometry': geometry}
-        if body == 'option':
+        if body == 'option' and not background:
             assets[asset]['checked'] = state == 1
             assets[asset]['optionKind'] = 'checkbox' if stem in (
                 'baocunmima', 'katongxuanran', 'tongzhitongbu', 'ruanjianguangbiao', 'zhandoubiaoqing') else 'radio'
@@ -182,10 +185,13 @@ def main():
 
     # One source image per shape; each state shares its unlettered background.
     jobs = []
-    base_rows = [(name, 'ui/regions/' + BASES[name] + '.png') for name in sorted(used)]
-    for start in range(0, len(base_rows), 2):
-        selected = base_rows[start:start + 2]
-        identifier = f'blank-buttons-{start // 2:02}'
+    illustrations = {'settings-sound', 'settings-music'}
+    base_rows = [(name, 'ui/regions/' + BASES[name] + '.png') for name in sorted(used - illustrations)]
+    groups = [base_rows[start:start + 2] for start in range(0, len(base_rows), 2)]
+    if used & illustrations:
+        groups.append([(name, 'ui/regions/' + BASES[name] + '.png') for name in sorted(used & illustrations)])
+    for index, selected in enumerate(groups):
+        identifier = f'blank-buttons-{index:02}'
         folder = ART / 'jobs' / identifier
         folder.mkdir(parents=True, exist_ok=True)
         canvas = Image.new('RGB', (1024, 768), '#ff00ff')
@@ -205,6 +211,8 @@ def main():
                           'box': [left, top, left + original.width, top + original.height],
                           'frame': [x, y, x + w, y + h], 'slot': [x + 6, y + 6, x + w - 6, y + h - 6],
                           'buttonBackground': name})
+            if name in illustrations:
+                cells[-1]['preserveCanvas'] = True
             descriptions.append(f'第{index + 1}格为{name}，蓝框外沿{x},{y},{x+w},{y+h}。')
         if not (folder / 'input.png').exists():
             canvas.save(folder / 'input.png')
@@ -271,7 +279,7 @@ def main():
         after = {'content': json.dumps(text['text'], ensure_ascii=False), 'position': 'absolute',
                  'left': f"{text['x'] / text['width'] * 100:.6f}%", 'top': f"{text['y'] / text['height'] * 100:.6f}%",
                  'width': 'max-content', 'white-space': 'pre', 'transform-origin': 'left top',
-                 'transform': f"scaleX({text['scaleX']})", 'font-family': f"'{face}', sans-serif",
+                 'transform': f"scaleX({text['scaleX']})", 'font-family': f"'{face}', sans-serif !important",
                  'font-size': f"{text['size'] / text['width'] * 100:.6f}cqw", 'line-height': f"{text['lineHeight'] / text['width'] * 100:.6f}cqw",
                  'font-style': 'normal', 'font-weight': '700', 'letter-spacing': '0', 'text-transform': 'none',
                  'color': text['colour'], '-webkit-text-stroke': f"{text['stroke'] / text['width'] * 100:.6f}cqw {text['outline']}",

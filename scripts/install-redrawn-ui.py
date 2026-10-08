@@ -170,6 +170,17 @@ def extract(job, cell, entry):
         opacity = original.getchannel('A').getextrema()[1]
         if opacity < 255:
             result.putalpha(result.getchannel('A').point(lambda value: round(value * opacity / 255)))
+    elif cell.get('preserveCanvas'):
+        box = [round(value * (generated.width / job['canvas'][0] if index % 2 == 0 else generated.height / job['canvas'][1]))
+               for index, value in enumerate(cell['box'])]
+        artwork = transparent_artwork(generated.crop(tuple(box)), remove_fringes=True)
+        rgb = np.asarray(artwork.convert('RGB')).astype(np.int16)
+        fringe = (np.minimum(rgb[:, :, 0], rgb[:, :, 2]) - rgb[:, :, 1] > 25) \
+            & (np.abs(rgb[:, :, 0] - rgb[:, :, 2]) < 60)
+        alpha = np.asarray(artwork.getchannel('A')).copy()
+        alpha[fringe] = 0
+        artwork.putalpha(Image.fromarray(alpha))
+        result = artwork.resize(target, Image.Resampling.LANCZOS)
     elif job.get('framed'):
         artwork = transparent_artwork(generated.crop(frame_interior(generated, cell, job)))
         result = place_artwork(artwork, original, target)

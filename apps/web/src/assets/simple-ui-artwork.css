@@ -3941,18 +3941,6 @@
   border-radius: 3px;
 }
 
-[data-source-asset="ui/regions/69/8.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/69/8.png"]::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: #fffcd0;
-  border: 1px solid #947b4f;
-  border-radius: 5px;
-}
-
 [data-source-asset="ui/regions/72/1.png"]:not(.source-static-image):not(.source-state-button)::before,
 [data-source-selection-asset="ui/regions/72/1.png"]::before,
 [data-source-asset="ui/regions/72/2.png"]:not(.source-static-image):not(.source-state-button)::before,
@@ -5520,115 +5508,28 @@
 }
 
 [data-source-asset="ui/regions/74/106.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/74/106.png"]::before {
-  content: '';
-  position: absolute;
-  inset: 1px 0 1px 1px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: linear-gradient(#f4a58f, #ee9780);
-  border: 1px solid #8e5149;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 #fff0dd;
-}
-
-[data-source-asset="ui/regions/74/106.png"]:not(.source-static-image):not(.source-state-button)::after,
-[data-source-selection-asset="ui/regions/74/106.png"]::after {
-  content: "F9";
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font: bold 13px "Arial Black", Arial, sans-serif;
-  font-style: normal;
-  text-shadow: 1px 0 #4a2521, -1px 0 #4a2521, 0 1px #4a2521, 0 -1px #4a2521;
-}
-
+[data-source-selection-asset="ui/regions/74/106.png"]::before,
 [data-source-asset="ui/regions/74/107.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/74/107.png"]::before {
-  content: '';
-  position: absolute;
-  inset: 1px 0 1px 1px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: linear-gradient(#f4a58f, #ee9780);
-  border: 1px solid #8e5149;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 #fff0dd;
-}
-
-[data-source-asset="ui/regions/74/107.png"]:not(.source-static-image):not(.source-state-button)::after,
-[data-source-selection-asset="ui/regions/74/107.png"]::after {
-  content: "F8";
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font: bold 13px "Arial Black", Arial, sans-serif;
-  font-style: normal;
-  text-shadow: 1px 0 #4a2521, -1px 0 #4a2521, 0 1px #4a2521, 0 -1px #4a2521;
-}
-
+[data-source-selection-asset="ui/regions/74/107.png"]::before,
 [data-source-asset="ui/regions/74/108.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/74/108.png"]::before {
-  content: '';
-  position: absolute;
-  inset: 1px 0 1px 1px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: linear-gradient(#f4a58f, #ee9780);
-  border: 1px solid #8e5149;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 #fff0dd;
-}
-
-[data-source-asset="ui/regions/74/108.png"]:not(.source-static-image):not(.source-state-button)::after,
-[data-source-selection-asset="ui/regions/74/108.png"]::after {
-  content: "F10";
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font: bold 13px "Arial Black", Arial, sans-serif;
-  font-style: normal;
-  text-shadow: 1px 0 #4a2521, -1px 0 #4a2521, 0 1px #4a2521, 0 -1px #4a2521;
-}
-
+[data-source-selection-asset="ui/regions/74/108.png"]::before,
 [data-source-asset="ui/regions/74/109.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/74/109.png"]::before {
+[data-source-selection-asset="ui/regions/74/109.png"]::before,
+[data-source-asset="ui/regions/74/110.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-selection-asset="ui/regions/74/110.png"]::before,
+[data-source-asset="ui/regions/74/111.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-selection-asset="ui/regions/74/111.png"]::before,
+[data-source-asset="ui/regions/74/112.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-selection-asset="ui/regions/74/112.png"]::before,
+[data-source-asset="ui/regions/74/113.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-selection-asset="ui/regions/74/113.png"]::before {
   content: '';
-  position: absolute;
-  inset: 1px 0 1px 1px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: linear-gradient(#f4a58f, #ee9780);
-  border: 1px solid #8e5149;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 #fff0dd;
-}
-
-[data-source-asset="ui/regions/74/109.png"]:not(.source-static-image):not(.source-state-button)::after,
-[data-source-selection-asset="ui/regions/74/109.png"]::after {
-  content: "F11";
   position: absolute;
   inset: 0;
   box-sizing: border-box;
   pointer-events: none;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font: bold 13px "Arial Black", Arial, sans-serif;
-  font-style: normal;
-  text-shadow: 1px 0 #4a2521, -1px 0 #4a2521, 0 1px #4a2521, 0 -1px #4a2521;
+  background: linear-gradient(#efa28c, #ef9a86);
+  border: 0;
 }
 
 [data-source-asset="ui/regions/74/11.png"]:not(.source-static-image):not(.source-state-button)::before,
@@ -5640,118 +5541,6 @@
   pointer-events: none;
   background: linear-gradient(180deg, #ff9a7b, #d68a6b);
   border-radius: 2px;
-}
-
-[data-source-asset="ui/regions/74/110.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/74/110.png"]::before {
-  content: '';
-  position: absolute;
-  inset: 1px 0 1px 1px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: linear-gradient(#f4a58f, #ee9780);
-  border: 1px solid #8e5149;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 #fff0dd;
-}
-
-[data-source-asset="ui/regions/74/110.png"]:not(.source-static-image):not(.source-state-button)::after,
-[data-source-selection-asset="ui/regions/74/110.png"]::after {
-  content: "F12";
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font: bold 13px "Arial Black", Arial, sans-serif;
-  font-style: normal;
-  text-shadow: 1px 0 #4a2521, -1px 0 #4a2521, 0 1px #4a2521, 0 -1px #4a2521;
-}
-
-[data-source-asset="ui/regions/74/111.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/74/111.png"]::before {
-  content: '';
-  position: absolute;
-  inset: 1px 0 1px 1px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: linear-gradient(#f4a58f, #ee9780);
-  border: 1px solid #8e5149;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 #fff0dd;
-}
-
-[data-source-asset="ui/regions/74/111.png"]:not(.source-static-image):not(.source-state-button)::after,
-[data-source-selection-asset="ui/regions/74/111.png"]::after {
-  content: "F5";
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font: bold 13px "Arial Black", Arial, sans-serif;
-  font-style: normal;
-  text-shadow: 1px 0 #4a2521, -1px 0 #4a2521, 0 1px #4a2521, 0 -1px #4a2521;
-}
-
-[data-source-asset="ui/regions/74/112.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/74/112.png"]::before {
-  content: '';
-  position: absolute;
-  inset: 1px 0 1px 1px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: linear-gradient(#f4a58f, #ee9780);
-  border: 1px solid #8e5149;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 #fff0dd;
-}
-
-[data-source-asset="ui/regions/74/112.png"]:not(.source-static-image):not(.source-state-button)::after,
-[data-source-selection-asset="ui/regions/74/112.png"]::after {
-  content: "F6";
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font: bold 13px "Arial Black", Arial, sans-serif;
-  font-style: normal;
-  text-shadow: 1px 0 #4a2521, -1px 0 #4a2521, 0 1px #4a2521, 0 -1px #4a2521;
-}
-
-[data-source-asset="ui/regions/74/113.png"]:not(.source-static-image):not(.source-state-button)::before,
-[data-source-selection-asset="ui/regions/74/113.png"]::before {
-  content: '';
-  position: absolute;
-  inset: 1px 0 1px 1px;
-  box-sizing: border-box;
-  pointer-events: none;
-  background: linear-gradient(#f4a58f, #ee9780);
-  border: 1px solid #8e5149;
-  border-radius: 3px;
-  box-shadow: inset 0 1px 0 #fff0dd;
-}
-
-[data-source-asset="ui/regions/74/113.png"]:not(.source-static-image):not(.source-state-button)::after,
-[data-source-selection-asset="ui/regions/74/113.png"]::after {
-  content: "F7";
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font: bold 13px "Arial Black", Arial, sans-serif;
-  font-style: normal;
-  text-shadow: 1px 0 #4a2521, -1px 0 #4a2521, 0 1px #4a2521, 0 -1px #4a2521;
 }
 
 [data-source-asset="ui/regions/74/12.png"]:not(.source-static-image):not(.source-state-button)::before,
@@ -5817,12 +5606,21 @@
 [data-source-selection-asset="ui/regions/74/127.png"]::before {
   content: '';
   position: absolute;
-  inset: 0.000% 0.000% 0.000% 0.000%;
+  inset: 0;
   box-sizing: border-box;
   pointer-events: none;
-  background: radial-gradient(circle at 35% 30%, #ffffde 0 10%, #ffcf08 22% 60%, #f79a00 72%, #5b2b00 88%);
-  border-radius: 50% 50% 45% 45%;
-  clip-path: polygon(50% 0, 58% 24%, 100% 18%, 91% 62%, 64% 100%, 36% 100%, 9% 62%, 0 18%, 42% 24%);
+  background: radial-gradient(ellipse at 26% 44%, #ffffde 0 9%, #ffe308 18% 31%, transparent 46%), radial-gradient(ellipse at 62% 53%, #ffcf08 0 17%, #f79a00 32%, #d67900 65%, #000 82%);
+  clip-path: polygon(evenodd, 4.7619% 25.0000%, 4.7619% 25.0000%, 0.0000% 67.1875%, 23.8095% 98.4375%, 79.7619% 98.4375%, 98.8095% 67.1875%, 98.8095% 31.2500%, 79.7619% 12.5000%, 52.3810% 12.5000%, 42.8571% 0.0000%, 41.6667% 12.5000%, 4.7619% 25.0000%, 4.7619% 25.0000%);
+}
+
+[data-source-asset="ui/regions/74/127.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-selection-asset="ui/regions/74/127.png"]::after {
+  content: '';
+  position: absolute;
+  inset: 0 47.619% 87.5% 47.619%;
+  box-sizing: border-box;
+  pointer-events: none;
+  background: #000;
 }
 
 [data-source-asset="ui/regions/74/128.png"]:not(.source-static-image):not(.source-state-button)::before,
@@ -5884,40 +5682,32 @@
 [data-source-selection-asset="ui/regions/74/131.png"]::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 10% 10% 10% 0;
   box-sizing: border-box;
   pointer-events: none;
-  background: linear-gradient(#ffe097 0 20%, #ef8252 35% 80%, #ffdc94 90%);
-  border-top: 1px solid #ce7946;
-  border-bottom: 1px solid #ce7946;
+  background: linear-gradient(#ffe4a8 0 12.5%, #de8b5d 12.5% 25%, #ef8252 25% 75%, #ce6142 75% 87.5%, #ffdf94 87.5%);
+  border-radius: 0 45% 45% 0;
 }
 
 [data-source-asset="ui/regions/74/132.png"]:not(.source-static-image):not(.source-state-button)::before,
 [data-source-selection-asset="ui/regions/74/132.png"]::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 10% 0 10% 10%;
   box-sizing: border-box;
   pointer-events: none;
-  background: linear-gradient(#ffe097 0 20%, #ef8252 35% 80%, #ffdc94 90%);
-  border-left: 1px solid #ce7946;
-  border-top: 1px solid #ce7946;
-  border-bottom: 1px solid #ce7946;
-  border-radius: 5px 0 0 5px;
+  background: linear-gradient(#ffe4a8 0 12.5%, #de8b5d 12.5% 25%, #ef8252 25% 75%, #ce6142 75% 87.5%, #ffdf94 87.5%);
+  border-radius: 45% 0 0 45%;
 }
 
 [data-source-asset="ui/regions/74/133.png"]:not(.source-static-image):not(.source-state-button)::before,
 [data-source-selection-asset="ui/regions/74/133.png"]::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 10% 0;
   box-sizing: border-box;
   pointer-events: none;
-  background: linear-gradient(#ffe097 0 20%, #ef8252 35% 80%, #ffdc94 90%);
-  border-right: 1px solid #ce7946;
-  border-top: 1px solid #ce7946;
-  border-bottom: 1px solid #ce7946;
-  border-radius: 0 5px 5px 0;
+  background: linear-gradient(#ffe4a8 0 12.5%, #de8b5d 12.5% 25%, #ef8252 25% 75%, #ce6142 75% 87.5%, #ffdf94 87.5%);
 }
 
 [data-source-asset="ui/regions/74/14.png"]:not(.source-static-image):not(.source-state-button)::before,

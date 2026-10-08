@@ -2438,6 +2438,28 @@
         "border": "1px solid #12142b",
         "box-shadow": "none"
       }
+    },
+    "ui/regions/74/56.png": {
+      "background": "settings-sound",
+      "preserveColours": true,
+      "bodyBounds": [
+        0,
+        0,
+        69,
+        56
+      ],
+      "preserveCanvas": true
+    },
+    "ui/regions/74/66.png": {
+      "background": "settings-music",
+      "preserveColours": true,
+      "bodyBounds": [
+        0,
+        0,
+        65,
+        47
+      ],
+      "preserveCanvas": true
     }
   },
   "textAssets": {
@@ -2669,6 +2691,36 @@
         "border-radius": "50%",
         "box-shadow": "0 2px 1px #000",
         "mask-image": "conic-gradient(from 323deg, transparent 0 28deg, #000 29deg 360deg)"
+      }
+    },
+    "ui/regions/74/127.png": {
+      "before": {
+        "background": "radial-gradient(ellipse at 26% 44%, #ffffde 0 9%, #ffe308 18% 31%, transparent 46%), radial-gradient(ellipse at 62% 53%, #ffcf08 0 17%, #f79a00 32%, #d67900 65%, #000 82%)",
+        "clip-path": "polygon(evenodd, 4.7619% 25.0000%, 4.7619% 25.0000%, 0.0000% 67.1875%, 23.8095% 98.4375%, 79.7619% 98.4375%, 98.8095% 67.1875%, 98.8095% 31.2500%, 79.7619% 12.5000%, 52.3810% 12.5000%, 42.8571% 0.0000%, 41.6667% 12.5000%, 4.7619% 25.0000%, 4.7619% 25.0000%)"
+      },
+      "after": {
+        "inset": "0 47.619% 87.5% 47.619%",
+        "background": "#000"
+      }
+    },
+    "ui/regions/74/132.png": {
+      "before": {
+        "background": "linear-gradient(#ffe4a8 0 12.5%, #de8b5d 12.5% 25%, #ef8252 25% 75%, #ce6142 75% 87.5%, #ffdf94 87.5%)",
+        "inset": "10% 0 10% 10%",
+        "border-radius": "45% 0 0 45%"
+      }
+    },
+    "ui/regions/74/133.png": {
+      "before": {
+        "background": "linear-gradient(#ffe4a8 0 12.5%, #de8b5d 12.5% 25%, #ef8252 25% 75%, #ce6142 75% 87.5%, #ffdf94 87.5%)",
+        "inset": "10% 0"
+      }
+    },
+    "ui/regions/74/131.png": {
+      "before": {
+        "background": "linear-gradient(#ffe4a8 0 12.5%, #de8b5d 12.5% 25%, #ef8252 25% 75%, #ce6142 75% 87.5%, #ffdf94 87.5%)",
+        "inset": "10% 10% 10% 0",
+        "border-radius": "0 45% 45% 0"
       }
     }
   },

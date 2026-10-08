@@ -83,7 +83,7 @@ export function HomeTankOwnedParameters({ui, record, pet, catalog, equippedItemI
         className="home-tank-owned-attribute" text={String(values[name])} />)}
     <div {...background} className="home-tank-capacity" data-home-tank-capacity=""
       role="meter" aria-label="炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values.capacity}>
-      <span aria-hidden="true" style={{position: 'absolute', inset: 0, width, height,
+      <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, width, height,
         clipPath: `inset(0 ${width - extent}px 0 0)`, backgroundImage: fill.style.backgroundImage,
         backgroundSize: '100% 100%'}} />
     </div>

@@ -42,6 +42,8 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
 }) {
   const layout = new HomeSourceLayout(ui, 'shop_tankpage.xml');
   const textureLayout = new HomeSourceLayout(ui, 'shop_tankpage_texture.xml');
+  const selection = sourceProps(ui, layout, 'shop_tankpage.xml', 'lstTank', layout.control('lstTank').properties.SelectionImage);
+  const unavailable = sourceProps(ui, layout, 'shop_tankpage.xml', 'btnChangeTexture', layout.control('btnChangeTexture').properties.NormalImage);
   const session = useRef({active: false, query: false, identity: {}});
   const [tankTypes, setTankTypes] = useState<CombatCatalog['tankTypes']>([]);
   const [owned, setOwned] = useState<ResOwnedRoles>();
@@ -158,7 +160,8 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
         const rowFields = new Map(value.fields), id = rowFields.get(0x1c)!, rowTankId = rowFields.get(0x24);
         return <button key={id} type="button" role="option" data-tank-shop-owned-instance={id} data-home-owned-tank-row={id} disabled={busy}
           aria-selected={id === instance} tabIndex={id === instance ? 0 : -1}
-          style={id === instance ? {backgroundImage: sourceProps(ui, layout, 'shop_tankpage.xml', 'lstTank', layout.control('lstTank').properties.SelectionImage).style.backgroundImage} : undefined}
+          style={id === instance ? {backgroundImage: selection.style.backgroundImage} : undefined}
+          data-source-selection-asset={id === instance ? selection['data-source-asset'] : undefined}
           onClick={() => selectRecord(value)} onKeyDown={event => {
             const destination = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
               : event.key === 'Home' ? 0 : event.key === 'End' ? records.length - 1 : undefined;
@@ -196,7 +199,8 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
     <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="btnChangeTexture" data-tank-shop-texture-save=""
       aria-label="保存战车迷彩" disabled={busy || !profile || !changed} onClick={event => {void save(event.currentTarget);}}>
       {(busy || !profile || !changed) && <span className="tank-shop-texture-save-unavailable" data-presentation-state="web-disabled"
-        style={{backgroundImage: sourceProps(ui, layout, 'shop_tankpage.xml', 'btnChangeTexture', layout.control('btnChangeTexture').properties.NormalImage).style.backgroundImage}} />}
+        data-source-asset={unavailable['data-source-asset']} data-source-button-label="external"
+        style={{backgroundImage: unavailable.style.backgroundImage}} />}
     </SourceButton>
     <button type="button" className="tank-shop-refresh" disabled={busy} onClick={() => owner.session?.refresh()} data-tank-shop-texture-refresh="">刷新拥有资料</button>
     <output className="tank-shop-status" data-tank-shop-texture-status="" data-texture-selection={selected ? JSON.stringify(selected) : undefined}

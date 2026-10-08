@@ -13418,8 +13418,8 @@
       }
     },
     "ui/regions/74/56.png": {
-      "background": null,
-      "family": "option",
+      "background": "/hd-ui/buttons/settings-sound.png",
+      "family": "settings-sound",
       "filter": "none",
       "text": {
         "text": "音效",
@@ -13444,10 +13444,8 @@
       "bodyColour": "#f7e7a5",
       "bodyStyle": {},
       "geometry": {
-        "inset": "1.785714% 1.449275% 1.785714% 1.449275%"
-      },
-      "checked": false,
-      "optionKind": "radio"
+        "inset": "0.000000% 0.000000% 0.000000% 0.000000%"
+      }
     },
     "ui/regions/74/57.png": {
       "background": "/hd-ui/buttons/small.png",
@@ -13648,8 +13646,8 @@
       }
     },
     "ui/regions/74/66.png": {
-      "background": null,
-      "family": "option",
+      "background": "/hd-ui/buttons/settings-music.png",
+      "family": "settings-music",
       "filter": "none",
       "text": {
         "text": "音乐",
@@ -13674,10 +13672,8 @@
       "bodyColour": "#ffffde",
       "bodyStyle": {},
       "geometry": {
-        "inset": "2.127660% 3.076923% 2.127660% 1.538462%"
-      },
-      "checked": false,
-      "optionKind": "radio"
+        "inset": "0.000000% 0.000000% 0.000000% 0.000000%"
+      }
     },
     "ui/regions/74/68.png": {
       "background": "/hd-ui/buttons/banner.png",

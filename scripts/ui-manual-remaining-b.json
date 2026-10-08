@@ -792,13 +792,6 @@
         "border-radius": "2px"
       }
     },
-    "ui/regions/69/8.png": {
-      "before": {
-        "background": "#fffcd0",
-        "border": "1px solid #947b4f",
-        "border-radius": "5px"
-      }
-    },
     "ui/regions/69/23.png": {
       "before": {
         "inset": "3.571% 3.136% 0.000% 0.348%",

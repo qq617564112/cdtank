@@ -107,7 +107,7 @@ def main():
                         'inset': 'auto', 'left': f"{text['x'] / text['width'] * 100:.6f}%",
                         'top': f"{text['y'] / text['height'] * 100:.6f}%", 'display': 'block',
                         'width': 'max-content', 'white-space': 'pre', 'transform-origin': 'left top',
-                        'transform': f"scaleX({text['scaleX']})", 'font-family': f"'{face}', sans-serif",
+                        'transform': f"scaleX({text['scaleX']})", 'font-family': f"'{face}', sans-serif !important",
                         'font-size': f"{text['size'] / text['width'] * 100:.6f}cqw",
                         'line-height': f"{text['lineHeight'] / text['width'] * 100:.6f}cqw",
                         'font-weight': '700', 'font-style': 'normal', 'letter-spacing': '0', 'text-transform': 'none',

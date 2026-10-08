@@ -104,7 +104,7 @@ export function HomePetOwnedMastery({ui, selectedBase, currentTank, currentPetIn
         className="home-pet-mastery-progress" data-home-pet-mastery-progress={name}
         data-mastery-value={value} data-mastery-fraction={values.progress[index]}
         role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={Math.max(5, value)} aria-valuenow={value}>
-        <span aria-hidden="true" style={{position: 'absolute', inset: 0, width, height,
+        <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, width, height,
           clipPath: `inset(0 ${width - extent}px 0 0)`, backgroundImage: fill.style.backgroundImage,
           backgroundSize: '100% 100%'}} />
       </div>;

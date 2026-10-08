@@ -19,6 +19,8 @@ def main():
               for image in sheet['images'] if image.get('asset', '').startswith('ui/regions/')}
     drawings = {}
     families = defaultdict(list)
+    manual = manual_catalogue()
+    text_only = set(manual['textAssets']) - set(manual['drawings'])
 
     def original(asset):
         return Image.open(ORIGINALS / asset).convert('RGBA')
@@ -42,6 +44,8 @@ def main():
                     f'{left / image.width * 100:.3f}%'}
 
     def add(asset, family, before, after=None):
+        if asset in text_only:
+            return
         drawings[asset] = {'before': before, **({'after': after} if after else {})}
         families[family].append(asset)
 
@@ -280,7 +284,7 @@ def main():
             position = position.replace('Upper', 'Top').replace('Lower', 'Bottom')
             add(asset, 'stock-widget-frames', slice_style(position, fill, edge, 3))
 
-    for asset, drawing in manual_catalogue()['drawings'].items():
+    for asset, drawing in manual['drawings'].items():
         add(asset, 'source-ui', drawing['before'], drawing.get('after'))
 
     # Store explicit source membership; runtime rendering never classifies by filename.

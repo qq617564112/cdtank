@@ -70,11 +70,16 @@ def fit_text(image, label, ink_bounds, fill, outline, stroke, face='brush'):
 
 def manual_catalogue():
     result = {'assets': {}, 'textAssets': {}, 'drawings': {}, 'reviewed': []}
-    for path in sorted((ROOT / 'scripts').glob('ui-manual-*.json')):
+    paths = sorted((ROOT / 'scripts').glob('ui-manual-*.json'),
+                   key=lambda path: (path.name == 'ui-manual-root.json', path.name))
+    for path in paths:
         data = json.loads(path.read_text())
         for category in ('assets', 'textAssets', 'drawings'):
             for source, entry in data.get(category, {}).items():
-                result[category].setdefault(source, {}).update(entry)
+                if category == 'drawings':
+                    result[category][source] = entry
+                else:
+                    result[category].setdefault(source, {}).update(entry)
         result['reviewed'].extend(data.get('reviewed', []))
     for source in result['assets'].keys() & result['drawings'].keys():
         if result['assets'][source].get('plain'):

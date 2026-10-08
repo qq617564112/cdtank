@@ -12,6 +12,7 @@ import {KEY_BINDINGS_STORAGE_KEY, type InitialSettings} from './settings-startup
 import {SettingsSourceButton, SettingsSourceCheckmark, SettingsSourcePage, SETTINGS_LAYOUT} from './settings-source-page';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
+import {sourceUiImage} from '../resources/source-ui-image';
 import {SourceImageScale} from '../resources/source-static-image';
 import {loadUiFont} from '../resources/source-ui-fonts';
 import {loadSourceUi} from '../resources/source-ui-resources';
@@ -170,18 +171,26 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
 
   const layout = ui ? new HomeSourceLayout(ui, SETTINGS_LAYOUT) : undefined;
   const props = (name: string) => sourceProps(ui!, layout!, SETTINGS_LAYOUT, name);
-  function sliderStyle(source: string): CSSProperties {
+  function sliderArtwork(source: string, value: number) {
     const properties = layout!.control(source).properties;
-    const image = (property: string) => sourceProps(ui!, layout!, SETTINGS_LAYOUT, source, properties[property]).style.backgroundImage;
+    const image = (property: string) => sourceUiImage(ui!, properties[property]);
     const reference = /^set:(\S+) image:(.+)$/.exec(properties.ThumbNormalImage);
     const sets = ui!.imagesets.filter(set => set.attributes.Name === reference?.[1]);
     const set = sets.find(value => value.path.includes('imagesets_dds/')) ?? sets[0];
     const thumb = set?.images.find(value => value.Name === reference?.[2]);
-    return {...props(source).style, '--settings-thumb': image('ThumbNormalImage'),
+    const style = {...props(source).style,
       '--settings-thumb-width': `${thumb?.Width ?? 7}px`, '--settings-thumb-height': `${thumb?.Height ?? 10}px`,
-      '--settings-track-left': image('TrackLeftImage'), '--settings-track-middle': image('TrackMiddleImage'),
-      '--settings-track-right': image('TrackRightImage'),
     } as CSSProperties;
+    return {style, layers: <>
+      {([['TrackLeftImage', 'left'], ['TrackMiddleImage', 'middle'], ['TrackRightImage', 'right']] as const).map(([property, part]) => {
+        const artwork = image(property);
+        return <span key={property} className={`settings-volume-track-${part}`} aria-hidden="true"
+          data-source-asset={artwork.asset} style={{backgroundImage: artwork.backgroundImage}} />;
+      })}
+      <span className="settings-volume-thumb" aria-hidden="true" data-source-asset={image('ThumbNormalImage').asset}
+        style={{left: value * (Number(style.width) - Number(thumb?.Width ?? 7)),
+          backgroundImage: image('ThumbNormalImage').backgroundImage}} />
+    </>};
   }
   return <dialog ref={dialog} id="source-settings" aria-label="系统设置" aria-busy={!ui && !resourceError} style={{zoom: scale}}
     onCompositionStart={() => {composing.current = true;}}
@@ -216,12 +225,16 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
         {QUICK_CHAT_KEYS.map(key => <input key={key} {...props('edt' + key)} className="settings-quick-chat"
           aria-label={key + '快捷聊天'} data-settings-quick-chat={key} value={quickChats[key]} maxLength={72}
           autoComplete="off" onChange={event => setQuickChats({...quickChats, [key]: event.currentTarget.value})} />)}
-        {(['music', 'sound'] as const).map(name => <input key={name}
-          {...props(name === 'music' ? 'sldMusicVolume' : 'sldSoundVolume')} type="range" min="0" max="1" step="0.05"
-          className="settings-volume" data-settings-volume={name} aria-label={name === 'music' ? '音乐音量' : '音效音量'}
-          aria-valuetext={`${Math.round(audio[name] * 100)}%`} value={audio[name]}
-          style={sliderStyle(name === 'music' ? 'sldMusicVolume' : 'sldSoundVolume')}
-          onChange={event => changeAudio(name, event.currentTarget.valueAsNumber)} />)}
+        {(['music', 'sound'] as const).map(name => {
+          const source = name === 'music' ? 'sldMusicVolume' : 'sldSoundVolume';
+          const artwork = sliderArtwork(source, audio[name]);
+          return <div key={name} {...props(source)} className="settings-volume-control" style={artwork.style}>
+            {artwork.layers}
+            <input type="range" min="0" max="1" step="0.05" className="settings-volume" data-settings-volume={name}
+              aria-label={name === 'music' ? '音乐音量' : '音效音量'} aria-valuetext={`${Math.round(audio[name] * 100)}%`}
+              value={audio[name]} onChange={event => changeAudio(name, event.currentTarget.valueAsNumber)} />
+          </div>;
+        })}
         {([['window', 'rdoWindowMode', '窗口模式'], ['fullscreen', 'rdoFullscreenMode', '全屏模式']] as const)
           .map(([mode, source, label]) => <SettingsSourceButton key={source} ui={ui} source={source}
             data-settings-display-mode={mode} data-settings-display-binding="web-browser-fullscreen"
