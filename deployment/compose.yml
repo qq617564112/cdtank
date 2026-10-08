@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     init: true
     ports:
-      - "192.168.10.140:61002:3001"
+      - "61002:3001"
     volumes:
       - accounts:/app/state
     healthcheck:

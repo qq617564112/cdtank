@@ -4,6 +4,8 @@
 
 访问地址：[http://192.168.10.140:61002/](http://192.168.10.140:61002/)。网页、模型、音频和 WebSocket `/game` 共用此端口。
 
+宿主机 `61002` 监听所有网络接口。Nginx Proxy Manager 将 `tank.cloyd.fun` 转发到 `http://172.17.0.1:61002`，并开启 WebSocket 支持，域名入口为 [https://tank.cloyd.fun/](https://tank.cloyd.fun/)。
+
 ## 发布
 
 推送到 `main` 自动触发 `.forgejo/workflows/deploy.yml`；也可在仓库 Actions 页面手动运行。仓库专用的 `cdtank-deploy` runner 使用目标机器的 Docker socket，镜像直接在该 Docker 上构建和部署。
