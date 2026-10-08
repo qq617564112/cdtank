@@ -36,10 +36,8 @@ export class PetView {
     const document = JSON.parse(new TextDecoder().decode(new Uint8Array(bytes, 20, length)));
     const duration: number = document.extras.mv3Duration;
     if (!Number.isFinite(duration) || duration <= 0) throw new Error('宠物动作时长缺失');
-    const url = URL.createObjectURL(new Blob([bytes], {type: 'model/gltf-binary'}));
-    let assets: AssetContainer;
-    try {assets = await LoadAssetContainerAsync(url, scene, {pluginExtension: '.glb'});}
-    finally {URL.revokeObjectURL(url);}
+    const rootUrl = response.url.slice(0, response.url.lastIndexOf('/') + 1);
+    const assets = await LoadAssetContainerAsync(new Uint8Array(bytes), scene, {rootUrl, pluginExtension: '.glb'});
     if (scene.isDisposed) {assets.dispose(); throw new Error('宠物预览已关闭');}
     const root = new TransformNode(`pet-preview-${petId}`, scene);
     try {
