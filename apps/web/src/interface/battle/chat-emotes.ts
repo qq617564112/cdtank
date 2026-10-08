@@ -1,4 +1,6 @@
 import {imageResourceUrl} from '../../assets/image-cache';
+import {isSimpleUiImage} from '../../assets/simple-ui-artwork';
+import {buttonArtwork} from '../../assets/button-artwork';
 import {EMOTE_COUNT, EMOTE_FIRST_CODEPOINT} from './chat-emote-text';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {loadChatEmoteSequences} from './chat-emote-animation';
@@ -155,11 +157,16 @@ export class ChatEmotes {
         Object.assign(piece.style,{position:'absolute',left:`${item.x}px`,top:'0px',width:`${item.width}px`,height:`${height}px`,whiteSpace:'pre'});
         if (item.image) {
           const image=this.imageCatalog!.image(item.image.set,item.image.name)!;
-          const img=document.createElement('img');img.draggable=false;img.alt='';
-          img.dataset.chatSourceImage=item.image.name;img.dataset.chatSourceImageset=item.image.set;
-          img.src=imageResourceUrl(`/${image.asset}`);img.width=image.width;img.height=image.height;
-          Object.assign(img.style,{position:'absolute',left:'0px',top:'0px',width:`${image.width}px`,height:`${image.height}px`});
-          piece.append(img);
+          const artwork=isSimpleUiImage(image.asset) || buttonArtwork(image.asset)
+            ? document.createElement('span') : document.createElement('img');
+          artwork.dataset.chatSourceImage=item.image.name;artwork.dataset.chatSourceImageset=item.image.set;
+          artwork.dataset.sourceAsset=image.asset;
+          if (artwork instanceof HTMLImageElement) {
+            artwork.draggable=false;artwork.alt='';artwork.src=imageResourceUrl(`/${image.asset}`);
+            artwork.width=image.width;artwork.height=image.height;
+          } else artwork.setAttribute('aria-hidden','true');
+          Object.assign(artwork.style,{position:'absolute',left:'0px',top:'0px',width:`${image.width}px`,height:`${image.height}px`});
+          piece.append(artwork);
         } else if (item.emoteId===undefined) piece.textContent=item.text;
         else {
           const sequence=this.sequences?.get(item.emoteId),image=sequence?.definition.frames[0]??this.images.get(item.emoteId)!;

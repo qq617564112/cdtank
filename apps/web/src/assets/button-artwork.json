@@ -1,0 +1,8199 @@
+{
+  "assets": {
+    "ui/regions/44/49.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "家族",
+        "width": 49,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/50.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "家族",
+        "width": 49,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/51.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "家族",
+        "width": 49,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/53.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "聊天",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/54.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "聊天",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/55.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "密语",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/56.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "密语",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/57.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "密语",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/58.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "好友",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/59.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "队伍",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/60.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "GM",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 16.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/61.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "GM",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 16.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/62.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "GM",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 16.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/63.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "聊天",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/64.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "好友",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/65.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "队伍",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/66.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "队伍",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/67.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "好友",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/86.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/87.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/88.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/89.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/90.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/91.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/92.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/93.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/94.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/95.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/96.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/97.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/98.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/99.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/100.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/101.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/102.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/44/103.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/59/16.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "继续",
+        "width": 183,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 72.78,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/59/17.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "继续",
+        "width": 183,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 72.78,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/59/18.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "继续",
+        "width": 183,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 72.78,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/13.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "回上页",
+        "width": 181,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 60.98,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/14.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "回上页",
+        "width": 181,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 60.98,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/15.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "回上页",
+        "width": 181,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 60.98,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/20.png": {
+      "background": "/hd-ui/buttons/hanging.png",
+      "family": "hanging",
+      "filter": "none",
+      "text": {
+        "text": "系统设定",
+        "width": 82,
+        "height": 55,
+        "face": "brush",
+        "size": 15.58,
+        "lineHeight": 18.696,
+        "x": 9.84,
+        "y": 25.302,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/60/21.png": {
+      "background": "/hd-ui/buttons/hanging.png",
+      "family": "hanging",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "系统设定",
+        "width": 82,
+        "height": 55,
+        "face": "brush",
+        "size": 15.58,
+        "lineHeight": 18.696,
+        "x": 9.84,
+        "y": 25.302,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/60/22.png": {
+      "background": "/hd-ui/buttons/hanging.png",
+      "family": "hanging",
+      "filter": "none",
+      "text": {
+        "text": "系统设定",
+        "width": 82,
+        "height": 55,
+        "face": "brush",
+        "size": 15.58,
+        "lineHeight": 18.696,
+        "x": 9.84,
+        "y": 25.302,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/60/23.png": {
+      "background": "/hd-ui/buttons/hanging.png",
+      "family": "hanging",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "教学说明",
+        "width": 78,
+        "height": 57,
+        "face": "brush",
+        "size": 14.82,
+        "lineHeight": 17.784,
+        "x": 9.36,
+        "y": 27.018,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/60/24.png": {
+      "background": "/hd-ui/buttons/hanging.png",
+      "family": "hanging",
+      "filter": "none",
+      "text": {
+        "text": "教学说明",
+        "width": 78,
+        "height": 57,
+        "face": "brush",
+        "size": 14.82,
+        "lineHeight": 17.784,
+        "x": 9.36,
+        "y": 27.018,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/60/25.png": {
+      "background": "/hd-ui/buttons/hanging.png",
+      "family": "hanging",
+      "filter": "none",
+      "text": {
+        "text": "教学说明",
+        "width": 78,
+        "height": 57,
+        "face": "brush",
+        "size": 14.82,
+        "lineHeight": 17.784,
+        "x": 9.36,
+        "y": 27.018,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/60/38.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "好友",
+        "width": 54,
+        "height": 54,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 6.48,
+        "y": 11.448,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/39.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "玩家",
+        "width": 54,
+        "height": 54,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 6.48,
+        "y": 11.448,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/52.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "玩家",
+        "width": 64,
+        "height": 33,
+        "face": "brush",
+        "size": 15.84,
+        "lineHeight": 19.008,
+        "x": 16.16,
+        "y": 5.016,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/53.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "好友",
+        "width": 64,
+        "height": 33,
+        "face": "brush",
+        "size": 15.84,
+        "lineHeight": 19.008,
+        "x": 16.16,
+        "y": 5.016,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/54.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "好友",
+        "width": 64,
+        "height": 33,
+        "face": "brush",
+        "size": 15.84,
+        "lineHeight": 19.008,
+        "x": 16.16,
+        "y": 5.016,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/55.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "好友",
+        "width": 64,
+        "height": 33,
+        "face": "brush",
+        "size": 15.84,
+        "lineHeight": 19.008,
+        "x": 16.16,
+        "y": 5.016,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/56.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "玩家",
+        "width": 64,
+        "height": 33,
+        "face": "brush",
+        "size": 15.84,
+        "lineHeight": 19.008,
+        "x": 16.16,
+        "y": 5.016,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/57.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "玩家",
+        "width": 64,
+        "height": 33,
+        "face": "brush",
+        "size": 15.84,
+        "lineHeight": 19.008,
+        "x": 16.16,
+        "y": 5.016,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/58.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "队伍",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/59.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "密语",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/60.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "密语",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/61.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "聊天",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/62.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "聊天",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/63.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "密语",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/64.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "聊天",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/65.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "队伍",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/66.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "队伍",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/67.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "家族",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/68.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "GM",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 23.3,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/69.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "GM",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 23.3,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/70.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "GM",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 23.3,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/71.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "好友",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/72.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "好友",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/73.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "好友",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/74.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "家族",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/60/75.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "家族",
+        "width": 61,
+        "height": 32,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 6.88,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/0.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "加入狗队",
+        "width": 183,
+        "height": 44,
+        "face": "brush",
+        "size": 21.12,
+        "lineHeight": 25.344,
+        "x": 49.26,
+        "y": 6.688,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/1.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "加入狗队",
+        "width": 183,
+        "height": 44,
+        "face": "brush",
+        "size": 21.12,
+        "lineHeight": 25.344,
+        "x": 49.26,
+        "y": 6.688,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/2.png": {
+      "background": "/hd-ui/buttons/dog-team.png",
+      "family": "dog-team",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "加入狗队",
+        "width": 183,
+        "height": 44,
+        "face": "brush",
+        "size": 21.12,
+        "lineHeight": 25.344,
+        "x": 49.26,
+        "y": 6.688,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/64/3.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "加入狗队",
+        "width": 183,
+        "height": 44,
+        "face": "brush",
+        "size": 21.12,
+        "lineHeight": 25.344,
+        "x": 49.26,
+        "y": 6.688,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/4.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "加入猫队",
+        "width": 183,
+        "height": 44,
+        "face": "brush",
+        "size": 21.12,
+        "lineHeight": 25.344,
+        "x": 49.26,
+        "y": 6.688,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/5.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "加入猫队",
+        "width": 183,
+        "height": 44,
+        "face": "brush",
+        "size": 21.12,
+        "lineHeight": 25.344,
+        "x": 49.26,
+        "y": 6.688,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/6.png": {
+      "background": "/hd-ui/buttons/cat-team.png",
+      "family": "cat-team",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "加入猫队",
+        "width": 183,
+        "height": 44,
+        "face": "brush",
+        "size": 21.12,
+        "lineHeight": 25.344,
+        "x": 49.26,
+        "y": 6.688,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/64/7.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "加入猫队",
+        "width": 183,
+        "height": 44,
+        "face": "brush",
+        "size": 21.12,
+        "lineHeight": 25.344,
+        "x": 49.26,
+        "y": 6.688,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/8.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "创意点",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 66.06,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/9.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "技能点",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 66.06,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/10.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "技能点",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 66.06,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/11.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "创意点",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 66.06,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/12.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "创意点",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 66.06,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/13.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "技能点",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 66.06,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/14.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "金钱",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 72.54,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/15.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "金钱",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 72.54,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/16.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "金钱",
+        "width": 171,
+        "height": 27,
+        "face": "brush",
+        "size": 12.96,
+        "lineHeight": 15.552,
+        "x": 72.54,
+        "y": 4.104,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/17.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "开新房间",
+        "width": 94,
+        "height": 42,
+        "face": "brush",
+        "size": 17.86,
+        "lineHeight": 21.432,
+        "x": 11.28,
+        "y": 7.764,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/18.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "开新房间",
+        "width": 94,
+        "height": 42,
+        "face": "brush",
+        "size": 17.86,
+        "lineHeight": 21.432,
+        "x": 11.28,
+        "y": 7.764,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/19.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "开新房间",
+        "width": 94,
+        "height": 42,
+        "face": "brush",
+        "size": 17.86,
+        "lineHeight": 21.432,
+        "x": 11.28,
+        "y": 7.764,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/20.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "快速进入",
+        "width": 91,
+        "height": 43,
+        "face": "brush",
+        "size": 17.29,
+        "lineHeight": 20.748,
+        "x": 10.92,
+        "y": 8.546,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/21.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "快速进入",
+        "width": 91,
+        "height": 43,
+        "face": "brush",
+        "size": 17.29,
+        "lineHeight": 20.748,
+        "x": 10.92,
+        "y": 8.546,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/22.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "快速进入",
+        "width": 91,
+        "height": 43,
+        "face": "brush",
+        "size": 17.29,
+        "lineHeight": 20.748,
+        "x": 10.92,
+        "y": 8.546,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/23.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "编号排序",
+        "width": 91,
+        "height": 42,
+        "face": "brush",
+        "size": 17.29,
+        "lineHeight": 20.748,
+        "x": 10.92,
+        "y": 8.106,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/24.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "空房间",
+        "width": 91,
+        "height": 42,
+        "face": "brush",
+        "size": 20.16,
+        "lineHeight": 24.192,
+        "x": 15.26,
+        "y": 6.384,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/25.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "空房间",
+        "width": 91,
+        "height": 42,
+        "face": "brush",
+        "size": 20.16,
+        "lineHeight": 24.192,
+        "x": 15.26,
+        "y": 6.384,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/26.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "空房间",
+        "width": 91,
+        "height": 42,
+        "face": "brush",
+        "size": 20.16,
+        "lineHeight": 24.192,
+        "x": 15.26,
+        "y": 6.384,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/27.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "编号排序",
+        "width": 91,
+        "height": 42,
+        "face": "brush",
+        "size": 17.29,
+        "lineHeight": 20.748,
+        "x": 10.92,
+        "y": 8.106,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/28.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "编号排序",
+        "width": 91,
+        "height": 42,
+        "face": "brush",
+        "size": 17.29,
+        "lineHeight": 20.748,
+        "x": 10.92,
+        "y": 8.106,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/29.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "分数排行",
+        "width": 88,
+        "height": 42,
+        "face": "brush",
+        "size": 16.72,
+        "lineHeight": 20.064,
+        "x": 10.56,
+        "y": 8.448,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/30.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "分数排行",
+        "width": 88,
+        "height": 42,
+        "face": "brush",
+        "size": 16.72,
+        "lineHeight": 20.064,
+        "x": 10.56,
+        "y": 8.448,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/31.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "分数排行",
+        "width": 88,
+        "height": 42,
+        "face": "brush",
+        "size": 16.72,
+        "lineHeight": 20.064,
+        "x": 10.56,
+        "y": 8.448,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/32.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "商店",
+        "width": 89,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 25.78,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/33.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "商店",
+        "width": 89,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 25.78,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/34.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "商店",
+        "width": 89,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 25.78,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/35.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "玩家信息",
+        "width": 81,
+        "height": 38,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 7.486,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/36.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "玩家信息",
+        "width": 81,
+        "height": 38,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 7.486,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/37.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "玩家信息",
+        "width": 81,
+        "height": 38,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 7.486,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/38.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "阶级",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/39.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "阶级",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/40.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "阶级",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/41.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "亲密",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/42.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "亲密",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/43.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "亲密",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/44.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "性别",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/45.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "性别",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/64/46.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "性别",
+        "width": 50,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 13.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/0.png": {
+      "background": "/hd-ui/buttons/mode-pohuaimoshi.png",
+      "family": "mode-pohuaimoshi",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "破坏模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/1.png": {
+      "background": "/hd-ui/buttons/mode-hunzhanmoshi.png",
+      "family": "mode-hunzhanmoshi",
+      "filter": "none",
+      "text": {
+        "text": "混战模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/2.png": {
+      "background": "/hd-ui/buttons/mode-hunzhanmoshi.png",
+      "family": "mode-hunzhanmoshi",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "混战模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/3.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "占领模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 21.5,
+        "y": 11.2,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/4.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "混战模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 21.5,
+        "y": 11.2,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/5.png": {
+      "background": "/hd-ui/buttons/mode-pohuaimoshi.png",
+      "family": "mode-pohuaimoshi",
+      "filter": "none",
+      "text": {
+        "text": "破坏模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/6.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "破坏模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 21.5,
+        "y": 11.2,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/7.png": {
+      "background": "/hd-ui/buttons/mode-qinwangmoshi.png",
+      "family": "mode-qinwangmoshi",
+      "filter": "none",
+      "text": {
+        "text": "擒王模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/8.png": {
+      "background": "/hd-ui/buttons/mode-qinwangmoshi.png",
+      "family": "mode-qinwangmoshi",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "擒王模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/9.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "擒王模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 21.5,
+        "y": 11.2,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/10.png": {
+      "background": "/hd-ui/buttons/mode-tuanduimoshi.png",
+      "family": "mode-tuanduimoshi",
+      "filter": "none",
+      "text": {
+        "text": "团队模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/11.png": {
+      "background": "/hd-ui/buttons/mode-tuanduimoshi.png",
+      "family": "mode-tuanduimoshi",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "团队模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/12.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "团队模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 21.5,
+        "y": 11.2,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/13.png": {
+      "background": "/hd-ui/buttons/mode-zhanlingmoshi.png",
+      "family": "mode-zhanlingmoshi",
+      "filter": "none",
+      "text": {
+        "text": "占领模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/14.png": {
+      "background": "/hd-ui/buttons/mode-zhanlingmoshi.png",
+      "family": "mode-zhanlingmoshi",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "占领模式",
+        "width": 115,
+        "height": 50,
+        "face": "brush",
+        "size": 21.85,
+        "lineHeight": 26.22,
+        "x": 13.8,
+        "y": 8.89,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/15.png": {
+      "background": "/hd-ui/buttons/rule-maogouyouhao.png",
+      "family": "rule-maogouyouhao",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "猫狗混编",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/16.png": {
+      "background": "/hd-ui/buttons/rule-maogouyouhao.png",
+      "family": "rule-maogouyouhao",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "猫狗混编",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/17.png": {
+      "background": "/hd-ui/buttons/rule-duiyoushanghai.png",
+      "family": "rule-duiyoushanghai",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "敌我不分",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/18.png": {
+      "background": "/hd-ui/buttons/rule-duiyoushanghai.png",
+      "family": "rule-duiyoushanghai",
+      "filter": "none",
+      "text": {
+        "text": "敌我不分",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/19.png": {
+      "background": "/hd-ui/buttons/rule-duiyoushanghai.png",
+      "family": "rule-duiyoushanghai",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "敌我不分",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/20.png": {
+      "background": "/hd-ui/buttons/rule-duiyoushanghai.png",
+      "family": "rule-duiyoushanghai",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "敌我不分",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/21.png": {
+      "background": "/hd-ui/buttons/rule-maogouduikang.png",
+      "family": "rule-maogouduikang",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "猫狗对抗",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/22.png": {
+      "background": "/hd-ui/buttons/rule-maogouduikang.png",
+      "family": "rule-maogouduikang",
+      "filter": "none",
+      "text": {
+        "text": "猫狗对抗",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/23.png": {
+      "background": "/hd-ui/buttons/rule-maogouduikang.png",
+      "family": "rule-maogouduikang",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "猫狗对抗",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/24.png": {
+      "background": "/hd-ui/buttons/rule-maogouduikang.png",
+      "family": "rule-maogouduikang",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "猫狗对抗",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/25.png": {
+      "background": "/hd-ui/buttons/rule-yizhiduiwai.png",
+      "family": "rule-yizhiduiwai",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "不伤友军",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/26.png": {
+      "background": "/hd-ui/buttons/rule-yizhiduiwai.png",
+      "family": "rule-yizhiduiwai",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "不伤友军",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/27.png": {
+      "background": "/hd-ui/buttons/rule-yizhiduiwai.png",
+      "family": "rule-yizhiduiwai",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "不伤友军",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/28.png": {
+      "background": "/hd-ui/buttons/rule-maogouyouhao.png",
+      "family": "rule-maogouyouhao",
+      "filter": "none",
+      "text": {
+        "text": "猫狗混编",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/29.png": {
+      "background": "/hd-ui/buttons/rule-maogouyouhao.png",
+      "family": "rule-maogouyouhao",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "猫狗混编",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/30.png": {
+      "background": "/hd-ui/buttons/rule-yizhiduiwai.png",
+      "family": "rule-yizhiduiwai",
+      "filter": "none",
+      "text": {
+        "text": "不伤友军",
+        "width": 98,
+        "height": 41,
+        "face": "brush",
+        "size": 18.62,
+        "lineHeight": 22.344,
+        "x": 11.76,
+        "y": 6.868,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/31.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "修改昵称",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/32.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "修改昵称",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/33.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "修改昵称",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/65/34.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/35.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/36.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/37.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/38.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/39.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/40.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/41.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/42.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/43.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/44.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/45.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/46.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/47.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/48.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/49.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/50.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/65/51.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/66/0.png": {
+      "background": "/hd-ui/buttons/wide.png",
+      "family": "wide",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "准备",
+        "width": 156,
+        "height": 50,
+        "face": "brush",
+        "size": 22,
+        "lineHeight": 26.4,
+        "x": 56.0,
+        "y": 8.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/1.png": {
+      "background": "/hd-ui/buttons/wide.png",
+      "family": "wide",
+      "filter": "none",
+      "text": {
+        "text": "准备",
+        "width": 156,
+        "height": 50,
+        "face": "brush",
+        "size": 22,
+        "lineHeight": 26.4,
+        "x": 56.0,
+        "y": 8.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/2.png": {
+      "background": "/hd-ui/buttons/wide.png",
+      "family": "wide",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "准备",
+        "width": 156,
+        "height": 50,
+        "face": "brush",
+        "size": 22,
+        "lineHeight": 26.4,
+        "x": 56.0,
+        "y": 8.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/3.png": {
+      "background": "/hd-ui/buttons/wide.png",
+      "family": "wide",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "取消",
+        "width": 156,
+        "height": 50,
+        "face": "brush",
+        "size": 22,
+        "lineHeight": 26.4,
+        "x": 56.0,
+        "y": 8.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/4.png": {
+      "background": "/hd-ui/buttons/wide.png",
+      "family": "wide",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "取消",
+        "width": 156,
+        "height": 50,
+        "face": "brush",
+        "size": 22,
+        "lineHeight": 26.4,
+        "x": 56.0,
+        "y": 8.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/5.png": {
+      "background": "/hd-ui/buttons/wide.png",
+      "family": "wide",
+      "filter": "none",
+      "text": {
+        "text": "取消",
+        "width": 156,
+        "height": 50,
+        "face": "brush",
+        "size": 22,
+        "lineHeight": 26.4,
+        "x": 56.0,
+        "y": 8.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/6.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "保存修改",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/7.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "保存修改",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/8.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "保存修改",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/9.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "保存修改",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/10.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "加好友",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/11.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "加好友",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/12.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "加好友",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/13.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "加好友",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/14.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "交易",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/15.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "准备",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/16.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "准备",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/17.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "准备",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/18.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "交易",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/19.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "交易",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/20.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "交易",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/21.png": {
+      "background": "/hd-ui/buttons/invite.png",
+      "family": "invite",
+      "filter": "none",
+      "text": {
+        "text": "快速邀请",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/22.png": {
+      "background": "/hd-ui/buttons/invite.png",
+      "family": "invite",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "快速邀请",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/23.png": {
+      "background": "/hd-ui/buttons/invite.png",
+      "family": "invite",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "快速邀请",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/24.png": {
+      "background": "/hd-ui/buttons/invite.png",
+      "family": "invite",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "快速邀请",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/25.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "屏蔽",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/26.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "屏蔽",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/27.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "屏蔽",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/28.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "确定",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/29.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "确定",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/30.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "确定",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/31.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "取消",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/32.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "取消",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/33.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "取消",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/34.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "屏蔽",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/35.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "删好友",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/36.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "删好友",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/37.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "删好友",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/38.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "修改介绍",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/39.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "修改介绍",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/40.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "修改介绍",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 15.39,
+        "lineHeight": 18.468,
+        "x": 9.72,
+        "y": 9.686,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/41.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "学习",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/42.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "学习",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/43.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "学习",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/44.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "学习",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/45.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "邀请",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/46.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "邀请",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/47.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "邀请",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/48.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "邀请",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/49.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "允许",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/50.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "允许",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/51.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "允许",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/52.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "展示",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/53.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "展示",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/54.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "展示",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/55.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "展示",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/56.png": {
+      "background": "/hd-ui/buttons/round.png",
+      "family": "round",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "邀请",
+        "width": 52,
+        "height": 52,
+        "face": "brush",
+        "size": 19.76,
+        "lineHeight": 23.712,
+        "x": 6.24,
+        "y": 11.024,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/57.png": {
+      "background": "/hd-ui/buttons/round.png",
+      "family": "round",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "邀请",
+        "width": 52,
+        "height": 52,
+        "face": "brush",
+        "size": 19.76,
+        "lineHeight": 23.712,
+        "x": 6.24,
+        "y": 11.024,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/58.png": {
+      "background": "/hd-ui/buttons/round.png",
+      "family": "round",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "邀请",
+        "width": 52,
+        "height": 52,
+        "face": "brush",
+        "size": 19.76,
+        "lineHeight": 23.712,
+        "x": 6.24,
+        "y": 11.024,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/66/59.png": {
+      "background": "/hd-ui/buttons/round.png",
+      "family": "round",
+      "filter": "none",
+      "text": {
+        "text": "邀请",
+        "width": 52,
+        "height": 52,
+        "face": "brush",
+        "size": 19.76,
+        "lineHeight": 23.712,
+        "x": 6.24,
+        "y": 11.024,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/10.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "出售",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/11.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "出击！",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 84.04,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/12.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "购买",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/13.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "购买",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/14.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "出击！",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 84.04,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/15.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "出击！",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 84.04,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/16.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "出击！",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 84.04,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/17.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "出售",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/18.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "出售",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/19.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "购买",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/20.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "更换",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/21.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "更换",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/22.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "更换",
+        "width": 230,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 94.36,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/30.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "维修中心",
+        "width": 103,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.5,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/31.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "维修中心",
+        "width": 103,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.5,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/32.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "维修中心",
+        "width": 103,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.5,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/33.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "装备零件",
+        "width": 103,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/34.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "装备零件",
+        "width": 103,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/35.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "装备零件",
+        "width": 103,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/39.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "关于我",
+        "width": 79,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 12.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/40.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "关于我",
+        "width": 79,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 12.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/41.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "关于我",
+        "width": 79,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 12.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/42.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "贵重品",
+        "width": 79,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 12.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/43.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "贵重品",
+        "width": 79,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 12.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/44.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "贵重品",
+        "width": 79,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 12.5,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/54.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "火力  [LV ]",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 38.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/55.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "火力  [LV ]",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 38.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/56.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "火力  [LV ]",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 38.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/57.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "LV",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 68.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/58.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "LV",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 68.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/59.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "LV",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 68.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/60.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(285deg) saturate(1.25)",
+      "text": {
+        "text": "装甲  [LV ]",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 38.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/61.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "装甲  [LV ]",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 38.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/62.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "装甲  [LV ]",
+        "width": 151,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 38.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/63.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "换涂装",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/64.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "买坦克",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/65.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "卖坦克",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/66.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "卖坦克",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/67.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "买猫狗",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/68.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "卖坦克",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/69.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "卖猫狗",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/70.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "卖猫狗",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/71.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "卖猫狗",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/72.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "买坦克",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/73.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "买坦克",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/74.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "买猫狗",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/75.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "买猫狗",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/76.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "换涂装",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/77.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "换涂装",
+        "width": 70,
+        "height": 51,
+        "face": "brush",
+        "size": 17.733,
+        "lineHeight": 21.28,
+        "x": 8.4,
+        "y": 11.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/80.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "辅助",
+        "width": 66,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/81.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "辅助",
+        "width": 66,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/82.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "道具",
+        "width": 66,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/83.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "辅助",
+        "width": 66,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/84.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "道具",
+        "width": 66,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/85.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "道具",
+        "width": 66,
+        "height": 53,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 12.52,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/86.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "grayscale(1) brightness(.8)",
+      "text": {
+        "text": "改装",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/87.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "改装",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/88.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "改装",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/89.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "改装",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.64,
+        "lineHeight": 24.768,
+        "x": 19.86,
+        "y": 6.536,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/90.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "零件",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/91.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "饰品",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/92.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "饰品",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/93.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "饰品",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/94.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "零件",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/95.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "标志",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/96.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "标志",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/97.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "标志",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/98.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "猫狗",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/99.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "零件",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/100.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "坦克",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/101.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "猫狗",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/102.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "坦克",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/103.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "坦克",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/104.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "一般",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/105.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "一般",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/106.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "一般",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/107.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "猫狗",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/108.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "武器",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/109.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "武器",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/110.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "武器",
+        "width": 66,
+        "height": 51,
+        "face": "brush",
+        "size": 18,
+        "lineHeight": 21.6,
+        "x": 15.0,
+        "y": 11.64,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/111.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "拥有称号",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/112.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "拥有称号",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/113.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "拥有称号",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/114.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "战斗统计",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/115.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "战斗统计",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/116.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "战斗统计",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/117.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "获奖统计",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/118.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "获奖统计",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/119.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "获奖统计",
+        "width": 86,
+        "height": 29,
+        "face": "brush",
+        "size": 13.92,
+        "lineHeight": 16.704,
+        "x": 15.16,
+        "y": 4.408,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/121.png": {
+      "background": "/hd-ui/buttons/board.png",
+      "family": "board",
+      "filter": "none",
+      "text": {
+        "text": "命名",
+        "width": 91,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 33.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#ffed48",
+        "outline": "#d51f16",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/122.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "命名",
+        "width": 91,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 33.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/123.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "none",
+      "text": {
+        "text": "命名",
+        "width": 91,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 33.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/124.png": {
+      "background": "/hd-ui/buttons/enamel.png",
+      "family": "enamel",
+      "filter": "hue-rotate(55deg)",
+      "text": {
+        "text": "命名",
+        "width": 91,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 33.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/69/125.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "弹药",
+        "width": 88,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 32.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/126.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "弹药",
+        "width": 88,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 32.0,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/155.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "火力  [LV ]",
+        "width": 111,
+        "height": 17,
+        "face": "brush",
+        "size": 8.16,
+        "lineHeight": 9.792,
+        "x": 30.204,
+        "y": 2.584,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/158.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "武器",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/159.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "武器",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/160.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "武器",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/161.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "标志",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/162.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "一般",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/163.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "一般",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/164.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "一般",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/165.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "标志",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/166.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "标志",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/167.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "辅助",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/168.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "辅助",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/169.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "辅助",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/170.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "贵重品",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/171.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "贵重品",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/172.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "贵重品",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/173.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "none",
+      "text": {
+        "text": "饰品",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/174.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "饰品",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/69/175.png": {
+      "background": null,
+      "family": "rectangle",
+      "filter": "hue-rotate(210deg) saturate(1.25)",
+      "text": {
+        "text": "饰品",
+        "width": 61,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 18.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/29.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "离开游戏",
+        "width": 249,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 85.14,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/30.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "登录",
+        "width": 249,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 104.82,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/31.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "登录",
+        "width": 249,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 104.82,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/32.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "登录",
+        "width": 249,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 104.82,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/33.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "离开游戏",
+        "width": 249,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 85.14,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/34.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "离开游戏",
+        "width": 249,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 85.14,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/45.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "保存账号",
+        "width": 131,
+        "height": 37,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 26.2,
+        "y": 11.3,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/46.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "保存账号",
+        "width": 131,
+        "height": 37,
+        "face": "brush",
+        "size": 12,
+        "lineHeight": 14.4,
+        "x": 26.2,
+        "y": 11.3,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/47.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "系统设置",
+        "width": 114,
+        "height": 38,
+        "face": "brush",
+        "size": 18.24,
+        "lineHeight": 21.888,
+        "x": 20.52,
+        "y": 5.776,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/48.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "none",
+      "text": {
+        "text": "系统设置",
+        "width": 114,
+        "height": 38,
+        "face": "brush",
+        "size": 18.24,
+        "lineHeight": 21.888,
+        "x": 20.52,
+        "y": 5.776,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/49.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "none",
+      "text": {
+        "text": "系统设置",
+        "width": 114,
+        "height": 38,
+        "face": "brush",
+        "size": 18.24,
+        "lineHeight": 21.888,
+        "x": 20.52,
+        "y": 5.776,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/50.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "none",
+      "text": {
+        "text": "取得Q点",
+        "width": 110,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 21.304,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/51.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "取得Q点",
+        "width": 110,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 21.304,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/52.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "none",
+      "text": {
+        "text": "取得Q点",
+        "width": 110,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 21.304,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/53.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "取得星币",
+        "width": 110,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 17.56,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/54.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "取得星币",
+        "width": 110,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 17.56,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/55.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "取得星币",
+        "width": 110,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 17.56,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/74/57.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "预设值",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/58.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "预设值",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/59.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "预设值",
+        "width": 81,
+        "height": 43,
+        "face": "brush",
+        "size": 20.52,
+        "lineHeight": 24.624,
+        "x": 9.72,
+        "y": 6.608,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/61.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "none",
+      "text": {
+        "text": "注册",
+        "width": 79,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 19.82,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/62.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "注册",
+        "width": 79,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 19.82,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/63.png": {
+      "background": "/hd-ui/buttons/small.png",
+      "family": "small",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "注册",
+        "width": 79,
+        "height": 41,
+        "face": "brush",
+        "size": 19.68,
+        "lineHeight": 23.616,
+        "x": 19.82,
+        "y": 6.232,
+        "scaleX": 1,
+        "colour": "#fff",
+        "outline": "#111",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/68.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "hue-rotate(165deg) saturate(1.1)",
+      "text": {
+        "text": "主页",
+        "width": 62,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 12.28,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/69.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "none",
+      "text": {
+        "text": "主页",
+        "width": 62,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 12.28,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/70.png": {
+      "background": "/hd-ui/buttons/banner.png",
+      "family": "banner",
+      "filter": "none",
+      "text": {
+        "text": "主页",
+        "width": 62,
+        "height": 39,
+        "face": "brush",
+        "size": 18.72,
+        "lineHeight": 22.464,
+        "x": 12.28,
+        "y": 5.928,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 1.5
+      }
+    },
+    "ui/regions/74/78.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "卡通渲染",
+        "width": 90,
+        "height": 21,
+        "face": "brush",
+        "size": 10.08,
+        "lineHeight": 12.096,
+        "x": 18.0,
+        "y": 4.452,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/79.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "垂直同步",
+        "width": 90,
+        "height": 21,
+        "face": "brush",
+        "size": 10.08,
+        "lineHeight": 12.096,
+        "x": 18.0,
+        "y": 4.452,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/80.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "卡通渲染",
+        "width": 90,
+        "height": 21,
+        "face": "brush",
+        "size": 10.08,
+        "lineHeight": 12.096,
+        "x": 18.0,
+        "y": 4.452,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/81.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "软件光标",
+        "width": 90,
+        "height": 21,
+        "face": "brush",
+        "size": 10.08,
+        "lineHeight": 12.096,
+        "x": 18.0,
+        "y": 4.452,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/82.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "软件光标",
+        "width": 90,
+        "height": 21,
+        "face": "brush",
+        "size": 10.08,
+        "lineHeight": 12.096,
+        "x": 18.0,
+        "y": 4.452,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/83.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "垂直同步",
+        "width": 90,
+        "height": 21,
+        "face": "brush",
+        "size": 10.08,
+        "lineHeight": 12.096,
+        "x": 18.0,
+        "y": 4.452,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/84.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "战斗表情",
+        "width": 90,
+        "height": 21,
+        "face": "brush",
+        "size": 10.08,
+        "lineHeight": 12.096,
+        "x": 18.0,
+        "y": 4.452,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/85.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "战斗表情",
+        "width": 90,
+        "height": 21,
+        "face": "brush",
+        "size": 10.08,
+        "lineHeight": 12.096,
+        "x": 18.0,
+        "y": 4.452,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "checkbox"
+    },
+    "ui/regions/74/96.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "32位色",
+        "width": 71,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 14.2,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/97.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "32位色",
+        "width": 71,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 14.2,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/98.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "16位色",
+        "width": 67,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 13.4,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/99.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "16位色",
+        "width": 67,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 13.4,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/100.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "高画质",
+        "width": 63,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 12.6,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/101.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "高画质",
+        "width": 63,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 12.6,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/102.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "低画质",
+        "width": 63,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 12.6,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/103.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "全屏",
+        "width": 63,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 12.6,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/104.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "全屏",
+        "width": 63,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 12.6,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/105.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "低画质",
+        "width": 63,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 12.6,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/115.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "窗口",
+        "width": 47,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 9.4,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": false,
+      "optionKind": "radio"
+    },
+    "ui/regions/74/116.png": {
+      "background": null,
+      "family": "option",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "窗口",
+        "width": 47,
+        "height": 18,
+        "face": "brush",
+        "size": 8.64,
+        "lineHeight": 10.368,
+        "x": 9.4,
+        "y": 3.816,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      },
+      "checked": true,
+      "optionKind": "radio"
+    },
+    "ui/regions/77/49.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "家族",
+        "width": 49,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/50.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "家族",
+        "width": 49,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/51.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "家族",
+        "width": 49,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 12.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/53.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "聊天",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/54.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "聊天",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/55.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "密语",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/56.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "密语",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/57.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "密语",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/58.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "好友",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/59.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "队伍",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/60.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "GM",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 16.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/61.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "GM",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 16.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/62.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "GM",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 16.3,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/63.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "聊天",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/64.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "好友",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/65.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "队伍",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/66.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "none",
+      "text": {
+        "text": "队伍",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/67.png": {
+      "background": null,
+      "family": "pill",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "好友",
+        "width": 47,
+        "height": 25,
+        "face": "brush",
+        "size": 12.0,
+        "lineHeight": 14.4,
+        "x": 11.5,
+        "y": 3.8,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/86.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/87.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/88.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/89.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/90.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "好友",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/91.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/92.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/93.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/94.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/95.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/96.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/97.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "密语",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/98.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/99.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "家族",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/100.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(-25deg) saturate(1.15)",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/101.png": {
+      "background": null,
+      "family": "text",
+      "filter": "none",
+      "text": {
+        "text": "GM",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 10.392,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/102.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "队伍",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    },
+    "ui/regions/77/103.png": {
+      "background": null,
+      "family": "text",
+      "filter": "hue-rotate(125deg) saturate(.9)",
+      "text": {
+        "text": "聊天",
+        "width": 30,
+        "height": 16,
+        "face": "brush",
+        "size": 7.68,
+        "lineHeight": 9.216,
+        "x": 7.32,
+        "y": 2.432,
+        "scaleX": 1,
+        "colour": "#111",
+        "outline": "#fff4b0",
+        "stroke": 0.6
+      }
+    }
+  }
+}

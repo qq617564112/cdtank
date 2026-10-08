@@ -1,4 +1,6 @@
 import {loadStaticJson} from './static-resources';
+import {isSimpleUiImage} from './simple-ui-artwork';
+import {buttonArtwork} from './button-artwork';
 
 export interface ImageAsset {url: string; bytes: number; modifiedAt: number;}
 
@@ -230,6 +232,7 @@ export function imageResourceUrl(url: string): string {
 }
 
 export function imageResourceBackground(url: string): string {
+  if (isSimpleUiImage(url) || buttonArtwork(url)) return 'none';
   return `url("${imageResourceUrl(url)}")`;
 }
 

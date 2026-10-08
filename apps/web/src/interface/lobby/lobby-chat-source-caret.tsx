@@ -62,9 +62,9 @@ export function LobbyChatSourceCaret({input, ui, layout, name, value}: {
   }, [input, width, value, image?.asset]);
   if (!image?.asset) return null;
   return <span {...sourceProps(ui, layout, 'chat.xml', name)} aria-hidden="true" className="lobby-chat-source-caret"
-    data-lobby-chat-caret={name} data-source-asset={image.asset} data-source-caret-width={width}
+    data-lobby-chat-caret={name} data-source-asset={undefined} data-source-caret-width={width}
     data-source-caret-index={view.index} data-source-scroll={view.scroll} data-source-focused={String(view.focused)}
     style={{...sourceProps(ui, layout, 'chat.xml', name).style, visibility: view.focused ? 'visible' : 'hidden'}}>
-    <i ref={brush} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
+    <i ref={brush} data-source-asset={image.asset} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
   </span>;
 }

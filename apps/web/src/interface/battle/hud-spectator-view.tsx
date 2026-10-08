@@ -2,7 +2,7 @@ import './hud-spectator-view.css';
 import {useMemo, useSyncExternalStore} from 'react';
 import {SourceButton} from '../resources/source-button';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {sourcePicture} from './hud-source-controls';
+import {sourceAsset, sourcePicture} from './hud-source-controls';
 import type {BattleHud, SourceUi} from './battle-hud';
 
 export function HudSpectatorView({hud, data}: {hud: BattleHud; data: SourceUi}) {
@@ -16,6 +16,7 @@ export function HudSpectatorView({hud, data}: {hud: BattleHud; data: SourceUi}) 
   const panel = data.layouts.find(value => value.path === 'ui/layouts/game_main.xml')
     ?.windows.find(value => value.name === 'picBattleInfoPanel');
   return <section className="hud-spectator" aria-label="友军观战"
+    data-source-asset={sourceAsset(data, panel?.properties.Image)}
     style={sourcePicture(data, panel?.properties.Image)}
     onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}>
     <SourceButton ui={ui} layout={layout} suffix="roomlist.xml" source="btnPageUp"

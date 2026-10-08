@@ -3,6 +3,9 @@ import {bundledImageUrls, decodeImage} from './image-resources';
 import {loadImageResource, prepareImageCache, prepareSpriteImages, releaseSpriteAtlas, releaseSpriteAtlases,
   type ImageAsset} from './image-cache';
 import {isSourceTextImage} from '../interface/resources/source-text-artwork';
+import {isSimpleUiImage} from './simple-ui-artwork';
+import {bindButtonBackgrounds, buttonArtwork} from './button-artwork';
+import {imageResourceUrl} from './image-cache';
 
 export interface ImageLoadingProgress {
   phase: 'download' | 'decode';
@@ -18,6 +21,7 @@ export interface ImageLoadingProgress {
 interface ImageManifest {images: ImageAsset[];}
 
 const imageManifestUrl = '/image-assets.json';
+const needsRaster = (url: string) => !isSourceTextImage(url) && !isSimpleUiImage(url) && !buttonArtwork(url);
 
 /** Download and decode all published and bundled images before entering the game. */
 export class ImagePreloader {
@@ -31,7 +35,12 @@ export class ImagePreloader {
       if (!response.ok) throw new Error(`图片目录加载失败（HTTP ${response.status}）`);
       const {images} = await response.json() as ImageManifest;
       if (images.length === 0) throw new Error('图片资源目录为空');
-      const artwork = images.filter(image => !isSourceTextImage(image.url));
+      const sprites = await prepareSpriteImages();
+      const unusedAtlases = new Set(Object.values(sprites.images).map(sprite => sprite.atlas));
+      for (const [url, sprite] of Object.entries(sprites.images)) {
+        if (needsRaster(url)) unusedAtlases.delete(sprite.atlas);
+      }
+      const artwork = images.filter(image => needsRaster(image.url) && !unusedAtlases.has(image.url));
       await prepareImageCache(artwork, bundledImageUrls);
       if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.getRegistration('/');
@@ -53,13 +62,14 @@ export class ImagePreloader {
       .map(url => new URL(url, location.href).href))].filter(url => !atlasUrls.has(url));
     const spriteGroups = new Map<string, string[]>();
     for (const [url, sprite] of Object.entries(sprites.images)) {
+      if (!needsRaster(url)) continue;
       const group = spriteGroups.get(sprite.atlas) ?? [];
       group.push(url);
       spriteGroups.set(sprite.atlas, group);
     }
     const decodeGroups: [string, string[]][] = [['', standalone], ...spriteGroups.entries()];
     const progress: ImageLoadingProgress = {
-      phase: 'download', decoded: 0, decodeTotal: standalone.length + Object.keys(sprites.images).length,
+      phase: 'download', decoded: 0, decodeTotal: standalone.length + [...spriteGroups.values()].reduce((total, urls) => total + urls.length, 0),
       completed: 0, cached: 0, total: images.length, loadedBytes: 0,
       totalBytes: images.reduce((total, image) => total + image.bytes, 0),
     };
@@ -121,5 +131,6 @@ export class ImagePreloader {
     }
     signal.throwIfAborted();
     await loadUiFont();
+    bindButtonBackgrounds(imageResourceUrl);
   }
 }

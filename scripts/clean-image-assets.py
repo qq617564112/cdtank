@@ -88,6 +88,8 @@ def main():
     parser.add_argument('--workers', type=int, default=4)
     parser.add_argument('--plan-only', action='store_true')
     parser.add_argument('--restore', action='store_true')
+    parser.add_argument('--unused-only', action='store_true',
+                        help='Remove unused images and compact affected sheets, retaining other published files')
     args = parser.parse_args()
     root = args.root.resolve()
     runtime = Path(os.environ.get('WEB_ASSETS', 'recovery/output/web-assets'))
@@ -155,6 +157,32 @@ def main():
     temporary = ui_path.with_suffix('.tmp')
     temporary.write_text(json.dumps(usage['ui'], ensure_ascii=False, separators=(',', ':')) + '\n')
     temporary.replace(ui_path)
+    if args.unused_only:
+        affected = {cell['atlas'] for name, cell in previous_sprites.items() if name.lstrip('/') in unused}
+        for atlas in affected:
+            source = runtime / atlas.lstrip('/')
+            relative = source.relative_to(root)
+            destination = archive / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if not destination.exists():
+                shutil.copyfile(source, destination)
+            files[relative.as_posix()] = dict(source=relative.as_posix(), path=atlas.lstrip('/'), bytes=destination.stat().st_size)
+        manifest_path.write_text(json.dumps(dict(files=list(files.values()), virtualImages=list(virtual.values())),
+                                            ensure_ascii=False, indent=2) + '\n')
+        compacted = packing.prune_unused(set(unused))
+        after = published(root, runtime)
+        directory = json.loads(previous_path.read_text())
+        cells = {(cell['atlas'], cell['x'], cell['y'], cell['width'], cell['height']) for cell in directory['images'].values()}
+        report.update(publishedImagesAfter=len(after), publishedBytesAfter=sum(path.stat().st_size for path in after),
+                      archivedPhysicalImages=sum(1 for name in unused if not sources[name].is_relative_to(packing.BACKUP)),
+                      uniqueCells=len(cells), spriteSheets=len(directory['sheets']),
+                      duplicateImages=len(directory['images']) - len(cells), **compacted)
+        report['savedBytes'] = before_bytes - report['publishedBytesAfter']
+        report['references'] = usage['reasons']
+        (root / 'art/hd-assets/image-cleanup.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+        print(json.dumps({key: value for key, value in report.items()
+                         if key not in ('unusedPaths', 'catalogs', 'references')}, ensure_ascii=False, indent=2))
+        return
     subprocess.run([sys.executable, str(root / 'scripts/pack-image-sprites.py'), '--root', str(root),
                     '--workers', str(args.workers)], check=True)
     manifest = json.loads(manifest_path.read_text())

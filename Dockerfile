@@ -1,4 +1,4 @@
-FROM cdtank-assets:1.0.0 AS assets
+FROM cdtank-assets:1.0.0-20261008-ui AS assets
 
 FROM node:24.16.0-bookworm-slim AS build
 WORKDIR /workspace

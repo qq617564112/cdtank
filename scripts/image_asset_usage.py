@@ -6,6 +6,7 @@ from pathlib import Path
 import struct
 import subprocess
 from urllib.parse import unquote
+from ui_artwork_scope import html_ui_sources
 
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif', '.bmp', '.ico'}
 
@@ -15,7 +16,8 @@ def image_usage(root, runtime, names):
     scan = json.loads(subprocess.check_output(
         ['node', str(root / 'scripts/image-resource-references.mjs'), str(root)], text=True))
     text = json.loads((root / 'apps/web/src/interface/resources/source-text-artwork.json').read_text())
-    retired = set(text['replacedImages'])
+    html_artwork = html_ui_sources()
+    retired = set(text['replacedImages']) | html_artwork
     reasons = defaultdict(set)
     missing = []
 
@@ -62,7 +64,7 @@ def image_usage(root, runtime, names):
         for imageset in ui['imagesets']:
             for image in imageset['images']:
                 asset = image.get('asset')
-                if asset in retired and asset in names:
+                if asset in retired and asset not in html_artwork and asset in names:
                     chat_glyphs.add(asset)
                     reasons[asset].add('chat-image-catalog')
 

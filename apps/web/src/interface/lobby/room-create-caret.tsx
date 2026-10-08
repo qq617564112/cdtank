@@ -60,8 +60,8 @@ export function RoomCreateCaret({input, ui, layout, name, style, disabled}: {
   }, [input, disabled, width]);
   if (!image?.asset) return null;
   return <span aria-hidden="true" className="room-create-source-caret" data-room-create-caret={name}
-    data-source-asset={image.asset} data-source-caret-width={width} data-source-caret-index={view.index} data-source-scroll={view.scroll}
+    data-source-caret-width={width} data-source-caret-index={view.index} data-source-scroll={view.scroll}
     data-source-focused={String(view.focused)} style={{...style, visibility: view.focused ? 'visible' : 'hidden'}}>
-    <i ref={brush} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
+    <i ref={brush} data-source-asset={image.asset} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
   </span>;
 }

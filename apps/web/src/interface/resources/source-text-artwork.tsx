@@ -1,8 +1,9 @@
 import {useLayoutEffect, useRef, type CSSProperties} from 'react';
 import catalogue from './source-text-artwork.json';
 import './source-text-artwork.css';
+import {buttonArtwork} from '../../assets/button-artwork';
 
-interface SourceTextStyle {
+export interface SourceTextStyle {
   text: string;
   width: number;
   height: number;
@@ -26,7 +27,7 @@ const numeric: Readonly<Record<string, Readonly<Record<string, string>>>> = cata
 const replacedImages = new Set<string>(catalogue.replacedImages);
 
 export function sourceTextArtwork(asset?: string): SourceTextStyle | undefined {
-  return asset ? assets[asset] : undefined;
+  return asset ? buttonArtwork(asset)?.text ?? assets[asset] : undefined;
 }
 
 export function isSourceTextImage(path: string): boolean {
@@ -46,7 +47,7 @@ function inkStyle(text: SourceTextStyle): CSSProperties {
 
 /** Live outline text occupies the original image's ink and transparent margins. */
 export function SourceTextArtwork({asset, style}: {asset: string; style?: CSSProperties}) {
-  const text = assets[asset];
+  const text = sourceTextArtwork(asset)!;
   const bounds = useRef<HTMLSpanElement>(null), coordinates = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
     const element = bounds.current!, content = coordinates.current!;

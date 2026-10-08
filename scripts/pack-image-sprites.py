@@ -202,6 +202,71 @@ def restore():
     print('Restored original image files; sprite references remain available')
 
 
+def prune_unused(unused):
+    """Remove unused mappings and compact their sheets without changing other sheets."""
+    directory_path = RUNTIME / 'sprite-images.json'
+    directory = json.loads(directory_path.read_text())
+    affected = {cell['atlas'] for path, cell in directory['images'].items() if path.lstrip('/') in unused}
+    mappings = {path: cell for path, cell in directory['images'].items() if path.lstrip('/') not in unused}
+    sheets = [sheet for sheet in directory['sheets'] if '/' + sheet['path'] not in affected]
+    comparisons = 0
+    for atlas in sorted(affected):
+        target = RUNTIME / atlas.lstrip('/')
+        with Image.open(target) as original:
+            profile = original.info.copy()
+            original = original.convert('RGBA')
+        cells = {}
+        for path, cell in mappings.items():
+            if cell['atlas'] != atlas:
+                continue
+            rectangle = tuple(cell[key] for key in ('x', 'y', 'width', 'height'))
+            if rectangle not in cells:
+                cells[rectangle] = {'path': path, 'size': rectangle[2:], 'rectangle': rectangle, 'aliases': []}
+            cells[rectangle]['aliases'].append(path)
+        for index, sheet in enumerate(plan(list(cells.values()))):
+            output = target if index == 0 else target.with_stem(target.stem + f'-{index:03}')
+            url = '/' + output.relative_to(RUNTIME).as_posix()
+            width = max(cell['x'] + cell['item']['size'][0] for cell in sheet.cells)
+            height = max(cell['y'] + cell['item']['size'][1] for cell in sheet.cells)
+            image = Image.new('RGBA', (width, height))
+            for cell in sheet.cells:
+                item = cell['item']
+                x, y, w, h = item['rectangle']
+                image.paste(original.crop((x, y, x + w, y + h)), (cell['x'], cell['y']))
+                for path in item['aliases']:
+                    mappings[path] = dict(atlas=url, x=cell['x'], y=cell['y'], width=w, height=h)
+            metadata = PngInfo()
+            if 'gamma' in profile:
+                metadata.add(b'gAMA', struct.pack('>I', round(profile['gamma'] * 100000)))
+            if 'srgb' in profile:
+                metadata.add(b'sRGB', bytes([profile['srgb']]))
+            temporary = output.with_suffix('.tmp')
+            image.save(temporary, format='PNG', compress_level=6, pnginfo=metadata,
+                       **({'icc_profile': profile['icc_profile']} if 'icc_profile' in profile else {}))
+            with Image.open(temporary) as stored:
+                stored = stored.convert('RGBA')
+                for cell in sheet.cells:
+                    x, y, w, h = cell['item']['rectangle']
+                    left, top = cell['x'], cell['y']
+                    if stored.crop((left, top, left + w, top + h)).tobytes() != original.crop((x, y, x + w, y + h)).tobytes():
+                        raise ValueError(f'Sprite pixels differ: {cell["item"]["path"]}')
+                    comparisons += 1
+            temporary.replace(output)
+            sheets.append(dict(path=output.relative_to(RUNTIME).as_posix(), width=width, height=height,
+                               cells=len(sheet.cells), references=sum(len(cell['item']['aliases']) for cell in sheet.cells),
+                               bytes=output.stat().st_size))
+    directory = dict(images=dict(sorted(mappings.items())), sheets=sorted(sheets, key=lambda sheet: sheet['path']))
+    temporary = directory_path.with_suffix('.tmp')
+    temporary.write_text(json.dumps(directory, separators=(',', ':')) + '\n')
+    temporary.replace(directory_path)
+    retained = {RUNTIME / sheet['path'] for sheet in sheets}
+    for atlas in affected:
+        target = RUNTIME / atlas.lstrip('/')
+        if target not in retained:
+            target.unlink()
+    return dict(affectedSheets=len(affected), pixelComparisons=comparisons, pixelDifferences=0)
+
+
 def main():
     global ROOT, RUNTIME, BACKUP
     parser = argparse.ArgumentParser(description=__doc__)

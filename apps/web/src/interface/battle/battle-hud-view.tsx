@@ -114,7 +114,9 @@ function HudLayout({source, data, state, hud, filterId, scale, mode, intro}: {
     const anchor = mode && name === 'SheetWindow' ? 'right'
       : /^picPlayer\d+$/.test(name) ? slot < 6 ? 'left' : 'right'
       : name === 'prgBullet' ? 'left' : undefined;
-    const props = {'data-source-control': name, 'data-source-layout': source.path, 'data-hud-anchor': anchor};
+    const asset = image(data, control.properties.Image ?? control.properties.BackgroundImage)?.asset;
+    const props = {'data-source-control': name, 'data-source-layout': source.path, 'data-hud-anchor': anchor,
+      'data-source-asset': asset};
     const style = baseStyle(data, control), player = state.slots[slot];
     let hidden: boolean | undefined, content: React.ReactNode, extra: Record<string, unknown> = {};
     if (name === 'SheetWindow' && mode) hidden = state.mode !== mode
@@ -199,7 +201,7 @@ function HudLayout({source, data, state, hud, filterId, scale, mode, intro}: {
       extra = {'data-hud-renderer': 'source-image'};
     }
     if (name === 'prgBullet') return <BulletControl key={name} {...props} style={style} control={control} data={data} hud={hud} scale={scale} />;
-    if (name === 'prgCrossbar') return <ReloadControl key={name} {...props} style={style} hud={hud} />;
+    if (name === 'prgCrossbar') return <ReloadControl key={name} {...props} style={style} hud={hud} scale={scale} />;
     if (name === 'picBattleInfoPanel') {
       style.left = '50%';
       style.transform = 'translateX(-50%)';
@@ -209,8 +211,8 @@ function HudLayout({source, data, state, hud, filterId, scale, mode, intro}: {
       player={name === 'prgLife' ? state.localHealth : player} scale={scale} />;
     if (flipImage && !/^picPlayerIcon\d+$/.test(name)) {
       const background = picture(data, control.properties.Image ?? control.properties.BackgroundImage);
-      return <div key={name} {...props} {...extra} className="source-control" style={{...style, backgroundImage: 'none'}} hidden={hidden}>
-        <div className="source-control-image" style={{...background, transform: 'scaleX(-1)'}} />
+      return <div key={name} {...props} {...extra} data-source-asset={undefined} className="source-control" style={{...style, backgroundImage: 'none'}} hidden={hidden}>
+        <div className="source-control-image" data-source-asset={asset} style={{...background, transform: 'scaleX(-1)'}} />
         {content}{tree(name)}
       </div>;
     }
@@ -234,16 +236,6 @@ function HudText({value, fontName = 'BigHT'}: {data: SourceUi; value: string; fo
 function HealthControl({control, data, player, scale, style, ...props}: {
   control: SourceWindow; data: SourceUi; player?: Pick<HudPlayer, 'name' | 'hp' | 'maxHp'>; scale: number; style: CSSProperties;
 }) {
-  if (control.name === 'prgLife') {
-    const progress = lifeProgress(player?.hp ?? 1, player?.maxHp ?? 1, Math.fround(Number(style.width) * scale));
-    const colour = control.properties[['ProgressLowBoundColour', 'ProgressMediumColour', 'ProgressHighBoundColour'][progress.band]];
-    return <div {...props} className="source-control source-life-progress" style={{...style, backgroundImage: 'none'}}
-      hidden={!player} role="progressbar" data-hud-renderer="source-image" data-progress-format="Horizontal"
-      data-source-progress-fraction={progress.fraction} data-source-progress-extent={progress.extent}
-      data-source-progress-colour={colour} aria-label={player ? `${player.name}生命` : '生命'}
-      aria-valuemin={player ? 0 : undefined} aria-valuemax={player?.maxHp} aria-valuenow={player?.hp}
-      title={player ? `${player.hp}/${player.maxHp}` : undefined} />;
-  }
   return <SourceProgress {...props} control={control} data={data} style={style} scale={scale}
     hidden={!player}
     fraction={lifeProgress(player?.hp ?? 1, player?.maxHp ?? 1, 1).fraction} className="source-life-progress"
@@ -251,14 +243,19 @@ function HealthControl({control, data, player, scale, style, ...props}: {
     aria-valuemax={player?.maxHp} aria-valuenow={player?.hp} title={player ? `${player.hp}/${player.maxHp}` : undefined} />;
 }
 
-function ReloadControl({hud, style, ...props}: {
-  hud: BattleHud; style: CSSProperties;
+function ReloadControl({hud, style, scale, ...props}: {
+  hud: BattleHud; style: CSSProperties; scale: number;
 }) {
   const state = useSyncExternalStore(hud.subscribeReload, hud.getReloadSnapshot);
-  return <div {...props} className="source-control" style={{...style, backgroundImage: 'none'}}
-    hidden={!state.visible} role="progressbar" data-crosshair-renderer="source-image"
+  const height = Number(style.height), extent = Math.floor(Math.fround(height * scale) * state.fraction + .5);
+  return <div {...props} data-source-asset={undefined} className="source-control" style={{...style, backgroundImage: 'none'}}
+    hidden={!state.visible} role="progressbar" data-crosshair-renderer="html"
     data-source-progress-fraction={state.fraction} aria-label="装填" aria-valuemin={0} aria-valuemax={100}
-    aria-valuenow={Math.round(state.fraction * 100)} aria-valuetext={state.fraction < 1 ? '装填中' : '装填完成'} />;
+    aria-valuenow={Math.round(state.fraction * 100)} aria-valuetext={state.fraction < 1 ? '装填中' : '装填完成'}>
+    <i data-source-asset="ui/regions/77/47.png" aria-hidden="true" style={{position: 'absolute', inset: 0}}/>
+    <i data-source-asset="ui/regions/77/48.png" aria-hidden="true" style={{position: 'absolute', inset: 0,
+      clipPath: `inset(${height - extent / scale}px 0 0 0)`}}/>
+  </div>;
 }
 
 /** Original4cb52f: width = capacity × 15, progress = remaining / capacity. */

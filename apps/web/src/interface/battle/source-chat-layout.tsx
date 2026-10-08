@@ -1,6 +1,7 @@
 import {imageResourceBackground} from '../../assets/image-cache';
 import {useState, type ComponentPropsWithRef, type CSSProperties} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
+import {sourceTextArtwork, SourceTextArtwork} from '../resources/source-text-artwork';
 
 /** Original rectangles and image references expressed as React props. */
 export class ChatSourceLayout {
@@ -40,7 +41,10 @@ export function SourceChatButton({layout, name, offsetX = 0, offsetY = 0, style,
     onMouseEnter={event => {setState('HoverImage'); props.onMouseEnter?.(event);}}
     onMouseLeave={event => {setState('NormalImage'); props.onMouseLeave?.(event);}}
     onMouseDown={event => {setState('PushedImage'); props.onMouseDown?.(event);}}
-    onMouseUp={event => {setState('HoverImage'); props.onMouseUp?.(event);}} />;
+    onMouseUp={event => {setState('HoverImage'); props.onMouseUp?.(event);}}>
+    {image['data-source-asset'] && sourceTextArtwork(image['data-source-asset']) && <SourceTextArtwork asset={image['data-source-asset']}/>}
+    {props.children}
+  </button>;
 }
 
 export function SourceChatFrame({layout, name, width, height, kind}: {

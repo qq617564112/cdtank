@@ -2,7 +2,6 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-import getpass
 import importlib.util
 import json
 import os
@@ -13,6 +12,8 @@ import threading
 import time
 
 from PIL import Image, ImageChops, ImageDraw
+
+import hd_image_api
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / 'art/hd-ui'
@@ -230,8 +231,8 @@ def main():
         return
     sys.path.insert(0, str(SKILL / 'scripts'))
     import common
-    key = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
-    base_url = common.resolve_base_url(os.environ.get('CHATGPT2API_BASE_URL', 'https://gptimg.cloyd.fun/'))
+    key = hd_image_api.auth_key()
+    base_url = os.environ.get('CHATGPT2API_BASE_URL', hd_image_api.DEFAULT_BASE_URL)
     ledger_path = ART / 'calls.json'
     ledger = json.loads(ledger_path.read_text()) if ledger_path.exists() else []
 
@@ -258,10 +259,8 @@ def main():
                 record_save()
             print('UI call', record['call'], job['id'], flush=True)
             try:
-                status, payload = common.request_multipart('POST', base_url + '/v1/images/edits', headers=common.auth_headers(key),
-                    fields=[('model', common.DEFAULT_MODEL), ('prompt', (job['folder'] / 'prompt.txt').read_text()),
-                            ('n', '1'), ('size', job['ratio']), ('response_format', 'b64_json')],
-                    files=[('image', job['folder'] / 'input.png')])
+                status, payload = hd_image_api.edit(base_url, key, (job['folder'] / 'prompt.txt').read_text(),
+                                                    job['folder'] / 'input.png')
                 saved = common.save_image_results(payload, output_dir=job['folder'], prefix='output', download_url_results=True)
                 if not saved:
                     raise ValueError('API returned no image')

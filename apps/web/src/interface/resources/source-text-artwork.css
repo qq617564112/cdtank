@@ -34,6 +34,10 @@ body [data-source-text-face='latin'] {
   font-family: 'CDTank-SourceLatin', sans-serif !important;
 }
 
+body [data-source-text-face='brush'] {
+  font-family: 'CDTank-Xiangjiao', sans-serif !important;
+}
+
 .source-text-artwork {
   position: absolute;
   display: block;
