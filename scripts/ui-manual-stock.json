@@ -1,0 +1,2955 @@
+{
+  "drawings": {
+    "ui/regions/72/1.png": {
+      "before": {
+        "background": "#8da9b9",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/72/2.png": {
+      "before": {
+        "background": "#8da9b9",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/72/3.png": {
+      "before": {
+        "background": "#353f45",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/72/4.png": {
+      "before": {
+        "background": "#353f45",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/72/5.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/6.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/7.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom": "1px solid #353f45",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/8.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #353f45",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/9.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-top-left-radius": "3px",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/10.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/11.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-top-right-radius": "3px",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/12.png": {
+      "before": {
+        "background": "#353f45",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-top-left-radius": "3px",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/13.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/14.png": {
+      "before": {
+        "background": "#353f45",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-top-right-radius": "3px",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/15.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #c1d5e1",
+        "border-top": "1px solid #c1d5e1",
+        "border-bottom": "1px solid #c1d5e1",
+        "border-top-left-radius": "3px",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/16.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #c1d5e1",
+        "border-bottom": "1px solid #c1d5e1"
+      }
+    },
+    "ui/regions/72/17.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #c1d5e1",
+        "border-top": "1px solid #c1d5e1",
+        "border-bottom": "1px solid #c1d5e1",
+        "border-top-right-radius": "3px",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/18.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #8da9b9",
+        "border-radius": "2px"
+      }
+    },
+    "ui/regions/72/19.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #a4a4a4",
+        "border-radius": "2px"
+      }
+    },
+    "ui/regions/72/20.png": {
+      "before": {
+        "background": "#8da9b9",
+        "border": "1px solid #4f5e68",
+        "border-radius": "2px",
+        "inset": "25%"
+      },
+      "after": {
+        "content": "\"\u2713\"",
+        "font": "bold 13px Arial, sans-serif",
+        "color": "#111",
+        "display": "grid",
+        "place-items": "center",
+        "font-style": "normal"
+      }
+    },
+    "ui/regions/72/21.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #8da9b9",
+        "border-radius": "50%"
+      }
+    },
+    "ui/regions/72/22.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #a4a4a4",
+        "border-radius": "50%"
+      }
+    },
+    "ui/regions/72/23.png": {
+      "before": {
+        "background": "#8da9b9",
+        "border": "1px solid #4f5e68",
+        "border-radius": "50%",
+        "inset": "25%"
+      }
+    },
+    "ui/regions/72/24.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #353f45",
+        "border-top-left-radius": "3px",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/25.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #353f45"
+      }
+    },
+    "ui/regions/72/26.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #353f45",
+        "border-top-right-radius": "3px",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/27.png": {
+      "before": {
+        "background": "#353f45",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/28.png": {
+      "before": {
+        "background": "#353f45",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/29.png": {
+      "before": {
+        "background": "#353f45",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/30.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "inset": "6.25% 0 0 0"
+      }
+    },
+    "ui/regions/72/31.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-right": "1px solid #8da9b9",
+        "inset": "6.25% 0 0 0",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/32.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/33.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/34.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/35.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/36.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/37.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/38.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom": "1px solid #353f45",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/39.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #353f45",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/40.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/41.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #687b86"
+      }
+    },
+    "ui/regions/72/42.png": {
+      "before": {
+        "background": "#232a2e",
+        "border-top": "1px solid #687b86",
+        "border-bottom": "1px solid #687b86"
+      }
+    },
+    "ui/regions/72/43.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #687b86",
+        "border-bottom": "1px solid #687b86"
+      }
+    },
+    "ui/regions/72/44.png": {
+      "before": {
+        "background": "#687b86",
+        "border": "1px solid #8da9b9",
+        "border-radius": "20%"
+      }
+    },
+    "ui/regions/72/45.png": {
+      "before": {
+        "background": "#687b86",
+        "border": "1px solid #c1d5e1",
+        "border-radius": "20%"
+      }
+    },
+    "ui/regions/72/46.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-top-left-radius": "3px",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/47.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/48.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-top-right-radius": "3px",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/49.png": {
+      "before": {
+        "background": "#c1d5e1",
+        "border-left": "1px solid #4f5e68",
+        "inset": "11.111% 25% 11.111% 25%"
+      }
+    },
+    "ui/regions/72/50.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/51.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/52.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/53.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/54.png": {
+      "before": {
+        "background": "#ffffff"
+      }
+    },
+    "ui/regions/72/55.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #4f5e68"
+      }
+    },
+    "ui/regions/72/56.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/57.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #4f5e68"
+      }
+    },
+    "ui/regions/72/58.png": {
+      "before": {
+        "background": "#353f45",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/72/59.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/60.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/61.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/62.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/63.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/64.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/65.png": {
+      "before": {
+        "background": "#53626b",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/72/66.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/67.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/68.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/69.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/70.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/71.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/72.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/73.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/74.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/75.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/76.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/77.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/78.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/79.png": {
+      "before": {
+        "inset": "16.667% 0.000% 16.667% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/80.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/81.png": {
+      "before": {
+        "background": "#53626b",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/72/82.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/83.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/84.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/85.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/86.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "linear-gradient(#a8c8d5, #52717e)",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px"
+      }
+    },
+    "ui/regions/72/87.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/88.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/89.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/90.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/91.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/92.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/93.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#c1d5e1",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/94.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/95.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/96.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/97.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/98.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/99.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-right": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/100.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/101.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/102.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/103.png": {
+      "before": {
+        "background": "#ffffff"
+      }
+    },
+    "ui/regions/72/104.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/105.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/106.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #8da9b9"
+      },
+      "after": {
+        "inset": "30%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      }
+    },
+    "ui/regions/72/107.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #8da9b9"
+      },
+      "after": {
+        "inset": "30%",
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      }
+    },
+    "ui/regions/72/108.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/109.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/110.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/111.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/112.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/113.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-right": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/114.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/115.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/116.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/117.png": {
+      "before": {
+        "background": "#ffffff"
+      }
+    },
+    "ui/regions/72/118.png": {
+      "before": {
+        "background": "linear-gradient(90deg, #353f45, #637680)"
+      }
+    },
+    "ui/regions/72/119.png": {
+      "before": {
+        "background": "#637680",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/72/120.png": {
+      "before": {
+        "background": "linear-gradient(90deg, #687b86, #3a454b)"
+      }
+    },
+    "ui/regions/72/121.png": {
+      "before": {
+        "background": "#53626b",
+        "border-top": "1px solid #353f45",
+        "border-bottom": "1px solid #353f45"
+      }
+    },
+    "ui/regions/72/122.png": {
+      "before": {
+        "background": "#53626b",
+        "border-top": "1px solid #353f45",
+        "border-bottom": "1px solid #353f45"
+      }
+    },
+    "ui/regions/72/123.png": {
+      "before": {
+        "background": "#353f45",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/124.png": {
+      "before": {
+        "background": "#8da9b9",
+        "border-left": "1px solid #c1d5e1"
+      }
+    },
+    "ui/regions/72/125.png": {
+      "before": {
+        "background": "#53626b"
+      },
+      "after": {
+        "background": "#8da9b9",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "inset": "0",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/126.png": {
+      "before": {
+        "background": "#53626b"
+      },
+      "after": {
+        "background": "#8da9b9",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "inset": "0",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/72/127.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/128.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/129.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/130.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/131.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/132.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-right": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/133.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/134.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/135.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/136.png": {
+      "before": {
+        "background": "#ffffff"
+      }
+    },
+    "ui/regions/72/137.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #687b86",
+        "border-top-left-radius": "3px",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/138.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/139.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-bottom": "1px solid #687b86",
+        "border-top-right-radius": "3px",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/140.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/141.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/152.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #8da9b9",
+        "border-radius": "3px",
+        "inset": "0"
+      },
+      "after": {
+        "inset": "25%",
+        "background": "linear-gradient(45deg, transparent 43%, #8da9b9 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #8da9b9 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/72/153.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #c1d5e1",
+        "border-radius": "3px",
+        "inset": "0"
+      },
+      "after": {
+        "inset": "25%",
+        "background": "linear-gradient(45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/72/154.png": {
+      "before": {
+        "background": "#353f45",
+        "border": "1px solid #c1d5e1",
+        "border-radius": "3px",
+        "inset": "0"
+      },
+      "after": {
+        "inset": "25%",
+        "background": "linear-gradient(45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/72/155.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #c1d5e1",
+        "border-radius": "3px",
+        "inset": "0"
+      },
+      "after": {
+        "inset": "20%",
+        "background": "linear-gradient(45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/72/156.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #c1d5e1",
+        "border-radius": "3px",
+        "inset": "0"
+      },
+      "after": {
+        "inset": "20%",
+        "background": "linear-gradient(45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/72/157.png": {
+      "before": {
+        "background": "#000000",
+        "border": "1px solid #c1d5e1",
+        "border-radius": "3px",
+        "inset": "0"
+      },
+      "after": {
+        "inset": "20%",
+        "background": "linear-gradient(45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #c1d5e1 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/72/158.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/159.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/160.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/161.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/162.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/163.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-right": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/164.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/165.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/166.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/167.png": {
+      "before": {
+        "background": "#ffffff"
+      }
+    },
+    "ui/regions/72/168.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "border": "1px solid #bad2dc",
+        "border-radius": "50%"
+      },
+      "after": {
+        "background": "linear-gradient(#bad2dc, #bad2dc) center / 8% 100% no-repeat, linear-gradient(#bad2dc, #bad2dc) center / 100% 8% no-repeat"
+      }
+    },
+    "ui/regions/72/169.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#bad2dc",
+        "clip-path": "polygon(0 0, 90% 65%, 57% 65%, 78% 95%, 62% 100%, 42% 69%, 16% 90%)"
+      }
+    },
+    "ui/regions/72/170.png": {
+      "before": {
+        "inset": "35% 0",
+        "background": "#bad2dc",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "none"
+      },
+      "after": {
+        "inset": "35% 0",
+        "background": "#bad2dc",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "rotate(90deg)"
+      }
+    },
+    "ui/regions/72/171.png": {
+      "before": {
+        "inset": "27.778% -62.500%",
+        "background": "#bad2dc",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "rotate(90deg)"
+      }
+    },
+    "ui/regions/72/172.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#bad2dc",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "none"
+      }
+    },
+    "ui/regions/72/173.png": {
+      "before": {
+        "inset": "30% 0",
+        "background": "#bad2dc",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "rotate(-45deg)"
+      }
+    },
+    "ui/regions/72/174.png": {
+      "before": {
+        "inset": "30% 0",
+        "background": "#bad2dc",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "rotate(45deg)"
+      }
+    },
+    "ui/regions/72/175.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#bad2dc",
+        "clip-path": "polygon(0 0, 100% 0, 100% 10%, 60% 10%, 60% 90%, 100% 90%, 100% 100%, 0 100%, 0 90%, 40% 90%, 40% 10%, 0 10%)"
+      }
+    },
+    "ui/regions/72/176.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/177.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/178.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/179.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/180.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/181.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/182.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/183.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/184.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/185.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/186.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/187.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/188.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9",
+        "border-right": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/189.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/190.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/191.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/192.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top-left-radius": "3px",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/193.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top-right-radius": "3px",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/194.png": {
+      "before": {
+        "background": "#000000",
+        "border-top": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/195.png": {
+      "before": {
+        "background": "#000000",
+        "border-bottom": "1px solid #8da9b9"
+      }
+    },
+    "ui/regions/72/196.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/197.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-top": "1px solid #8da9b9",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/198.png": {
+      "before": {
+        "background": "#000000",
+        "border-left": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/72/199.png": {
+      "before": {
+        "background": "#000000",
+        "border-right": "1px solid #8da9b9",
+        "border-bottom": "1px solid #8da9b9",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/72/200.png": {
+      "before": {
+        "background": "#000000"
+      }
+    },
+    "ui/regions/72/201.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-left": "1px solid #000000",
+        "border-top": "1px solid #000000"
+      }
+    },
+    "ui/regions/72/202.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-right": "1px solid #000000",
+        "border-top": "1px solid #000000"
+      }
+    },
+    "ui/regions/72/203.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-left": "1px solid #000000",
+        "border-bottom": "1px solid #000000"
+      }
+    },
+    "ui/regions/72/204.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-right": "1px solid #000000",
+        "border-bottom": "1px solid #000000"
+      }
+    },
+    "ui/regions/72/205.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-left": "1px solid #000000"
+      }
+    },
+    "ui/regions/72/206.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-right": "1px solid #000000"
+      }
+    },
+    "ui/regions/72/207.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-top": "1px solid #000000"
+      }
+    },
+    "ui/regions/72/208.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-bottom": "1px solid #000000"
+      }
+    },
+    "ui/regions/72/209.png": {
+      "before": {
+        "background": "#fffec3"
+      }
+    },
+    "ui/regions/75/0.png": {
+      "before": {
+        "background": "#ffffff"
+      }
+    },
+    "ui/regions/75/1.png": {
+      "before": {
+        "background": "linear-gradient(90deg, #666666 0 25%, #ffffff 25% 50%, #b2b2b2 50% 75%, #666666 75%)"
+      }
+    },
+    "ui/regions/75/2.png": {
+      "before": {
+        "background": "linear-gradient(90deg, #666666 0 25%, #b2b2b2 25% 50%, #ffffff 50% 75%, #666666 75%)"
+      }
+    },
+    "ui/regions/75/3.png": {
+      "before": {
+        "background": "linear-gradient(180deg, #666666 0 25%, #ffffff 25% 50%, #b2b2b2 50% 75%, #666666 75%)"
+      }
+    },
+    "ui/regions/75/4.png": {
+      "before": {
+        "background": "linear-gradient(180deg, #666666 0 25%, #b2b2b2 25% 50%, #ffffff 50% 75%, #666666 75%)"
+      }
+    },
+    "ui/regions/75/5.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-left": "1px solid #666666",
+        "border-top": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/6.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-right": "1px solid #666666",
+        "border-top": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/7.png": {
+      "before": {
+        "background": "#b2b2b2",
+        "border-left": "1px solid #666666",
+        "border-bottom": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/8.png": {
+      "before": {
+        "background": "#b2b2b2",
+        "border-right": "1px solid #666666",
+        "border-bottom": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/9.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-left": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/10.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/11.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/12.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/13.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/14.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-right": "1px solid #8c9388",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/15.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/16.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388",
+        "border-bottom": "1px solid #8c9388",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/17.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-left": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/18.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/19.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/20.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/21.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/22.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-right": "1px solid #8c9388",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/23.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/24.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388",
+        "border-bottom": "1px solid #8c9388",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/25.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-left": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/26.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-right": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/27.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/28.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-bottom": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/29.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-left": "1px solid #8d8d93",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/30.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-right": "1px solid #8d8d93",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/31.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-left": "1px solid #8d8d93",
+        "border-bottom": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/32.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-right": "1px solid #8d8d93",
+        "border-bottom": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/33.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-left": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/34.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/35.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/36.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/37.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/38.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-right": "1px solid #8c9388",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/39.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/40.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388",
+        "border-bottom": "1px solid #8c9388",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/41.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-left": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/42.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/43.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/44.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/45.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/46.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-right": "1px solid #8c9388",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/47.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/48.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388",
+        "border-bottom": "1px solid #8c9388",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/49.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#f03a37",
+        "border": "1px solid #8c9388",
+        "border-radius": "3px"
+      },
+      "after": {
+        "inset": "25%",
+        "background": "linear-gradient(45deg, transparent 43%, #fff 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #fff 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/75/50.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#f03a37",
+        "border": "1px solid #8c9388",
+        "border-radius": "3px"
+      },
+      "after": {
+        "inset": "25%",
+        "background": "linear-gradient(45deg, transparent 43%, #fff 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #fff 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/75/51.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#f03a37",
+        "border": "1px solid #8c9388",
+        "border-radius": "3px"
+      },
+      "after": {
+        "inset": "25%",
+        "background": "linear-gradient(45deg, transparent 43%, #fff 44% 56%, transparent 57%), linear-gradient(-45deg, transparent 43%, #fff 44% 56%, transparent 57%)"
+      }
+    },
+    "ui/regions/75/52.png": {
+      "before": {
+        "background": "linear-gradient(#cecece, #b2b2b2)",
+        "border-left": "1px solid #666666",
+        "border-top": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/53.png": {
+      "before": {
+        "background": "linear-gradient(#cecece, #b2b2b2)",
+        "border-right": "1px solid #666666",
+        "border-top": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/54.png": {
+      "before": {
+        "background": "#b2b2b2",
+        "border-left": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/55.png": {
+      "before": {
+        "background": "#b2b2b2",
+        "border-right": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/56.png": {
+      "before": {
+        "background": "linear-gradient(#c0c0c0, #ffffff)",
+        "border-left": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/57.png": {
+      "before": {
+        "background": "linear-gradient(#c0c0c0, #ffffff)",
+        "border-right": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/58.png": {
+      "before": {
+        "background": "linear-gradient(#cecece, #b2b2b2)",
+        "border-top": "1px solid #666666"
+      }
+    },
+    "ui/regions/75/59.png": {
+      "before": {
+        "background": "#b2b2b2"
+      }
+    },
+    "ui/regions/75/60.png": {
+      "before": {
+        "background": "linear-gradient(#c0c0c0, #ffffff)"
+      }
+    },
+    "ui/regions/75/61.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#fff",
+        "border": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/62.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#fff",
+        "border": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/63.png": {
+      "before": {
+        "background": "transparent"
+      },
+      "after": {
+        "content": "\"\u2713\"",
+        "font": "bold 13px Arial, sans-serif",
+        "color": "#111",
+        "display": "grid",
+        "place-items": "center",
+        "font-style": "normal"
+      }
+    },
+    "ui/regions/75/64.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#fff",
+        "border": "1px solid #8c9388",
+        "border-radius": "50%"
+      }
+    },
+    "ui/regions/75/65.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#fff",
+        "border": "1px solid #8c9388",
+        "border-radius": "50%"
+      }
+    },
+    "ui/regions/75/66.png": {
+      "before": {
+        "inset": "30.000% 30.000% 30.000% 30.000%",
+        "background": "#111",
+        "border": "0",
+        "border-radius": "50%"
+      }
+    },
+    "ui/regions/75/67.png": {
+      "before": {
+        "background": "linear-gradient(#f1efe2, #e0dfe3)",
+        "border": "1px solid #8d8d93",
+        "border-radius": "3px",
+        "inset": "0"
+      }
+    },
+    "ui/regions/75/68.png": {
+      "before": {
+        "background": "linear-gradient(#ffffff, #e0dfe3)",
+        "border": "1px solid #8d8d93",
+        "border-radius": "3px",
+        "inset": "0"
+      }
+    },
+    "ui/regions/75/69.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-left": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/70.png": {
+      "before": {
+        "background": "#edf0e7"
+      }
+    },
+    "ui/regions/75/71.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/72.png": {
+      "before": {
+        "background": "#a1a192",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/75/73.png": {
+      "before": {
+        "background": "#f9fafd"
+      }
+    },
+    "ui/regions/75/74.png": {
+      "before": {
+        "background": "linear-gradient(#f9fafd, #bdbece)"
+      }
+    },
+    "ui/regions/75/75.png": {
+      "before": {
+        "background": "linear-gradient(90deg, #fefefe 0 33%, #b5b6c8 33% 66%, #f9fafd 66%)"
+      }
+    },
+    "ui/regions/75/76.png": {
+      "before": {
+        "background": "repeating-linear-gradient(0deg, #8e95a2 0 2px, #ffffff 2px 4px)"
+      }
+    },
+    "ui/regions/75/77.png": {
+      "before": {
+        "background": "repeating-linear-gradient(90deg, #8e95a2 0 2px, #ffffff 2px 4px)"
+      }
+    },
+    "ui/regions/75/78.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/79.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/80.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/81.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/82.png": {
+      "before": {
+        "inset": "0.000% 20.000% 0.000% 20.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 20.000% 0.000% 20.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/83.png": {
+      "before": {
+        "inset": "0.000% 20.000% 0.000% 20.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 20.000% 0.000% 20.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/84.png": {
+      "before": {
+        "inset": "20.000% 0.000% 20.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)"
+      },
+      "after": {
+        "inset": "20.000% 0.000% 20.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(50% 0, 100% 100%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/85.png": {
+      "before": {
+        "inset": "20.000% 0.000% 20.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)"
+      },
+      "after": {
+        "inset": "20.000% 0.000% 20.000% 0.000%",
+        "background": "#212121",
+        "clip-path": "polygon(0 0, 100% 0, 50% 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/86.png": {
+      "before": {
+        "background": "#1005a5",
+        "inset": "0.000% 0.000% 0.000% 0.000%"
+      }
+    },
+    "ui/regions/75/87.png": {
+      "before": {
+        "inset": "5.263% 10.000% 5.263% 0.000%",
+        "background": "#fff",
+        "clip-path": "polygon(0 0, 90% 65%, 57% 65%, 78% 95%, 62% 100%, 42% 69%, 16% 90%)"
+      }
+    },
+    "ui/regions/75/88.png": {
+      "before": {
+        "inset": "35% 0",
+        "background": "#fff",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "none"
+      },
+      "after": {
+        "inset": "35% 0",
+        "background": "#fff",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "rotate(90deg)"
+      }
+    },
+    "ui/regions/75/89.png": {
+      "before": {
+        "inset": "21.053% -36.364%",
+        "background": "#fff",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "rotate(90deg)"
+      }
+    },
+    "ui/regions/75/90.png": {
+      "before": {
+        "inset": "0.000% 5.263% 0.000% 0.000%",
+        "background": "#fff",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "none"
+      }
+    },
+    "ui/regions/75/91.png": {
+      "before": {
+        "inset": "30% 0",
+        "background": "#fff",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "rotate(-45deg)"
+      }
+    },
+    "ui/regions/75/92.png": {
+      "before": {
+        "inset": "30% 0",
+        "background": "#fff",
+        "clip-path": "polygon(0 50%, 28% 0, 28% 40%, 72% 40%, 72% 0, 100% 50%, 72% 100%, 72% 60%, 28% 60%, 28% 100%)",
+        "transform": "rotate(45deg)"
+      }
+    },
+    "ui/regions/75/93.png": {
+      "before": {
+        "inset": "5.000% 9.091% 5.000% 9.091%",
+        "background": "#fff",
+        "clip-path": "polygon(0 0, 100% 0, 100% 10%, 60% 10%, 60% 90%, 100% 90%, 100% 100%, 0 100%, 0 90%, 40% 90%, 40% 10%, 0 10%)"
+      }
+    },
+    "ui/regions/75/94.png": {
+      "before": {
+        "background": "#edf0e7"
+      }
+    },
+    "ui/regions/75/95.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-left": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/96.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/97.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/98.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/99.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388",
+        "border-bottom": "1px solid #8c9388",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/100.png": {
+      "before": {
+        "background": "#edf0e7"
+      }
+    },
+    "ui/regions/75/101.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-left": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/102.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/103.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/104.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388"
+      }
+    },
+    "ui/regions/75/105.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-top-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/106.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-top": "1px solid #8c9388",
+        "border-right": "1px solid #8c9388",
+        "border-top-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/107.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-bottom": "1px solid #8c9388",
+        "border-left": "1px solid #8c9388",
+        "border-bottom-left-radius": "3px"
+      }
+    },
+    "ui/regions/75/108.png": {
+      "before": {
+        "background": "#edf0e7",
+        "border-right": "1px solid #8c9388",
+        "border-bottom": "1px solid #8c9388",
+        "border-bottom-right-radius": "3px"
+      }
+    },
+    "ui/regions/75/109.png": {
+      "before": {
+        "background": "#edf0e7"
+      }
+    },
+    "ui/regions/75/110.png": {
+      "before": {
+        "background": "#f9f8f1",
+        "border-left": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/111.png": {
+      "before": {
+        "background": "#f9f8f1",
+        "border-right": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/112.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/113.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-left": "1px solid #8d8d93",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/114.png": {
+      "before": {
+        "background": "#97dc99",
+        "border-right": "1px solid #8d8d93",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/115.png": {
+      "before": {
+        "background": "#ffffff"
+      }
+    },
+    "ui/regions/75/116.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-left": "1px solid #000000",
+        "border-top": "1px solid #000000"
+      }
+    },
+    "ui/regions/75/117.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-right": "1px solid #000000",
+        "border-top": "1px solid #000000"
+      }
+    },
+    "ui/regions/75/118.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-left": "1px solid #000000",
+        "border-bottom": "1px solid #000000"
+      }
+    },
+    "ui/regions/75/119.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-right": "1px solid #000000",
+        "border-bottom": "1px solid #000000"
+      }
+    },
+    "ui/regions/75/120.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-left": "1px solid #000000"
+      }
+    },
+    "ui/regions/75/121.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-right": "1px solid #000000"
+      }
+    },
+    "ui/regions/75/122.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-top": "1px solid #000000"
+      }
+    },
+    "ui/regions/75/123.png": {
+      "before": {
+        "background": "#fffec3",
+        "border-bottom": "1px solid #000000"
+      }
+    },
+    "ui/regions/75/124.png": {
+      "before": {
+        "background": "#fffec3"
+      }
+    },
+    "ui/regions/75/125.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-left": "1px solid #7f7f7f",
+        "border-top": "1px solid #7f7f7f"
+      }
+    },
+    "ui/regions/75/126.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-right": "1px solid #7f7f7f",
+        "border-top": "1px solid #7f7f7f"
+      }
+    },
+    "ui/regions/75/127.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-left": "1px solid #7f7f7f",
+        "border-bottom": "1px solid #7f7f7f"
+      }
+    },
+    "ui/regions/75/128.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-right": "1px solid #7f7f7f",
+        "border-bottom": "1px solid #7f7f7f"
+      }
+    },
+    "ui/regions/75/129.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-left": "1px solid #7f7f7f"
+      }
+    },
+    "ui/regions/75/130.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-right": "1px solid #7f7f7f"
+      }
+    },
+    "ui/regions/75/131.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-top": "1px solid #7f7f7f"
+      }
+    },
+    "ui/regions/75/132.png": {
+      "before": {
+        "background": "#ffffff",
+        "border-bottom": "1px solid #7f7f7f"
+      }
+    },
+    "ui/regions/75/133.png": {
+      "before": {
+        "background": "#f9f8f1",
+        "border-left": "1px solid #8d8d93",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/134.png": {
+      "before": {
+        "background": "#f9f8f1",
+        "border-right": "1px solid #8d8d93",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/135.png": {
+      "before": {
+        "background": "#9d9da1",
+        "border-left": "1px solid #8d8d93",
+        "border-bottom": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/136.png": {
+      "before": {
+        "background": "#9d9da1",
+        "border-right": "1px solid #8d8d93",
+        "border-bottom": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/137.png": {
+      "before": {
+        "background": "#f9f8f1",
+        "border-left": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/138.png": {
+      "before": {
+        "background": "#8d8d93",
+        "border-right": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/139.png": {
+      "before": {
+        "background": "#f9f8f1",
+        "border-top": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/140.png": {
+      "before": {
+        "background": "#8d8d93",
+        "border-bottom": "1px solid #8d8d93"
+      }
+    },
+    "ui/regions/75/141.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#ffffff",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#ffffff",
+        "clip-path": "polygon(0 0, 100% 50%, 0 100%)",
+        "transform": "scale(.7)"
+      }
+    },
+    "ui/regions/75/142.png": {
+      "before": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#ffffff",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)"
+      },
+      "after": {
+        "inset": "0.000% 0.000% 0.000% 0.000%",
+        "background": "#ffffff",
+        "clip-path": "polygon(0 50%, 100% 0, 100% 100%)",
+        "transform": "scale(.7)"
+      }
+    }
+  },
+  "reviewed": [
+    "ui/regions/72/1.png",
+    "ui/regions/72/2.png",
+    "ui/regions/72/3.png",
+    "ui/regions/72/4.png",
+    "ui/regions/72/5.png",
+    "ui/regions/72/6.png",
+    "ui/regions/72/7.png",
+    "ui/regions/72/8.png",
+    "ui/regions/72/9.png",
+    "ui/regions/72/10.png",
+    "ui/regions/72/11.png",
+    "ui/regions/72/12.png",
+    "ui/regions/72/13.png",
+    "ui/regions/72/14.png",
+    "ui/regions/72/15.png",
+    "ui/regions/72/16.png",
+    "ui/regions/72/17.png",
+    "ui/regions/72/18.png",
+    "ui/regions/72/19.png",
+    "ui/regions/72/20.png",
+    "ui/regions/72/21.png",
+    "ui/regions/72/22.png",
+    "ui/regions/72/23.png",
+    "ui/regions/72/24.png",
+    "ui/regions/72/25.png",
+    "ui/regions/72/26.png",
+    "ui/regions/72/27.png",
+    "ui/regions/72/28.png",
+    "ui/regions/72/29.png",
+    "ui/regions/72/30.png",
+    "ui/regions/72/31.png",
+    "ui/regions/72/32.png",
+    "ui/regions/72/33.png",
+    "ui/regions/72/34.png",
+    "ui/regions/72/35.png",
+    "ui/regions/72/36.png",
+    "ui/regions/72/37.png",
+    "ui/regions/72/38.png",
+    "ui/regions/72/39.png",
+    "ui/regions/72/40.png",
+    "ui/regions/72/41.png",
+    "ui/regions/72/42.png",
+    "ui/regions/72/43.png",
+    "ui/regions/72/44.png",
+    "ui/regions/72/45.png",
+    "ui/regions/72/46.png",
+    "ui/regions/72/47.png",
+    "ui/regions/72/48.png",
+    "ui/regions/72/49.png",
+    "ui/regions/72/50.png",
+    "ui/regions/72/51.png",
+    "ui/regions/72/52.png",
+    "ui/regions/72/53.png",
+    "ui/regions/72/54.png",
+    "ui/regions/72/55.png",
+    "ui/regions/72/56.png",
+    "ui/regions/72/57.png",
+    "ui/regions/72/58.png",
+    "ui/regions/72/59.png",
+    "ui/regions/72/60.png",
+    "ui/regions/72/61.png",
+    "ui/regions/72/62.png",
+    "ui/regions/72/63.png",
+    "ui/regions/72/64.png",
+    "ui/regions/72/65.png",
+    "ui/regions/72/66.png",
+    "ui/regions/72/67.png",
+    "ui/regions/72/68.png",
+    "ui/regions/72/69.png",
+    "ui/regions/72/70.png",
+    "ui/regions/72/71.png",
+    "ui/regions/72/72.png",
+    "ui/regions/72/73.png",
+    "ui/regions/72/74.png",
+    "ui/regions/72/75.png",
+    "ui/regions/72/76.png",
+    "ui/regions/72/77.png",
+    "ui/regions/72/78.png",
+    "ui/regions/72/79.png",
+    "ui/regions/72/80.png",
+    "ui/regions/72/81.png",
+    "ui/regions/72/82.png",
+    "ui/regions/72/83.png",
+    "ui/regions/72/84.png",
+    "ui/regions/72/85.png",
+    "ui/regions/72/86.png",
+    "ui/regions/72/87.png",
+    "ui/regions/72/88.png",
+    "ui/regions/72/89.png",
+    "ui/regions/72/90.png",
+    "ui/regions/72/91.png",
+    "ui/regions/72/92.png",
+    "ui/regions/72/93.png",
+    "ui/regions/72/94.png",
+    "ui/regions/72/95.png",
+    "ui/regions/72/96.png",
+    "ui/regions/72/97.png",
+    "ui/regions/72/98.png",
+    "ui/regions/72/99.png",
+    "ui/regions/72/100.png",
+    "ui/regions/72/101.png",
+    "ui/regions/72/102.png",
+    "ui/regions/72/103.png",
+    "ui/regions/72/104.png",
+    "ui/regions/72/105.png",
+    "ui/regions/72/106.png",
+    "ui/regions/72/107.png",
+    "ui/regions/72/108.png",
+    "ui/regions/72/109.png",
+    "ui/regions/72/110.png",
+    "ui/regions/72/111.png",
+    "ui/regions/72/112.png",
+    "ui/regions/72/113.png",
+    "ui/regions/72/114.png",
+    "ui/regions/72/115.png",
+    "ui/regions/72/116.png",
+    "ui/regions/72/117.png",
+    "ui/regions/72/118.png",
+    "ui/regions/72/119.png",
+    "ui/regions/72/120.png",
+    "ui/regions/72/121.png",
+    "ui/regions/72/122.png",
+    "ui/regions/72/123.png",
+    "ui/regions/72/124.png",
+    "ui/regions/72/125.png",
+    "ui/regions/72/126.png",
+    "ui/regions/72/127.png",
+    "ui/regions/72/128.png",
+    "ui/regions/72/129.png",
+    "ui/regions/72/130.png",
+    "ui/regions/72/131.png",
+    "ui/regions/72/132.png",
+    "ui/regions/72/133.png",
+    "ui/regions/72/134.png",
+    "ui/regions/72/135.png",
+    "ui/regions/72/136.png",
+    "ui/regions/72/137.png",
+    "ui/regions/72/138.png",
+    "ui/regions/72/139.png",
+    "ui/regions/72/140.png",
+    "ui/regions/72/141.png",
+    "ui/regions/72/152.png",
+    "ui/regions/72/153.png",
+    "ui/regions/72/154.png",
+    "ui/regions/72/155.png",
+    "ui/regions/72/156.png",
+    "ui/regions/72/157.png",
+    "ui/regions/72/158.png",
+    "ui/regions/72/159.png",
+    "ui/regions/72/160.png",
+    "ui/regions/72/161.png",
+    "ui/regions/72/162.png",
+    "ui/regions/72/163.png",
+    "ui/regions/72/164.png",
+    "ui/regions/72/165.png",
+    "ui/regions/72/166.png",
+    "ui/regions/72/167.png",
+    "ui/regions/72/168.png",
+    "ui/regions/72/169.png",
+    "ui/regions/72/170.png",
+    "ui/regions/72/171.png",
+    "ui/regions/72/172.png",
+    "ui/regions/72/173.png",
+    "ui/regions/72/174.png",
+    "ui/regions/72/175.png",
+    "ui/regions/72/176.png",
+    "ui/regions/72/177.png",
+    "ui/regions/72/178.png",
+    "ui/regions/72/179.png",
+    "ui/regions/72/180.png",
+    "ui/regions/72/181.png",
+    "ui/regions/72/182.png",
+    "ui/regions/72/183.png",
+    "ui/regions/72/184.png",
+    "ui/regions/72/185.png",
+    "ui/regions/72/186.png",
+    "ui/regions/72/187.png",
+    "ui/regions/72/188.png",
+    "ui/regions/72/189.png",
+    "ui/regions/72/190.png",
+    "ui/regions/72/191.png",
+    "ui/regions/72/192.png",
+    "ui/regions/72/193.png",
+    "ui/regions/72/194.png",
+    "ui/regions/72/195.png",
+    "ui/regions/72/196.png",
+    "ui/regions/72/197.png",
+    "ui/regions/72/198.png",
+    "ui/regions/72/199.png",
+    "ui/regions/72/200.png",
+    "ui/regions/72/201.png",
+    "ui/regions/72/202.png",
+    "ui/regions/72/203.png",
+    "ui/regions/72/204.png",
+    "ui/regions/72/205.png",
+    "ui/regions/72/206.png",
+    "ui/regions/72/207.png",
+    "ui/regions/72/208.png",
+    "ui/regions/72/209.png",
+    "ui/regions/75/0.png",
+    "ui/regions/75/1.png",
+    "ui/regions/75/2.png",
+    "ui/regions/75/3.png",
+    "ui/regions/75/4.png",
+    "ui/regions/75/5.png",
+    "ui/regions/75/6.png",
+    "ui/regions/75/7.png",
+    "ui/regions/75/8.png",
+    "ui/regions/75/9.png",
+    "ui/regions/75/10.png",
+    "ui/regions/75/11.png",
+    "ui/regions/75/12.png",
+    "ui/regions/75/13.png",
+    "ui/regions/75/14.png",
+    "ui/regions/75/15.png",
+    "ui/regions/75/16.png",
+    "ui/regions/75/17.png",
+    "ui/regions/75/18.png",
+    "ui/regions/75/19.png",
+    "ui/regions/75/20.png",
+    "ui/regions/75/21.png",
+    "ui/regions/75/22.png",
+    "ui/regions/75/23.png",
+    "ui/regions/75/24.png",
+    "ui/regions/75/25.png",
+    "ui/regions/75/26.png",
+    "ui/regions/75/27.png",
+    "ui/regions/75/28.png",
+    "ui/regions/75/29.png",
+    "ui/regions/75/30.png",
+    "ui/regions/75/31.png",
+    "ui/regions/75/32.png",
+    "ui/regions/75/33.png",
+    "ui/regions/75/34.png",
+    "ui/regions/75/35.png",
+    "ui/regions/75/36.png",
+    "ui/regions/75/37.png",
+    "ui/regions/75/38.png",
+    "ui/regions/75/39.png",
+    "ui/regions/75/40.png",
+    "ui/regions/75/41.png",
+    "ui/regions/75/42.png",
+    "ui/regions/75/43.png",
+    "ui/regions/75/44.png",
+    "ui/regions/75/45.png",
+    "ui/regions/75/46.png",
+    "ui/regions/75/47.png",
+    "ui/regions/75/48.png",
+    "ui/regions/75/49.png",
+    "ui/regions/75/50.png",
+    "ui/regions/75/51.png",
+    "ui/regions/75/52.png",
+    "ui/regions/75/53.png",
+    "ui/regions/75/54.png",
+    "ui/regions/75/55.png",
+    "ui/regions/75/56.png",
+    "ui/regions/75/57.png",
+    "ui/regions/75/58.png",
+    "ui/regions/75/59.png",
+    "ui/regions/75/60.png",
+    "ui/regions/75/61.png",
+    "ui/regions/75/62.png",
+    "ui/regions/75/63.png",
+    "ui/regions/75/64.png",
+    "ui/regions/75/65.png",
+    "ui/regions/75/66.png",
+    "ui/regions/75/67.png",
+    "ui/regions/75/68.png",
+    "ui/regions/75/69.png",
+    "ui/regions/75/70.png",
+    "ui/regions/75/71.png",
+    "ui/regions/75/72.png",
+    "ui/regions/75/73.png",
+    "ui/regions/75/74.png",
+    "ui/regions/75/75.png",
+    "ui/regions/75/76.png",
+    "ui/regions/75/77.png",
+    "ui/regions/75/78.png",
+    "ui/regions/75/79.png",
+    "ui/regions/75/80.png",
+    "ui/regions/75/81.png",
+    "ui/regions/75/82.png",
+    "ui/regions/75/83.png",
+    "ui/regions/75/84.png",
+    "ui/regions/75/85.png",
+    "ui/regions/75/86.png",
+    "ui/regions/75/87.png",
+    "ui/regions/75/88.png",
+    "ui/regions/75/89.png",
+    "ui/regions/75/90.png",
+    "ui/regions/75/91.png",
+    "ui/regions/75/92.png",
+    "ui/regions/75/93.png",
+    "ui/regions/75/94.png",
+    "ui/regions/75/95.png",
+    "ui/regions/75/96.png",
+    "ui/regions/75/97.png",
+    "ui/regions/75/98.png",
+    "ui/regions/75/99.png",
+    "ui/regions/75/100.png",
+    "ui/regions/75/101.png",
+    "ui/regions/75/102.png",
+    "ui/regions/75/103.png",
+    "ui/regions/75/104.png",
+    "ui/regions/75/105.png",
+    "ui/regions/75/106.png",
+    "ui/regions/75/107.png",
+    "ui/regions/75/108.png",
+    "ui/regions/75/109.png",
+    "ui/regions/75/110.png",
+    "ui/regions/75/111.png",
+    "ui/regions/75/112.png",
+    "ui/regions/75/113.png",
+    "ui/regions/75/114.png",
+    "ui/regions/75/115.png",
+    "ui/regions/75/116.png",
+    "ui/regions/75/117.png",
+    "ui/regions/75/118.png",
+    "ui/regions/75/119.png",
+    "ui/regions/75/120.png",
+    "ui/regions/75/121.png",
+    "ui/regions/75/122.png",
+    "ui/regions/75/123.png",
+    "ui/regions/75/124.png",
+    "ui/regions/75/125.png",
+    "ui/regions/75/126.png",
+    "ui/regions/75/127.png",
+    "ui/regions/75/128.png",
+    "ui/regions/75/129.png",
+    "ui/regions/75/130.png",
+    "ui/regions/75/131.png",
+    "ui/regions/75/132.png",
+    "ui/regions/75/133.png",
+    "ui/regions/75/134.png",
+    "ui/regions/75/135.png",
+    "ui/regions/75/136.png",
+    "ui/regions/75/137.png",
+    "ui/regions/75/138.png",
+    "ui/regions/75/139.png",
+    "ui/regions/75/140.png",
+    "ui/regions/75/141.png",
+    "ui/regions/75/142.png"
+  ]
+}
