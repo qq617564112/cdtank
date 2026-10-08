@@ -4,7 +4,9 @@ import {tankThumbnails} from '../../assets/tanks/thumbnails';
 import {petThumbnails} from '../../assets/pets/thumbnails';
 import type {HomeSourceUi} from './source-ui-layout';
 import {imageResourceBackground, imageResourceUrl} from '../../assets/image-cache';
-import {sourceTextArtwork} from './source-text-artwork';
+import {isSourceTextImage} from './source-text-artwork';
+import {isSimpleUiImage} from '../../assets/simple-ui-artwork';
+import {buttonArtwork} from '../../assets/button-artwork';
 
 const TANK_ICON_MARKS = ['轻', '中', '重', 'Ⅱ', 'Ⅲ'];
 
@@ -28,7 +30,8 @@ export function sourceUiImage(ui: HomeSourceUi, reference?: string) {
   const sets = ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
   const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
   const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-  const url = asset && !sourceTextArtwork(asset) ? imageResourceUrl(`/${asset}`) : undefined;
+  const url = asset && !isSourceTextImage(asset) && !isSimpleUiImage(asset)
+    ? imageResourceUrl(buttonArtwork(asset)?.background ?? `/${asset}`) : undefined;
   return {asset, url, tankThumbnail: false, petThumbnail: false, tankMark: undefined,
-    backgroundImage: url ? `url('${url}')` : undefined};
+    backgroundImage: asset && (isSimpleUiImage(asset) || buttonArtwork(asset)) ? 'none' : url ? `url('${url}')` : undefined};
 }

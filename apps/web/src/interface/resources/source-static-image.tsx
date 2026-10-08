@@ -4,6 +4,8 @@ import {createContext, useContext, type CSSProperties, type ComponentPropsWithou
 import type {HomeSourceUi, HomeSourceLayout} from './source-ui-layout';
 import {sourceProps} from './source-ui-props';
 import {sourceTextArtwork, SourceTextArtwork} from './source-text-artwork';
+import {buttonArtwork} from '../../assets/button-artwork';
+import {isSimpleUiImage} from '../../assets/simple-ui-artwork';
 
 export const SourceImageScale = createContext(1);
 
@@ -58,9 +60,9 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
   const text = sourceTextArtwork(textAsset);
   return <span {...props} {...attributes} className={`source-static-image ${className}`}
     style={{...props.style, backgroundImage: undefined}}>
-    {text && <SourceTextArtwork asset={textAsset!} style={{inset: `${top}px ${right}px ${bottom}px ${left}px`}}/>}
-    {!text && props['data-source-asset'] && <i data-source-image="" data-source-horz-format="HorzStretched" data-source-vert-format="VertStretched"
+    {(!text || buttonArtwork(textAsset!) || isSimpleUiImage(textAsset!)) && props['data-source-asset'] && <i data-source-image="" data-source-horz-format="HorzStretched" data-source-vert-format="VertStretched"
       data-source-offset="0,0" data-source-clip="inner-rectangle" data-source-asset={props['data-source-asset']}
+      data-source-button-label={text ? 'external' : undefined}
       style={{inset: `${top}px ${right}px ${bottom}px ${left}px`, backgroundImage: props.style.backgroundImage,
         backgroundSize: props.style.backgroundSize, backgroundPosition: props.style.backgroundPosition,
         backgroundRepeat: props.style.backgroundRepeat, ...blueStripBackground(imageReference)}} />}
@@ -78,6 +80,7 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
       else {style.top = size(`Top${position}`, 'Height'); style.bottom = size(`Bottom${position}`, 'Height');}
       return <i key={position} data-source-frame={`${position}FrameImage`} data-source-asset={image!.asset} style={style}/>;
     })}
+    {text && <SourceTextArtwork asset={textAsset!} style={{inset: `${top}px ${right}px ${bottom}px ${left}px`}}/>}
     {children}
   </span>;
 }

@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 
 from PIL import Image
+from ui_artwork_scope import html_ui_sources
 
 
 LAYOUTS = {'tiny': (32, 8, 128), 'small': (64, 4, 256),
@@ -63,6 +64,13 @@ def defer_regular_text(root, inventory):
         if entry['source'].lower() in sources or entry['canonical'] in canonical:
             entry['deferred'] = 'font-rendering'
     return sum(entry.get('deferred') == 'font-rendering' for entry in inventory['textures'])
+
+
+def defer_simple_ui(root, inventory):
+    sources = html_ui_sources()
+    for entry in inventory['textures']:
+        if entry['source'] in sources:
+            entry['deferred'] = 'html-css-rendering'
 
 
 def category(entry):
@@ -236,6 +244,7 @@ def main():
     root = args.root.resolve()
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
     deferred = defer_regular_text(root, inventory)
+    defer_simple_ui(root, inventory)
     if not args.dry_run:
         inventory_path = root / 'art/hd-assets/inventory.json'
         temporary = inventory_path.with_suffix('.scope.tmp')

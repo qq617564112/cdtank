@@ -1,13 +1,12 @@
 """Restore game texture atlases through the chatgpt2api image-edit skill.
 
 Requires Pillow, numpy and opencv-python-headless. Credentials are read from
-CHATGPT2API_AUTH_KEY or hidden terminal input and never written to assets.
+CHATGPT2API_KEY or hidden terminal input and never written to assets.
 """
 import argparse
 from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
-import getpass
 import json
 import os
 from pathlib import Path
@@ -22,6 +21,9 @@ import time
 import cv2
 import numpy as np
 from PIL import Image, ImageChops, ImageFilter
+
+import hd_image_api
+from ui_artwork_scope import html_ui_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / 'art/hd-assets'
@@ -66,6 +68,7 @@ def prepare():
     previous = document(ART / 'inventory.json') if (ART / 'inventory.json').exists() else {'textures': []}
     previous_entries = {entry['source']: entry for entry in previous['textures']}
     previous_plan = document(ART / 'plan.json') if (ART / 'plan.json').exists() else {'batches': []}
+    simple = html_ui_sources()
 
     def add(path, group):
         source = existing.get(path.replace('\\', '/').lower())
@@ -147,6 +150,8 @@ def prepare():
                          'size': list(image.size), 'groups': sorted(membership)})
         if previous_entries.get(source, {}).get('deferred'):
             textures[-1]['deferred'] = previous_entries[source]['deferred']
+        if source in simple:
+            textures[-1]['deferred'] = 'html-css-rendering'
         if source in local_sources:
             textures[-1]['installPath'] = str(local_sources[source].relative_to(ROOT))
             if source.startswith('local-ui/loading-words/'):
@@ -216,7 +221,7 @@ Repaint crisp natural contours and restrained fine material detail in the origin
                                 'prompt': str((folder / 'prompt.txt').relative_to(ROOT)),
                                 'output': str((folder / 'output-1.png').relative_to(ROOT)),
                                 'ratio': '1:1' if columns == rows else f'{columns}:{rows}'})
-    save(ART / 'plan.json', {'baseUrl': 'https://gptimg.cloyd.fun/', 'model': 'gpt-image-2', 'groups': ordered_groups, 'batches': batches})
+    save(ART / 'plan.json', {'baseUrl': hd_image_api.DEFAULT_BASE_URL, 'model': hd_image_api.MODEL, 'groups': ordered_groups, 'batches': batches})
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-loading.py'), 'prepare'], check=True)
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-reference-hero.py')], check=True)
     subprocess.run([sys.executable, str(ROOT / 'scripts/prepare-hd-layered-ui.py'), 'prepare'], check=True)
@@ -363,16 +368,16 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
              initial_concurrency=None, released_workers=None, request_slots=None, release_pool=None):
     sys.path.insert(0, str(SKILL / 'scripts'))
     import common
-    key = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
-    base_url = common.resolve_base_url(os.environ.get('CHATGPT2API_BASE_URL', 'https://gptimg.cloyd.fun/'))
+    key = hd_image_api.auth_key()
+    base_url = os.environ.get('CHATGPT2API_BASE_URL', hd_image_api.DEFAULT_BASE_URL)
     ledger_path = ART / 'calls.json'
     if ledger is None:
         ledger = document(ledger_path) if ledger_path.exists() else []
     batches = document(ART / 'plan.json')['batches']
     textures = document(ART / 'inventory.json')['textures']
-    deferred = {entry['source'] for entry in textures if entry.get('deferred')}
+    deferred = {entry['source'] for entry in textures if entry.get('deferred')} | html_ui_sources()
     selected = [b for b in batches if (not groups or b['group'] in groups)
-                and any(cell['source'] not in deferred for cell in b['cells'])]
+                and all(cell['source'] not in deferred for cell in b['cells'])]
     delivered = {e['source']: e['png'] for e in textures}
     assemble_tiles({cell['source'] for batch in selected for cell in batch['cells']
                     if cell.get('sourceBox') and not (ROOT / delivered[cell['source']]).exists()})
@@ -418,10 +423,8 @@ def generate(groups, concurrency, limit, retry_delay=300, ledger=None,
             save(ledger_path, ledger)
         print(f"Call {record['call']}: {batch['id']}", flush=True)
         try:
-            status, payload = common.request_multipart('POST', base_url + '/v1/images/edits',
-                headers=common.auth_headers(key), fields=[('prompt', (ROOT / batch['prompt']).read_text()),
-                ('model', common.DEFAULT_MODEL), ('n', '1'), ('size', batch['ratio']), ('response_format', 'b64_json')],
-                files=[('image', ROOT / batch['input'])])
+            status, payload = hd_image_api.edit(base_url, key, (ROOT / batch['prompt']).read_text(),
+                                                ROOT / batch['input'])
             paths = common.save_image_results(payload, output_dir=(ROOT / batch['output']).parent,
                                               prefix='output', download_url_results=True)
             if not paths:
@@ -538,7 +541,7 @@ def install_group(group):
 
 
 def run(groups, concurrency, ui_concurrency, limit, retry_delay):
-    os.environ['CHATGPT2API_AUTH_KEY'] = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
+    os.environ['CHATGPT2API_KEY'] = hd_image_api.auth_key()
     ledger_path = ART / 'calls.json'
     ledger = document(ledger_path) if ledger_path.exists() else []
     selected = [group for group in document(ART / 'plan.json')['groups'] if not groups or group in groups]

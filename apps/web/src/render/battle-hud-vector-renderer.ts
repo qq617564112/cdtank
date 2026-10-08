@@ -3,6 +3,7 @@ import type {Scene} from '@babylonjs/core';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import type {ResInventory} from '../../../shared/protocols/PtlInventory';
 import {decodeImage} from '../assets/image-resources';
+import {isSimpleUiImage} from '../assets/simple-ui-artwork';
 import type {BattleHud, SourceWindow} from '../interface/battle/battle-hud';
 import {hudItemSlots} from '../interface/battle/hud-item-slots';
 import {absoluteRect} from '../interface/battle/hud-source-controls';
@@ -35,6 +36,7 @@ export class BattleHudVectorRenderer {
       import('./battle-hud-vector-geometry'), import('./battle-notice-vector-geometry'),
     ]);
     await Promise.all([...Object.values(hud.BATTLE_HUD_VECTORS), ...Object.values(notices.BATTLE_NOTICE_VECTORS)]
+      .filter(shape => !isSimpleUiImage(shape.asset))
       .map(shape => decodeImage(`/${shape.asset}`)));
     this.geometry = hud.BATTLE_HUD_VECTORS;
     this.notices = notices.BATTLE_NOTICE_VECTORS;
@@ -107,15 +109,6 @@ export class BattleHudVectorRenderer {
       const progress = lifeProgress(fraction, 1, Math.fround(bulletRect.width));
       this.tiles('magazine-background', vectors.magazineBackground, bulletRect, projection, bulletRect.width, 0);
       this.tiles('magazine-fill', vectors.magazineFill, bulletRect, projection, progress.extent, 1);
-    }
-    const life = windows.find(control => control.name === 'prgLife'), health = state.localHealth;
-    if (life && health && !hud.spectator.getSnapshot().active) {
-      const lifeRect = rect(life), progress = lifeProgress(health.hp, health.maxHp, Math.fround(lifeRect.width));
-      const colour = life.properties[['ProgressLowBoundColour', 'ProgressMediumColour', 'ProgressHighBoundColour'][progress.band]];
-      const tint: VectorRectangle = [parseInt(colour.slice(2, 4), 16) / 255,
-        parseInt(colour.slice(4, 6), 16) / 255, parseInt(colour.slice(6, 8), 16) / 255, 1];
-      this.tiles('life-background', vectors.lifeBackground, lifeRect, projection, lifeRect.width, 0);
-      this.tiles('life-fill', vectors.lifeFill, lifeRect, projection, progress.extent, 1, tint);
     }
     if (this.notices && state.introStage !== 'hidden') {
       const modeControl = ['picTeamMode', 'picConquerMode', 'picVIPMode', 'picMeleeMode', 'picDestroyMode'][state.mode - 1];

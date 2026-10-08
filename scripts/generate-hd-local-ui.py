@@ -3,7 +3,6 @@
 
 import argparse
 from datetime import datetime, timezone
-import getpass
 import json
 import os
 from pathlib import Path
@@ -14,6 +13,8 @@ import time
 from PIL import Image
 import cv2
 import numpy as np
+
+import hd_image_api
 
 
 ASSET_DIR = Path('apps/web/src/assets/ui')
@@ -122,7 +123,7 @@ def run(art, jobs, base_url):
     pending = [job for job in jobs if not (job['folder'] / 'output-1.png').exists()]
     if not pending:
         return
-    key = os.environ.get('CHATGPT2API_AUTH_KEY') or getpass.getpass('API key: ')
+    key = hd_image_api.auth_key()
     if not key:
         raise ValueError('API key is required')
     base_url = common.normalize_base_url(base_url)
@@ -147,11 +148,8 @@ def run(art, jobs, base_url):
             save()
             print('Local UI call', record['call'], job['id'], flush=True)
             try:
-                status, payload = common.request_multipart(
-                    'POST', base_url + '/v1/images/edits', headers=common.auth_headers(key),
-                    fields=[('model', 'gpt-image-2'), ('prompt', (job['folder'] / 'prompt.txt').read_text()),
-                            ('n', '1'), ('size', job['ratio']), ('response_format', 'b64_json')],
-                    files=[('image', job['folder'] / 'input.png')])
+                status, payload = hd_image_api.edit(base_url, key, (job['folder'] / 'prompt.txt').read_text(),
+                                                    job['folder'] / 'input.png')
                 saved = common.save_image_results(payload, output_dir=job['folder'],
                                                   prefix='output', download_url_results=True)
                 if not saved or saved[0] != output:
@@ -177,7 +175,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=('prepare', 'run', 'install'))
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
-    parser.add_argument('--base-url', default=os.environ.get('CHATGPT2API_BASE_URL', 'https://gptimg.cloyd.fun/'))
+    parser.add_argument('--base-url', default=os.environ.get('CHATGPT2API_BASE_URL', hd_image_api.DEFAULT_BASE_URL))
     args = parser.parse_args()
     root = args.root.resolve()
     art, jobs = prepare(root)

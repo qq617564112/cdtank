@@ -63,9 +63,9 @@ export function RoomChatSourceCaret({input, ui, layout, name, value, scale, suff
   }, [input, width, value, image?.asset]);
   if (!image?.asset) return null;
   return <span {...sourceProps(ui, layout, suffix, name, undefined, 0, offsetY)} aria-hidden="true" className="room-chat-source-caret"
-    data-room-chat-caret={name} data-source-asset={image.asset} data-source-caret-width={width}
+    data-room-chat-caret={name} data-source-asset={undefined} data-source-caret-width={width}
     data-source-caret-index={view.index} data-source-scroll={view.scroll} data-source-focused={String(view.focused)}
     style={{...sourceProps(ui, layout, suffix, name, undefined, 0, offsetY).style, visibility: view.focused ? 'visible' : 'hidden'}}>
-    <i ref={brush} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
+    <i ref={brush} data-source-asset={image.asset} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
   </span>;
 }

@@ -243,6 +243,10 @@ def main():
         target = runtime / 'hd-ui' / source.relative_to(root / 'art/hd-ui/png')
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
+    for source in (root / 'art/hd-ui-redraw/button-backgrounds').glob('*.png'):
+        target = runtime / 'hd-ui/buttons' / source.name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
     local_ui = root / 'art/hd-local-ui/png'
     for name in ('lobby-logo.png', 'normal-cursor.png', 'normal-cursor-hd.png', 'client-icon.ico'):
         source = local_ui / name

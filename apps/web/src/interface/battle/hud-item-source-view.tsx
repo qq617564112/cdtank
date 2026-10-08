@@ -31,7 +31,7 @@ export function HudItemSourceView({data, combat, catalog, inventory, selectedIte
         ? Number(/\d+$/.exec(name)?.[0]) + 1 : daoju || cooldown ? Number(/\d+$/.exec(name)?.[0]) : 0;
       const binding = slots[slot - 1];
       const reference = daoju ? binding?.item?.iconId === undefined ? undefined
-        : `set:daoju0 image:data\\ui\\daoju\\${String(binding.item.iconId).padStart(5, '0')}.tga` : control.properties.Image;
+        : `set:daoju0 image:data\\ui\\daoju\\${String(binding.item.iconId).padStart(5, '0')}.tga` : control.properties.Image ?? control.properties.ProgressImage;
       const asset = sourceAsset(data, reference);
       const label = name.startsWith('lblItem') ? control.properties.Text ?? '' : undefined;
       const infinite = count && binding?.infinite, quantity = count ? binding?.quantity : undefined;
@@ -40,7 +40,7 @@ export function HudItemSourceView({data, combat, catalog, inventory, selectedIte
       const remainingSeconds = cooldown ? binding?.remainingSeconds : undefined;
       const remainingLabel = `${cooldownBinding === 'effect-expiry' ? '效果剩余' : '装填剩余'} ${Math.ceil(remainingSeconds ?? 0)} 秒`;
       return <div key={name} className="hud-item-source-control" data-source-control={name}
-        data-source-layout={layout!.path} data-source-asset={asset} data-item-instance={daoju ? binding?.instanceId : undefined}
+        data-source-layout={layout!.path} data-source-asset={cooldown ? undefined : asset} data-item-instance={daoju ? binding?.instanceId : undefined}
         data-item-count-binding={count ? infinite ? 'default-infinite-supply'
           : quantity === undefined ? 'unbound' : 'web-confirmed-battle-quantity' : undefined}
         data-item-quantity={quantity} data-item-infinite={infinite ? '' : undefined}
@@ -56,6 +56,9 @@ export function HudItemSourceView({data, combat, catalog, inventory, selectedIte
         aria-label={remainingSeconds !== undefined ? remainingLabel
           : quantity === undefined ? infinite ? '无限弹药' : label ?? binding?.item?.name : `本局可用 ${quantity}`}
         style={{...style(control), textAlign: count ? 'right' : undefined}}>
+        {cooldownFraction !== undefined && <i data-source-asset={asset} aria-hidden="true"
+          style={{position: 'absolute', inset: 0,
+            clipPath: `inset(${(1 - cooldownFraction) * 100}% 0 0 0)`}}/>}
         {label === undefined ? null : glyphs(label, control.properties.Font)}
         {quantity === undefined ? null : glyphs(String(quantity), control.properties.Font)}
         {remainingSeconds !== undefined && <span className="hud-item-remaining" aria-hidden="true">{Math.ceil(remainingSeconds)}</span>}
