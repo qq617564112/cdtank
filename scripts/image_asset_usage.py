@@ -48,25 +48,22 @@ def image_usage(root, runtime, names):
 
     ui_path = runtime / 'ui.json'
     ui = json.loads(ui_path.read_text())
+    removed_layouts = [layout['path'] for layout in ui['layouts'] if layout['path'].endswith('keyboard.xml')]
+    ui['layouts'] = [layout for layout in ui['layouts'] if layout['path'] not in removed_layouts]
+    keyboard_sets = [imageset['path'] for imageset in ui['imagesets']
+                     if any(image.get('asset', '').startswith('ui/regions/71/') for image in imageset['images'])]
+    ui['imagesets'] = [imageset for imageset in ui['imagesets']
+                       if not any(image.get('asset', '').startswith('ui/regions/71/')
+                                  for image in imageset['images'])]
     grouped = defaultdict(list)
     for imageset in ui['imagesets']:
         grouped[imageset['attributes']['Name']].append(imageset)
     selected = {next((row for row in rows if 'imagesets_dds/' in row['path']), rows[0])['path']
                 for rows in grouped.values()}
     selected.update(scan['imagesets'])
-    removed_sets = [row['path'] for row in ui['imagesets'] if row['path'] not in selected]
+    removed_sets = keyboard_sets + [row['path'] for row in ui['imagesets'] if row['path'] not in selected]
     ui['imagesets'] = [row for row in ui['imagesets'] if row['path'] in selected]
     references(ui, 'ui-catalog')
-
-    # Rich chat accepts named images from every selected imageset, including glyphs.
-    chat_glyphs = set()
-    if any(module.endswith('/chat-image-catalog.ts') for module in scan['modules']):
-        for imageset in ui['imagesets']:
-            for image in imageset['images']:
-                asset = image.get('asset')
-                if asset in retired and asset not in html_artwork and asset in names:
-                    chat_glyphs.add(asset)
-                    reasons[asset].add('chat-image-catalog')
 
     catalog_paths = {path.relative_to(runtime).as_posix(): path for path in runtime.rglob('*.json')
                      if path.name not in ('sprite-images.json', 'ui.json', 'image-assets.json')}
@@ -114,6 +111,6 @@ def image_usage(root, runtime, names):
                 missing.append(dict(model=path.relative_to(runtime).as_posix(), image=target))
 
     return dict(images=sorted(reasons), reasons={name: sorted(value) for name, value in sorted(reasons.items())},
-                retired=sorted(retired), chatGlyphImages=sorted(chat_glyphs), catalogs=sorted(catalogs), modules=scan['modules'],
-                removedImagesets=removed_sets, ui=ui, models=model_count, modelReferences=model_references,
+                retired=sorted(retired), chatGlyphImages=[], catalogs=sorted(catalogs), modules=scan['modules'],
+                removedImagesets=removed_sets, removedLayouts=removed_layouts, ui=ui, models=model_count, modelReferences=model_references,
                 missingModelImages=missing)

@@ -12,11 +12,11 @@
 
 普通中文、常规数字和标签在清单中标记为 `deferred: "font-rendering"`，生成队列和安装器均跳过它们，原图片文件保留备份，页面改为轮廓字体渲染。普通字体图集、货币和技能点标签、房间字段、坦克属性及常规单位，连同它们的同像素别名均沿用此范围；艺术标题、Logo、倒计时和加载进度艺术字继续高清化。迁移实现、字体许可和离线对照见 [普通 UI 文字与数字](ui-text-rendering.md)。
 
-简单界面素材按原图横向排查后，用 391 个共享 CSS 配方绘制 689 个素材，覆盖面板九宫格、键帽、色块、进度条、滚动条、基础箭头、准星和鼠标符号。429 个带字按钮的文字由 HTML 字体独立渲染；简单按钮直接绘制底面，复杂按钮按造型共用 19 张无字底图，以 CSS 滤镜呈现颜色和交互状态。滤镜只作用于底图层，文字保持自己的颜色与描边。选项的圆点和勾选状态使用 CSS 绘制。这些源图标记为 `deferred: "html-css-rendering"`，保留原图与原高清交付。
+简单界面素材按原图逐张目视排查后，用 CSS 绘制 808 个素材，覆盖面板九宫格、色块、进度条、滚动条、基础箭头、准星和鼠标符号。498 个带字按钮的文字由 HTML 字体独立渲染；简单按钮直接绘制底面，复杂按钮按造型共用 19 张无字底图，以 CSS 滤镜呈现颜色和交互状态；音乐与音效标签保留两张无字猫狗插画。滤镜只作用于底图层，文字保持自己的颜色与描边。选项的圆点和勾选状态使用 CSS 绘制。这些源图标记为 `deferred: "html-css-rendering"`，保留原图与原高清交付。
 
-335 个 UI 问题来源均有最终去向：194 个聊天表情和 45 个其他美术使用已安装图片，58 个简单控件使用 CSS，38 个按钮使用无字底图与 HTML 文字。239 个图片格子与交付 PNG、候选 PNG 逐像素一致，涉及 7 张运行精灵图；19 张共用按钮底图与候选一致，原图及受影响资源的原高清备份齐全。记录位于 `art/hd-ui-redraw/final-installation-check.json` 和 `resolved-ui-sources.json`。
+335 个 UI 问题来源均有最终去向：194 个聊天表情和 23 个其他美术使用已安装图片，57 个简单控件使用 CSS，50 个按钮使用 HTML 文字，11 个来源随虚拟键盘功能移除。217 个图片格子与交付 PNG、候选 PNG 逐像素一致，涉及 7 张运行精灵图；21 张无字底图与候选一致，原图及受影响资源的原高清备份齐全。记录位于 `art/hd-ui-redraw/final-installation-check.json` 和 `resolved-ui-sources.json`。
 
-本轮已安装全部 7552 个目标 PNG 路径，并替换 956 个模型中的 4447 处贴图引用，其中 4442 处使用模型目录中的现有 PNG，5 处跨目录贴图保留内嵌。运行图片与交付图片一致，模型的几何、UV、动画及其缓冲区内容一致。全量核对没有缺失交付、未安装路径、未映射的材质图片或清单外运行资源；226 个普通文字路径与原图一致。界面两种比例布局、本地 Logo、光标、应用图标和测试地图选择预览均已安装。
+高清交付目录包含全部 7552 个目标 PNG，运行端按图片与 HTML/CSS 清单加载。956 个模型中的 4447 处贴图引用已替换，其中 4442 处使用模型目录中的现有 PNG，5 处跨目录贴图保留内嵌。模型的几何、UV、动画及其缓冲区内容一致。交付与模型安装核对无缺失；HTML/CSS 替代来源的原图及原高清版本保留备份。界面两种比例布局、本地 Logo、光标、应用图标和测试地图选择预览均已安装。
 
 界面中的坦克和宠物肖像从高清模型离线重绘，同时写入原 UI 区域和本地缩略图目录。这些肖像使用各角色单独生成的贴图，不再放进多角色 UI 拼图请求。
 
@@ -73,7 +73,7 @@
 - `art/hd-local-ui/`：本地图标和标志的原图、两份请求输入及交付。标志单独请求，光标与应用图标共用两格图集。
 - `art/hd-ui-redraw/`：UI 横向核对、家族提示词、带边框修正请求、原始响应和切图候选；`framed-review/` 为原图与候选对照。
 - `art/hd-ui-redraw/html-ui-preview.html`：原始控件与共用底图、CSS 滤镜、HTML 字体的离线对照。
-- `art/hd-ui-redraw/button-backgrounds/`：19 张共用无字底图，安装到 `hd-ui/buttons/`。
+- `art/hd-ui-redraw/button-backgrounds/`：19 张共用按钮底图及 2 张设置猫狗插画，安装到 `hd-ui/buttons/`。
 - `apps/web/src/assets/simple-ui-artwork.json` 与 `button-artwork.json`：HTML/CSS 替换范围及字体、颜色、状态数据。
 
 ## 使用
@@ -109,15 +109,22 @@ python3 scripts/preview-hd-ui-redraw.py --candidate-dir art/hd-ui-redraw/framed-
 
 图片生成脚本共用 `scripts/hd_image_api.py`：请求 `http://192.168.10.140:13999/v1/images/edits`，使用 `gpt-image-2.5-sunburst`。multipart 字段为 `model`、`image`、`prompt`、`n=1` 和 `response_format=url`，请求最长等待 1300 秒，再下载返回的 `data[0].url`。`CHATGPT2API_BASE_URL` 可覆盖服务器地址；密钥从 `CHATGPT2API_KEY` 或终端隐藏输入读取。UI 修正器保存响应 URL，下载失败后复用响应，避免重新生图。
 
+UI 文字与图形参数由 `scripts/ui-manual-*.json` 保存，逐张目视读取原图，记录文字、墨迹位置、描边、牌面颜色及透明留白；不使用 OCR。字体导出读取这份清单，并保留动态数值之间的分段空白。复杂按钮复用无字底图，颜色滤镜只作用于底图；控件与富聊天共用文字坐标。F5–F12 使用原位置的独立衬线文字；进度填充、列表选中态与音量滑条均消费同一套 CSS 图形。登录密码使用标准输入框。
+
 简单 UI 与带字按钮先生成 HTML/CSS 清单。普通拼图只要包含这些素材就退出生图队列，重新准备与打包时按剩余图片范围组图。无字底图队列独立请求，只安装到共用目录；运行图片目录由 Vite 的图片清单插件自动收录，预载器复用已缓存底图。`assets:hd` 会从无字底图交付目录恢复这些资源。
 
+图片清理器将 HTML/CSS 清单内的旧 PNG 排除在运行图片引用之外，保留用于控件定位的原图元数据。`--unused-only` 删除闲置图片与精灵映射，仅重组受影响的图集，保留其它运行图片及原图、原高清备份。当前使用 808 个 CSS 图形、498 个字体按钮、225 个独立字图和 21 张无字底图，覆盖 1,523 个原图来源；逐张目视清单覆盖 1,837 个来源。此次清理运行图片减少 31,251,923 字节，重组的 781 个保留格子逐像素一致，图片引用、图集边界及备份核对无缺失。
+
 ```sh
+recovery/.venv/bin/python scripts/export-ui-text-rendering.py
 python3 scripts/prepare-simple-ui-artwork.py
 python3 scripts/prepare-button-artwork.py
 python3 scripts/redraw-hd-ui.py --jobs art/hd-ui-redraw/blank-button-jobs.json
 python3 scripts/install-redrawn-ui.py --jobs art/hd-ui-redraw/blank-button-jobs.json --candidate-dir art/hd-ui-redraw/blank-button-candidates --publish-backgrounds
 python3 scripts/preview-html-ui-artwork.py
 python3 scripts/inspect-hd-ui-installation.py
+python3 scripts/clean-image-assets.py --unused-only
+python3 scripts/inspect-clean-image-assets.py
 ```
 
 生成器跳过已交付贴图和普通文字，记录失败请求；失败批次自失败时间起等待 300 秒后重试。等待分成不超过 30 秒的片段。重新执行时复用已保存结果及每个批次的剩余等待时间。`--limit` 可设置累计提交上限。`run` 默认以 8 路处理地图及其他美术，另外 2 路专门生成 UI；两队列共用同一份调用账本和 10 路请求容量。最后一个主组剩余批次不超过 8 个时，UI 提前使用空闲容量；主组安装期间也继续处理 UI。各组完成后安装并绘制模型与地图预览，替换本地角色缩略图与小地图图标；UI 生成完成后等主队列结束，再组装并安装图集。Ctrl-C 会停止新增请求，保存所有在途结果后退出。

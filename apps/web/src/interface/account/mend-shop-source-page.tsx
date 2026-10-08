@@ -131,6 +131,8 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
   const partNames = new Set(['picPartPagePanel', 'heseditu2']);
   const controls = ui.layouts.find(value => value.path.endsWith(suffix))!.windows.filter(control =>
     selected !== undefined || !/^btn(?:Coin|Money)Mend[0-2]$/.test(control.parent ?? ''));
+  const listSource = page === 'Tank' ? 'lstTank' : 'lstPart';
+  const selection = sourceProps(ui, layout, suffix, listSource, layout.control(listSource).properties.SelectionImage);
   return <>
     <div className="mend-shop-source" data-mend-shop-page="" data-mend-page={page} aria-busy={busy}>
       {selected !== undefined && (['Coin', 'Money'] as const).flatMap(currency => ([1, 7, 30] as const).map((days, index) => {
@@ -167,8 +169,8 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
           data-mend-owned-instance={entry.id} data-home-owned-tank-row={page === 'Tank' ? entry.id : undefined}
           data-mend-owned-tank-row={page === 'Tank' ? entry.id : undefined} data-mend-owned-part-row={page === 'Part' ? '' : undefined} aria-selected={entry.id === selected} disabled={busy}
           tabIndex={selected === entry.id || selected === undefined && index === 0 ? 0 : -1}
-          style={entry.id === selected ? {backgroundImage: sourceProps(ui, layout, suffix,
-            page === 'Tank' ? 'lstTank' : 'lstPart', layout.control(page === 'Tank' ? 'lstTank' : 'lstPart').properties.SelectionImage).style.backgroundImage} : undefined}
+          style={entry.id === selected ? {backgroundImage: selection.style.backgroundImage} : undefined}
+          data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
           onClick={() => setSelected(entry.id)} onKeyDown={event => {
             const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
               : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;

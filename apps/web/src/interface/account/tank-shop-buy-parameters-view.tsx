@@ -23,7 +23,7 @@ export function TankShopBuyParametersView({ui, tankId}: {ui: HomeSourceUi; tankI
     <div {...background} className="tank-shop-buy-capacity" data-tank-buy-capacity=""
       data-capacity={values.capacity} data-progress={values.progress}
       role="meter" aria-label="商品炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values.capacity}>
-      <span aria-hidden="true" style={{position: 'absolute', inset: 0, clipPath: `inset(0 ${width - extent}px 0 0)`,
+      <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, clipPath: `inset(0 ${width - extent}px 0 0)`,
         width, height, backgroundImage: fill.style.backgroundImage, backgroundSize: '100% 100%'}} />
     </div>
   </div>;

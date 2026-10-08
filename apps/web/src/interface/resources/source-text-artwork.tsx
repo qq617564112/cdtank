@@ -1,6 +1,7 @@
 import {useLayoutEffect, useRef, type CSSProperties} from 'react';
 import catalogue from './source-text-artwork.json';
 import './source-text-artwork.css';
+import './source-text-artwork-generated.css';
 import {buttonArtwork} from '../../assets/button-artwork';
 
 export interface SourceTextStyle {
@@ -27,7 +28,7 @@ const numeric: Readonly<Record<string, Readonly<Record<string, string>>>> = cata
 const replacedImages = new Set<string>(catalogue.replacedImages);
 
 export function sourceTextArtwork(asset?: string): SourceTextStyle | undefined {
-  return asset ? buttonArtwork(asset)?.text ?? assets[asset] : undefined;
+  return asset ? assets[asset] ?? buttonArtwork(asset)?.text : undefined;
 }
 
 export function isSourceTextImage(path: string): boolean {
@@ -43,6 +44,35 @@ function inkStyle(text: SourceTextStyle): CSSProperties {
     transform: `scaleX(${text.scaleX})`, color: text.colour,
     WebkitTextStroke: `${text.stroke}px ${text.outline}`,
     textShadow: text.shadow ? `${text.shadowX}px ${text.shadowY}px 0 ${text.shadow}` : 'none'};
+}
+
+/** Use the same source coordinates for named images embedded in rich chat. */
+export function createSourceTextArtwork(asset: string): HTMLSpanElement {
+  const text = sourceTextArtwork(asset)!;
+  const bounds = document.createElement('span');
+  bounds.className = 'source-text-artwork';
+  bounds.dataset.sourceTextImage = asset;
+  bounds.dataset.sourceTextValue = text.text;
+  bounds.setAttribute('aria-hidden', 'true');
+  const coordinates = document.createElement('span');
+  coordinates.className = 'source-text-coordinates';
+  coordinates.style.width = `${text.width}px`;
+  coordinates.style.height = `${text.height}px`;
+  for (const run of text.runs ?? [text]) {
+    const ink = document.createElement('span');
+    ink.className = 'source-text-ink';
+    ink.dataset.sourceTextFace = run.face;
+    ink.textContent = run.text;
+    Object.assign(ink.style, {
+      left: `${run.x}px`, top: `${run.y}px`, fontSize: `${run.size}px`,
+      lineHeight: `${run.lineHeight}px`, transform: `scaleX(${run.scaleX})`,
+      color: run.colour, WebkitTextStroke: `${run.stroke}px ${run.outline}`,
+      textShadow: run.shadow ? `${run.shadowX}px ${run.shadowY}px 0 ${run.shadow}` : 'none',
+    });
+    coordinates.append(ink);
+  }
+  bounds.append(coordinates);
+  return bounds;
 }
 
 /** Live outline text occupies the original image's ink and transparent margins. */

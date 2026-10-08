@@ -21,6 +21,7 @@ export function loadUiFont(): Promise<void> {
     document.fonts.load('700 16px "CDTank-SourceSans"'),
     document.fonts.load('700 16px "CDTank-SourceLatin"'),
     document.fonts.load('700 16px "CDTank-SourceDigits"'),
+    document.fonts.load('700 16px "CDTank-SourceSerif"'),
   ]), '界面字体')
     .then(() => {}).catch(error => {loading = undefined; throw error;});
   return loading;

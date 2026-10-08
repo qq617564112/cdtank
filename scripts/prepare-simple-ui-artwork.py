@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 
 from PIL import Image
+from source_ui_metrics import manual_catalogue
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'apps/web/src/assets'
@@ -18,6 +19,8 @@ def main():
               for image in sheet['images'] if image.get('asset', '').startswith('ui/regions/')}
     drawings = {}
     families = defaultdict(list)
+    manual = manual_catalogue()
+    text_only = set(manual['textAssets']) - set(manual['drawings'])
 
     def original(asset):
         return Image.open(ORIGINALS / asset).convert('RGBA')
@@ -41,6 +44,8 @@ def main():
                     f'{left / image.width * 100:.3f}%'}
 
     def add(asset, family, before, after=None):
+        if asset in text_only:
+            return
         drawings[asset] = {'before': before, **({'after': after} if after else {})}
         families[family].append(asset)
 
@@ -87,7 +92,6 @@ def main():
     panel(60, 'ruanjianpanditu', '#c6c5bf', '#fff', radius=1)
     panel(68, 'tanchukuang', 'rgb(13 0 76 / .733)', '#57e9ff', outer)
     panel(68, 'luditu', '#a1c482', '#435b35', radius=6)
-    panel(71, 'jianpandi', '#a7d4e1', '#202b2c', radius=15)
 
     def strip(group, stem, fill, edge):
         positions = {1: 'Left', 2: 'Right', 3: 'Middle'}
@@ -176,22 +180,10 @@ def main():
     ]:
         flat('ui/regions/' + asset + '.png', family, fill, **bounds('ui/regions/' + asset + '.png'), **style)
 
-    # Keyboard artwork consists of a key surface and ordinary live characters.
-    key_names = {'dunhao': '\\', 'juhao': '.', 'wenhao': '/', 'caps': 'Caps',
-                 'shift': 'Shift', 'enter': '↵', 'backspace': '←', 'tab': '⇥', 'ins': 'Ins'}
     for asset, image in images.items():
         group = int(asset.split('/')[2])
         name = image['Name'].split('\\')[-1].removesuffix('.tga')
-        if group == 71 and not name.startswith('jianpandi'):
-            pushed = name.endswith('_2') or name == '_2'
-            key = name.removesuffix('_2') if name != '_2' else '_'
-            label = key_names.get(key, key.upper())
-            add(asset, 'keyboard-keys', {'inset': '1px 1px 2px', 'background': '#88c2d7' if pushed else '#d2ecf2',
-                'border': '1px solid #456677', 'border-radius': '3px',
-                'box-shadow': 'inset 0 1px 0 #fff, 0 1px 0 #365161'},
-                {'content': json.dumps(label, ensure_ascii=False), 'display': 'grid', 'place-items': 'center',
-                 'color': '#172833', 'font': 'bold 12px Arial, sans-serif', 'font-style': 'normal'})
-        elif group == 74 and re.fullmatch(r'f\d+', name):
+        if group == 74 and re.fullmatch(r'f\d+', name):
             add(asset, 'function-keys', {'inset': '1px 2px', 'background': '#d8ebef',
                 'border': '1px solid #51717b', 'border-radius': '3px'},
                 {'content': json.dumps(name.upper()), 'display': 'grid', 'place-items': 'center',
@@ -292,6 +284,9 @@ def main():
             position = position.replace('Upper', 'Top').replace('Lower', 'Bottom')
             add(asset, 'stock-widget-frames', slice_style(position, fill, edge, 3))
 
+    for asset, drawing in manual['drawings'].items():
+        add(asset, 'source-ui', drawing['before'], drawing.get('after'))
+
     # Store explicit source membership; runtime rendering never classifies by filename.
     grouped = {}
     assets = {}
@@ -307,11 +302,14 @@ def main():
     for drawing_id, drawing in recipes.items():
         members = [asset for asset, identifier in assets.items() if identifier == drawing_id]
         for pseudo, style in drawing.items():
-            selectors = ',\n'.join(f'[data-source-asset="{asset}"]:not(.source-static-image):not(.source-state-button)::{pseudo}'
-                                   for asset in members)
+            selectors = ',\n'.join(selector for asset in members for selector in (
+                f'[data-source-asset="{asset}"]:not(.source-static-image):not(.source-state-button)::{pseudo}',
+                f'[data-source-selection-asset="{asset}"]::{pseudo}'))
             declarations = {'content': "''", 'position': 'absolute', 'inset': '0',
                             'box-sizing': 'border-box', 'pointer-events': 'none', **style}
             rules.append(selectors + ' {\n' + '\n'.join(f'  {key}: {value};' for key, value in declarations.items()) + '\n}')
+    rules.append(':where([data-source-selection-asset]) {\n  position: relative;\n  isolation: isolate;\n}')
+    rules.append('[data-source-selection-asset]::before,\n[data-source-selection-asset]::after {\n  z-index: -1;\n}')
     (OUTPUT / 'simple-ui-artwork.css').write_text('\n\n'.join(rules) + '\n')
     report = {'rendering': 'HTML/CSS', 'sources': len(assets),
               'families': {name: sorted(set(sources)) for name, sources in sorted(families.items())},

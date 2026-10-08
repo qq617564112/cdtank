@@ -1,0 +1,5519 @@
+[data-source-asset="ui/regions/0/0.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/0.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "×";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -40.937889%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9108225);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 147.866444cqw;
+  line-height: 160.878778cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/1.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/1.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "+";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -40.446111%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9142857);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 147.306444cqw;
+  line-height: 160.269333cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/2.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/2.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "3";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 158.005625cqw;
+  line-height: 171.910125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/3.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/3.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "4";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.428556%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8162585);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 160.714250cqw;
+  line-height: 174.857125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/4.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/4.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "5";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -27.142889%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8162585);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 160.714250cqw;
+  line-height: 174.857125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/5.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/5.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "6";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 158.005625cqw;
+  line-height: 171.910125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/6.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/6.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "8";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 158.005625cqw;
+  line-height: 171.910125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/7.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/7.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "9";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 158.005625cqw;
+  line-height: 171.910125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/8.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/8.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "%";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -11.111111%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.623);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 140.449500cqw;
+  line-height: 152.809000cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/9.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/9.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "=";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -10.308556%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.1746212);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 112.866875cqw;
+  line-height: 122.799125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/10.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/10.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "−";
+  position: absolute;
+  inset: auto;
+  left: 12.500000%;
+  top: 25.993222%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(3.0);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 37.878750cqw;
+  line-height: 41.212125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/11.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/11.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "0";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 180.577857cqw;
+  line-height: 196.468714cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/12.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/12.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "2";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.428556%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6996502);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 183.673429cqw;
+  line-height: 199.836714cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/13.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/13.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "7";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -27.616333%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6876562);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 186.877143cqw;
+  line-height: 203.322286cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/0/14.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/0/14.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "1";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -27.431111%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.4591038);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 261.248200cqw;
+  line-height: 284.238000cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/0.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/0.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "∞";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -15.382571%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.7174099);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 99.875133cqw;
+  line-height: 108.664200cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 26.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/1.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/1.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "0";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -14.285714%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/2.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/2.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "2";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -14.653071%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8745627);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 171.428600cqw;
+  line-height: 186.514300cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/3.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/3.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "3";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -14.285714%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/4.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/4.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "4";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -14.653071%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8745627);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 171.428600cqw;
+  line-height: 186.514300cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/5.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/5.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "5";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -16.122429%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8745627);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 171.428600cqw;
+  line-height: 186.514300cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/6.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/6.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "6";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -14.285714%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/7.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/7.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "7";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -16.528214%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8595702);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 174.418600cqw;
+  line-height: 189.767400cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/8.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/8.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "8";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -14.285714%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/9.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/9.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "9";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -14.285714%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 40.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/2/10.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/2/10.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "1";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -16.369500%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6025737);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 248.807857cqw;
+  line-height: 270.702857cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 57.142857cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/0.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/0.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "∞";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: 12.790250%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.8319039);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 93.632950cqw;
+  line-height: 101.872650cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 10.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/1.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/1.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "×";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -16.844100%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7969697);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 190.114071cqw;
+  line-height: 206.844071cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 14.285714cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/2.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/2.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "0";
+  position: absolute;
+  inset: auto;
+  left: 7.692308%;
+  top: 6.250000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7828086);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 162.057077cqw;
+  line-height: 176.318077cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 15.384615cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/3.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/3.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "2";
+  position: absolute;
+  inset: auto;
+  left: 8.333333%;
+  top: 5.928550%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6996502);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 178.571417cqw;
+  line-height: 194.285750cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 16.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/4.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/4.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "3";
+  position: absolute;
+  inset: auto;
+  left: 8.333333%;
+  top: 6.250000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7116442);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 175.561833cqw;
+  line-height: 191.011250cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 16.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/5.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/5.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "4";
+  position: absolute;
+  inset: auto;
+  left: 8.333333%;
+  top: 5.928550%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6996502);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 178.571417cqw;
+  line-height: 194.285750cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 16.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/6.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/6.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "5";
+  position: absolute;
+  inset: auto;
+  left: 8.333333%;
+  top: 4.642850%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6996502);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 178.571417cqw;
+  line-height: 194.285750cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 16.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/7.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/7.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "6";
+  position: absolute;
+  inset: auto;
+  left: 8.333333%;
+  top: 6.250000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7116442);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 175.561833cqw;
+  line-height: 191.011250cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 16.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/8.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/8.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "7";
+  position: absolute;
+  inset: auto;
+  left: 8.333333%;
+  top: 4.287800%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6876562);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 181.686083cqw;
+  line-height: 197.674417cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 16.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/9.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/9.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "8";
+  position: absolute;
+  inset: auto;
+  left: 8.333333%;
+  top: 6.250000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7116442);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 175.561833cqw;
+  line-height: 191.011250cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 16.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/10.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/10.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "9";
+  position: absolute;
+  inset: auto;
+  left: 8.333333%;
+  top: 6.250000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7116442);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 175.561833cqw;
+  line-height: 191.011250cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 16.666667cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/11.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/11.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "1";
+  position: absolute;
+  inset: auto;
+  left: 12.500000%;
+  top: 4.426700%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.4131934);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 272.133500cqw;
+  line-height: 296.081250cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 25.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/3/12.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/3/12.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: ":";
+  position: absolute;
+  inset: auto;
+  left: 16.666667%;
+  top: 3.541650%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.5765766);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 347.222167cqw;
+  line-height: 377.777833cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 33.333333cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/5/0.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/0.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "0";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -7.142857%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/1.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/1.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "2";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -7.510214%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8745627);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 171.428600cqw;
+  line-height: 186.514300cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/2.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/2.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "3";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -7.142857%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/3.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/3.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "4";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -7.510214%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8745627);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 171.428600cqw;
+  line-height: 186.514300cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/4.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/4.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "5";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: 0.102071%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9540684);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 157.142900cqw;
+  line-height: 170.971400cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/5.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/5.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "6";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -7.142857%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/6.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/6.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "7";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -0.269929%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.937713);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 159.883700cqw;
+  line-height: 173.953500cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/7.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/7.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "8";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -7.142857%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/8.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/8.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "9";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -7.142857%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8895552);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 168.539300cqw;
+  line-height: 183.370800cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 10.000000cqw 10.000000cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/5/9.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/5/9.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "1";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -9.226643%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6025737);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 248.807857cqw;
+  line-height: 270.702857cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #fff83b;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: 14.285714cqw 14.285714cqw 0 #555214;
+}
+
+[data-source-asset="ui/regions/6/0.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/0.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "3";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 158.005625cqw;
+  line-height: 171.910125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/1.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/1.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "4";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.428556%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8162585);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 160.714250cqw;
+  line-height: 174.857125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/2.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/2.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "5";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -27.142889%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8162585);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 160.714250cqw;
+  line-height: 174.857125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/3.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/3.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "6";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 158.005625cqw;
+  line-height: 171.910125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/4.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/4.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "8";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 158.005625cqw;
+  line-height: 171.910125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/5.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/5.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "9";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 158.005625cqw;
+  line-height: 171.910125cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/6.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/6.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "-";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: 27.997444%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(6.3783784);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 40.355143cqw;
+  line-height: 43.906429cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/7.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/7.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "0";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.000000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8302515);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 180.577857cqw;
+  line-height: 196.468714cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/8.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/8.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "2";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -25.428556%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6996502);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 183.673429cqw;
+  line-height: 199.836714cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/9.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/9.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "7";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -27.616333%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6876562);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 186.877143cqw;
+  line-height: 203.322286cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/6/10.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/6/10.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "1";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -27.431111%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.4591038);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 261.248200cqw;
+  line-height: 284.238000cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ff0000;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/0.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/0.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "1";
+  position: absolute;
+  inset: auto;
+  left: 29.411765%;
+  top: -18.321529%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.4131934);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 128.062824cqw;
+  line-height: 139.332353cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 11.764706cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/1.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/1.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "2";
+  position: absolute;
+  inset: auto;
+  left: 23.529412%;
+  top: -16.554647%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6996502);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 126.050412cqw;
+  line-height: 137.142882cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 11.764706cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/2.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/2.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "3";
+  position: absolute;
+  inset: auto;
+  left: 23.529412%;
+  top: -16.176471%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7116442);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 123.926000cqw;
+  line-height: 134.831471cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 11.764706cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/3.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/3.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "4";
+  position: absolute;
+  inset: auto;
+  left: 23.529412%;
+  top: -16.554647%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6996502);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 126.050412cqw;
+  line-height: 137.142882cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 11.764706cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/4.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/4.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "5";
+  position: absolute;
+  inset: auto;
+  left: 23.529412%;
+  top: -18.067235%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6996502);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 126.050412cqw;
+  line-height: 137.142882cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 11.764706cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/5.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/5.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "6";
+  position: absolute;
+  inset: auto;
+  left: 23.529412%;
+  top: -16.176471%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7116442);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 123.926000cqw;
+  line-height: 134.831471cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 11.764706cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/6.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/6.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "7";
+  position: absolute;
+  inset: auto;
+  left: 23.529412%;
+  top: -18.484941%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6876562);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 128.249000cqw;
+  line-height: 139.534882cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 11.764706cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/7.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/7.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "8";
+  position: absolute;
+  inset: auto;
+  left: 23.529412%;
+  top: -16.176471%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7116442);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 123.926000cqw;
+  line-height: 134.831471cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  -webkit-text-stroke: 11.764706cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/8.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/8.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "B";
+  position: absolute;
+  inset: auto;
+  left: 14.285714%;
+  top: -16.528214%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8106255);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 124.584714cqw;
+  line-height: 135.548143cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 14.285714cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/9.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/9.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "E";
+  position: absolute;
+  inset: auto;
+  left: 14.285714%;
+  top: -16.528214%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7940905);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 124.584714cqw;
+  line-height: 135.548143cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 14.285714cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/10.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/10.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "N";
+  position: absolute;
+  inset: auto;
+  left: 7.142857%;
+  top: -16.528214%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8259304);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 124.584714cqw;
+  line-height: 135.548143cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 14.285714cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/11/11.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/11/11.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "S";
+  position: absolute;
+  inset: auto;
+  left: 14.285714%;
+  top: -14.285714%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8217913);
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+  font-size: 120.385214cqw;
+  line-height: 130.979143cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffff00;
+  -webkit-text-stroke: 14.285714cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/60/91.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/60/91.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费创意点数";
+  position: absolute;
+  inset: auto;
+  left: 2.500000%;
+  top: -9.525800%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.1153333);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 14.382850cqw;
+  line-height: 20.826363cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #00f0ff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/60/98.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/60/98.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "创意点";
+  position: absolute;
+  inset: auto;
+  left: 1.886792%;
+  top: -23.619048%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.85);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 37.735849cqw;
+  line-height: 54.641509cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #9fdd4c;
+  -webkit-text-stroke: 7.547170cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/60/100.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/60/100.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "技能点";
+  position: absolute;
+  inset: auto;
+  left: 1.886792%;
+  top: -24.789190%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8437368);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 38.015962cqw;
+  line-height: 55.047113cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffa800;
+  -webkit-text-stroke: 7.547170cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/60/130.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/60/130.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费创意点";
+  position: absolute;
+  inset: auto;
+  left: 1.515152%;
+  top: -18.794462%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.1077818);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 17.507000cqw;
+  line-height: 25.350136cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/60/131.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/60/131.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "现有技能点";
+  position: absolute;
+  inset: auto;
+  left: 1.515152%;
+  top: -19.915231%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0984727);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 17.655364cqw;
+  line-height: 25.564970cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/60/132.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/60/132.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "现有创意点";
+  position: absolute;
+  inset: auto;
+  left: 1.515152%;
+  top: -18.738923%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.1101091);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 17.470303cqw;
+  line-height: 25.297000cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/60/133.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/60/133.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费技能点";
+  position: absolute;
+  inset: auto;
+  left: 1.515152%;
+  top: -19.944538%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0973091);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 17.674091cqw;
+  line-height: 25.592076cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/60/153.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/60/153.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费代币";
+  position: absolute;
+  inset: auto;
+  left: 1.923077%;
+  top: -20.212769%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0681818);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 22.504096cqw;
+  line-height: 32.585923cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/16.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/16.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "地图规则";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.943706%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8856471);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.793677cqw;
+  line-height: 40.245231cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/21.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/21.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "地图规则";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.943667%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8782667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.965772cqw;
+  line-height: 40.494439cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 3.508772cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/22.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/22.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费代币";
+  position: absolute;
+  inset: auto;
+  left: 1.851852%;
+  top: -21.914867%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.94);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 25.610722cqw;
+  line-height: 37.084315cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 3.703704cqw #ffc889;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/23.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/23.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "背面装甲";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.594933%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8374);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.301444cqw;
+  line-height: 42.428500cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/24.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/24.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "侧面装甲";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.734933%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8365167);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.332389cqw;
+  line-height: 42.473315cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/25.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/25.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "零件栏位";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -30.610133%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8703);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 28.725722cqw;
+  line-height: 41.594852cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/26.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/26.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "回旋速度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.029600%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8514);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.363407cqw;
+  line-height: 42.518204cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/27.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/27.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "移动速度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.861200%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8559);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.209019cqw;
+  line-height: 42.294667cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/28.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/28.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "装弹修正";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.594933%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8532);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.301444cqw;
+  line-height: 42.428500cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/29.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/29.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "发射间隔";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.962000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8532);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.301444cqw;
+  line-height: 42.428500cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/33.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/33.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "碉堡生命";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -30.721000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9201923);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.168240cqw;
+  line-height: 39.339600cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 4.000000cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/34.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/34.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "轻坦克";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.767733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9010889);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.992279cqw;
+  line-height: 53.564814cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/35.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/35.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "熟练度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.335467%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9087333);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.681093cqw;
+  line-height: 53.114233cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/36.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/36.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "突击炮";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.962000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9058667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.797163cqw;
+  line-height: 53.282302cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/37.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/37.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "生命值";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -30.721000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9144667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.451116cqw;
+  line-height: 52.781209cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/38.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/38.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "重坦克";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.767733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9010889);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.992279cqw;
+  line-height: 53.564814cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/39.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/39.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "中坦克";
+  position: absolute;
+  inset: auto;
+  left: 2.325581%;
+  top: -32.767733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8801333);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.992279cqw;
+  line-height: 53.564814cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/40.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/40.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "坦克存量";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.767769%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8885962);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 28.134265cqw;
+  line-height: 40.738408cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 4.081633cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/42.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/42.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "耐久度";
+  position: absolute;
+  inset: auto;
+  left: 2.380952%;
+  top: -21.033733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9723077);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 32.650190cqw;
+  line-height: 47.277476cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 4.761905cqw #ffc889;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/43.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/43.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "每局时间";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.101385%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8741538);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 28.599083cqw;
+  line-height: 41.411479cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 4.166667cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/46.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/46.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "技能";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.661733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9115667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 54.850621cqw;
+  line-height: 79.423690cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.896552cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/47.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/47.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好运";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.876733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9173667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 54.503828cqw;
+  line-height: 78.921552cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.896552cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/48.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/48.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "速度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.029600%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9144667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 54.676690cqw;
+  line-height: 79.171828cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.896552cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/49.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/49.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "凶猛";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -33.833000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9028667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 55.379172cqw;
+  line-height: 80.189034cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.896552cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/53.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/53.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "/sec";
+  position: absolute;
+  inset: auto;
+  left: 3.571429%;
+  top: -24.429500%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7109822);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 67.114107cqw;
+  line-height: 75.033571cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 7.142857cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/54.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/54.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "%";
+  position: absolute;
+  inset: auto;
+  left: 35.714286%;
+  top: -9.151786%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.647919);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 55.803571cqw;
+  line-height: 62.388393cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 7.142857cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/55.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/55.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "sec";
+  position: absolute;
+  inset: auto;
+  left: 14.285714%;
+  top: -2.659000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8213429);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 52.137643cqw;
+  line-height: 58.289893cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 7.142857cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/56.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/56.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "km/h";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -24.429500%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.638389);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 67.114107cqw;
+  line-height: 75.033571cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 7.142857cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/60.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/60.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "～";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -69.740000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.7056);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 58.630375cqw;
+  line-height: 84.896812cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 12.500000cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/67/61.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/67/61.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "～";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -69.740000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.4924);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 67.006143cqw;
+  line-height: 97.024929cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 14.285714cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/111.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/111.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "拥有称号";
+  position: absolute;
+  inset: auto;
+  left: 8.139535%;
+  top: -6.633000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.942);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 22.218930cqw;
+  line-height: 32.173012cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 2.325581cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/114.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/114.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "战斗统计";
+  position: absolute;
+  inset: auto;
+  left: 8.139535%;
+  top: -5.790517%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.954);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 21.939442cqw;
+  line-height: 31.768314cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 2.325581cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/118.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/118.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "获奖统计";
+  position: absolute;
+  inset: auto;
+  left: 8.139535%;
+  top: -5.790517%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.954);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 21.939442cqw;
+  line-height: 31.768314cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 2.325581cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/176.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/176.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "回旋速度";
+  position: absolute;
+  inset: auto;
+  left: 1.538462%;
+  top: -32.029588%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8764412);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.646769cqw;
+  line-height: 40.032523cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/177.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/177.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "剩余天数";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.446529%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9119118);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.414938cqw;
+  line-height: 39.696831cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/178.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/178.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "移动速度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.861176%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8950588);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.501415cqw;
+  line-height: 39.822046cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/179.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/179.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "发射间隔";
+  position: absolute;
+  inset: auto;
+  left: 1.538462%;
+  top: -31.962000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8922353);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.588446cqw;
+  line-height: 39.948062cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/180.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/180.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "侧面装甲";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.734941%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8912941);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.617585cqw;
+  line-height: 39.990246cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/181.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/181.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "背面装甲";
+  position: absolute;
+  inset: auto;
+  left: 1.538462%;
+  top: -32.594941%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8782941);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.588446cqw;
+  line-height: 39.948062cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/182.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/182.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "炮弹容量";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.407588%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.91);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.472523cqw;
+  line-height: 39.780215cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/185.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/185.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "生命值";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -30.721000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9194706);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.252755cqw;
+  line-height: 52.493980cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.081633cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/196.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/196.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "凶猛";
+  position: absolute;
+  inset: auto;
+  left: 3.030303%;
+  top: -25.960471%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.934);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 51.910970cqw;
+  line-height: 75.167091cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.060606cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/197.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/197.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好运";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.876706%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9210882);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 54.283606cqw;
+  line-height: 78.602667cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.060606cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/199.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/199.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "°/sec";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -24.429533%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7198068);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 59.218324cqw;
+  line-height: 66.206088cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 5.882353cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/200.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/200.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "sec";
+  position: absolute;
+  inset: auto;
+  left: 25.000000%;
+  top: -6.958667%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8760991);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 51.323000cqw;
+  line-height: 57.379094cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.250000cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/202.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/202.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "%";
+  position: absolute;
+  inset: auto;
+  left: 21.875000%;
+  top: -19.185600%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.5482392);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 57.705969cqw;
+  line-height: 64.515281cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.250000cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/69/203.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/69/203.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "km/h";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -24.429533%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6809483);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 62.919469cqw;
+  line-height: 70.343969cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.250000cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/74/106.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/74/106.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "F9";
+  position: absolute;
+  inset: auto;
+  left: 30.769231%;
+  top: 9.305429%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0041592);
+  font-family: 'CDTank-SourceSerif', sans-serif !important;
+  font-size: 25.603096cqw;
+  line-height: 35.101846cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #7b0000;
+  -webkit-text-stroke: 3.846154cqw #fff3ce;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/74/107.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/74/107.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "F8";
+  position: absolute;
+  inset: auto;
+  left: 30.769231%;
+  top: 9.162429%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9982175);
+  font-family: 'CDTank-SourceSerif', sans-serif !important;
+  font-size: 25.755500cqw;
+  line-height: 35.310788cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #7b0000;
+  -webkit-text-stroke: 3.846154cqw #fff3ce;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/74/108.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/74/108.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "F10";
+  position: absolute;
+  inset: auto;
+  left: 30.769231%;
+  top: 4.400524%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0320513);
+  font-family: 'CDTank-SourceSerif', sans-serif !important;
+  font-size: 25.755500cqw;
+  line-height: 35.310788cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #7b0000;
+  -webkit-text-stroke: 3.846154cqw #fff3ce;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/74/109.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/74/109.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "F11";
+  position: absolute;
+  inset: auto;
+  left: 30.769231%;
+  top: 3.848667%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9651442);
+  font-family: 'CDTank-SourceSerif', sans-serif !important;
+  font-size: 26.343519cqw;
+  line-height: 36.116962cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #7b0000;
+  -webkit-text-stroke: 3.846154cqw #fff3ce;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/74/110.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/74/110.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "F12";
+  position: absolute;
+  inset: auto;
+  left: 30.769231%;
+  top: 8.610571%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0090144);
+  font-family: 'CDTank-SourceSerif', sans-serif !important;
+  font-size: 26.343519cqw;
+  line-height: 36.116962cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #7b0000;
+  -webkit-text-stroke: 3.846154cqw #fff3ce;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/74/111.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/74/111.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "F5";
+  position: absolute;
+  inset: auto;
+  left: 30.769231%;
+  top: 4.400524%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9982175);
+  font-family: 'CDTank-SourceSerif', sans-serif !important;
+  font-size: 25.755500cqw;
+  line-height: 35.310788cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #7b0000;
+  -webkit-text-stroke: 3.846154cqw #fff3ce;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/74/112.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/74/112.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "F6";
+  position: absolute;
+  inset: auto;
+  left: 30.769231%;
+  top: 9.162429%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9982175);
+  font-family: 'CDTank-SourceSerif', sans-serif !important;
+  font-size: 25.755500cqw;
+  line-height: 35.310788cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #7b0000;
+  -webkit-text-stroke: 3.846154cqw #fff3ce;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/74/113.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/74/113.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "F7";
+  position: absolute;
+  inset: auto;
+  left: 30.769231%;
+  top: 8.610571%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9108734);
+  font-family: 'CDTank-SourceSerif', sans-serif !important;
+  font-size: 26.343519cqw;
+  line-height: 36.116962cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #7b0000;
+  -webkit-text-stroke: 3.846154cqw #fff3ce;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/91.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/91.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费创意点数";
+  position: absolute;
+  inset: auto;
+  left: 2.500000%;
+  top: -9.525800%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.1153333);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 14.382850cqw;
+  line-height: 20.826363cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #00f0ff;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/98.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/98.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "创意点";
+  position: absolute;
+  inset: auto;
+  left: 1.886792%;
+  top: -23.619048%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.85);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 37.735849cqw;
+  line-height: 54.641509cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #9fdd4c;
+  -webkit-text-stroke: 7.547170cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/100.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/100.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "技能点";
+  position: absolute;
+  inset: auto;
+  left: 1.886792%;
+  top: -24.789190%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8437368);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 38.015962cqw;
+  line-height: 55.047113cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffa800;
+  -webkit-text-stroke: 7.547170cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/130.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/130.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费创意点";
+  position: absolute;
+  inset: auto;
+  left: 1.515152%;
+  top: -18.794462%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.1077818);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 17.507000cqw;
+  line-height: 25.350136cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/131.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/131.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "现有技能点";
+  position: absolute;
+  inset: auto;
+  left: 1.515152%;
+  top: -19.915231%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0984727);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 17.655364cqw;
+  line-height: 25.564970cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/132.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/132.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "现有创意点";
+  position: absolute;
+  inset: auto;
+  left: 1.515152%;
+  top: -18.738923%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.1101091);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 17.470303cqw;
+  line-height: 25.297000cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/133.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/133.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费技能点";
+  position: absolute;
+  inset: auto;
+  left: 1.515152%;
+  top: -19.944538%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0973091);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 17.674091cqw;
+  line-height: 25.592076cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/153.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/153.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费代币";
+  position: absolute;
+  inset: auto;
+  left: 1.923077%;
+  top: -20.212769%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.0681818);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 22.504096cqw;
+  line-height: 32.585923cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/16.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/16.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "地图规则";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.943706%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8856471);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.793677cqw;
+  line-height: 40.245231cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/21.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/21.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "地图规则";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.943667%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8782667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.965772cqw;
+  line-height: 40.494439cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 3.508772cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/22.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/22.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费代币";
+  position: absolute;
+  inset: auto;
+  left: 1.851852%;
+  top: -21.914867%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.94);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 25.610722cqw;
+  line-height: 37.084315cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 3.703704cqw #ffc889;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/23.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/23.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "背面装甲";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.594933%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8374);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.301444cqw;
+  line-height: 42.428500cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/24.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/24.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "侧面装甲";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.734933%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8365167);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.332389cqw;
+  line-height: 42.473315cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/25.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/25.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "零件栏位";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -30.610133%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8703);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 28.725722cqw;
+  line-height: 41.594852cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/26.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/26.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "回旋速度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.029600%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8514);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.363407cqw;
+  line-height: 42.518204cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/27.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/27.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "移动速度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.861200%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8559);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.209019cqw;
+  line-height: 42.294667cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/28.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/28.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "装弹修正";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.594933%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8532);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.301444cqw;
+  line-height: 42.428500cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/29.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/29.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "发射间隔";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.962000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8532);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 29.301444cqw;
+  line-height: 42.428500cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.703704cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/33.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/33.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "碉堡生命";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -30.721000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9201923);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.168240cqw;
+  line-height: 39.339600cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 4.000000cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/34.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/34.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "轻坦克";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.767733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9010889);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.992279cqw;
+  line-height: 53.564814cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/35.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/35.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "熟练度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.335467%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9087333);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.681093cqw;
+  line-height: 53.114233cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/36.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/36.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "突击炮";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.962000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9058667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.797163cqw;
+  line-height: 53.282302cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/37.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/37.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "生命值";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -30.721000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9144667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.451116cqw;
+  line-height: 52.781209cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/38.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/38.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "重坦克";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.767733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9010889);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.992279cqw;
+  line-height: 53.564814cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/39.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/39.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "中坦克";
+  position: absolute;
+  inset: auto;
+  left: 2.325581%;
+  top: -32.767733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8801333);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.992279cqw;
+  line-height: 53.564814cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.651163cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/40.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/40.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "坦克存量";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.767769%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8885962);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 28.134265cqw;
+  line-height: 40.738408cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 4.081633cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/42.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/42.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "耐久度";
+  position: absolute;
+  inset: auto;
+  left: 2.380952%;
+  top: -21.033733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9723077);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 32.650190cqw;
+  line-height: 47.277476cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 4.761905cqw #ffc889;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/43.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/43.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "每局时间";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.101385%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8741538);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 28.599083cqw;
+  line-height: 41.411479cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 4.166667cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/46.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/46.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "技能";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.661733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9115667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 54.850621cqw;
+  line-height: 79.423690cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.896552cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/47.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/47.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好运";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.876733%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9173667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 54.503828cqw;
+  line-height: 78.921552cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.896552cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/48.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/48.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "速度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.029600%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9144667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 54.676690cqw;
+  line-height: 79.171828cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.896552cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/49.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/49.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "凶猛";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -33.833000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9028667);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 55.379172cqw;
+  line-height: 80.189034cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.896552cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/53.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/53.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "/sec";
+  position: absolute;
+  inset: auto;
+  left: 3.571429%;
+  top: -24.429500%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7109822);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 67.114107cqw;
+  line-height: 75.033571cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 7.142857cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/54.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/54.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "%";
+  position: absolute;
+  inset: auto;
+  left: 35.714286%;
+  top: -9.151786%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.647919);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 55.803571cqw;
+  line-height: 62.388393cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 7.142857cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/55.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/55.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "sec";
+  position: absolute;
+  inset: auto;
+  left: 14.285714%;
+  top: -2.659000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8213429);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 52.137643cqw;
+  line-height: 58.289893cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 7.142857cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/56.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/56.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "km/h";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -24.429500%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.638389);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 67.114107cqw;
+  line-height: 75.033571cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 7.142857cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/60.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/60.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "～";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -69.740000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.7056);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 58.630375cqw;
+  line-height: 84.896812cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 12.500000cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/34/61.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/34/61.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "～";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -69.740000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.4924);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 67.006143cqw;
+  line-height: 97.024929cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #742600;
+  -webkit-text-stroke: 14.285714cqw #ffffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/111.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/111.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "拥有称号";
+  position: absolute;
+  inset: auto;
+  left: 8.139535%;
+  top: -6.633000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.942);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 22.218930cqw;
+  line-height: 32.173012cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 2.325581cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/114.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/114.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "战斗统计";
+  position: absolute;
+  inset: auto;
+  left: 8.139535%;
+  top: -5.790517%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.954);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 21.939442cqw;
+  line-height: 31.768314cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 2.325581cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/118.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/118.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "获奖统计";
+  position: absolute;
+  inset: auto;
+  left: 8.139535%;
+  top: -5.790517%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.954);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 21.939442cqw;
+  line-height: 31.768314cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 2.325581cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/176.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/176.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "回旋速度";
+  position: absolute;
+  inset: auto;
+  left: 1.538462%;
+  top: -32.029588%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8764412);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.646769cqw;
+  line-height: 40.032523cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/177.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/177.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "剩余天数";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.446529%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9119118);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.414938cqw;
+  line-height: 39.696831cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/178.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/178.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "移动速度";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.861176%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8950588);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.501415cqw;
+  line-height: 39.822046cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/179.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/179.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "发射间隔";
+  position: absolute;
+  inset: auto;
+  left: 1.538462%;
+  top: -31.962000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8922353);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.588446cqw;
+  line-height: 39.948062cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/180.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/180.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "侧面装甲";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.734941%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8912941);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.617585cqw;
+  line-height: 39.990246cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/181.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/181.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "背面装甲";
+  position: absolute;
+  inset: auto;
+  left: 1.538462%;
+  top: -32.594941%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8782941);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.588446cqw;
+  line-height: 39.948062cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/182.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/182.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "炮弹容量";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -31.407588%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.91);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 27.472523cqw;
+  line-height: 39.780215cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 3.076923cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/185.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/185.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "生命值";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -30.721000%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9194706);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 36.252755cqw;
+  line-height: 52.493980cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 4.081633cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/196.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/196.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "凶猛";
+  position: absolute;
+  inset: auto;
+  left: 3.030303%;
+  top: -25.960471%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.934);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 51.910970cqw;
+  line-height: 75.167091cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.060606cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/197.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/197.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好运";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -32.876706%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.9210882);
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+  font-size: 54.283606cqw;
+  line-height: 78.602667cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.060606cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/199.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/199.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "°/sec";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -24.429533%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.7198068);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 59.218324cqw;
+  line-height: 66.206088cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 5.882353cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/200.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/200.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "sec";
+  position: absolute;
+  inset: auto;
+  left: 25.000000%;
+  top: -6.958667%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.8760991);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 51.323000cqw;
+  line-height: 57.379094cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.250000cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/202.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/202.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "%";
+  position: absolute;
+  inset: auto;
+  left: 21.875000%;
+  top: -19.185600%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.5482392);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 57.705969cqw;
+  line-height: 64.515281cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.250000cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/36/203.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/36/203.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "km/h";
+  position: absolute;
+  inset: auto;
+  left: 0.000000%;
+  top: -24.429533%;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.6809483);
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+  font-size: 62.919469cqw;
+  line-height: 70.343969cqw;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #595901;
+  -webkit-text-stroke: 6.250000cqw #edffda;
+  paint-order: stroke fill;
+  pointer-events: none;
+}

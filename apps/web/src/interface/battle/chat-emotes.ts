@@ -1,6 +1,7 @@
 import {imageResourceUrl} from '../../assets/image-cache';
 import {isSimpleUiImage} from '../../assets/simple-ui-artwork';
 import {buttonArtwork} from '../../assets/button-artwork';
+import {createSourceTextArtwork, sourceTextArtwork} from '../resources/source-text-artwork';
 import {EMOTE_COUNT, EMOTE_FIRST_CODEPOINT} from './chat-emote-text';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {loadChatEmoteSequences} from './chat-emote-animation';
@@ -157,7 +158,8 @@ export class ChatEmotes {
         Object.assign(piece.style,{position:'absolute',left:`${item.x}px`,top:'0px',width:`${item.width}px`,height:`${height}px`,whiteSpace:'pre'});
         if (item.image) {
           const image=this.imageCatalog!.image(item.image.set,item.image.name)!;
-          const artwork=isSimpleUiImage(image.asset) || buttonArtwork(image.asset)
+          const textArtwork=sourceTextArtwork(image.asset);
+          const artwork=textArtwork || isSimpleUiImage(image.asset) || buttonArtwork(image.asset)
             ? document.createElement('span') : document.createElement('img');
           artwork.dataset.chatSourceImage=item.image.name;artwork.dataset.chatSourceImageset=item.image.set;
           artwork.dataset.sourceAsset=image.asset;
@@ -166,6 +168,10 @@ export class ChatEmotes {
             artwork.width=image.width;artwork.height=image.height;
           } else artwork.setAttribute('aria-hidden','true');
           Object.assign(artwork.style,{position:'absolute',left:'0px',top:'0px',width:`${image.width}px`,height:`${image.height}px`});
+          if (textArtwork) {
+            artwork.dataset.sourceButtonLabel='external';
+            artwork.append(createSourceTextArtwork(image.asset));
+          }
           piece.append(artwork);
         } else if (item.emoteId===undefined) piece.textContent=item.text;
         else {

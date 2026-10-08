@@ -51,7 +51,7 @@ export function PartShopSourceList({ui, source, entries, selected, busy, select,
         {...(source === 'lstShopEquip' ? {'data-part-product-id': entry.id} : {'data-part-owned-instance': entry.id})}
         tabIndex={entry.id === selected || selected === undefined && index === 0 ? 0 : -1}
         style={entry.id === selected ? {backgroundImage: selection.style.backgroundImage} : undefined}
-        data-source-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
+        data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
         onMouseEnter={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
         onFocus={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
         onClick={() => select(entry.id)}

@@ -49,7 +49,7 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
         {...(source === 'lstShopItem' ? {'data-shop-product-id': entry.id} : {'data-shop-owned-instance': entry.id})}
         tabIndex={entry.id === selected || selected === undefined && index === 0 ? 0 : -1}
         style={entry.id === selected ? {backgroundImage: selection.style.backgroundImage} : undefined}
-        data-source-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
+        data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
         data-stack-sale-available={source === 'lstMyItem' && Boolean(activate && canActivate?.(entry.id))}
         onMouseEnter={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
         onFocus={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}

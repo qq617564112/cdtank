@@ -9,4 +9,5 @@ def html_ui_sources():
     sources = set()
     for name in ('simple-ui-artwork.json', 'button-artwork.json'):
         sources.update(json.loads((ROOT / 'apps/web/src/assets' / name).read_text())['assets'])
+    sources.update(json.loads((ROOT / 'apps/web/src/interface/resources/source-text-artwork.json').read_text())['assets'])
     return sources

@@ -17,6 +17,7 @@ def document(path):
 def main():
     simple = document(ROOT / 'apps/web/src/assets/simple-ui-artwork.json')['assets']
     buttons = document(ROOT / 'apps/web/src/assets/button-artwork.json')['assets']
+    lettering = document(ROOT / 'apps/web/src/interface/resources/source-text-artwork.json')['assets']
     inventory = {entry['source']: entry for entry in document(ROOT / 'art/hd-assets/inventory.json')['textures']}
     directory = document(RUNTIME / 'sprite-images.json')['images']
     records = {record['source']: record for record in document(ART / 'installed-framed-ui-jobs.json')}
@@ -29,15 +30,30 @@ def main():
     for name in ('installed-sunburst-pilot-jobs.json', 'installed-framed-smooth-jobs.json'):
         emotes.extend(record for record in document(ART / name) if record['installed'])
     records.update((record['source'], record) for record in emotes)
+    quality_jobs = ART / 'quality-ui-jobs.json'
+    quality_sources = {source for job in document(quality_jobs) for source in job['sources']} \
+        if quality_jobs.is_file() else set()
+    quality_installation = ART / 'installed-quality-ui-jobs.json'
+    quality_records = {record['source']: record for record in document(quality_installation) if record['installed']} \
+        if quality_installation.is_file() else {}
+    records.update(quality_records)
     groups = defaultdict(list)
     outcomes, issues = [], []
-    for issue in document(ART / 'issues.json'):
-        source = issue['source']
-        if source in simple:
+    sources = dict.fromkeys(issue['source'] for issue in document(ART / 'issues.json'))
+    sources.update(dict.fromkeys(sorted(quality_sources)))
+    for source in sources:
+        if source.startswith('ui/regions/71/'):
+            outcome = {'source': source, 'rendering': 'removed', 'feature': 'screen keyboard'}
+        elif source in simple:
             outcome = {'source': source, 'rendering': 'html-css', 'recipe': simple[source]}
         elif source in buttons:
             outcome = {'source': source, 'rendering': 'html-button',
                        'background': buttons[source]['background'], 'text': buttons[source]['text']['text']}
+        elif source in lettering:
+            outcome = {'source': source, 'rendering': 'html-font', 'text': lettering[source]['text']}
+        elif source in quality_sources and source not in quality_records:
+            outcome = {'source': source, 'rendering': 'awaiting-raster-redraw'}
+            issues.append({'source': source, 'issue': 'No visually accepted raster redraw is installed'})
         elif source in records:
             record = records[source]
             outcome = {'source': source, 'rendering': 'image', 'candidate': record['candidate']}
@@ -76,6 +92,7 @@ def main():
     report = {'problemSources': len(outcomes), 'outcomes': dict(Counter(row['rendering'] for row in outcomes)),
               'emotes': len(emotes), 'imageCells': inspected, 'runtimeSheets': len(groups),
               'simpleUiSources': len(simple), 'buttonSources': len(buttons),
+              'fontSources': len(lettering),
               'sharedButtonBackgrounds': len(backgrounds), 'issues': issues}
     (ART / 'installed-current-emotes.json').write_text(json.dumps(emotes, ensure_ascii=False, indent=2) + '\n')
     (ART / 'resolved-ui-sources.json').write_text(json.dumps(outcomes, ensure_ascii=False, indent=2) + '\n')

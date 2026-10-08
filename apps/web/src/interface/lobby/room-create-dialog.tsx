@@ -101,7 +101,6 @@ export function RoomCreateDialog({open, close, initialDraft, map, submit, editin
           placeholder={editing ? passwordAction === 'KEEP' ? '保持当前密码' : passwordAction === 'CLEAR' ? '不设密码' : '请输入新密码' : undefined}
           onFocus={() => {lastInput.current = 'password';}} {...passwordLimit}/>
         {editing && <select className="room-edit-password-action" aria-label="密码操作" value={passwordAction} disabled={pending}
-          style={{backgroundImage: place('tiao7', layout.control('tiao7').properties.Image).style.backgroundImage}}
           onChange={event => setPasswordAction(event.target.value as RoomPasswordAction)}>
           <option value="KEEP">保持密码</option><option value="REPLACE">修改密码</option><option value="CLEAR">取消密码</option>
         </select>}

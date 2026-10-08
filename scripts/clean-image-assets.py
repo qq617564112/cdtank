@@ -123,6 +123,7 @@ def main():
     report = dict(publishedImagesBefore=len(before), publishedBytesBefore=before_bytes,
                   logicalImagesBefore=len(sources), referencedImages=len(retained), unusedImages=len(unused),
                   unusedPaths=unused, removedImagesets=usage['removedImagesets'],
+                  removedLayouts=usage['removedLayouts'],
                   retainedChatGlyphs=len(usage['chatGlyphImages']), models=usage['models'],
                   modelReferences=usage['modelReferences'], modules=len(usage['modules']), catalogs=usage['catalogs'])
     print(json.dumps({key: value for key, value in report.items() if key not in ('unusedPaths', 'catalogs')},

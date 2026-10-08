@@ -1,49 +1,37 @@
 """Prepare shared unlettered button backgrounds and live font labels."""
-from collections import defaultdict
 import json
 from pathlib import Path
 import re
 
 from PIL import Image, ImageDraw
+import cv2
+import numpy as np
+from source_ui_metrics import manual_catalogue, manual_style, polygon
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / 'art/hd-ui-redraw'
 OUTPUT = ROOT / 'apps/web/src/assets'
 
-LABELS = {
-    59: {'jixuanniu': '继续'},
-    60: {'btnback': '回上页', 'xtsz': '系统设定', 'jxsm': '教学说明',
-         'haoyou_wanjia': '玩家', 'haoyou_haoyou': '好友', 'haoyou_haoyoua': '好友'},
-    64: {'jiarugoudui': '加入狗队', 'jiarumaodui': '加入猫队', 'chuangyidianshu': '创意点',
-         'jinengdianshu': '技能点', 'jinqiananniu': '金钱', 'kaixinfangjian': '开新房间',
-         'kuaisujinru': '快速进入', 'bianhaopaixu': '编号排序', 'kongfangjian': '空房间',
-         'fenshupaihang': '分数排行', 'guangjiegouwuanniu': '商店', 'myhomeanniu': '玩家信息',
-         'jiejianniu': '阶级', 'qinmianniu': '亲密', 'xingbieanniu': '性别'},
-    65: {'pohuaimoshi': '破坏模式', 'hunzhanmoshi': '混战模式', 'zhanlingmoshi': '占领模式',
-         'qinwangmoshi': '擒王模式', 'tuanduimoshi': '团队模式', 'maogouyouhao': '猫狗混编',
-         'maogouduikang': '猫狗对抗', 'duiyoushanghai': '敌我不分', 'yizhiduiwai': '不伤友军',
-         'xiugainicheng': '修改昵称'},
-    66: {'zhunebianniu': '准备', 'quxiaoanniu': '取消', 'baocunxiugai': '保存修改',
-         'jiahaoyou': '加好友', 'zhunbei': '准备', 'jiaoyi': '交易', 'kuaisuyaoqing': '快速邀请',
-         'pingbi': '屏蔽', 'queding': '确定', 'quxiao': '取消', 'shanhaoyou': '删好友',
-         'xiugaijieshao': '修改介绍', 'xuexi': '学习', 'yaoqinganniu': '邀请', 'yaoqing': '邀请',
-         'yunxu': '允许', 'zhanshi': '展示'},
-    69: {'chushou': '出售', 'chuji': '出击！', 'goumai': '购买', 'genghuan': '更换',
-         'weixiuzhongxin': '维修中心', 'zhuangbeilingjian': '装备零件', 'guanyuwo': '关于我',
-         'guizhongpin': '贵重品', 'huoli': '火力  [LV ]', 'jinenganniu': 'LV', 'zhuangjia': '装甲  [LV ]',
-         'huantietu': '换涂装', 'maitanke': '买坦克', 'selltanke': '卖坦克', 'goumaimaogou': '买猫狗',
-         'chushoumaogou': '卖猫狗', 'daoju': '辅助', 'gaizhuang': '改装', 'lingjian': '零件',
-         'maozi': '饰品', 'biaozhi': '标志', 'maogou': '猫狗', 'tanke': '坦克', 'yiban': '一般',
-         'wuqi': '武器', 'yongyouchenghao': '拥有称号', 'zhandoutongji': '战斗统计', 'huojiangtongji': '获奖统计',
-         'mingming': '命名', 'zidan': '弹药', 'xiaowuqi': '武器', 'xiaobiaozhi': '标志', 'xiaoyiban': '一般',
-         'xiaodaoju': '辅助', 'xiaoguizhongpin': '贵重品', 'xiaomaozi': '饰品'},
-    74: {'likaiyouxi': '离开游戏', 'denglu': '登录', 'baocunmima': '保存账号', 'xitongshezhi': '系统设置',
-         'goumaidaibi': '取得Q点', 'goumaixindian': '取得星币', 'yushezhi': '预设值', 'zhuce': '注册',
-         'chongzhi': '主页', 'katongxuanran': '卡通渲染', 'tongzhitongbu': '垂直同步',
-         'ruanjianguangbiao': '软件光标', 'zhandoubiaoqing': '战斗表情', '32weise': '32位色',
-         '16weise': '16位色', 'gaohuazhi': '高画质', 'dihuazhi': '低画质', 'quanping': '全屏', 'chuangkou': '窗口'},
+STEMS = {
+    59: ('jixuanniu',),
+    60: ('btnback', 'xtsz', 'jxsm', 'haoyou_wanjia', 'haoyou_haoyou', 'haoyou_haoyoua',),
+    64: ('jiarugoudui', 'jiarumaodui', 'chuangyidianshu', 'jinengdianshu', 'jinqiananniu', 'kaixinfangjian',
+         'kuaisujinru', 'bianhaopaixu', 'kongfangjian', 'fenshupaihang', 'guangjiegouwuanniu', 'myhomeanniu',
+         'jiejianniu', 'qinmianniu', 'xingbieanniu',),
+    65: ('pohuaimoshi', 'hunzhanmoshi', 'zhanlingmoshi', 'qinwangmoshi', 'tuanduimoshi', 'maogouyouhao',
+         'maogouduikang', 'duiyoushanghai', 'yizhiduiwai', 'xiugainicheng',),
+    66: ('zhunebianniu', 'quxiaoanniu', 'baocunxiugai', 'jiahaoyou', 'zhunbei', 'jiaoyi', 'kuaisuyaoqing',
+         'pingbi', 'queding', 'quxiao', 'shanhaoyou', 'xiugaijieshao', 'xuexi', 'yaoqinganniu', 'yaoqing',
+         'yunxu', 'zhanshi',),
+    69: ('chushou', 'chuji', 'goumai', 'genghuan', 'weixiuzhongxin', 'zhuangbeilingjian', 'guanyuwo',
+         'guizhongpin', 'huoli', 'jinenganniu', 'zhuangjia', 'huantietu', 'maitanke', 'selltanke',
+         'goumaimaogou', 'chushoumaogou', 'daoju', 'gaizhuang', 'lingjian', 'maozi', 'biaozhi', 'maogou',
+         'tanke', 'yiban', 'wuqi', 'yongyouchenghao', 'zhandoutongji', 'huojiangtongji', 'mingming', 'zidan',
+         'xiaowuqi', 'xiaobiaozhi', 'xiaoyiban', 'xiaodaoju', 'xiaoguizhongpin', 'xiaomaozi',),
+    74: ('likaiyouxi', 'denglu', 'baocunmima', 'xitongshezhi', 'goumaidaibi', 'goumaixindian', 'yushezhi',
+         'zhuce', 'chongzhi', 'katongxuanran', 'tongzhitongbu', 'ruanjianguangbiao', 'zhandoubiaoqing',
+         '32weise', '16weise', 'gaohuazhi', 'dihuazhi', 'quanping', 'chuangkou',),
 }
-CHANNELS = {'jiazu': '家族', 'liaotian': '聊天', 'miyu': '密语', 'haoyou': '好友', 'duiwu': '队伍', 'gm': 'GM'}
 BASES = {
     'small': '66/10', 'invite': '66/21', 'wide': '66/1', 'round': '66/59',
     'enamel': '69/34', 'board': '69/35', 'hanging': '60/20', 'banner': '74/47',
@@ -52,111 +40,147 @@ BASES = {
     'mode-zhanlingmoshi': '65/13', 'mode-qinwangmoshi': '65/7',
     'rule-maogouyouhao': '65/28', 'rule-maogouduikang': '65/22',
     'rule-duiyoushanghai': '65/18', 'rule-yizhiduiwai': '65/30',
+    'settings-sound': '74/56', 'settings-music': '74/66',
 }
-FILTERS = {'gold': 'none', 'blue': 'hue-rotate(165deg) saturate(1.1)',
-           'cyan': 'hue-rotate(125deg) saturate(.9)', 'green': 'hue-rotate(55deg)',
-           'orange': 'hue-rotate(-25deg) saturate(1.15)', 'pink': 'hue-rotate(285deg) saturate(1.25)',
-           'purple': 'hue-rotate(210deg) saturate(1.25)', 'grey': 'grayscale(1) brightness(.8)'}
+CSS_BASES = {'small', 'invite', 'wide', 'round', 'enamel'}
+
+
+def body_colour(image):
+    rgba = np.asarray(image)
+    rgb = rgba[:, :, :3]
+    hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
+    mask = (rgba[:, :, 3] > 128) & (hsv[:, :, 1] > 70) & (hsv[:, :, 2] > 70)
+    pixels = rgb[mask]
+    if not len(pixels):
+        pixels = rgb[(rgba[:, :, 3] > 128) & (hsv[:, :, 2] > 50)]
+    bins = (pixels // 32).astype(int)
+    values, counts = np.unique(bins, axis=0, return_counts=True)
+    chosen = values[counts.argmax()]
+    return np.median(pixels[np.all(bins == chosen, axis=1)], axis=0)
+
+
+def colour_filter(base, target):
+    # Fit the CSS colour operations to the source button's measured surface.
+    luminance = np.array([.213, .715, .072])
+    grey = np.tile(luminance, (3, 1))
+    cosine = np.eye(3) - grey
+    sine = np.array([[-.213, -.715, .928], [.143, .140, -.283], [-.787, .715, .072]])
+    rotations = np.arange(-180, 181)
+    matrices = grey + np.cos(np.deg2rad(rotations))[:, None, None] * cosine + np.sin(np.deg2rad(rotations))[:, None, None] * sine
+    rotated = matrices @ base
+    best = None
+    for saturation in np.arange(0, 2.51, .025):
+        saturated = (grey @ rotated.T).T + saturation * (rotated - (grey @ rotated.T).T)
+        brightness = np.clip((saturated * target).sum(axis=1) / np.maximum((saturated ** 2).sum(axis=1), 1), .25, 2)
+        error = ((np.clip(saturated * brightness[:, None], 0, 255) - target) ** 2).sum(axis=1)
+        index = error.argmin()
+        candidate = (error[index], rotations[index], saturation, brightness[index])
+        if best is None or candidate[0] < best[0]:
+            best = candidate
+    _, rotation, saturation, brightness = best
+    return f'hue-rotate({rotation}deg) saturate({saturation:.3f}) brightness({brightness:.5f})'
+
 
 
 def main():
     ui = json.loads((ROOT / 'recovery/output/web-assets/ui.json').read_text())
     images = {i['asset']: i for sheet in ui['imagesets'] for i in sheet['images']
               if i.get('asset', '').startswith('ui/regions/')}
+    standalone = json.loads((ROOT / 'apps/web/src/interface/resources/source-text-artwork.json').read_text())['assets']
+    reviewed = manual_catalogue()
     assets, used = {}, set()
     for asset, image in images.items():
+        if asset in standalone:
+            continue
+        manual = reviewed['assets'].get(asset)
+        if manual is None:
+            continue
         group = int(asset.split('/')[2])
         name = image['Name'].split('\\')[-1].removesuffix('.tga')
-        stem, label = None, None
-        for key in sorted(LABELS.get(group, {}), key=len, reverse=True):
+        stem = None
+        for key in sorted(STEMS.get(group, ()), key=len, reverse=True):
             if re.fullmatch(re.escape(key) + r'(?:_?\d+)?f?', name):
-                stem, label = key, LABELS[group][key]
+                stem = key
                 break
         channel = re.fullmatch(r'(?:liantian_)?(jiazu|liaotian|miyu|haoyou|duiwu|gm)\d', name)
         if channel and group in (44, 60, 65, 77):
-            stem, label = channel[1], CHANNELS[channel[1]]
-        if label is None:
-            continue
+            stem = channel[1]
+        stem = stem or name
         suffix = re.search(r'(\d)(?:f)?$', name)
         state = int(suffix[1]) if suffix else 0
-        background, body, colour = None, 'pill', 'gold'
-        plain = bool(channel and not name.startswith('liantian_'))
+        background, body = None, 'pill'
+        plain = manual.get('plain', False)
         if group == 66 or group in (65, 69) and stem in ('xiugainicheng', 'gaizhuang') or group == 74 and stem in ('yushezhi', 'zhuce'):
             background = 'wide' if stem in ('zhunebianniu', 'quxiaoanniu') else \
                 'round' if stem == 'yaoqinganniu' else 'invite' if stem == 'kuaisuyaoqing' else 'small'
-            colour = {1: 'gold', 2: 'blue', 3: 'orange', 4: 'grey', 0: 'blue'}.get(state, 'gold')
-            if background in ('wide', 'round'):
-                colour = {1: 'gold', 2: 'purple', 3: 'pink', 4: 'grey'}.get(state, 'gold')
         elif group == 69 and stem in ('chushou', 'chuji', 'goumai', 'genghuan', 'huoli', 'jinenganniu', 'zhuangjia'):
             body = 'rectangle'
-            colour = {1: 'gold', 2: 'pink', 3: 'blue'}.get(state, 'gold')
         elif group == 69 and stem.startswith('xiao') or group == 69 and stem in ('yongyouchenghao', 'zhandoutongji', 'huojiangtongji', 'zidan'):
             body = 'rectangle'
-            colour = {1: 'gold', 2: 'cyan', 3: 'purple'}.get(state, 'gold')
         elif group == 69:
             background = 'board' if state == 3 or stem in ('daoju',) and state in (22, 33) else 'enamel'
             if stem == 'daoju' and name in ('daoju22', 'daoju33', 'daoju11'):
-                label = '道具'
                 background = 'board' if name == 'daoju33' else 'enamel'
-            colour = 'gold' if state == 1 else 'green'
-            if background == 'board':
-                colour = 'gold'
         elif group == 65 and stem.endswith('moshi'):
             background = 'board' if state == 3 else 'mode-' + stem
-            colour = 'green' if state == 2 else 'gold'
         elif group == 65 and stem in ('maogouyouhao', 'maogouduikang', 'duiyoushanghai', 'yizhiduiwai'):
             background = 'rule-' + stem
-            colour = {1: 'gold', 2: 'blue', 3: 'orange', 4: 'grey'}[state]
         elif group == 60 and stem in ('xtsz', 'jxsm'):
             background = 'hanging'
-            colour = {0: 'gold', 1: 'gold', 2: 'cyan'}.get(state, 'gold')
         elif group == 74 and stem in ('xitongshezhi', 'goumaidaibi', 'chongzhi'):
             background = 'banner'
-            colour = {1: 'gold', 2: 'blue', 3: 'gold'}.get(state, 'gold')
         elif group == 74 and stem == 'goumaixindian':
             plain = True
         elif group == 74 and stem in ('likaiyouxi', 'denglu'):
             body = 'pill'
-            colour = {1: 'gold', 2: 'orange', 3: 'blue'}[state]
         elif group == 74:
             body = 'option'
-            colour = 'orange'
         elif group == 64 and stem in ('jiarugoudui', 'jiarumaodui'):
             body = 'rectangle'
-            colour = {1: 'gold', 2: 'pink' if stem == 'jiarugoudui' else 'green', 3: 'grey', 4: 'grey'}[state]
             if state == 3:
                 background = 'dog-team' if stem == 'jiarugoudui' else 'cat-team'
         elif group == 64:
             body = 'rectangle' if stem in ('chuangyidianshu', 'jinengdianshu', 'jinqiananniu') else 'pill'
-            colour = {1: 'gold', 2: 'purple' if body == 'pill' else 'cyan', 3: 'orange' if body == 'pill' else 'pink'}.get(state, 'gold')
         elif group in (59, 60):
             body = 'rectangle' if stem == 'btnback' or group == 59 else 'pill'
-            colour = {0: 'blue', 1: 'gold', 2: 'orange', 3: 'blue'}.get(state, 'gold')
-        elif channel:
-            colour = {0: 'orange', 1: 'gold', 2: 'orange', 3: 'cyan'}.get(state, 'gold')
-        width, height = int(image['Width']), int(image['Height'])
-        units = sum(.6 if ord(character) < 128 else 1 for character in label)
-        size = min(22, height * .48, width * .76 / max(1, units))
-        if channel or body == 'option':
-            size = min(size, 12)
-        if background in ('board', 'enamel'):
-            size = min(size, 18)
-        ink = '#fff' if background in ('small', 'invite', 'hanging') or colour in ('pink', 'purple') else '#111'
-        if background == 'board':
-            ink = '#ffed48'
-        text = {'text': label, 'width': width, 'height': height, 'face': 'brush', 'size': round(size, 3),
-                'lineHeight': round(size * 1.2, 3), 'x': round((width - units * size) / 2, 3),
-                'y': round(height * .44 - size * .6, 3), 'scaleX': 1, 'colour': ink,
-                'outline': '#d51f16' if background == 'board' else '#111' if ink == '#fff' else '#fff4b0',
-                'stroke': 1.5 if background else .6}
-        if background == 'hanging':
-            text['y'] = round(height * .63 - size * .6, 3)
-        if body == 'option':
-            text['x'], text['y'] = round(width * .2, 3), round((height - size * 1.2) / 2, 3)
+        if plain:
+            background = None
+        background = manual.get('background', background)
+        if background in CSS_BASES:
+            body = 'round' if background == 'round' else 'rectangle' if background == 'wide' else 'pill'
+            background = None
+        with Image.open(ROOT / 'art/hd-assets/original' / asset) as original:
+            original = original.convert('RGBA')
+        family = background or ('text' if plain else body)
+        text = manual_style(original, manual)
+        body_bounds = manual.get('bodyBounds', original.getchannel('A').getbbox())
+        left, top, right, bottom = body_bounds
+        geometry = {'inset': f'{top / original.height * 100:.6f}% {(original.width - right) / original.width * 100:.6f}% '
+                    f'{(original.height - bottom) / original.height * 100:.6f}% {left / original.width * 100:.6f}%'}
+        if manual.get('bodyClip'):
+            geometry['clip-path'] = manual['bodyClip']
+        elif background in ('small', 'invite') or not background and not plain and family != 'option':
+            mask = np.asarray(original.crop(tuple(body_bounds)).getchannel('A')) > 128
+            geometry['clip-path'] = polygon(mask)
+        if background:
+            with Image.open(ART / 'button-backgrounds' / f'{background}.png') as shared:
+                shared = shared.convert('RGBA')
+                target = np.array(tuple(bytes.fromhex(manual['bodyColour'].lstrip('#')))) if manual.get('bodyColour') else body_colour(original)
+                filter_value = 'none' if manual.get('preserveColours') else colour_filter(body_colour(shared), target)
+                if not manual.get('preserveCanvas'):
+                    left, top, right, bottom = shared.getchannel('A').getbbox()
+                    geometry.update({'background-size': f'{shared.width / (right - left) * 100:.6f}% {shared.height / (bottom - top) * 100:.6f}%',
+                                     'background-position': f'{left / max(1, shared.width - (right - left)) * 100:.6f}% {top / max(1, shared.height - (bottom - top)) * 100:.6f}%'})
+        else:
+            filter_value = 'none'
+        surface_colour = manual.get('bodyColour') or ('#000000' if plain else
+                         '#%02x%02x%02x' % tuple(body_colour(original).astype(int)))
         assets[asset] = {'background': f'/hd-ui/buttons/{background}.png' if background else None,
-                         'family': background or ('text' if plain else body),
-                         'filter': FILTERS[colour], 'text': text}
-        if body == 'option':
+                         'family': family, 'filter': filter_value, 'text': text,
+                         'bodyColour': surface_colour,
+                         'bodyStyle': manual.get('bodyStyle', {}),
+                         'geometry': geometry}
+        if body == 'option' and not background:
             assets[asset]['checked'] = state == 1
             assets[asset]['optionKind'] = 'checkbox' if stem in (
                 'baocunmima', 'katongxuanran', 'tongzhitongbu', 'ruanjianguangbiao', 'zhandoubiaoqing') else 'radio'
@@ -165,10 +189,13 @@ def main():
 
     # One source image per shape; each state shares its unlettered background.
     jobs = []
-    base_rows = [(name, 'ui/regions/' + BASES[name] + '.png') for name in sorted(used)]
-    for start in range(0, len(base_rows), 2):
-        selected = base_rows[start:start + 2]
-        identifier = f'blank-buttons-{start // 2:02}'
+    illustrations = {'settings-sound', 'settings-music'}
+    base_rows = [(name, 'ui/regions/' + BASES[name] + '.png') for name in sorted(used - illustrations)]
+    groups = [base_rows[start:start + 2] for start in range(0, len(base_rows), 2)]
+    if used & illustrations:
+        groups.append([(name, 'ui/regions/' + BASES[name] + '.png') for name in sorted(used & illustrations)])
+    for index, selected in enumerate(groups):
+        identifier = 'blank-buttons-' + '-'.join(name for name, _ in selected)
         folder = ART / 'jobs' / identifier
         folder.mkdir(parents=True, exist_ok=True)
         canvas = Image.new('RGB', (1024, 768), '#ff00ff')
@@ -188,6 +215,8 @@ def main():
                           'box': [left, top, left + original.width, top + original.height],
                           'frame': [x, y, x + w, y + h], 'slot': [x + 6, y + 6, x + w - 6, y + h - 6],
                           'buttonBackground': name})
+            if name in illustrations:
+                cells[-1]['preserveCanvas'] = True
             descriptions.append(f'第{index + 1}格为{name}，蓝框外沿{x},{y},{x+w},{y+h}。')
         if not (folder / 'input.png').exists():
             canvas.save(folder / 'input.png')
@@ -213,7 +242,7 @@ def main():
         if entry['background']:
             name = Path(entry['background']).stem
             style = {'background-image': f"var(--source-button-{name}, url('{entry['background']}'))",
-                     'background-size': '100% 100%', 'background-repeat': 'no-repeat', 'filter': entry['filter']}
+                     'background-size': '100% 100%', 'background-repeat': 'no-repeat', 'filter': entry['filter'], **entry['geometry']}
         elif entry['family'] == 'text':
             style = {'background': 'transparent'}
         elif entry['family'] == 'option':
@@ -239,22 +268,28 @@ def main():
                      'background-position': ', '.join(positions), 'background-repeat': 'no-repeat',
                      'background-color': 'transparent' if saved_account else '#f78d74'}
         else:
-            style = {'inset': '8% 3% 16%', 'background': 'linear-gradient(#fff4ba 0 12%, #ffc934 35%, #ffad13 80%)',
-                     'border': '1px solid #12142b', 'border-radius': '3px' if entry['family'] == 'rectangle' else '45% / 35%',
+            style = {**entry['geometry'], 'background': f"linear-gradient(color-mix(in srgb, {entry['bodyColour']} 65%, white) 0 12%, {entry['bodyColour']} 35% 65%, color-mix(in srgb, {entry['bodyColour']} 75%, black) 80%)",
+                     'border': '1px solid #12142b', 'border-radius': '50%' if entry['family'] == 'round' else '3px' if entry['family'] == 'rectangle' else '24% / 40%',
                      'box-shadow': 'inset 0 1px 0 #fff, 0 2px 0 #36303c'}
             # Colour belongs to the body layer, independent of the live label.
-            style['filter'] = entry['filter']
+            style.update(entry['bodyStyle'])
         base = {'content': "''", 'position': 'absolute', 'inset': '0', 'box-sizing': 'border-box', 'pointer-events': 'none', **style}
         rules.append(selector + '::before {\n' + '\n'.join(f'  {key}: {value};' for key, value in base.items()) + '\n}')
         text = entry['text']
         # Direct picture consumers use the same font caption as React controls.
-        after = {'content': json.dumps(text['text'], ensure_ascii=False), 'position': 'absolute', 'inset': '0',
-                 'display': 'grid', 'place-items': 'center', 'font-family': "'CDTank-Xiangjiao', sans-serif",
-                 'font-size': f"{text['size']}px", 'font-style': 'normal', 'font-weight': '700',
-                 'color': text['colour'], '-webkit-text-stroke': f"{text['stroke']}px {text['outline']}",
+        rules.append(selector + ' {\n  container-type: size;\n  overflow: hidden;\n}')
+        face = {'brush': 'CDTank-Xiangjiao', 'sans': 'CDTank-SourceSans', 'latin': 'CDTank-SourceLatin',
+                'digits': 'CDTank-SourceDigits', 'serif': 'CDTank-SourceSerif'}[text['face']]
+        after = {'content': json.dumps(text['text'], ensure_ascii=False), 'position': 'absolute',
+                 'left': f"{text['x'] / text['width'] * 100:.6f}%", 'top': f"{text['y'] / text['height'] * 100:.6f}%",
+                 'width': 'max-content', 'white-space': 'pre', 'transform-origin': 'left top',
+                 'transform': f"scaleX({text['scaleX']})", 'font-family': f"'{face}', sans-serif !important",
+                 'font-size': f"{text['size'] / text['width'] * 100:.6f}cqw", 'line-height': f"{text['lineHeight'] / text['width'] * 100:.6f}cqw",
+                 'font-style': 'normal', 'font-weight': '700', 'letter-spacing': '0', 'text-transform': 'none',
+                 'color': text['colour'], '-webkit-text-stroke': f"{text['stroke'] / text['width'] * 100:.6f}cqw {text['outline']}",
                  'paint-order': 'stroke fill', 'pointer-events': 'none'}
-        if entry['family'] == 'option':
-            after.update({'place-items': 'center start', 'padding-left': '20%'})
+        if text.get('shadow'):
+            after['text-shadow'] = f"{text['shadowX'] / text['width'] * 100:.6f}cqw {text['shadowY'] / text['width'] * 100:.6f}cqw 0 {text['shadow']}"
         rules.append(selector + ':not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {\n' +
                      '\n'.join(f'  {key}: {value};' for key, value in after.items()) + '\n}')
     (OUTPUT / 'button-artwork.css').write_text('\n\n'.join(rules) + '\n')

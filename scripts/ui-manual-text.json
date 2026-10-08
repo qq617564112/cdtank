@@ -1,0 +1,4216 @@
+{
+  "assets": {
+    "ui/regions/0/0.png": {
+      "text": "×",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        8,
+        8
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/1.png": {
+      "text": "+",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        8,
+        8
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/2.png": {
+      "text": "3",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/3.png": {
+      "text": "4",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/4.png": {
+      "text": "5",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/5.png": {
+      "text": "6",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/6.png": {
+      "text": "8",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/7.png": {
+      "text": "9",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/8.png": {
+      "text": "%",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        7,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/9.png": {
+      "text": "=",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        3,
+        7,
+        7
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/10.png": {
+      "text": "−",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        4,
+        7,
+        5
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/11.png": {
+      "text": "0",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/12.png": {
+      "text": "2",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        6,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/13.png": {
+      "text": "7",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        6,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/0/14.png": {
+      "text": "1",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        4,
+        9
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/2/0.png": {
+      "text": "∞",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        3,
+        15,
+        11
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/1.png": {
+      "text": "0",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/2.png": {
+      "text": "2",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/3.png": {
+      "text": "3",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/4.png": {
+      "text": "4",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/5.png": {
+      "text": "5",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/6.png": {
+      "text": "6",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/7.png": {
+      "text": "7",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/8.png": {
+      "text": "8",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/9.png": {
+      "text": "9",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        10,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/2/10.png": {
+      "text": "1",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        1,
+        7,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/3/0.png": {
+      "text": "∞",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        9,
+        20,
+        19
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/1.png": {
+      "text": "×",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        6,
+        14,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/2.png": {
+      "text": "0",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        12,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/3.png": {
+      "text": "2",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        11,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/4.png": {
+      "text": "3",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        11,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/5.png": {
+      "text": "4",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        11,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/6.png": {
+      "text": "5",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        11,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/7.png": {
+      "text": "6",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        11,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/8.png": {
+      "text": "7",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        11,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/9.png": {
+      "text": "8",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        11,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/10.png": {
+      "text": "9",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        11,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/11.png": {
+      "text": "1",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        5,
+        7,
+        20
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/3/12.png": {
+      "text": ":",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        8,
+        5,
+        19
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/5/0.png": {
+      "text": "0",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        2,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/1.png": {
+      "text": "2",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        2,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/2.png": {
+      "text": "3",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        2,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/3.png": {
+      "text": "4",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        2,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/4.png": {
+      "text": "5",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        3,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/5.png": {
+      "text": "6",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        2,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/6.png": {
+      "text": "7",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        3,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/7.png": {
+      "text": "8",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        2,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/8.png": {
+      "text": "9",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        2,
+        10,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/5/9.png": {
+      "text": "1",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        2,
+        7,
+        14
+      ],
+      "colour": "#fff83b",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/0.png": {
+      "text": "3",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/1.png": {
+      "text": "4",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/2.png": {
+      "text": "5",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/3.png": {
+      "text": "6",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/4.png": {
+      "text": "8",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/5.png": {
+      "text": "9",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/6.png": {
+      "text": "-",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        4,
+        6,
+        5
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/7.png": {
+      "text": "0",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        7,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/8.png": {
+      "text": "2",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        6,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/9.png": {
+      "text": "7",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        6,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/6/10.png": {
+      "text": "1",
+      "face": "digits",
+      "inkBounds": [
+        0,
+        0,
+        4,
+        9
+      ],
+      "colour": "#ff0000",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/11/0.png": {
+      "text": "1",
+      "face": "digits",
+      "inkBounds": [
+        5,
+        1,
+        11,
+        16
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/1.png": {
+      "text": "2",
+      "face": "digits",
+      "inkBounds": [
+        4,
+        1,
+        14,
+        16
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/2.png": {
+      "text": "3",
+      "face": "digits",
+      "inkBounds": [
+        4,
+        1,
+        14,
+        16
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/3.png": {
+      "text": "4",
+      "face": "digits",
+      "inkBounds": [
+        4,
+        1,
+        14,
+        16
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/4.png": {
+      "text": "5",
+      "face": "digits",
+      "inkBounds": [
+        4,
+        1,
+        14,
+        16
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/5.png": {
+      "text": "6",
+      "face": "digits",
+      "inkBounds": [
+        4,
+        1,
+        14,
+        16
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/6.png": {
+      "text": "7",
+      "face": "digits",
+      "inkBounds": [
+        4,
+        1,
+        14,
+        16
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/7.png": {
+      "text": "8",
+      "face": "digits",
+      "inkBounds": [
+        4,
+        1,
+        14,
+        16
+      ],
+      "colour": "#ffffff",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/8.png": {
+      "text": "B",
+      "face": "digits",
+      "inkBounds": [
+        2,
+        1,
+        13,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/9.png": {
+      "text": "E",
+      "face": "digits",
+      "inkBounds": [
+        2,
+        1,
+        12,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/10.png": {
+      "text": "N",
+      "face": "digits",
+      "inkBounds": [
+        1,
+        1,
+        13,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/11/11.png": {
+      "text": "S",
+      "face": "digits",
+      "inkBounds": [
+        2,
+        1,
+        12,
+        13
+      ],
+      "colour": "#ffff00",
+      "outline": "#000000",
+      "stroke": 2
+    },
+    "ui/regions/27/91.png": {
+      "text": "花费创意点数",
+      "face": "sans",
+      "inkBounds": [
+        2,
+        2,
+        79,
+        13
+      ],
+      "colour": "#00f0ff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/27/92.png": {
+      "text": "花 费 代 币",
+      "face": "sans",
+      "inkBounds": [
+        2,
+        2,
+        78,
+        13
+      ],
+      "colour": "#00f0ff",
+      "outline": "#000000",
+      "stroke": 0,
+      "runs": [
+        {
+          "text": "花",
+          "face": "sans",
+          "inkBounds": [
+            2,
+            2,
+            14,
+            13
+          ],
+          "colour": "#00f0ff",
+          "outline": "#000000",
+          "stroke": 0
+        },
+        {
+          "text": "费",
+          "face": "sans",
+          "inkBounds": [
+            24,
+            2,
+            36,
+            13
+          ],
+          "colour": "#00f0ff",
+          "outline": "#000000",
+          "stroke": 0
+        },
+        {
+          "text": "代",
+          "face": "sans",
+          "inkBounds": [
+            45,
+            2,
+            57,
+            13
+          ],
+          "colour": "#00f0ff",
+          "outline": "#000000",
+          "stroke": 0
+        },
+        {
+          "text": "币",
+          "face": "sans",
+          "inkBounds": [
+            67,
+            2,
+            78,
+            13
+          ],
+          "colour": "#00f0ff",
+          "outline": "#000000",
+          "stroke": 0
+        }
+      ]
+    },
+    "ui/regions/27/95.png": {
+      "text": "赠 点",
+      "face": "sans",
+      "inkBounds": [
+        3,
+        1,
+        48,
+        20
+      ],
+      "colour": "#00aeef",
+      "outline": "#000000",
+      "stroke": 4,
+      "runs": [
+        {
+          "text": "赠",
+          "face": "sans",
+          "inkBounds": [
+            3,
+            1,
+            22,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        },
+        {
+          "text": "点",
+          "face": "sans",
+          "inkBounds": [
+            29,
+            1,
+            48,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        }
+      ]
+    },
+    "ui/regions/27/96.png": {
+      "text": "金 钱",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        52,
+        20
+      ],
+      "colour": "#fff799",
+      "outline": "#000000",
+      "stroke": 4,
+      "runs": [
+        {
+          "text": "金",
+          "face": "sans",
+          "inkBounds": [
+            1,
+            1,
+            20,
+            20
+          ],
+          "colour": "#fff799",
+          "outline": "#000000",
+          "stroke": 4
+        },
+        {
+          "text": "钱",
+          "face": "sans",
+          "inkBounds": [
+            33,
+            1,
+            52,
+            20
+          ],
+          "colour": "#fff799",
+          "outline": "#000000",
+          "stroke": 4
+        }
+      ]
+    },
+    "ui/regions/27/97.png": {
+      "text": "星 币",
+      "face": "sans",
+      "inkBounds": [
+        2,
+        1,
+        51,
+        20
+      ],
+      "colour": "#00aeef",
+      "outline": "#000000",
+      "stroke": 4,
+      "runs": [
+        {
+          "text": "星",
+          "face": "sans",
+          "inkBounds": [
+            2,
+            2,
+            20,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        },
+        {
+          "text": "币",
+          "face": "sans",
+          "inkBounds": [
+            33,
+            1,
+            51,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        }
+      ]
+    },
+    "ui/regions/27/98.png": {
+      "text": "创意点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        52,
+        20
+      ],
+      "colour": "#9fdd4c",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/27/99.png": {
+      "text": "Q 点",
+      "face": "sans",
+      "inkBounds": [
+        4,
+        1,
+        50,
+        20
+      ],
+      "colour": "#00aeef",
+      "outline": "#000000",
+      "stroke": 4,
+      "runs": [
+        {
+          "text": "Q",
+          "face": "latin",
+          "inkBounds": [
+            4,
+            2,
+            16,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        },
+        {
+          "text": "点",
+          "face": "sans",
+          "inkBounds": [
+            31,
+            1,
+            50,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        }
+      ]
+    },
+    "ui/regions/27/100.png": {
+      "text": "技能点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        52,
+        20
+      ],
+      "colour": "#ffa800",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/27/130.png": {
+      "text": "花费创意点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        65,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/27/131.png": {
+      "text": "现有技能点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        65,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/27/132.png": {
+      "text": "现有创意点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        65,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/27/133.png": {
+      "text": "花费技能点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        65,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/27/153.png": {
+      "text": "花费代币",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        51,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/34/14.png": {
+      "text": "火力 (Lv     )",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        84,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "火力",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            27,
+            15
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "(Lv",
+          "face": "latin",
+          "inkBounds": [
+            34,
+            1,
+            55,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": ")",
+          "face": "latin",
+          "inkBounds": [
+            79,
+            1,
+            84,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/34/15.png": {
+      "text": "装甲 (Lv     )",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        84,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "装甲",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            27,
+            15
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "(Lv",
+          "face": "latin",
+          "inkBounds": [
+            34,
+            1,
+            55,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": ")",
+          "face": "latin",
+          "inkBounds": [
+            79,
+            1,
+            84,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/34/16.png": {
+      "text": "地图规则",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/17.png": {
+      "text": "密 码",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        56,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "密",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            16,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "码",
+          "face": "sans",
+          "inkBounds": [
+            39,
+            1,
+            56,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/34/18.png": {
+      "text": "房 名",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        56,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "房",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            17,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "名",
+          "face": "sans",
+          "inkBounds": [
+            41,
+            0,
+            56,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/34/19.png": {
+      "text": "人 数",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        56,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "人",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            16,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "数",
+          "face": "sans",
+          "inkBounds": [
+            39,
+            0,
+            56,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/34/21.png": {
+      "text": "地图规则",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        56,
+        15
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/34/22.png": {
+      "text": "花费代币",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        53,
+        14
+      ],
+      "colour": "#742600",
+      "outline": "#ffc889",
+      "stroke": 2
+    },
+    "ui/regions/34/23.png": {
+      "text": "背面装甲",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        53,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/24.png": {
+      "text": "侧面装甲",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        53,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/25.png": {
+      "text": "零件栏位",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/26.png": {
+      "text": "回旋速度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/27.png": {
+      "text": "移动速度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/28.png": {
+      "text": "装弹修正",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/29.png": {
+      "text": "发射间隔",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/33.png": {
+      "text": "碉堡生命",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        50,
+        13
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/34/34.png": {
+      "text": "轻坦克",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/35.png": {
+      "text": "熟练度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/36.png": {
+      "text": "突击炮",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/37.png": {
+      "text": "生命值",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/38.png": {
+      "text": "重坦克",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/39.png": {
+      "text": "中坦克",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/40.png": {
+      "text": "坦克存量",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        49,
+        13
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/34/41.png": {
+      "text": "人 数",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        49,
+        13
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "人",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            14,
+            13
+          ],
+          "colour": "#742600",
+          "outline": "#ffffff",
+          "stroke": 2
+        },
+        {
+          "text": "数",
+          "face": "sans",
+          "inkBounds": [
+            35,
+            0,
+            49,
+            13
+          ],
+          "colour": "#742600",
+          "outline": "#ffffff",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/34/42.png": {
+      "text": "耐久度",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        41,
+        14
+      ],
+      "colour": "#742600",
+      "outline": "#ffc889",
+      "stroke": 2
+    },
+    "ui/regions/34/43.png": {
+      "text": "每局时间",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        48,
+        13
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/34/45.png": {
+      "text": "% +",
+      "face": "latin",
+      "inkBounds": [
+        3,
+        3,
+        26,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "%",
+          "face": "latin",
+          "inkBounds": [
+            3,
+            3,
+            12,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "+",
+          "face": "latin",
+          "inkBounds": [
+            17,
+            3,
+            26,
+            12
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/34/46.png": {
+      "text": "技能",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        29,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/47.png": {
+      "text": "好运",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        29,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/48.png": {
+      "text": "速度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        29,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/49.png": {
+      "text": "凶猛",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        29,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/53.png": {
+      "text": "/sec",
+      "face": "latin",
+      "inkBounds": [
+        1,
+        0,
+        27,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/54.png": {
+      "text": "%",
+      "face": "latin",
+      "inkBounds": [
+        10,
+        2,
+        19,
+        13
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/55.png": {
+      "text": "sec",
+      "face": "latin",
+      "inkBounds": [
+        4,
+        5,
+        24,
+        13
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/56.png": {
+      "text": "km/h",
+      "face": "latin",
+      "inkBounds": [
+        0,
+        0,
+        28,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/60.png": {
+      "text": "～",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        1,
+        16,
+        6
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/34/61.png": {
+      "text": "～",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        1,
+        14,
+        6
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/36/111.png": {
+      "text": "拥有称号",
+      "face": "sans",
+      "inkBounds": [
+        7,
+        4,
+        79,
+        22
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/114.png": {
+      "text": "战斗统计",
+      "face": "sans",
+      "inkBounds": [
+        7,
+        4,
+        79,
+        22
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/118.png": {
+      "text": "获奖统计",
+      "face": "sans",
+      "inkBounds": [
+        7,
+        4,
+        79,
+        22
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/154.png": {
+      "text": "装 甲 [Lv     ]",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        111,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "装",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            16,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "甲",
+          "face": "sans",
+          "inkBounds": [
+            26,
+            1,
+            40,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "[Lv",
+          "face": "latin",
+          "inkBounds": [
+            67,
+            0,
+            89,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "]",
+          "face": "latin",
+          "inkBounds": [
+            105,
+            0,
+            111,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/36/155.png": {
+      "text": "火 力 [Lv     ]",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        111,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "火",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            16,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "力",
+          "face": "sans",
+          "inkBounds": [
+            25,
+            0,
+            39,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "[Lv",
+          "face": "latin",
+          "inkBounds": [
+            67,
+            0,
+            89,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "]",
+          "face": "latin",
+          "inkBounds": [
+            105,
+            0,
+            111,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/36/176.png": {
+      "text": "回旋速度",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/177.png": {
+      "text": "剩余天数",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        65,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/178.png": {
+      "text": "移动速度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/179.png": {
+      "text": "发射间隔",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        0,
+        65,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/180.png": {
+      "text": "侧面装甲",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/181.png": {
+      "text": "背面装甲",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/182.png": {
+      "text": "炮弹容量",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        65,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/183.png": {
+      "text": "熟 练 度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "熟",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            17,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "练",
+          "face": "sans",
+          "inkBounds": [
+            24,
+            0,
+            41,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "度",
+          "face": "sans",
+          "inkBounds": [
+            48,
+            0,
+            64,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/36/185.png": {
+      "text": "生命值",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        49,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/186.png": {
+      "text": "技 能",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        49,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "技",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            17,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "能",
+          "face": "sans",
+          "inkBounds": [
+            33,
+            0,
+            49,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/36/196.png": {
+      "text": "凶猛",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        33,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/197.png": {
+      "text": "好运",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        33,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/199.png": {
+      "text": "°/sec",
+      "face": "latin",
+      "inkBounds": [
+        0,
+        0,
+        34,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/200.png": {
+      "text": "sec",
+      "face": "latin",
+      "inkBounds": [
+        8,
+        5,
+        32,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/201.png": {
+      "text": "% +",
+      "face": "latin",
+      "inkBounds": [
+        7,
+        1,
+        32,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "%",
+          "face": "latin",
+          "inkBounds": [
+            7,
+            1,
+            16,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "+",
+          "face": "latin",
+          "inkBounds": [
+            23,
+            3,
+            32,
+            12
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/36/202.png": {
+      "text": "%",
+      "face": "latin",
+      "inkBounds": [
+        7,
+        1,
+        16,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/36/203.png": {
+      "text": "km/h",
+      "face": "latin",
+      "inkBounds": [
+        0,
+        0,
+        32,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/60/91.png": {
+      "text": "花费创意点数",
+      "face": "sans",
+      "inkBounds": [
+        2,
+        2,
+        79,
+        13
+      ],
+      "colour": "#00f0ff",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/60/92.png": {
+      "text": "花 费 代 币",
+      "face": "sans",
+      "inkBounds": [
+        2,
+        2,
+        78,
+        13
+      ],
+      "colour": "#00f0ff",
+      "outline": "#000000",
+      "stroke": 0,
+      "runs": [
+        {
+          "text": "花",
+          "face": "sans",
+          "inkBounds": [
+            2,
+            2,
+            14,
+            13
+          ],
+          "colour": "#00f0ff",
+          "outline": "#000000",
+          "stroke": 0
+        },
+        {
+          "text": "费",
+          "face": "sans",
+          "inkBounds": [
+            24,
+            2,
+            36,
+            13
+          ],
+          "colour": "#00f0ff",
+          "outline": "#000000",
+          "stroke": 0
+        },
+        {
+          "text": "代",
+          "face": "sans",
+          "inkBounds": [
+            45,
+            2,
+            57,
+            13
+          ],
+          "colour": "#00f0ff",
+          "outline": "#000000",
+          "stroke": 0
+        },
+        {
+          "text": "币",
+          "face": "sans",
+          "inkBounds": [
+            67,
+            2,
+            78,
+            13
+          ],
+          "colour": "#00f0ff",
+          "outline": "#000000",
+          "stroke": 0
+        }
+      ]
+    },
+    "ui/regions/60/95.png": {
+      "text": "赠 点",
+      "face": "sans",
+      "inkBounds": [
+        3,
+        1,
+        48,
+        20
+      ],
+      "colour": "#00aeef",
+      "outline": "#000000",
+      "stroke": 4,
+      "runs": [
+        {
+          "text": "赠",
+          "face": "sans",
+          "inkBounds": [
+            3,
+            1,
+            22,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        },
+        {
+          "text": "点",
+          "face": "sans",
+          "inkBounds": [
+            29,
+            1,
+            48,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        }
+      ]
+    },
+    "ui/regions/60/96.png": {
+      "text": "金 钱",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        52,
+        20
+      ],
+      "colour": "#fff799",
+      "outline": "#000000",
+      "stroke": 4,
+      "runs": [
+        {
+          "text": "金",
+          "face": "sans",
+          "inkBounds": [
+            1,
+            1,
+            20,
+            20
+          ],
+          "colour": "#fff799",
+          "outline": "#000000",
+          "stroke": 4
+        },
+        {
+          "text": "钱",
+          "face": "sans",
+          "inkBounds": [
+            33,
+            1,
+            52,
+            20
+          ],
+          "colour": "#fff799",
+          "outline": "#000000",
+          "stroke": 4
+        }
+      ]
+    },
+    "ui/regions/60/97.png": {
+      "text": "星 币",
+      "face": "sans",
+      "inkBounds": [
+        2,
+        1,
+        51,
+        20
+      ],
+      "colour": "#00aeef",
+      "outline": "#000000",
+      "stroke": 4,
+      "runs": [
+        {
+          "text": "星",
+          "face": "sans",
+          "inkBounds": [
+            2,
+            2,
+            20,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        },
+        {
+          "text": "币",
+          "face": "sans",
+          "inkBounds": [
+            33,
+            1,
+            51,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        }
+      ]
+    },
+    "ui/regions/60/98.png": {
+      "text": "创意点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        52,
+        20
+      ],
+      "colour": "#9fdd4c",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/60/99.png": {
+      "text": "Q 点",
+      "face": "sans",
+      "inkBounds": [
+        4,
+        1,
+        50,
+        20
+      ],
+      "colour": "#00aeef",
+      "outline": "#000000",
+      "stroke": 4,
+      "runs": [
+        {
+          "text": "Q",
+          "face": "latin",
+          "inkBounds": [
+            4,
+            2,
+            16,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        },
+        {
+          "text": "点",
+          "face": "sans",
+          "inkBounds": [
+            31,
+            1,
+            50,
+            20
+          ],
+          "colour": "#00aeef",
+          "outline": "#000000",
+          "stroke": 4
+        }
+      ]
+    },
+    "ui/regions/60/100.png": {
+      "text": "技能点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        52,
+        20
+      ],
+      "colour": "#ffa800",
+      "outline": "#000000",
+      "stroke": 4
+    },
+    "ui/regions/60/130.png": {
+      "text": "花费创意点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        65,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/60/131.png": {
+      "text": "现有技能点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        65,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/60/132.png": {
+      "text": "现有创意点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        65,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/60/133.png": {
+      "text": "花费技能点",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        65,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/60/153.png": {
+      "text": "花费代币",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        51,
+        12
+      ],
+      "colour": "#024e98",
+      "outline": "#000000",
+      "stroke": 0
+    },
+    "ui/regions/67/14.png": {
+      "text": "火力 (Lv     )",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        84,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "火力",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            27,
+            15
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "(Lv",
+          "face": "latin",
+          "inkBounds": [
+            34,
+            1,
+            55,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": ")",
+          "face": "latin",
+          "inkBounds": [
+            79,
+            1,
+            84,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/67/15.png": {
+      "text": "装甲 (Lv     )",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        84,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "装甲",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            27,
+            15
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "(Lv",
+          "face": "latin",
+          "inkBounds": [
+            34,
+            1,
+            55,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": ")",
+          "face": "latin",
+          "inkBounds": [
+            79,
+            1,
+            84,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/67/16.png": {
+      "text": "地图规则",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/17.png": {
+      "text": "密 码",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        56,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "密",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            16,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "码",
+          "face": "sans",
+          "inkBounds": [
+            39,
+            1,
+            56,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/67/18.png": {
+      "text": "房 名",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        56,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "房",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            17,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "名",
+          "face": "sans",
+          "inkBounds": [
+            41,
+            0,
+            56,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/67/19.png": {
+      "text": "人 数",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        56,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "人",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            16,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "数",
+          "face": "sans",
+          "inkBounds": [
+            39,
+            0,
+            56,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/67/21.png": {
+      "text": "地图规则",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        56,
+        15
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/67/22.png": {
+      "text": "花费代币",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        53,
+        14
+      ],
+      "colour": "#742600",
+      "outline": "#ffc889",
+      "stroke": 2
+    },
+    "ui/regions/67/23.png": {
+      "text": "背面装甲",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        53,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/24.png": {
+      "text": "侧面装甲",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        53,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/25.png": {
+      "text": "零件栏位",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/26.png": {
+      "text": "回旋速度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/27.png": {
+      "text": "移动速度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/28.png": {
+      "text": "装弹修正",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/29.png": {
+      "text": "发射间隔",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        54,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/33.png": {
+      "text": "碉堡生命",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        50,
+        13
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/67/34.png": {
+      "text": "轻坦克",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/35.png": {
+      "text": "熟练度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/36.png": {
+      "text": "突击炮",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/37.png": {
+      "text": "生命值",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/38.png": {
+      "text": "重坦克",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/39.png": {
+      "text": "中坦克",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        0,
+        43,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/40.png": {
+      "text": "坦克存量",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        49,
+        13
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/67/41.png": {
+      "text": "人 数",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        49,
+        13
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "人",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            14,
+            13
+          ],
+          "colour": "#742600",
+          "outline": "#ffffff",
+          "stroke": 2
+        },
+        {
+          "text": "数",
+          "face": "sans",
+          "inkBounds": [
+            35,
+            0,
+            49,
+            13
+          ],
+          "colour": "#742600",
+          "outline": "#ffffff",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/67/42.png": {
+      "text": "耐久度",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        41,
+        14
+      ],
+      "colour": "#742600",
+      "outline": "#ffc889",
+      "stroke": 2
+    },
+    "ui/regions/67/43.png": {
+      "text": "每局时间",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        48,
+        13
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/67/45.png": {
+      "text": "% +",
+      "face": "latin",
+      "inkBounds": [
+        3,
+        3,
+        26,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "%",
+          "face": "latin",
+          "inkBounds": [
+            3,
+            3,
+            12,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "+",
+          "face": "latin",
+          "inkBounds": [
+            17,
+            3,
+            26,
+            12
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/67/46.png": {
+      "text": "技能",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        29,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/47.png": {
+      "text": "好运",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        29,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/48.png": {
+      "text": "速度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        29,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/49.png": {
+      "text": "凶猛",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        29,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/53.png": {
+      "text": "/sec",
+      "face": "latin",
+      "inkBounds": [
+        1,
+        0,
+        27,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/54.png": {
+      "text": "%",
+      "face": "latin",
+      "inkBounds": [
+        10,
+        2,
+        19,
+        13
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/55.png": {
+      "text": "sec",
+      "face": "latin",
+      "inkBounds": [
+        4,
+        5,
+        24,
+        13
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/56.png": {
+      "text": "km/h",
+      "face": "latin",
+      "inkBounds": [
+        0,
+        0,
+        28,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/60.png": {
+      "text": "～",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        1,
+        16,
+        6
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/67/61.png": {
+      "text": "～",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        1,
+        14,
+        6
+      ],
+      "colour": "#742600",
+      "outline": "#ffffff",
+      "stroke": 2
+    },
+    "ui/regions/69/111.png": {
+      "text": "拥有称号",
+      "face": "sans",
+      "inkBounds": [
+        7,
+        4,
+        79,
+        22
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/114.png": {
+      "text": "战斗统计",
+      "face": "sans",
+      "inkBounds": [
+        7,
+        4,
+        79,
+        22
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/118.png": {
+      "text": "获奖统计",
+      "face": "sans",
+      "inkBounds": [
+        7,
+        4,
+        79,
+        22
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/154.png": {
+      "text": "装 甲 [Lv     ]",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        111,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "装",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            16,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "甲",
+          "face": "sans",
+          "inkBounds": [
+            26,
+            1,
+            40,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "[Lv",
+          "face": "latin",
+          "inkBounds": [
+            67,
+            0,
+            89,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "]",
+          "face": "latin",
+          "inkBounds": [
+            105,
+            0,
+            111,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/69/155.png": {
+      "text": "火 力 [Lv     ]",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        111,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "火",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            16,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "力",
+          "face": "sans",
+          "inkBounds": [
+            25,
+            0,
+            39,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "[Lv",
+          "face": "latin",
+          "inkBounds": [
+            67,
+            0,
+            89,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "]",
+          "face": "latin",
+          "inkBounds": [
+            105,
+            0,
+            111,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/69/176.png": {
+      "text": "回旋速度",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/177.png": {
+      "text": "剩余天数",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        65,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/178.png": {
+      "text": "移动速度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/179.png": {
+      "text": "发射间隔",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        0,
+        65,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/180.png": {
+      "text": "侧面装甲",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/181.png": {
+      "text": "背面装甲",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/182.png": {
+      "text": "炮弹容量",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        65,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/183.png": {
+      "text": "熟 练 度",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        64,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "熟",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            17,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "练",
+          "face": "sans",
+          "inkBounds": [
+            24,
+            0,
+            41,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "度",
+          "face": "sans",
+          "inkBounds": [
+            48,
+            0,
+            64,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/69/185.png": {
+      "text": "生命值",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        49,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/186.png": {
+      "text": "技 能",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        49,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "技",
+          "face": "sans",
+          "inkBounds": [
+            0,
+            0,
+            17,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "能",
+          "face": "sans",
+          "inkBounds": [
+            33,
+            0,
+            49,
+            17
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/69/196.png": {
+      "text": "凶猛",
+      "face": "sans",
+      "inkBounds": [
+        1,
+        1,
+        33,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/197.png": {
+      "text": "好运",
+      "face": "sans",
+      "inkBounds": [
+        0,
+        0,
+        33,
+        17
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/199.png": {
+      "text": "°/sec",
+      "face": "latin",
+      "inkBounds": [
+        0,
+        0,
+        34,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/200.png": {
+      "text": "sec",
+      "face": "latin",
+      "inkBounds": [
+        8,
+        5,
+        32,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/201.png": {
+      "text": "% +",
+      "face": "latin",
+      "inkBounds": [
+        7,
+        1,
+        32,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2,
+      "runs": [
+        {
+          "text": "%",
+          "face": "latin",
+          "inkBounds": [
+            7,
+            1,
+            16,
+            14
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        },
+        {
+          "text": "+",
+          "face": "latin",
+          "inkBounds": [
+            23,
+            3,
+            32,
+            12
+          ],
+          "colour": "#595901",
+          "outline": "#edffda",
+          "stroke": 2
+        }
+      ]
+    },
+    "ui/regions/69/202.png": {
+      "text": "%",
+      "face": "latin",
+      "inkBounds": [
+        7,
+        1,
+        16,
+        14
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    },
+    "ui/regions/69/203.png": {
+      "text": "km/h",
+      "face": "latin",
+      "inkBounds": [
+        0,
+        0,
+        32,
+        15
+      ],
+      "colour": "#595901",
+      "outline": "#edffda",
+      "stroke": 2
+    }
+  },
+  "reviewed": [
+    "ui/regions/0/0.png",
+    "ui/regions/0/1.png",
+    "ui/regions/0/2.png",
+    "ui/regions/0/3.png",
+    "ui/regions/0/4.png",
+    "ui/regions/0/5.png",
+    "ui/regions/0/6.png",
+    "ui/regions/0/7.png",
+    "ui/regions/0/8.png",
+    "ui/regions/0/9.png",
+    "ui/regions/0/10.png",
+    "ui/regions/0/11.png",
+    "ui/regions/0/12.png",
+    "ui/regions/0/13.png",
+    "ui/regions/0/14.png",
+    "ui/regions/2/0.png",
+    "ui/regions/2/1.png",
+    "ui/regions/2/2.png",
+    "ui/regions/2/3.png",
+    "ui/regions/2/4.png",
+    "ui/regions/2/5.png",
+    "ui/regions/2/6.png",
+    "ui/regions/2/7.png",
+    "ui/regions/2/8.png",
+    "ui/regions/2/9.png",
+    "ui/regions/2/10.png",
+    "ui/regions/3/0.png",
+    "ui/regions/3/1.png",
+    "ui/regions/3/2.png",
+    "ui/regions/3/3.png",
+    "ui/regions/3/4.png",
+    "ui/regions/3/5.png",
+    "ui/regions/3/6.png",
+    "ui/regions/3/7.png",
+    "ui/regions/3/8.png",
+    "ui/regions/3/9.png",
+    "ui/regions/3/10.png",
+    "ui/regions/3/11.png",
+    "ui/regions/3/12.png",
+    "ui/regions/5/0.png",
+    "ui/regions/5/1.png",
+    "ui/regions/5/2.png",
+    "ui/regions/5/3.png",
+    "ui/regions/5/4.png",
+    "ui/regions/5/5.png",
+    "ui/regions/5/6.png",
+    "ui/regions/5/7.png",
+    "ui/regions/5/8.png",
+    "ui/regions/5/9.png",
+    "ui/regions/6/0.png",
+    "ui/regions/6/1.png",
+    "ui/regions/6/2.png",
+    "ui/regions/6/3.png",
+    "ui/regions/6/4.png",
+    "ui/regions/6/5.png",
+    "ui/regions/6/6.png",
+    "ui/regions/6/7.png",
+    "ui/regions/6/8.png",
+    "ui/regions/6/9.png",
+    "ui/regions/6/10.png",
+    "ui/regions/11/0.png",
+    "ui/regions/11/1.png",
+    "ui/regions/11/2.png",
+    "ui/regions/11/3.png",
+    "ui/regions/11/4.png",
+    "ui/regions/11/5.png",
+    "ui/regions/11/6.png",
+    "ui/regions/11/7.png",
+    "ui/regions/11/8.png",
+    "ui/regions/11/9.png",
+    "ui/regions/11/10.png",
+    "ui/regions/11/11.png",
+    "ui/regions/27/91.png",
+    "ui/regions/27/92.png",
+    "ui/regions/27/95.png",
+    "ui/regions/27/96.png",
+    "ui/regions/27/97.png",
+    "ui/regions/27/98.png",
+    "ui/regions/27/99.png",
+    "ui/regions/27/100.png",
+    "ui/regions/27/130.png",
+    "ui/regions/27/131.png",
+    "ui/regions/27/132.png",
+    "ui/regions/27/133.png",
+    "ui/regions/27/153.png",
+    "ui/regions/34/14.png",
+    "ui/regions/34/15.png",
+    "ui/regions/34/16.png",
+    "ui/regions/34/17.png",
+    "ui/regions/34/18.png",
+    "ui/regions/34/19.png",
+    "ui/regions/34/21.png",
+    "ui/regions/34/22.png",
+    "ui/regions/34/23.png",
+    "ui/regions/34/24.png",
+    "ui/regions/34/25.png",
+    "ui/regions/34/26.png",
+    "ui/regions/34/27.png",
+    "ui/regions/34/28.png",
+    "ui/regions/34/29.png",
+    "ui/regions/34/33.png",
+    "ui/regions/34/34.png",
+    "ui/regions/34/35.png",
+    "ui/regions/34/36.png",
+    "ui/regions/34/37.png",
+    "ui/regions/34/38.png",
+    "ui/regions/34/39.png",
+    "ui/regions/34/40.png",
+    "ui/regions/34/41.png",
+    "ui/regions/34/42.png",
+    "ui/regions/34/43.png",
+    "ui/regions/34/45.png",
+    "ui/regions/34/46.png",
+    "ui/regions/34/47.png",
+    "ui/regions/34/48.png",
+    "ui/regions/34/49.png",
+    "ui/regions/34/53.png",
+    "ui/regions/34/54.png",
+    "ui/regions/34/55.png",
+    "ui/regions/34/56.png",
+    "ui/regions/34/60.png",
+    "ui/regions/34/61.png",
+    "ui/regions/36/111.png",
+    "ui/regions/36/114.png",
+    "ui/regions/36/118.png",
+    "ui/regions/36/154.png",
+    "ui/regions/36/155.png",
+    "ui/regions/36/176.png",
+    "ui/regions/36/177.png",
+    "ui/regions/36/178.png",
+    "ui/regions/36/179.png",
+    "ui/regions/36/180.png",
+    "ui/regions/36/181.png",
+    "ui/regions/36/182.png",
+    "ui/regions/36/183.png",
+    "ui/regions/36/185.png",
+    "ui/regions/36/186.png",
+    "ui/regions/36/196.png",
+    "ui/regions/36/197.png",
+    "ui/regions/36/199.png",
+    "ui/regions/36/200.png",
+    "ui/regions/36/201.png",
+    "ui/regions/36/202.png",
+    "ui/regions/36/203.png",
+    "ui/regions/60/91.png",
+    "ui/regions/60/92.png",
+    "ui/regions/60/95.png",
+    "ui/regions/60/96.png",
+    "ui/regions/60/97.png",
+    "ui/regions/60/98.png",
+    "ui/regions/60/99.png",
+    "ui/regions/60/100.png",
+    "ui/regions/60/130.png",
+    "ui/regions/60/131.png",
+    "ui/regions/60/132.png",
+    "ui/regions/60/133.png",
+    "ui/regions/60/153.png",
+    "ui/regions/67/14.png",
+    "ui/regions/67/15.png",
+    "ui/regions/67/16.png",
+    "ui/regions/67/17.png",
+    "ui/regions/67/18.png",
+    "ui/regions/67/19.png",
+    "ui/regions/67/21.png",
+    "ui/regions/67/22.png",
+    "ui/regions/67/23.png",
+    "ui/regions/67/24.png",
+    "ui/regions/67/25.png",
+    "ui/regions/67/26.png",
+    "ui/regions/67/27.png",
+    "ui/regions/67/28.png",
+    "ui/regions/67/29.png",
+    "ui/regions/67/33.png",
+    "ui/regions/67/34.png",
+    "ui/regions/67/35.png",
+    "ui/regions/67/36.png",
+    "ui/regions/67/37.png",
+    "ui/regions/67/38.png",
+    "ui/regions/67/39.png",
+    "ui/regions/67/40.png",
+    "ui/regions/67/41.png",
+    "ui/regions/67/42.png",
+    "ui/regions/67/43.png",
+    "ui/regions/67/45.png",
+    "ui/regions/67/46.png",
+    "ui/regions/67/47.png",
+    "ui/regions/67/48.png",
+    "ui/regions/67/49.png",
+    "ui/regions/67/53.png",
+    "ui/regions/67/54.png",
+    "ui/regions/67/55.png",
+    "ui/regions/67/56.png",
+    "ui/regions/67/60.png",
+    "ui/regions/67/61.png",
+    "ui/regions/69/111.png",
+    "ui/regions/69/114.png",
+    "ui/regions/69/118.png",
+    "ui/regions/69/154.png",
+    "ui/regions/69/155.png",
+    "ui/regions/69/176.png",
+    "ui/regions/69/177.png",
+    "ui/regions/69/178.png",
+    "ui/regions/69/179.png",
+    "ui/regions/69/180.png",
+    "ui/regions/69/181.png",
+    "ui/regions/69/182.png",
+    "ui/regions/69/183.png",
+    "ui/regions/69/185.png",
+    "ui/regions/69/186.png",
+    "ui/regions/69/196.png",
+    "ui/regions/69/197.png",
+    "ui/regions/69/199.png",
+    "ui/regions/69/200.png",
+    "ui/regions/69/201.png",
+    "ui/regions/69/202.png",
+    "ui/regions/69/203.png"
+  ]
+}
