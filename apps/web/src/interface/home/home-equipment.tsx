@@ -24,6 +24,8 @@ import {HomeTankUpgradeEntries, HomeTankUseControl, homeTankListQuantity} from '
 
 type EquipmentTarget = 'PART' | 'DECORATION' | 'MARK';
 interface Resources {ui: HomeSourceUi; controls: HomeSourceControl[]; catalog: CombatCatalog;}
+type SessionOwner = {active: boolean; pending: boolean};
+type UpgradeRequest = {owner: SessionOwner; instanceId: number; action: 1 | 2};
 export interface HomeEquipmentViewProps {
   open: boolean; close: () => void; battle: Battle;
   tankInstanceId?: number;
@@ -67,7 +69,8 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
   );
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
-  const session = useRef({active: false, pending: false});
+  const session = useRef<SessionOwner>({active: false, pending: false});
+  const revision = useRef(0);
   const focusAfterCommit = useRef<HTMLButtonElement | null>(null);
   const [resources, setResources] = useState<Resources>();
   const [inventory, setInventory] = useState<ResInventory>();
@@ -76,9 +79,10 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
   const [currentTankInstanceId, setCurrentTankInstanceId] = useState<number>();
   const [currentPetInstanceId, setCurrentPetInstanceId] = useState<number>();
   const [originality, setOriginality] = useState<number>();
+  const [money, setMoney] = useState<number>();
   const [page, setPage] = useState<EquipmentTarget>('PART');
   const [candidate, setCandidate] = useState<number>();
-  const [upgrade, setUpgrade] = useState<{instanceId: number; action: 1 | 2}>();
+  const [upgrade, setUpgrade] = useState<UpgradeRequest>();
   const [busy, setBusy] = useState(false);
   const [queryFailed, setQueryFailed] = useState(false);
   const [queryAttempt, setQueryAttempt] = useState(0);
@@ -103,9 +107,11 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
   useEffect(() => {
     const current = {active: true, pending: false}; session.current = current;
     const controller = new AbortController();
+    revision.current++;
     setResourceError(undefined);
     setResources(undefined); setInventory(undefined); setEquipment(undefined); setOwned(undefined);
-    setCurrentTankInstanceId(undefined); setCurrentPetInstanceId(undefined); setOriginality(undefined);
+    setCurrentTankInstanceId(undefined); setCurrentPetInstanceId(undefined); setOriginality(undefined); setMoney(undefined);
+    setUpgrade(undefined);
     setPage('PART'); setCandidate(undefined); setBusy(true); setQueryFailed(false); setStatus('载入部件…');
     void (async () => {
       const [uiResponse, catalogResponse] = await Promise.all([
@@ -185,31 +191,43 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
     }
   }
 
-  async function refreshTarget() {
-    if (!session.current.active) return;
-    const [confirmedEquipment, confirmedProfile] = await Promise.all([
-      battle.equipment({operation: 'QUERY', tankInstanceId}), battle.roleProfile(),
-    ]);
-    if (!session.current.active) return;
-    if (tankInstanceId !== undefined && confirmedEquipment.tankInstanceId !== tankInstanceId) return;
-    setEquipment(confirmedEquipment);
-    setCurrentTankInstanceId(confirmedProfile.profile
-      ? new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0xa8, true) : undefined);
-    setOriginality(confirmedProfile.growth?.originality ?? confirmedProfile.playerSummary?.originality);
+  async function refreshTarget(owner: SessionOwner, target: number) {
+    if (!owner.active || session.current !== owner) return;
+    const requestRevision = revision.current;
+    try {
+      const [confirmedEquipment, confirmedProfile] = await Promise.all([
+        battle.equipment({operation: 'QUERY', tankInstanceId: target}), battle.roleProfile(),
+      ]);
+      if (!owner.active || session.current !== owner || confirmedEquipment.tankInstanceId !== target) return;
+      setEquipment(confirmedEquipment);
+      setCurrentTankInstanceId(confirmedProfile.profile
+        ? new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0xa8, true) : undefined);
+      if (revision.current === requestRevision) {
+        if (confirmedProfile.profile) {
+          setMoney(new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0x70, true));
+        }
+        setOriginality(confirmedProfile.growth?.originality ?? confirmedProfile.playerSummary?.originality);
+      }
+    } catch (error) {
+      if (owner.active && session.current === owner) {
+        setStatus(`装备资料刷新失败：${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
   }
 
   async function useTarget(button: HTMLButtonElement) {
     const current = session.current;
     if (!current.active || current.pending || busy || !equipment || alreadyUsed) return;
+    const target = equipment.tankInstanceId;
     focusAfterCommit.current = button;
     current.pending = true; setBusy(true); setStatus('保存战车选择…');
     try {
-      await battle.selectRole({kind: 'tank', instanceId: equipment.tankInstanceId});
-      if (!current.active) return;
+      await battle.selectRole({kind: 'tank', instanceId: target});
+      if (!current.active || session.current !== current) return;
       setStatus('战车选择已保存');
-      await refreshTarget();
+      await refreshTarget(current, target);
     } catch (error) {
-      if (current.active) setStatus(String(error));
+      if (current.active && session.current === current) setStatus(String(error));
     } finally {
       if (current.active) {current.pending = false; setBusy(false);}
     }
@@ -278,11 +296,12 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
           }} />
         <HomeTankSourceRegions ui={resources.ui} />
         <HomeTankUpgradeEntries ui={resources.ui} record={tank} busy={busy}
-          openUpgrade={(instanceId, action) => {setUpgrade({instanceId, action}); setStatus('');}} />
+          openUpgrade={(instanceId, action) => {setUpgrade({owner: session.current, instanceId, action}); setStatus('');}} />
         <HomeTankDescription ui={resources.ui}
           description={sourceTankDescription(fields?.get(0x24))} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtMoney"
-          text={equipment ? String(new DataView(Uint8Array.from(equipment.profile.bytes).buffer).getUint32(0x70, true)) : ''} />
+          text={money !== undefined ? String(money)
+            : equipment ? String(new DataView(Uint8Array.from(equipment.profile.bytes).buffer).getUint32(0x70, true)) : ''} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtOriginality"
           text={originality === undefined ? '' : String(originality)} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtListQuantity"
@@ -336,10 +355,21 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
     {resources && queryFailed && <button type="button" className="home-equipment-retry" data-equipment-query-retry
       aria-label="重试装备查询" disabled={busy}
       onClick={() => setQueryAttempt(value => value + 1)}>重试</button>}
-    {resources && upgrade && <HomeTankUpgradeDialog ui={resources.ui} battle={battle}
-      instanceId={upgrade.instanceId} action={upgrade.action} close={() => setUpgrade(undefined)}
-      onState={result => {setOwned(result.owned); void refreshTarget();}}
-      onConfirmed={message => setStatus(message)} />}
+    {resources && upgrade && upgrade.owner === session.current && equipment?.tankInstanceId === upgrade.instanceId
+      && <HomeTankUpgradeDialog ui={resources.ui} battle={battle}
+        instanceId={upgrade.instanceId} action={upgrade.action} close={() => setUpgrade(undefined)}
+        onState={result => {
+          if (!upgrade.owner.active || session.current !== upgrade.owner) return;
+          setOwned(result.owned);
+          revision.current++;
+          const view = result.profile ? new DataView(Uint8Array.from(result.profile.bytes).buffer) : undefined;
+          if (view) {
+            setMoney(view.getUint32(0x70, true));
+            setOriginality(view.getUint32(0x9c, true));
+          }
+          void refreshTarget(upgrade.owner, upgrade.instanceId);
+        }}
+        onConfirmed={message => setStatus(message)} />}
     </SourceImageScale>
   </dialog>;
 }
