@@ -23,7 +23,7 @@ export function HudSpectatorView({hud, data}: {hud: BattleHud; data: SourceUi}) 
       style={{left: 6, top: 8, width: 26, height: 37}}
       aria-label="观战上一位友军" title="上一位友军" disabled={state.players.length < 2}
       onClick={() => hud.spectator.switchPlayer(-1)} />
-    <span className="hud-spectator-name" data-dynamic-font="xiangjiao-brush" aria-live="polite" title={player?.name}>
+    <span className="hud-spectator-name" data-dynamic-font="SIMSUN" aria-live="polite" title={player?.name}>
       {player ? `观战：${player.name}` : '暂无存活友军'}
     </span>
     <SourceButton ui={ui} layout={layout} suffix="roomlist.xml" source="btnPageDown"

@@ -10,6 +10,7 @@
     "assets:rebuild": "node scripts/rebuild-assets.mjs",
     "assets:custom-maps": "tsx scripts/export-test-map.ts && tsx scripts/export-field-road-hd.ts",
     "assets:field-road-hd": "tsx scripts/export-field-road-hd.ts",
+    "assets:original": "python3 scripts/restore-original-assets.py",
     "assets:hd": "python3 scripts/install-hd-assets.py",
     "assets:sprites": "python3 scripts/pack-image-sprites.py",
     "assets:clean-images": "python3 scripts/clean-image-assets.py",

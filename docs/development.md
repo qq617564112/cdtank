@@ -49,8 +49,9 @@
 | --- | --- |
 | `npm ci` | 按锁文件安装 JavaScript 依赖 |
 | `npm run assets:install` | 自动下载并解压 Release 运行资源包，包含字体和内容表 |
-| `npm run assets:rebuild -- --font /path/to/font.ttf` | 可选：从原客户端重新提取并生成运行资源，替换动态文字字体 |
-| `npm run assets:rebuild -- --reuse-verified` | 可选：复用本地完整提取结果重新导出资源，沿用已安装字体；仍需原客户端 |
+| `npm run assets:rebuild` | 可选：从原客户端重新提取资源，发布模型高清贴图与原版 UI |
+| `npm run assets:rebuild -- --reuse-verified` | 可选：复用本地完整提取结果重新导出资源，发布原版 UI 字体与模型高清贴图 |
+| `npm run assets:original` | 从本地原始资源恢复非模型图片，保留涂鸦小地图 |
 | `npm run dev:server` | 启动开发服务端 |
 | `npm run dev` | 启动正式 Web 开发入口 |
 | `npm run tools:assets:dev` | 启动独立资源查看器，默认端口 5211 |

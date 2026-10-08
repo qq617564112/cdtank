@@ -25,7 +25,7 @@ export function SourceMultilineReading({ui, layout, name, text, suffix}: {
       if (!active) return;
       cancelDrag(); cancelArrows();
       const context = document.createElement('canvas').getContext('2d')!;
-      context.font = '12px CDTank-Xiangjiao';
+      context.font = '12px CDTank-SIMSUN';
       const glyph = (character: string) => {
         if (character === '\n' || character === '\r') return {width: 0, actualBoundingBoxRight: 0};
         return context.measureText(character);
@@ -46,7 +46,7 @@ export function SourceMultilineReading({ui, layout, name, text, suffix}: {
       if (next.length * lineHeight > height) next = sourceMultilineLayout(text, width - scrollbarWidth, metrics);
       setRows(next); setPosition(0);
     };
-    format(); void document.fonts.load('12px CDTank-Xiangjiao').then(format);
+    format(); void document.fonts.load('12px CDTank-SIMSUN').then(format);
     return () => {active = false;};
   }, [text, width, height, scrollbarWidth, lineHeight]);
   const documentHeight = rows.length * lineHeight, extent = Math.max(0, documentHeight - height), visible = extent > 0;
@@ -91,7 +91,7 @@ export function SourceMultilineReading({ui, layout, name, text, suffix}: {
     return sourceProps(ui, layout, suffix, name, layout.control(name).properties[property]);
   };
   return <div ref={root} {...props} className="source-multiline-reading" data-waiting-description=""
-    data-source-font="xiangjiao-brush" data-source-text-colour="FFFFFFFF" data-source-description-position={position}
+    data-source-font="SIMSUN" data-source-text-colour="FFFFFFFF" data-source-description-position={position}
     data-source-description-scale={scale} data-source-description-line-spacing={lineHeight}
     data-source-description-document={documentHeight} data-source-description-page={height}
     tabIndex={0} role="region" aria-label="地图说明" onKeyDown={keyboard} onKeyUp={event => event.stopPropagation()}>

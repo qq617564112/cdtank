@@ -50,15 +50,7 @@ export async function prepareSourceUi(suffixes: readonly string[]): Promise<Home
     for (const control of layout.windows) {
       for (const reference of Object.values(control.properties)) addReference(reference);
     }
-    if (suffix === 'login.xml') {
-      for (const ratio of ['4-3', '16-9']) urls.add(`/hd-ui/entry/login-background-${ratio}.png`);
-    }
-    if (suffix === 'default.xml') {
-      urls.add(lobbyBannerUrl);
-      for (const name of ['background-4-3', 'background-16-9', 'room-board', 'player-panel']) {
-        urls.add(`/hd-ui/lobby/${name}.png`);
-      }
-    }
+    if (suffix === 'default.xml') urls.add(lobbyBannerUrl);
     if (suffix === 'roomlist_icon.xml') {
       for (let mode = 1; mode <= 5; mode++) addReference(roomModeIconReference(mode));
     }

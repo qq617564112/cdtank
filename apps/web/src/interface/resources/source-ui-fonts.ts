@@ -1,5 +1,5 @@
 import {withResourceTimeout} from '../../assets/static-resources';
-import './source-text-artwork.css';
+import './app-font.css';
 import {loadSourceBitmapFonts} from './source-bitmap-font';
 
 export interface SourceUiFont {
@@ -15,14 +15,10 @@ export interface SourceUiFontLibrary {fonts: SourceUiFont[];}
 
 let loading: Promise<void> | undefined;
 
-/** The selected app font is declared in app-font.css and shared across page sessions. */
+/** Load the original dynamic face and source bitmap fonts. */
 export function loadUiFont(): Promise<void> {
   loading ??= withResourceTimeout(Promise.all([
-    document.fonts.load('16px "CDTank-Xiangjiao"'),
-    document.fonts.load('700 16px "CDTank-SourceSans"'),
-    document.fonts.load('700 16px "CDTank-SourceLatin"'),
-    document.fonts.load('700 16px "CDTank-SourceDigits"'),
-    document.fonts.load('700 16px "CDTank-SourceSerif"'),
+    document.fonts.load('16px "CDTank-SIMSUN"'),
     loadSourceBitmapFonts(),
   ]), '界面字体')
     .then(() => {}).catch(error => {loading = undefined; throw error;});

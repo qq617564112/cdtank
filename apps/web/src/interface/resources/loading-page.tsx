@@ -25,8 +25,7 @@ const LOADING_WORDS: Record<number, {left: number; top: number; width: number; h
 export function getLoadingArtwork(background: number) {
   const word = LOADING_WORDS[background];
   return {
-    backgroundClassic: `/hd-ui/loading/${background}-4-3.png`,
-    backgroundWide: `/hd-ui/loading/${background}-16-9.png`,
+    background: `/Data/ui/loading/${background}.png`,
     tank: '/Data/ui/loading/tanke.png',
     progressEmpty: word.empty,
     progressFull: word.full,
@@ -62,9 +61,10 @@ export function LoadingPage({background, progress, status, details, artworkReady
   return <section {...attributes} className={`loading-page${className ? ` ${className}` : ''}`}>
     <div className="loading-viewport" style={{width: stageWidth * scale, height: 600 * scale}}>
       <div className="loading-stage" style={{width: stageWidth, transform: `scale(${scale})`}}>
-        {artworkReady && <ImageArtwork className="loading-background"
-          asset={stageWidth > 800 ? artwork.backgroundWide : artwork.backgroundClassic}
-          aria-hidden="true"/>}
+        {artworkReady && <div className="loading-background" aria-hidden="true">
+          <ImageArtwork asset={artwork.background}
+            style={{width: `${1024 / 800 * 100}%`, height: `${1024 / 600 * 100}%`}}/>
+        </div>}
         <div className="loading-content">
           {artworkReady && <>
             <ImageArtwork className="loading-tank" asset={artwork.tank} aria-hidden="true"/>
