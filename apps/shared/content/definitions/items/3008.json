@@ -1,0 +1,80 @@
+{
+  "name": "小型爆炸地雷",
+  "getMethod": 2,
+  "durable": 10,
+  "breakMode": 2,
+  "itemType": 4,
+  "battleUseMax": 10,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "trap",
+  "id": 3008,
+  "key": "item-3008",
+  "description": "30秒后或敌方接触时引发约100*100范围的小型爆炸。",
+  "prices": {
+    "money": 10,
+    "tokens": 10
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 4,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": "Data/scnobj/03002/03002.glb",
+    "modelId": 3002,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 3002,
+    "textures": [
+      "Data/scnobj/03002/03002A.png"
+    ],
+    "sourceModel": "Data/scnobj/03002/03002.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/03002/03002A.png"
+  },
+  "runtime": {
+    "values": {
+      "triggerRadius": 30,
+      "blastWidth": 100,
+      "shopSupplyCount": 10,
+      "battleRewardOrder": 15
+    },
+    "skillRoles": {
+      "primary": 33007,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "trap": "blast",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

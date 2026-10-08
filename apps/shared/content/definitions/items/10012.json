@@ -1,0 +1,79 @@
+{
+  "name": "妖精翅膀",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10012,
+  "key": "item-10012",
+  "description": "精巧的妖精翅膀，人见人爱。",
+  "prices": {
+    "money": 4000,
+    "tokens": 400
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10012/10012.glb",
+    "modelId": 10012,
+    "modelType": 1,
+    "texture": "10012A",
+    "iconId": 10012,
+    "textures": [
+      "Data/accessory/10012/10012A.png"
+    ],
+    "sourceModel": "Data/accessory/10012/10012.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10012/10012A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

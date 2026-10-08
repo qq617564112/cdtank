@@ -1,5 +1,7 @@
 .history-intro-scrollbar {
   position: absolute;
+  box-sizing: border-box;
+  max-height: 100%;
   overflow: hidden;
   background-repeat: repeat;
 }
@@ -8,6 +10,7 @@
 .history-intro-scrollbar span,
 .history-intro-scrollbar button {
   position: absolute;
+  left: 0;
   margin: 0;
   padding: 0;
   border: 0;

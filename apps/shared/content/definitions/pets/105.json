@@ -1,0 +1,119 @@
+{
+  "kind": "pet",
+  "id": 105,
+  "key": "pet-105",
+  "name": "猞猁",
+  "description": "猫群之首，有道是“木桶有个猫老大，铁面无私猫之王”！凭借自己的强健机敏，保持着木桶镇猫群内部的团结。",
+  "prices": {
+    "money": 5000,
+    "tokens": 500
+  },
+  "shop": {
+    "available": true,
+    "group": "pet"
+  },
+  "starter": false,
+  "defaultSelected": false,
+  "petType": 1,
+  "petSize": 2,
+  "attributes": {
+    "maxHp": 700,
+    "critical": 8,
+    "lucky": 10,
+    "mastery": [
+      2,
+      2,
+      4,
+      3
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/105/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/105/11011.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 11011,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        11011
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 11021,
+      "initialRank": 0,
+      "rankCap": 3,
+      "levels": [
+        11021,
+        11022,
+        11023
+      ],
+      "event": "motion",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "stationary"
+    },
+    {
+      "baseId": 11031,
+      "initialRank": 0,
+      "rankCap": 6,
+      "levels": [
+        11031,
+        11032,
+        11033,
+        11034,
+        11035,
+        11036
+      ],
+      "event": "health",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "lowHealth"
+    },
+    {
+      "baseId": 10541,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10541
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "team"
+    },
+    {
+      "baseId": 11051,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        11051
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 11061,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

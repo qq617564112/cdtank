@@ -2,7 +2,7 @@
 
 原来源与运行树已充分：原item3004关联3004施放技能，作用技能4002首槽115/SE47/tag0/method3；原115包含根2954、烟尘粒子2955及图纹3113。原SAV完整记录、控制器及子引用逐项与发布库相等；yan1和115的原DDS解码与发布PNG逐像素相等，SE47原WAV与发布文件字节相等，时长0.354376417秒。
 
-来源状态PASS_SOURCE115_FLAG10_STATIC_CONTRACT_ONLY。粒子发射器寿命0.5秒，图纹寿命0.800000012秒并有四个原控制器区间；不把Func4表t5当作效果树寿命。槽1为016/SE15，仅表中存在不能证明到期调用，不接附加到期表现。
+来源状态PASS_SOURCE115_FLAG10_STATIC_CONTRACT_ONLY。粒子发射器寿命0.5秒，图纹寿命0.800000012秒并有四个原控制器区间；不把Func4表t5当作效果树寿命。槽1为016/SE15，当前生产采用存活成功自然恢复时单次通知；原到期调用来源未证明，新绘声实测待做，详remaining-effect-slot-integration.md。
 
 ## 原状态观察者和玩家输入
 
@@ -14,7 +14,7 @@
 
 trap4002-presentation-runtime.cts直接使用生产EffectRuntime及原115树、原纹理，在NullEngine中建立2955粒子和3113六顶点图纹，保持victim实时tag_efcenter同一引用。原有限子节点自然结束后树quiescent、实例/网格归零；owner detach和runtime stop分别清理0。状态PASS_115_TREE_MODULE_ONLY，没有玩家事件、实际像素或实际声音输出证明。
 
-主线现已提供正式输入：正常Shop3004原价格10金币／10软星币，普通放置消费与ground3004对象、敌方接触贡献一个flag10许可计数并发布原4002首槽duration0通知，五服务器秒恢复贡献，没有flag6门禁，不调用016。原Func12/Func4服务端实现未取得，对象、资格、计数写入与期限为明示重建。FX通知消费者复用既有BattleSkillEffects→SkillEffectNotifications→actor首槽，无需新增guard。
+主线现已提供正式输入：正常Shop3004原价格10金币／10软星币，普通放置消费与ground3004对象、敌方接触贡献一个flag10许可计数并发布原4002首槽duration0通知，五服务器秒恢复贡献，没有flag6门禁；存活自然恢复采用第二016/SE15单次通知，原第二槽来源及新增实测保持开放。原Func12/Func4服务端实现未取得，对象、资格、计数写入与期限为明示重建。FX通知消费者复用既有BattleSkillEffects→SkillEffectNotifications→actor首槽，无需新增guard。
 
 | 环节 | 当前证据 |
 | --- | --- |

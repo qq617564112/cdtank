@@ -9,6 +9,7 @@ export class SceneCvdAnimation {
   private readonly textures = new Map<string, Texture>();
   private disposed = false;
   private delta = 0;
+  private time = 0;
 
   constructor(private readonly scene: Scene, private readonly placementId: string,
               private readonly matrix: EffectNativeMatrix) {}
@@ -37,15 +38,24 @@ export class SceneCvdAnimation {
   advance(deltaSeconds: number): void {
     if (this.disposed || !this.renderer) return;
     this.delta = effectModelEngineDelta(deltaSeconds);
+    this.time += this.delta;
     this.renderer.update();
     this.renderer.draw({matrix: this.matrix, blend: 0, alpha: 1, priority: 0});
     for (const mesh of this.renderer.meshes) {
       const sourceModel = mesh.metadata.sourceSceneModel ?? mesh.metadata.sourceModel;
       const sourceModelNode = mesh.metadata.sourceSceneModelNode ?? mesh.metadata.sourceModelNode;
       mesh.name = `placement-${this.placementId}/cvd-${sourceModelNode}`;
-      mesh.metadata = {sourceSceneModel: sourceModel, sourceSceneModelNode: sourceModelNode,
+      mesh.metadata = {...mesh.metadata, sourceSceneModel: sourceModel, sourceSceneModelNode: sourceModelNode,
         sourcePlacementId: this.placementId};
     }
+  }
+
+  setAnimationTime(time: number): void {
+    if (this.disposed || !this.renderer) return;
+    this.time = Math.max(0, time);
+    this.delta = 0;
+    this.renderer.setTime(this.time);
+    this.advance(0);
   }
 
   dispose(): void {

@@ -1,0 +1,79 @@
+{
+  "name": "1UP",
+  "getMethod": 0,
+  "durable": 0,
+  "breakMode": 2,
+  "itemType": 1,
+  "battleUseMax": 2,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "item",
+  "id": 501,
+  "key": "teamLife",
+  "description": "我方坦克存量+1。",
+  "prices": {
+    "money": 0,
+    "tokens": 0
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 1,
+  "inventoryCategory": 1,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 0,
+  "resources": {
+    "model": "Data/scnobj/00501/00501.glb",
+    "modelId": 501,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 501,
+    "textures": [
+      "Data/scnobj/00501/00501A.png"
+    ],
+    "sourceModel": "Data/scnobj/00501/00501.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/00501/00501A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 22,
+      "breachDropOrder": 9
+    },
+    "skillRoles": {
+      "primary": 501,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "use": "teamLife",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

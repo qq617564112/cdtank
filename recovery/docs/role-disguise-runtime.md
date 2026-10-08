@@ -8,11 +8,13 @@
 
 `PlayerSnapshot.roleDisguise`复制权威状态，供新进入或晚加载显示使用；没有状态时省略。到期在普通输入接收前和每个World步推进，死亡、复活、终局、首次开局、再战和正常离房只清理本模块安装的skill/state，不改变其它技能或输入sequence。死亡、结束和离房为实际恢复边界发送`roleStyleRestored`；首次开局、再战和迟加入依赖状态缺失。
 
-普通开火只有在弹匣/装填/库存CAS门禁全部通过后才解除伪装；`beforeFire`仅在`consumeConfirmedAmmo`返回真时恢复。`advanceActors`在真实发射边界`fireProjectile`调用后立即执行`afterFire`，World只清除此时仍存在的`roleDisguise`，重算属性并发送原`roleStyleRestored`；批末不再扫描`fire`，因此发射之后再次合法施放的新伪装不被撤销。该路径不改actor/pendingShot/query时序、弹药消费或声音特效。被拒绝的开火保留伪装，普通选弹不解除，原flag12清理不等同模型恢复。伪装只改变显示，不改变碰撞、手动命中、伤害或CPU目标身份。
+伪装期间禁止车体移动与转向，炮塔仍可瞄准。`isBattleMovementAllowed`在已有角色许可之外检查真实`roleDisguise`，同时用于服务器运动推进和快照`canMove/canTurn`；手动客户端pose在伪装时只更新瞄准，不安装车体位置和方向。客户端进入或离开伪装时以权威位置同步预测，期间按快照许可停止移动。该门禁不修改陷阱的移动/转向贡献计数，到期或主动解除后仍按原许可判定。
+
+普通开火只有在弹匣/装填/库存CAS门禁全部通过后才解除伪装及光学迷彩；`beforeFire`仅在`consumeConfirmedAmmo`返回真时调用`restoreConcealmentAfterAcceptedFire`。`advanceActors`在真实发射边界`fireProjectile`调用后立即执行`afterFire`，World清除此时仍存在的伪装/隐身临时技能，重算属性，伪装发送原`roleStyleRestored`，光学迷彩发送`skillStopped`；批末不再扫描`fire`，因此发射之后再次合法施放的新伪装不被撤销。该路径不改actor/pendingShot/query时序、弹药消费或声音特效。被拒绝的开火保留效果，普通选弹不解除，原flag12清理不等同模型恢复。碰撞、手动命中、伤害和CPU目标身份保持原规则。
 
 光学迷彩互斥使用`roleDisguise`权威状态，而不是raw flag12；item10/11也拒绝skill9及有效光学状态。两种伪装style互不叠加。
 
-CPU槽5至8可按房主有限配置使用item1至11及502，数量上限沿用原表；伪装策略只在存活status2、可见敌人距离300以内、HP不高于半血、当前`input.fire=false`、无有效伪装/隐身、技能栏无9/10/11且有空槽时返回普通伪装输入。伪装期间保留普通移动与转向并抑制开火，期限结束后恢复原决策；不直接写状态或赠送库存。
+CPU槽5至8可按房主有限配置使用item1至11及502，数量上限沿用原表；伪装策略只在存活status2、可见敌人距离300以内、HP不高于半血、当前`input.fire=false`、无有效伪装/隐身、技能栏无9/10/11且有空槽时返回普通伪装输入。伪装期间移动与转向同样受服务器门禁限制，原决策抑制主动开火，期限结束后恢复；不直接写状态或赠送库存。
 
 ## 未执行验收
 

@@ -7,9 +7,23 @@
   font-size: 12px;
 }
 
+#original-battle-hud [data-hud-anchor='left'],
+#original-battle-hud .hud-item-source-bar,
+#original-battle-hud .hud-resource-error {
+  transform: translateX(calc(0px - var(--hud-side-offset)));
+}
+
+#original-battle-hud [data-hud-anchor='right'] {
+  transform: translateX(var(--hud-side-offset));
+}
+
 .source-control {
   position: absolute;
   box-sizing: border-box;
+}
+
+#original-battle-hud[data-spectating='true'] [data-source-control='prgLife'] {
+  display: none;
 }
 
 .source-control-image {
@@ -18,11 +32,6 @@
   background-repeat: no-repeat;
   background-size: 100% 100%;
   pointer-events: none;
-}
-
-.source-progress-fill {
-  position: absolute;
-  inset: 0;
 }
 
 [data-source-control="edtBattleInfo"] {
@@ -36,6 +45,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+[data-source-control='txtCountdown'] {
+  justify-content: center;
+  align-items: center;
+  color: #ffdf00;
+  font-size: 22px;
+  line-height: 28px;
+  white-space: nowrap;
 }
 
 [data-source-layout="ui/layouts/game_main_info_team.xml"][data-source-control="txtSelfInfo"],
@@ -52,17 +70,6 @@
   text-overflow: ellipsis;
   text-shadow: 1px 1px #000;
   line-height: 18px;
-}
-
-.source-progress-control {
-  overflow: hidden;
-}
-
-.source-life-background,
-.source-life-image {
-  position: absolute;
-  top: 0;
-  left: 0;
 }
 
 [data-source-control^="txtPlayerTitle"] {

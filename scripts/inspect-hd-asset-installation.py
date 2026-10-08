@@ -8,6 +8,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path, PurePosixPath
+from PIL import Image, ImageChops
 
 
 @lru_cache(maxsize=4)
@@ -22,6 +23,47 @@ def inspect(root, groups):
     runtime = Path(os.environ.get('WEB_ASSETS', 'recovery/output/web-assets'))
     if not runtime.is_absolute():
         runtime = root / runtime
+    sprite_path = runtime / 'sprite-images.json'
+    sprites = json.loads(sprite_path.read_text())['images'] if sprite_path.is_file() else {}
+
+    @lru_cache(maxsize=1)
+    def atlas_image(path):
+        with Image.open(runtime / path.lstrip('/')) as image:
+            return image.convert('RGBA')
+
+    cleanup_path = root / 'art/hd-assets/unused-images/manifest.json'
+    cleanup = json.loads(cleanup_path.read_text()) if cleanup_path.is_file() else {'files': [], 'virtualImages': []}
+    unused = {entry['path'] for key in ('files', 'virtualImages') for entry in cleanup[key]
+              if entry.get('reason') != 'duplicate'}
+    duplicates = {entry['path']: entry['duplicateOf'] for entry in cleanup['files']
+                  if entry.get('reason') == 'duplicate'}
+
+    def installed_equals(installed, expected):
+        if installed.is_file():
+            return read_bytes(installed) == read_bytes(expected)
+        if installed.is_relative_to(runtime):
+            key = '/' + installed.relative_to(runtime).as_posix()
+        elif installed.is_relative_to(root / 'apps/web/src'):
+            key = '/local-images/' + installed.relative_to(root / 'apps/web/src').as_posix()
+        else:
+            return False
+        duplicate = duplicates.get(key.lstrip('/'))
+        if duplicate:
+            with Image.open(runtime / duplicate) as actual, Image.open(expected) as reference:
+                if actual.size != reference.size:
+                    return False
+                difference = ImageChops.difference(actual.convert('RGBA'), reference.convert('RGBA'))
+                return not any(channel.getbbox() for channel in difference.split())
+        sprite = sprites.get(key)
+        if not sprite:
+            return False
+        x, y, w, h = (sprite[name] for name in ('x', 'y', 'width', 'height'))
+        with Image.open(expected) as image:
+            if image.size != (w, h):
+                return False
+            difference = ImageChops.difference(atlas_image(sprite['atlas']).crop((x, y, x + w, y + h)),
+                                              image.convert('RGBA'))
+            return not any(channel.getbbox() for channel in difference.split())
     inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
     all_textures = {entry['source'].lower(): entry for entry in inventory['textures']
                     if not entry.get('intermediate')}
@@ -29,18 +71,20 @@ def inspect(root, groups):
                  if not entry.get('deferred') and (root / entry['png']).is_file()}
     selected = [entry for entry in inventory['textures']
                 if not entry.get('intermediate') and not entry.get('deferred')
+                and entry['source'] not in unused
                 and (not groups or any(group in entry['groups'] for group in groups))]
     report = {'updated': datetime.now(timezone.utc).isoformat(timespec='seconds'),
               'scope': {'groups': groups or 'all', 'paths': len(selected)},
               'delivered': 0, 'installed': 0, 'models': 0, 'embeddedImages': 0, 'externalImages': 0,
               'deferredTextPaths': [entry['source'] for entry in inventory['textures'] if entry.get('deferred')],
+              'unusedImagePaths': sorted(unused),
               'pendingPaths': [], 'uninstalledPaths': [], 'unusedEmbeddedImages': [], 'issues': []}
     coverage = {'inventoryModels': len(inventory['models']), 'textureModels': 0,
                 'untexturedModels': [], 'unmatchedTexturedModels': []}
     if not groups:
         report['runtimePngPathsOutsideInventory'] = sorted(
             path.relative_to(runtime).as_posix() for path in runtime.rglob('*.png')
-            if path.relative_to(runtime).parts[0] != 'hd-ui'
+            if path.relative_to(runtime).parts[0] not in ('hd-ui', 'sprites')
             and path.relative_to(runtime).as_posix().lower() not in all_textures)
         report['runtimeModelsOutsideInventory'] = sorted(
             path.relative_to(runtime).as_posix() for path in runtime.rglob('*.glb')
@@ -49,19 +93,25 @@ def inspect(root, groups):
         for entry in inventory['textures']:
             if not entry.get('deferred'):
                 continue
+            if entry['source'] in unused:
+                continue
             installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
-            if not installed.is_file() or read_bytes(installed) != read_bytes(root / entry['original']):
+            if not installed_equals(installed, root / entry['original']):
                 report['changedDeferredTextPaths'].append(entry['source'])
         report['uninstalledUiLayouts'] = []
         for source in (root / 'art/hd-ui/png').rglob('*.png'):
             installed = runtime / 'hd-ui' / source.relative_to(root / 'art/hd-ui/png')
-            if not installed.is_file() or read_bytes(installed) != read_bytes(source):
+            if installed.relative_to(runtime).as_posix() in unused:
+                continue
+            if not installed_equals(installed, source):
                 report['uninstalledUiLayouts'].append(source.relative_to(root).as_posix())
         report['uninstalledLocalUi'] = []
         for name in ('lobby-logo.png', 'normal-cursor.png', 'normal-cursor-hd.png', 'client-icon.ico'):
             source = root / 'art/hd-local-ui/png' / name
             installed = root / 'apps/web/src/assets/ui' / name
-            if not installed.is_file() or read_bytes(installed) != read_bytes(source):
+            if 'local-images/assets/ui/' + name in unused:
+                continue
+            if not installed_equals(installed, source):
                 report['uninstalledLocalUi'].append(name)
         report['uninstalledMapPreviews'] = []
         preview = 'custom-maps/1001/preview.svg'
@@ -78,7 +128,7 @@ def inspect(root, groups):
         report['delivered'] += 1
         ready[entry['source'].lower()] = entry
         installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
-        if not installed.is_file() or read_bytes(installed) != read_bytes(delivered):
+        if not installed_equals(installed, delivered):
             report['uninstalledPaths'].append(entry['source'])
         else:
             report['installed'] += 1
@@ -186,7 +236,7 @@ def inspect(root, groups):
                 expected = runtime / entry['source']
                 if ('bufferView' in after or after.get('mimeType') != 'image/png'
                         or image_path.resolve() != expected.resolve()
-                        or not image_path.is_file() or read_bytes(image_path) != read_bytes(root / entry['png'])):
+                        or not installed_equals(image_path, root / entry['png'])):
                     issue(source, f'Image {index} external PNG differs from delivered {entry["source"]}')
                 report['externalImages'] += 1
                 continue

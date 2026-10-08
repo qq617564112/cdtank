@@ -1,10 +1,9 @@
 import type {DatabaseSync} from 'node:sqlite';
-import {readFileSync} from 'node:fs';
+import {combatItems} from '../battle/catalog';
 import type {CombatItemDefinition} from '../../../shared/combat/catalog';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
 import {isTreasureItem} from '../../../shared/combat/treasure-items';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
-import {webAssetPath} from '../runtime/content-paths';
 
 /** Ground identity handed in by the calling ground producer; the producer already
  * fixed the drop visual domain and category before reaching the account write. */
@@ -35,18 +34,7 @@ export interface GroundItemDiscardResult {
 /** Owned quantity column is the project's 24-bit MyItem+10 stack count. */
 const MAX_QUANTITY = 0xffffff;
 
-let definitions: Map<number, CombatItemDefinition> | undefined;
-
-/** Same runtime asset consumed by `battle/catalog`; loaded once on first ground write. */
-function itemDefinitions(): Map<number, CombatItemDefinition> {
-  if (!definitions) {
-    const catalog = JSON.parse(readFileSync(webAssetPath('combat-catalog.json'), 'utf8')) as {
-      items: CombatItemDefinition[];
-    };
-    definitions = new Map(catalog.items.map(item => [item.itemTableId, item]));
-  }
-  return definitions;
-}
+function itemDefinitions(): ReadonlyMap<number, CombatItemDefinition> {return combatItems;}
 
 function readRecord(value: unknown): InventoryWireRecord {
   return JSON.parse(String(value)) as InventoryWireRecord;

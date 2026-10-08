@@ -1,10 +1,11 @@
 import type {ModeAwardsConfig, ModeMapConfig} from '../config';
-import type {AwardType, RoundAward, RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
+import type {AwardType, ResultPlayer, RoundAward, RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
 
 /** The frozen, real round inputs used by the nine-award policy. */
 export interface AwardParticipant {
   readonly playerId: string;
   readonly team: number;
+  readonly outcome: ResultPlayer['outcome'];
   readonly playedSeconds: number;
   readonly roundStats: RoundStats;
   readonly kills: number;
@@ -35,10 +36,6 @@ function threshold(config: ModeAwardsConfig, type: keyof ModeAwardsConfig, enemy
   return damage + damagePlus * Math.max(0, enemyCount - 1);
 }
 
-function positivePerformance(player: AwardParticipant): boolean {
-  return player.kills > 0 || player.objectivesDestroyed > 0 || player.roundStats.damage > 0;
-}
-
 function compareMvp(left: AwardParticipant, right: AwardParticipant): number {
   return right.totalScore - left.totalScore
     || right.kills - left.kills
@@ -46,9 +43,45 @@ function compareMvp(left: AwardParticipant, right: AwardParticipant): number {
     || compareIds(left.playerId, right.playerId);
 }
 
-function compareGreedy(left: AwardParticipant, right: AwardParticipant): number {
+function compareDamage(left: AwardParticipant, right: AwardParticipant): number {
   return right.roundStats.damage - left.roundStats.damage
     || right.kills - left.kills
+    || compareIds(left.playerId, right.playerId);
+}
+
+function comparePerfect(left: AwardParticipant, right: AwardParticipant): number {
+  return (right.kills + right.objectivesDestroyed) - (left.kills + left.objectivesDestroyed)
+    || compareDamage(left, right);
+}
+
+function compareBrave(left: AwardParticipant, right: AwardParticipant): number {
+  return right.roundStats.killCombo - left.roundStats.killCombo
+    || right.kills - left.kills
+    || left.deaths - right.deaths
+    || compareIds(left.playerId, right.playerId);
+}
+
+function compareConsole(left: AwardParticipant, right: AwardParticipant): number {
+  return right.roundStats.damageTaken - left.roundStats.damageTaken
+    || right.deaths - left.deaths
+    || compareIds(left.playerId, right.playerId);
+}
+
+function compareKind(left: AwardParticipant, right: AwardParticipant): number {
+  return right.roundStats.healing - left.roundStats.healing
+    || left.deaths - right.deaths
+    || compareIds(left.playerId, right.playerId);
+}
+
+function compareCrafty(left: AwardParticipant, right: AwardParticipant): number {
+  return right.roundStats.rearDamage - left.roundStats.rearDamage
+    || compareDamage(left, right);
+}
+
+function compareGreedy(left: AwardParticipant, right: AwardParticipant): number {
+  return right.kills - left.kills
+    || left.deaths - right.deaths
+    || right.objectivesDestroyed - left.objectivesDestroyed
     || compareIds(left.playerId, right.playerId);
 }
 
@@ -59,7 +92,7 @@ function addAward(result: Map<string, RoundAward[]>, playerId: string, value: Ro
 }
 
 /**
- * Apply the nine published award rules to frozen round inputs.
+ * Select distinct round performances using the project's competitive award policy.
  *
  * This function only reads the supplied map and participant data. It does not
  * mutate either input, and it does not depend on World state, a database, or
@@ -74,61 +107,41 @@ export function computeRoundAwards(
   const active = participants.filter(player => player.playedSeconds > 0);
   const config = map.awards;
 
-  for (const player of active) {
-    if (enabled(config, 'perfect') && player.deaths === 0
-        && player.kills + player.objectivesDestroyed >= 1) {
-      addAward(result, player.playerId, award(config, 'perfect'));
-    }
-    if (enabled(config, 'brave') && player.deaths >= 1 && player.kills >= 1) {
-      addAward(result, player.playerId, award(config, 'brave'));
-    }
-    if (enabled(config, 'shy') && player.roundStats.shots === 0
-        && player.roundStats.damageTaken > 0) {
-      addAward(result, player.playerId, award(config, 'shy'));
-    }
-  }
-
-  for (const player of active) {
+  const reachesThreshold = (player: AwardParticipant, type: keyof ModeAwardsConfig, value: number): boolean => {
     const enemyCount = map.mode <= 3
       ? active.filter(other => other.team !== player.team).length
       : active.filter(other => other.playerId !== player.playerId).length;
-    if (enabled(config, 'savage')
-        && player.roundStats.damage >= threshold(config, 'savage', enemyCount)) {
-      addAward(result, player.playerId, award(config, 'savage'));
-    }
-    if (enabled(config, 'console') && player.deaths >= 1
-        && player.roundStats.damageTaken >= threshold(config, 'console', enemyCount)) {
-      addAward(result, player.playerId, award(config, 'console'));
-    }
-    if (enabled(config, 'kind')
-        && player.roundStats.healing >= threshold(config, 'kind', enemyCount)) {
-      addAward(result, player.playerId, award(config, 'kind'));
-    }
-    if (enabled(config, 'crafty')
-        && player.roundStats.rearDamage >= threshold(config, 'crafty', enemyCount)) {
-      addAward(result, player.playerId, award(config, 'crafty'));
-    }
-  }
+    return value >= threshold(config, type, enemyCount);
+  };
+  const grantBest = (type: keyof ModeAwardsConfig, candidates: readonly AwardParticipant[],
+    compare: (left: AwardParticipant, right: AwardParticipant) => number): void => {
+    if (!enabled(config, type)) return;
+    const winner = [...candidates].sort(compare)[0];
+    if (winner) addAward(result, winner.playerId, award(config, type));
+  };
 
-  if (enabled(config, 'mvp')) {
-    const groups = map.mode <= 3
-      ? [...new Set(active.map(player => player.team))].map(team => ({
-        team, players: active.filter(player => player.team === team),
-      }))
-      : [{team: -1, players: active}];
-    for (const group of groups) {
-      const winner = group.players
-        .filter(positivePerformance)
-        .sort(compareMvp)[0];
-      if (winner) addAward(result, winner.playerId, award(config, 'mvp'));
-    }
-  }
+  grantBest('perfect', active.filter(player => player.deaths === 0
+    && player.kills + player.objectivesDestroyed >= 3), comparePerfect);
+  grantBest('brave', active.filter(player => player.deaths >= 1
+    && player.roundStats.killCombo >= 3), compareBrave);
+  grantBest('shy', active.filter(player => player.roundStats.shots === 0 && player.deaths >= 1
+    && reachesThreshold(player, 'console', player.roundStats.damageTaken)), compareConsole);
 
-  if (enabled(config, 'greedy') && map.mode >= 4) {
-    const winner = active
-      .filter(player => player.roundStats.damage > 0)
-      .sort(compareGreedy)[0];
-    if (winner) addAward(result, winner.playerId, award(config, 'greedy'));
+  grantBest('savage', active.filter(player =>
+    reachesThreshold(player, 'savage', player.roundStats.damage)), compareDamage);
+  grantBest('console', active.filter(player => player.deaths >= 3 && player.deaths > player.kills
+    && reachesThreshold(player, 'console', player.roundStats.damageTaken)), compareConsole);
+  if (map.mode <= 3) {
+    grantBest('kind', active.filter(player =>
+      reachesThreshold(player, 'kind', player.roundStats.healing)), compareKind);
+  }
+  grantBest('crafty', active.filter(player => player.roundStats.rearDamage * 2 >= player.roundStats.damage
+    && reachesThreshold(player, 'crafty', player.roundStats.rearDamage)), compareCrafty);
+
+  grantBest('mvp', active.filter(player => player.outcome === 'WIN' && player.kills > 0), compareMvp);
+
+  if (map.mode >= 4) {
+    grantBest('greedy', active.filter(player => player.kills >= 3 && player.kills > player.deaths), compareGreedy);
   }
 
   for (const awards of result.values()) {

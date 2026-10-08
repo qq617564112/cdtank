@@ -31,3 +31,5 @@ settings-source-types.log记录最终Webtype PASS。两次3376/5426/9626与临�
 图形配置中未接的VSync/光标/色深等源选项、原确认/默认/取消回调、字段字形、滑块精确旅程和原高清锚点、全107控件及1:1仍未完成。UseItem/循环武器道具已接五新动作绑定与设置捕获，运行时接口见 battle-cycle-controls-runtime.md、settings-cycle-controls-client.md，但未实测；历史UI-50组合证据只覆盖原15动作，不扩给新5。窗口/全屏、低/高画质与卡通渲染源控件已接正式设置草稿和运行消费，但本批未实测真实画质、描边、保存刷新与重启。事件与持久规则沿现重建业务明确记录，未知项不假接；UI-50父项不勾。
 
 主线已审实际1920整图、偏好消费者与定向键盘导航raw，组合限定范围接受；正式App入口/焦点与共享SourceButton接线完成，生产Webtypes与最终Vite构建1m31通过。原107控件和未支持业务父项保持未完成。
+
+原25图角色toon采样已接同一chkSilhouette显示偏好，与现轮廓共同切换；原默认灯、纹理与效果选择来源见scene-actor-toon-runtime.md。

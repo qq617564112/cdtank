@@ -37,6 +37,7 @@ export function finishRound(room: FinishingRoom, now: number, reason: MatchResul
     return [{
       playerId: player.id,
       team: player.team,
+      outcome: player.outcome,
       playedSeconds,
       roundStats: player.roundStats,
       kills: player.kills,

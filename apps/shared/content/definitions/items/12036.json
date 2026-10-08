@@ -1,0 +1,77 @@
+{
+  "name": "春到",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 7,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 4,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 12036,
+  "key": "item-12036",
+  "description": "春到新年喜洋洋。",
+  "prices": {
+    "money": 500,
+    "tokens": 50
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 7,
+  "inventoryCategory": 4,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 0,
+  "resources": {
+    "model": null,
+    "modelId": 12036,
+    "modelType": 1,
+    "texture": "12036",
+    "iconId": 12036,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "mark"
+  },
+  "equipmentTarget": "MARK"
+}

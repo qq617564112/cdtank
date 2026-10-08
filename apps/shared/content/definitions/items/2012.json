@@ -1,0 +1,87 @@
+{
+  "name": "示爱炮弹",
+  "getMethod": 0,
+  "durable": 10,
+  "breakMode": 2,
+  "itemType": 3,
+  "battleUseMax": 30,
+  "effects": [
+    {
+      "effectId": 53,
+      "sound": "GA08",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 6,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "ammo",
+  "id": 2012,
+  "key": "item-2012",
+  "description": "求爱弹，看到心仪的对象全靠它啦。",
+  "prices": {
+    "money": 50,
+    "tokens": 50
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 3,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 2012,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 2012,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null,
+    "fireSound": {
+      "id": 49,
+      "asset": "audio/sound/GA08.wav"
+    }
+  },
+  "runtime": {
+    "values": {
+      "baseDamage": 35,
+      "attackScale": 0.08,
+      "shopSupplyCount": 10,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 2012,
+      "secondary": 4010,
+      "tertiary": 0
+    },
+    "defaultAmmo": false,
+    "query": "projectile",
+    "projectileSpeed": 360,
+    "range": 1000,
+    "muzzleForward": 30,
+    "muzzleHeight": 20,
+    "sceneResult": true,
+    "remoteShotResult": true,
+    "victimShotResult": true,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": true,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

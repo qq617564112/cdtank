@@ -56,7 +56,8 @@ export class EffectSkillSound {
     source.connect(panner); panner.connect(gain); gain.connect(this.master);
     const voice: Voice = {audio, source, panner, gain, position: [...position]};
     this.voices.set(handle, voice);
-    audio.addEventListener('ended', () => this.stop(handle), {once: true});
+    audio.onended = () => this.stop(handle);
+    audio.onerror = () => this.stop(handle);
     this.update();
     this.startVoice(handle, voice);
     return handle;
@@ -89,8 +90,13 @@ export class EffectSkillSound {
   stop(handle: number): void {
     const voice = this.voices.get(handle);
     if (!voice) return;
-    voice.audio.pause(); voice.source.disconnect(); voice.panner.disconnect(); voice.gain.disconnect();
     this.voices.delete(handle);
+    voice.audio.onended = null;
+    voice.audio.onerror = null;
+    voice.audio.pause();
+    voice.audio.removeAttribute('src');
+    voice.audio.load();
+    voice.source.disconnect(); voice.panner.disconnect(); voice.gain.disconnect();
   }
   clear(): void {for (const handle of this.voices.keys()) this.stop(handle);}
   dispose(): void {

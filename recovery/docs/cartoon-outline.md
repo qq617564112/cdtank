@@ -12,4 +12,4 @@ node tests/browser-cartoon-outline.mjs：隔离Vite5298/Chrome9368，实际原00
 
 ## 未完成原精度
 
-这是按原黑色法线外扩思想与Ink值接入的Web轮廓。Babylon使用自身多阶段轮廓及深度偏移，不是原cartoon.gbf的CCW背面单通道逐设备状态复刻。原texToon分层颜色、lightdir来源、全场景脚本选择和原D3D framebuffer仍待恢复。当前仅验证0007/战车1及所列动作，未证明全地图/21车或性能；父项M3-03/M4-07保持未完成。
+这是按原黑色法线外扩思想与Ink值接入的Web轮廓。Babylon使用自身多阶段轮廓及深度偏移，不是原cartoon.gbf的CCW背面单通道逐设备状态复刻。原25图角色texToon分层颜色、默认lightdir与Silhouette脚本选择已接，详scene-actor-toon-runtime.md；几何toon资格、全场景脚本选择和原D3D framebuffer仍待恢复。当前仅验证0007/战车1及所列动作，未证明全地图/21车或性能；父项M3-03/M4-07保持未完成。

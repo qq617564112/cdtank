@@ -25,7 +25,7 @@
 
   function dimensions(asset) {
     var original = asset.size.join(' × ');
-    if (asset.deferred) return `${original} · 后续字体渲染`;
+    if (asset.deferred) return `${original} · 字体渲染`;
     return asset.hdSize ? `${original} → ${asset.hdSize.join(' × ')}` : `${original} · 待处理`;
   }
 
@@ -48,8 +48,13 @@
   }
 
   function hdFigure(asset, lazy) {
-    return figure(asset.hd, asset.deferred ? '后续字体渲染' : '高清图', asset.source,
-      lazy, asset.deferred ? '沿用原图，后续改为字体渲染' : undefined);
+    if (!asset.deferred) return figure(asset.hd, '高清图', asset.source, lazy);
+    var node = figure(undefined, '字体渲染', asset.source, lazy, '已替换为轮廓字体');
+    var link = element('a', '查看原图与字体对照');
+    link.href = 'font-rendering-preview.html';
+    link.target = '_blank';
+    node.append(link);
+    return node;
   }
 
   function openAsset(asset) {
@@ -84,7 +89,7 @@
     });
     var completed = filtered.filter(asset => asset.hd).length;
     var deferred = filtered.filter(asset => asset.deferred).length;
-    document.getElementById('results').textContent = `${filtered.length.toLocaleString()} 项 · 已完成 ${completed.toLocaleString()} 项 · 后续字体渲染 ${deferred.toLocaleString()} 项`;
+    document.getElementById('results').textContent = `${filtered.length.toLocaleString()} 项 · 已完成 ${completed.toLocaleString()} 项 · 字体渲染 ${deferred.toLocaleString()} 项`;
     document.getElementById('page').textContent = `${page + 1} / ${pages}`;
     document.getElementById('previous').disabled = page === 0;
     document.getElementById('next').disabled = page === pages - 1;
@@ -116,7 +121,7 @@
   var base = assets.filter(asset => !asset.layer && !asset.deferred);
   var layers = assets.filter(asset => asset.layer);
   var deferred = assets.filter(asset => asset.deferred);
-  document.getElementById('progress').textContent = `基础资源 ${base.filter(asset => asset.hd).length.toLocaleString()} / ${base.length.toLocaleString()} · 独立图层 ${layers.filter(asset => asset.hd).length} / ${layers.length} · 后续字体渲染 ${deferred.length}`;
+  document.getElementById('progress').textContent = `基础资源 ${base.filter(asset => asset.hd).length.toLocaleString()} / ${base.length.toLocaleString()} · 独立图层 ${layers.filter(asset => asset.hd).length} / ${layers.length} · 字体渲染 ${deferred.length}`;
   document.getElementById('updated').textContent = `资源快照：${new Date(data.updated).toLocaleString()} · 每组安装完成后更新，刷新页面查看最新进度。`;
   var previewList = document.getElementById('preview-list');
   for (var preview of data.previews) {

@@ -1,0 +1,88 @@
+{
+  "name": "黏胶弹",
+  "getMethod": 2,
+  "durable": 20,
+  "breakMode": 2,
+  "itemType": 3,
+  "battleUseMax": 15,
+  "effects": [
+    {
+      "effectId": 54,
+      "sound": "GA09",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 6,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "ammo",
+  "id": 2008,
+  "key": "slowAmmo",
+  "description": "非常黏稠的炮弹。被命中者10秒内移动速度降低60km/h。",
+  "prices": {
+    "money": 5,
+    "tokens": 10
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 3,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 2008,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 2008,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null,
+    "fireSound": {
+      "id": 50,
+      "asset": "audio/sound/GA09.wav"
+    }
+  },
+  "runtime": {
+    "values": {
+      "baseDamage": 35,
+      "attackScale": 0.08,
+      "shopSupplyCount": 20,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 2008,
+      "secondary": 4006,
+      "tertiary": 0
+    },
+    "hit": "slow",
+    "defaultAmmo": false,
+    "query": "projectile",
+    "projectileSpeed": 360,
+    "range": 1000,
+    "muzzleForward": 30,
+    "muzzleHeight": 20,
+    "sceneResult": true,
+    "remoteShotResult": true,
+    "victimShotResult": true,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": true,
+    "requiresPlayerTarget": true,
+    "markerReward": false
+  }
+}

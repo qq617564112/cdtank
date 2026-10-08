@@ -1,0 +1,79 @@
+{
+  "name": "恶魔翅膀",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10011,
+  "key": "item-10011",
+  "description": "酷酷的黑色翅膀，只有那些敢作敢为的人才配得上。",
+  "prices": {
+    "money": 4000,
+    "tokens": 400
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10011/10011.glb",
+    "modelId": 10011,
+    "modelType": 1,
+    "texture": "10011A",
+    "iconId": 10011,
+    "textures": [
+      "Data/accessory/10011/10011A.png"
+    ],
+    "sourceModel": "Data/accessory/10011/10011.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10011/10011A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

@@ -1,3 +1,4 @@
+import {gameContent} from '../../../../shared/content/catalog';
 import {QueuedPartEffects} from './queued-part-effects';
 import {SkillEffectFrameScheduler} from './skill-effect-frame-scheduler';
 import type {MsgRoomEvent} from '../../../../shared/protocols/MsgRoomEvent';
@@ -47,11 +48,8 @@ export class BattleSkillEffects {
   private worldSound(event: MsgRoomEvent): void {
     const play = event.playSkillEffect;
     if (!play || play.roleId !== 0) return;
-    const source = event.type === 'itemUsed' ? 13
-      : event.type === 'airstrikeImpact' ? 3013
-        : event.type === 'explosiveAmmoBlast' ? 4004 : undefined;
-    if (source === undefined || play.skillId !== source) return;
-    if (source === 4004 && play.effectIndex !== 0) return;
+    const skill = gameContent().skills.get(play.skillId);
+    if (!skill?.runtime.worldSoundEvents.includes(event.type) || play.effectIndex !== 0) return;
     this.notifications.worldSound?.(play.skillId, play.effectIndex, [event.x, event.y, event.z]);
   }
 

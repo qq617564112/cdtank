@@ -1,11 +1,13 @@
 [data-player-info] { padding: 0; border: 0; max-width: none; max-height: none; overflow: visible; color: #fff; background: transparent; }
-[data-player-info]::backdrop { background: rgb(0 0 0 / 55%); }
+[data-player-info]::backdrop { background: rgb(0 33 74 / 60%); }
 .player-info-stage { position: relative; width: 800px; height: 405px; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
 .player-info-stage > * { position: absolute; box-sizing: border-box; }
 .player-info-picture { pointer-events: none; }
 .player-info-stage > .source-state-button { margin: 0; padding: 0; border: 0; background: transparent; }
 .player-info-stage > .source-state-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .player-info-stage textarea { resize: none; border: 0; padding: 0; background: transparent; color: #fff; }
+.player-info-stage .player-info-description { overflow: hidden; scrollbar-width: none; font: inherit; line-height: 16px; }
+.player-info-description::-webkit-scrollbar { display: none; }
 .player-info-status { left: 12px; top: 243px; width: 380px; min-height: 32px; margin: 0; font-size: 12px; }
 .player-info-query-status { left: 12px; top: 279px; width: 380px; min-height: 38px; font-size: 12px; }
 .player-info-query-status button { margin-left: 6px; padding: 1px 6px; border: 1px solid #8faac7; background: #203c5c; color: #fff; font: inherit; }

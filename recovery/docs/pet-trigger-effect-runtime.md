@@ -25,3 +25,7 @@
 ## 验证范围
 
 生产已接入本三处通知，集中静态代码走查已完成；首槽字段、门禁、目标与消费结论来自 owned 源码与已发布内容定义。既有的属性重算、模仿裁决、10441 零 HP 三秒存活／复活、治疗通知与队友数值证据属各自生命与路由范围，不作为本通知的实测证据。本三处通知的新页面、联机与高清运行尚未实测，原服务端发包条件仍未知，浏览器端实际挂点／声音与全部等级、队友与 copy 组合的表现待自然联机与页面验收。
+
+## 指挥绘声
+
+10541的有效指挥来源按受益角色合并：首次获得时单次通知首槽Effect102/SE34，最后来源撤回且受益者仍active/alive/status2/attributesReady时单次通知第二槽Effect104/SE36。模式1–3包含同队来源，4/5只有本人真实来源；多来源、重复tick和换caster不重播，自己的死亡／finish／round／Leave只清状态。World沿active tick调用reconcileCommandEffects，copy或来源死亡／离房在下一tick反映，数值传播和原三处首槽通知保持。采用时点、完整消息及限制见[remaining-effect-slot-integration.md](remaining-effect-slot-integration.md)；原两槽时机／受益者分配和新增实测继续开放。

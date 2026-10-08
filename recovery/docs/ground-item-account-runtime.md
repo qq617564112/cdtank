@@ -71,11 +71,19 @@ discardOwnedItem(accountId, context): GroundItemDiscardResult | undefined;
   `ownedQuantity` 且不回退已有值；其它原物件仍抬到 `min(ownedQuantity, BattleUseMax)`。
 - 无实例：按现 `shop`/`trade` 同样的「跨 `inventory`+`role_records` 取首个未用正 uint32」
   分配 `instanceId`，建类别 1..6 合法 `InventoryWireRecord`：`ownedQuantity=quantity`、
-  `battleQuantity=0`、`state=0`、`field8/float*` 取该类型构造器的默认值。这是本项目已采用的
-  owned schema，不冒充原记录来源，也不把未知 float 反推成取证事实。
+  `battleQuantity=0`、`state=0`、`field8/float*` 取该类型构造器的默认值。真正拾取时，新未装
+  实例自动填入本局正确栏首个空槽（Battle2..4 武器/陷阱、Battle5..8 消耗/宝物），不覆盖
+  满槽、不自动使用/切武器，只改当局角色 hotkeys（库存 RPC/HUD 可见），不改保存的账户配置，
+  满栏仍入库但无槽可用；跨连接 reconcile 不自动填槽。这是本项目已采用的 owned schema，
+  不冒充原记录来源，也不把未知 float 反推成取证事实。
 
-20001 鱼骨 / 20002 骨头的 Func20（`T1/T2`、`X1`、`Y20001/20002`）只做数量加一：
-本身不写 HP、不写 tech points；普通 use 不再加一，`ItemSkill2=30005` 改由
+20001 鱼骨 / 20002 骨头的 Func20（`T1/T2`、`X1`、`Y20001/20002`）只做数量加一。
+两件宝物成功领取才入库存 +1，并按物品 JSON `runtime.values.pickupPetType` 与
+`runtime.values.pickupHealing` 为实际拾取者回血 15，走原健康入口 clamp 到玩法当前 `maxHp`；
+满血仍取得、`lastStand` 不回血、失败不治疗不移除，同账户其它连接只刷新库存不回血。真人/CPU
+按真实已选 pet JSON 的 `petType` 判定：猫 `PetType 1` 拾 20001、狗 `PetType 2` 拾 20002，
+错误种类或未选宠物不拾这两件且保留实体，其它物品不限种类。原文案 15 与技能 `HP30` 不一致，
+因此拾取 15 与手动自用 30 分开。普通 use 不再加一，`ItemSkill2=30005` 改由
 `battle/items/treasure-item-use.ts` 在普通请求、存活、缺失生命及真实 skill 定义门禁后
 先 CAS 再治疗并各减一；0 价格不构成免费 Shop。最后一份成功消费在同一 AccountStore CAS
 事务删空实例与所有引用快捷槽，成功后清当前角色零量记录、七快捷槽与数组 0 权威；其它

@@ -1,3 +1,4 @@
+import {contentPlugin} from './content-plugin';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {defineConfig} from 'vite';
@@ -22,8 +23,9 @@ function portFromEnvironment(name: string, fallback: number): number {
 export default defineConfig({
   root: webRoot,
   publicDir,
-  plugins: [imageAssetsPlugin(publicDir, resolve(webRoot, 'image-cache-worker.js'))],
+  plugins: [contentPlugin(resolve(workspaceRoot, 'apps/shared/content/definitions')), imageAssetsPlugin(publicDir)],
   server: {
+    fs: {allow: [workspaceRoot]},
     port: portFromEnvironment('CDTANK_WEB_PORT', 5173),
     proxy: {
       '/game': {

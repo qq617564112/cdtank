@@ -1,15 +1,23 @@
-import {AssetContainer, LoadAssetContainerAsync, Scene, TransformNode} from '@babylonjs/core';
+import {gameContent} from '../../../../shared/content/catalog';
+import {AssetContainer, Constants, LoadAssetContainerAsync, PBRMaterial, Scene, Texture, TransformNode} from '@babylonjs/core';
 import type {RoleDisguiseSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import {SceneBreachMaterial} from './scene-breach-material';
 
-const MODELS = {1: 'obj05428', 2: 'obj05422'} as const;
 
 /** Original4173 replacement prop: intact obj05428/obj05422 at the captured activation XYZ. */
 export class RoleDisguiseVisual {
   readonly root: TransformNode;
   private owner?: SceneBreachMaterial;
   private asset?: AssetContainer;
+  private texture?: Texture;
   private disposed = false;
+
+  private get resources() {
+    const item = [...gameContent().items.values()].find(item => item.runtime.use === 'disguise'
+      && item.runtime.skillRoles.primary === this.snapshot.skillId);
+    if (!item?.resources.disguise) throw new Error('伪装模型定义缺失');
+    return item.resources.disguise;
+  }
 
   constructor(private readonly scene: Scene, readonly playerId: string,
               readonly style: 1 | 2, readonly snapshot: RoleDisguiseSnapshot) {
@@ -17,27 +25,37 @@ export class RoleDisguiseVisual {
     // Native X reflection matches the scene/ground placement convention.
     this.root.position.set(-snapshot.x, snapshot.y, snapshot.z);
     this.root.metadata = {roleDisguisePlayerId: playerId, roleDisguiseStyle: style,
-      roleDisguiseSkillId: snapshot.skillId, sourceModel: `Data/scnobj/${MODELS[style]}/${MODELS[style]}.POL`};
+      roleDisguiseSkillId: snapshot.skillId, sourceModel: this.resources.sourceModel};
   }
 
   async load(): Promise<void> {
     if (this.disposed || this.scene.isDisposed) return;
-    const model = MODELS[this.style];
-    const asset = await LoadAssetContainerAsync(`/Data/scnobj/${model}/${model}.glb`, this.scene);
+    const resources = this.resources, model = resources.name;
+    const asset = await LoadAssetContainerAsync(`/${resources.model}`, this.scene);
     if (this.disposed || this.scene.isDisposed) {
       asset.dispose();
       return;
     }
     const owner = new SceneBreachMaterial();
-    try {
-      owner.register(asset, model);
-    } catch (error) {
-      owner.dispose();
-      asset.dispose();
-      throw error;
-    }
     this.owner = owner;
     this.asset = asset;
+    try {
+      const texturePath = resources.textures[0];
+      if (texturePath) {
+        this.texture = await new Promise<Texture>((resolve, reject) => {
+          const value = new Texture(`/${texturePath}`, this.scene, false, false,
+            Constants.TEXTURE_LINEAR_LINEAR, () => resolve(value),
+            (_message, error) => {value.dispose(); reject(error ?? new Error('伪装贴图载入失败'));});
+        });
+      }
+      if (this.disposed || this.scene.isDisposed) {this.texture?.dispose(); this.dispose(); return;}
+      const mesh = asset.meshes.find(value => value.name === resources.meshName);
+      if (mesh?.material instanceof PBRMaterial && this.texture) mesh.material.albedoTexture = this.texture;
+      owner.register(asset, {name: model, meshName: resources.meshName, transparent: resources.transparent});
+    } catch (error) {
+      this.dispose();
+      throw error;
+    }
     asset.addAllToScene();
     asset.rootNodes.forEach(node => {node.parent = this.root;});
     asset.meshes.forEach(mesh => {
@@ -54,6 +72,8 @@ export class RoleDisguiseVisual {
     this.owner = undefined;
     this.asset?.dispose();
     this.asset = undefined;
+    this.texture?.dispose();
+    this.texture = undefined;
     this.root.dispose();
   }
 }

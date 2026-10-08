@@ -1,5 +1,6 @@
 import type {HomeSourceUi} from '../resources/source-ui-layout';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {loadUiFont} from '../resources/source-ui-fonts';
+import {loadSourceUi} from '../resources/source-ui-resources';
 
 export interface NoticeSnapshot {ui?: HomeSourceUi; message: string; open: boolean;}
 
@@ -35,10 +36,9 @@ export class SourceNotice {
     });
   }
   private async load(): Promise<HomeSourceUi> {
-    const response = await fetch('/ui.json');
-    if (!response.ok) throw new Error('通知资源缺失');
-    const ui = await response.json() as HomeSourceUi;
+    void loadUiFont().catch(() => {});
+    const ui = await loadSourceUi();
     if (!ui.layouts.some(layout => layout.path.endsWith('notify_dialog.xml'))) throw new Error('通知布局缺失');
-    await loadSourceUiFonts(); return ui;
+    return ui;
   }
 }

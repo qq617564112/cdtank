@@ -1,0 +1,93 @@
+{
+  "skillId": 10761,
+  "name": "？？？",
+  "info": "？？？",
+  "triggerType": 12,
+  "target": 1,
+  "range": 1,
+  "attributes": {
+    "MaxHP": 0,
+    "HP": 0,
+    "HPRegainRate": 0,
+    "HPDrain": 0,
+    "Critical": -20,
+    "Lucky": -30,
+    "AtkBase": 0,
+    "Atk": 0,
+    "AtkBonus": 0,
+    "Def": 0,
+    "DefBonus": 0,
+    "SideDef": 0,
+    "BackDef": 0,
+    "ItemMove": 0,
+    "ItemTurn": 0,
+    "Delay": 0,
+    "MaxBullet": 0,
+    "LoadTime": 0,
+    "MaxCounter": 0,
+    "StunRate": 0,
+    "PartSlot": 0,
+    "RadarA": 0,
+    "RadarB": 0,
+    "RadarC": 0,
+    "STankMastery": 0,
+    "MTankMastery": 0,
+    "LTankMastery": 0,
+    "StugMastery": 0
+  },
+  "effects": [
+    {
+      "effectId": 103,
+      "sound": "SE35",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 105,
+      "sound": "SE37",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 0,
+      "method": 0
+    }
+  ],
+  "functions": [
+    {
+      "type": 1,
+      "t": 1,
+      "x": 5,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "type": 0,
+      "t": 0,
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "type": 0,
+      "t": 0,
+      "x": 0,
+      "y": 0,
+      "z": 0
+    }
+  ],
+  "key": "skill-10761",
+  "learning": {
+    "groupId": 10761,
+    "level": 0,
+    "cost": 0
+  },
+  "runtime": {
+    "retainedEffect": false,
+    "queuedEffect": false,
+    "queueIntervalSeconds": 5,
+    "worldSoundEvents": []
+  }
+}

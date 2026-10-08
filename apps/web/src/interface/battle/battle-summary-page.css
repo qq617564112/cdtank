@@ -1,26 +1,80 @@
 .battle-summary-viewport { position: fixed; inset: 0; display: grid; place-items: center; z-index: 10; background: #142032; }
 .battle-summary-stage { position: relative; width: 800px; height: 600px; color: #fff; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
 .battle-summary-stage > *, .battle-summary-row > * { position: absolute; box-sizing: border-box; }
+.battle-summary-part { inset: 0; pointer-events: none; }
+.battle-summary-part > * { position: absolute; box-sizing: border-box; }
+.battle-summary-part-left { animation: summary-left-entry .7s linear both; }
+.battle-summary-part-right { animation: summary-right-entry .7s linear both; }
+.battle-summary-part-bottom { animation: summary-bottom-entry .7s linear both; }
+.battle-summary-row-left { animation: summary-left-entry .7s linear both; }
+.battle-summary-row-right { animation: summary-right-entry .7s linear both; }
+.battle-summary-outcome-entry { z-index: 1; transform-origin: center; animation: summary-outcome-entry .7s linear both; }
+.battle-summary-reward-layer { inset: 0; z-index: 3; pointer-events: none; }
+.battle-summary-reward-fade { animation: summary-reward-fade 1s linear both; }
 .battle-summary-picture { pointer-events: none; }
 .battle-summary-row { color: #fff; }
-.battle-summary-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.battle-summary-number { text-align: center; line-height: 16px; }
-.battle-summary-stats { left: 281px; top: 6px; width: 104px; font-size: 10px; line-height: 15px; }
+.battle-summary-name { min-height: 24px; max-width: 80px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 18px; line-height: 24px; transform: translate(28px, -4px); }
+.battle-summary-number { min-height: 24px; text-align: center; font-size: 18px; line-height: 24px; transform: translateY(-4px); }
+.battle-summary-stats,
+.battle-summary-accessible { width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .battle-summary-title { left: 185px; top: 24px; width: 430px; margin: 0; text-align: center; font-size: 21px; }
 .battle-summary-objective { left: 182px; top: 61px; width: 436px; margin: 0; text-align: center; line-height: 17px; }
-.battle-summary-extra-heading { top: 100px; width: 70px; text-align: center; line-height: 18px; }
-.battle-summary-status { left: 64px; top: 534px; width: 711px; overflow: hidden; white-space: nowrap;
-  font-size: 11px; line-height: 14px; }
-.battle-summary-exp { overflow: hidden; }
-.battle-summary-exp-fill { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background-repeat: no-repeat; background-size: 100% 100%; }
+.battle-summary-status { left: 64px; top: 504px; width: 711px; overflow: hidden; white-space: nowrap;
+  font-size: 16px; line-height: 22px; }
 .battle-summary-exp-percent { text-align: center; }
 .battle-summary-level { pointer-events: none; }
 .battle-summary-level-change { pointer-events: none; }
-.battle-summary-award { pointer-events: none; }
-.battle-summary-rematch { left: 74px; top: 555px; width: 150px; height: 28px; border: 1px solid #8faac7; background: #203c5c; color: #fff; font: inherit; }
-.battle-summary-rematch:disabled { opacity: .6; }
+.battle-summary-row-award { pointer-events: none; }
 .battle-summary-stage button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-.battle-summary-loading-leave { left: 310px; top: 556px; }
+.battle-summary-loading-continue { left: 310px; top: 556px; }
 .battle-summary-individual { left: 28px; top: 55px; font-size: 18px; }
 .battle-summary-pagination { left: 545px; top: 556px; display: flex; gap: 8px; align-items: center; }
 .battle-summary-pagination button { background: #203c5c; color: #fff; border: 1px solid #8faac7; font: inherit; }
+.battle-summary-ceremony { inset: 0; z-index: 2; pointer-events: none; }
+.battle-summary-ceremony > * { position: absolute; }
+.battle-summary-recipients { left: 210px; top: 415px; width: 380px; text-align: center; text-shadow: 1px 1px #000; }
+.battle-summary-title-notice { position: fixed; inset: 0; z-index: 4; margin: auto; padding: 0; border: 0;
+  max-width: none; max-height: none; background: transparent; color: #fff; pointer-events: none; }
+.battle-summary-title-stage { position: relative; width: 800px; height: 600px; font-family: 'CDTank-SIMSUN', serif;
+  animation: summary-title-slide 3.4s linear both; }
+.battle-summary-title-stage [data-source-control] { position: absolute; }
+.battle-summary-title-notice::backdrop { background: transparent; }
+.battle-summary-award-animation { transform-origin: center; animation: summary-award-image .9s linear both; }
+.battle-summary-award-pulse { transform-origin: center; animation: summary-award-pulse .4s linear both; }
+@keyframes summary-title-slide {
+  0% { transform: translateX(-500px); }
+  5.882353%, 94.117647% { transform: translateX(0); }
+  100% { transform: translateX(500px); }
+}
+@keyframes summary-left-entry {
+  from { transform: translateX(-400px); }
+  to { transform: translateX(0); }
+}
+@keyframes summary-right-entry {
+  from { transform: translateX(400px); }
+  to { transform: translateX(0); }
+}
+@keyframes summary-bottom-entry {
+  from { transform: translateY(107px); }
+  to { transform: translateY(0); }
+}
+@keyframes summary-outcome-entry {
+  from { transform: translateY(107px) scale(5); }
+  to { transform: translateY(0) scale(1); }
+}
+@keyframes summary-reward-fade {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes summary-award-image {
+  0% { opacity: 0; transform: scale(1.25); }
+  22.222222%, 77.777778% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(.75); }
+}
+@keyframes summary-award-pulse {
+  0%, 100% { transform: scale(1); }
+  49.999999% { transform: scale(1.8); }
+  50% { transform: scale(2); }
+  99.999999% { transform: scale(1.2); }
+}

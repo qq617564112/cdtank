@@ -1,4 +1,4 @@
-import {combatSkills} from './catalog';
+import {readPetSkills} from './pet-skill-rules';
 import type {BattleRoleSources} from '../battle-role-sources';
 import type {RoleCombatState} from './roles/combat-state';
 import type {CombatSkillDefinition} from '../../../shared/combat/catalog';
@@ -24,13 +24,10 @@ interface RevengeRecipient {
 /** Selected owned Pet2 slot3 resolves all five learned source ranks. */
 export function readQualifiedPetTeamRevengeSkill(source: RevengeSource):
     CombatSkillDefinition | undefined {
-  if (!source.attributesReady || source.ownedRoles.tables().pet?.id !== 2) return undefined;
-  const fields = source.ownedRoles.snapshot().base?.fields;
-  const rank = fields?.get(0x68);
-  if (fields?.get(0x50) !== 10241 || rank === undefined || rank < 1 || rank > 5) return undefined;
-  const skill = combatSkills.get(10241 + rank - 1);
-  if (skill?.triggerType !== 6 || skill.target !== 2 ||
-      skill.functions[0]?.type !== 1 || skill.functions[0].t !== 10) return undefined;
+  if (!source.attributesReady) return;
+  const skill = readPetSkills(source).find(source => source.rule.event === 'death'
+    && source.rule.handler === 'attributes' && source.rule.target === 'teammates')?.skill;
+  if (!skill || skill.functions[0]?.type !== 1) return;
   return skill;
 }
 

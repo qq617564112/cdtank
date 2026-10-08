@@ -34,7 +34,7 @@ not hide identity. Objectives are copied directly from `match.objectives`.
 
 ## Five-mode info
 
-The team-life, conquest-score, VIP-HP and remaining-objective definitions are user-confirmed project rules; `battle-hud-confirmed-rules.md` records their scope. The melee DogsInfo second addend remains unresolved.
+The team-life, conquest-score, VIP-HP and remaining-objective definitions are user-confirmed project rules; `battle-hud-confirmed-rules.md` records their scope. Melee projects the confirmed `catsInfo + dogsInfo` sum: the server counts the local player's kills of cat-side and dog-side tanks separately, freezes them in the result and clears them each round. This is the adopted rule in `battle-equipment-exit-melee-rules.md`; the original DogsInfo producer remains a source boundary.
 
 `HudSnapshot.modeInfo` is present only in `PLAYING` or `FINISHED`; `teamCounts`
 keeps the previous mode1 contract.
@@ -44,7 +44,7 @@ keeps the previous mode1 contract.
 | 1 | `teamLives` | Existing `teamInfo` projection over `match.teamLives` |
 | 2 | `teamScores` | Current `teamScores[0..1]` conquest score |
 | 3 | `vipHp` | Current HP of each team's `isVIP` player |
-| 4 | `localKills` | Local `kills`, or final result kills in `FINISHED` |
+| 4 | `catsInfo+dogsInfo` | Confirmed local side-specific kill counts, or frozen result counts in `FINISHED` |
 | 5 | `destroyObjectivesRemaining` | Remaining live `DESTROY` objectives |
 
 Invalid or absent authority fields leave `modeInfo` undefined; the projection

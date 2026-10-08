@@ -1,0 +1,86 @@
+@font-face {
+  font-family: 'CDTank-SourceLatin';
+  src: url('/ui/fonts/source-latin-bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'CDTank-SourceSans';
+  src: url('/ui/fonts/source-sans-bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'CDTank-SourceDigits';
+  src: url('/ui/fonts/source-digits-bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+body [data-source-text-face='sans'] {
+  font-family: 'CDTank-SourceSans', sans-serif !important;
+}
+
+body [data-source-text-face='digits'] {
+  font-family: 'CDTank-SourceDigits', sans-serif !important;
+}
+
+body [data-source-text-face='latin'] {
+  font-family: 'CDTank-SourceLatin', sans-serif !important;
+}
+
+.source-text-artwork {
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+}
+
+.source-text-coordinates {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  transform-origin: left top;
+}
+
+.source-text-ink {
+  position: absolute;
+  display: block;
+  width: max-content;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  white-space: pre;
+  text-shadow: none;
+  text-transform: none;
+  transform-origin: left top;
+  paint-order: stroke fill;
+}
+
+.source-numeric-text {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.source-text-glyph {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.source-numeric-fallback {
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0;
+  white-space: pre;
+  text-shadow: none;
+}

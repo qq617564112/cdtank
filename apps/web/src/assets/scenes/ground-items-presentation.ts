@@ -5,11 +5,12 @@ import type {EffectRuntime} from '../../render/effects/runtime/effect-runtime';
 import type {EffectVec3} from '../../render/effects/common/types';
 import {GroundItemVisual} from './ground-item-visual';
 
-type GroundItemRuntime = Pick<EffectRuntime, 'spawnWorldEffect' | 'playSceneSound'>;
+type GroundItemRuntime = Pick<EffectRuntime, 'spawnSceneEffect' | 'releaseSceneEffect' | 'playSceneSound'>;
 
 interface VisualEntry {
   visual: GroundItemVisual;
   loaded: Promise<void>;
+  effectHandle?: number;
 }
 
 interface SourceRecord {
@@ -23,8 +24,7 @@ interface SourceRecord {
 /**
  * Snapshot presence owns rebuilt ground drops. The visual geometry and the
  * original GA cue come from the dropitem row the server stored on the entity;
- * pickup/delete notifications only remove the scene node at its source pose,
- * matching the original receivers, and never touch local inventory.
+ * the model and its bound particles share the same presence and lifetime.
  */
 export class GroundItemsPresentation {
   private readonly visuals = new Map<string, VisualEntry>();
@@ -43,12 +43,7 @@ export class GroundItemsPresentation {
       return;
     }
     const present = new Set(sources.map(source => source.id));
-    for (const [id, entry] of this.visuals) {
-      if (!present.has(id)) {
-        entry.visual.dispose();
-        this.visuals.delete(id);
-      }
-    }
+    for (const id of this.visuals.keys()) if (!present.has(id)) this.removeVisual(id);
     for (const source of sources) {
       // Retain the authoritative pose/model so a same-tick pickup event that
       // follows the snapshot removal can still start the original cue.
@@ -59,9 +54,17 @@ export class GroundItemsPresentation {
         source.x, source.y, source.z);
       const entry: VisualEntry = {visual, loaded: Promise.resolve()};
       this.visuals.set(source.id, entry);
-      entry.loaded = visual.load().catch(error => {
-        visual.dispose();
-        if (this.visuals.get(source.id) === entry) this.visuals.delete(source.id);
+      entry.loaded = visual.load().then(async () => {
+        if (this.visuals.get(source.id) !== entry || !source.effectId) return;
+        const handle = await this.runtime.spawnSceneEffect(
+          `_root\\online\\${String(source.effectId).padStart(3, '0')}`, visual.effectMatrix);
+        if (this.visuals.get(source.id) !== entry) {
+          if (handle) this.runtime.releaseSceneEffect(handle);
+          return;
+        }
+        entry.effectHandle = handle;
+      }).catch(error => {
+        if (this.visuals.get(source.id) === entry) this.removeVisual(source.id);
         throw error;
       });
     }
@@ -76,30 +79,20 @@ export class GroundItemsPresentation {
   event(event: MsgRoomEvent, localPlayerId: string | undefined): void {
     const dropped = event.groundItemDropped;
     if (dropped) {
-      // Retain the authoritative pose so a same-tick pickup that arrives before
-      // the next snapshot can still start the original cue. The dropitem
-      // EffectFile is the ground-drop cue, played once here and never replayed
-      // for a late joiner whose full snapshot recreates the same entity.
+      // The snapshot owns the model and particles; retain the pose for a pickup
+      // that arrives before the next snapshot creates the visual.
       this.sources.set(dropped.id, {modelId: dropped.modelId, texture: dropped.texture,
         soundId: dropped.soundId, effectId: dropped.effectId, position: [dropped.x, dropped.y, dropped.z]});
-      if (dropped.effectId) {
-        this.runtime.spawnWorldEffect(`_root\\online\\${String(dropped.effectId).padStart(3, '0')}`,
-          [dropped.x, dropped.y, dropped.z]);
-      }
       return;
     }
     const pickup = event.groundItemPickedUp;
     const removed = event.groundItemRemoved;
     const id = pickup?.id ?? removed?.id;
     if (id === undefined) return;
+    this.removeVisual(id);
     const record = this.sources.get(id);
     if (!record) return;
     this.sources.delete(id);
-    const entry = this.visuals.get(id);
-    if (entry) {
-      this.visuals.delete(id);
-      entry.visual.dispose();
-    }
     if (!pickup) return;
     const origin: EffectVec3 = [...record.position];
     if (localPlayerId !== undefined && pickup.playerId === localPlayerId && record.soundId) {
@@ -114,7 +107,14 @@ export class GroundItemsPresentation {
   }
 
   private disposeVisuals(): void {
-    for (const entry of this.visuals.values()) entry.visual.dispose();
-    this.visuals.clear();
+    for (const id of this.visuals.keys()) this.removeVisual(id);
+  }
+
+  private removeVisual(id: string): void {
+    const entry = this.visuals.get(id);
+    if (!entry) return;
+    this.visuals.delete(id);
+    if (entry.effectHandle) this.runtime.releaseSceneEffect(entry.effectHandle);
+    entry.visual.dispose();
   }
 }

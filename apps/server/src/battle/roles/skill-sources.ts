@@ -5,12 +5,14 @@ import type {RoleSkillSources} from './skills';
 /** Original4335b5–4337d7 reads the bound gear separately from both owned sources. */
 export function readRoleSkillSources(input: {
   currentSkillIds: readonly number[] | undefined;
+  runtimeSkillIds?: readonly number[];
   boundGear: OwnedRoleBaseRecord | undefined;
   equipment: OwnedRoleEquipmentRecord;
   roleFields: ReadonlyMap<number, number>;
 }): RoleSkillSources {
   return {
     currentSkillIds: input.currentSkillIds,
+    runtimeSkillIds: input.runtimeSkillIds,
     equipmentSkills: input.boundGear ? Array.from({length: 6}, (_, slot) => ({
       baseId: input.boundGear!.fields.get(0x44 + slot * 4)! | 0,
       rank: input.boundGear!.fields.get(0x5c + slot * 4)! | 0,

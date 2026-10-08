@@ -1,0 +1,126 @@
+{
+  "kind": "pet",
+  "id": 101,
+  "key": "pet-101",
+  "name": "公主",
+  "description": "标准淑女猫咪，由自称贵族后裔的海伦阿婆所饲养。虽然有些高傲，但天性善良，作为玩家的初始猫猫登场。",
+  "prices": {
+    "money": 0,
+    "tokens": 0
+  },
+  "shop": {
+    "available": false,
+    "group": "pet"
+  },
+  "starter": true,
+  "defaultSelected": true,
+  "petType": 1,
+  "petSize": 1,
+  "attributes": {
+    "maxHp": 600,
+    "critical": 5,
+    "lucky": 10,
+    "mastery": [
+      3,
+      3,
+      3,
+      3
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/101/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/101/m117.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 10611,
+      "initialRank": 0,
+      "rankCap": 6,
+      "levels": [
+        10611,
+        10612,
+        10613,
+        10614,
+        10615,
+        10616
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10621,
+      "initialRank": 0,
+      "rankCap": 4,
+      "levels": [
+        10621,
+        10622,
+        10623,
+        10624
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10631,
+      "initialRank": 0,
+      "rankCap": 6,
+      "levels": [
+        10631,
+        10632,
+        10633,
+        10634,
+        10635,
+        10636
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10641,
+      "initialRank": 0,
+      "rankCap": 4,
+      "levels": [
+        10641,
+        10642,
+        10643,
+        10644
+      ],
+      "event": "respawn",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10651,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10651
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10661,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

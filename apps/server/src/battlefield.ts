@@ -22,6 +22,7 @@ interface SourceSpawn {
   position: number[];
   heading: number;
   slot: number;
+  team?: number;
 }
 interface SourceField {
   id: string;
@@ -36,6 +37,8 @@ interface GroundTriangle {
 }
 export interface SpawnPoint extends Point {
   yaw: number;
+  slot?: number;
+  team?: number;
 }
 export interface SurfaceHit {
   fraction: number;
@@ -51,30 +54,34 @@ export class Battlefield {
   private readonly ground = new Map<string, GroundTriangle[]>();
   private readonly boxCells = new Map<string, number[]>();
   readonly spawns: SpawnPoint[];
+  readonly spawnGroups: SpawnPoint[][];
   readonly boxes: SourceBox[];
   readonly navigation: NavigationGrid;
   private readonly dynamicBoxes = new Map<string, SourceBox>();
+  private readonly animatedBlockers = new Map<string, {id: string; cells: readonly number[]}>();
   private readonly replacedPlacements = new Set<string>();
   private readonly terrain: CollisionMesh;
   navigationRevision = 0;
 
   /** Dynamic actors take ownership of the static render placement and its occupancy. */
-  setDynamicBox(box: SourceBox | undefined, id: string): void {
+  setDynamicBox(box: SourceBox | undefined, id: string, cells?: ReadonlySet<number>): void {
+    let navigationChanged = false;
     if (!box) {
       if (!this.dynamicBoxes.delete(id)) return;
-      this.navigation.setBlocker(id);
+      navigationChanged = this.navigation.setBlocker(id);
     } else {
       this.dynamicBoxes.set(id, box);
       if (box.placementId !== undefined) {
         this.replacedPlacements.add(box.placementId);
-        this.navigation.setBlocker(`SCN:${box.placementId}`);
+        navigationChanged = this.navigation.setBlocker(`SCN:${box.placementId}`);
       }
       if (box.mesh) {
-        this.navigation.setBlocker(id, navigationOccupancy(box.mesh, this.navigation));
-        this.navigationRevision++;
+        navigationChanged = this.navigation.setBlocker(id, cells ?? navigationOccupancy(box.mesh, this.navigation))
+          || navigationChanged;
+        if (navigationChanged) this.navigationRevision++;
         return;
       }
-      const cells = new Set<number>();
+      const occupiedCells = new Set<number>();
       const grid = this.navigation.source;
       const extent = Math.hypot(...box.dimensions) / 2;
       const minX = Math.max(0, Math.floor((box.matrix[12] - extent - grid.minimum[0]) / 12));
@@ -84,11 +91,27 @@ export class Battlefield {
       for (let z = minZ; z <= maxZ; z++) for (let x = minX; x <= maxX; x++) {
         const point = {x: grid.minimum[0] + x * 12 + 6, y: box.matrix[13],
           z: grid.minimum[2] + z * 12 + 6};
-        if (segmentBox(point, point, box, 0) !== undefined) cells.add(z * grid.width + x);
+        if (segmentBox(point, point, box, 0) !== undefined) occupiedCells.add(z * grid.width + x);
       }
-      this.navigation.setBlocker(id, cells);
+      navigationChanged = this.navigation.setBlocker(id, occupiedCells) || navigationChanged;
     }
-    this.navigationRevision++;
+    if (navigationChanged) this.navigationRevision++;
+  }
+
+  /** Animated source occupancy is published to clients without rebuilding static surfaces. */
+  setAnimatedBox(box: SourceBox | undefined, id: string): void {
+    if (!box) {
+      this.animatedBlockers.delete(id);
+      this.setDynamicBox(undefined, id);
+      return;
+    }
+    const cells = box.mesh ? navigationOccupancy(box.mesh, this.navigation, false, false) : new Set<number>();
+    this.setDynamicBox(box, id, cells);
+    this.animatedBlockers.set(id, {id: box.placementId ?? id, cells: [...cells]});
+  }
+
+  animatedBlockersSnapshot(): {id: string; cells: number[]}[] {
+    return [...this.animatedBlockers.values()].map(({id, cells}) => ({id, cells: [...cells]}));
   }
 
   constructor(readonly source: SourceField) {
@@ -136,9 +159,12 @@ export class Battlefield {
       const height = cell?.valid ? cell.height : undefined;
       return height !== undefined && Math.abs(height - y) < 5;
     }));
-    const selected = groups[0].length >= 2 ? groups[0] : groups[1];
-    this.spawns = selected.map(spawn => ({x: spawn.position[0], y: spawn.position[1],
-      z: spawn.position[2], yaw: spawn.heading * Math.PI / 180}));
+    this.spawnGroups = groups.map(group => group.map(spawn => ({
+      x: spawn.position[0], y: spawn.position[1], z: spawn.position[2],
+      yaw: spawn.heading * Math.PI / 180, slot: spawn.slot,
+      ...(spawn.team === undefined ? {} : {team: spawn.team})})));
+    this.spawns = this.spawnGroups.reduce((best, group) =>
+      group.length > best.length ? group : best, this.spawnGroups[0]);
     for (const box of this.boxes) this.navigation.setBlocker(box.id, navigationOccupancy(box.mesh!, this.navigation));
     this.navigation.setBlocker('terrain', navigationOccupancy(this.terrain, this.navigation, true));
   }
@@ -227,11 +253,17 @@ export class Battlefield {
     return {x, y: this.navigation.sample(x, z)!.height, z};
   }
 
-  spawn(index: number): SpawnPoint {
-    if (!this.spawns.length) {
+  spawnPoints(team?: number): readonly SpawnPoint[] {
+    return team === undefined ? this.spawns
+      : this.spawns.filter(spawn => spawn.team === undefined || spawn.team === team);
+  }
+
+  spawn(index: number, team?: number): SpawnPoint {
+    const spawns = this.spawnPoints(team);
+    if (!spawns.length) {
       throw new Error(`地图${this.source.id}的出生点仍待还原`);
     }
-    return this.spawns[index % this.spawns.length];
+    return spawns[index % spawns.length];
   }
 }
 

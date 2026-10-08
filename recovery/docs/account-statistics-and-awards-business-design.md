@@ -109,9 +109,9 @@ export interface ResRoleProfile {
 
 历史缺统计不猜0，新增optional字段只在真实producer/ledger存在时附值。`battleSeconds` 沿当前title已记录的seconds窗口；旧history缺秒不猜 `timeLimit`。累计awards按真实unique `awards[].type` 计数，不按UI可见的5格裁掉。
 
-## 九奖章采用政策
+## 九奖章竞争政策
 
-九奖章的enable、threshold和score都从对应map行的原列读取；没有cap，也不建立另一张评分表。
+九奖章以表现竞争名额，让伤害、治疗、背击和连杀分别体现不同打法。enable、伤害门槛参数和score从对应map行的原列读取；名额、资格和评选顺序为本项目业务规则。
 
 ### Config 合同
 
@@ -146,32 +146,33 @@ export interface ModeMapConfig {
 ### 共同资格
 
 - 参与者必须在本局实际 `playedSeconds > 0`。旁观和未形成真实参赛stats的玩家跳过。
+- 每种奖章全场最多一名；没有达标者时该项空缺。每名玩家可因不同表现取得多个奖章，不按已得奖数量转让名额。
 - 每名玩家每类型至多产生一个 `RoundAward`。
 - `awards[].score` 在冻结结算时只加入一次 `combatScore`，`outcomeBonus` 不变。
-- 所有真实获奖记录都保留，最多9项；UI只显示每行固定顺序的前5项，不删除其余记录或账户计数。
+- 所有评选获奖记录都保留；UI只显示每行固定顺序的前5项，不删除其余记录或账户计数。历史结算和账户计数保持已提交结果，后续结算使用本政策。
 - CPU有真实本局stats时可以取得本局显示奖章，但账户层按account身份跳过；没有accountId不写累计。
 
 ### 判定
 
 | 奖章 | 采用条件 |
 | --- | --- |
-| Perfect | `deaths === 0` 且 `kills + objectivesDestroyed >= 1`。 |
-| MVP | 使用加奖分前的冻结 `totalScore`；mode1–3每team一名，mode4/5全局一名。只有kills、damage、objectivesDestroyed至少一项有实际贡献的玩家入选；并列依次比较kills、objectivesDestroyed、较小playerId。 |
-| Savage | 对敌真实damage达到Savage阈值。 |
-| Console | `deaths >= 1` 且对敌真实damageTaken达到Console阈值。 |
-| Brave | `deaths >= 1` 且 `kills >= 1`。 |
-| Kind | 真实ally healing达到Kind阈值。 |
-| Crafty | 真实rear damage达到Crafty阈值。 |
-| Shy | `shots === 0` 且 `damageTaken > 0`，即实际参赛并受击。 |
-| Greedy | mode4/5中damage最高且 `damage > 0`；并列依次比较kills、较小playerId。没有正damage producer时不授。 |
+| Perfect | `deaths === 0` 且 `kills + objectivesDestroyed >= 3`；该合计最高者一名，并列依次比较damage、kills、较小playerId。 |
+| MVP | 仅冻结结算 `outcome === 'WIN'` 且 `kills > 0` 的玩家入选，全场最多一名；使用加奖分前的冻结 `totalScore` 排序，并列依次比较kills、objectivesDestroyed、较小playerId。败方、平局和0击毁不授优秀奖，没有合格者时空缺。 |
+| Savage | 对敌真实damage达到Savage阈值的候选者中，damage最高者一名；并列依次比较kills、较小playerId。 |
+| Console | `deaths >= 3`、`deaths > kills` 且受到敌方真实damageTaken达到Console阈值；候选者中damageTaken最高者一名，并列依次比较deaths、较小playerId。 |
+| Brave | `deaths >= 1` 且真实无死亡连杀 `killCombo >= 3`；候选者中killCombo最高者一名，并列依次比较kills、较少deaths、较小playerId。 |
+| Kind | 仅mode1–3，真实ally healing达到Kind阈值；候选者中healing最高者一名，并列依次比较较少deaths、较小playerId。 |
+| Crafty | 真实rearDamage达到Crafty阈值，且 `rearDamage * 2 >= damage`，即背击至少占对敌总伤害一半；候选者中rearDamage最高者一名，并列依次比较damage、kills、较小playerId。 |
+| Shy | `shots === 0`、`deaths >= 1` 且受到敌方damageTaken达到Console阈值；候选者中damageTaken最高者一名，并列依次比较deaths、较小playerId。 |
+| Greedy | 仅mode4/5，`kills >= 3` 且 `kills > deaths`；候选者中kills最高者一名，并列依次比较较少deaths、objectivesDestroyed、较小playerId。以击杀数体现收割表现，与Savage的累计伤害竞争分别评选。 |
 
-Savage、Console、Kind、Crafty的采用阈值为：
+Savage、Console、Kind、Crafty的资格门槛，以及Shy复用的Console门槛为：
 
 ```text
 原Damage + 原DamagePlus * max(0, 敌对参赛者数量 - 1)
 ```
 
-这是按人数增加阈值的采用单位政策，不是原source证明。敌对参赛者数量在mode1–3按 `differentTeam`，mode4/5按其他玩家；源DamagePlus不被忽略。Kind/Crafty在mode4直接保留原Damage 50和DamagePlus 15。
+这是按人数增加阈值的采用单位政策，不是原source证明。敌对参赛者数量在mode1–3按 `differentTeam`，mode4/5按其他玩家；源DamagePlus不被忽略。mode4的Kind/Crafty配置保留原Damage 50和DamagePlus 15，该模式只评选Crafty，Kind不参与。
 
 ### 纯Domain API
 
@@ -181,6 +182,7 @@ Savage、Console、Kind、Crafty的采用阈值为：
 interface AwardParticipant {
   playerId: string;
   team: number;
+  outcome: 'WIN' | 'LOSE' | 'DRAW';
   playedSeconds: number;
   roundStats: RoundStats;
   kills: number;

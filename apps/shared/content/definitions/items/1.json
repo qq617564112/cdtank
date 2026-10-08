@@ -1,0 +1,80 @@
+{
+  "name": "宠物饲料",
+  "getMethod": 2,
+  "durable": 10,
+  "breakMode": 2,
+  "itemType": 1,
+  "battleUseMax": 10,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "item",
+  "id": 1,
+  "key": "food",
+  "description": "美味的宠物饲料普通包，猫狗都喜欢！可以回复生命200点。",
+  "prices": {
+    "money": 10,
+    "tokens": 10
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 1,
+  "inventoryCategory": 1,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": "Data/scnobj/00001/00001.glb",
+    "modelId": 1,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 1,
+    "textures": [
+      "Data/scnobj/00001/00001A.png"
+    ],
+    "sourceModel": "Data/scnobj/00001/00001.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/00001/00001A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 10,
+      "breachDropOrder": 1,
+      "cpuUrgentHpRatio": 0.35,
+      "battleRewardOrder": 1
+    },
+    "skillRoles": {
+      "primary": 1,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "use": "heal",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

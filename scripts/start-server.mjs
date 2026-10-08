@@ -9,6 +9,7 @@ const child = spawn(process.execPath, [resolve(workspace, 'dist/server/server/sr
   env: {...process.env,
     CONTENT_TABLES: process.env.CONTENT_TABLES ?? resolve(workspace, 'recovery/output/verified/tables'),
     WEB_ASSETS: process.env.WEB_ASSETS ?? resolve(workspace, 'recovery/output/web-assets'),
+    WEB_ROOT: process.env.WEB_ROOT ?? resolve(workspace, 'dist/web'),
     ACCOUNT_DB_PATH: process.env.ACCOUNT_DB_PATH ?? resolve(workspace, 'recovery/output/accounts.sqlite')},
 });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));

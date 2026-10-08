@@ -1,9 +1,9 @@
+import {isTreasureItem} from '../../../shared/combat/treasure-items';
 import type {DatabaseSync} from 'node:sqlite';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
 import type {ReqValuableItemSale, ResValuableItemSale} from '../../../shared/protocols/PtlValuableItemSale';
 
-const VALUABLE_ITEM_IDS = new Set([20001, 20002]);
 const MONEY_LIMIT = 999999999;
 const MAX_QUANTITY = 0xffffff;
 
@@ -30,7 +30,7 @@ export class AccountValuableItemSale {
       const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
       const money = view.getUint32(0x70, true);
       const quotes = records.flatMap(record => {
-        if (!VALUABLE_ITEM_IDS.has(record.itemTableId)) return [];
+        if (!isTreasureItem(record.itemTableId)) return [];
         const item = catalog.items.find(row => row.itemTableId === record.itemTableId);
         if (item?.moneyPrice === undefined) return [];
         const unitPrice = item.moneyPrice >>> 1;
@@ -65,7 +65,7 @@ export class AccountValuableItemSale {
       const current = response();
       if (!current.profile || current.money === undefined) throw new Error('账户角色资料尚未建立');
       const record = current.inventory.records.find(row => row.instanceId === request.instanceId);
-      if (!record || !VALUABLE_ITEM_IDS.has(record.itemTableId)) throw new Error('该出售实例不属于当前贵重品账户');
+      if (!record || !isTreasureItem(record.itemTableId)) throw new Error('该出售实例不属于当前贵重品账户');
       if (request.quantity! > record.ownedQuantity) throw new Error('出售数量超过拥有量');
       const quote = current.quotes.find(row => row.instanceId === request.instanceId);
       if (!quote) throw new Error('该贵重品原出售价格不可用');

@@ -6,7 +6,7 @@ export const INPUT_ACTIONS = [
 
 export type InputAction = typeof INPUT_ACTIONS[number];
 
-/** Shortcuts whose binding may be absent in an existing saved configuration. */
+/** Shortcuts whose primary may be absent in an existing saved configuration. */
 export const OPTIONAL_INPUT_ACTIONS = [
   'useItem', 'prevWeapon', 'nextWeapon', 'prevItem', 'nextItem',
 ] as const satisfies readonly InputAction[];
@@ -39,7 +39,7 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = {
   slot6: 'Digit6',
   slot7: 'Digit7',
   slot8: 'Digit8',
-  useItem: 'KeyH',
+  useItem: 'ControlLeft',
   prevWeapon: 'Home',
   nextWeapon: 'End',
   prevItem: 'PageUp',
@@ -48,7 +48,7 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = {
 
 export function isSupportedKeyCode(value: unknown): value is string {
   return typeof value === 'string'
-    && /^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|Arrow(Left|Right|Up|Down)|Space|Home|End|PageUp|PageDown)$/.test(value);
+    && /^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|Arrow(Left|Right|Up|Down)|Space|Home|End|PageUp|PageDown|ControlLeft|ControlRight)$/.test(value);
 }
 
 export function validateKeyBindings(value: unknown): KeyBindings | undefined {
@@ -112,6 +112,8 @@ export function keyLabel(code: string): string {
     case 'End': return '末页';
     case 'PageUp': return '上页';
     case 'PageDown': return '下页';
+    case 'ControlLeft': return '左Ctrl';
+    case 'ControlRight': return '右Ctrl';
     default: return code;
   }
 }

@@ -2,13 +2,17 @@
 
 M5-06/UI-19消费game_summary.xml的原800×600根，左右队伍各六行、主要上下底图和btnClose。React新增battle-summary-page.tsx/css持有资源、缩放、名单页码，主线battle-match拥有正式FINISHED分支和现请求owner。SourceButton消费原Close三态图片。当前Web采用min(viewportWidth/800,viewportHeight/600)居中，字形和原高清规则尚未证明。
 
-合同为results:readonly ResultPlayer[]、playerId、round、mode、title、objective、status、pending、voted、hasLocalPlayer、requestRematch、leave。team直接使用computeMatchResult已冻结的真实字段，无协议或账户事务改动。团队模式按真实team分列、rank排序；每队超过六人按页完整可达。个人模式4/5原joiningTeam全部为0，按整体rank依次填两列，不显示Cat/Dog队伍图，标明个人排名；数据中的team仍为真实值。超过十二条同页码完整可达。
+合同为results:readonly ResultPlayer[]、playerId、round、mode、title、objective、status、pending、hasLocalPlayer、soundVolume、returnToRoom。soundVolume读取Battle当前运行中的音效音量。team直接使用computeMatchResult已冻结的真实字段。团队模式按真实team分列、rank排序；每队超过六人按页完整可达。个人模式4/5按整体rank依次填两列，不显示Cat/Dog队伍图，标明个人排名；数据中的team仍为真实值。超过十二条同页码完整可达。
 
-原txtPlayerName、txtScore、txtExtra沿完整父链消费。Score显示当前combatScore，Extra显示outcomeBonus，是Web业务投影；原Score/Extra语义与FontScoreHT未证明。当前总分、击毁、死亡、目标计数保留在行内原奖励空区，以可读文字呈现，不推造奖励图或将totalScore当作钱。重复动态header与奖励/等级/EXP producer未知，保持未完成。未启用没有行为证据的重叠高亮层、胜负和奖项图片。
+原txtPlayerName、txtScore、txtExtra沿完整父链消费。Score随实际奖项逐项累加到冻结combatScore；Extra随原五模式列头显示击毁、碉堡伤害、VIP伤害、击毁、破坏目标。擒王列取累计实际敌方VIP HP损失，占领列累计实际扣除的敌方原CAS碉堡HP。排名、总分、结局加分、死亡和目标数保留在整行提示及辅助文字中，行内原奖章区域消费真实RoundAward。本人用原绿色底图；picWin/picLose/picDraw读取本人的冻结outcome。
 
-原Close接现退出房间动作，不绑定再战；原Close回调语义仍未知。再战是独立Web按钮，沿现owner的pending、voted和错误状态，原下方空区显示当前业务状态。原EXP条与奖励数值不填账户值。个人排名标识、分页、再战、行内额外数据与留边颜色均为Web呈现。
+原btnClose“继续”返回本局原等待房间，保留成员、队伍与房间设置；结算页没有再战提示和确认再战按钮。Rematch事务记录成员关闭结算，第一次继续使原房间进入WAITING并清空真人准备状态，CPU保持准备。冻结结果和同局号回执保留到下一局载入；尚未继续的参战者仍显示自己的FINISHED结算，必须继续后才能准备。全员重新准备后才载入下一局并递增局号；房主在所有仍在房的参战者返回后可修改设置，修改设置同样结束原局号。返回原房间、多人独立关闭结算及重新准备的完整流程尚未实测。
 
-归属仅新battle-summary-page.tsx/css、专属browser/source/doc。battle-match桥接、SourceButton suffix由主线维护；不改伤害、原奖励、ScenePreview或Battle生命周期。
+面板0.7秒入场，玩家行每隔0.3秒入场，再播放胜负图0.7秒缩放/位移、3秒滚分及每项2秒的实际奖项。成长进度从已提交receipt的rankPointsBefore逐级变化，每个等级段1秒；四种奖励数值由原game_summary_award消费，0.2秒滑入并于3.2秒自动衔接本局新称号。每条称号按原3.4秒横移动画自动继续，末段奖励层1秒渐隐。个人排名标识、分页、保留最终名单、提示文字及留边颜色为Web呈现。静态来源与接线见`battle-summary-sequence-source.md`。
+
+九个原音效按结算阶段、实际奖项、升降级和新称号触发；玩家行阶段入口播放一次UI36。颁奖UI38循环在成长前停止，UI29沿滚分和经验帧请求短声部。资源准备完成后开始演出；声音载入失败显示状态并保留结算操作。声音生命周期及原调用点见`battle-summary-audio-source.md`。
+
+结算宠物ID从真实选用owned base字段8冻结，包含中途离场者。原fenshujiesuan0的`${petId}_yeah_1/2.tga`每0.5秒轮换，败者/平局取`${petId}_die.tga`。ResultPlayer.petId、ResultAward.grantedTitles及RoundStats.vipDamage沿现TSRPC schema附加字段；称号查询复用同局已持久授予记录。详细来源见 `battle-ui-missing-runtime.md`。
 
 ## 验收范围
 
@@ -16,7 +20,7 @@ M5-06/UI-19消费game_summary.xml的原800×600根，左右队伍各六行、主
 
 ## 未完成
 
-全185控件、原动态可见producer、EXP/币/奖项/等级、原Score/Extra语义、原字体和1:1高清规则未完成；UI-19/M5-06父项不勾。当前证据记录完成后提交主线审查。
+全185控件、原Score细分语义、FontScoreHT与1:1高清规则仍未完成；道具/坦克奖励已由账户结算事务实际发放并沿回执显示，原发放资格与概率仍缺来源，采用规则见battle-equipment-exit-melee-rules.md。碉堡伤害、称号自动提示及结算时序已有代码接线，新增内容尚未实测，UI-19/M5-06父项不勾。下列历史证据只覆盖当时已验证的名单、导航与焦点。
 
 首实际整页证据为browser-battle-summary-page-2026-10-04T18-16-45-123Z.json有效finished/rows/sizes字段与800/1920/3840三图，已逐图实际查看。两端同一TIME_LIMIT冻结结果、真实team/rank/name/combatScore/outcomeBonus/totalScore与十二原槽一致，普通Space未命中，combatScore=0保持真实；EXP奖励空白。图片中排名尚只保存在data属性，最终源码已在行内补“第N名 · 总分”，不因此重跑三res。
 

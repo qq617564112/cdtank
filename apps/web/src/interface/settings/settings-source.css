@@ -1,5 +1,5 @@
 #source-settings { position: fixed; inset: 0; width: 800px; height: 599px; max-width: none; max-height: none; margin: auto; padding: 0; border: 0; background: transparent; overflow: visible; color: #fff; }
-#source-settings::backdrop { background: transparent; }
+#source-settings::backdrop { background: rgb(0 33 74 / 60%); }
 .settings-source-stage { position: relative; width: 800px; height: 599px; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
 .settings-source-stage > * { position: absolute; box-sizing: border-box; }
 .settings-source-picture { pointer-events: none; }

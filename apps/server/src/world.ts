@@ -1,3 +1,6 @@
+import {itemHitHandler, gameContent} from '../../shared/content/catalog';
+import {defaultAmmoId} from '../../shared/content/catalog';
+import {confirmAcceptedAmmoSelection} from './battle/items/ammo-confirmation';
 import {resetTrapFireRestraint} from './battle/items/trap-fire-restraint';
 import {advanceEquipmentSupply, resetEquipmentSupply} from './battle/items/equipment-supply';
 import {resetTrapTurnRestraint} from './battle/items/trap-turn-restraint';
@@ -14,24 +17,26 @@ import {
 } from './battle/items/ground-items';
 import {advanceOldBombs} from './battle/items/old-bomb';
 import {advanceContactMines} from './battle/items/contact-mine';
+import {advanceGroundBlasts} from './battle/items/ground-blast';
 import {advanceAirstrikes} from './battle/items/airstrike';
 import {resetTrapRestraint} from './battle/items/trap-restraint';
-import {createSceneCrushes, acceptSceneCrush} from './battle/scene-crush';
+import {createSceneCrushes, acceptSceneCrush, sceneCrushContactColliders} from './battle/scene-crush';
 import {createScenePlants, plantContactColliders} from './battle/scene-plant-contact';
-import {MEDICAL_AMMO_ID, resolveMedicalAmmo} from './battle/items/medical-ammo';
+import {resolveMedicalAmmo} from './battle/items/medical-ammo';
 import {advanceAmmoBurn, clearAmmoBurn, startAmmoBurn} from './battle/items/ammo-burn';
 import {advanceAmmoSlow, clearAmmoSlow, startAmmoSlow} from './battle/items/ammo-slow';
 import {advanceAmmoRadarJam, ammoRadarJamSkillEffect, clearAmmoRadarJam, startAmmoRadarJam} from './battle/items/ammo-radar-jam';
 import {resolveExplosiveAmmoBlast} from './battle/items/explosive-ammo';
 import {resolveSelfDestructDeath} from './battle/items/self-destruct';
 import {roomMaxPlayers, roomMinPlayers} from './rooms/player-limits';
-import {findAvailableTankSpawn} from './battle/spawn-position';
+import {findBattleRespawn} from './battle/spawn-position';
 import {battleAttributes, battlePartSources, battleSkillSources, battleInventory} from './battle/projection';
 import {configureBattleAutopilot} from './battle/autopilot';
 import {roomChat} from './rooms/chat';
 import {canBindBattleSources, bindBattleInventory, bindOwnedBattleSources, bindBattleEquipment, selectBattleTank, confirmBattleKitbag} from './battle/preparation';
 import {baseTankMaxHp} from './battle/create-player';
 import {setBattleHealth} from './battle/health';
+import {initialTankVerticalState} from '../../shared/movement/tank-vertical';
 import {combatSkills, combatItemSkills} from './battle/catalog';
 import {selectRoleSkills} from './battle/roles/skills';
 import {insertRoomPlayer} from './rooms/membership';
@@ -41,16 +46,14 @@ import type {ReqEditRoom} from '../../shared/protocols/PtlEditRoom';
 import {confirmBattleItemConsumption} from './battle/items/consumption';
 import type {CpuLoadoutItem, ReqCpu} from '../../shared/protocols/PtlCpu';
 import {leaveRoomPlayer} from './rooms/departure';
-import {ensureDefaultRooms, ensureWaitingRoom} from './rooms/availability';
 import {quickMatchRoom} from './rooms/quick-match';
 import type {PlayerState} from './battle/player-state';
 import type {RoomState, JoinResult, DepartedParticipantRecord} from './rooms/state';
 import {createWaitingRoom} from './rooms/create';
 import {createAndJoinRoom, admitRoomPlayer} from './rooms/admission';
 import {damagePlayer, damagePlayerDirectly, respawnPlayer, advanceLastStandDeath} from './battle/life';
-import {clearCopiedRoleSkill, copyPassiveSkillAfterKill} from './battle/passive-skill-copy';
-import {healPetAfterKill} from './battle/pet-kill-heal';
-import {applyPetHitSpeed, advancePetHitSpeed, clearPetHitSpeed} from './battle/pet-hit-speed';
+import {clearCopiedRoleSkill} from './battle/passive-skill-copy';
+import {PetBattleSkills, detachPetBattle, refreshPetTeamSkills} from './battle/pet-lifecycle';
 import {battleMovementPose} from './battle/movement';
 import {roleHurtSelector} from './battle/roles/hurt-direction';
 import {initializeBattleParticipants} from './battle/start';
@@ -66,13 +69,14 @@ import {advanceTurnDrink, clearTurnDrink} from './battle/items/turn-drink';
 import {advanceSpeedDrink, clearSpeedDrink} from './battle/items/speed-drink';
 import {advanceInvincibility, clearInvincibility} from './battle/items/invincibility';
 import {advanceOpticalCamouflage, clearOpticalCamouflage} from './battle/items/optical-camouflage';
-import {advanceRoleDisguise, clearRoleDisguise, restoreRoleDisguiseAfterAcceptedFire} from './battle/items/role-disguise';
-import {setReady, changeWaitingTeam, voteRematch, prepareRematch, readyCpus} from './rooms/preparation';
+import {advanceRoleDisguise, clearRoleDisguise, restoreConcealmentAfterAcceptedFire} from './battle/items/role-disguise';
+import {setReady, changeWaitingTeam, voteRematch, readyCpus} from './rooms/preparation';
 import {advanceProjectiles} from './battle/projectiles';
 import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSceneObjectCollision} from './battle/environment';
 import {attachProjectileSceneResult} from './battle/projectile-scene-result';
 import {createObjectives, advanceObjectives, damageObjective, objectiveEnd} from './modes/objectives';
 import {resetBreachCollision, syncBreachCollision} from './battle/breach-collision';
+import {resetAnimatedSceneCollision, syncAnimatedSceneCollision} from './battle/animated-scene-collision';
 import {applyRespawnProtection, advanceRespawnProtection, clearRespawnProtection} from './battle/respawn-protection';
 import type {
   GroundItemAcquireContext,
@@ -90,7 +94,7 @@ import type {
   MatchResult,
   MapOption,
 } from '../../shared/protocols';
-import type {PlayerTitle} from '../../shared/protocols/MsgRoomSnapshot';
+import type {ObjectiveSnapshot, PlayerTitle, SceneObjectSnapshot} from '../../shared/protocols/MsgRoomSnapshot';
 import {MAPS, type TankConfig} from './config';
 import type {InventoryWireRecord} from '../../shared/protocols/PtlInventory';
 import type {AccountInventory} from './account-store';
@@ -105,6 +109,7 @@ import {readResultRewardModifiers} from './settlement/reward-modifiers';
 import type {ResultRewardModifiers} from './settlement/reward-modifiers';
 import type {ResultAward} from '../../shared/protocols/MsgRoomSnapshot';
 import {countShot, recordHealing} from './battle/round-statistics';
+import {freezeTitleRoundStatistics} from './battle/creative-title-statistics';
 
 export type WorldEvent = MsgRoomEvent;
 
@@ -163,9 +168,7 @@ export class World {
                 resolveAccount?: (connectionId: string) => string | undefined;
                 currentTitle?: (accountId: string) => PlayerTitle | undefined;
                 onMatchCommitted?: (match: CommittedMatch) =>
-                  ReadonlyMap<string, ResultAward> | void} = {}) {
-    this.ensureDefaultRooms();
-  }
+                  ReadonlyMap<string, ResultAward> | void} = {}) {}
 
   listRooms(): RoomSummary[] {
     return [...this.rooms.values()].map(room => ({
@@ -208,7 +211,6 @@ export class World {
 
   quickMatch(clientId: string, name: string, tankId: number): JoinResult {
     return quickMatchRoom(this.rooms,
-      () => this.createRoom(2 + (this.nextRoomId % 4), 2 + (this.nextRoomId % 10)),
       room => this.joinRoom(room.roomId, clientId, name, tankId));
   }
 
@@ -247,6 +249,9 @@ export class World {
       throw new Error('对局已变化，请等待最新状态');
     }
     const {room} = found;
+    if (room.result?.players.some(player => player.id === playerId) && !room.rematch.has(playerId)) {
+      throw new Error('请先点击继续返回房间');
+    }
     if (setReady(room, playerId, isReady, this.minPlayers(room))) this.beginRoomLoading(room);
     return room.round;
   }
@@ -294,17 +299,29 @@ export class World {
     if (found.player.cpu || found.room.creatorClientId !== found.player.clientId) {
       throw new Error('只有房主可以编辑房间');
     }
+    if (found.room.result?.players.some(player => found.room.players.has(player.id)
+        && !found.room.rematch.has(player.id))) {
+      throw new Error('请等待所有成员返回房间后编辑设置');
+    }
+    const completedRound = found.room.result !== undefined;
     editWaitingRoom(found.room, request);
+    if (completedRound) found.room.round++;
     return found.room.round;
   }
 
   rematch(playerId: string, round: number): number {
     const found = this.findPlayer(playerId);
-    if (!found || round !== found.room.round || found.room.phase !== 'FINISHED') {
-      throw new Error('只有当前已结束的对局可以再战');
+    if (!found || round !== found.room.round || !found.room.result
+        || (found.room.phase !== 'FINISHED' && found.room.phase !== 'WAITING')) {
+      throw new Error('只有当前已结束的对局可以返回房间');
+    }
+    if (found.room.phase === 'FINISHED') {
+      found.room.phase = 'WAITING';
+      found.room.ready.clear();
+      found.room.loaded.clear();
+      readyCpus(found.room);
     }
     voteRematch(found.room, playerId);
-    this.tryRematch(found.room);
     return found.room.round;
   }
 
@@ -316,8 +333,7 @@ export class World {
     clearRespawnProtection(player);
     this.clearPlayerRoundState(playerId);
     clearAmmoRadarJam(player);
-    clearCopiedRoleSkill(player.combat);
-    clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
+    detachPetBattle(player);
     clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
     const events: WorldEvent[] = [];
     clearRoleDisguise(player, () => recomputeBattleAttributes(player), room.roomId, events);
@@ -330,10 +346,9 @@ export class World {
       finish: outcome => this.finishRoom(room, this.now(), 'FORFEIT',
         outcome.winnerTeam, outcome.winnerPlayerId, events, rewardModifiers),
       departed: departed => this.captureDeparted(room, departed, rewardModifiers.get(departed.id)),
-      create: mode => {this.createRoom(mode);},
       start: () => this.beginRoomLoading(room),
-      rematch: () => this.tryRematch(room),
     }));
+    if (room.phase === 'PLAYING') refreshPetTeamSkills(room);
     if (!this.rooms.has(room.roomId)) {
       clearGroundItems(room);
       this.departedParticipants.delete(room.roomId);
@@ -341,14 +356,22 @@ export class World {
     return events;
   }
 
+  /** Confirmed scene destructions count toward the adopted explicit-exit policy. */
+  exitPenaltyCount(playerId: string): number {
+    const found = this.findPlayer(playerId);
+    if (!found || found.room.phase !== 'PLAYING' || this.now() < found.room.startedAt) return 0;
+    return found.player.sceneBreakCount ?? 0;
+  }
+
   /** Freeze a mid-round ordinary leaver's statistics and real account before removal. */
   private captureDeparted(room: RoomState, player: PlayerState,
     rewardModifiers?: ResultRewardModifiers): void {
     if (player.cpu) return;
     const accountId = this.options.resolveAccount?.(player.clientId);
-    const frozen = {id: player.id, name: player.name, team: player.team, score: player.score,
+    const frozen = {id: player.id, name: player.name, petId: player.ownedRoles.snapshot().base?.fields.get(8), team: player.team, score: player.score,
       kills: player.kills, deaths: player.deaths, objectivesDestroyed: player.objectivesDestroyed,
-      roundStats: player.roundStats ? {...player.roundStats} : undefined,
+      catsInfo: player.catsInfo, dogsInfo: player.dogsInfo,
+      roundStats: freezeTitleRoundStatistics(player),
       playedSeconds: Math.max(0, (this.now() - room.startedAt) / 1000)};
     room.departedParticipants ??= new Map();
     room.departedParticipants.set(player.id, frozen);
@@ -380,7 +403,8 @@ export class World {
 
   /** Attach committed receipts to the still-live frozen result, by player id. */
   private attachResultAwards(room: RoomState, round: number, awards: ReadonlyMap<string, ResultAward>): void {
-    if (room.phase !== 'FINISHED' || room.round !== round || !room.result) return;
+    if (room.round !== round || !room.result
+        || (room.phase !== 'FINISHED' && room.phase !== 'WAITING')) return;
     for (const player of room.result.players) {
       const award = awards.get(player.id);
       if (award) player.award = award;
@@ -388,7 +412,7 @@ export class World {
     // Refresh still-live participants' worn badge after a first or retried commit; the persisted
     // account title is authoritative and survives disconnect/mid-round leave.
     for (const [playerId, player] of room.players) {
-      if (!awards.has(playerId)) continue;
+      if (player.cpu || !awards.has(playerId)) continue;
       const accountId = this.options.resolveAccount?.(player.clientId);
       player.title = accountId ? this.options.currentTitle?.(accountId) : undefined;
     }
@@ -399,6 +423,19 @@ export class World {
     for (const receipt of receipts) {
       const room = this.rooms.get(receipt.roomId);
       if (room) this.attachResultAwards(room, receipt.round, receipt.awards);
+    }
+  }
+
+  /** Merge committed new item instances without changing live quantities or hotkey bindings. */
+  publishInventoryGrants(accountId: string, records: readonly InventoryWireRecord[]): void {
+    for (const playerId of this.accountPlayerIds(accountId)) {
+      const player = this.findPlayer(playerId)?.player;
+      if (!player) continue;
+      for (const record of records) {
+        if (player.inventory.some(item => item.instanceId === record.instanceId)) continue;
+        player.inventory.push({...record});
+        this.pendingInventoryChanged.add(playerId);
+      }
     }
   }
 
@@ -415,6 +452,10 @@ export class World {
     found.player.autopilot = undefined;
     found.player.autopilotInputSequence = 0;
     found.player.input = {...DEFAULT_INPUT, sequence: found.player.inputSequence};
+    // Dropping autopilot is a control change: rebuild the vertical state from
+    // the current body position so a leftover descent does not carry over.
+    found.player.verticalState = initialTankVerticalState(found.player.y,
+      found.room.battlefield.navigation.sample(found.player.x, found.player.z)?.height);
   }
 
   restorePlayerConnection(playerId: string, connectionId: string): void {
@@ -597,8 +638,61 @@ export class World {
 
   private readonly groundItemCallbacks: AcquireDiscardCallbacks = {
     roundUse: (playerId, itemTableId) => this.roundItemUseCount(playerId, itemTableId),
+    petType: playerId => {
+      const player = this.findPlayer(playerId)?.player;
+      if (!player) return undefined;
+      const petId = player.cpu
+        ? player.cpuPetId ?? player.ownedRoles.tables().pet?.id
+        : player.ownedRoles.tables().pet?.id;
+      return petId === undefined ? undefined : gameContent().pets.get(petId)?.petType;
+    },
     acquire: request => this.acquireGroundItem(request),
     discard: request => this.discardGroundItem(request),
+    pickupRejection: (playerId, ground) => {
+      const found = this.findPlayer(playerId);
+      const item = gameContent().items.get(ground.itemTableId);
+      if (!found || !item || !((item.runtime.values.pickupHealing ?? 0) > 0)) return;
+      if (found.player.lastStand) return `最后一搏期间无法拾取${item.name}`;
+      const maximum = found.player.vip
+        ? Math.max(1, found.room.map.vipHp)
+        : this.playerMaxHp(found.player);
+      if (found.player.hp >= maximum) return `生命值已满，无法拾取${item.name}`;
+      return undefined;
+    },
+    pickupSucceeded: (playerId, ground, events) => {
+      const found = this.findPlayer(playerId);
+      if (!found || found.room.phase !== 'PLAYING' || !found.player.alive || found.player.lastStand) return;
+      const item = gameContent().items.get(ground.itemTableId);
+      const healing = item?.runtime.values.pickupHealing;
+      if (!item || healing === undefined || !(healing > 0)) return;
+      const maximum = found.player.vip
+        ? Math.max(1, found.room.map.vipHp)
+        : this.playerMaxHp(found.player);
+      const hp = Math.min(maximum, found.player.hp + healing * ground.quantity);
+      const restored = hp - found.player.hp;
+      setBattleHealth(found.player, hp, maximum);
+      const skillId = item.runtime.skillRoles.secondary;
+      events.push({
+        roomId: found.room.roomId,
+        type: 'groundItemHealed',
+        message: `${found.player.name}拾取${item.name}，恢复${Math.round(restored)}生命`,
+        playerId: found.player.id,
+        targetId: found.player.id,
+        value: restored,
+        x: found.player.x,
+        y: found.player.y,
+        z: found.player.z,
+        skillId,
+        playSkillEffect: skillId > 0 ? {
+          skillId,
+          effectIndex: 0,
+          duration: 0,
+          roleId: Number(found.player.id.slice(1)),
+          xBits: 0,
+          zBits: 0,
+        } : undefined,
+      });
+    },
   };
 
   private accountForPlayer(playerId: string): string | undefined {
@@ -802,10 +896,6 @@ export class World {
     return room ? this.snapshotRoom(room, this.now()) : undefined;
   }
 
-  private ensureDefaultRooms(): void {
-    ensureDefaultRooms(this.rooms, mode => {this.createRoom(mode);});
-  }
-
   private createRoom(mode: number, mapId?: number, minPlayers?: number, maxPlayers?: number, friendlyFire = false): RoomState {
     const room = createWaitingRoom(mode, mapId, () => `R${this.nextRoomId++}`, minPlayers, maxPlayers, friendlyFire);
     this.rooms.set(room.roomId, room);
@@ -830,7 +920,9 @@ export class World {
     }
     for (const player of room.players.values()) {
       advanceRespawnProtection(room.roomId, player, now, events);
+      player.petBattle?.advance(now);
     }
+    for (const player of room.players.values()) player.petBattle?.reconcileCommandEffects(events);
     for (const player of room.players.values()) {
       if (room.phase !== 'PLAYING') return;
       const death = advanceLastStandDeath(room, player,
@@ -842,11 +934,21 @@ export class World {
       const wasAlive = target.alive;
       const hpBefore = target.hp;
       const outcome = damagePlayerDirectly(room, owner, target, damage, now, skillId, events);
-      applyPetHitSpeed(target, owner, room.mode, hpBefore, now, () => recomputeBattleAttributes(target));
+      target.petBattle?.hit(owner, hpBefore, now, events);
       if (wasAlive && !target.alive) this.commitPlayerDeath(room, target, owner.id, outcome, events);
     };
-    const breachDropOnDestroy = (owner: PlayerState, target: PlayerState, now: number) => {
-      if (room.mode !== 5) return;
+    const breachDropOnDestroy = (owner: PlayerState, target: ObjectiveSnapshot, now: number) => {
+      createBreachDrop(room, {
+        id: target.sourcePlacementId ?? target.id,
+        hp: target.hp,
+        destroyedAt: target.destroyedAt,
+        x: target.x,
+        y: target.y,
+        z: target.z,
+      }, owner.id, now, Math.random, events);
+    };
+    const sceneDropOnDestroy = (owner: PlayerState, target: SceneObjectSnapshot, now: number) => {
+      if (target.id.startsWith('CASTLE:')) return;
       createBreachDrop(room, {
         id: target.sourcePlacementId ?? target.id,
         hp: target.hp,
@@ -862,17 +964,19 @@ export class World {
     if (room.phase !== 'PLAYING') return;
     advanceContactMines(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
+    advanceGroundBlasts(room, now, events, hitGroundSkill, damage => this.runCombatResolution(room, events, damage));
+    if (room.phase !== 'PLAYING') return;
     advanceGroundTraps(room, now, events, this.groundTrapHealing(room));
     if (room.phase !== 'PLAYING') return;
     const rebirth = advanceObjectives(room, now);
     syncBreachCollision(room, now);
     syncSceneObjectCollision(room, now);
+    syncAnimatedSceneCollision(room, now);
     if (rebirth) {
       this.finishObjective(room, now, rebirth, events);
       return;
     }
     for (const player of room.players.values()) {
-      advancePetHitSpeed(player, now, () => recomputeBattleAttributes(player));
       advanceDefenseDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceAttackDrink(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
       advanceInvincibility(room.roomId, player, now, () => recomputeBattleAttributes(player), events);
@@ -887,15 +991,15 @@ export class World {
       if (room.phase !== 'PLAYING') break;
       advanceAmmoBurn(target, now, id => room.players.has(id), (ownerId, damage) => {
         const owner = room.players.get(ownerId)!;
-        this.applyPlayerDamage(room, owner, target, damage, events, undefined, 4005);
+        this.applyPlayerDamage(room, owner, target, damage, events, undefined, target.burn?.skillId);
       }, burn => {
         // Ordinary natural completion only; the ended instance must still own a playing target.
         if (room.phase !== 'PLAYING' || !target.alive || target.hp <= 0 ||
             target.combat.status !== 2 || !room.players.has(burn.ownerId)) return;
         events.push({roomId: room.roomId, type: 'ammoBurnEnded', message: '',
           playerId: burn.ownerId, targetId: target.id, value: burn.startedAt,
-          x: target.x, y: target.y, z: target.z, skillId: 4005,
-          playSkillEffect: {skillId: 4005, effectIndex: 1, duration: 0,
+          x: target.x, y: target.y, z: target.z, skillId: burn.skillId,
+          playSkillEffect: {skillId: burn.skillId, effectIndex: 1, duration: 0,
             roleId: Number(target.id.slice(1)), xBits: 0, zBits: 0}});
       });
     }
@@ -903,41 +1007,44 @@ export class World {
     const resolveShotPlayerHit = (owner: PlayerState, target: PlayerState, damage: number,
       ammoItemId: number | undefined, shotId?: string, bearing?: {x: number; z: number}) => {
       if (!target.alive || room.phase !== 'PLAYING') return;
-      const blastCenter = ammoItemId === 2005 ? {x: target.x, y: target.y, z: target.z} : undefined;
+      const handler = itemHitHandler(ammoItemId);
+      const blastCenter = {x: target.x, y: target.y, z: target.z};
       this.runCombatResolution(room, events, () => {
         const selector = roleHurtSelector(battleMovementPose(target).look, battleMovementPose(owner).look);
         const previousHp = target.hp;
         const firstEvent = events.length;
         this.applyPlayerDamage(room, owner, target, damage, events, selector, undefined, ammoItemId,
           bearing ? {bodyYaw: target.bodyYaw ?? target.yaw, bearing} : undefined, shotId);
-        if (room.phase === 'PLAYING' && ammoItemId === 2007 && target.alive && target.hp < previousHp) {
-          startAmmoBurn(target, owner.id, now);
-        }
-        if (room.phase === 'PLAYING' && ammoItemId === 2008 && target.alive && target.hp < previousHp) {
-          startAmmoSlow(room.roomId, target, now, () => recomputeBattleAttributes(target), events);
-        }
-        if (room.phase === 'PLAYING' && ammoItemId === 2010 && target.alive && target.hp > 0
-            && target.hp < previousHp
-            && owner.id !== target.id && !this.isAlly(room, owner, target)) {
-          if (startAmmoRadarJam(room.roomId, target, now, events)) {
-            for (const notice of events.slice(firstEvent)) {
-              if (notice.type === 'hit') {notice.playSkillEffect = ammoRadarJamSkillEffect(target);}
+        const handlers: Record<string, () => void> = {
+          burn: () => {
+            if (room.phase === 'PLAYING' && target.alive && target.hp < previousHp)
+              startAmmoBurn(target, owner.id, now, ammoItemId);
+          },
+          slow: () => {
+            if (room.phase === 'PLAYING' && target.alive && target.hp < previousHp)
+              startAmmoSlow(room.roomId, target, now, () => recomputeBattleAttributes(target), events, ammoItemId);
+          },
+          radarJam: () => {
+            if (room.phase === 'PLAYING' && target.alive && target.hp > 0 && target.hp < previousHp
+                && owner.id !== target.id && !this.isAlly(room, owner, target)
+                && startAmmoRadarJam(room.roomId, target, now, events, ammoItemId)) {
+              for (const notice of events.slice(firstEvent)) {
+                if (notice.type === 'hit') notice.playSkillEffect = ammoRadarJamSkillEffect(target);
+              }
             }
-          }
-        }
-        if (blastCenter) {
-          resolveExplosiveAmmoBlast(room, owner, blastCenter, now, events,
+          },
+          explosive: () => resolveExplosiveAmmoBlast(room, owner, blastCenter, now, events,
             (source, victim, directDamage, skillId) =>
-              this.applyDirectSkillDamage(room, source, victim, directDamage, now, skillId, events));
-        }
+              this.applyDirectSkillDamage(room, source, victim, directDamage, now, skillId, events), ammoItemId),
+        };
+        if (handler) handlers[handler]?.();
       });
     };
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {
       respawn: player => {
-        const spawn = findAvailableTankSpawn(room.battlefield, player.id, room.players.values());
+        const spawn = findBattleRespawn(room.battlefield, player, room.players.values(), room.mode);
         if (!spawn) return;
         clearCopiedRoleSkill(player.combat);
-        clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
         clearOpticalCamouflage(player, () => recomputeBattleAttributes(player));
         clearRoleDisguise(player, () => recomputeBattleAttributes(player));
         clearAmmoRadarJam(player);
@@ -948,6 +1055,8 @@ export class World {
         respawnPlayer(room.battlefield, player, this.playerMaxHp(player), DEFAULT_INPUT, spawn);
         recomputeBattleAttributes(player);
         setBattleHealth(player, this.playerMaxHp(player), this.playerMaxHp(player));
+        player.petBattle?.respawn(now, events);
+        refreshPetTeamSkills(room);
         applyRespawnProtection(room.roomId, player, now, events);
         resetEquipmentSupply(player, now);
       },
@@ -955,35 +1064,50 @@ export class World {
       input: (id, input, autonomous) => this.updateInput(id, input, autonomous),
       allocateBulletId: () => `B${this.nextBulletId++}`,
       allocateShotId: () => `S${this.nextShotId++}`,
-      staticObjects: player => plantContactColliders(room, player.id, events),
+      staticObjects: player => [
+        ...plantContactColliders(room, player.id, events, now),
+        ...sceneCrushContactColliders(room, player.id, events),
+      ],
+      afterMovement: player => player.petBattle?.motion(now, events),
       beforeFire: player => {
         const accepted = consumeConfirmedAmmo(room.roomId, player, this.consumeItem, events);
         if (accepted) {
-          restoreRoleDisguiseAfterAcceptedFire(room.roomId, player,
+          restoreConcealmentAfterAcceptedFire(room.roomId, player,
             () => recomputeBattleAttributes(player), events);
         }
         if (player.combat.dirty) recomputeBattleAttributes(player);
         return accepted;
       },
-      fired: player => {
-        countShot(player);
+      fired: (player, shotId) => {
+        countShot(player, shotId);
       },
       afterFire: player => {
-        restoreRoleDisguiseAfterAcceptedFire(room.roomId, player,
+        if (player.combat.selectedAmmoSlot !== 1) {
+          const instanceId = player.combat.record?.arrays.get(0)?.[player.combat.selectedAmmoSlot - 2];
+          const item = instanceId === undefined ? undefined : player.inventory.find(record =>
+            (record.instanceId >>> 0) === (instanceId >>> 0));
+          if (!item || item.ownedQuantity <= 0 || item.battleQuantity <= 0) {
+            confirmAcceptedAmmoSelection(player.combat, player.inventory, 1);
+            recomputeBattleAttributes(player);
+          }
+        }
+        restoreConcealmentAfterAcceptedFire(room.roomId, player,
           () => recomputeBattleAttributes(player), events);
       },
       hitSceneObject: (owner, targetId, damage, ammoItemId) => {
-        if (ammoItemId === MEDICAL_AMMO_ID) return false;
+        if (itemHitHandler(ammoItemId) === 'medical') return false;
         const firstEvent = events.length;
         const crush = room.sceneCrushes.find(object => object.id === targetId);
         if (crush) {
-          if (ammoItemId !== 2001 || !acceptSceneCrush(room, owner.id, crush, events)) return false;
+          if (ammoItemId !== defaultAmmoId() || !acceptSceneCrush(room, owner.id, crush, events)) return false;
+          owner.sceneBreakCount = (owner.sceneBreakCount ?? 0) + 1;
           this.attachShotItemResult(events, firstEvent, owner.id, ammoItemId);
           return true;
         }
         const target = room.sceneObjects.find(object => object.id === targetId && object.hp > 0);
         if (target) {
           damageSceneObject(room, owner, target, damage, now, events);
+          sceneDropOnDestroy(owner, target, now);
           if (room.phase === 'PLAYING') {
             const end = objectiveEnd(room);
             if (end) this.finishObjective(room, now, end, events);
@@ -1016,7 +1140,7 @@ export class World {
         resolveShotPlayerHit(owner, target, damage, ammoItemId, shotId, bearing);
       },
       hitObjective: (owner, target, damage, ammoItemId) => {
-        if (ammoItemId === MEDICAL_AMMO_ID) return;
+        if (itemHitHandler(ammoItemId) === 'medical') return;
         const firstEvent = events.length;
         damageObjective(room, owner, target, damage, now, events);
         breachDropOnDestroy(owner, target, now);
@@ -1027,9 +1151,10 @@ export class World {
         attachProjectileSceneResult(events, firstEvent, owner.id, ammoItemId);
       },
       hitSceneObject: (owner, target, damage, ammoItemId) => {
-        if (ammoItemId === MEDICAL_AMMO_ID) return;
+        if (itemHitHandler(ammoItemId) === 'medical') return;
         const firstEvent = events.length;
         damageSceneObject(room, owner, target, damage, now, events);
+        sceneDropOnDestroy(owner, target, now);
         if (room.phase === 'PLAYING') {
           const end = objectiveEnd(room);
           if (end) this.finishObjective(room, now, end, events);
@@ -1041,8 +1166,11 @@ export class World {
     if (room.phase !== 'PLAYING') return;
     advanceContactMines(room, now, events, hitGroundSkill);
     if (room.phase !== 'PLAYING') return;
+    advanceGroundBlasts(room, now, events, hitGroundSkill, damage => this.runCombatResolution(room, events, damage));
+    if (room.phase !== 'PLAYING') return;
     advanceGroundTraps(room, now, events, this.groundTrapHealing(room));
     if (room.phase !== 'PLAYING') return;
+    syncAnimatedSceneCollision(room, now);
     for (const player of room.players.values()) {
       advanceEquipmentSupply(room.roomId, room.phase, player, now,
         player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), events);
@@ -1060,7 +1188,7 @@ export class World {
 
   /** Source result display only follows the accepted scene shot which caused destruction. */
   private attachShotItemResult(events: MsgRoomEvent[], firstEvent: number, ownerId: string, itemId: number): void {
-    if (itemId === 2002 || itemId === 2003 || itemId === 2004) {
+    if (gameContent().items.get(itemId)?.runtime.sceneResultAfterDamage) {
       attachProjectileSceneResult(events, firstEvent, ownerId, itemId);
       return;
     }
@@ -1085,7 +1213,7 @@ export class World {
     const firstEvent = events.length;
     const outcome = damagePlayer(room, owner, target, damage, this.now, events, selector, ammoItemId,
       incidence, shotId);
-    applyPetHitSpeed(target, owner, room.mode, hpBefore, this.now(), () => recomputeBattleAttributes(target));
+    target.petBattle?.hit(owner, hpBefore, this.now(), events);
     if (skillId !== undefined) {
       for (const notice of events.slice(firstEvent)) if (notice.type === 'hit') notice.skillId = skillId;
     }
@@ -1102,7 +1230,7 @@ export class World {
     const wasAlive = target.alive;
     const hpBefore = target.hp;
     const outcome = damagePlayerDirectly(room, owner, target, damage, now, skillId, events);
-    applyPetHitSpeed(target, owner, room.mode, hpBefore, now, () => recomputeBattleAttributes(target));
+    target.petBattle?.hit(owner, hpBefore, now, events);
     if (wasAlive && !target.alive) this.commitPlayerDeath(room, target, owner.id, outcome, events);
   }
 
@@ -1136,10 +1264,10 @@ export class World {
     try {
       clearRespawnProtection(target);
       clearAmmoRadarJam(target);
-      clearPetHitSpeed(target, () => recomputeBattleAttributes(target));
-      if (attacker) healPetAfterKill(room.roomId, attacker, target, room.mode, events);
-      if (attacker && copyPassiveSkillAfterKill(attacker, target, room.mode)) recomputeBattleAttributes(attacker);
+      if (attacker) attacker.petBattle?.kill(target, this.now(), events);
+      target.petBattle?.death(this.now(), events);
       if (clearCopiedRoleSkill(target.combat)) recomputeBattleAttributes(target);
+      refreshPetTeamSkills(room);
       target.equipmentSupply = undefined;
       resetTrapRestraint(target);
       resetTrapTurnRestraint(target);
@@ -1184,7 +1312,7 @@ export class World {
     room.airstrikes = [];
     resetBreachCollision(room.battlefield);
     resetSceneObjectCollision(room.battlefield);
-    room.phase = 'PLAYING';
+    resetAnimatedSceneCollision(room.battlefield);
     room.startedAt = this.now() + BATTLE_INTRO_MS;
     room.endedAt = 0;
     room.tick = 0;
@@ -1194,32 +1322,34 @@ export class World {
     this.releaseRoundFrozen(room);
     room.bullets = [];
     room.rematch.clear();
-    initializeBattleParticipants(room.battlefield, room.players.values(), DEFAULT_INPUT,
-      assignVip, player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), this.now);
-    for (const player of room.players.values()) {
-      clearAmmoRadarJam(player);
-      const accountId = !player.cpu ? this.options.resolveAccount?.(player.clientId) : undefined;
-      player.title = accountId ? this.options.currentTitle?.(accountId) : undefined;
-      resetEquipmentSupply(player, room.startedAt);
-    }
     room.objectives = createObjectives(room, BODY_RADIUS);
     room.sceneObjects = createSceneObjects(room);
     room.sceneCrushes = createSceneCrushes(room);
     room.scenePlants = createScenePlants(room);
     syncSceneObjectCollision(room, this.now());
     syncBreachCollision(room, this.now());
-    this.ensureAvailableRoom(room.mode);
-  }
-
-  private ensureAvailableRoom(mode: number): void {
-    ensureWaitingRoom(this.rooms, mode, value => {this.createRoom(value);});
-  }
-
-  private tryRematch(room: RoomState): void {
-    if (prepareRematch(room, this.minPlayers(room))) this.beginRoomLoading(room);
+    syncAnimatedSceneCollision(room, this.now());
+    initializeBattleParticipants(room.battlefield, room.players.values(), DEFAULT_INPUT,
+      assignVip, player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), this.now, room.mode);
+    room.phase = 'PLAYING';
+    for (const player of room.players.values()) player.petBattle = new PetBattleSkills(player, room);
+    for (const player of room.players.values()) player.petBattle!.start();
+    refreshPetTeamSkills(room);
+    for (const player of room.players.values()) {
+      clearAmmoRadarJam(player);
+      if (!player.cpu) {
+        const accountId = this.options.resolveAccount?.(player.clientId);
+        player.title = accountId ? this.options.currentTitle?.(accountId) : undefined;
+      }
+      resetEquipmentSupply(player, room.startedAt);
+    }
   }
 
   private beginRoomLoading(room: RoomState): void {
+    if (room.result) {
+      room.round++;
+      room.result = undefined;
+    }
     room.phase = 'LOADING';
     room.tick = 0;
     clearGroundItems(room);
@@ -1231,7 +1361,6 @@ export class World {
       player.input = {...DEFAULT_INPUT};
       if (player.cpu) room.loaded.add(player.id);
     }
-    this.ensureAvailableRoom(room.mode);
   }
 
   private finishRoom(room: RoomState, now: number, reason: MatchResult['reason'],
@@ -1241,6 +1370,10 @@ export class World {
     if (finishRound(room, now, reason, DEFAULT_INPUT, winnerTeam, winnerPlayerId)) {
       const rewardModifiers = frozenRewardModifiers
         ?? this.freezeRewardModifiers(room.players.values());
+      for (const result of room.result!.players) {
+        const player = room.players.get(result.id);
+        if (player) result.petId = player.ownedRoles.snapshot().base?.fields.get(8);
+      }
       clearGroundTraps(room);
       clearGroundItems(room);
       room.airstrikes = [];
@@ -1260,10 +1393,12 @@ export class World {
         participants: [
           ...[...room.players.values()].map(player => ({playerId: player.id,
             connectionId: player.clientId, cpu: !!player.cpu,
+            completedRound: true,
             elapsedSeconds: Math.max(0, (now - room.startedAt) / 1000),
             rewardModifiers: player.cpu ? undefined : {...rewardModifiers.get(player.id)!}})),
           ...[...this.departedParticipants.get(room.roomId)?.values() ?? []].map(departed =>
             ({playerId: departed.player.id, connectionId: '', cpu: false, accountId: departed.accountId,
+              completedRound: false,
               elapsedSeconds: departed.elapsedSeconds,
               rewardModifiers: departed.rewardModifiers
                 ? {...departed.rewardModifiers} : undefined})),
@@ -1278,11 +1413,10 @@ export class World {
       for (const player of room.players.values()) clearRoleDisguise(player,
         () => recomputeBattleAttributes(player), room.roomId, events);
       for (const player of room.players.values()) clearSpeedDrink(player, () => recomputeBattleAttributes(player));
-      for (const player of room.players.values()) clearPetHitSpeed(player, () => recomputeBattleAttributes(player));
+      for (const player of room.players.values()) detachPetBattle(player);
       for (const player of room.players.values()) clearTurnDrink(player, () => recomputeBattleAttributes(player));
       for (const player of room.players.values()) clearAmmoSlow(player, () => recomputeBattleAttributes(player));
       this.releaseRoundFrozen(room);
-      this.ensureAvailableRoom(room.mode);
     }
   }
 

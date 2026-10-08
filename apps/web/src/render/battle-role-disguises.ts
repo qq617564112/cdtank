@@ -1,3 +1,4 @@
+import {gameContent} from '../../../shared/content/catalog';
 import {Scene} from '@babylonjs/core';
 import type {PlayerSnapshot, RoleDisguiseSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 import {RoleDisguiseVisual} from '../assets/scenes/role-disguise-visual';
@@ -64,7 +65,8 @@ export class BattleRoleDisguises {
   }
 
   private supported(disguise: RoleDisguiseSnapshot | undefined): disguise is RoleDisguiseSnapshot {
-    return !!disguise && (disguise.skillId === 10 || disguise.skillId === 11)
+    return !!disguise && [...gameContent().items.values()].some(item => item.runtime.use === 'disguise'
+      && item.runtime.skillRoles.primary === disguise.skillId)
       && (disguise.style === 1 || disguise.style === 2);
   }
 

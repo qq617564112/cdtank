@@ -1,5 +1,8 @@
+import {itemHitHandler, gameContent} from '../../../shared/content/catalog';
+import {loadCombatCatalog} from '../content';
 import type {ReqStackItemSale, ResStackItemSale} from '../../../shared/protocols/PtlStackItemSale';
 import type {ReqValuableItemSale, ResValuableItemSale} from '../../../shared/protocols/PtlValuableItemSale';
+import {loadStaticJson} from '../assets/static-resources';
 import type {ReqPartSale, ResPartSale} from '../../../shared/protocols/PtlPartSale';
 import type {ReqPartMaintenance, ResPartMaintenance} from '../../../shared/protocols/PtlPartMaintenance';
 import {Trade} from '../network/trade';
@@ -13,7 +16,11 @@ import type {ReqPetShop} from '../../../shared/protocols/PtlPetShop';
 import type {CpuLoadoutItem} from '../../../shared/protocols/PtlCpu';
 import {configureBattleCamera} from '../render/battle-camera';
 import {BattlePlayers} from '../render/battle-players';
-import {BattleMinimap} from '../render/battle-minimap';
+import {battleInfoText} from '../interface/battle/battle-info-messages';
+import {mapMinimaps} from '../assets/maps/minimaps';
+import {BattleMinimapRenderer} from '../render/battle-minimap-renderer';
+import {BattleCrosshairRenderer} from '../render/battle-crosshair-renderer';
+import {BattleHudVectorRenderer} from '../render/battle-hud-vector-renderer';
 import {GameConnection} from '../network/game-connection';
 import type {AccountContext} from '../network/accounts';
 import {LobbyChat} from '../network/lobby-chat';
@@ -32,6 +39,7 @@ import {BattleHud} from '../interface/battle/battle-hud';
 import {BattleMusic} from '../audio/battle-music';
 import {PageMusic} from './page-music';
 import {BattleSound} from '../audio/battle-sound';
+import {BattleUiSound} from '../audio/battle-ui-sound';
 import {MapEnvironmentSound} from '../audio/map-environment-sound';
 import {BattleMatch} from '../interface/battle/battle-match';
 import {BattleTargets} from '../render/battle-targets';
@@ -49,6 +57,7 @@ import type {ReqPetSkillLearning, ResPetSkillLearning} from '../../../shared/pro
 import type {ReqTankMaintenance, ResTankMaintenance} from '../../../shared/protocols/PtlTankMaintenance';
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../shared/protocols/PtlOwnedRoleSale';
 import type {ReqTankUpgrade, ResTankUpgrade} from '../../../shared/protocols/PtlTankUpgrade';
+import type {LeavePenalty} from '../../../shared/protocols/PtlLeave';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {createSkillEffectNotifications} from './skills/skill-effect-runtime';
 import {battleRoleId, BattleSkillEffects} from './skills/battle-skill-effects';
@@ -61,13 +70,14 @@ import {RoomFeed} from './room-feed';
 import {BattleInput} from './battle-input';
 import {LocalTankMotion} from './local-tank-motion';
 import {BattleItemInventory} from './battle-item-inventory';
-import {itemCandidateSlots, stepCandidate, WeaponCycleSelection, weaponCandidateSlots}
+import {stepCandidate, WeaponCycleSelection, weaponCandidateSlots}
   from './battle-shortcut-selection';
 import type {KeyBindings} from './input-bindings';
 import type {QuickChatPreferences} from '../interface/settings/quick-chat-preferences';
 import {battleIsActive} from '../../../shared/combat/battle-start';
 import {GroundItemAction} from '../../../shared/protocols/MsgPlayerAction';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
+import {BattleProjectiles} from '../render/battle-projectiles';
 
 /** Displays server-owned world state; no local damage or outcome calculation. */
 export class Battle {
@@ -76,6 +86,12 @@ export class Battle {
   private readonly music = new BattleMusic();
   private pageMusic?: PageMusic;
   private readonly sound = new BattleSound();
+  private readonly battleUiSound = new BattleUiSound(() => this.soundVolume);
+  private battleUiSoundError?: string;
+  private battleUiSoundContext?: string;
+  private battleUiSoundResync = false;
+  private lastDeathCountdown?: number;
+  private lastIntroStage?: string;
   private readonly connection = new GameConnection();
   readonly lobbyChat = new LobbyChat(this.connection);
   readonly lobbyPresence = new LobbyPresence(this.connection);
@@ -132,7 +148,8 @@ export class Battle {
         if (useItem >= 1 && useItem <= 4) this.weaponCycle.reject();
       });
   }, {
-    itemSlot: slot => this.useItemSlot(slot),
+    acceptSlot: slot => this.acceptSlot(slot),
+    itemSlot: slot => this.directItemSlot(slot),
     currentItemSlot: () => this.currentItemSlot(),
     cycleWeapon: direction => this.cycleWeapon(direction),
     cycleItem: direction => this.cycleItem(direction),
@@ -140,13 +157,16 @@ export class Battle {
   });
   private readonly weaponCycle = new WeaponCycleSelection();
   private readonly localMotion = new LocalTankMotion();
-  readonly chat = new BattleChat(async (text, channel, targetName) => {
+  readonly chat: BattleChat = new BattleChat(async (text, channel, targetName) => {
     if (!this.active || !this.client.isConnected) throw new Error('连接已断开');
-    if (channel === 3) {
-      const snapshot = this.roomFeed.snapshot;
-      if (!snapshot?.match) throw new Error('请先加入房间');
-      const result = await this.client.callApi('FriendChat', {text, roomId: snapshot.roomId, round: snapshot.match.round});
+    if (channel === 4) {
+      const generation = this.chat.getSnapshot().generation;
+      const result = await this.client.callApi('RoomChat', {text, channel: 6});
       if (!result.isSucc) throw new Error(result.err.message);
+      if (this.active && generation === this.chat.getSnapshot().generation) {
+        this.chat.message(`[GM] ${battleInfoText(text)}`);
+        this.chat.message(`[系统] ${battleInfoText(result.res.message)}`);
+      }
     } else if (channel === 5) {
       const context = this.accountContext;
       await this.connection.ensureConnected();
@@ -156,6 +176,11 @@ export class Battle {
       const result = await this.client.callApi('FamilyChat', {text, roomId: snapshot.roomId, round: snapshot.match.round});
       if (context !== this.accountContext || !this.active) throw new Error('账户或连接已变化，请重新操作');
       if (!result.isSucc) throw new Error(result.err.message);
+    } else if (channel === 3) {
+      const snapshot = this.roomFeed.snapshot;
+      if (!snapshot?.match) throw new Error('请先加入房间');
+      const result = await this.client.callApi('FriendChat', {text, roomId: snapshot.roomId, round: snapshot.match.round});
+      if (!result.isSucc) throw new Error(result.err.message);
     } else if (channel === 2) {
       const snapshot = this.roomFeed.snapshot;
       if (!snapshot?.match) throw new Error('请先加入房间');
@@ -163,8 +188,11 @@ export class Battle {
     } else await this.rooms.chat(text, channel);
   }, () => {this.input.clear();}, this.family, listener => this.connection.subscribeAccountContext(listener));
   private readonly players: BattlePlayers;
+  private readonly projectiles: BattleProjectiles;
   private readonly battlefield: ScenePreview;
-  private readonly minimap: BattleMinimap;
+  private readonly minimapRenderer: BattleMinimapRenderer;
+  private readonly crosshairRenderer: BattleCrosshairRenderer;
+  private readonly hudVectorRenderer: BattleHudVectorRenderer;
   private readonly groundTraps: GroundTrapsPresentation;
   private groundTrapError?: string;
   private readonly groundItems: GroundItemsPresentation;
@@ -181,14 +209,16 @@ export class Battle {
   private shotItemResult?: TankShotItemResult;
   private ammoBurnPresentation?: AmmoBurnPresentation;
   private combatCatalog?: CombatCatalog;
-  readonly matchPanel = new BattleMatch(() => this.rematch(),
+  readonly matchPanel = new BattleMatch(() => this.returnToRoom(),
     isReady => this.ready(isReady), team => this.changeTeam(team),
     (operation, playerId, team) => this.manageCpu(operation, playerId, team), enabled => this.autopilot(enabled),
-    () => this.exitRoom(), () => this.inviteRoom(),
+    points => this.exitRoom(points), () => this.inviteRoom(),
     (playerId, loadout) => this.configureCpuLoadout(playerId, loadout), () => this.retryBattleLoading(),
     {listMaps: () => this.listMaps(), save: settings => this.editRoom(settings)}, playerId => this.kickRoomPlayer(playerId),
+    () => this.soundVolume,
     {candidates: () => this.discardCandidates(), selected: () => this.discardSelectedInstance,
-      setSelected: instanceId => this.setDiscardSelection(instanceId), discard: () => this.discardSelected()});
+      setSelected: instanceId => this.setDiscardSelection(instanceId), discard: () => this.discardSelected()},
+    () => this.quoteExitPenalty());
   private readonly targets: BattleTargets;
   private readonly roomFeed: RoomFeed;
   private playerId?: string;
@@ -211,7 +241,6 @@ export class Battle {
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
               private readonly hud: HTMLOutputElement) {
     this.battlefield = new ScenePreview(scene, camera);
-    this.minimap = new BattleMinimap(scene);
     this.groundTraps = new GroundTrapsPresentation(scene);
     this.effects = new EffectRuntime(scene, camera);
     this.groundItems = new GroundItemsPresentation(scene, this.effects);
@@ -225,9 +254,17 @@ export class Battle {
       queuedParts: (id, skills, active) => this.skillEffects?.reconcileQueuedParts(id, skills, active) ?? false,
       petDeath: (view, petType, localView) => {this.petDeath.show(view, petType, localView);},
     });
+    this.projectiles = new BattleProjectiles(scene);
+    this.minimapRenderer = new BattleMinimapRenderer(scene, camera, id => this.players.get(id));
+    this.crosshairRenderer = new BattleCrosshairRenderer(scene);
+    this.hudVectorRenderer = new BattleHudVectorRenderer(scene);
     this.targets = new BattleTargets(scene);
     this.roomFeed = new RoomFeed(this.client, {
       beforeSnapshot: (snapshot, previous) => {
+        // Each participant keeps the frozen summary until they choose Continue.
+        if (this.playerId && snapshot.phase === 'WAITING'
+            && snapshot.match?.result?.players.some(player => player.id === this.playerId)
+            && !snapshot.match.rematchPlayerIds.includes(this.playerId)) snapshot.phase = 'FINISHED';
         const local = snapshot.players.find(player => player.id === this.playerId);
         const previousLocal = previous?.players.find(player => player.id === this.playerId);
         if (snapshot.phase !== 'PLAYING' || snapshot.match?.round !== previous?.match?.round
@@ -240,6 +277,10 @@ export class Battle {
           this.skillEffects?.clear();
           this.effects.clearRoundEffects();
           this.players.resetRound(snapshot.players);
+        }
+        if (snapshot.roomId !== previous?.roomId || snapshot.match?.round !== previous?.match?.round) {
+          this.battleUiSound.reset();
+          this.battleUiSoundContext = undefined;
         }
         if (snapshot.phase === 'FINISHED' && previous?.phase !== 'FINISHED') {
           this.skillEffects?.clear();
@@ -255,6 +296,9 @@ export class Battle {
         }
         this.itemInventory.event(event);
         this.originalHud.event(event);
+        if (event.type === 'destroy' && event.killCombo !== undefined) {
+          this.players.combo(event.playerId, event.killCombo);
+        }
         const current = this.roomFeed.snapshot;
         const ammoBurnEnded = event.type === 'ammoBurnEnded' && event.playSkillEffect?.skillId === 4005
             && event.playSkillEffect.effectIndex === 1 && event.value !== undefined
@@ -287,6 +331,11 @@ export class Battle {
         }
         if (event.type === 'fire') {
           if (event.shotDisplay) this.shotDisplay?.show(event.shotDisplay);
+          if (event.playerId === this.playerId && this.active && this.mapLoaded
+              && this.loadedRound === snapshot?.match?.round && snapshot?.phase === 'PLAYING'
+              && this.client.isConnected && !this.reconnecting) {
+            this.battleUiSound.play(72);
+          }
         }
         if (event.type === 'hit') {
           this.players.damage(event.targetId, event.value, event.targetId === this.playerId,
@@ -295,12 +344,13 @@ export class Battle {
         if (event.type === 'hit' || event.type === 'playerHealed') {
           const victim = this.players.get(event.targetId);
           const hasRadarJamNotification = event.type === 'hit'
-            && event.shotPlayerResult?.itemId === 2010
-            && event.playSkillEffect?.skillId === 4008
+            && itemHitHandler(event.shotPlayerResult?.itemId) === 'radarJam'
+            && event.playSkillEffect !== undefined
+            && event.playSkillEffect?.skillId === gameContent().items.get(event.shotPlayerResult!.itemId)?.runtime.skillRoles.secondary
             && event.playSkillEffect.effectIndex === 0
             && event.playSkillEffect.roleId === battleRoleId(event.targetId);
           const hasExplosiveAmmoBlastNotification = event.type === 'hit'
-            && event.shotPlayerResult?.itemId === 2005;
+            && itemHitHandler(event.shotPlayerResult?.itemId) === 'explosive';
           if (victim && event.shotPlayerResult && !hasRadarJamNotification
               && !hasExplosiveAmmoBlastNotification) {
             this.shotPlayerResult?.showPlayerResult(victim, event.shotPlayerResult.itemId,
@@ -311,7 +361,7 @@ export class Battle {
             if (event.targetId === this.playerId && localShake) this.effects.ordinaryHurtCamera();
           }
         }
-        if (event.type === 'sceneCrushed' && event.sceneCrush && event.shotItemResult) {
+        if (event.type === 'sceneCrushed' && event.sceneCrush) {
           this.battlefield.crush(event.sceneCrush.placementId);
         }
         if (this.mapLoaded && !this.reconnecting &&
@@ -367,8 +417,11 @@ export class Battle {
     this.client.listenMsg('FamilyChat', this.onFamilyChat);
     scene.onBeforeRenderObservable.add(() => {this.render();});
     scene.onDisposeObservable.addOnce(() => {
+      this.projectiles.dispose();
       this.stopInventoryRefresh();
       this.itemInventory.clear();
+      this.sound.dispose();
+      this.battleUiSound.dispose();
       if (this.pageMusic) this.pageMusic.dispose();
       else this.music.dispose();
       this.lobbyPresence.stop();
@@ -558,10 +611,7 @@ export class Battle {
       progress(0, '正在载入战斗资源…');
       if (!this.mapLoaded) {
         const [, , catalog] = await Promise.all([this.originalHud.load(), this.effects.load(),
-          fetch('/combat-catalog.json').then(async response => {
-            if (!response.ok) throw new Error('原技能目录载入失败');
-            return response.json() as Promise<CombatCatalog>;
-          })]);
+          loadCombatCatalog()]);
         if (!current()) return;
         progress(0.15, '正在载入地图…');
         this.skillEffects = new BattleSkillEffects(createSkillEffectNotifications(this.effects, catalog, {
@@ -575,7 +625,7 @@ export class Battle {
         this.ammoBurnPresentation = new AmmoBurnPresentation(this.effects, id => this.players.get(id));
         await this.battlefield.load(String(this.mapId).padStart(4, '0'), this.effects);
         if (!current()) return;
-        await this.localMotion.field.load(this.mapId!, this.battlefield.movementSurfaces);
+        await this.localMotion.field.load(this.mapId!);
         if (current() && this.roomFeed.snapshot) {
           const snapshot = this.roomFeed.snapshot;
           this.battlefield.reconcileCrushes(snapshot.match?.sceneCrushes ?? [], snapshot.match?.round ?? 0);
@@ -603,7 +653,15 @@ export class Battle {
           ], snapshot.match?.round ?? 0, snapshot.serverTime);
         }
         this.mapLoaded = true;
-        await this.sound.start();
+        this.battleUiSoundError = undefined;
+        await Promise.all([
+          this.sound.start(),
+          this.battleUiSound.load().catch(error => {
+            if (!current()) return;
+            this.battleUiSoundError = error instanceof Error ? error.message : String(error);
+            this.hud.value = this.battleUiSoundError;
+          }),
+        ]);
         if (!current()) return;
       }
       progress(0.8, '正在载入各玩家战车…');
@@ -617,13 +675,16 @@ export class Battle {
         await new Promise(resolve => setTimeout(resolve, 50));
       }
       progress(0.95, '正在准备画面…');
+      await Promise.all([this.players.loadLabels(), this.minimapRenderer.load(this.originalHud.getSnapshot().data!),
+        this.hudVectorRenderer.load()]);
+      if (!current()) return;
+      if (!this.minimapRenderer.hasMap(this.mapId!)) {
+        const imageUrl = mapMinimaps[this.mapId!];
+        if (!imageUrl) throw new Error(`地图 ${this.mapId} 小地图资源缺失`);
+        this.minimapRenderer.setMap(this.mapId!, imageUrl);
+      }
       await this.scene.whenReadyAsync();
       if (!current()) return;
-      if (!this.originalHud.getMinimapSnapshot().imageUrl) {
-        const imageUrl = await this.minimap.capture(this.mapId!, this.battlefield.minimapMeshes);
-        if (!current()) return;
-        if (imageUrl) this.originalHud.setMinimapImage(this.mapId!, imageUrl);
-      }
       configureBattleCamera(this.camera);
       this.loadedRound = round;
       progress(1, '载入完成，等待其他玩家…');
@@ -659,13 +720,18 @@ export class Battle {
   }
 
   private clearCancelledLoading(): void {
-    this.minimap.clear();
+    this.projectiles.clear();
+    this.minimapRenderer.clear();
+    this.crosshairRenderer.clear();
+    this.hudVectorRenderer.clear();
     this.resourceRevision++;
     this.loadingRound = undefined;
     this.loadedRound = undefined;
     this.ammoBurnPresentation?.clear();
     this.ammoBurnPresentation = undefined;
     this.sound.stop();
+    this.battleUiSound.stop();
+    this.battleUiSoundError = undefined;
     this.environmentSound?.clear();
     this.sceneEffects.clear();
     this.skillEffects?.clear();
@@ -710,6 +776,7 @@ export class Battle {
   private async recoverRoom(): Promise<void> {
     const session = this.session, roomId = this.roomFeed.roomId, playerId = this.playerId;
     if (!roomId || !playerId) return;
+    this.battleUiSoundResync = true;
     this.reconnecting = true;
     const deadline = performance.now() + ROOM_RECONNECT_WINDOW_MS;
     this.hud.value = '连接已断开，正在恢复原房间…';
@@ -750,15 +817,41 @@ export class Battle {
     }
   }
 
-  exitRoom(): Promise<void> {
+  async quoteExitPenalty(): Promise<LeavePenalty> {
+    await this.recovery;
+    const session = this.session;
+    if (!this.active || !this.client.isConnected) throw new Error('连接已断开');
+    const snapshot = this.roomFeed.snapshot;
+    if (!snapshot?.match) throw new Error('等待房间状态后重试');
+    const roomId = snapshot.roomId, round = snapshot.match.round;
+    const penalty = await this.rooms.quoteExitPenalty({roomId, round});
+    const current = this.roomFeed.snapshot;
+    if (session !== this.session || !this.active || current?.roomId !== roomId
+        || current.match?.round !== round) {
+      throw new Error('房间或局号已变化，请刷新后重试');
+    }
+    return penalty;
+  }
+
+  exitRoom(confirmedPenaltyPoints = 0): Promise<void> {
     if (this.exiting) return this.exiting;
     const session = this.session;
+    const expectedRoomId = this.roomFeed.snapshot?.roomId;
+    const expectedRound = this.roomFeed.snapshot?.match?.round;
     const exit = async () => {
       await this.recovery;
+      if (session !== this.session) throw new Error('退出确认已失效，请重新确认');
       if (this.active && this.client.isConnected) {
         const snapshot = this.roomFeed.snapshot;
         if (!snapshot?.match) throw new Error('等待房间状态后重试');
-        await this.rooms.leave({roomId: snapshot.roomId, round: snapshot.match.round});
+        if (snapshot.roomId !== expectedRoomId || snapshot.match.round !== expectedRound) {
+          throw new Error('房间或局号已变化，请刷新后重试');
+        }
+        if (confirmedPenaltyPoints !== 0
+            && !this.matchPanel.matchesExitQuote(snapshot.roomId, snapshot.match.round, confirmedPenaltyPoints)) {
+          throw new Error('退出处罚确认已失效，请重新报价');
+        }
+        await this.rooms.leave({roomId: snapshot.roomId, round: snapshot.match.round, confirmedPenaltyPoints});
       }
       if (session !== this.session) return;
       this.leave(!this.client.isConnected);
@@ -769,7 +862,10 @@ export class Battle {
   }
 
   leave(disconnect = true): void {
-    this.minimap.clear();
+    this.projectiles.clear();
+    this.minimapRenderer.clear();
+    this.crosshairRenderer.clear();
+    this.hudVectorRenderer.clear();
     this.resourceRevision++;
     this.loadingRound = undefined;
     this.loadedRound = undefined;
@@ -787,6 +883,8 @@ export class Battle {
     if (this.pageMusic) this.pageMusic.lobby();
     else this.music.stop();
     this.sound.stop();
+    this.battleUiSound.stop();
+    this.battleUiSoundError = undefined;
     this.environmentSound?.clear();
     this.sceneEffects.clear();
     this.skillEffects?.clear();
@@ -829,48 +927,88 @@ export class Battle {
   getKeyBindings(): KeyBindings {return this.input.getKeyBindings();}
   setKeyBindings(bindings: KeyBindings): void {this.input.setKeyBindings(bindings);}
   readonly useHudSlot = (slot: number): void => {
-    const local = this.roomFeed.snapshot?.players.find(player => player.id === this.playerId);
-    if (!local?.alive) return;
-    this.useItemSlot(slot);
+    const snapshot = this.roomFeed.snapshot;
+    const local = snapshot?.players.find(player => player.id === this.playerId);
+    if (!this.active || !snapshot || !battleIsActive(snapshot, this.serverNow())
+        || !this.client.isConnected || this.reconnecting || !local?.alive || local.isAutopilot) return;
+    this.directItemSlot(slot);
     this.input.send(slot);
   };
 
-  /** Reflect a direct Battle slot1–8 press. Item slots move the local cursor
-   * only when the slot is a confirmed usable instance; weapon slots drop any
-   * cycling intent and follow the server-confirmed baseline. The immediate
-   * request stays in the caller. */
+  /** Single quantity gate for every slot request before it is sent. A confirmed
+   * Inventory record at this round's count 0, or a locally remembered configured
+   * item whose last instance was removed, plays UI28 and rejects the request;
+   * unknown records and empty bindings stay silent. Accepted requests keep the
+   * confirmed item cursor and discard candidate selection. */
+  private acceptSlot(slot: number): boolean {
+    if (slot >= 5) {
+      const configured = this.itemInventory.configuredItemSlot(slot);
+      if (configured?.cleared || (configured?.record
+          && (configured.record.battleQuantity >>> 0) === 0)) {
+        this.battleUiSound.play(28);
+        return false;
+      }
+    } else if (slot >= 2) {
+      const inventory = this.itemInventory.getSnapshot().inventory;
+      const instanceId = (inventory?.hotkeys[slot - 2] ?? 0) >>> 0;
+      const record = instanceId
+        ? inventory?.records.find(value => (value.instanceId >>> 0) === instanceId) : undefined;
+      if (record && (record.battleQuantity >>> 0) === 0) {
+        this.battleUiSound.play(28);
+        return false;
+      }
+    }
+    this.useItemSlot(slot);
+    return true;
+  }
+
+  /** Reflect an accepted Battle slot5–8 request: select the confirmed discard
+   * candidate for item slots and move the local item cursor. */
   private useItemSlot(slot: number): void {
-    if (slot >= 5) this.itemInventory.setSelectedItemSlot(slot);
-    else if (slot >= 1 && slot <= 4) this.weaponCycle.returnToConfirmed();
+    this.itemInventory.setSelectedItemSlot(slot);
     const instanceId = slot >= 2 ? this.itemInventory.getSnapshot().inventory?.hotkeys[slot - 2] : undefined;
     if (instanceId && this.discardCandidates().some(candidate => candidate.instanceId === instanceId)) {
       this.discardSelection = instanceId;
     }
   }
 
-  /** Cursor for the ordinary useItem key, resolved against the current confirmed
-   * candidates so an unbound, unknown or exhausted slot never sends a request. */
+  /** Reflect a direct Battle slot1–8 press. Item slots only move the local
+   * cursor for a confirmed usable instance; weapon slots drop any cycling
+   * intent so the next cycle follows the server-confirmed baseline. */
+  private directItemSlot(slot: number): void {
+    this.useItemSlot(slot);
+    if (slot >= 1 && slot <= 4) this.weaponCycle.returnToConfirmed();
+  }
+
+  /** Cursor for the ordinary useItem key, resolved against configured item slots.
+   * An exhausted bound slot still reaches the unified gate, which plays UI28 and
+   * rejects without sending; unbound and unknown slots stay silent. */
   private currentItemSlot(): number | undefined {
-    const {inventory, selectedItemSlot} = this.itemInventory.getSnapshot();
-    const slots = itemCandidateSlots(inventory);
-    return selectedItemSlot !== undefined && slots.includes(selectedItemSlot)
+    const {selectedItemSlot} = this.itemInventory.getSnapshot();
+    return selectedItemSlot !== undefined && this.itemInventory.itemSlots().includes(selectedItemSlot)
       ? selectedItemSlot : undefined;
   }
 
-  /** Ordinary weapon cycle over confirmed class3 ammo slots; selects only, no
-   * fire or consumption, while the server remains the authority on selection. */
+  /** Ordinary weapon cycle over confirmed class3 ammo and class4 trap slots;
+   * selects ammo or requests trap placement, no fire or consumption, while the
+   * server remains the authority on selection. */
   private cycleWeapon(direction: 1 | -1): number | undefined {
     const local = this.roomFeed.snapshot?.players.find(player => player.id === this.playerId);
     if (!local?.alive) return undefined;
-    return this.weaponCycle.next(weaponCandidateSlots(local.ammoSlots ?? []), direction);
+    const inventory = this.itemInventory.getSnapshot().inventory;
+    return this.weaponCycle.next(weaponCandidateSlots(local.ammoSlots ?? [], inventory),
+      direction, inventory);
   }
 
-  /** Ordinary item cycle over confirmed hotkey items; moves the local cursor
-   * only and never sends a request or consumes stock. */
-  private cycleItem(direction: 1 | -1): void {
-    const slots = itemCandidateSlots(this.itemInventory.getSnapshot().inventory);
-    const next = stepCandidate(slots, this.itemInventory.getSnapshot().selectedItemSlot, direction);
-    if (next !== undefined) this.itemInventory.setSelectedItemSlot(next);
+  /** Ordinary item cycle over configured hotkey items; the original selection
+   * index moves before the unified request gate, which rejects exhausted slots.
+   * The caller still runs one ordinary request and never consumes stock locally. */
+  private cycleItem(direction: 1 | -1): number | undefined {
+    const {selectedItemSlot} = this.itemInventory.getSnapshot();
+    const slots = this.itemInventory.itemSlots();
+    const slot = stepCandidate(slots, selectedItemSlot, direction);
+    if (slot !== undefined) this.itemInventory.setSelectedItemSlot(slot);
+    return slot;
   }
 
   private actionSequence = 0;
@@ -1005,14 +1143,13 @@ export class Battle {
     return snapshot ? snapshot.serverTime + performance.now() - this.roomFeed.receivedAt : performance.now();
   }
 
-  private async rematch(): Promise<void> {
+  private async returnToRoom(): Promise<void> {
     const round = this.roomFeed.snapshot?.match?.round;
     if (round === undefined || this.roomFeed.snapshot?.phase !== 'FINISHED' || !this.client.isConnected) {
-      throw new Error('当前对局无法再战，请返回后重新加入');
+      throw new Error('当前无法返回原房间，请等待连接恢复');
     }
     await this.rooms.rematch({round});
     this.input.clear();
-    document.querySelector<HTMLCanvasElement>('#world')?.focus();
   }
 
   private reconcile(snapshot: MsgRoomSnapshot): void {
@@ -1036,8 +1173,8 @@ export class Battle {
     }
     if (this.playerId) this.itemInventory.update(snapshot, this.playerId);
     const localPlayer = this.playerId ? snapshot.players.find(player => player.id === this.playerId) : undefined;
-    this.weaponCycle.sync(localPlayer?.selectedAmmoSlot,
-      localPlayer?.ammoSlots ?? []);
+    this.weaponCycle.sync(localPlayer?.selectedAmmoSlot, localPlayer?.ammoSlots ?? [],
+      this.itemInventory.getSnapshot().inventory);
     if (this.active && this.mapId !== undefined) {
       const result = snapshot.phase === 'FINISHED' ? snapshot.match?.result : undefined;
       const own = this.playerId ? result?.players.find(player => player.id === this.playerId) : undefined;
@@ -1053,7 +1190,7 @@ export class Battle {
         void this.music.playResult(resultFlag).catch(error => console.error('结算音乐载入失败', error));
       }
     }
-    if (snapshot.phase !== 'WAITING' && this.loadingRound !== undefined) {
+    if (snapshot.phase !== 'WAITING' && this.loadingRound !== undefined && this.mapLoaded) {
       this.players.reconcile(snapshot.players, this.playerId, snapshot.mode);
     }
     this.ammoBurnPresentation?.reconcile(snapshot.players,
@@ -1084,6 +1221,28 @@ export class Battle {
       renderedActions: this.players.actions});
   }
 
+  private syncBattleUiSounds(snapshot: MsgRoomSnapshot): void {
+    if (snapshot.phase !== 'PLAYING' || !this.client.isConnected || this.reconnecting) return;
+    const context = `${snapshot.roomId}:${snapshot.match?.round ?? 0}`;
+    const hud = this.originalHud.getSnapshot();
+    if (this.battleUiSoundContext !== context || this.battleUiSoundResync) {
+      this.battleUiSoundContext = context;
+      this.battleUiSoundResync = false;
+      this.lastDeathCountdown = hud.deathCountdown;
+      this.lastIntroStage = hud.introStage;
+      return;
+    }
+    if (hud.deathCountdown !== undefined && hud.deathCountdown > 0
+        && hud.deathCountdown !== this.lastDeathCountdown) {
+      this.battleUiSound.play(42);
+    }
+    this.lastDeathCountdown = hud.deathCountdown;
+    if (this.lastIntroStage !== 'fight' && hud.introStage === 'fight') {
+      this.battleUiSound.play(43);
+    }
+    this.lastIntroStage = hud.introStage;
+  }
+
   private render(): void {
     this.environmentSound?.update();
     const position = this.camera.globalPosition;
@@ -1093,31 +1252,51 @@ export class Battle {
       {x: -forward.x, y: forward.y, z: forward.z}, {x: -up.x, y: up.y, z: up.z});
     const snapshot = this.roomFeed.snapshot;
     if (!this.active || !snapshot || !this.client.isConnected || this.reconnecting) {
+      this.projectiles.clear();
+      this.crosshairRenderer.clear();
+      this.hudVectorRenderer.clear();
       return;
     }
     if (!this.mapLoaded || this.loadedRound !== snapshot.match?.round
-        || (snapshot.phase !== 'PLAYING' && snapshot.phase !== 'FINISHED')) return;
+        || (snapshot.phase !== 'PLAYING' && snapshot.phase !== 'FINISHED')) {
+      this.projectiles.clear();
+      this.crosshairRenderer.clear();
+      this.hudVectorRenderer.clear();
+      return;
+    }
     const alpha = Math.min(1, this.scene.getEngine().getDeltaTime() / 80);
     this.ammoBurnPresentation?.reconcile(snapshot.players,
       `${snapshot.roomId}:${snapshot.match?.round ?? 0}`, snapshot.phase === 'PLAYING');
     const now = snapshot.serverTime + performance.now() - this.roomFeed.receivedAt;
+    this.projectiles.reconcile(snapshot);
+    this.projectiles.render(now);
     const active = battleIsActive(snapshot, now);
     this.localMotion.field.reconcile(snapshot, now);
     this.localMotion.setActive(active);
     this.localMotion.advance(active ? this.input.motionAxes : {move: 0, turn: 0, aim: 0},
       this.scene.getEngine().getDeltaTime() / 1000, snapshot.players);
-    this.players.render(alpha, this.playerId, snapshot.phase === 'PLAYING',
-      this.localMotion.renderedPose, this.localMotion.moving);
-    this.skillEffects?.frame(this.scene.getEngine().getDeltaTime() / 1000);
-    this.battlefield.advance(this.scene.getEngine().getDeltaTime() / 1000);
-    this.battlefield.updateObjects([...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? [])], snapshot.match?.round ?? 0,
-      snapshot.serverTime, this.scene.getEngine().getDeltaTime() / 1000);
-    const local = snapshot.players.find(player => player.id === this.playerId);
     if (this.playerId) {
       this.originalHud.update(snapshot, this.playerId, performance.now(), now);
+      this.syncBattleUiSounds(snapshot);
     }
-    const phase = {WAITING: '等待其他玩家', LOADING: '正在载入对局', PLAYING: '战斗中', FINISHED: '本局结束'}[snapshot.phase] ?? snapshot.phase;
-    this.hud.value = this.groundTrapError || this.groundItemError || this.players.loadingError || `${phase} · ${snapshot.players.length} 人 · ${snapshot.remaining}s · 生命 ${local?.hp ?? 0}/${local?.maxHp ?? 0} · 得分 ${local?.score ?? 0}`;
+    this.crosshairRenderer.render(this.originalHud.getReloadSnapshot());
+    const items = this.itemInventory.getSnapshot();
+    this.hudVectorRenderer.render(this.originalHud, this.combatCatalog, items.inventory, items.selectedItemSlot, now);
+    const spectator = this.originalHud.spectator.getSnapshot();
+    this.players.render(alpha, this.playerId, snapshot.phase === 'PLAYING',
+      this.localMotion.renderedPose, this.localMotion.moving,
+      spectator.playerId ?? this.playerId, spectator.wreckStartedAt === undefined
+        ? undefined : Math.max(0, (now - spectator.wreckStartedAt) / 1000),
+      this.localMotion.field.navigation);
+    if (this.playerId) this.minimapRenderer.render(snapshot, this.playerId);
+    this.skillEffects?.frame(this.scene.getEngine().getDeltaTime() / 1000);
+    this.battlefield.advance(this.scene.getEngine().getDeltaTime() / 1000, {
+      now: snapshot.phase === 'FINISHED' ? snapshot.match?.result?.endedAt ?? now : now,
+      battleStartsAt: snapshot.match?.battleStartsAt ?? now, objects: snapshot.match?.sceneObjects ?? []});
+    this.battlefield.updateObjects([...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? [])], snapshot.match?.round ?? 0,
+      snapshot.serverTime, this.scene.getEngine().getDeltaTime() / 1000);
+    this.hud.value = this.groundTrapError || this.groundItemError || this.players.loadingError
+      || this.battleUiSoundError || '';
     // DOM world state supports HUD accessibility and browser integration verification.
     this.hud.dataset.world = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,
       mapId: this.mapId, mapLoaded: this.mapLoaded,

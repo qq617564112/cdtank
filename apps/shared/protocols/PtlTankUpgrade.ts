@@ -1,4 +1,5 @@
 import type {ResOwnedRoles} from './PtlOwnedRoles';
+import type {AccountGrowth} from './MsgRoomSnapshot';
 
 /** Rebuilt account RPC for the source TankUp table and owned equipment upgrade fields. */
 export interface ReqTankUpgrade {
@@ -42,6 +43,7 @@ export interface TankUpgradeConfirmation {
 export interface ResTankUpgrade {
   owned: ResOwnedRoles;
   profile?: {bytes: number[]; strings: [string, string]};
+  growth?: AccountGrowth;
   quotes: TankUpgradeQuote[];
   confirmation?: TankUpgradeConfirmation;
   historicalConfirmation?: TankUpgradeConfirmation;

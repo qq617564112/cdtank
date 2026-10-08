@@ -2,6 +2,11 @@ import {Camera, Matrix, Vector3} from '@babylonjs/core';
 import {effectBillboardCorners} from './effect-billboard';
 import type {EffectVec3} from '../common/types';
 
+/** Match U to reflected camera X while preserving the source quad winding. */
+export function effectCameraUv(uv: readonly [number, number, number, number]): [number, number, number, number] {
+  return [uv[2], uv[1], uv[0], uv[3]];
+}
+
 /**
  * Adapt native XYZ billboards to the current Web camera. Output remains native
  * world XYZ so EffectSpriteMesh performs the established X reflection once.

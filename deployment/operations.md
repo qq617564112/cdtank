@@ -1,6 +1,8 @@
 # 运行与账户存档
 
-使用 Node.js 24.16 或更高版本。Web 构建为 `npm run build`，服务端构建为 `npm run build:server`。将 `dist/web` 作为静态站点发布；`index.html` 是正式玩家入口，`validation.html` 是独立验证入口。WebSocket `/game` 转发到服务端，示例见 `nginx.conf.example`。
+使用 Node.js 24.16 或更高版本。Web 构建为 `npm run build`，服务端构建为 `npm run build:server`。服务端直接托管构建后的网页和资源，与 WebSocket `/game` 共用一个端口；`index.html` 是正式玩家入口，`validation.html` 是独立验证入口。
+
+在仓库中完成两端构建后，运行 `PORT=40171 npm run start:server`，通过 `http://服务器局域网IP:40171/` 访问。服务监听所有网络接口，默认网页目录为 `dist/web`，账户库沿用 `recovery/output/accounts.sqlite`。
 
 转换后的运行资源、字体和内容表通过 GitHub Releases 提供。克隆或下载后执行 `npm ci` 和 `npm run assets:install` 下载解压，即可使用这些资源构建与打包，无需原客户端、Python 或外部字体。
 
@@ -15,16 +17,17 @@ npm ci --omit=dev --ignore-scripts
 node /srv/cdtank/start.mjs
 ```
 
-`start.mjs` 可从任意工作目录启动。默认 Web 资源目录为发行包的 `web`，原数据表为 `content/tables`，账户库为 `state/accounts.sqlite`。包内不带玩家账户数据；已有存档通过备份恢复命令导入新路径。服务运行依赖在 `server/package-lock.json` 固定，目标设备无需项目源码或开发依赖。
+`start.mjs` 可从任意工作目录启动。默认网页和 Web 资源目录为发行包的 `web`，原数据表为 `content/tables`，账户库为 `state/accounts.sqlite`。包内不带玩家账户数据；已有存档通过备份恢复命令导入新路径。服务运行依赖在 `server/package-lock.json` 固定，目标设备无需项目源码或开发依赖。
 
-静态服务将根目录设为 `/srv/cdtank/web`，将 `/game` 的 WebSocket 请求转发至服务端。包内 `nginx.conf.example` 提供配置，默认入口为 `http://服务器:8080/`。浏览器和服务端分别部署时仍须配置同一 WebSocket 接入路径。
+默认入口为 `http://服务器:3001/`，通过 `PORT` 修改端口。页面、模型、音频和 WebSocket 均由同一 Node.js 进程提供。静态响应包含正确的 MIME、ETag 和 Last-Modified；文本资源支持压缩，音频支持 Range 分段下载。Vite 生成的带版本文件名资源缓存一年，其余资源和 HTML 每次访问重新验证缓存。
 
-将示例 `server` 块加入 nginx 的 `http` 配置，并保留标准 `include /etc/nginx/mime.types;`。使用 `nginx -t` 检查配置后重载 nginx。浏览器通过此地址加载页面，并连接同源 `/game`；JavaScript 模块由 nginx 提供正确的 MIME 类型。
+如需单独部署网页，包内保留 `nginx.conf.example`：根目录设为 `/srv/cdtank/web`，将 `/game` 转发至服务端，标准配置包含 `include /etc/nginx/mime.types;`。浏览器和服务端分别部署时须配置同一 WebSocket 接入路径。
 
 服务端也可使用 `server.env.example` 中的环境变量覆盖默认值：
 
 ```sh
 ACCOUNT_DB_PATH=/srv/cdtank/state/accounts.sqlite \
+WEB_ROOT=/srv/cdtank/web \
 WEB_ASSETS=/srv/cdtank/web \
 CONTENT_TABLES=/srv/cdtank/content/tables \
 node /srv/cdtank/start.mjs
@@ -64,7 +67,7 @@ npm run accounts:restore -- /srv/cdtank/backups/accounts-2026-10-04.sqlite /srv/
 
 将 `ACCOUNT_DB_PATH` 改为新路径，按上述启动命令重启服务端。原数据库和备份保留不变。运行中的房间、连接与战斗状态不在账户数据库中；玩家重新认证后从大厅继续操作。
 
-数据库备份不包含 `dist/web`、编译服务端、`WEB_ASSETS`、`CONTENT_TABLES` 或浏览器本地设置。发布版本时同时保留对应代码、锁文件、构建产物和资源目录；恢复存档使用同一发布版本的程序与内容。本命令不转换数据库格式。
+数据库备份不包含 `dist/web`、编译服务端、`WEB_ROOT`、`WEB_ASSETS`、`CONTENT_TABLES` 或浏览器本地设置。发布版本时同时保留对应代码、锁文件、构建产物和资源目录；恢复存档使用同一发布版本的程序与内容。本命令不转换数据库格式。
 
 ## 验证范围
 

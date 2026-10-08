@@ -70,8 +70,14 @@ max(0, min(ownedQuantity, max(0, BattleUseMax - roundUse)))
 remaining spendable amount instead of being subtracted from the owned count a
 second time. An unassigned instance stays at zero battle quantity.
 
-An unassigned new instance becomes available but is not automatically selected into
-a hotkey. This keeps a pickup from restoring quantity already spent in the round.
+A real pickup fills the first empty slot in the correct local band for a newly
+unassigned instance: Battle2..4 for weapons/traps, Battle5..8 for
+consumables/treasures. It never overwrites a full slot, auto-uses, or auto-switches
+weapons; a full bar still banks the item but leaves no usable slot. Only the
+current-round character hotkeys change (visible to the Inventory RPC/HUD); the saved
+account configuration is untouched. An existing assigned stack follows the
+`remainingBattleQuantity`/`roundUse` remainder, so a pickup never restores quantity
+already spent in the round. Cross-connection reconciliation never auto-fills a slot.
 Discard is not a use: it reduces owned quantity without increasing `roundUse`.
 
 ## Same-account inventory notification
@@ -94,14 +100,32 @@ travels alongside the same-tick finish snapshot.
 ## Event and lifecycle ordering
 
 `advanceGroundItems` runs after actor movement and before projectile processing. It
-only scans `PLAYING`, alive, status2 participants in the same room at XYZ distance
-`<= 40`; a successful pickup removes the entity and emits pickup/removal events.
+first removes every ground entity whose `createdAt` is 30 seconds old or older against
+the server clock, then scans `PLAYING`, alive, status2 participants in the same room at
+XYZ distance `<= 40`; a successful pickup removes the entity and emits pickup/removal
+events. Every ground entity, `DISCARD` included, uses this 30 second lifetime; the
+adopted values come from `shared/content/definitions/index.json` `rules.groundDrops`,
+and the original `VanishTime` meaning stays unconfirmed.
 
-In mode5, a real Breach reaching 0 HP creates its one drop immediately after the
-authoritative objective damage and before `objectiveEnd`/finish cleanup. Castle,
-environment objects, and other modes never enter that producer. A later genuine
-respawn creates a new destruction timestamp, so it can roll again while the old
-timestamp cannot replay a removed or already-rolled drop.
+Every real placement destruction rolls once, deduplicated by
+`placement + destroyedAt`, across all five modes. Modes 1-4 use the current map's
+original Breach placements as destructible `sceneObjects` (mode2 included); mode5 uses
+its single Breach `objectives` entity. The unified roll uses the former mode5 50% chance
+and maps a success onto the `runtime.values.breachDropOrder` pool
+`[1, 2, 2010, 20001, 20002]`, one unit each. Castle keeps its original mode1/mode2 rule;
+Castle, Plant, and Crush never enter this producer, and mode5 still produces the drop
+before the end-of-round objective check. A later genuine respawn creates a new
+destruction timestamp, so it can roll again while the old timestamp cannot replay a
+removed or already-rolled drop.
+
+A real pickup of item20001/item20002 requires the selected pet JSON type: cat
+`petType 1` for 20001, dog `petType 2` for 20002. A wrong or unselected pet leaves the
+entity in place, and other items are unrestricted. The committed pickup adds one to
+owned inventory and heals the actual picker 15 through the health entry clamped to the
+mode's current `maxHp`; a full-health player still receives the item, `lastStand` does
+not heal, and a failure neither heals nor removes the entity. Other connections of the
+same account refresh inventory only. The pickup healing of 15 stays separate from the
+manual `ItemSkill2=30005` self-use of 30.
 
 For room deletion, finish, and new-round loading, World clears the room's ground
 entities and the domain's per-round counter/trigger state. Leave clears only that

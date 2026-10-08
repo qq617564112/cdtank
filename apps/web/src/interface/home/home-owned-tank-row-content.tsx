@@ -16,6 +16,7 @@ export function HomeOwnedTankRowContent({ui, name, tankId, tankType, durationMin
     `set:tanke0 image:data\\ui\\tanke\\${String(tankId).padStart(3, '0')}.tga`);
   return <>
     <span className="home-owned-tank-row-icon" data-home-owned-tank-icon="" aria-hidden="true"
+      data-tank-icon-mark={icon?.['data-tank-icon-mark']}
       data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: icon?.style.backgroundImage}} />
     {current && <HomeRoleRowStatusBadge ui={ui} status="current"/>}
     <span className="home-owned-tank-row-name" data-home-owned-tank-name=""><SourceFeedbackText text={name}/></span>

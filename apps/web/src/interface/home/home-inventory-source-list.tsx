@@ -10,10 +10,13 @@ export interface HomeInventoryListEntry {
 }
 
 /** Source bounds and pictures surround confirmed inventory; selection is local. */
-export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, valuableRows = false, select, activate}: {
+export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, valuableRows = false, select, activate,
+  describe, dismissDescription, described}: {
   ui: HomeSourceUi; entries: readonly HomeInventoryListEntry[]; selected: number;
   busy: boolean; itemRows: boolean; valuableRows?: boolean; select(instanceId: number): void;
   activate?(instanceId: number): void;
+  describe?(entry: HomeInventoryListEntry, anchor: HTMLButtonElement): void;
+  dismissDescription?(): void; described?: number;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const layout = new HomeSourceLayout(ui, 'myhome_playerpage.xml');
@@ -23,18 +26,23 @@ export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, 
   return <div {...sourceProps(ui, layout, 'myhome_playerpage.xml', controlName)}
     className="home-inventory-list-scroll-shell">
     <div ref={list} className="home-inventory-source-list" role="listbox" aria-label={valuableRows ? '拥有贵重品' : '拥有物品'}
-      aria-busy={busy} data-home-inventory-list="">
+      aria-busy={busy} data-home-inventory-list="" onMouseLeave={dismissDescription} onScroll={dismissDescription}
+      onBlur={event => {if (!event.currentTarget.contains(event.relatedTarget)) dismissDescription?.();}}>
       {entries.map((entry, index) => {
         return <button key={entry.instanceId} type="button" role="option" draggable={!busy && !valuableRows} disabled={busy}
           data-inventory-instance={entry.instanceId} aria-selected={selected === entry.instanceId}
           data-home-source-item-row={itemRows ? '' : undefined}
           data-home-source-weapon-row={!itemRows && !valuableRows ? '' : undefined}
           data-home-source-valuable-row={valuableRows ? '' : undefined}
-          aria-pressed={selected === entry.instanceId} title={entry.info}
+          aria-pressed={selected === entry.instanceId}
+          aria-describedby={described === entry.instanceId ? 'home-item-description' : undefined}
           style={selected === entry.instanceId ? {backgroundImage: selection.style.backgroundImage} : undefined}
           data-source-selection-asset={selected === entry.instanceId ? selection['data-source-asset'] : undefined}
+          onMouseEnter={event => describe?.(entry, event.currentTarget)}
+          onFocus={event => describe?.(entry, event.currentTarget)}
           onClick={() => select(entry.instanceId)} onDoubleClick={activate ? () => activate(entry.instanceId) : undefined}
           onDragStart={valuableRows ? undefined : event => {
+            dismissDescription?.();
             event.dataTransfer.setData('text/plain', String(entry.instanceId)); event.dataTransfer.effectAllowed = 'copy';
           }} onKeyDown={event => {
             if (event.key === 'Enter' && activate) {

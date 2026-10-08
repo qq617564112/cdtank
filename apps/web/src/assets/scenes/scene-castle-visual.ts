@@ -6,6 +6,7 @@ import {sampleEffectTag, type EffectTagFrame} from '../tanks/effect-tag-sampler'
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import type {EffectVec3} from '../../render/effects/common/types';
 import type {CastleEffectTarget} from './scene-castle-state';
+import {castleAnimationTime} from '../../../../shared/movement/scene-animation-clock';
 
 interface CastleAction {
   name: string;
@@ -43,7 +44,9 @@ export class SceneCastleVisual {
     try {
       for (const resource of this.resource.actions) {
         if (!resource.available) throw new Error(`缺少原城堡动作：${resource.name}`);
-        const container = await LoadAssetContainerAsync(`/${resource.asset}`, this.scene);
+        const container = await LoadAssetContainerAsync(`/${resource.asset}`, this.scene, {
+          pluginOptions: {gltf: {useSRGBBuffers: false}},
+        });
         if (this.disposed || this.scene.isDisposed) {container.dispose(); return;}
         container.materials.push(...applyMv3Materials(this.scene, container.meshes));
         applyCartoonOutlines(container.meshes);
@@ -90,6 +93,21 @@ export class SceneCastleVisual {
     if (this.disposed || !this.clock) return;
     this.clock.advance(deltaSeconds);
     this.sample();
+  }
+
+  /** Follow the round clock without restarting the current original action. */
+  setAnimationTime(elapsedSeconds: number): void {
+    if (this.disposed || !this.clock) return;
+    this.clock.time = Math.trunc(castleAnimationTime(elapsedSeconds, this.clock.duration, this.clock.stopAtEnd) * 1000);
+    this.sample();
+  }
+
+  setAuthorityAnimation(animation: {action: string; startedAt: number; stopAtEnd: boolean} | undefined,
+    now: number, battleStartsAt: number): void {
+    const action = (animation?.action ?? 'n1') as 'c2' | 'c3' | 'n1' | 'n2';
+    const mode = animation?.stopAtEnd ? 4 : 0;
+    if (this.current?.resource.name !== action || this.clock?.stopAtEnd !== (mode === 4)) this.action(action, mode);
+    this.setAnimationTime(Math.max(0, (now - (animation?.startedAt ?? battleStartsAt)) / 1000));
   }
 
   /** Resume an existing collapse at authority time without restarting its action or owner. */

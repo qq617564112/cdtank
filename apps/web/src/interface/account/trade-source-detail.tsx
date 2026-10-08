@@ -1,3 +1,4 @@
+import {rankedPetSkillId} from '../../../../shared/content/catalog';
 import {useLayoutEffect, useRef} from 'react';
 import {createPortal} from 'react-dom';
 import type {TradeRecordView} from '../../../../shared/protocols/PtlTrade';
@@ -99,7 +100,7 @@ export function TradeSourceDetail({ui, catalog, record, scale, close}: {
     texts.leixing = sourcePetKind(pet?.petSize, pet?.petType);
     for (let slot = 0; slot < 6; slot++) {
       const base = fields.get(0x44 + slot * 4), rank = fields.get(0x5c + slot * 4);
-      const skillId = base === undefined || rank === undefined ? undefined : base + Math.max(0, rank - 1);
+      const skillId = base === undefined || rank === undefined ? undefined : rankedPetSkillId(base, Math.max(1, rank));
       texts[`txtSkillName${slot}`] = base ? catalog?.skills.find(value => value.skillId === skillId)?.name ?? '' : '';
       texts[`txtSkill${slot}`] = !base || rank === undefined ? '' : String(rank);
     }

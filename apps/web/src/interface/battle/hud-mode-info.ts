@@ -36,10 +36,14 @@ export function modeInfo(snapshot: MsgRoomSnapshot, playerId: string): HudModeIn
     return {...base, self: own, enemy, binding: 'vipHp', label: '王生命'};
   }
   if (snapshot.mode === 4) {
-    const resultPlayer = snapshot.phase === 'FINISHED'
-      ? snapshot.match?.result?.players.find(player => player.id === playerId) : undefined;
-    const kills = resultPlayer?.kills ?? local?.kills;
-    return kills === undefined ? undefined : {...base, info: String(kills), binding: 'localKills', label: '本机击毁'};
+    const stats = snapshot.phase === 'FINISHED'
+      ? snapshot.match?.result?.players.find(player => player.id === playerId) : local;
+    const catsInfo = stats?.catsInfo;
+    const dogsInfo = stats?.dogsInfo;
+    if (catsInfo === undefined || dogsInfo === undefined
+        || !Number.isFinite(catsInfo) || !Number.isFinite(dogsInfo)) return;
+    return {...base, info: String(catsInfo + dogsInfo),
+      binding: 'catsInfo+dogsInfo', label: '本机击毁'};
   }
   if (snapshot.mode === 5) {
     const objectives = snapshot.match?.objectives;

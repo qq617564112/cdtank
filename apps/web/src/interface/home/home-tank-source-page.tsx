@@ -66,7 +66,7 @@ export function HomeTankOwnedAttributes({ui, record}: {ui: HomeSourceUi; record?
   </>;
 }
 
-function HomeTankOwnedParameters({ui, record, pet, catalog, equippedItemIds, alreadyUsed}: Pick<HomeTankSourcePageProps,
+export function HomeTankOwnedParameters({ui, record, pet, catalog, equippedItemIds, alreadyUsed}: Pick<HomeTankSourcePageProps,
     'ui' | 'record' | 'pet' | 'catalog' | 'equippedItemIds' | 'alreadyUsed'>) {
   const suffix = 'myhome_panzerpage.xml', layout = new HomeSourceLayout(ui, suffix);
   const values = homeTankParameters(record, pet, catalog, equippedItemIds, alreadyUsed);

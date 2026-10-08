@@ -46,15 +46,15 @@ export function selectBuildingToolTarget(mode: number, mapId: number, bunkerHp: 
 export function applyBuildingTool(room: BuildingToolRoom, player: BuildingToolParticipant,
   request: {kind: string; instanceId: number},
   consumeItem: ((playerId: string, instanceId: number, expectedOwned: number,
-    itemTableId: number) => boolean) | undefined, events: MsgRoomEvent[]): void {
+    itemTableId: number) => boolean) | undefined, events: MsgRoomEvent[], now = Date.now()): void {
   if (request.kind !== 'useItem') return;
   const item = player.inventory.find(record => record.instanceId === request.instanceId);
-  if (!item || item.itemTableId !== 502) return;
-  const definition = combatItems.get(502);
+  if (!item || combatItems.get(item.itemTableId)?.runtime.use !== 'building') return;
+  const definition = combatItems.get(item.itemTableId);
   const skill = definition ? combatSkills.get(definition.skillIds[0]) : undefined;
-  if (!definition || !skill || skill.skillId !== 502 || skill.target !== 1
+  if (!definition || !skill || skill.target !== 1
       || skill.triggerType !== 1 || skill.range !== 0 || skill.functions[0]?.type !== 18
-      || skill.functions[0].x !== 2 || skill.functions[0].y !== 5000) return;
+      || skill.functions[0].x !== 2) return;
   const reject = (message: string): void => {
     events.push({roomId: room.roomId, type: 'itemRejected', message, playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0});
@@ -91,11 +91,13 @@ export function applyBuildingTool(room: BuildingToolRoom, player: BuildingToolPa
   item.ownedQuantity -= 1;
   item.battleQuantity -= 1;
   target.hp += restored;
-  events.push({roomId: room.roomId, type: 'itemUsed',
+  target.castleAnimation = {action: target.hp < Math.trunc(target.maxHp / 3) ? 'n2' : 'n1',
+    startedAt: now, stopAtEnd: true};
+  events.push({roomId: room.roomId, type: 'itemUsed', itemName: combatItems.get(item.itemTableId)?.name,
     message: `${player.name}使用${definition.name}，恢复${restored}生命`,
     playerId: player.id, targetId: target.id, value: restored,
-    x: player.x, y: player.y, z: player.z, skillId: 502,
-    playSkillEffect: {skillId: 502, effectIndex: 0, duration: 0,
+    x: player.x, y: player.y, z: player.z, skillId: skill.skillId,
+    playSkillEffect: {skillId: skill.skillId, effectIndex: 0, duration: 0,
       roleId: Number(player.id.slice(1)), xBits: 0, zBits: 0}});
   events.push({roomId: room.roomId, type: 'sceneObjectHealed',
     message: `${player.name}修复碉堡`, playerId: player.id, targetId: target.id,

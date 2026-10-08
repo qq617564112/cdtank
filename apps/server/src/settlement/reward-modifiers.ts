@@ -1,3 +1,4 @@
+import {content} from '../content';
 import type {CombatSkillDefinition} from '../../../shared/combat/catalog';
 import type {ResultPlayer} from '../../../shared/protocols/MsgRoomSnapshot';
 import {combatSkills} from '../battle/catalog';
@@ -11,13 +12,6 @@ export interface ResultRewardModifiers {
 
 /** Frozen result carried inside history/account transactions; never part of the shared protocol. */
 export type FrozenRewardResult = ResultPlayer & {rewardModifiers?: ResultRewardModifiers};
-
-/** Original item12501/02/03 -> skill12501/02/03 Func19 slots X/Y/Z100; each drives one reward. */
-const FUNC19_SKILLS: Record<number, {param: 'x' | 'y' | 'z'; field: keyof ResultRewardModifiers}> = {
-  12501: {param: 'x', field: 'moneyPercent'},
-  12502: {param: 'y', field: 'originalityPercent'},
-  12503: {param: 'z', field: 'techPercent'},
-};
 
 /** Func19 is a trigger0/Target1 passive function in the source skill table. */
 const FUNC19_TYPE = 19;
@@ -46,7 +40,7 @@ export function readResultRewardModifiers(skillIds: readonly number[]): ResultRe
   for (const skillId of skillIds) {
     if (seen.has(skillId)) continue;
     seen.add(skillId);
-    const source = FUNC19_SKILLS[skillId];
+    const source = content.skills.get(skillId)?.runtime.rewardModifier;
     if (!source) continue;
     const percent = readFunc19Percent(combatSkills.get(skillId), source.param);
     if (percent !== undefined && percent > result[source.field]) result[source.field] = percent;

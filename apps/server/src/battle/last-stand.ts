@@ -1,7 +1,6 @@
-import type {BattleRoleSources} from '../battle-role-sources';
-import {combatSkills} from './catalog';
+import {readPetSkills, type LearnedPetSkill, type PetSkillHandler,
+  type PetSkillSource} from './pet-skill-rules';
 import {resolveQualifiedLastStandDuration} from './roles/qualified-last-stand-duration';
-import type {CombatSkillDefinition} from '../../../shared/combat/catalog';
 
 export interface LastStandState {
   expiresAt: number;
@@ -10,27 +9,32 @@ export interface LastStandState {
   friendly: boolean;
 }
 
-/** The selected owned slot supplies eligibility; the delayed death is Web policy. */
-export function qualifiedLastStand(player: {
+const lethalHandlers: Partial<Record<PetSkillHandler,
+  (source: LearnedPetSkill) => number | undefined>> = {
+  lastStand: ({skill}) => {
+    const action = skill.functions.find(fn => fn.type === 11);
+    return resolveQualifiedLastStandDuration(skill.triggerType === 6 && skill.target === 1 &&
+      action !== undefined, action?.t ?? 0);
+  },
+};
+
+/** Selected and copied skills route through the same lethal-event JSON rule. */
+export function qualifiedLastStand(player: PetSkillSource & {
   alive: boolean;
   attributesReady?: boolean;
-  ownedRoles?: Pick<BattleRoleSources, 'snapshot' | 'tables'>;
-}): {skill: CombatSkillDefinition; duration: number} | undefined {
-  if (!player.alive || !player.attributesReady || player.ownedRoles?.tables().pet?.id !== 4) return;
-  const fields = player.ownedRoles.snapshot().base?.fields;
-  const skill = combatSkills.get(10441);
-  const action = skill?.functions.find(fn => fn.type === 11);
-  const duration = resolveQualifiedLastStandDuration(fields?.get(0x50) === 10441
-    && fields.get(0x68) === 1 && skill?.triggerType === 6 && skill.target === 1
-    && action !== undefined, action?.t ?? 0);
-  return skill && duration !== undefined ? {skill, duration} : undefined;
+}): {source: LearnedPetSkill; duration: number} | undefined {
+  if (!player.alive || !player.attributesReady) return;
+  for (const source of readPetSkills(player)) {
+    if (source.rule.event !== 'lethal') continue;
+    const duration = lethalHandlers[source.rule.handler]?.(source);
+    if (duration !== undefined) return {source, duration};
+  }
 }
 
-/** Qualified surviving duration in milliseconds for the fixed owned last-stand source. */
-export function qualifiedLastStandDuration(player: {
+/** Qualified surviving duration in milliseconds for the selected lethal source. */
+export function qualifiedLastStandDuration(player: PetSkillSource & {
   alive: boolean;
   attributesReady?: boolean;
-  ownedRoles?: Pick<BattleRoleSources, 'snapshot' | 'tables'>;
 }): number | undefined {
   return qualifiedLastStand(player)?.duration;
 }

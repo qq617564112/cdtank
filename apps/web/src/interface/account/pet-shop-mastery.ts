@@ -1,71 +1,12 @@
+import {gameContent, rankedPetSkillId} from '../../../../shared/content/catalog';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
 
-/** Original PetTable directory mastery values; no owned growth authority. */
-export const PET_SHOP_MASTERY: Readonly<Record<number, readonly number[]>> = {
-  "1": [
-    3,
-    3,
-    3,
-    3
-  ],
-  "2": [
-    2,
-    3,
-    4,
-    2
-  ],
-  "3": [
-    3,
-    4,
-    2,
-    2
-  ],
-  "4": [
-    4,
-    3,
-    2,
-    3
-  ],
-  "5": [
-    2,
-    2,
-    3,
-    4
-  ],
-  "101": [
-    3,
-    3,
-    3,
-    3
-  ],
-  "102": [
-    3,
-    4,
-    2,
-    2
-  ],
-  "103": [
-    2,
-    2,
-    3,
-    4
-  ],
-  "104": [
-    4,
-    3,
-    2,
-    3
-  ],
-  "105": [
-    2,
-    2,
-    4,
-    3
-  ]
-};
+export function petShopMastery(petId: number): readonly number[] {
+  return gameContent().pets.get(petId)?.attributes.mastery ?? [];
+}
 
-/** Original PetTable +7c..+88 order. */
+/** Original PetTable +7c..+88 order; markup uses the same slot order. */
 const MASTERY_ATTRIBUTES = ['STankMastery', 'MTankMastery', 'LTankMastery', 'StugMastery'] as const;
 
 export interface PetOwnedMastery {
@@ -86,9 +27,9 @@ export function petOwnedMastery({selectedBase, currentTank, isCurrent, catalog}:
     PetOwnedMastery | undefined {
   if (!selectedBase || !currentTank || !catalog) return undefined;
   const fields = new Map(selectedBase.fields), definitionId = fields.get(8);
-  const base = definitionId === undefined ? undefined : PET_SHOP_MASTERY[definitionId];
+  const base = definitionId === undefined ? undefined : gameContent().pets.get(definitionId)?.attributes.mastery;
   if (!base || base.length < MASTERY_ATTRIBUTES.length) return undefined;
-  const mastery = [...base];
+  const mastery = base.slice(0, MASTERY_ATTRIBUTES.length);
   let unresolved = false;
   const addSkill = (skillId: number) => {
     const skill = catalog.skills.find(value => value.skillId === skillId);
@@ -103,7 +44,9 @@ export function petOwnedMastery({selectedBase, currentTank, isCurrent, catalog}:
       const baseId = fields.get(0x44 + slot * 4), rank = fields.get(0x5c + slot * 4);
       if (baseId === undefined || rank === undefined) return undefined;
       if (baseId === 0 || rank === 0) continue;
-      addSkill(baseId + (rank - 1));
+      const skillId = rankedPetSkillId(baseId, rank);
+      if (skillId === undefined) return undefined;
+      addSkill(skillId);
     }
   }
   const tankFields = new Map(currentTank.fields);

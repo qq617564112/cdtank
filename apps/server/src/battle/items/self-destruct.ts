@@ -1,44 +1,44 @@
-import {combatItems, combatItemSkills, combatSkills} from '../catalog';
+import {itemForHandler} from '../../../../shared/content/catalog';
+import {combatItems, combatSkills} from '../catalog';
 import type {PlayerState} from '../player-state';
 import type {RoomState} from '../../rooms/state';
 import type {MsgRoomEvent, PlaySkillEffectMessage} from '../../../../shared/protocols';
 
 export interface SelfDestructRule {
-  itemTableId: 17051;
-  blastSkillId: 13151;
-  damageSkillId: 19;
+  itemTableId: number;
+  blastSkillId: number;
+  damageSkillId: number;
   range: number;
   damage: number;
 }
 
 /** Original item17051 skill1 → 13151 Func15 → terminal19 Func2 HP-100. */
-export function readSelfDestructRule(): SelfDestructRule | undefined {
-  const item = combatItems.get(17051);
+export function readSelfDestructRule(itemId = itemForHandler('passive', 'selfDestruct').id): SelfDestructRule | undefined {
+  const item = combatItems.get(itemId);
   const blast = item ? combatSkills.get(item.skillIds[0]) : undefined;
   const effect = blast?.functions[0];
   const damage = effect ? combatSkills.get(effect.y) : undefined;
-  if (!item || item.itemType !== 12 || item.skillIds[0] !== 13151
-      || !blast || blast.skillId !== 13151 || blast.triggerType !== 6 || blast.target !== 1
-      || blast.range !== 150 || blast.effects[0]?.effectId !== 9
-      || effect?.type !== 15 || effect.y !== 19
-      || !damage || damage.skillId !== 19 || damage.functions[0]?.type !== 2
-      || damage.attributes.HP >= 0) return;
-  return {itemTableId: 17051, blastSkillId: 13151, damageSkillId: 19,
+  if (!item || !blast || blast.range <= 0 || effect?.type !== 15
+      || !damage || damage.functions[0]?.type !== 2 || damage.attributes.HP >= 0) return;
+  return {itemTableId: item.itemTableId, blastSkillId: blast.skillId, damageSkillId: damage.skillId,
     range: blast.range, damage: -damage.attributes.HP};
 }
 
-/** The selected owned 17051 part is the source; 13151 is a death trigger, not a passive stat skill. */
-export function hasSelectedSelfDestruct(player: PlayerState): boolean {
-  const parts = player.ownedRoles.equipment().parts;
-  const owned = parts.some(instanceId => {
-    const record = player.inventory.find(value => (value.instanceId >>> 0) === (instanceId >>> 0));
-    return record !== undefined && record.itemTableId === 17051 && record.state === 2
-      && (record.ownedQuantity >>> 0) > 0
-      && combatItemSkills.get(record.itemTableId)?.skillIds.includes(13151) === true;
-  });
-  if (!owned) return false;
+/** Resolve the rule from the confirmed owned part in its selected battle slot. */
+function selectedSelfDestructRule(player: PlayerState): SelfDestructRule | undefined {
   const selectedParts = player.combat.record?.arrays.get(2);
-  return selectedParts !== undefined && Array.from(selectedParts).includes(17051);
+  for (const [slot, instanceId] of player.ownedRoles.equipment().parts.entries()) {
+    const record = player.inventory.find(value => (value.instanceId >>> 0) === (instanceId >>> 0));
+    if (!record || record.state !== 2 || (record.ownedQuantity >>> 0) === 0
+        || selectedParts?.[slot] !== record.itemTableId
+        || combatItems.get(record.itemTableId)?.runtime.passive !== 'selfDestruct') continue;
+    const rule = readSelfDestructRule(record.itemTableId);
+    if (rule) return rule;
+  }
+}
+
+export function hasSelectedSelfDestruct(player: PlayerState): boolean {
+  return selectedSelfDestructRule(player) !== undefined;
 }
 
 function floatBits(value: number): number {
@@ -54,8 +54,8 @@ export function selfDestructWorldEffect(skillId: number, x: number, z: number): 
 export function resolveSelfDestructDeath(room: Pick<RoomState, 'roomId' | 'phase' | 'mode' | 'players'>,
   deadOwner: PlayerState, center: {x: number; y: number; z: number}, now: number, events: MsgRoomEvent[],
   hit: (owner: PlayerState, target: PlayerState, damage: number, skillId: number) => void): void {
-  const rule = readSelfDestructRule();
-  if (!rule || room.phase !== 'PLAYING' || !hasSelectedSelfDestruct(deadOwner)) return;
+  const rule = selectedSelfDestructRule(deadOwner);
+  if (!rule || room.phase !== 'PLAYING') return;
   events.push({roomId: room.roomId, type: 'selfDestructBlast', message: '',
     playerId: deadOwner.id, targetId: '', value: 0, x: center.x, y: center.y, z: center.z,
     skillId: rule.blastSkillId,

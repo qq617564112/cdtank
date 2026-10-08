@@ -1,3 +1,4 @@
+import {gameContent} from '../../../../shared/content/catalog';
 import type {PlaySkillEffectMessage, StopSkillEffectMessage} from '../../../../shared/protocols/MsgRoomEvent';
 
 export interface SkillEffectSlot {
@@ -29,7 +30,6 @@ export interface SkillEffectNotificationBackend<Role, Effect, Sound> {
   resetRoleEffects(roleId: number): void;
 }
 
-const RETAINED_SKILLS = new Set([8, 10, 11, 19, 4005, 30001, 30003]);
 const SOUND_OFFSET: readonly [number, number, number] = [0, 0, -1];
 
 /** Original 488291/486b4a notifications and 48698f simulation-tick countdown updates. */
@@ -73,13 +73,13 @@ export class SkillEffectNotifications<Role, Effect, Sound> {
       roleId: message.roleId, skillId: message.skillId, effectIndex: message.effectIndex,
       duration: message.duration,
     };
-    if (message.skillId >= 13501 && message.skillId <= 13506) {
+    if (gameContent().skills.get(message.skillId)?.runtime.queuedEffect) {
       let queue = this.roleQueues.get(message.roleId);
       if (!queue) {queue = []; this.roleQueues.set(message.roleId, queue);}
       queue.push(record);
       return;
     }
-    const retain = message.duration !== 0 && RETAINED_SKILLS.has(message.skillId);
+    const retain = message.duration !== 0 && gameContent().skills.get(message.skillId)?.runtime.retainedEffect;
     if (retain && this.retained.some(existing => existing.roleId === message.roleId &&
       existing.skillId === message.skillId && existing.effectIndex === message.effectIndex)) return;
     const effect = this.backend.attached(role, slot.effectId, 3, slot.tag, !retain);
@@ -175,7 +175,7 @@ export class SkillEffectNotifications<Role, Effect, Sound> {
   }
 
   private schedule(record: SkillEffectNotificationRecord<Effect, Sound>): void {
-    this.timers.set(record.roleId, {skillId: record.skillId, remaining: 5});
+    this.timers.set(record.roleId, {skillId: record.skillId, remaining: gameContent().skills.get(record.skillId)!.runtime.queueIntervalSeconds});
   }
 
   clearQueue(roleId: number): void {

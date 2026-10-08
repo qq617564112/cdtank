@@ -1,5 +1,7 @@
 # 田野路普通Castle受损表现
 
+当前041树声ww098已发布独立补作并映射audio.json，死亡五挂点并发保留低音量余量。原Castle动作、挂点与GA48／SE03／SE07保持，资源与参数见[reconstructed-tree-audio-runtime.md](reconstructed-tree-audio-runtime.md)，新增实际声音输出待验。
+
 M3-08-CASTLE02按单次正式受损事务消费原Castle动画、挂点效果和声音。原模型资源与放置由地图线提供，权威目标、HP与伤害由主线提供。
 
 ## 原合同与消费者

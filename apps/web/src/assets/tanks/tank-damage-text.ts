@@ -5,9 +5,11 @@ import type {CastleDamageTextRenderer, CastleDamageTextViewport} from '../scenes
 export class TankDamageText {
   private readonly queue: SceneCastleDamageText;
   private readonly criticalQueue?: SceneCastleDamageText;
+  private readonly comboQueue?: SceneCastleDamageText;
 
   /** The player presentation owner retains and disposes the shared glyph renderer. */
-  constructor(renderer: CastleDamageTextRenderer, criticalRenderer?: CastleDamageTextRenderer) {
+  constructor(renderer: CastleDamageTextRenderer, criticalRenderer?: CastleDamageTextRenderer,
+    comboRenderer?: CastleDamageTextRenderer) {
     const queue = (renderer: CastleDamageTextRenderer): SceneCastleDamageText => new SceneCastleDamageText({
       create: text => renderer.create(Number(text) > 0 ? `+${text}` : text),
       draw: (record, viewport) => renderer.draw(record, viewport),
@@ -16,6 +18,7 @@ export class TankDamageText {
     });
     this.queue = queue(renderer);
     if (criticalRenderer) this.criticalQueue = queue(criticalRenderer);
+    if (comboRenderer) this.comboQueue = new SceneCastleDamageText(comboRenderer);
   }
 
   /** Original422877/467209/466d09: signed damage is negated; local screenY is shifted once. */
@@ -28,16 +31,24 @@ export class TankDamageText {
   advance(actorDeltaSeconds: number, viewZ: number): void {
     this.queue.advance(actorDeltaSeconds, viewZ);
     this.criticalQueue?.advance(actorDeltaSeconds, viewZ);
+    this.comboQueue?.advance(actorDeltaSeconds, viewZ);
   }
 
   draw(viewport: CastleDamageTextViewport): void {
     this.queue.draw(viewport);
     this.criticalQueue?.draw(viewport);
+    this.comboQueue?.draw(viewport);
   }
 
   clear(): void {
     this.queue.clear();
     this.criticalQueue?.clear();
+    this.comboQueue?.clear();
+  }
+
+  /** Source selector3 carries the unmodified consecutive kill count. */
+  combo(screenX: number, screenY: number, count: number, isLocal: boolean): void {
+    this.comboQueue?.show(screenX, isLocal ? Math.fround(screenY - 100) : screenY, count);
   }
 
   /** Actor destruction frees its records without disposing another actor's glyph resources. */

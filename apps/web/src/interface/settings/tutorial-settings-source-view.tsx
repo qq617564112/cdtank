@@ -50,6 +50,6 @@ function TutorialSettingsSession({onSettings, onExit, retried, retry}: TutorialS
     <SourceButton ui={ui} layout={layout} suffix={TUTORIAL_SETTINGS_LAYOUT} source="btnSettings"
       className="tutorial-settings-button" aria-label="系统设置" title="系统设置" onClick={onSettings}/>
     <SourceButton ui={ui} layout={layout} suffix={TUTORIAL_SETTINGS_LAYOUT} source="btnClose"
-      className="tutorial-settings-button" aria-label="退出游戏" title="退出游戏" onClick={onExit}/>
+      className="tutorial-settings-button" aria-label="返回登录" title="返回登录" onClick={onExit}/>
   </div>;
 }

@@ -16,22 +16,25 @@ const PRESS_ACTIONS = ['useItem', 'prevWeapon', 'nextWeapon', 'prevItem', 'nextI
 const HELD_ACTIONS = ['forward', 'backward', 'turnLeft', 'turnRight', 'aimLeft', 'aimRight', 'fire'] as const;
 
 interface BattleInputShortcuts {
-  /** Reflect a direct Battle slot1–8 press: move the local item/weapon cursor
-   * and select the discard candidate. The request itself is sent by the caller. */
+  /** Quantity gate for a slot request before it is sent. Returns false to drop
+   * the request; accepted slots also move the local item cursor/discard choice. */
+  acceptSlot(slot: number): boolean;
+  /** Reflect a direct Battle slot1–8 press: item slots move the local cursor,
+   * weapon slots drop any cycling intent. */
   itemSlot(slot: number): void;
   /** Selected local item slot for the ordinary useItem key, if any. */
   currentItemSlot(): number | undefined;
   /** Weapon cycle returns the ammo slot to select, or undefined when none. */
   cycleWeapon(direction: 1 | -1): number | undefined;
-  /** Item cycle moves the local cursor only; no request is sent. */
-  cycleItem(direction: 1 | -1): void;
+  /** Item cycle returns the Battle slot5–8 to use, or undefined when none. */
+  cycleItem(direction: 1 | -1): number | undefined;
   /** Drop transient shortcut intent for blur, config reload, stop and lifecycle. */
   clearIntent(): void;
 }
 
 const NO_SHORTCUTS: BattleInputShortcuts = {
-  itemSlot: () => {}, currentItemSlot: () => undefined,
-  cycleWeapon: () => undefined, cycleItem: () => {}, clearIntent: () => {},
+  acceptSlot: () => true, itemSlot: () => {}, currentItemSlot: () => undefined,
+  cycleWeapon: () => undefined, cycleItem: () => undefined, clearIntent: () => {},
 };
 
 /** Manual controls send key changes immediately and refresh held input every 50 ms. */
@@ -47,7 +50,9 @@ export class BattleInput {
     window.addEventListener('keydown', event => {
       const context = this.readContext();
       if (!context.active || !context.playing || !context.connected || context.autopilot
-          || event.isComposing || event.ctrlKey || event.altKey || event.metaKey
+          || event.isComposing
+          || (event.ctrlKey && event.code !== 'ControlLeft' && event.code !== 'ControlRight')
+          || event.altKey || event.metaKey
           || (event.target instanceof HTMLElement &&
             (event.target.closest('input, select, button, textarea') || event.target.isContentEditable))) {
         return;
@@ -72,10 +77,7 @@ export class BattleInput {
         if (event.repeat) return;
         if (press === 'useItem') {
           const slot = this.shortcuts.currentItemSlot();
-          if (slot !== undefined) {
-            this.shortcuts.itemSlot(slot);
-            this.send(slot);
-          }
+          if (slot !== undefined) this.send(slot);
         } else if (press === 'prevWeapon') {
           const slot = this.shortcuts.cycleWeapon(-1);
           if (slot !== undefined) this.send(slot);
@@ -83,9 +85,11 @@ export class BattleInput {
           const slot = this.shortcuts.cycleWeapon(1);
           if (slot !== undefined) this.send(slot);
         } else if (press === 'prevItem') {
-          this.shortcuts.cycleItem(-1);
+          const slot = this.shortcuts.cycleItem(-1);
+          if (slot !== undefined) this.send(slot);
         } else {
-          this.shortcuts.cycleItem(1);
+          const slot = this.shortcuts.cycleItem(1);
+          if (slot !== undefined) this.send(slot);
         }
         return;
       }
@@ -102,7 +106,8 @@ export class BattleInput {
     });
     window.addEventListener('blur', () => {this.clear();});
     window.addEventListener('focusin', event => {
-      if (event.target instanceof HTMLElement && event.target.matches('input, select, button, textarea, [contenteditable]')) {
+      if (event.target instanceof HTMLElement
+          && event.target.matches('input, select, button, textarea, [contenteditable]')) {
         this.clear();
       }
     });
@@ -150,6 +155,7 @@ export class BattleInput {
   send(useItem = 0): void {
     const context = this.readContext();
     if (!context.connected || !context.active || !context.playing || context.autopilot) return;
+    if (useItem > 0 && !this.shortcuts.acceptSlot(useItem)) return;
     this.sendMessage({
       sequence: ++this.sequence,
       ...this.motionAxes,

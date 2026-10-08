@@ -2,9 +2,9 @@ import {Camera, Color4, FreeCamera, RenderTargetTexture, Scene, Vector3} from '@
 import type {AbstractMesh} from '@babylonjs/core';
 import {hudMinimapBounds} from '../interface/battle/hud-minimap-bounds';
 
-const TEXTURE_SIZE = 768;
+const TEXTURE_SIZE = 1024;
 
-/** Captures the original scene from above, using the marker projection's bounds. */
+/** Offline map capture uses the same bounds as the battle radar markers. */
 export class BattleMinimap {
   private cancel?: () => void;
 
@@ -33,6 +33,7 @@ export class BattleMinimap {
     camera.minZ = 1;
     camera.maxZ = highest + span * 3;
     const texture = new RenderTargetTexture(`minimap-${mapId}`, TEXTURE_SIZE, this.scene, false);
+    texture.samples = 4;
     texture.activeCamera = camera;
     texture.renderList = [...meshes];
     texture.renderParticles = false;

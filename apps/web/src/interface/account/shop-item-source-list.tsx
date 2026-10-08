@@ -14,10 +14,12 @@ export interface ShopSourceListEntry {
 }
 
 /** Original list bounds and selection image with React-owned candidate and keyboard focus. */
-export function ShopItemSourceList({ui, source, entries, selected, busy, select, activate, canActivate}: {
+export function ShopItemSourceList({ui, source, entries, selected, busy, select, activate, canActivate,
+  describe, dismissDescription, described}: {
   ui: HomeSourceUi; source: 'lstShopItem' | 'lstMyItem'; entries: ShopSourceListEntry[];
   selected?: number; busy: boolean; select: (id: number) => void;
-  activate?: (id: number) => void; canActivate?: (id: number) => boolean;
+  activate?: (id: number, anchor: HTMLButtonElement) => void; canActivate?: (id: number) => boolean;
+  describe?: (id: number, anchor: HTMLButtonElement) => void; dismissDescription?: () => void; described?: number;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const layout = new HomeSourceLayout(ui, 'shop_itempage.xml');
@@ -32,7 +34,9 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
   return <div {...sourceProps(ui, layout, 'shop_itempage.xml', source)} className="shop-list-scroll-shell">
     <div ref={root} className="shop-item-source-list"
     {...(source === 'lstShopItem' ? {'data-shop-item': '', 'data-selected-item': selected ?? '', 'data-shop-source-product-grid': ''} : {'data-shop-owned-list': ''})}
-    role="listbox" aria-label={source === 'lstShopItem' ? '商品' : '已拥有物品'} aria-busy={busy}>
+    role="listbox" aria-label={source === 'lstShopItem' ? '商品' : '已拥有物品'} aria-busy={busy}
+    onMouseLeave={dismissDescription} onScroll={dismissDescription}
+    onBlur={event => {if (!event.currentTarget.contains(event.relatedTarget)) dismissDescription?.();}}>
     {entries.map((entry, index) => {
       const ownedItemRow = source === 'lstMyItem' && entry.itemTableId !== undefined
         && [1, 2].includes(classifyInventoryCategory(entry.itemTableId)) && entry.ownedQuantity !== undefined;
@@ -40,16 +44,19 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
         `set:daoju0 image:data\\ui\\daoju\\${String(entry.iconId).padStart(5, '0')}.tga`);
       return <button key={entry.id} type="button" role="option" aria-selected={entry.id === selected}
         disabled={busy} data-shop-list-id={entry.id}
+        aria-describedby={described === entry.id ? 'shop-item-description' : undefined}
         {...(ownedItemRow ? {'data-shop-source-owned-item-row': ''} : source === 'lstShopItem' ? {'data-shop-source-product-row': ''} : {})}
         {...(source === 'lstShopItem' ? {'data-shop-product-id': entry.id} : {'data-shop-owned-instance': entry.id})}
         tabIndex={entry.id === selected || selected === undefined && index === 0 ? 0 : -1}
         style={entry.id === selected ? {backgroundImage: selection.style.backgroundImage} : undefined}
         data-source-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
         data-stack-sale-available={source === 'lstMyItem' && Boolean(activate && canActivate?.(entry.id))}
-        onDoubleClick={() => {if (source === 'lstMyItem' && !busy && canActivate?.(entry.id)) activate?.(entry.id);}}
+        onMouseEnter={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
+        onFocus={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
+        onDoubleClick={event => {if (!busy && canActivate?.(entry.id)) activate?.(entry.id, event.currentTarget);}}
         onClick={() => select(entry.id)} onKeyDown={event => {
-          if (event.key === 'Enter' && source === 'lstMyItem' && activate && canActivate?.(entry.id)) {
-            event.preventDefault(); activate(entry.id); return;
+          if (event.key === 'Enter' && !event.nativeEvent.isComposing && activate && canActivate?.(entry.id)) {
+            event.preventDefault(); activate(entry.id, event.currentTarget); return;
           }
           const target = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
             : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;

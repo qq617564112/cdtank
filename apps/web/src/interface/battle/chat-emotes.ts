@@ -1,3 +1,4 @@
+import {imageResourceUrl} from '../../assets/image-cache';
 import {EMOTE_COUNT, EMOTE_FIRST_CODEPOINT} from './chat-emote-text';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {loadChatEmoteSequences} from './chat-emote-animation';
@@ -21,12 +22,15 @@ export class ChatEmotes {
   private layoutWidth = 0;
   private imageCatalog?: ChatImageCatalog;
   private loadGeneration = 0;
+  private readonly fontLoaded = () => {this.layoutWidth = 0; this.relayout();};
 
   setSourceLayout(active: boolean, log: HTMLElement): void {
     if (this.sourceLayout===active && this.log===log) return;
     this.log = log; this.sourceLayout = active;
     this.resizeObserver?.disconnect();
+    document.fonts.removeEventListener('loadingdone', this.fontLoaded);
     if (active) {
+      document.fonts.addEventListener('loadingdone', this.fontLoaded);
       this.resizeObserver ??= new ResizeObserver(() => this.relayout());
       this.resizeObserver.observe(log);
     }
@@ -75,7 +79,7 @@ export class ChatEmotes {
         const sequence = this.sequences?.get(id), image = sequence?.definition.frames[0] ?? this.images.get(id);
         if (!image) {element.append(document.createTextNode(glyph)); continue;}
         const img = document.createElement('img'); img.alt=glyph; img.dataset.chatEmote=String(id); img.draggable=false;
-        img.src=`/${image.asset}`; img.width=image.width; img.height=image.height;
+        img.src=imageResourceUrl(`/${image.asset}`); img.width=image.width; img.height=image.height;
         if (sequence) this.paint(img,sequence);
         element.append(img);
       }
@@ -91,6 +95,7 @@ export class ChatEmotes {
     if (this.animation !== undefined) cancelAnimationFrame(this.animation);
     this.animation=undefined; this.previousTime=undefined; this.rows.clear();
     this.resizeObserver?.disconnect(); this.sourceLayout=false; this.layoutWidth=0;
+    document.fonts.removeEventListener('loadingdone', this.fontLoaded);
   }
 
   remove(element: HTMLElement): void {
@@ -152,14 +157,14 @@ export class ChatEmotes {
           const image=this.imageCatalog!.image(item.image.set,item.image.name)!;
           const img=document.createElement('img');img.draggable=false;img.alt='';
           img.dataset.chatSourceImage=item.image.name;img.dataset.chatSourceImageset=item.image.set;
-          img.src=`/${image.asset}`;img.width=image.width;img.height=image.height;
+          img.src=imageResourceUrl(`/${image.asset}`);img.width=image.width;img.height=image.height;
           Object.assign(img.style,{position:'absolute',left:'0px',top:'0px',width:`${image.width}px`,height:`${image.height}px`});
           piece.append(img);
         } else if (item.emoteId===undefined) piece.textContent=item.text;
         else {
           const sequence=this.sequences?.get(item.emoteId),image=sequence?.definition.frames[0]??this.images.get(item.emoteId)!;
           const img=document.createElement('img');img.alt=item.text;img.draggable=false;
-          img.dataset.chatEmote=String(item.emoteId);img.src=`/${image.asset}`;
+          img.dataset.chatEmote=String(item.emoteId);img.src=imageResourceUrl(`/${image.asset}`);
           img.width=image.width;img.height=image.height;
           Object.assign(img.style,{position:'absolute',left:'1px',top:'0px',width:`${image.width-1}px`,height:`${image.height}px`});
           applyChatEmoteColour(img,colour,piece);
@@ -200,7 +205,7 @@ export class ChatEmotes {
     image.style.visibility=index===undefined?'hidden':'';
     if (index===undefined) return;
     const frame=sequence.definition.frames[index];
-    const source=`/${frame.asset}`;
+    const source=imageResourceUrl(`/${frame.asset}`);
     if (image.getAttribute('src')!==source) image.src=source;
     image.width=frame.width; image.height=frame.height;
   }

@@ -75,4 +75,4 @@ M5-04 / UI-09。本文定位 `game_main.xml` 的 `txtPlayerTitleN` 与 `picVIPN`
 
 - `txtPlayerTitle*`：控件与原字段 `m_iNowTitle`（选择子 `0x1e`→`title.dat`）已确认；原账号“持有/选用”producer仍有边界；Web快照选用称号已消费，缺值默认显示ID1“嗷嗷待哺”，不据默认授予账户称号。
 - `picVIP*`：确认规则（Web 模式3且 `m_bVIP`），正式UI已消费快照 `isVIP`。
-- 勋章：无独立控件；Home 奖项统计仍无 producer（`home-award-summary.md`），不冒充战斗 HUD 勋章。
+- 勋章：战斗HUD无独立控件；Home九奖项统计已从实际持久结算历史聚合并沿RoleProfile供给页面（`home-award-summary.md`），原统计producer仍缺来源。

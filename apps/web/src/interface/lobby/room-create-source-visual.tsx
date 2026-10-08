@@ -1,8 +1,8 @@
 import {useEffect, useLayoutEffect, useState, type CSSProperties, type RefObject} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
-import {sourceProps} from '../resources/source-ui-props';
+import {loadUiFont} from '../resources/source-ui-fonts';
+import {withResourceTimeout} from '../../assets/static-resources';
 import {SourceStaticImage} from '../resources/source-static-image';
 
 export {SourceImageScale as RoomCreateImageScale} from '../resources/source-static-image';
@@ -11,9 +11,10 @@ let passwordFont: Promise<void> | undefined;
 
 function loadRoomCreatePasswordFont(): Promise<void> {
   passwordFont ??= (async () => {
-    const face = new FontFace('CDTank-SIMSUN-Password', "url('/ui/fonts/SIMSUN-password.ttf')");
-    await face.load();
+    const face = new FontFace('CDTank-SIMSUN-Password', "url('/ui/fonts/SIMSUN-password.ttf')", {display: 'swap'});
     document.fonts.add(face);
+    try {await withResourceTimeout(face.load(), '密码字体');}
+    catch (error) {document.fonts.delete(face); throw error;}
   })().catch(error => {passwordFont = undefined; throw error;});
   return passwordFont;
 }
@@ -85,19 +86,8 @@ export function useRoomCreateVisual(open: boolean) {
   useEffect(() => {
     if (!open) return;
     let active = true;
-    void Promise.all([loadSourceUiFonts(), loadRoomCreatePasswordFont()]).catch(error => {if (active) setFontError(String(error));});
+    void Promise.all([loadUiFont(), loadRoomCreatePasswordFont()]).catch(error => {if (active) setFontError(String(error));});
     return () => {active = false;};
   }, [open]);
-  return {fontError, scale, viewportWidth: viewport.width, viewportHeight: viewport.height, viewport: {width: 310 * scale, height: 328 * scale}, stage: {transform: `scale(${scale})`}};
-}
-
-/** The source mask is the first child of the sheet and is not clipped to its parent. */
-export function RoomCreateSourceMask({ui, layout, scale, viewportWidth, viewportHeight}: {
-  ui: HomeSourceUi; layout: HomeSourceLayout; scale: number; viewportWidth: number; viewportHeight: number;
-}) {
-  const props = sourceProps(ui, layout, 'createroom.xml', 'zhezhaoditu', layout.control('zhezhaoditu').properties.Image);
-  return <span {...props} className="room-create-source-mask" aria-hidden="true" style={{...props.style,
-    left: (viewportWidth - 800 * scale) / 2 + Number(props.style.left) * scale,
-    top: (viewportHeight - 600 * scale) / 2 + Number(props.style.top) * scale,
-    width: Number(props.style.width) * scale, height: Number(props.style.height) * scale}}/>;
+  return {fontError, scale, viewport: {width: 310 * scale, height: 328 * scale}, stage: {transform: `scale(${scale})`}};
 }

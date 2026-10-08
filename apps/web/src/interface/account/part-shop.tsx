@@ -1,6 +1,13 @@
+import {gameContent} from '../../../../shared/content/catalog';
+import {loadCombatCatalog} from '../../content';
 import type {ReqPartSale, ResPartSale} from '../../../../shared/protocols/PtlPartSale';
 import {createRequestId} from '../../network/request-id';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
+import {SourceNotice} from '../dialogs/source-notice';
+import {SourceNoticeView} from '../dialogs/source-notice-view';
+import {createPortal} from 'react-dom';
+import {ShopPurchaseSource} from './shop-purchase-source';
+import {ShopItemDescriptionSource} from './shop-item-description-source';
 import './part-shop.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {ReqShop, ResShop, ShopCurrency} from '../../../../shared/protocols/PtlShop';
@@ -21,12 +28,11 @@ const inCategory = (id: number, category: PartShopCategory) => {
   const type = classifyItemId(id);
   return category === 'Common' ? type >= 8 && type <= 12 : type === (category === 'Hat' ? 5 : 7);
 };
-const MARK_CATALOG_IDS = [12501, 12502, 12503] as const;
-const hasMarkCatalog = (items: readonly {itemTableId: number}[]) =>
-  MARK_CATALOG_IDS.every(id => items.some(item => item.itemTableId === id && inCategory(item.itemTableId, 'Mark')));
-const HAT_CATALOG_IDS = Array.from({length: 40}, (_, index) => 10001 + index);
-const hasHatCatalog = (items: readonly {itemTableId: number}[]) =>
-  HAT_CATALOG_IDS.every(id => items.some(item => item.itemTableId === id && inCategory(item.itemTableId, 'Hat')));
+const hasCategoryCatalog = (items: readonly {itemTableId: number}[], category: PartShopCategory) =>
+  [...gameContent().items.values()].filter(item => item.shop.available && item.shop.group === 'part'
+    && inCategory(item.id, category)).every(item => items.some(row => row.itemTableId === item.id));
+const hasMarkCatalog = (items: readonly {itemTableId: number}[]) => hasCategoryCatalog(items, 'Mark');
+const hasHatCatalog = (items: readonly {itemTableId: number}[]) => hasCategoryCatalog(items, 'Hat');
 const categoryForItem = (id: number): PartShopCategory => {
   const type = classifyItemId(id);
   return type >= 8 && type <= 12 ? 'Common' : type === 5 ? 'Hat' : type === 7 ? 'Mark' : 'Common';
@@ -47,7 +53,7 @@ function profileInstalled(profile: {bytes: number[]} | undefined, category: Part
 }
 
 /** Part purchases reuse the existing Shop transaction and refresh real inventory. */
-export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMoney}: {
+export function PartShopView({ui, source, owner, onBusy, onMoney}: {
   ui: HomeSourceUi; source: ShopSource; owner: PartPurchaseOwner; onBusy: (busy: boolean) => void;
   onEquipmentPage?: () => void; onMoney?: (money: number) => void;
 }) {
@@ -56,6 +62,9 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
   const [inventory, setInventory] = useState<ResInventory>();
   const [sale, setSale] = useState<ResPartSale>();
   const [saleConfirm, setSaleConfirm] = useState(false);
+  const [buyConfirm, setBuyConfirm] = useState(false);
+  const [description, setDescription] = useState<{id: number; left: number; top: number}>();
+  const [notice] = useState(() => new SourceNotice());
   const generation = useRef(0);
   const [catalog, setCatalog] = useState<CombatCatalog>();
   const initialSelected = owner.pending?.itemTableId ?? owner.selected;
@@ -71,6 +80,7 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
   categoryRef.current = category;
   const products = confirmed?.items.filter(item => inCategory(item.itemTableId, category)) ?? [];
   const product = products.find(item => item.itemTableId === selected);
+  const describedProduct = products.find(item => item.itemTableId === description?.id);
   const hatAvailable = confirmed ? hasHatCatalog(confirmed.items) : false;
   const markAvailable = confirmed ? hasMarkCatalog(confirmed.items) : false;
   const moneyPrice = product && positivePrice(product.moneyPrice) ? product.moneyPrice : undefined;
@@ -80,6 +90,7 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
       : moneyPrice !== undefined ? 'MONEY' : tokenPrice !== undefined ? 'TOKENS' : undefined;
   const unitPrice = effectiveCurrency === 'MONEY' ? moneyPrice : effectiveCurrency === 'TOKENS' ? tokenPrice : undefined;
   const owned = inventory?.records.filter(item => inCategory(item.itemTableId, ownedCategory)) ?? [];
+  useEffect(() => () => notice.clear(), [notice]);
   useEffect(() => {onBusy(busy);}, [busy, onBusy]);
   useEffect(() => {
     if (effectiveCurrency && effectiveCurrency !== currency) setCurrency(effectiveCurrency);
@@ -87,16 +98,14 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
   useEffect(() => {
     generation.current++;
     const current = {active: true, query: false, identity: {}}; session.current = current;
-    const controller = new AbortController(); let queued = false;
+    let queued = false;
     async function refresh() {
       if (!current.active) return;
       if (current.query) {queued = true; return;}
       current.query = true; setBusy(true);
       try {
-        const [shop, saleResult, response] = await Promise.all([source.shop({operation: 'QUERY'}),
-          source.partSale?.({operation: 'QUERY'}), fetch('/combat-catalog.json', {signal: controller.signal})]);
-        if (!response.ok) throw new Error('部件资料载入失败');
-        const definitions = await response.json() as CombatCatalog;
+        const [shop, saleResult, definitions] = await Promise.all([source.shop({operation: 'QUERY'}),
+          source.partSale?.({operation: 'QUERY'}), loadCombatCatalog()]);
         if (!current.active) return;
         const items = saleResult?.inventory ?? await source.inventory?.();
         if (!current.active) return;
@@ -113,19 +122,36 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
           : shop.items.find(item => inCategory(item.itemTableId, nextCategory))?.itemTableId;
         owner.selected = id; return id;});
         setStatus(owner.inFlight ? '等待购买确认…' : owner.pending ? '购买未确认，可重试原请求。' : '购买部件后可前往装备。');
-      } catch (error) {if (current.active) setStatus(error instanceof Error ? error.message : '部件资料载入失败');}
+      } catch (error) {if (current.active) void notice.show(error instanceof Error ? error.message : '部件资料载入失败');}
       finally {current.query = false; if (current.active) {setBusy(Boolean(owner.inFlight || owner.saleInFlight)); if (queued) {queued = false; void refresh();}}}
     }
     owner.session = {identity: current.identity, refresh: () => {void refresh();}}; void refresh();
-    return () => {generation.current++; current.active = false; controller.abort(); if (owner.session?.identity === current.identity) owner.session = undefined;};
-  }, [source, owner]);
+    return () => {generation.current++; current.active = false; if (owner.session?.identity === current.identity) owner.session = undefined;};
+  }, [source, owner, notice]);
   useLayoutEffect(() => {
     const target = focusAfterCommit.current;
     if (busy || !target) return; focusAfterCommit.current = null;
     if (target.isConnected && (document.activeElement === document.body || document.activeElement === target
       || document.activeElement?.id === 'account-shop')) target.focus();
   }, [busy]);
-  async function purchase(button: HTMLButtonElement) {
+  function describeProduct(id: number, button: HTMLButtonElement) {
+    const stage = button.closest('.shop-source-stage');
+    if (!stage || buyConfirm || saleConfirm) return;
+    const sheet = stage.getBoundingClientRect(), row = button.getBoundingClientRect();
+    const scale = sheet.width / 625;
+    setDescription({id, left: Math.max(0, Math.min(625 - 218, (row.left - sheet.left) / scale)),
+      top: Math.max(0, Math.min(404 - 103, (row.bottom - sheet.top) / scale + 4))});
+  }
+  function requestPurchase(id: number, button: HTMLButtonElement) {
+    const item = products.find(value => value.itemTableId === id);
+    if (!session.current.active || busy || owner.inFlight || owner.saleInFlight || !item) return;
+    owner.selected = id; setSelected(id);
+    setCurrency(owner.pending?.itemTableId === id ? owner.pending.currency ?? 'MONEY'
+      : positivePrice(item.tokenPrice) ? 'TOKENS' : 'MONEY');
+    focusAfterCommit.current = button;
+    setDescription(undefined); setStatus(''); setBuyConfirm(true);
+  }
+  async function purchase() {
     const current = session.current;
     if (!current.active || current.query || owner.inFlight || owner.saleInFlight || !product
         || effectiveCurrency === undefined || unitPrice === undefined) return;
@@ -133,19 +159,22 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
       owner.pending = {operation: 'BUY', itemTableId: product.itemTableId, quantity: 1,
         currency: effectiveCurrency, requestId: createRequestId()};
     }
-    focusAfterCommit.current = button; setBusy(true); setStatus('等待购买确认…');
+    setBusy(true); setStatus('等待购买确认…');
     const request = source.shop(owner.pending); owner.inFlight = request;
     try {
       const result = await request; owner.pending = undefined;
       if (current.active) {
-        setConfirmed(result); setStatus(`已购买${product.name}，正在查询库存…`);
+        setConfirmed(result); setBuyConfirm(false); setStatus('');
         const saleResult = await source.partSale?.({operation: 'QUERY'});
         const items = saleResult?.inventory ?? await source.inventory?.();
         if (current.active) {setInventory(items); setSale(saleResult);
           if (saleResult?.money !== undefined) {setConfirmed(value => value && {...value, money: saleResult.money!}); onMoney?.(saleResult.money);} setOwnedSelected(result.purchased?.instanceId);
-          setStatus(`已购买${product.name}，可在装备页配置。`);}
+          void notice.show(`已购买${product.name}。`);}
       }
-    } catch (error) {if (current.active) setStatus(error instanceof Error ? error.message : '购买未确认，请重试');}
+    } catch (error) {if (current.active) {
+      const message = error instanceof Error ? error.message : '购买未确认，请重试';
+      if (owner.pending) setStatus(message); else void notice.show(`购买已完成，库存载入失败：${message}`);
+    }}
     finally {owner.inFlight = undefined; if (current.active) setBusy(current.query); else owner.session?.refresh();}
   }
   function requestSale(instanceId: number, button: HTMLButtonElement) {
@@ -155,10 +184,11 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
       owner.salePending = {operation: 'SELL', instanceId, requestId: createRequestId()};
     }
     setOwnedSelected(instanceId); focusAfterCommit.current = button;
-    setStatus(''); setSaleConfirm(true);
+    setDescription(undefined); setStatus(''); setSaleConfirm(true);
   }
   function selectProductCategory(kind: PartShopCategory) {
     if (busy || kind === 'Hat' && !hatAvailable || kind === 'Mark' && !markAvailable) return;
+    setDescription(undefined); setBuyConfirm(false);
     categoryRef.current = kind; setCategory(kind);
     const id = confirmed?.items.find(item => inCategory(item.itemTableId, kind))?.itemTableId;
     owner.selected = id; setSelected(id);
@@ -178,8 +208,9 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
         ? value : result.inventory.records.find(record => inCategory(record.itemTableId, ownedCategory))?.instanceId);
       if (result.money !== undefined) {setConfirmed(value => value && {...value, money: result.money!}); onMoney?.(result.money);}
       focusAfterCommit.current = document.querySelector<HTMLButtonElement>(`[data-part-owned-instance]:not([data-part-owned-instance="${result.sold.instanceId}"])`)
-        ?? document.querySelector<HTMLButtonElement>('[data-part-refresh]');
-      setSaleConfirm(false); setStatus(`已出售零件实例${result.sold.instanceId}，收入${result.sold.price}金币。`);
+        ?? document.querySelector<HTMLButtonElement>(`[data-part-owned-category="${ownedCategory}"]`);
+      setSaleConfirm(false); setStatus('');
+      void notice.show(`已出售零件，收入${result.sold.price}金币。`);
     } catch (error) {
       if (current.active && generation.current === ticket) setStatus(error instanceof Error ? error.message : '出售未确认，请重试原请求');
     } finally {
@@ -193,6 +224,9 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
       selectOwned={value => {generation.current++; setSaleConfirm(false); setOwnedCategory(value); setOwnedSelected(undefined);}} />
     <PartShopSourceList ui={ui} source="lstShopEquip" selected={selected} busy={busy}
       select={id => {owner.selected = id; setSelected(id);}}
+      activate={requestPurchase} canActivate={id => products.some(item => item.itemTableId === id
+        && (positivePrice(item.moneyPrice) || positivePrice(item.tokenPrice)))}
+      describe={describeProduct} dismissDescription={() => setDescription(undefined)} described={description?.id}
       entries={products.map(item => ({id: item.itemTableId, itemTableId: item.itemTableId, product: item, name: item.name, iconId: item.iconId,
         detail: [positivePrice(item.moneyPrice) ? `${item.moneyPrice}金币` : '',
           positivePrice(item.tokenPrice) ? `${item.tokenPrice}软星币` : ''].filter(Boolean).join(' / ')}))} />
@@ -202,32 +236,18 @@ export function PartShopView({ui, source, owner, onBusy, onEquipmentPage, onMone
         return {id: item.instanceId, itemTableId: item.itemTableId, installed: profileInstalled(sale?.profile, ownedCategory, item.instanceId),
           ownedQuantity: item.ownedQuantity, moneyPrice: definition?.moneyPrice, name: definition?.name ?? String(item.itemTableId),
           iconId: definition?.iconId ?? 0, detail: `×${item.ownedQuantity} · 实例${item.instanceId}`};})} />
-    <div className="part-shop-description" data-part-description="">{product?.info ?? ''}</div>
-    <div className="part-shop-query-prices" data-part-query-prices="">{product
-      ? [moneyPrice !== undefined ? `${moneyPrice}金币` : '', tokenPrice !== undefined ? `${tokenPrice}软星币` : '']
-        .filter(Boolean).join(' / ') : ''}</div>
-    <label className="part-shop-currency">币种 <select aria-label="部件购买币种" data-part-currency=""
-      value={effectiveCurrency ?? ''} disabled={busy || !product || (moneyPrice === undefined && tokenPrice === undefined)}
-      onChange={event => {
-        const value = event.currentTarget.value;
-        if (value === 'MONEY' && moneyPrice !== undefined || value === 'TOKENS' && tokenPrice !== undefined) {
-          setCurrency(value);
-        }
-      }}>
-      {moneyPrice !== undefined && <option value="MONEY">金币</option>}
-      {tokenPrice !== undefined && <option value="TOKENS">软星币</option>}
-    </select></label>
-    <button type="button" className="part-shop-buy" data-part-buy=""
-      disabled={busy || !product || effectiveCurrency === undefined || unitPrice === undefined}
-      onClick={event => {void purchase(event.currentTarget);}}>购买一件</button>
-    <button type="button" className="part-shop-equipment" data-part-equipment="" disabled={busy || !onEquipmentPage}
-      onClick={onEquipmentPage}>{category === 'Hat' ? '装备拥有装饰' : '装备拥有部件'}</button>
-    <button type="button" className="part-shop-refresh" data-part-refresh="" disabled={busy}
-      onClick={() => owner.session?.refresh()}>刷新</button>
+    {describedProduct && description && <ShopItemDescriptionSource ui={ui} itemTableId={describedProduct.itemTableId}
+      name={describedProduct.name} description={describedProduct.info} left={description.left} top={description.top}/>}
+    {buyConfirm && product && <ShopPurchaseSource ui={ui} name={product.name}
+      moneyPrice={moneyPrice ?? 0} tokenPrice={tokenPrice ?? 0} moneyAvailable={moneyPrice !== undefined}
+      currency={effectiveCurrency ?? currency} changeCurrency={value => {setCurrency(value); setStatus('');}}
+      pending={busy} status={status} confirm={() => {void purchase();}}
+      cancel={() => {setBuyConfirm(false); setStatus('');}}/>}
     {saleConfirm && <SourceConfirmView label="出售零件" binding="owned-part-sale"
       message="你确定出售该零件吗？" pending={busy}
       disabled={!sale?.quotes.some(quote => quote.instanceId === owner.salePending?.instanceId && quote.canSell)}
       status={status} confirm={() => {void sell();}} cancel={() => setSaleConfirm(false)} />}
-    <output className="part-shop-status" data-part-status="" role="status" aria-live="polite">{status}</output>
+    <output hidden data-part-status="">{status}</output>
+    {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
   </>;
 }

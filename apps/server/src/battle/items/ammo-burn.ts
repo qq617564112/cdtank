@@ -1,5 +1,11 @@
+import {itemForHandler, gameContent} from '../../../../shared/content/catalog';
 export interface AmmoBurnState {
   ownerId: string;
+  skillId: number;
+  itemId: number;
+  ticks: number;
+  intervalMs: number;
+  damage: number;
   startedAt: number;
   nextTick: number;
 }
@@ -11,9 +17,12 @@ export interface AmmoBurnParticipant {
 }
 
 /** Rebuilt4005 policy: an active nine-second burn is neither stacked nor refreshed. */
-export function startAmmoBurn(target: AmmoBurnParticipant, ownerId: string, now: number): boolean {
+export function startAmmoBurn(target: AmmoBurnParticipant, ownerId: string, now: number, itemId = itemForHandler('hit', 'burn').id): boolean {
   if (!target.alive || target.burn) return false;
-  target.burn = {ownerId, startedAt: now, nextTick: 1};
+  const rule = gameContent().items.get(itemId)!;
+  target.burn = {ownerId, startedAt: now, nextTick: 1, itemId, skillId: rule.runtime.skillRoles.secondary,
+    ticks: rule.runtime.values.burnTicks, intervalMs: rule.runtime.values.burnIntervalMs,
+    damage: rule.runtime.values.burnDamage};
   return true;
 }
 
@@ -31,16 +40,16 @@ export function advanceAmmoBurn(target: AmmoBurnParticipant, now: number,
     clearAmmoBurn(target);
     return;
   }
-  while (burn.nextTick <= 3 && now - burn.startedAt >= burn.nextTick * 3000) {
+  while (burn.nextTick <= burn.ticks && now - burn.startedAt >= burn.nextTick * burn.intervalMs) {
     burn.nextTick++;
-    damage(burn.ownerId, 70);
+    damage(burn.ownerId, burn.damage);
     if (target.burn !== burn) return;
     if (!target.alive || !ownerExists(burn.ownerId)) {
       clearAmmoBurn(target);
       return;
     }
   }
-  if (burn.nextTick > 3) {
+  if (burn.nextTick > burn.ticks) {
     clearAmmoBurn(target);
     onNaturalEnd?.(burn);
   }

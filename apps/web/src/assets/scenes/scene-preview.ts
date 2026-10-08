@@ -1,5 +1,6 @@
-import {ArcRotateCamera, AssetContainer, LoadAssetContainerAsync, Matrix, Observable, Quaternion, Scene, TransformNode, Vector3, Viewport} from '@babylonjs/core';
-import type {ObjectiveSnapshot} from '../../../../shared/protocols';
+import {AnimationGroup, ArcRotateCamera, AssetContainer, LoadAssetContainerAsync, Matrix, Observable, Quaternion, Scene, TransformNode, Vector3, Viewport} from '@babylonjs/core';
+import {loadStaticJson} from '../static-resources';
+import type {ObjectiveSnapshot, SceneObjectSnapshot} from '../../../../shared/protocols';
 import {SceneCvdAnimation} from './scene-cvd-animation';
 import {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import {effectModelEngineDelta} from '../../render/effects/models/effect-model-animation';
@@ -8,6 +9,7 @@ import {SceneBreachVisual} from './scene-breach-visual';
 import type {EffectRuntime} from '../../render/effects/runtime/effect-runtime';
 import type {EffectVec3} from '../../render/effects/common/types';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
+import {hasSceneActorToon, registerSceneActorToon, SceneActorToon} from '../../render/materials/actor-toon';
 import {SceneCastleVisual, type CastleModelResource} from './scene-castle-visual';
 import {SceneCastleDamageText} from './scene-castle-damage-text';
 import {SceneCastleDamageTextRenderer} from '../../render/scene-castle-damage-text-renderer';
@@ -18,19 +20,19 @@ import {SceneCrushPresentation} from './scene-crush-presentation';
 import {sceneCrushTransform} from './scene-crush-transform';
 import {SceneWater} from './scene-water';
 import {SceneSequence} from './scene-sequence';
+import {SceneHook} from './scene-hook';
+import {SceneWaterFall} from './scene-waterfall';
 import {ScenePlantSway} from './scene-plant-sway';
-import {SceneTerrainMaterial} from './scene-terrain-material';
-import {SceneGeneralMaterial} from './scene-general-material';
+import {hasSceneTerrainMaterial, SceneTerrainMaterial} from './scene-terrain-material';
+import {sceneGeneralMaterialModel, SceneGeneralMaterial} from './scene-general-material';
 import {SceneBreachMaterial, sceneBreachMaterialModel} from './scene-breach-material';
 import {sceneBreachLibrary, type SceneBreachDestruction} from './scene-breach-resources';
+import {sceneEnvironmentFor} from '../../../../shared/maps/scene-environment';
+import {applySceneEnvironment, resetSceneShaderEnvironment} from '../../render/scene-environment';
+import {orderSceneModels} from '../../render/scene-model-order';
+import {castleResourceFile} from '../../../../shared/maps/castle-resources';
+import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
 import type {AbstractMesh} from '@babylonjs/core';
-
-export interface SceneMovementSurface {
-  id: string;
-  meshes: readonly AbstractMesh[];
-  terrain: boolean;
-  enabled: boolean;
-}
 
 interface Placement {
   id: string;
@@ -42,6 +44,7 @@ interface Placement {
   asset?: string;
   className?: string;
   animation?: {library: string; reference: string};
+  special?: {library: string; kind: 'hook' | 'waterfall'};
   destruction?: SceneBreachDestruction;
 }
 interface SceneEntry {
@@ -74,14 +77,15 @@ export class ScenePreview {
   private readonly assets: AssetContainer[] = [];
   private readonly minimapGeometry: AbstractMesh[] = [];
   get minimapMeshes(): readonly AbstractMesh[] {return this.minimapGeometry;}
-  private readonly movementGeometry = new Map<string, SceneMovementSurface>();
-  get movementSurfaces(): readonly SceneMovementSurface[] {return [...this.movementGeometry.values()];}
   private water?: SceneWater;
   private sequence?: SceneSequence;
+  private hook?: SceneHook;
+  private waterfall?: SceneWaterFall;
   private plants?: ScenePlantSway;
   private terrainMaterial?: SceneTerrainMaterial;
   private generalMaterial?: SceneGeneralMaterial;
   private breachMaterial?: SceneBreachMaterial;
+  private actorToon?: SceneActorToon;
   private readonly crushes = new Map<string, {root: TransformNode;
     matrix: EffectNativeMatrix; presentation: SceneCrushPresentation;
     sourceEnabled: boolean; enabled: boolean; hidden: boolean; consumedShot: boolean}>();
@@ -94,6 +98,7 @@ export class ScenePreview {
   private revision = 0;
   private readonly animations: SceneCvdAnimation[] = [];
   private round?: number;
+  private readonly glbAnimations: AnimationGroup[] = [];
   private readonly breakables = new Map<string, {root: TransformNode; state: SceneBreachState;
     broken?: SceneBreachVisual; position: EffectVec3; soundPlayed: boolean}>();
 
@@ -103,12 +108,16 @@ export class ScenePreview {
 
   clear(): void {
     this.revision++;
+    resetSceneShaderEnvironment(this.scene);
     this.minimapGeometry.length = 0;
-    this.movementGeometry.clear();
     this.water?.dispose();
     this.water = undefined;
     this.sequence?.clear();
     this.sequence = undefined;
+    this.hook?.dispose();
+    this.hook = undefined;
+    this.waterfall?.dispose();
+    this.waterfall = undefined;
     this.plants?.dispose();
     this.plants = undefined;
     this.plantRoots.clear();
@@ -120,6 +129,8 @@ export class ScenePreview {
     this.generalMaterial = undefined;
     this.breachMaterial?.dispose();
     this.breachMaterial = undefined;
+    this.actorToon?.dispose();
+    this.actorToon = undefined;
     this.castles.forEach(value => {value.presentation.dispose(); value.visual.dispose();});
     this.castles.clear();
     this.castleDamageTexts.forEach(queue => queue.clear());
@@ -136,6 +147,8 @@ export class ScenePreview {
     this.breakables.forEach(value => {value.broken?.dispose();});
     this.breakables.clear();
     this.round = undefined;
+    this.glbAnimations.length = 0;
+    this.scene.setRenderingOrder(0);
     this.disposals.splice(0).forEach(dispose => dispose());
     this.assets.splice(0).forEach(asset => asset.dispose());
   }
@@ -144,12 +157,23 @@ export class ScenePreview {
     const pendingPlants = this.plantRoots.size === 0 ? [...this.plantSnapshots.values()] : [];
     const pendingPlantRound = this.plantRoots.size === 0 ? this.plantRound : undefined;
     this.clear();
-    if (['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
-      '0021', '0023', '0024', '0025'].includes(id) && pendingPlantRound !== undefined) {
+    if (pendingPlantRound !== undefined) {
       this.reconcilePlants(pendingPlants, pendingPlantRound);
     }
     const revision = this.revision;
     if (this.scene.isDisposed) return '';
+    if (hasSceneActorToon(id)) {
+      const owner = new SceneActorToon(this.scene, id);
+      this.actorToon = owner;
+      registerSceneActorToon(owner);
+      try {
+        await owner.load();
+      } catch (error) {
+        if (revision === this.revision) this.clear();
+        throw error;
+      }
+      if (revision !== this.revision) return '';
+    }
     const response = await fetch('/scene-placements.json');
     const entries: SceneEntry[] = await response.json();
     if (revision !== this.revision) {
@@ -159,7 +183,12 @@ export class ScenePreview {
     if (!entry) {
       throw new Error('找不到地图放置数据');
     }
-    const terrain = await LoadAssetContainerAsync(`/${entry.terrain}`, this.scene);
+    // Environment binds before any asset/shaders load so actors, castle and
+    // effects capture the current map's ambient, fog and light registers.
+    applySceneEnvironment(this.scene, sceneEnvironmentFor(id));
+    const terrain = await LoadAssetContainerAsync(`/${entry.terrain}`, this.scene, {
+      pluginOptions: {gltf: {useSRGBBuffers: false}},
+    });
     if (revision !== this.revision) {
       terrain.dispose();
       return '';
@@ -170,8 +199,7 @@ export class ScenePreview {
     terrain.rootNodes.forEach(node => {node.setEnabled(false);});
     this.assets.push(terrain);
     this.minimapGeometry.push(...terrain.meshes);
-    this.movementGeometry.set('terrain', {id: 'terrain', meshes: terrain.meshes, terrain: true, enabled: true});
-    if (['0002', '0004', '0005', '0006', '0007', '0010', '0011', '0014', '0017', '0018', '0020', '0021', '0022'].includes(id)) {
+    if (hasSceneTerrainMaterial(id)) {
       const owner = new SceneTerrainMaterial();
       this.terrainMaterial = owner;
       try {await owner.load(id, terrain);} catch (error) {
@@ -181,17 +209,23 @@ export class ScenePreview {
       if (revision !== this.revision) {owner.dispose(); return '';}
     }
     if (['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
-      '0021', '0023', '0024', '0025'].includes(id)) {
+      '0021', '0023', '0024', '0025', FIELD_ROAD_HD.sceneId].includes(id)) {
       this.plants = new ScenePlantSway();
       await this.plants.load(id);
       if (revision !== this.revision) return '';
     }
     const cache = new Map<string, AssetContainer>();
     let castleResources: CastleModelResource[] = [];
-    if (['0002', '0005', '0006', '0010', '0011'].includes(id) && runtime) {
-      const response = await fetch(`/scene-castle-${id}.json`);
+    if (entry.castles.length > 0 && runtime) {
+      const response = await fetch(`/${castleResourceFile(Number(id))}`);
       if (!response.ok) throw new Error('原城堡资源载入失败');
-      castleResources = (await response.json() as {castles: CastleModelResource[]}).castles;
+      const models = (await response.json() as {castles: CastleModelResource[]}).castles;
+      castleResources = entry.castles.map(placement => {
+        const model = models.find(value => value.model === placement.model);
+        if (!model) throw new Error(`原城堡模型载入失败：${placement.model}`);
+        return {...model, sourcePlacementId: placement.id, matrix: placement.matrix,
+          position: placement.position as EffectVec3};
+      });
       if (revision !== this.revision) return '';
     }
     const placements = [...entry.records, ...entry.castles];
@@ -203,7 +237,9 @@ export class ScenePreview {
       await Promise.all(Array.from({length: Math.min(4, paths.length)}, async () => {
         while (next < paths.length && revision === this.revision) {
           const path = paths[next++];
-          const asset = await LoadAssetContainerAsync(`/${path}`, this.scene);
+          const asset = await LoadAssetContainerAsync(`/${path}`, this.scene, {
+            pluginOptions: {gltf: {useSRGBBuffers: false}},
+          });
           if (revision !== this.revision) {asset.dispose(); return;}
           asset.animationGroups.forEach(group => {group.stop(); group.reset();});
           cache.set(path, asset);
@@ -217,10 +253,8 @@ export class ScenePreview {
     if (revision !== this.revision) return '';
     let damageRenderer: SceneCastleDamageTextRenderer | undefined;
     if (castleResources.length > 0 || placements.some(value => value.className === 'SYcScnObjBreach')) {
-      const fontResponse = await fetch('/ui-fonts.json');
-      if (!fontResponse.ok) throw new Error('原字体目录载入失败');
-      const fonts = await fontResponse.json() as {fonts: {name: string; attributes: Record<string, string>;
-        glyphs?: {codepoint: number; asset: string; width: number; height: number}[]}[]};
+      const fonts = await loadStaticJson<{fonts: {name: string; attributes: Record<string, string>;
+        glyphs?: {codepoint: number; asset: string; width: number; height: number}[]}[]}>('/ui-fonts.json');
       if (revision !== this.revision) return '';
       const damageFont = fonts.fonts.find(font => font.name === 'Damage' && font.attributes.Type === 'Static');
       if (!damageFont?.glyphs?.length) throw new Error('原Damage字体定义缺失');
@@ -232,17 +266,24 @@ export class ScenePreview {
       }
       if (revision !== this.revision) return '';
     }
-    if (id === '0011' || id === '0006') {
-      const model = id === '0011' ? 'obj05431' : 'obj05424';
+    const breachMaterialPaths = new Set(placements.filter(value =>
+      value.className === 'SYcScnObjBreach' && sceneBreachMaterialModel(value.model))
+      .map(value => value.asset));
+    const generalPlacements = placements.filter(value =>
+      value.className === 'SYcScnObjGeneral' || value.className === 'SYcScnObjCrush');
+    if (generalPlacements.length > 0) {
       const owner = new SceneGeneralMaterial();
       this.generalMaterial = owner;
       try {
-        const paths = new Set(placements.filter(value => value.className === 'SYcScnObjGeneral' &&
-          value.model === model).map(value => value.asset));
-        for (const path of paths) {
-          const asset = path ? cache.get(path) : undefined;
+        const registered = new Set<string>();
+        for (const placement of generalPlacements) {
+          const model = sceneGeneralMaterialModel(placement.model);
+          if (!model || !placement.asset || registered.has(placement.asset)
+            || breachMaterialPaths.has(placement.asset)) continue;
+          const asset = cache.get(placement.asset);
           if (!asset) throw new Error(`原 General ${model} 资产缺失`);
           owner.register(asset, model);
+          registered.add(placement.asset);
         }
       } catch (error) {
         this.clear();
@@ -291,6 +332,21 @@ export class ScenePreview {
     }
     for (const placement of placements) {
       if (placement.className === 'SYcScnObjSequence') continue;
+      if (placement.special) {
+        const visual = placement.special.kind === 'hook'
+          ? new SceneHook(this.scene, placement, runtime)
+          : new SceneWaterFall(this.scene, placement);
+        if (visual instanceof SceneHook) this.hook = visual;
+        else this.waterfall = visual;
+        try {await visual.load(placement.special.library);} catch (error) {
+          if (revision === this.revision) this.clear();
+          else visual.dispose();
+          throw error;
+        }
+        if (revision !== this.revision) {visual.dispose(); return '';}
+        this.minimapGeometry.push(...visual.meshes);
+        continue;
+      }
       const castle = castleResources.find(value => value.sourcePlacementId === placement.id);
       if (castle && runtime) {
         const visual = new SceneCastleVisual(this.scene, castle);
@@ -304,9 +360,6 @@ export class ScenePreview {
           mesh.metadata?.sourceCastlePlacementId === castle.sourcePlacementId && mesh.metadata?.sourceCastleAction === 'n1'));
         const presentation = this.castlePresentation(castle.sourcePlacementId, visual, runtime);
         this.castles.set(castle.sourcePlacementId, {visual, presentation, runtime});
-        this.movementGeometry.set(castle.sourcePlacementId, {id: castle.sourcePlacementId,
-          meshes: this.scene.meshes.filter(mesh => mesh.metadata?.sourceCastlePlacementId === castle.sourcePlacementId
-            && mesh.metadata?.sourceCastleAction === 'n1'), terrain: false, enabled: true});
         if (damageRenderer) {
           this.castleDamageTexts.set(castle.sourcePlacementId,
             new SceneCastleDamageText(damageRenderer));
@@ -328,11 +381,6 @@ export class ScenePreview {
         }
         if (revision !== this.revision) return '';
         this.minimapGeometry.push(...this.scene.meshes.filter(mesh => mesh.metadata?.sourcePlacementId === placement.id));
-        if (placement.className === 'SYcScnObjGeneral') {
-          this.movementGeometry.set(placement.id, {id: placement.id,
-            meshes: this.scene.meshes.filter(mesh => mesh.metadata?.sourcePlacementId === placement.id),
-            terrain: false, enabled: true});
-        }
       }
       if (!placement.asset) {
         continue;
@@ -344,6 +392,10 @@ export class ScenePreview {
       const root = new TransformNode(`placement-${placement.id}`, this.scene);
       this.disposals.push(() => {instance.dispose(); root.dispose();});
       instance.rootNodes.forEach(node => {node.parent = root;});
+      for (const group of instance.animationGroups) {
+        group.start(true); group.pause();
+        this.glbAnimations.push(group);
+      }
       this.minimapGeometry.push(...root.getChildMeshes());
       const scale = new Vector3();
       const rotation = new Quaternion();
@@ -355,18 +407,12 @@ export class ScenePreview {
       root.scaling.copyFrom(scale);
       root.position.set(-placement.position[0], placement.position[1], placement.position[2]);
       root.rotationQuaternion = new Quaternion(rotation.x, -rotation.y, -rotation.z, rotation.w);
-      if (['SYcScnObjBreach', 'SYcScnObjGeneral', 'SYcScnObjCrush', 'SYcCastle'].includes(placement.className ?? '')) {
-        this.movementGeometry.set(placement.id, {id: placement.id,
-          meshes: [...(this.movementGeometry.get(placement.id)?.meshes ?? []), ...root.getChildMeshes()],
-          terrain: false, enabled: placement.className !== 'SYcScnObjCrush' || placement.enabled === 1});
-      }
       if (placement.className === 'SYcScnObjPlant') {
         this.plants?.register(placement.id, root);
-        if (['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
-          '0021', '0023', '0024', '0025'].includes(id)) this.registerPlant(placement.id, root, Boolean(placement.enabled));
+        this.registerPlant(placement.id, root, Boolean(placement.enabled));
       }
-      if (id === '0007' && placement.className === 'SYcScnObjCrush' &&
-        placement.model === 'obj05420' && runtime) {
+      if (placement.className === 'SYcScnObjCrush' &&
+        ['obj05420', 'obj05459'].includes(placement.model) && runtime) {
         // Original +78 holds a matrix built from position/angles, separate from
         // the serialized bounds matrix used by the static placement consumer.
         const matrix = sceneCrushTransform(placement.position as EffectVec3,
@@ -406,11 +452,24 @@ export class ScenePreview {
         }
       }
     }
+    // Original queue priority is a per-object band; opaque draws before
+    // transparent within each band, independent of the previous scene's
+    // leftover alphaIndex.
+    orderSceneModels(this.scene, placements.flatMap(placement => {
+      const root = this.scene.getTransformNodeByName(`placement-${placement.id}`);
+      if (!root) return [];
+      return root.getChildMeshes().map(mesh => ({mesh, priority: 0}));
+    }));
     terrain.rootNodes.forEach(node => {node.setEnabled(true);});
-    if (id === '0002') {
-      this.water = new SceneWater(this.scene);
-      await this.water.load(id);
-      if (revision !== this.revision) return '';
+    if (['0002', '0003', '0016', FIELD_ROAD_HD.sceneId].includes(id)) {
+      const water = new SceneWater(this.scene);
+      this.water = water;
+      try {await water.load(id);} catch (error) {
+        if (revision === this.revision) this.clear();
+        else water.dispose();
+        throw error;
+      }
+      if (revision !== this.revision) {water.dispose(); return '';}
       this.minimapGeometry.push(...this.scene.meshes.filter(mesh => mesh.metadata?.sourceSceneWater));
     }
     const bounds = terrain.rootNodes[0].getHierarchyBoundingVectors();
@@ -425,12 +484,29 @@ export class ScenePreview {
   }
 
   /** Frame-driven CVD playback; independent of network snapshot frequency. */
-  advance(deltaSeconds: number): void {
+  advance(deltaSeconds: number, clock?: {now: number; battleStartsAt: number; objects: readonly SceneObjectSnapshot[]}): void {
     this.water?.advance(deltaSeconds);
     this.sequence?.advance(deltaSeconds);
-    this.plants?.advance(deltaSeconds);
-    this.animations.forEach(animation => {animation.advance(deltaSeconds);});
-    this.castles.forEach(value => value.visual.update(deltaSeconds));
+    if (clock) {
+      const seconds = Math.max(0, (clock.now - clock.battleStartsAt) / 1000);
+      this.hook?.setAnimationTime(seconds);
+      this.waterfall?.setAnimationTime(seconds);
+      this.plants?.setAnimationTime(seconds);
+      this.animations.forEach(animation => animation.setAnimationTime(seconds));
+      for (const group of this.glbAnimations) {
+        const fps = group.targetedAnimations[0]?.animation.framePerSecond;
+        if (fps !== undefined && group.to > group.from) group.goToFrame(group.from + (seconds * fps) % (group.to - group.from));
+      }
+      this.castles.forEach((value, id) => value.visual.setAuthorityAnimation(
+        clock.objects.find(object => object.sourcePlacementId === id)?.castleAnimation,
+        clock.now, clock.battleStartsAt));
+    } else {
+      this.hook?.advance(deltaSeconds);
+      this.waterfall?.advance(deltaSeconds);
+      this.plants?.advance(deltaSeconds);
+      this.animations.forEach(animation => animation.advance(deltaSeconds));
+      this.castles.forEach(value => value.visual.update(deltaSeconds));
+    }
     const engine = this.scene.getEngine();
     const viewport = {width: engine.getRenderWidth(), height: engine.getRenderHeight()};
     this.castles.forEach((value, castleId) => {

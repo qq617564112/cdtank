@@ -1,3 +1,6 @@
+import {withResourceTimeout} from '../../assets/static-resources';
+import './source-text-artwork.css';
+
 export interface SourceUiFont {
   name: string;
   attributes: Record<string, string>;
@@ -9,24 +12,16 @@ export interface SourceUiFont {
 
 export interface SourceUiFontLibrary {fonts: SourceUiFont[];}
 
-let loading: Promise<SourceUiFontLibrary> | undefined;
+let loading: Promise<void> | undefined;
 
-/** Load the actual source outline font before showing recovered source text. */
-export function loadSourceUiFonts(): Promise<SourceUiFontLibrary> {
-  loading ??= load().catch(error => {loading = undefined; throw error;});
+/** The selected app font is declared in app-font.css and shared across page sessions. */
+export function loadUiFont(): Promise<void> {
+  loading ??= withResourceTimeout(Promise.all([
+    document.fonts.load('16px "CDTank-Xiangjiao"'),
+    document.fonts.load('700 16px "CDTank-SourceSans"'),
+    document.fonts.load('700 16px "CDTank-SourceLatin"'),
+    document.fonts.load('700 16px "CDTank-SourceDigits"'),
+  ]), '界面字体')
+    .then(() => {}).catch(error => {loading = undefined; throw error;});
   return loading;
-}
-
-async function load(): Promise<SourceUiFontLibrary> {
-  const response = await fetch('/ui-fonts.json');
-  if (!response.ok) throw new Error('原字体目录载入失败');
-  const library = await response.json() as SourceUiFontLibrary;
-  for (const font of library.fonts) {
-    if (font.attributes.Type !== 'Dynamic') continue;
-    if (!font.family || !font.asset) throw new Error(`原字体资源缺失：${font.name}`);
-    const face = new FontFace(font.family, `url('/${font.asset}')`);
-    await face.load();
-    document.fonts.add(face);
-  }
-  return library;
 }

@@ -1,0 +1,77 @@
+{
+  "name": "幸运四叶草",
+  "getMethod": 2,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 7,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 4,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 12033,
+  "key": "item-12033",
+  "description": "传说佩戴美丽的四叶草将会带来好运气。",
+  "prices": {
+    "money": 500,
+    "tokens": 50
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 7,
+  "inventoryCategory": 4,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 0,
+  "resources": {
+    "model": null,
+    "modelId": 12033,
+    "modelType": 1,
+    "texture": "12033",
+    "iconId": 12033,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "mark"
+  },
+  "equipmentTarget": "MARK"
+}

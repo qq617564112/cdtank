@@ -6,6 +6,7 @@ import {effectModelAmbient, EffectModelGraphicsState} from './effect-model-mater
 import {EffectModelMesh} from './effect-model-mesh';
 import {EffectModelBackend} from './effect-model-node';
 import {EFFECT_IDENTITY, multiplyEffectMatrices} from '../common/effect-render-transform';
+import {setSceneModelPriority} from '../../scene-model-order';
 
 interface ModelPart {kind: number; properties: number[]; asset: string | null; indices: number[];}
 interface ModelNode {
@@ -44,6 +45,11 @@ export class EffectModelRenderer implements EffectModelBackend {
       const local = this.animations[index]?.matrix ?? EFFECT_IDENTITY;
       matrices[index] = multiplyEffectMatrices(node.parent == null ? state.matrix : matrices[node.parent], local);
     });
+    const graphics: EffectModelGraphicsState = {
+      ambient: this.scene.ambientColor.equalsFloats(0, 0, 0)
+        ? this.library.graphics.ambient : this.scene.ambientColor.asArray(),
+      emissive: this.library.graphics.emissive,
+    };
     for (const draw of this.draws) {
       const node = this.resource.nodes[draw.node];
       const script = (draw.material ??= new EffectAttachMaterialCache()).select(node.fvf, draw.part.kind, state.blend).script;
@@ -53,10 +59,16 @@ export class EffectModelRenderer implements EffectModelBackend {
         for (const name of ['default', script]) this.library.scripts.find(row => row.name === name)!.states
           .forEach(row => states.set(row.name, row.value));
         const texture = this.textures.get(draw.part.asset!)!;
+        // Original device state inheritance: default.gbf is the baseline and
+        // the selected section GBF only overrides the keys it names. Missing
+        // keys therefore keep the baseline instead of a material-local guess.
+        const cullState = states.get('CullMode');
         draw.renderer = new EffectModelMesh(this.scene, texture, {
-          cull: states.get('CullMode') as 'CW' | 'CCW' | 'NONE',
-          depthWrite: states.get('ZWriteEnable') === 'TRUE', depthTest: states.get('ZEnable') === 'TRUE',
-          blend: states.get('AlphaBlendEnable') === 'TRUE', alphaTest: states.get('AlphaTestEnable') === 'TRUE',
+          cull: cullState === 'CW' || cullState === 'CCW' || cullState === 'NONE' ? cullState : 'CW',
+          depthWrite: states.has('ZWriteEnable') ? states.get('ZWriteEnable') === 'TRUE' : true,
+          depthTest: states.has('ZEnable') ? states.get('ZEnable') === 'TRUE' : true,
+          blend: states.get('AlphaBlendEnable') === 'TRUE',
+          alphaTest: states.get('AlphaTestEnable') === 'TRUE',
         });
         draw.renderer.mesh.metadata = {originalEffect: this.name, sourceNode: this.sourceNode,
           sourceModel: this.resource.reference, sourceModelNode: draw.node};
@@ -64,9 +76,10 @@ export class EffectModelRenderer implements EffectModelBackend {
       }
       const animation = this.animations[draw.node];
       const vertices = animation ? effectModelVertices(node.frames!, node.times!, animation.time) : node.vertices!;
+      setSceneModelPriority(draw.renderer!.mesh, state.priority);
       draw.renderer!.mesh.setEnabled(true);
       draw.renderer!.update(vertices, draw.part.indices, matrices[draw.node],
-        effectModelAmbient(draw.part.properties, state.alpha, this.library.graphics), node.colors);
+        effectModelAmbient(draw.part.properties, state.alpha, graphics), node.colors);
     }
   }
   get meshes(): Mesh[] {return this.draws.flatMap(draw => draw.renderer ? [draw.renderer.mesh] : []);}

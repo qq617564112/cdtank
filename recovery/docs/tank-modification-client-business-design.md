@@ -161,7 +161,7 @@ armorBonus       += uniform integer [MinDefBonusUp, MaxDefBonusUp]
 | `instanceId` | 32 位；必须是当前账户 owned equipment `+1c` |
 | `level` | 采用域 `0..24`；写入 owned `+44`/`+54` |
 | `money` | 32 位完整余额 |
-| `originality` | 16 位完整余额；结果超过 `0xffff` 时拒绝事务 |
+| `originality` | Web 使用 `account_growth.originality` 的当前余额；原确认线路为 16 位，独立成长账户不按旧资料字节截断 |
 | `attribute` / `bonus` | 各 16 位；写入 `+3c/+40` 或 `+4c/+50` |
 | `result` | 8 位；采用只返回 `0` 成功、`1` 无效果、`2` 失败 |
 
@@ -174,15 +174,15 @@ armorBonus       += uniform integer [MinDefBonusUp, MaxDefBonusUp]
 1. 校验账户、owned 实例、action、资格位和目标表行。
 2. 校验当前等级域及终表哨兵。
 3. 计算 money/originality 费用。
-4. 校验 money 32 位与 originality 16 位边界、余额和失败降级下限。
+4. 校验 money 32 位边界、当前金钱与成长账户创意点余额和失败降级下限。
 5. 扣除 money 与 originality。
 6. 采样 result，按 action 和 result 更新 owned 等级与两项属性。
 7. 写升级 receipt。
-8. 同一事务提交后返回完整 `owned`、`profile`、`confirmation` 和 `replayed`。
+8. 同一事务提交后返回完整 `owned`、`profile`、当前 `growth`、`confirmation` 和 `replayed`。
 
 任何校验或写入失败都 rollback，余额、两项属性、等级和 receipt 均不改变。费用在成功、无效果和失败三种已接受结果上都扣除，这与原确认先替换完整钱包、再处理 result 分支一致。
 
-客户端收到确认时先应用完整 money/originality，再应用 result 分支和两个 16 位属性。`result=1` 只更新钱包；未知 result 保持等级和属性不变，但服务端合同不产生未知 result。
+Web 报价与扣费共用 `account_growth.originality`，金钱仍写 profile `+0x70`，原 profile `+0x9c` 保留。Home 收到响应后替换当前 `owned`、`profile` 和 `growth`，余额随同事务确认更新。`result=1` 只更新金钱和创意点；未知 result 保持等级和属性不变，但服务端合同不产生未知 result。
 
 ### WAITING、Ready 与 PLAYING
 
@@ -192,11 +192,11 @@ armorBonus       += uniform integer [MinDefBonusUp, MaxDefBonusUp]
 
 `requestId` 是现账户 RPC 的重建幂等键，不是原 3f94 字段。相同账户、相同 `requestId`、相同 `action`、相同 `instanceId` 的重入返回历史 confirmation 和 `replayed:true`，不得再次扣费、降级、升级或重新写属性。历史 confirmation 不重 roll、不扣费、不改 owned；重放响应的 owned/profile 读取当前账户持久状态，historicalConfirmation 只用于结果说明。同一 `requestId` 用于不同 action 或 instance 时拒绝 `UPGRADE_REQUEST_CONFLICT`。
 
-QUERY 返回当前账户完整 owned、当前 profile、action 对应 quote、启用状态、等级、费用、成功/失败/无效果字面和拒绝原因；不返回 confirmation，不创建 receipt。确认 QUERY 与重入相互独立：QUERY 永远读当前持久状态，重入返回历史 confirmation 说明与当前持久 owned/profile。UI 以响应中的当前 owned/profile 替换确认状态；`replayed:true` 时不得把 historicalConfirmation 的旧 money 或属性再覆盖现账户。新提交的 confirmation 与当次已提交 state 一致。
+QUERY 返回当前账户完整 owned、当前 profile/growth、action 对应 quote、启用状态、等级、费用、成功/失败/无效果字面和拒绝原因；不返回 confirmation，不创建 receipt。确认 QUERY 与重入相互独立：QUERY 永远读当前持久状态，重入返回历史 confirmation 说明与当前持久 owned/profile/growth。UI 以响应中的当前 owned/profile/growth 替换确认状态；`replayed:true` 时不得把 historicalConfirmation 的旧 money、originality 或属性再覆盖现账户。新提交的 confirmation 与当次已提交 state 一致。
 
 ### 保留边界
 
-升级只更新当前账户的一个 equipment role record 及 profile money/originality。必须在同一事务内保留其余 owned 字段、纹理 `+28/+2c/+30`、部件 `+58/+5c/+60`、期限 `+34` 和状态；不得删除或重建购买、交易、维修、迷彩或其它 receipt。不得新增迁移框架、feature flag、兼容 wrapper、哈希或防御性表。
+升级只更新当前账户的一个 equipment role record、profile money 与成长账户 originality。必须在同一事务内保留其余 owned 字段、纹理 `+28/+2c/+30`、部件 `+58/+5c/+60`、期限 `+34` 和状态，以及成长账户积分、等级和技能点；不得删除或重建购买、交易、维修、迷彩或其它 receipt。不得新增迁移框架、feature flag、兼容 wrapper、哈希或防御性表。
 
 ## 现生产消费者
 
@@ -229,6 +229,7 @@ ReqTankUpgrade
 ResTankUpgrade
   owned: ResOwnedRoles
   profile?: { bytes: number[]; strings: [string, string] }
+  growth?: AccountGrowth
   quotes: TankUpgradeQuote[]
   confirmation?: TankUpgradeConfirmation
   historicalConfirmation?: TankUpgradeConfirmation
@@ -266,7 +267,7 @@ TankUpgradeConfirmation
 
 `nextAttributeMin/nextAttributeMax/nextBonusMin/nextBonusMax` 由服务端派生：按当前 owned 属性/加成与本 action 对应 Tank 表 Min/Max 升级区间计算成功候选边界，并按既有 uint16 规则截断到 `0..0xffff`。UI 的 `txtNextMinValue` / `txtNextMaxValue` 只消费这些报价，不重新计算收费、随机或属性区间政策。当前属性/加成仍从返回 owned 确认字段读取。
 
-QUERY 只校验账户，返回完整 owned、当前 profile 与本账户每个 owned tank 两个 action 的报价。UPGRADE 要求登录，允许无房间或 `WAITING`；`LOADING`、`PLAYING`、`FINISHED` 拒绝。instance 必须 owned，action 合法，`requestId` 匹配现请求 ID 规则。重复 requestId 返回历史 confirmation 并置 `replayed:true`，同时 owned/profile 读取当前持久状态；仅新提交且玩家真在 WAITING 时重绑来源、取消 Ready 并广播。
+QUERY 只校验账户，返回完整 owned、当前 profile/growth 与本账户每个 owned tank 两个 action 的报价。UPGRADE 要求登录，允许无房间或 `WAITING`；`LOADING`、`PLAYING`、`FINISHED` 拒绝。instance 必须 owned，action 合法，`requestId` 匹配现请求 ID 规则。重复 requestId 返回历史 confirmation 并置 `replayed:true`，同时 owned/profile/growth 读取当前持久状态；仅新提交且玩家真在 WAITING 时重绑来源、取消 Ready 并广播。
 
 注册模式沿用其他账户 API：服务端通过 `accountByConnection` 解析账户，通过 `sessionByConnection` 判断房间操作。成功提交后，若玩家在 WAITING，调用现 `world.bindRoleSources` 与 `world.bindEquipmentProfile` 同步战斗来源和 profile，移除 Ready，再广播。
 

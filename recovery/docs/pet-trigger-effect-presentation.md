@@ -52,3 +52,7 @@ Web 采用的事件字段如下，原服务端相同 producer 尚未恢复：
 ## 范围边界
 
 已有的宠物死亡视觉、部件队列和复活队列属于既有路径，本批不修改。文档结论来自上述协议的 Web 消费规则、runtime 与玩家生命周期源码，以及已发布内容定义；它不把源码说明当作页面或自然联机实测。原服务端 producer、EffectMethod 分派、实际资源挂点和声音表现仍待真实 producer 与页面验收。
+
+## 指挥绘声
+
+10541的有效指挥来源按受益角色合并：首次获得时单次通知首槽Effect102/SE34，最后来源撤回且受益者仍active/alive/status2/attributesReady时单次通知第二槽Effect104/SE36。模式1–3包含同队来源，4/5只有本人真实来源；多来源、重复tick和换caster不重播，自己的死亡／finish／round／Leave只清状态。World沿active tick调用reconcileCommandEffects，copy或来源死亡／离房在下一tick反映，数值传播和原三处首槽通知保持。采用时点、完整消息及限制见[remaining-effect-slot-integration.md](remaining-effect-slot-integration.md)；原两槽时机／受益者分配和新增实测继续开放。

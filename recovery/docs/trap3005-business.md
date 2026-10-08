@@ -1,6 +1,6 @@
 # 软木塞3005的正式玩家业务
 
-FUNC-05/FUNC-12与M4-10。原3005放置关联4003作用技能，首槽为118/GA20/tag0/method3。原flag11的正许可值控制开火资格；观察者old≠new、HP正数且new=0或old=new+1时提交4003/duration0，没有flag6门禁。原118资源、GA20与运行树证据见trap4003-presentation-source.json和trap4003-presentation-runtime.json；第二槽016/SE15不推定为到期表现。
+FUNC-05/FUNC-12与M4-10。原3005放置关联4003作用技能，首槽为118/GA20/tag0/method3。原flag11的正许可值控制开火资格；观察者old≠new、HP正数且new=0或old=new+1时提交4003/duration0，没有flag6门禁。原118资源、GA20与运行树证据见trap4003-presentation-source.json和trap4003-presentation-runtime.json；第二槽016/SE15采用存活成功自然恢复时单次通知，index1／duration0；注射及生命周期清理不补播，原时机及新绘声实测仍开放，详remaining-effect-slot-integration.md。
 
 服务端PLAYING／存活status2／实例owned与battle数量正时允许普通快捷槽放置，库存CAS成功后扣一次数量并创建ground3005。CAS失败或保存异常不修改数量与地面对象。地面30秒、XZ半径30、敌方单次接触、flag11许可贡献1、不叠加与五秒恢复是明确重建规则。直行、车体转向与独立炮塔保持原各自许可链，生命不变。自然到期或普通注射恢复本状态贡献；死亡、复活、离房和新局清除状态，由原角色生命周期初始化许可。
 

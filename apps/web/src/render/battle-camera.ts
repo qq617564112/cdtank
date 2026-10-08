@@ -68,3 +68,15 @@ export function followBattleCamera(camera: ArcRotateCamera, webPosition: Vector3
   camera.setTarget(new Vector3(-pose.target[0], pose.target[1], pose.target[2]), false, true, true);
   camera.setPosition(new Vector3(-pose.eye[0], pose.eye[1], pose.eye[2]));
 }
+
+/** Circle the wreck at 30 degrees per second while the death action plays. */
+export function orbitWreckCamera(camera: ArcRotateCamera, webPosition: Vector3,
+  turretYaw: number, elapsedSeconds: number): void {
+  const heading = originalActorCameraHeading(turretYaw) + elapsedSeconds * 30;
+  const pose = originalBattleCameraPose([-webPosition.x, webPosition.y, webPosition.z], heading);
+  const target = webPosition.add(new Vector3(0, BATTLE_CAMERA_SOURCE.offset[1], 0));
+  camera.upVector = new Vector3(-pose.up[0], pose.up[1], pose.up[2]);
+  camera.setTarget(target, false, true, true);
+  camera.setPosition(target.add(new Vector3(
+    -(pose.eye[0] - pose.target[0]), pose.eye[1] - pose.target[1], pose.eye[2] - pose.target[2])));
+}

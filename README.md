@@ -1,6 +1,6 @@
 # CDTank · 阿猫阿狗大作战复刻
 
-当前版本：**0.9.0** · [更新日志](CHANGELOG.md#090--2026-10-07)
+当前版本：**1.0.0** · [更新日志](CHANGELOG.md#100--2026-10-08)
 
 ![阿猫阿狗大作战 Online 原作标志](docs/assets/original-cover.jpg)
 
@@ -47,7 +47,7 @@
 
 ## 本地运行
 
-需要 **Node.js 24.16 或更高版本**、浏览器和支持 `.tar.xz` 的 `tar`。高清贴图、模型、音频、界面、字体和数据表通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.9.0) 提供，安装脚本自动下载解压，无需原客户端、Python 或另行准备字体。Windows 10/11 和 macOS 使用系统 `tar`；Linux 需安装 `tar` 和 `xz-utils`。以下命令在仓库根目录执行。
+需要 **Node.js 24.16 或更高版本**、浏览器和支持 `.tar.xz` 的 `tar`。高清贴图、模型、音频、界面、字体和数据表通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v1.0.0) 提供，安装脚本自动下载解压，无需原客户端、Python 或另行准备字体。Windows 10/11 和 macOS 使用系统 `tar`；Linux 需安装 `tar` 和 `xz-utils`。以下命令在仓库根目录执行。
 
 ### 1. 安装依赖和资源
 
@@ -58,7 +58,7 @@ npm ci
 npm run assets:install
 ```
 
-脚本下载 `cdtank-assets-0.9.0.tar.xz`，将运行资源解压到 `recovery/output/web-assets/`，内容表解压到 `recovery/output/verified/tables/`，地图预览、角色缩略图和界面图片解压到 `apps/web/src/assets/`。解压后约占 6.81 GB，包含所需字体、已转换的移动数据、测试地图和高清田野路。使用旧版资源包的用户重新运行 `npm run assets:install` 即可升级。
+脚本依次下载 `cdtank-assets-1.0.0.tar.xz.part01`、`.part02`，自动合并解压。两个分卷下载共约 2.28 GB，解压后约占 2.76 GB。运行资源安装到 `recovery/output/web-assets/`，内容表安装到 `recovery/output/verified/tables/`，包含高清图片图集、共享模型贴图、字体、地图预览、角色缩略图、移动数据、测试地图和高清田野路。使用旧版资源包的用户更新源码后重新运行 `npm run assets:install` 即可升级。
 
 ### 2. 启动服务端和网页
 
@@ -77,6 +77,16 @@ npm run dev
 打开 [http://localhost:5173](http://localhost:5173)，注册或登录，选择频道进入大厅，创建或加入房间，资源加载完成后点击准备。默认开局人数由地图原表决定；可在等待房间添加 CPU 补足人数，也可用多个浏览器窗口加入同一房间。
 
 开场先显示模式介绍和战斗提示，提示结束后开始计时并开放操作。结算画面保留最后的战场状态，可继续投票再战或返回大厅。
+
+使用构建版本时，一个服务端进程即可提供网页、资源和联机连接：
+
+```bash
+npm run build:web
+npm run build:server
+PORT=40171 npm run start:server
+```
+
+打开 `http://服务器局域网IP:40171/`。默认账户数据库仍为 `recovery/output/accounts.sqlite`，可通过 `ACCOUNT_DB_PATH` 指定已有存档。
 
 | 默认按键 | 操作 |
 | --- | --- |

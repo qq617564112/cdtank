@@ -1,0 +1,88 @@
+{
+  "name": "爆发弹",
+  "getMethod": 2,
+  "durable": 20,
+  "breakMode": 2,
+  "itemType": 3,
+  "battleUseMax": 15,
+  "effects": [
+    {
+      "effectId": 55,
+      "sound": "GA10",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 6,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "ammo",
+  "id": 2005,
+  "key": "explosiveAmmo",
+  "description": "命中后还会产生爆炸！被波及的坦克会减少100点生命值。",
+  "prices": {
+    "money": 10,
+    "tokens": 20
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 3,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 2005,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 2005,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null,
+    "fireSound": {
+      "id": 51,
+      "asset": "audio/sound/GA10.wav"
+    }
+  },
+  "runtime": {
+    "values": {
+      "baseDamage": 35,
+      "attackScale": 0.08,
+      "shopSupplyCount": 20,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 2005,
+      "secondary": 4004,
+      "tertiary": 0
+    },
+    "hit": "explosive",
+    "defaultAmmo": false,
+    "query": "projectile",
+    "projectileSpeed": 360,
+    "range": 1000,
+    "muzzleForward": 30,
+    "muzzleHeight": 20,
+    "sceneResult": true,
+    "remoteShotResult": true,
+    "victimShotResult": true,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": true,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

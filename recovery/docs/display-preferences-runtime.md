@@ -30,10 +30,12 @@ export function subscribeDisplayPreferences(listener: () => void): () => void;
 
 `scene-runtime` 读取 active 偏好并订阅变化。高画质缩放为 `1 / currentDPR`，低画质为 `2 / currentDPR`；窗口 resize 后重新应用同一比例。`start-game` 中的 runtime、battle 和 settings 初始化仍在同一个同步调用链内完成，第一帧渲染前 active 已恢复。
 
-`cartoon-outline` 继续只修改已注册合格 `Mesh` 的 `renderOutline`、`outlineWidth=0.65` 和黑色 `outlineColor`。实际 source mesh 只注册一次，`InstancedMesh` 沿用 source；已注册 source 通过 `onClonedObservable` 将实际生成且仍符合资格的克隆 Mesh 纳入同一注册表，不新增 Mesh/Material、不复制 geometry，也不逐帧扫描 scene。alpha 混合和 planar alpha-test 排除规则、地形不调用入口的边界保持不变。mesh 或 scene dispose 会解绑自身 observer、clone observer 与 scene observer，并释放注册引用；偏好监听在最后一个注册释放后解除。已有模型、实际 clone、后续动作和异步新增对象都读取当前 active 值。
+`cartoon-outline` 修改已注册合格 `Mesh` 的 `renderOutline`、`outlineWidth=0.65` 和黑色 `outlineColor`。实际 source mesh 只注册一次，`InstancedMesh` 沿用 source；已注册 source 通过 `onClonedObservable` 将实际生成且仍符合资格的克隆 Mesh 纳入同一注册表，不新增 Mesh/Material、不复制 geometry，也不逐帧扫描 scene。alpha 混合和 planar alpha-test 排除规则、地形不调用入口的边界保持不变。mesh 或 scene dispose 会解绑自身 observer、clone observer 与 scene observer，并释放注册引用；偏好监听在最后一个注册释放后解除。已有模型、实际 clone、后续动作和异步新增对象都读取当前 active 值。
 
 Type8 屏幕 overlay 的 `EffectOverlayDrawState` 增加尺寸更新，绘制时读取实际 engine 后备缓冲宽高。UV retention、颜色打包、float32 尺寸和原 native vertex 顺序保持不变，不重新创建材质或纹理。
 
 ## 范围
 
 原完整 D3D 高精度 producer 未恢复；本批高低画质是明确的 Web engine 后备缓冲策略。silhouette 复用已采用的 Web 轮廓入口，不把该入口扩展声明为完整原 `cartoon.gbf` 逐设备状态恢复。未运行测试、浏览器、构建或类型检查，也未做高清性能验收。
+
+同一silhouette偏好同时控制原25图TankView组件的原toon采样，方向来自默认灯[0,200,0]与统一角色中心；已加载和后续动作绑定时读取当前值，资源由ScenePreview图级owner释放，详scene-actor-toon-runtime.md。

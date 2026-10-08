@@ -1,3 +1,4 @@
+import {loadCombatCatalog} from '../../content';
 import {StackItemSaleSource, type StackSaleOwner} from './stack-item-sale-source';
 import {createRequestId} from '../../network/request-id';
 import type {ReqStackItemSale, ResStackItemSale} from '../../../../shared/protocols/PtlStackItemSale';
@@ -14,7 +15,8 @@ import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {ReqShop, ResShop, ShopCurrency, ShopItem} from '../../../../shared/protocols/PtlShop';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceImageScale} from '../resources/source-static-image';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {loadUiFont} from '../resources/source-ui-fonts';
+import {loadSourceUi} from '../resources/source-ui-resources';
 import {ShopSourcePage} from './shop-source-page';
 import {TankShopView, type TankPurchaseOwner} from './tank-shop';
 import {PetShopView, type PetPurchaseOwner} from './pet-shop';
@@ -29,6 +31,10 @@ import {ShopItemSourceList} from './shop-item-source-list';
 import {ShopItemDescriptionSource} from './shop-item-description-source';
 import {MendShopSourcePage} from './mend-shop-source-page';
 import {ShopResourceFeedback} from './shop-resource-feedback';
+import {createPortal} from 'react-dom';
+import {SourceNotice} from '../dialogs/source-notice';
+import {SourceNoticeView} from '../dialogs/source-notice-view';
+import {ShopPurchaseSource} from './shop-purchase-source';
 
 export interface ShopSource {stackItemSale?(request: ReqStackItemSale): Promise<ResStackItemSale>; partSale?(request: ReqPartSale): Promise<ResPartSale>; partMaintenance?(request: ReqPartMaintenance): Promise<ResPartMaintenance>; ownedRoleSale?(request: ReqOwnedRoleSale): Promise<ResOwnedRoleSale>; tankMaintenance?(request: ReqTankMaintenance): Promise<ResTankMaintenance>; ownedRoles?(): Promise<ResOwnedRoles>; roleProfile?(): Promise<ResRoleProfile>; configureTankTextures?(request: ReqTankTextures): Promise<ResTankTextures>; equipment?(request: ReqEquipment): Promise<ResEquipment>; shop(request: ReqShop): Promise<ResShop>; inventory?(): Promise<ResInventory>; tankShop?(request: ReqTankShop): Promise<ResTankShop>; petShop?(request: ReqPetShop): Promise<ResPetShop>;}
 export interface AccountShopViewProps {open: boolean; close: () => void; source: ShopSource; initialTextureInstance?: number; onEquipmentPage?: () => void;}
@@ -51,6 +57,7 @@ export function AccountShopView({open, close, source, initialTextureInstance, on
 
 function ShopSession({close, source, owner, initialTextureInstance, onEquipmentPage}: Omit<AccountShopViewProps, 'open'> & {owner: PurchaseOwner}) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
   const escapePending = useRef(false);
   const session = useRef({active: false, query: false, identity: {}});
   const focusAfterCommit = useRef<HTMLElement | null>(null);
@@ -70,28 +77,33 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
   const [saleActivation, setSaleActivation] = useState<{instanceId: number; sequence: number}>();
   const [ownedSelected, setOwnedSelected] = useState<number>();
   const [ownedBusy, setOwnedBusy] = useState(false);
-  const [ownedStatus, setOwnedStatus] = useState('');
   const [category, setCategory] = useState<'Weapon' | 'Item'>(() =>
     sourceShopItemCategory(owner.pending?.itemTableId ?? 0) ?? 'Item');
   const [selected, setSelected] = useState<number | undefined>(owner.pending?.itemTableId);
   const [quantity, setQuantity] = useState(String(owner.pending?.quantity ?? 1));
   const [currency, setCurrency] = useState<ShopCurrency>(owner.pending?.currency ?? 'MONEY');
+  const [purchaseItem, setPurchaseItem] = useState<ShopItem>();
+  const [description, setDescription] = useState<{id: number; left: number; top: number}>();
+  const [notice] = useState(() => new SourceNotice());
   const [busy, setBusy] = useState(true);
-  const [status, setStatus] = useState('载入商店…');
+  const [status, setStatus] = useState('');
   const [resourceError, setResourceError] = useState<string>();
   const [purchasedInstance, setPurchasedInstance] = useState<number>();
   const products = confirmed?.items.filter(value => sourceShopItemCategory(value.itemTableId) === category) ?? [];
-  const item = products.find(value => value.itemTableId === selected);
+  const describedItem = products.find(value => value.itemTableId === description?.id);
   const activePageBusy = page === 'Tank' ? tankBusy : page === 'Pet' ? petBusy : page === 'Part' ? partBusy : page === 'Mend' ? mendBusy : busy;
 
   function selectItemCategory(kind: 'Weapon' | 'Item') {
     if (busy || ownedBusy) return;
+    setDescription(undefined);
     if (ownedCategory !== kind) {setOwnedCategory(kind); setOwnedSelected(undefined);}
     if (category !== kind) {
       setCategory(kind);
       setSelected(confirmed?.items.find(product => sourceShopItemCategory(product.itemTableId) === kind)?.itemTableId);
     }
   }
+
+  useEffect(() => () => notice.clear(), [notice]);
 
   useEffect(() => {
     const element = dialog.current!;
@@ -108,19 +120,11 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
 
   useEffect(() => {
     const current = {active: true, query: false, identity: {}}; session.current = current;
-    const controller = new AbortController();
     let refreshQueued = false;
     setResourceError(undefined);
+    void loadUiFont().catch(() => {});
     void Promise.all([
-      fetch('/ui.json', {signal: controller.signal}).then(async response => {
-        if (!response.ok) throw new Error('道具图标载入失败');
-        return await response.json() as HomeSourceUi;
-      }),
-      fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
-        if (!response.ok) throw new Error('物品名称载入失败');
-        return await response.json() as CombatCatalog;
-      }),
-      loadSourceUiFonts(),
+      loadSourceUi(), loadCombatCatalog(),
     ]).then(([resources, itemCatalog]) => {
       if (!current.active) return;
       setUi(resources); setCatalog(itemCatalog);
@@ -128,7 +132,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     async function load() {
       if (!current.active) return;
       if (current.query) {refreshQueued = true; return;}
-      current.query = true; setBusy(true); setStatus('载入商店…');
+      current.query = true; setBusy(true);
       try {
         const result = await source.shop({operation: 'QUERY'});
         if (!current.active) return;
@@ -138,10 +142,8 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
           const available = result.items.filter(product => sourceShopItemCategory(product.itemTableId) === currentCategory);
           return available.some(product => product.itemTableId === value) ? value : available[0]?.itemTableId;
         });
-        setStatus(owner.inFlight ? '等待购买确认…' : owner.pending
-          ? '上次购买未确认，可重试原请求或修改数量购买。' : '购买后请在我的家配置快捷槽。');
       } catch (error) {
-        if (current.active) setStatus(error instanceof Error ? error.message : '商店载入失败');
+        if (current.active) void notice.show(error instanceof Error ? error.message : '商店载入失败');
       } finally {
         current.query = false;
         if (current.active) {
@@ -153,10 +155,10 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     owner.session = {identity: current.identity, refresh: () => {void load();}};
     void load();
     return () => {
-      current.active = false; controller.abort();
+      current.active = false;
       if (owner.session?.identity === current.identity) owner.session = undefined;
     };
-  }, [source, owner]);
+  }, [source, owner, notice]);
 
   useLayoutEffect(() => {
     if (!ui || activePageBusy) return;
@@ -168,16 +170,16 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
   useEffect(() => {
     if (page !== 'Item' || !confirmed || !source.inventory || source.stackItemSale) return;
     let active = true;
-    setOwnedBusy(true); setOwnedStatus('');
+    setOwnedBusy(true);
     void source.inventory().then(result => {
       if (active && session.current.active) {setInventory(result); setOwnedBusy(false);}
     }).catch(error => {
       if (active && session.current.active) {
-        setOwnedBusy(false); setOwnedStatus(error instanceof Error ? error.message : '拥有物品载入失败');
+        setOwnedBusy(false); void notice.show(error instanceof Error ? error.message : '拥有物品载入失败');
       }
     });
     return () => {active = false;};
-  }, [source, confirmed, page]);
+  }, [source, confirmed, page, notice]);
 
   useLayoutEffect(() => {
     if (busy || !focusAfterCommit.current) return;
@@ -188,18 +190,36 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
 
   function requestClose() {session.current.active = false; close();}
 
-  async function purchase(button: HTMLButtonElement) {
+  function describeItem(id: number, anchor: HTMLButtonElement) {
+    if (!stage.current || purchaseItem) return;
+    const sheet = stage.current.getBoundingClientRect(), row = anchor.getBoundingClientRect();
+    const sourceScale = sheet.width / 625;
+    setDescription({id, left: Math.max(0, Math.min(625 - 218, (row.left - sheet.left) / sourceScale)),
+      top: Math.max(0, Math.min(404 - 103, (row.bottom - sheet.top) / sourceScale + 4))});
+  }
+
+  function requestPurchase(id: number, button: HTMLButtonElement) {
+    const product = products.find(value => value.itemTableId === id);
+    if (!session.current.active || busy || ownedBusy || owner.inFlight || owner.stackSale?.inFlight || !product) return;
+    focusAfterCommit.current = button;
+    setSelected(id); setDescription(undefined); setStatus('');
+    setQuantity(String(owner.pending?.itemTableId === id ? owner.pending.quantity ?? 1 : 1));
+    setCurrency(owner.pending?.itemTableId === id ? owner.pending.currency ?? 'MONEY'
+      : (product.tokenPrice > 0 && (product.getMethod === 2 || product.moneyPrice <= 0)) ? 'TOKENS' : 'MONEY');
+    setPurchaseItem(product);
+  }
+
+  async function purchase() {
     const current = session.current;
-    if (!current.active || current.query || owner.inFlight || ownedBusy || owner.stackSale?.inFlight || !item) return;
+    if (!current.active || current.query || owner.inFlight || ownedBusy || owner.stackSale?.inFlight || !purchaseItem) return;
     const count = Number(quantity);
     if (!Number.isInteger(count) || count < 1 || count > 10) {setStatus('请选择1至10份'); return;}
-    if (!owner.pending || owner.pending.itemTableId !== item.itemTableId
+    if (!owner.pending || owner.pending.itemTableId !== purchaseItem.itemTableId
         || owner.pending.quantity !== count || owner.pending.currency !== currency) {
-      owner.pending = {operation: 'BUY', itemTableId: item.itemTableId, quantity: count, currency,
+      owner.pending = {operation: 'BUY', itemTableId: purchaseItem.itemTableId, quantity: count, currency,
         requestId: createRequestId()};
     }
     const request = owner.pending;
-    focusAfterCommit.current = button;
     setBusy(true); setStatus('等待购买确认…');
     const inFlight = source.shop(request); owner.inFlight = inFlight;
     try {
@@ -207,7 +227,8 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
       owner.pending = undefined;
       if (current.active) {
         setConfirmed(result); setPurchasedInstance(result.purchased?.instanceId); setSaleRefresh(value => value + 1);
-        setStatus(`已购买${item.name}×${count}，请在我的家配置快捷槽。`);
+        setPurchaseItem(undefined); setStatus('');
+        void notice.show(`已购买${purchaseItem.name}×${count}。`);
       }
     } catch (error) {
       if (current.active) setStatus(error instanceof Error ? error.message : '购买未确认，请重试');
@@ -232,10 +253,10 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
       }
     }}>
     <SourceImageScale value={scale}>
-    <div className="shop-source-stage" data-shop-page="" data-shop-active-page={page}>
+    <div ref={stage} className="shop-source-stage" data-shop-page="" data-shop-active-page={page}>
     {ui && <ShopSourcePage ui={ui} money={confirmed?.money} tokens={confirmed?.tokens} close={requestClose}
       page={page} tankAvailable={!!source.tankShop} petAvailable={!!source.petShop} mendAvailable={!!source.ownedRoles && !!source.inventory && !!source.roleProfile} partAvailable selectPage={value => {
-        owner.page = value; setPage(value); setSaleActivation(undefined);
+        owner.page = value; setPage(value); setSaleActivation(undefined); setDescription(undefined);
         if (value === 'Item') owner.session?.refresh();
       }}
       category={category} ownedCategory={ownedCategory} ownedBusy={ownedBusy || busy}
@@ -254,7 +275,9 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     <p className="shop-balance-summary" data-shop-balance="">{confirmed?.money === undefined ? '账户尚无余额资料'
       : `金币：${confirmed.money} · 软星币：${confirmed.tokens}`}</p>
     {ui && <>
-      <ShopItemSourceList ui={ui} source="lstShopItem" selected={selected} busy={busy} select={setSelected}
+      <ShopItemSourceList ui={ui} source="lstShopItem" selected={selected} busy={busy || ownedBusy} select={setSelected}
+        activate={requestPurchase} canActivate={() => !busy && !ownedBusy}
+        describe={describeItem} dismissDescription={() => setDescription(undefined)} described={description?.id}
         entries={products.map(product => ({id: product.itemTableId, name: product.name, iconId: product.iconId,
           detail: '', product}))} />
       <ShopItemSourceList ui={ui} source="lstMyItem" selected={ownedSelected} busy={busy || ownedBusy} select={id => {setOwnedSelected(id); setSaleActivation(undefined);}}
@@ -270,28 +293,24 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     </>}
     {source.stackItemSale && <StackItemSaleSource ui={ui} source={source} instanceId={ownedSelected}
       activation={saleActivation} refreshKey={saleRefresh} owner={owner.stackSale!} disabled={busy} onBusy={setOwnedBusy}
+      onError={message => {void notice.show(message);}}
       onConfirmed={result => {
         setInventory(result.inventory);
         if (result.money !== undefined) setConfirmed(value => value && value.money !== result.money ? {...value, money: result.money} : value);
       }} />}
-    {item && ui && <ShopItemDescriptionSource ui={ui} itemTableId={item.itemTableId} name={item.name} description={item.info} />}
-    {item && <output className="shop-selected-query-prices" data-shop-selected-query-prices=""
-      data-price-provider="shop-query-both-prices">{item.moneyPrice}金币 / {item.tokenPrice}软星币</output>}
-    <label className="shop-quantity">数量<input type="number" min="1" max="10" step="1" data-shop-quantity="" value={quantity}
-      disabled={busy || ownedBusy} onChange={event => setQuantity(event.currentTarget.value)} /></label>
-    <label className="shop-currency">支付方式<select data-shop-currency="" value={currency} disabled={busy || ownedBusy}
-      onChange={event => setCurrency(event.currentTarget.value === 'TOKENS' ? 'TOKENS' : 'MONEY')}>
-      <option value="MONEY">金币</option><option value="TOKENS">软星币</option>
-    </select></label>
-    <button type="button" data-shop-buy="" disabled={busy || ownedBusy || !item} onClick={event => {void purchase(event.currentTarget);}}>购买</button>
-    <button type="button" data-shop-refresh="" disabled={busy || ownedBusy}
-      onClick={event => {focusAfterCommit.current = event.currentTarget; owner.session?.refresh();}}>刷新余额</button>
-    <output data-shop-status="" data-shop-no-catalog={!confirmed && !busy || undefined}
-      role="status" aria-live="polite">{status}</output>
-    <output className="shop-owned-status" data-shop-owned-status="" role="status">{ownedStatus}</output>
+    {describedItem && description && <ShopItemDescriptionSource ui={ui} itemTableId={describedItem.itemTableId}
+      name={describedItem.name} description={describedItem.info} left={description.left} top={description.top}/>}
+    {purchaseItem && <ShopPurchaseSource ui={ui} name={purchaseItem.name}
+      moneyPrice={purchaseItem.moneyPrice} tokenPrice={purchaseItem.tokenPrice} moneyAvailable={purchaseItem.moneyPrice > 0}
+      quantity={quantity} changeQuantity={value => {setQuantity(value); setStatus('');}}
+      currency={currency} changeCurrency={value => {setCurrency(value); setStatus('');}}
+      pending={busy || ownedBusy} status={status} confirm={() => {void purchase();}}
+      cancel={() => {setPurchaseItem(undefined); setStatus('');}}/>}
+    <output hidden data-shop-status="">{status}</output>
     </>}
     {!ui && <ShopResourceFeedback error={resourceError} pending={activePageBusy} close={requestClose}/>}
     </div>
     </SourceImageScale>
+    {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
   </dialog>;
 }

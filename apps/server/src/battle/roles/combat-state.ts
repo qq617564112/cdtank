@@ -1,5 +1,6 @@
 import {setRoleHp, type RoleHealthRecord} from './health';
 import {createRoleRecordNumericDefaults} from './record-defaults';
+import type {ShotModifiers} from './shot-modifiers';
 
 export interface RoleRecordState {
   status: 0 | 1 | 2 | 3;
@@ -19,7 +20,7 @@ export class RoleCombatState {
   reloadDuration = 0;
   reloadSource: 'original-normal' | 'rebuilt' = 'rebuilt';
   /** Web authority retains accepted ammo until the original0.4-second query callback. */
-  pendingShot?: {remainingSeconds: number; ammoItemId: number};
+  pendingShot?: {remainingSeconds: number; ammoItemId: number; shotModifiers: ShotModifiers};
   /** Actual role float writes from recompute/notifications; absent fields stay absent. */
   readonly roleFloatFields = new Map<number, number>();
   activeActionId = 0;

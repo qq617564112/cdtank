@@ -15,7 +15,7 @@
 | 五模式数字 | 双方剩余生命、整数占领分、双方王生命、本机击毁、剩余破坏目标；只显示当前模式 |
 | 开场 | 当前模式原图2秒，随后Fight原图1秒；`MatchSnapshot.battleStartsAt`服务端deadline前所有坦克不动，提示完才计时/移动；切阶段和离房清理 |
 | 战车头顶 | 其它玩家/队友/敌人的权威/默认称号、姓名/王标记、原96×4血条、生命数字与温和距离缩放；当前策略隐藏本人头顶标签 |
-| 聊天与消息 | 闲置隐藏聊天、Enter编辑、确认发送退出、拒绝保草稿、新消息短显；原战斗消息8秒透明度及hover |
+| 聊天与消息 | 闲置隐藏聊天、Enter编辑、确认发送退出、拒绝保草稿、新消息短显；原战斗消息最近五条、图文排版、8秒透明度及hover |
 
 房间快照入口与渲染帧共同更新HUD。WAITING/LOADING隐藏战斗HUD，PLAYING显示，FINISHED保留终值，换局与离房清空旧数值。个人模式只将本人视为友方，个人模式的其它玩家按敌方着色。侧栏与可见敌我标签均无选用默认ID1。
 
@@ -36,12 +36,29 @@
 
 断线立即禁用八槽操作，恢复原房间后按最新权威快照重置本机运动预测，并保留已载入地图和碰撞资源。死亡数字使用原Countdown图字资源，复活授权取服务端状态。接线范围见`battle-ui-lifecycle.md`，页面表现仍待实测。
 
-## 附属界面缺项
+## 附属界面接线
 
-原 `game_main_chat_shrinked.xml` 有 `btnFamily`/`btnGM`，当前 `source-battle-chat.tsx` 未挂载它们，频道 `rdoGM` 明确禁用；原权限/producer未恢复。原 `game_summary_dialog.xml`（`wndDialog`/`picItem`/`txtMessage`）及 `game_summary_title.xml`（`wndDialog`/`txtMessage`）在当前 `apps/web/src` 没有消费者引用，不把名字推断为确切业务触发；原软键盘 `keyboard.xml` 的55控件也无对应消费者引用。它们是附属界面缺项，不是主 `game_main` 165控件中漏计控件，本任务不顺带实现。
+原 `game_main_chat_shrinked.xml` 有 `btnFamily`/`btnGM`。当前Family持久归属、operator、服务端路由及三页Web入口已接；GM沿频道6提交并持久保存，原自动回复、operator单条人工回复、认证查询／定向推送及Web回复入口已接，详`family-chat-runtime.md`和`gm-support-replies-runtime.md`。`game_summary_title.xml`（`wndDialog`/`txtMessage`）已消费本局账户事务授予的新称号，四值奖励阶段结束后逐个提示。`game_summary_dialog.xml`（`wndDialog`/`picItem`/`txtMessage`）原入口 `0x4aa7ab` 使用道具表与 `daoju0`，`0x4aa998` 使用另一队列与 `tanke0`；实际发放与网页展示合同见 `battle-summary-equipment-source.md`。原 `keyboard.xml` 为登录密码软键盘，不属于战斗附属界面。
 
-原HUD `edtBattleInfo`是RichEdit，现`BattleHud`为messages字符串/最近5条加`HudLayout` plain内容，不等于原完整彩色/图文战斗消息格式化恢复；既有聊天`ChatEmotes`解析是独立消费者，不能冒称该HUD日志已具备。完整800/1080/4K原版视觉未经实测，原乱斗`DogsInfo`加数含义还缺（现本机`kills`）；已接账号title不要重复写称号功能缺失，缺值默认ID1仅展示。
+原HUD `edtBattleInfo`由 `HudBattleInfoView` 复用既有 `ChatEmotes`，消费颜色、Imageset图片、序列表情和像素换行，沿原最近五条容量（`0x4d0278–0x4d028f`）及透明度生命周期。已定位的五类原模板583/584/585/586/591均由 `battle-info-messages.ts` 消费：公共击毁、换弹、使用道具、连续击毁及本机击毁积分；换弹和使用道具事件由服务端成功确认产生。`finish/leave/friendlyFire/itemRejected`采用当前确认文本，其原模板与生产来源尚未取得；本次没有定位到额外已证但未消费的原战斗公告模板。
+
+结算已接原胜负大图、五模式列头、本人绿色条目、宠物胜负表情、九奖项逐项提示及真实新增称号。宠物ID冻结自已选用owned base字段8，胜者两帧每0.5秒切换，败者/平局用die图；每个实际颁发奖项展示2秒。擒王列累计敌方VIP实际HP损失，占领列累计实际扣除的敌方碉堡HP。来源及限制见 `battle-ui-missing-runtime.md`。
+
+## 剩余接线与原操作差异
+
+| 项目 | 当前状态与原来源 |
+| --- | --- |
+| 家族入口与业务 | 持久归属、operator、服务端路由及三页Web入口已接，实测待做；原频道4发送分支 `0x4913aa–0x4913ab`直接跳过，完整原通信仍缺来源，当前路由为Web采用 |
+| GM人工处理与回复 | 提交、自动回复、operator人工回复、认证分页查询／定向推送及Web回复入口已接；原客服处理程序未取得，实际联机、重登录和持久实测待做 |
+| Ctrl键绑定 | 共享校验、两个设置入口和BattleInput均接受`ControlLeft/ControlRight`；新默认`useItem`为ControlLeft，旧合法绑定保留，保存／重启实测待做 |
+| 切换道具即使用 | 已接：原 `4ceac5/4cebf0`选槽后调用 `4cb2f5→43d4dc`请求使用；当前PageUp/PageDown选定槽后立即沿普通快捷槽入口发送一次使用请求 |
+| 武器切换中的陷阱 | 已接：原槽2–4的类别4进入 `43d5f3`请求放陷阱；当前Home/End从已确认Inventory加入真实陷阱候选，切到该槽沿已有分派请求放置，实际炮弹仍取服务端确认 |
+| 端点与耗尽槽 | 已接：两组循环越界保留旧索引，保留已配置零量项，数量0交统一入口播放UI28并拒绝；空槽无声，实际网页操作待测 |
+
+端点和耗尽槽的原指令、采用规则与生产接线见 `battle-cycle-controls-source.md`及`battle-cycle-controls-runtime.md`。装备实际发放、原593/829退出确认及账户扣分、乱斗 `catsInfo+dogsInfo`均已接入，规则见 `battle-equipment-exit-melee-rules.md`。
+
+正式PLAYING的弹药数量由八槽栏呈现，中央反馈只保留增益/错误文字，无重复弹量或滚动条。正式战斗页不提供道具丢弃入口、选择框或按钮；页面与地面事务范围见battle-play-page-source.md、ground-item-client-presentation.md。
 
 ## 限制
 
-未运行测试、构建、类型检查或浏览器验收。控件覆盖和上述原指令核对不代表完整高清/原版视觉已验收。原始旧服务端producer未恢复属来源边界；角色 `m_iNowTitle` getter / 称号 table 事实与 typed Web snapshot 按 `title.name` 采用是两条独立事实，不写当前功能缺失。世界标签勋章、原动态纹理相机/整数矩形、阶段生产与公告上游仍有取证边界。乱斗第二加数DogsInfo尚未确定含义，当前只显示本人击毁。其余模式数值、标签美观优先、剩余时间、介绍时长与现有聊天已由用户确认；M5-04、M5-05、UI-09父项继续待验收。
+未运行测试、构建、类型检查或浏览器验收。控件覆盖和上述原指令核对不代表完整高清/原版视觉已验收。原始旧服务端producer未恢复属来源边界；角色 `m_iNowTitle` getter / 称号 table 事实与 typed Web snapshot 按 `title.name` 采用是两条独立事实，不写当前功能缺失。`game_main.xml`没有独立勋章控件，擒王VIP已接；未取得原世界标签勋章执行/资源合同，不列为已证漏接。原动态纹理相机/整数矩形、阶段生产与公告上游仍有取证边界。原装备概率、退出计数字段完整业务名及乱斗DogsInfo上游仍缺来源；当前采用规则与接线见battle-equipment-exit-melee-rules.md。其余模式数值、标签美观优先、剩余时间、介绍时长与现有聊天已由用户确认；M5-04、M5-05、UI-09父项继续待验收。

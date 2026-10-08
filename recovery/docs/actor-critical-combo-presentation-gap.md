@@ -4,11 +4,11 @@ M4-09普通Damage、HPobserver Benefit及Critical selector2组合消费者已有
 
 Critical的原消息身份已由`role-shot-player-message-native.json`及`role-local-shot-hurt-native.json`确认：3aa3的message+14为一bit critical布尔值，reader42cf39／writer42ce56进入完整handler424614，再由467209提交浮字；true选择selector2，false选择selector1，同一伤害43均作为signed−43送入。`role-shot-hit-flags-native.json`与`role-shot-trigger8-presentation-native.json`另确认flag15／1c及Trigger8组合保持selector2。复用这些原执行，不重复caller或普通Damage验收。
 
-Critical由424749读取原消息byte+14非零后，以message+20送4228f1，负值selector2、Critical字体。原服务端概率与倍率生产来源仍缺，本轮正式hit分类由主线明确的Web政策供给。hurtSelector只负责方向，不能代替暴击标志。Combo由4364c4以message+10、+c、+14送429443；两个role lookup须有效，第三参数>1且本机role state!=3，随后给第二role提交selector3。现destroy.kills不能证明该第三消息参数，不能自行建立次数政策。
+Critical由424749读取原消息byte+14非零后，以message+20送4228f1，负值selector2、Critical字体。原服务端概率与倍率生产来源仍缺，本轮正式hit分类由主线明确的Web政策供给。hurtSelector只负责方向，不能代替暴击标志。Combo由4364c4以message+10、+c、+14送429443；两个role lookup须有效，第三参数>1且本机role state!=3，随后给第二role提交selector3。当前destroy.killCombo来自死亡归零的roundCurrentKillCombo，按gamestring586的连续击毁语义接第三参数；独立于累计kills及最大killCombo。
 
-原selector2/3还在record+38持有CEGUI附图，不是仅切换数字字体。Critical使用zhandou00/data/ui/zhandou/1_baojishuziditu.tga（原110×82，发布ui/regions/44/11.png），Combo为2_baojixianshidanwei.tga（128×99，44/9.png）。465196绘制附图并分别调整文字；Combo额外源常数46、17。原目录尺寸不证明原GPU矩形；Critical的Web组合度量见下文，Combo组合尚未实现。
+原selector2/3还在record+38持有CEGUI附图，不是仅切换数字字体。Critical使用zhandou00/data/ui/zhandou/1_baojishuziditu.tga（原110×82，发布ui/regions/44/11.png），Combo为2_baojixianshidanwei.tga（128×99，44/9.png）。465196绘制附图并分别调整文字；Combo额外源常数46、17。原目录尺寸不证明原GPU矩形；Critical的Web组合度量见下文，Combo原图字组合已接TankDamageText独立队列及BattlePlayers，沿原46/17偏移。
 
-Critical的原classification消息身份已确认。主线本轮明确采用Web重建概率／倍率政策，正式命中以shotPlayerResult.critical传入，概率抽样和伤害顺序由主线持有，不冒原服务端规则。Combo的count来源仍缺，不沿Critical接口恢复Combo。
+Critical的原classification消息身份已确认。主线本轮明确采用Web重建概率／倍率政策，正式命中以shotPlayerResult.critical传入，概率抽样和伤害顺序由主线持有，不冒原服务端规则。Combo由真实destroy确认事件供给，在本机存活且次数大于1时显示击毁者。
 
 ## Critical组合消费者
 
@@ -22,4 +22,4 @@ Players私有资源初始化加载共享Critical renderer，每角色持有独�
 
 `critical-hit-browser-root-review.json`接受原生键盘普通2001自然普通／Critical双端命中、同tick状态、原字体和附图实际Web绘制及源退出范围。两页Critical各24个实际render frames：44/11附图6、Critical数字18；网格启用、quad处于viewport、alpha正值、纹理来源与附图alphaIndex0／数字1均有实际记录，最终字图队列及renderer maps清空。该范围不称原GPU逐像素等价。
 
-总合审`shot-critical-root-review.json`接受网络与网页的有限普通／Critical双命中、双端状态、原生记录与重启保存、源字图Web绘制及summary／Home关闭范围。首UI raw FAIL保留，其七次普通命中与自然复活后地形未命中不被补段改写；补段使用新的普通房间。Critical selector2消费者不再列为缺失，原服务端概率／倍率公式、CEGUI font+bc实时度量、GPU像素等价、全部车型／弹药及Combo仍未完成。PetType2/dog120普通死亡及Map14目标148破坏已有限交付；cat119仅source/module。
+总合审`shot-critical-root-review.json`接受网络与网页的有限普通／Critical双命中、双端状态、原生记录与重启保存、源字图Web绘制及summary／Home关闭范围。首UI raw FAIL保留，其七次普通命中与自然复活后地形未命中不被补段改写；补段使用新的普通房间。Critical selector2消费者不再列为缺失，原服务端概率／倍率公式、CEGUI font+bc实时度量、GPU像素等价、全部车型／弹药及Combo正式联机/原GPU画面验收仍未完成。PetType2/dog120普通死亡及Map14目标148破坏已有限交付；cat119仅source/module。

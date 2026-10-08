@@ -18,7 +18,9 @@ export function insertRoomPlayer(rooms: ReadonlyMap<string, RoomState>, room: Ro
   const playerId = allocateId();
   const tank = getTankConfig(tankId);
   const team = joiningTeam(room.mode, room.players.values());
-  const spawn = room.battlefield.spawn(room.players.size);
+  const spawnIndex = room.battlefield.spawns.some(spawn => spawn.team !== undefined)
+    ? [...room.players.values()].filter(player => player.team === team).length : room.players.size;
+  const spawn = room.battlefield.spawn(spawnIndex, team);
   room.players.set(playerId, createBattlePlayer(playerId, clientId, name, tank, team, spawn, defaultInput));
   return {playerId, roomId: room.roomId, mode: room.mode, mapId: room.map.mapId};
 }

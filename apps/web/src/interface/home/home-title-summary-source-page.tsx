@@ -8,8 +8,8 @@ import {sourceProps} from '../resources/source-ui-props';
 const SUFFIX = 'myhome_playerpage_titlesummary.xml';
 
 /** Owned titles render at the original lstTitles geometry; selection is server-confirmed. */
-export function HomeTitleSummarySourcePage({ui, titles, pending, status, select}: {
-  ui: HomeSourceUi; titles?: AccountTitles; pending: boolean; status: string; select(titleId: number): void;
+export function HomeTitleSummarySourcePage({ui, titles, pending, select}: {
+  ui: HomeSourceUi; titles?: AccountTitles; pending: boolean; select(titleId: number): void;
 }) {
   const list = useRef<HTMLDivElement>(null);
   const layout = new HomeSourceLayout(ui, SUFFIX);
@@ -24,10 +24,16 @@ export function HomeTitleSummarySourcePage({ui, titles, pending, status, select}
         <div ref={list} className="home-title-summary-list" role="listbox" aria-label="拥有称号清单"
           aria-busy={pending} data-home-title-list="" data-title-count={owned.length}>
           {owned.map((title, index) => <button key={title.id} type="button" role="option"
+            disabled={pending} aria-label={title.name}
             data-home-title-id={title.id} aria-selected={selectedId === title.id}
             data-source-selection-asset={selectedId === title.id ? selection['data-source-asset'] : undefined}
             style={selectedId === title.id ? {backgroundImage: selection.style.backgroundImage} : undefined}
-            onClick={() => select(title.id)} onKeyDown={event => {
+            onClick={() => select(selectedId === title.id ? 0 : title.id)}
+            onContextMenu={event => {event.preventDefault(); if (!pending && selectedId === title.id) select(0);}}
+            onKeyDown={event => {
+              if ((event.key === 'Delete' || event.key === 'Backspace') && selectedId === title.id) {
+                event.preventDefault(); event.stopPropagation(); select(0); return;
+              }
               const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
                 : event.key === 'Home' ? 0 : event.key === 'End' ? owned.length - 1 : undefined;
               if (next === undefined) return;
@@ -43,8 +49,5 @@ export function HomeTitleSummarySourcePage({ui, titles, pending, status, select}
         </div>
       </div>
     </SourceImageScale>
-    <button type="button" className="home-title-clear" data-home-title-clear="" disabled={pending || !titles}
-      onClick={() => select(0)}>清空称号</button>
-    <output role="status" className="home-title-status" data-home-title-status="" aria-live="polite">{status}</output>
   </section>;
 }

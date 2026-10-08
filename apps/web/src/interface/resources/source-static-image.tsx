@@ -1,9 +1,25 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import './source-static-image.css';
 import {createContext, useContext, type CSSProperties, type ComponentPropsWithoutRef} from 'react';
 import type {HomeSourceUi, HomeSourceLayout} from './source-ui-layout';
 import {sourceProps} from './source-ui-props';
+import {sourceTextArtwork, SourceTextArtwork} from './source-text-artwork';
 
 export const SourceImageScale = createContext(1);
+
+/** Crop stray atlas pixels and their filtered neighbours at blue-strip joins. */
+function blueStripBackground(reference?: string): CSSProperties {
+  switch (reference) {
+    case 'set:gy0 image:data\\ui\\gy\\lantiao1.tga':
+      return {backgroundSize: `${51 / 49 * 100}% 100%`, backgroundPosition: 'left top'};
+    case 'set:gy0 image:data\\ui\\gy\\lantiao2.tga':
+      return {backgroundSize: `${51 / 49 * 100}% 100%`, backgroundPosition: 'right top'};
+    case 'set:gy0 image:data\\ui\\gy\\lantiao3.tga':
+      return {backgroundSize: `${51 / 46 * 100}% 100%`, backgroundPosition: '60% top'};
+    default:
+      return {};
+  }
+}
 
 function region(ui: HomeSourceUi, reference?: string) {
   const match = /^set:(\S+) image:(.+)$/.exec(reference ?? '');
@@ -20,7 +36,8 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
 } & ComponentPropsWithoutRef<'span'>) {
   const scale = useContext(SourceImageScale);
   const properties = layout.control(name).properties;
-  const props = sourceProps(ui, layout, suffix, name, reference ?? properties.Image, offsetX, offsetY);
+  const imageReference = reference ?? properties.Image;
+  const props = sourceProps(ui, layout, suffix, name, imageReference, offsetX, offsetY);
   const frame = properties.FrameEnabled !== 'False';
   const pieces = ['Top', 'Bottom', 'Left', 'Right', 'TopLeft', 'TopRight', 'BottomLeft', 'BottomRight']
     .map(position => ({position, image: frame ? region(ui, properties[`${position}FrameImage`]) : undefined}));
@@ -37,13 +54,19 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
   const right = size('Right', 'Width');
   const top = size('Top', 'Height');
   const bottom = size('Bottom', 'Height');
+  const textAsset = props['data-source-asset'];
+  const text = sourceTextArtwork(textAsset);
   return <span {...props} {...attributes} className={`source-static-image ${className}`}
     style={{...props.style, backgroundImage: undefined}}>
-    {props['data-source-asset'] && <i data-source-image="" data-source-horz-format="HorzStretched" data-source-vert-format="VertStretched"
+    {text && <SourceTextArtwork asset={textAsset!} style={{inset: `${top}px ${right}px ${bottom}px ${left}px`}}/>}
+    {!text && props['data-source-asset'] && <i data-source-image="" data-source-horz-format="HorzStretched" data-source-vert-format="VertStretched"
       data-source-offset="0,0" data-source-clip="inner-rectangle" data-source-asset={props['data-source-asset']}
-      style={{inset: `${top}px ${right}px ${bottom}px ${left}px`, backgroundImage: props.style.backgroundImage}} />}
+      style={{inset: `${top}px ${right}px ${bottom}px ${left}px`, backgroundImage: props.style.backgroundImage,
+        backgroundSize: props.style.backgroundSize, backgroundPosition: props.style.backgroundPosition,
+        backgroundRepeat: props.style.backgroundRepeat, ...blueStripBackground(imageReference)}} />}
     {pieces.filter(piece => piece.image?.asset).map(({position, image}) => {
-      const style: CSSProperties = {backgroundImage: `url('/${image!.asset}')`};
+      const style: CSSProperties = {backgroundImage: imageResourceBackground(`/${image!.asset}`),
+        ...blueStripBackground(properties[`${position}FrameImage`])};
       if (position.includes('Left')) {style.left = 0; style.width = dimension(image!, 'Width');}
       else if (position.includes('Right')) {style.right = 0; style.width = dimension(image!, 'Width');}
       else {
@@ -58,4 +81,3 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
     {children}
   </span>;
 }
-

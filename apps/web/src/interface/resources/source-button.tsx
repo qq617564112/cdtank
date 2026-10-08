@@ -2,6 +2,7 @@ import './source-button.css';
 import {useEffect, useRef, useState, type ComponentPropsWithoutRef} from 'react';
 import type {HomeSourceLayout, HomeSourceUi} from './source-ui-layout';
 import {sourceProps} from './source-ui-props';
+import {sourceTextArtwork, SourceTextArtwork} from './source-text-artwork';
 
 interface SourceButtonProps extends ComponentPropsWithoutRef<'button'> {
   ui: HomeSourceUi; layout: HomeSourceLayout; source: string; selected?: boolean;
@@ -70,7 +71,9 @@ export function SourceButton({ui, layout, source, suffix, offsetX = 0, offsetY =
     onBlur={cancel}
     onClick={event => {if (!disabled && (event.detail === 0 || releasedInside.current)) onClick?.(event);}}>
     {imageProps.map(({key, props: image}) => <i key={key} aria-hidden="true" data-room-button-image={key}
-      data-source-asset={image['data-source-asset']} style={{backgroundImage: image.style.backgroundImage, opacity: alpha}}/>)}
+      data-source-asset={image['data-source-asset']} style={{backgroundImage: image.style.backgroundImage, opacity: alpha}}>
+      {sourceTextArtwork(image['data-source-asset']) && <SourceTextArtwork asset={image['data-source-asset']!}/>}
+    </i>)}
     {children}
   </button>;
 }

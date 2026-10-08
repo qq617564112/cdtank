@@ -116,7 +116,7 @@ export function registerRoomApis(
       await call.succ({round: world.rematch(session.playerId, call.req.round)});
       broadcastRoomState(session.roomId);
     } catch (error) {
-      await call.error(error instanceof Error ? error.message : '再战失败', {code: 'ROUND_CONFLICT'});
+      await call.error(error instanceof Error ? error.message : '返回房间失败', {code: 'ROUND_CONFLICT'});
     }
   });
 

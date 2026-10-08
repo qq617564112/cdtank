@@ -10,7 +10,7 @@ function positiveInteger(name: string, fallback: number, maximum: number): numbe
 }
 
 export function serverRuntimeConfig(): {
-  port: number; tickRate: number; accountPath: string;
+  port: number; tickRate: number; accountPath: string; webRoot: string;
   minPlayers?: number; timeLimitSeconds?: number;
 } {
   const timeLimit = process.env.MATCH_TIME_LIMIT_SECONDS;
@@ -21,6 +21,7 @@ export function serverRuntimeConfig(): {
   return {port: positiveInteger('PORT', 3001, 65535),
     tickRate: positiveInteger('TICK_RATE', 20, 1000),
     accountPath: resolve(process.env.ACCOUNT_DB_PATH ?? 'recovery/output/accounts.sqlite'),
+    webRoot: resolve(process.env.WEB_ROOT ?? 'dist/web'),
     minPlayers: process.env.MATCH_MIN_PLAYERS === undefined ? undefined
       : positiveInteger('MATCH_MIN_PLAYERS', 1, 12),
     timeLimitSeconds: seconds};

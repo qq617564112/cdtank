@@ -50,10 +50,13 @@ from export_scene_terrain06_material import export as export_scene_terrain06_mat
 from export_scene_terrain14_material import export as export_scene_terrain14_material
 from export_scene_terrain17_material import export as export_scene_terrain17_material
 from export_scene_terrain04_material import export as export_scene_terrain04_material
+from export_scene_extended_terrain_material import export as export_scene_extended_terrain_material
 from export_scene_sequence05023 import export as export_scene_sequence05023
+from export_scene_special_objects import export as export_scene_special_objects, PLACEMENTS as special_placements
 
 root = Path('recovery/output/verified/assets/data')
 out = Path('recovery/output/web-assets')
+breach_catalog_models = ('obj05438', 'obj05440', 'obj05441', 'obj05446', 'obj05463')
 models = json.loads((out / 'pol-conversion.json').read_text())
 lookup = {Path(entry['path']).stem.lower(): entry['output'] for entry in models}
 animated = {entry['path'].lower(): entry['output']
@@ -102,8 +105,10 @@ export_scene_terrain06_material()
 export_scene_terrain14_material()
 export_scene_terrain17_material()
 export_scene_terrain04_material()
+export_scene_extended_terrain_material()
 sequence_placements = {(placement['mapId'], placement['sourcePlacementId'])
     for placement in export_scene_sequence05023()}
+export_scene_special_objects()
 scenes = []
 for path in sorted((root / 'Data/scn').rglob('*.obj')):
     records = read_scene(path)
@@ -115,6 +120,9 @@ for path in sorted((root / 'Data/scn').rglob('*.obj')):
         box['shapeMatrix'] = struct.unpack_from('<16f', raw, 4)
         box['dimensions'] = struct.unpack_from('<3f', raw, 68)
     for record in records + castles:
+        special = special_placements.get((path.stem, record['id']))
+        if special:
+            record['special'] = special
         if record['className'] == 'SYcScnObjBreach':
             record['breachFields'] = decode_breach_tail(bytes.fromhex(record['tail']))
         if record['className'] in ('SYcScnObjPlant', 'SYcScnObjBreach', 'SYcScnObjGeneral', 'SYcScnObjCrush', 'SYcCastle'):
@@ -122,10 +130,13 @@ for path in sorted((root / 'Data/scn').rglob('*.obj')):
         if path.stem in ('0007', '0021') and record['className'] == 'SYcScnObjGeneral' and record['model'] == 'obj05025':
             record['animation'] = dict(library='scene-animation-0007.json',
                 reference='Data/scnobj/obj05025/obj05025.CVD')
-        if path.stem == '0010' and record['id'] == '106' and record['className'] == 'SYcScnObjGeneral' and record['model'] == 'obj05015':
+        if ((path.stem, record['id']) in (('0003', '146'), ('0010', '106'))
+                and record['className'] == 'SYcScnObjGeneral' and record['model'] == 'obj05015'):
             record['animation'] = dict(library='scene-animation-0010.json',
                 reference='Data/scnobj/obj05015/obj05015.CVD')
-        if path.stem == '0018' and record['id'] in ('66', '67', '68', '69') and record['className'] == 'SYcScnObjGeneral' and record['model'] == 'obj05018':
+        if ((path.stem, record['id']) in (('0009', '111'), ('0009', '112'), ('0015', '103'),
+                ('0015', '108'), ('0018', '66'), ('0018', '67'), ('0018', '68'), ('0018', '69'))
+                and record['className'] == 'SYcScnObjGeneral' and record['model'] == 'obj05018'):
             record['animation'] = dict(library='scene-animation-0018.json',
                 reference='Data/scnobj/obj05018/obj05018.CVD')
         if record['className'] == 'SYcCastle':
@@ -137,10 +148,10 @@ for path in sorted((root / 'Data/scn').rglob('*.obj')):
             record['asset'] = animated[model_path.relative_to(root).as_posix().lower()]
     entry = dict(id=path.stem, terrain=f'Data/map/{path.stem}/{path.stem}.glb',
         records=records, castles=castles, collisionBoxes=collision_boxes,
-        resolved=sum(bool(r.get('asset') or r.get('animation')
+        resolved=sum(bool(r.get('asset') or r.get('animation') or r.get('special')
             or (path.stem, r['id']) in sequence_placements) for r in records + castles))
     scenes.append(entry)
-export_scene_breach_catalog(scenes, root, out)
+export_scene_breach_catalog(scenes, root, out, breach_catalog_models)
 (out / 'scene-placements.json').write_text(json.dumps(scenes,ensure_ascii=False,indent=2),encoding='utf-8')
 print(f'{len(scenes)} scenes, {sum(len(s["records"]) for s in scenes)} records, {sum(s["resolved"] for s in scenes)} static model references resolved')
 print(f'{sum(len(s["castles"]) for s in scenes)} castles, {sum(len(s["collisionBoxes"]) for s in scenes)} virtual boxes preserved')

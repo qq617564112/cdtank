@@ -1,0 +1,77 @@
+{
+  "name": "填弹装置",
+  "getMethod": 2,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 10,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 15021,
+  "key": "item-15021",
+  "description": "装弹时间修正为45%。",
+  "prices": {
+    "money": 500,
+    "tokens": 50
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 10,
+  "inventoryCategory": 5,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 13141,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 13141,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 13101,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "common"
+  },
+  "equipmentTarget": "PART"
+}

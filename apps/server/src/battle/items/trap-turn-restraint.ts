@@ -1,3 +1,4 @@
+import {itemForHandler} from '../../../../shared/content/catalog';
 import {combatItems, combatSkills} from '../catalog';
 import {readGroupTrapRule} from './group-trap-rule';
 
@@ -12,7 +13,7 @@ export interface TrapTurnRestraintRule {
 }
 
 /** Source fields are confirmed; Func12 time/radius/model interpretation is rebuilt. */
-export function readTrapTurnRestraintRule(itemId = 3004): TrapTurnRestraintRule | undefined {
+export function readTrapTurnRestraintRule(itemId = itemForHandler('trap', 'turnRestraint').id): TrapTurnRestraintRule | undefined {
   if (itemId === 3007) {
     const group = readGroupTrapRule(itemId);
     return group ? {itemTableId: group.itemTableId, placementSkillId: group.placementSkillId,
@@ -25,10 +26,10 @@ export function readTrapTurnRestraintRule(itemId = 3004): TrapTurnRestraintRule 
   const create = placement?.functions[0];
   const effect = create ? combatSkills.get(create.y) : undefined;
   const restraint = effect?.functions[0];
-  if (!item || item.itemType !== 4 || !placement || placement.skillId !== 3004
+  if (!item || item.itemType !== 4 || !placement
       || !create || create.type !== 12 || create.z !== item.itemTableId
-      || !effect || effect.skillId !== 4002 || !restraint || restraint.type !== 4) return undefined;
-  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId, effectSkillId: 4002,
+      || !effect || !restraint || restraint.type !== 4) return undefined;
+  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId, effectSkillId: effect.skillId,
     groundModelId: create.z, groundDurationMs: create.t * 1000,
     triggerRadius: create.x, restraintDurationMs: restraint.t * 1000};
 }
@@ -60,7 +61,7 @@ export interface TrapTurnRestraintChange {
 
 /** Rebuilt single-contact authority removes one original uint8 turn permission. */
 export function applyTrapTurnRestraint(target: TrapTurnRestraintParticipant, now: number,
-    permission: TrapTurnPermissionProvider, itemId = 3004): TrapTurnRestraintChange | undefined {
+    permission: TrapTurnPermissionProvider, itemId = itemForHandler('trap', 'turnRestraint').id): TrapTurnRestraintChange | undefined {
   if (!target.alive || target.combat.status !== 2 || target.trapTurnRestraint) return undefined;
   const rule = readTrapTurnRestraintRule(itemId);
   const count = permission.readTurnPermissionCount();

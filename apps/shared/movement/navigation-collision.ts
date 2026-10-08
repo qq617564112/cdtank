@@ -4,11 +4,12 @@ import {CollisionMesh, triangleIntersectsBounds} from './collision-mesh';
 const meshOccupancy = new WeakMap<SourceNavigationLayer, Map<CollisionMesh, ReadonlySet<number>>>();
 
 /** Intersect render faces with the 12-unit cells at the role's standing height. */
-export function navigationOccupancy(mesh: CollisionMesh, navigation: NavigationGrid, verticalOnly = false): ReadonlySet<number> {
+export function navigationOccupancy(mesh: CollisionMesh, navigation: NavigationGrid, verticalOnly = false,
+  cacheResult = true): ReadonlySet<number> {
   const grid = navigation.source;
   let cache = meshOccupancy.get(grid);
   if (!cache) {cache = new Map(); meshOccupancy.set(grid, cache);}
-  const cached = cache.get(mesh);
+  const cached = cacheResult ? cache.get(mesh) : undefined;
   if (cached) return cached;
   const cells = new Set<number>();
   for (const {vertices, minimum, maximum, normal} of mesh.triangles) {
@@ -28,7 +29,6 @@ export function navigationOccupancy(mesh: CollisionMesh, navigation: NavigationG
           [originX + 12, cell.height + 24, originZ + 12])) cells.add(index);
     }
   }
-  cache.set(mesh, cells);
+  if (cacheResult) cache.set(mesh, cells);
   return cells;
 }
-

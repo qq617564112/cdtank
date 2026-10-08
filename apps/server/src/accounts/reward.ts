@@ -2,6 +2,9 @@ import type {DatabaseSync} from 'node:sqlite';
 import type {AccountGrowth, ResultAward, ResultPlayer} from '../../../shared/protocols/MsgRoomSnapshot';
 import {computeResultAward, readResultRewardRates, type ResultRewardRates} from '../settlement/reward';
 import type {ResultRewardModifiers} from '../settlement/reward-modifiers';
+import {grantEquipmentReward, type EquipmentRewardRoll} from './equipment-reward';
+
+export type {EquipmentRewardRoll} from './equipment-reward';
 
 /** Original MyPlayer money field; existing shop/sale helpers already write this balance. */
 const MONEY_OFFSET = 0x70;
@@ -54,11 +57,18 @@ export class AccountReward {
    */
   apply(accountId: string, matchId: string, round: number,
       result: Pick<ResultPlayer, 'combatScore' | 'totalScore' | 'outcome'>
-        & {rewardModifiers?: ResultRewardModifiers}): ResultAward {
+        & {rewardModifiers?: ResultRewardModifiers; equipmentRewardRoll?: EquipmentRewardRoll}): ResultAward {
+    const existing = this.receipt(accountId, matchId, round);
+    if (existing) return existing;
     const previous = this.growth(accountId);
     const computed = computeResultAward({player: result, previous, rates: this.resultRewardRates()});
     const money = this.creditMoney(accountId, computed.money);
-    const award: ResultAward = {...computed, money};
+    const equipment = result.equipmentRewardRoll
+      ? grantEquipmentReward(this.database, accountId, result.equipmentRewardRoll)
+      : {items: [], tanks: []};
+    const award: ResultAward = {...computed, money,
+      ...(equipment.items.length ? {grantedItems: equipment.items} : {}),
+      ...(equipment.tanks.length ? {grantedTanks: equipment.tanks} : {})};
     this.database.prepare(`INSERT INTO account_growth
       (account_id, rank_points, level, originality, skill_points) VALUES (?, ?, ?, ?, ?)
       ON CONFLICT(account_id) DO UPDATE SET rank_points = excluded.rank_points, level = excluded.level,
@@ -70,7 +80,7 @@ export class AccountReward {
     return award;
   }
 
-  /** Credit the existing spendable profile balance; absent profile has no confirmed balance to add to. */
+  /** Credit up to the balance cap and return the amount actually received. */
   private creditMoney(accountId: string, amount: number): number {
     if (amount <= 0) return 0;
     const row = this.database.prepare('SELECT payload FROM role_profiles WHERE account_id = ?').get(accountId);
@@ -78,10 +88,11 @@ export class AccountReward {
     const bytes = new Uint8Array(row.payload as Uint8Array);
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     const money = view.getUint32(MONEY_OFFSET, true);
-    if (money + amount > MONEY_CAP) throw new Error('结算金钱超出上限');
-    view.setUint32(MONEY_OFFSET, money + amount, true);
+    const credited = Math.min(amount, Math.max(0, MONEY_CAP - money));
+    if (credited === 0) return 0;
+    view.setUint32(MONEY_OFFSET, money + credited, true);
     this.database.prepare('UPDATE role_profiles SET payload = ? WHERE account_id = ?').run(bytes, accountId);
-    return amount;
+    return credited;
   }
 
   private resultRewardRates(): ResultRewardRates {

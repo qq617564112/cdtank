@@ -23,16 +23,28 @@ export class NavigationGrid {
   private readonly blockers = new Map<string, ReadonlySet<number>>();
   private readonly occupied = new Map<number, number>();
 
-  /** Rebuilt per-room dynamic occupancy; original NAV bytes remain unchanged. */
-  setBlocker(id: string, cells?: ReadonlySet<number>): void {
-    for (const index of this.blockers.get(id) ?? []) {
+  /** Update per-room occupancy and report cells becoming blocked or free. */
+  setBlocker(id: string, cells?: ReadonlySet<number>): boolean {
+    const previous = this.blockers.get(id);
+    let changed = false;
+    for (const index of previous ?? []) {
+      if (cells?.has(index)) continue;
       const remaining = this.occupied.get(index)! - 1;
       if (remaining) this.occupied.set(index, remaining);
-      else this.occupied.delete(index);
+      else {
+        this.occupied.delete(index);
+        changed = true;
+      }
     }
     if (cells?.size) this.blockers.set(id, cells);
     else this.blockers.delete(id);
-    for (const index of cells ?? []) this.occupied.set(index, (this.occupied.get(index) ?? 0) + 1);
+    for (const index of cells ?? []) {
+      if (previous?.has(index)) continue;
+      const occupied = this.occupied.get(index) ?? 0;
+      this.occupied.set(index, occupied + 1);
+      if (occupied === 0) changed = true;
+    }
+    return changed;
   }
 
   constructor(readonly source: SourceNavigationLayer) {

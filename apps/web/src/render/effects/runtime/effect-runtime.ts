@@ -79,6 +79,7 @@ export class EffectRuntime {
       this.movementSubscriptions.clear();
       if (this.renderObserver) scene.onBeforeRenderObservable.remove(this.renderObserver);
       this.renderObserver = undefined;
+      this.sound.dispose();
       this.skillSound.dispose();
       this.textures.clear();
       this.screenBackend.dispose();
@@ -98,8 +99,9 @@ export class EffectRuntime {
       this.json<EffectModelLibrary>('/effect-models.json'),
     ]);
     if (this.scene.isDisposed) return;
-    this.sound.configure(audio);
     this.skillSound.configure(audio);
+    await this.sound.configure(audio, this.skillSound.audioContext()!);
+    if (this.scene.isDisposed) return;
     const indices = new Set<number>();
     const collect = (node: EffectRuntimeLibrary['nodes'][number]): void => {
       if (indices.has(node.index)) return;
@@ -418,13 +420,19 @@ export class EffectRuntime {
         this.draw(instance, draw);
         const mesh = draw.sprite?.mesh ?? draw.particle?.sprite.mesh ?? draw.overlay?.mesh;
         if (mesh) mesh.alphaIndex = drawOrder++;
-        draw.model?.meshes.forEach(model => {model.alphaIndex = drawOrder++;});
       }
     }
     this.sound.update();
   }
 
   private draw(instance: Instance, draw: Draw): void {
+    if (instance.owner?.hiddenFromObserver) {
+      draw.model?.draw(undefined);
+      draw.sprite?.updateQuads([]);
+      draw.particle?.sprite.updateQuads([]);
+      draw.overlay?.update();
+      return;
+    }
     const node = draw.node;
     if (node.model) {
       draw.model!.draw(node.lifecycle.phase === 2 && node.lifecycle.controller >= 0 ?

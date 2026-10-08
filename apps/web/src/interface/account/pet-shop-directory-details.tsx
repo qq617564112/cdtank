@@ -1,12 +1,15 @@
+import {rankedPetSkillId} from '../../../../shared/content/catalog';
+import {loadCombatCatalog} from '../../content';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
+import {loadStaticJson} from '../../assets/static-resources';
 import {useEffect, useState} from 'react';
 import type {CombatCatalog, CombatSkillDefinition} from '../../../../shared/combat/catalog';
 import {SourceButton} from '../resources/source-button';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {PetSkillSourceView} from '../home/pet-skill-source-view';
-import {PET_SHOP_MASTERY, petOwnedMastery} from './pet-shop-mastery';
+import {petOwnedMastery, petShopMastery} from './pet-shop-mastery';
 import {sourceProps} from '../resources/source-ui-props';
-import {PET_SHOP_DIRECTORY_DETAILS} from './pet-shop-directory-metadata';
+import {petShopDirectoryDetails} from './pet-shop-directory-metadata';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-feedback-text';
@@ -28,16 +31,14 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
   const [opened, setOpened] = useState<{skill: CombatSkillDefinition; level: number}>();
   useEffect(() => {
     let active = true;
-    void fetch('/combat-catalog.json').then(response => {
-      if (!response.ok) throw new Error('技能目录载入失败');
-      return response.json() as Promise<CombatCatalog>;
-    }).then(value => {if (active) setCatalog(value);}).catch(() => {});
+    void loadCombatCatalog()
+      .then(value => {if (active) setCatalog(value);}).catch(() => {});
     return () => {active = false;};
   }, []);
   const fields = mode === 'owned' && ownedRecord ? new Map(ownedRecord.fields) : undefined;
   const ownedSkillIdentity = JSON.stringify(ownedRecord?.fields.filter(([offset]) => offset === 0 || offset >= 0x44 && offset <= 0x70));
   useEffect(() => {setOpened(undefined);}, [petId, mode, ownedSkillIdentity]);
-  const details = PET_SHOP_DIRECTORY_DETAILS[petId];
+  const details = petShopDirectoryDetails(petId);
   if (!details && mode === 'directory') return null;
   const currentPetInstance = profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0xa4, true) : undefined;
   const selectedInstance = ownedRecord ? new Map(ownedRecord.fields).get(0) : undefined;
@@ -45,7 +46,7 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
     isCurrent: currentPetInstance !== undefined && currentPetInstance === selectedInstance, catalog}) : undefined;
   const skills = mode === 'owned' ? Array.from({length: 6}, (_, index) => {
     const base = fields?.get(0x44 + index * 4), level = fields?.get(0x5c + index * 4);
-    const id = base !== undefined && level !== undefined ? base + Math.max(0, level - 1) : undefined;
+    const id = base !== undefined && level !== undefined ? rankedPetSkillId(base, Math.max(1, level)) : undefined;
     const definition = id ? catalog?.skills.find(value => value.skillId === id) : undefined;
     return {id, level, name: definition?.name ?? ''};
   }) : details!.skills;
@@ -71,7 +72,7 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
     </span>)}
     <div {...sourceProps(ui, layout, suffix, 'tankecanshuqu')} className="pet-shop-mastery-values"
       data-pet-shop-mastery="" data-mastery-binding={mode === 'owned' ? 'web-confirmed-owned-aggregate' : 'original-pet-table-directory'}>
-      {(mode === 'owned' ? ownedMastery?.mastery ?? [] : PET_SHOP_MASTERY[petId] ?? []).map((value, index) => <span key={index}
+      {(mode === 'owned' ? ownedMastery?.mastery ?? [] : petShopMastery(petId)).map((value, index) => <span key={index}
         data-mastery-index={index} data-mastery-value={value}
         style={{left: index % 2 ? 184 : 77, top: index < 2 ? 37 : 63}}>
         <SourceFeedbackText text={String(value)} />

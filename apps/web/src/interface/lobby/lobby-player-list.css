@@ -5,7 +5,7 @@
   padding: 0;
   overflow: auto;
   list-style: none;
-  color: white;
+  color: #fff;
   font: 12px 'CDTank-SIMSUN', serif;
 }
 
@@ -17,7 +17,7 @@
 .lobby-player-list [data-lobby-presence-status] {
   margin: 0;
   padding: 2px 4px;
-  color: white;
+  color: #fff;
   font: inherit;
   line-height: 16px;
   overflow-wrap: anywhere;
@@ -54,6 +54,6 @@
 }
 
 .lobby-player-list button:focus-visible {
-  outline: 1px solid white;
+  outline: 1px solid #80501f;
   outline-offset: -1px;
 }

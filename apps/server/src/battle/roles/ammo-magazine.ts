@@ -1,3 +1,4 @@
+import {defaultAmmoId} from '../../../../shared/content/catalog';
 import type {RoleCombatState} from './combat-state';
 import {combatItemSkills, combatSkills} from '../catalog';
 
@@ -20,7 +21,7 @@ function ammoState(role: RoleCombatState): AmmoAuthority {
 }
 
 export function isDefaultAmmo(role: RoleCombatState): boolean {
-  return role.selectedAmmoSlot === 1 && role.currentAmmoTableId === 2001;
+  return role.selectedAmmoSlot === 1 && role.currentAmmoTableId === defaultAmmoId();
 }
 
 /** Rebuilt installation producer; numeric consumers retain original selection/math. */
@@ -38,7 +39,7 @@ export function ensureSelectedAmmoSkills(role: RoleCombatState): boolean {
   const insertedSkills: number[] = [];
   const requested = combatItemSkills.get(itemId)?.skillIds.slice(0, 3).filter(skill => combatSkills.has(skill) && !slots.includes(skill)) ?? [];
   if (slots.filter(skill => skill === 0).length < requested.length) return false;
-  if (state.itemId === 2001 && state.defaultCount !== undefined) state.defaultCount = role.bulletCount;
+  if (state.itemId === defaultAmmoId() && state.defaultCount !== undefined) state.defaultCount = role.bulletCount;
   for (const skill of combatItemSkills.get(itemId)?.skillIds.slice(0, 3) ?? []) {
     if (!combatSkills.has(skill)) continue;
     if (slots.includes(skill)) continue;

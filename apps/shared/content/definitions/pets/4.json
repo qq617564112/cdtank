@@ -1,0 +1,125 @@
+{
+  "kind": "pet",
+  "id": 4,
+  "key": "pet-4",
+  "name": "迅猛龙",
+  "description": "天生热爱战斗的悍狗，“少说废话多打架！”是它遵循的一贯原则，正因为如此，连话都忘记怎么说了。",
+  "prices": {
+    "money": 4500,
+    "tokens": 450
+  },
+  "shop": {
+    "available": true,
+    "group": "pet"
+  },
+  "starter": false,
+  "defaultSelected": false,
+  "petType": 2,
+  "petSize": 1,
+  "attributes": {
+    "maxHp": 650,
+    "critical": 16,
+    "lucky": 10,
+    "mastery": [
+      4,
+      3,
+      2,
+      3
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/004/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/004/m103.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 10411,
+      "initialRank": 0,
+      "rankCap": 6,
+      "levels": [
+        10411,
+        10412,
+        10413,
+        10414,
+        10415,
+        10416
+      ],
+      "event": "kill",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10421,
+      "initialRank": 0,
+      "rankCap": 5,
+      "levels": [
+        10421,
+        10422,
+        10423,
+        10424,
+        10425
+      ],
+      "event": "motion",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "moving"
+    },
+    {
+      "baseId": 10431,
+      "initialRank": 0,
+      "rankCap": 5,
+      "levels": [
+        10431,
+        10432,
+        10433,
+        10434,
+        10435
+      ],
+      "event": "health",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "lowHealth"
+    },
+    {
+      "baseId": 10441,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10441
+      ],
+      "event": "lethal",
+      "handler": "lastStand",
+      "target": "self"
+    },
+    {
+      "baseId": 10451,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10451
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10461,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import type {RoleCombatState} from '../roles/combat-state';
 import {combatItems, combatSkills} from '../catalog';
 
 export interface AttackBoostState {
-  skillId: 4;
+  skillId: number;
   expiresAt: number;
   attackPercent: number;
   attackBonus: number;
@@ -29,17 +29,17 @@ export function applyAttackDrink(roomId: string, player: AttackDrinkParticipant,
     itemTableId: number) => boolean) | undefined, events: MsgRoomEvent[]): void {
   if (request.kind !== 'useItem' || !player.alive || player.combat.status !== 2) return;
   const item = player.inventory.find(record => record.instanceId === request.instanceId);
-  if (!item || item.itemTableId !== 4 || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
-  const definition = combatItems.get(4);
+  if (!item || combatItems.get(item.itemTableId)?.runtime.use !== 'attack' || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
+  const definition = combatItems.get(item.itemTableId);
   const skill = definition ? combatSkills.get(definition.skillIds[0]) : undefined;
-  if (!skill || skill.skillId !== 4 || skill.target !== 1 || skill.triggerType !== 1
+  if (!skill || skill.target !== 1 || skill.triggerType !== 1
       || skill.functions[0]?.type !== 1) return;
   const reject = (message: string): void => {
     events.push({roomId, type: 'itemRejected', message, playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0});
   };
   const slots = player.combat.record?.arrays.get(4);
-  if (player.attackBoost || slots?.includes(4)) {
+  if (player.attackBoost || slots?.includes(skill.skillId)) {
     reject('攻击提升效果已生效');
     return;
   }
@@ -58,21 +58,21 @@ export function applyAttackDrink(roomId: string, player: AttackDrinkParticipant,
   }
   item.ownedQuantity -= 1;
   item.battleQuantity -= 1;
-  player.combat.addSkill(4);
-  player.attackBoost = {skillId: 4, expiresAt: now + skill.functions[0].t * 1000,
+  player.combat.addSkill(skill.skillId);
+  player.attackBoost = {skillId: skill.skillId, expiresAt: now + skill.functions[0].t * 1000,
     attackPercent: skill.attributes.Atk, attackBonus: skill.attributes.AtkBonus};
   recompute();
-  events.push({roomId, type: 'itemUsed', message: `${player.name}使用${definition!.name}`,
+  events.push({roomId, type: 'itemUsed', itemName: combatItems.get(item.itemTableId)?.name, message: `${player.name}使用${definition!.name}`,
     playerId: player.id, targetId: player.id, value: 0,
-    x: player.x, y: player.y, z: player.z, skillId: 4,
-    playSkillEffect: {skillId: 4, effectIndex: 0, duration: 0,
+    x: player.x, y: player.y, z: player.z, skillId: skill.skillId,
+    playSkillEffect: {skillId: skill.skillId, effectIndex: 0, duration: 0,
       roleId: Number(player.id.slice(1)), xBits: 0, zBits: 0}});
 }
 
 /** Remove only the temporary skill installed by the attack drink. */
 export function clearAttackDrink(player: AttackDrinkParticipant, recompute: () => void): void {
   if (!player.attackBoost) return;
-  const slot = player.combat.record?.arrays.get(4)?.indexOf(4) ?? -1;
+  const slot = player.combat.record?.arrays.get(4)?.indexOf(player.attackBoost.skillId) ?? -1;
   if (slot !== -1) player.combat.removeSkillAt(slot);
   delete player.attackBoost;
   recompute();
@@ -81,10 +81,18 @@ export function clearAttackDrink(player: AttackDrinkParticipant, recompute: () =
 export function advanceAttackDrink(roomId: string, player: AttackDrinkParticipant, now: number,
   recompute: () => void, events: MsgRoomEvent[]): void {
   if (!player.attackBoost || (player.alive && now < player.attackBoost.expiresAt)) return;
+  const skillId = player.attackBoost.skillId;
+  const roleId = Number(player.id.slice(1));
+  const expiredNaturally = player.alive && now >= player.attackBoost.expiresAt;
   clearAttackDrink(player, recompute);
   events.push({roomId, type: 'skillStopped', message: '', playerId: player.id,
-    targetId: player.id, value: 0, x: player.x, y: player.y, z: player.z, skillId: 4,
-    stopSkillEffect: {skillId: 4, roleId: Number(player.id.slice(1))}});
+    targetId: player.id, value: 0, x: player.x, y: player.y, z: player.z, skillId,
+    stopSkillEffect: {skillId, roleId}});
+  if (expiredNaturally) {
+    events.push({roomId, type: 'drinkEndEffect', message: '', playerId: player.id,
+      targetId: player.id, value: 0, x: player.x, y: player.y, z: player.z, skillId,
+      playSkillEffect: {skillId, effectIndex: 1, duration: 0, roleId, xBits: 0, zBits: 0}});
+  }
 }
 
 /** Attack input to the existing rebuilt projectile formula, without changing tank data. */

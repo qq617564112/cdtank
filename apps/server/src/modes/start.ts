@@ -4,9 +4,9 @@ interface ModeParticipant {
   vip: boolean;
 }
 
-/** Keep the existing balanced insertion policy and team-zero tie break. */
+/** Balanced cat/dog identities for team modes and melee, with a team-zero tie break. */
 export function joiningTeam(mode: number, players: Iterable<{team: number}>): number {
-  if (mode !== 1 && mode !== 2 && mode !== 3) return 0;
+  if (mode !== 1 && mode !== 2 && mode !== 3 && mode !== 4) return 0;
   const members = [...players];
   return members.filter(player => player.team === 0).length
     <= members.filter(player => player.team === 1).length ? 0 : 1;

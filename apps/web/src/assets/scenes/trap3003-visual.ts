@@ -1,3 +1,4 @@
+import {itemForHandler} from '../../../../shared/content/catalog';
 import {AssetContainer, LoadAssetContainerAsync, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
@@ -18,11 +19,11 @@ export class Trap3003Visual {
     this.root.scaling.copyFrom(scale);
     this.root.rotationQuaternion = new Quaternion(rotation.x, -rotation.y, -rotation.z, rotation.w);
     this.root.position.set(-position.x, position.y, position.z);
-    this.root.metadata = {groundTrapId: id, sourceModel: 'Data/scnobj/03003/03003.POL'};
+    this.root.metadata = {groundTrapId: id, sourceModel: itemForHandler('trap', 'moveRestraint').resources.sourceModel};
   }
 
   private loadAsset(): Promise<AssetContainer> {
-    return LoadAssetContainerAsync('/Data/scnobj/03003/03003.glb', this.scene);
+    return LoadAssetContainerAsync(`/${itemForHandler('trap', 'moveRestraint').resources.model}`, this.scene);
   }
 
   async load(): Promise<void> {
@@ -38,7 +39,7 @@ export class Trap3003Visual {
     asset.rootNodes.forEach(node => {node.parent = this.root;});
     asset.meshes.forEach(mesh => {
       mesh.metadata = {...mesh.metadata, groundTrapId: this.id,
-        sourceModel: 'Data/scnobj/03003/03003.POL'};
+        sourceModel: itemForHandler('trap', 'moveRestraint').resources.sourceModel};
     });
   }
 

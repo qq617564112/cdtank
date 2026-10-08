@@ -1,3 +1,4 @@
+import {loadCombatCatalog} from '../../content';
 import './trade-source-page.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
@@ -9,7 +10,9 @@ import {SourceButton} from '../resources/source-button';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceStaticText} from '../resources/source-static-text';
 import {sourceProps} from '../resources/source-ui-props';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {loadUiFont} from '../resources/source-ui-fonts';
+import {loadSourceUi} from '../resources/source-ui-resources';
+import {loadStaticJson} from '../../assets/static-resources';
 import {TradeSourceDetail, hasTradeRecordDetail, tradeRecordPresentation} from './trade-source-detail';
 import {TradeCandidateRowContent} from './trade-candidate-row-content';
 
@@ -105,26 +108,25 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
   }, [confirmedRecords]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    void loadUiFont().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     setResourceLoading(true);
-    const fonts = loadSourceUiFonts();
-    const sourceUi = fetch('/ui.json', {signal: controller.signal}).then(async response => {
-      if (!response.ok) throw new Error('交易界面资源载入失败');
-      const value = await response.json() as HomeSourceUi;
-      if (!controller.signal.aborted) setUi(value);
+    const sourceUi = loadSourceUi().then(value => {
+      if (active) setUi(value);
     });
-    const combatCatalog = fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
-      if (!response.ok) throw new Error('交易物品资料载入失败');
-      const value = await response.json() as CombatCatalog;
-      if (!controller.signal.aborted) setCatalog(value);
+    const combatCatalog = loadCombatCatalog().then(value => {
+      if (active) setCatalog(value);
     });
-    void Promise.allSettled([fonts, sourceUi, combatCatalog]).then(results => {
-      if (controller.signal.aborted) return;
+    void Promise.allSettled([sourceUi, combatCatalog]).then(results => {
+      if (!active) return;
       const errors = results.flatMap(result => result.status === 'rejected' ? [String(result.reason)] : []);
       setResourceError(errors.join('；'));
       setResourceLoading(false);
     });
-    return () => controller.abort();
+    return () => {active = false;};
   }, [resourceAttempt]);
 
   useLayoutEffect(() => {
@@ -239,12 +241,13 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
           : tab === 'equipment' ? [[5, 'rdoCommon', '零件'], [3, 'rdoHat', '帽子'], [4, 'rdoMark', '标志']] as const : []).map(([value, source, label]) =>
           <SourceButton key={source} ui={ui} layout={layout} suffix={suffix} source={source} selected={subtab === value}
             disabled={pending} aria-label={label} onClick={() => setSubtab(value)}/>)}
-        <div {...sourceProps(ui, layout, suffix, candidateList)}
+        <div {...sourceProps(ui, layout, suffix, tab === 'item' ? 'lstMyItem' : tab === 'equipment' ? 'lstMyEquip' : 'lstMyTankMyPet')}
           className="trade-source-candidates" data-trade-candidates={tab} role="listbox" aria-multiselectable="true"
           aria-busy={resourceLoading || pending} aria-label={`${tab === 'item' ? '道具' : tab === 'equipment' ? '装备' : '宠物和战车'}候选`}>
           {candidates.map(record => {
             const display = tradeRecordPresentation(record, catalog);
-            const selected = draft.records.find(value => keyOf(value) === keyOf(record));
+            const selectedRecord = draft.records.find(value => keyOf(value) === keyOf(record));
+            const selected = !!selectedRecord;
             const rowData = candidateRowData(record);
             const recordCurrent = record.kind === 'tank'
               ? ownedRoles !== undefined && (record.instanceId >>> 0) === ownedRoles.tank
@@ -252,10 +255,10 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
                 : record.kind === 'item' ? equippedItem(record, classifyInventoryCategory(record.item?.itemTableId ?? 0)) : false;
             const recordOffered = draft.records.some(value => value.kind === record.kind && value.instanceId === record.instanceId);
             return <div key={keyOf(record)} className="trade-source-candidate" data-trade-candidate={keyOf(record)}>
-              <button type="button" className="trade-source-candidate-row" role="option" aria-selected={!!selected}
-                aria-pressed={!!selected} disabled={!candidateAvailable(record)}
+              <button type="button" className="trade-source-candidate-row" role="option" aria-selected={selected}
+                aria-pressed={selected} disabled={!candidateAvailable(record)}
                 {...rowData} aria-label={display.name || undefined}
-                style={!!selected && candidateSelection ? {backgroundImage: candidateSelection.style.backgroundImage} : undefined}
+                style={selected && candidateSelection ? {backgroundImage: candidateSelection.style.backgroundImage} : undefined}
                 data-source-selection-asset={selected ? candidateSelection?.['data-source-asset'] : undefined}
                 onClick={() => toggle(record)} data-trade-record-toggle={keyOf(record)} onKeyDown={event => {
                   const next = event.key === 'ArrowDown' ? candidates.indexOf(record) + 1
@@ -288,7 +291,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
                   {hasTradeRecordDetail(record) && <button type="button" disabled={pending || !businessReady}
                     aria-label={`${display.name}详情`} data-trade-record-detail={keyOf(record)} onClick={() => setDetail(record)}>详情</button>}
                   {selected && record.item && classifyInventoryCategory(record.item.itemTableId) <= 2 && <input type="number" min={1}
-                    max={record.item.ownedQuantity} step={1} aria-label={`${display.name}提供数量`} value={selected.quantity ?? record.item.ownedQuantity}
+                    max={record.item.ownedQuantity} step={1} aria-label={`${display.name}提供数量`} value={selectedRecord?.quantity ?? record.item.ownedQuantity}
                     disabled={pending || !open || !businessReady} onChange={event => {
                       const quantity = event.currentTarget.valueAsNumber;
                       if (Number.isInteger(quantity) && quantity > 0 && quantity <= record.item!.ownedQuantity)

@@ -1,3 +1,4 @@
+import {gameContent} from '../../../../shared/content/catalog';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {EffectRuntime} from '../../render/effects/runtime/effect-runtime';
 import type {TankView} from './tank-view';
@@ -9,7 +10,7 @@ export class TankShotPlayerResult {
 
   /** Confirmed2001–2006,2008–2016 and2017–2021 victim skills use retention0 and spatial selector1. */
   showPlayerResult(victim: TankView, itemId: number, localView?: TankView): void {
-    if (![2001, 2002, 2003, 2004, 2005, 2006, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021].includes(itemId)) return;
+    if (!gameContent().items.get(itemId)?.runtime.victimShotResult) return;
     const item = this.catalog.items.find(item => item.itemTableId === itemId);
     const skill = this.catalog.skills.find(skill => item?.skillIds.includes(skill.skillId) && skill.triggerType === 8);
     const effect = skill?.effects[0];

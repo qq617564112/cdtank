@@ -1,0 +1,90 @@
+{
+  "name": "木桶变变变",
+  "getMethod": 0,
+  "durable": 0,
+  "breakMode": 2,
+  "itemType": 1,
+  "battleUseMax": 5,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "item",
+  "id": 11,
+  "key": "teamLifeDrink",
+  "description": "伪装成一个圆滚滚的木桶，不要开炮，否则会恢复原形哦。",
+  "prices": {
+    "money": 0,
+    "tokens": 0
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 1,
+  "inventoryCategory": 1,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": "Data/scnobj/00011/00011.glb",
+    "modelId": 11,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 11,
+    "textures": [
+      "Data/scnobj/00011/00011A.png"
+    ],
+    "sourceModel": "Data/scnobj/00011/00011.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/00011/00011A.png",
+    "disguise": {
+      "name": "obj05422",
+      "model": "Data/scnobj/obj05422/obj05422.glb",
+      "sourceModel": "Data/scnobj/obj05422/obj05422.POL",
+      "textures": [
+        "Data/scnobj/obj05422/obj05422.png"
+      ],
+      "meshName": "cone78/0",
+      "transparent": false
+    }
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "cpuMaxHpRatio": 0.5,
+      "battleRewardOrder": 21,
+      "breachDropOrder": 8
+    },
+    "skillRoles": {
+      "primary": 11,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "use": "disguise",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

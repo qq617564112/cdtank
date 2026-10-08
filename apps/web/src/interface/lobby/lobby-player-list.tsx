@@ -3,7 +3,7 @@ import './lobby-player-list.css';
 import {PlayerListScrollbar} from './player-list-scrollbar';
 import {useEffect, useRef, useState, type KeyboardEvent} from 'react';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {loadUiFont} from '../resources/source-ui-fonts';
 import {sourceProps, useSourceUi} from './source-react';
 
 interface LobbyPlayerListProps {
@@ -24,7 +24,7 @@ export function LobbyPlayerListView({players, status, chooseTarget, openPlayer}:
   }, [players, selected]);
   useEffect(() => {
     let live = true;
-    void loadSourceUiFonts().then(() => {if (live) setFontReady(true);}).catch(() => {});
+    void loadUiFont().then(() => {if (live) setFontReady(true);}).catch(() => {});
     return () => {live = false;};
   }, []);
   const selectedId = players.some(player => player.accountId === selected) ? selected : '';
@@ -47,7 +47,7 @@ export function LobbyPlayerListView({players, status, chooseTarget, openPlayer}:
     button?.focus(); button?.scrollIntoView({block: 'nearest'});
   }
   return <div {...props} className="lobby-player-scroll-shell"><ul ref={list} className="lobby-player-list" data-lobby-player-list=""
-    data-source-font="SIMSUN" data-source-font-provider="web-ttf" data-source-font-ready={fontReady}
+    data-source-font="xiangjiao-brush" data-source-font-provider="web-ttf" data-source-font-ready={fontReady}
     role="listbox" aria-label="大厅玩家列表" aria-busy={!ui} title={error || status || undefined}>
     {(error || status) && <li role="presentation"><output data-lobby-presence-status="" role="status">{error || status}</output></li>}
     {players.map((player, index) => <li key={player.accountId} role="presentation">

@@ -1,6 +1,7 @@
 import {randomBytes, scryptSync, timingSafeEqual} from 'node:crypto';
 import type {DatabaseSync} from 'node:sqlite';
 import type {ReqAccount, ResAccount} from '../../../shared/protocols/PtlAccount';
+import {grantRegistrationStarterRoles} from './starter-roles';
 
 /** Named credentials bind to the same persistent identity used by token sessions. */
 export class AccountCredentials {
@@ -42,6 +43,7 @@ export class AccountCredentials {
       let session = this.open(request.token);
       if (this.accountName(session.accountId)) session = this.open();
       this.database.prepare('INSERT INTO account_credentials VALUES (?, ?, ?, ?)').run(session.accountId, name, salt, key);
+      grantRegistrationStarterRoles(this.database, session.accountId);
       this.database.exec('COMMIT');
       return {...session, accountName: name};
     } catch (error) {

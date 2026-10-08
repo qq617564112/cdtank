@@ -1,4 +1,8 @@
+import {gameContent} from '../../../shared/content/catalog';
+import {defaultAmmoId} from '../../../shared/content/catalog';
+import {loadCombatCatalog} from '../content';
 import {ArcRotateCamera, Matrix, Scene, Vector3, Viewport} from '@babylonjs/core';
+import {loadStaticJson} from '../assets/static-resources';
 import {TankDamageText} from '../assets/tanks/tank-damage-text';
 import {TankBenefitText} from '../assets/tanks/tank-benefit-text';
 import {TankBenefitTextRenderer} from './tank-benefit-text-renderer';
@@ -8,13 +12,15 @@ import {effectModelEngineDelta} from './effects/models/effect-model-animation';
 import type {PlayerSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 import type {ClientTankPose} from '../../../shared/protocols/MsgPlayerInput';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
-import {isHiddenByOpticalCamouflage} from '../../../shared/combat/optical-camouflage';
-import {followBattleCamera} from './battle-camera';
+import {isHiddenByOpticalCamouflage, isHiddenFromOpponent} from '../../../shared/combat/optical-camouflage';
+import {hasFixedTurret} from '../../../shared/combat/tank-turret';
+import {followBattleCamera, orbitWreckCamera} from './battle-camera';
 import {TankView} from '../assets/tanks/tank-view';
 import {BattleRoleDisguises} from './battle-role-disguises';
 import {BattlePlayerLabels} from './battle-player-labels';
 import {BattleTankDecoration} from './battle-tank-decoration';
-import {gameContent} from '../../../shared/content/catalog';
+import type {NavigationGrid} from '../../../shared/movement/navigation';
+import {tankGroundSlope} from './tank-ground-pose';
 
 interface PlayerEffects {
   attach(view: TankView): void;
@@ -34,6 +40,7 @@ export class BattlePlayers {
   private benefitTextRenderer?: TankBenefitTextRenderer;
   private damageTextRenderer?: TankDamageTextRenderer;
   private criticalTextRenderer?: TankCriticalTextRenderer;
+  private comboTextRenderer?: TankCriticalTextRenderer;
   private damageTextLoading?: Promise<void>;
   private readonly loading = new Set<string>();
   private readonly decorations = new Map<string, BattleTankDecoration>();
@@ -48,7 +55,6 @@ export class BattlePlayers {
   private generation = 0;
   private error = '';
   private ammoCatalog?: CombatCatalog;
-  private ammoCatalogLoading?: Promise<CombatCatalog>;
   private readonly disguises: BattleRoleDisguises;
   private readonly labels: BattlePlayerLabels;
 
@@ -75,6 +81,8 @@ export class BattlePlayers {
 
   get loadingError(): string {return this.disguises.loadingError || this.error;}
 
+  loadLabels(): Promise<void> {return this.labels.load();}
+
   resetRound(players: readonly PlayerSnapshot[]): void {
     this.labels.resetRound();
     this.disguises.clear();
@@ -96,7 +104,9 @@ export class BattlePlayers {
   }
 
   private resetPose(view: TankView, player: PlayerSnapshot): void {
+    view.root.rotation.x = 0;
     view.root.rotation.y = -(player.bodyYaw ?? player.yaw);
+    view.root.rotation.z = 0;
     view.position(player.x, player.y, player.z);
     view.aim(player.yaw + player.aim + view.root.rotation.y);
   }
@@ -178,9 +188,7 @@ export class BattlePlayers {
 
   private async loadDamageText(generation: number): Promise<void> {
     this.damageTextLoading ??= (async () => {
-      const response = await fetch('/ui-fonts.json');
-      if (!response.ok) throw new Error('原字体目录载入失败');
-      const fonts = await response.json() as {fonts: TankDamageTextFont[]};
+      const fonts = await loadStaticJson<{fonts: TankDamageTextFont[]}>('/ui-fonts.json');
       if (generation !== this.generation) return;
       const font = fonts.fonts.find(value => value.name === 'Damage' && value.attributes.Type === 'Static');
       if (!font?.glyphs?.length) throw new Error('原Damage字体定义缺失');
@@ -196,10 +204,8 @@ export class BattlePlayers {
       if (generation !== this.generation) {benefitRenderer.dispose(); return;}
       const criticalFont = fonts.fonts.find(value => value.name === 'Critical' && value.attributes.Type === 'Static');
       if (!criticalFont?.glyphs?.length) throw new Error('原Critical字体定义缺失');
-      const uiResponse = await fetch('/ui.json');
-      if (!uiResponse.ok) throw new Error('原Critical附图目录载入失败');
-      const ui = await uiResponse.json() as {imagesets: {path: string; attributes: Record<string, string>;
-        images: (Omit<CriticalTextImage, 'attributes'> & {Name: string})[]}[]};
+      const ui = await loadStaticJson<{imagesets: {path: string; attributes: Record<string, string>;
+        images: (Omit<CriticalTextImage, 'attributes'> & {Name: string})[]}[]}>('/ui.json');
       if (generation !== this.generation) return;
       const imageset = ui.imagesets.find(value => value.path === 'ui/imagesets/zhandou0_0.imageset');
       const image = imageset?.images.find(value => value.Name === 'data\\ui\\zhandou\\1_baojishuziditu.tga');
@@ -208,7 +214,15 @@ export class BattlePlayers {
         {...image, attributes: imageset.attributes});
       this.criticalTextRenderer = criticalRenderer;
       await criticalRenderer.load();
-      if (generation !== this.generation) criticalRenderer.dispose();
+      if (generation !== this.generation) {criticalRenderer.dispose(); return;}
+      const comboFont = fonts.fonts.find(value => value.name === 'Combo' && value.attributes.Type === 'Static');
+      const comboImage = imageset.images.find(value => value.Name === 'data\\ui\\zhandou\\2_baojixianshidanwei.tga');
+      if (!comboFont?.glyphs?.length || !comboImage?.asset) throw new Error('原Combo文字资源缺失');
+      const comboRenderer = new TankCriticalTextRenderer(this.scene, comboFont,
+        {...comboImage, attributes: imageset.attributes});
+      this.comboTextRenderer = comboRenderer;
+      await comboRenderer.load();
+      if (generation !== this.generation) comboRenderer.dispose();
     })();
     await this.damageTextLoading;
   }
@@ -217,18 +231,29 @@ export class BattlePlayers {
   damage(id: string, value: number, isLocal: boolean, critical = false): void {
     const view = this.players.get(id);
     const queue = this.damageTexts.get(id);
-    if (!view || !queue) return;
+    if (!view || !queue || view.hiddenFromObserver) return;
     const engine = this.scene.getEngine();
     const point = Vector3.Project(view.root.position, Matrix.Identity(),
       this.camera.getTransformationMatrix(), new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
     queue.show(Math.trunc(point.x), Math.trunc(point.y), value, isLocal, critical);
   }
 
+  /** Original destroy notification suppresses Combo while the local role is dead. */
+  combo(id: string, count: number): void {
+    const local = this.snapshot?.find(player => player.id === this.localPlayerId);
+    const view = this.players.get(id), queue = this.damageTexts.get(id);
+    if (!local?.alive || !view || !queue || view.hiddenFromObserver || count <= 1) return;
+    const engine = this.scene.getEngine();
+    const point = Vector3.Project(view.root.position, Matrix.Identity(),
+      this.camera.getTransformationMatrix(), new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
+    queue.combo(Math.trunc(point.x), Math.trunc(point.y), count, id === this.localPlayerId);
+  }
+
   /** Original HP observer emits only an increase after a nonzero cached value. */
   benefit(id: string, increase: number, isLocal: boolean): void {
     const view = this.players.get(id);
     const queue = this.benefitTexts.get(id);
-    if (!view || !queue) return;
+    if (!view || !queue || view.hiddenFromObserver) return;
     const engine = this.scene.getEngine();
     const point = Vector3.Project(view.root.position, Matrix.Identity(),
       this.camera.getTransformationMatrix(), new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
@@ -290,12 +315,9 @@ export class BattlePlayers {
     this.loading.add(player.id);
     try {
       await this.loadDamageText(generation);
-      this.ammoCatalogLoading ??= fetch('/combat-catalog.json').then(async response => {
-        if (!response.ok) throw new Error(`Combat catalog ${response.status}`);
-        this.ammoCatalog = await response.json() as CombatCatalog;
-        return this.ammoCatalog;
-      });
-      await this.ammoCatalogLoading;
+      if (generation !== this.generation) return;
+      this.ammoCatalog = await loadCombatCatalog();
+      if (generation !== this.generation) return;
       const view = await TankView.load(this.scene, `player-${player.id}`, player.tankId, player.tankTextures);
       const current = this.snapshot?.find(value => value.id === player.id);
       if (generation !== this.generation || !current || !this.sameModel(player, current)) {
@@ -307,7 +329,8 @@ export class BattlePlayers {
       this.applyVisibility(view, current);
       this.players.set(player.id, view);
       if (this.damageTextRenderer) {
-        this.damageTexts.set(player.id, new TankDamageText(this.damageTextRenderer, this.criticalTextRenderer));
+        this.damageTexts.set(player.id, new TankDamageText(this.damageTextRenderer,
+          this.criticalTextRenderer, this.comboTextRenderer));
       }
       if (this.benefitTextRenderer) {
         this.benefitTexts.set(player.id, new TankBenefitText(this.benefitTextRenderer));
@@ -332,16 +355,22 @@ export class BattlePlayers {
 
   /** Confirmed item+74 is the source virtual+a4 muzzle-effect argument. */
   private applyAmmoEffect(view: TankView, player: PlayerSnapshot): void {
-    const effect = this.ammoCatalog?.items.find(item => item.itemTableId === (player.ammoItemId ?? 2001))?.effects?.[0];
+    const effect = this.ammoCatalog?.items.find(item => item.itemTableId === (player.ammoItemId ?? defaultAmmoId()))?.effects?.[0];
     if (effect) view.setAmmoAttackEffect(effect.effectId);
   }
 
-  /** Hostile observers hide the alive skill9 actor root; self, teammates and non-playing phases show it.
+  /** Hostile observers hide the alive skill9 actor; self and teammates see a translucent tank.
    * Disguise hides the alive actor root for every observer while its prop is presented.
    */
   private applyVisibility(view: TankView, player: PlayerSnapshot): void {
     const observer = this.localPlayerId ? this.snapshot?.find(value => value.id === this.localPlayerId) : undefined;
     const hiddenByDisguise = this.disguises.hidesActor(player.id);
+    view.hiddenFromObserver = this.playing && isHiddenFromOpponent(player, observer, this.mode);
+    view.setOpticalCamouflage(this.playing && player.alive && player.opticalCamouflage !== undefined);
+    if (view.hiddenFromObserver) {
+      this.damageTexts.get(player.id)?.clear();
+      this.benefitTexts.get(player.id)?.clear();
+    }
     view.root.setEnabled(!this.playing
       || (!hiddenByDisguise && !isHiddenByOpticalCamouflage(player, observer, this.mode)));
   }
@@ -350,7 +379,8 @@ export class BattlePlayers {
   changeRoleStyle(roleId: number, style: 1 | 2): void {
     const player = this.snapshot?.find(value => value.id === `P${roleId}`);
     const disguise = player?.roleDisguise;
-    if (!disguise || disguise.style !== style || (disguise.skillId !== 10 && disguise.skillId !== 11)) return;
+    if (!disguise || disguise.style !== style || ![...gameContent().items.values()].some(item => item.runtime.use === 'disguise'
+      && item.runtime.skillRoles.primary === disguise.skillId)) return;
     this.refreshDisguises();
   }
 
@@ -391,7 +421,8 @@ export class BattlePlayers {
   }
 
   render(alpha: number, localPlayerId?: string, playing = true,
-      localPose?: ClientTankPose, localMoving = false): void {
+      localPose?: ClientTankPose, localMoving = false, cameraPlayerId = localPlayerId,
+      wreckElapsedSeconds?: number, navigation?: NavigationGrid): void {
     this.localPlayerId = localPlayerId;
     this.playing = playing;
     this.disguises.reconcile(this.snapshot ?? [], playing);
@@ -415,15 +446,26 @@ export class BattlePlayers {
       const bodyYaw = pose.bodyYaw ?? pose.yaw;
       const delta = Math.atan2(Math.sin(-bodyYaw - view.root.rotation.y), Math.cos(-bodyYaw - view.root.rotation.y));
       view.root.rotation.y += delta * poseAlpha;
+      const slope = playing && player.alive
+        ? tankGroundSlope(navigation, -view.root.position.x, view.root.position.y,
+          view.root.position.z, -view.root.rotation.y)
+        : {pitch: 0, roll: 0};
+      view.root.rotation.x = slope.pitch;
+      view.root.rotation.z = slope.roll;
       const turretDelta = Math.atan2(Math.sin(pose.yaw + pose.aim - previousTurretYaw),
         Math.cos(pose.yaw + pose.aim - previousTurretYaw));
-      const turretYaw = previousTurretYaw + turretDelta * poseAlpha;
+      const turretYaw = hasFixedTurret(player.tankId) ? -view.root.rotation.y
+        : previousTurretYaw + turretDelta * poseAlpha;
       view.aim(turretYaw + view.root.rotation.y);
       void view.motion(playing && player.alive && (manual ? localMoving : this.moving.has(player.id))).catch(error => {
         this.actionError(player.id, view, error);
       });
-      if (player.id === localPlayerId) {
-        followBattleCamera(this.camera, view.root.position, view.turretYaw);
+      if (player.id === cameraPlayerId) {
+        if (player.id === localPlayerId && !player.alive && wreckElapsedSeconds !== undefined) {
+          orbitWreckCamera(this.camera, view.root.position, view.turretYaw, wreckElapsedSeconds);
+        } else {
+          followBattleCamera(this.camera, view.root.position, view.turretYaw);
+        }
       }
     }
     this.labels.render(this.players, localPlayerId, playing);
@@ -435,7 +477,7 @@ export class BattlePlayers {
       if (!view) continue;
       const viewZ = Vector3.TransformCoordinates(view.root.position, this.camera.getViewMatrix()).z;
       queue.advance(delta, viewZ);
-      queue.draw(viewport);
+      if (!view.hiddenFromObserver) queue.draw(viewport);
     }
   }
 
@@ -463,6 +505,8 @@ export class BattlePlayers {
     this.damageTextRenderer = undefined;
     this.criticalTextRenderer?.dispose();
     this.criticalTextRenderer = undefined;
+    this.comboTextRenderer?.dispose();
+    this.comboTextRenderer = undefined;
     this.damageTextLoading = undefined;
     this.loading.clear();
     this.previousPositions.clear();

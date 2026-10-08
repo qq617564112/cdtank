@@ -36,6 +36,8 @@
 
 首次出生、死亡期间、`FINISHED` 和 `Leave` 不授保护。普通复活授一次，重复通知不刷新；死亡清除，下一生命重新授。Effect100/37 各发一次原技能消息，不增加第二效果队列。
 
+当前真实复活的五秒免伤、Effect100首槽及Effect37第二槽均已接：在五秒保护自然到期时先删除状态，仅对仍存活status2角色发一次index1／duration0；死亡／显式clear／换局／离房不补播。树声ww137已补作发布并映射audio.json，详[respawn-protection-second-slot-gap.md](respawn-protection-second-slot-gap.md)。自然到期为项目采用，原第二槽触发时点／ww137原内容及新增实测仍开放。
+
 ### API
 
 ```ts

@@ -9,7 +9,7 @@ import type {ReqChangeTeam} from '../../../shared/protocols/PtlChangeTeam';
 import type {ReqCpu} from '../../../shared/protocols/PtlCpu';
 import type {ReqAutopilot} from '../../../shared/protocols/PtlAutopilot';
 import type {ReqRematch} from '../../../shared/protocols/PtlRematch';
-import type {ReqLeave} from '../../../shared/protocols/PtlLeave';
+import type {LeavePenalty, ReqLeave, ResLeave} from '../../../shared/protocols/PtlLeave';
 import type {ReqRoomInvite} from '../../../shared/protocols/PtlRoomInvite';
 
 /** Room requests on GameConnection's single authenticated transport. */
@@ -27,9 +27,17 @@ export class RoomConnection {
     if (!result.isSucc) throw new Error(result.err.message);
   }
 
-  async leave(request: ReqLeave): Promise<void> {
+  async leave(request: ReqLeave): Promise<ResLeave> {
     const result = await this.client.callApi('Leave', request);
     if (!result.isSucc) throw new Error(result.err.message);
+    return result.res;
+  }
+
+  async quoteExitPenalty(request: ReqLeave): Promise<LeavePenalty> {
+    const result = await this.client.callApi('Leave', {...request, quoteOnly: true});
+    if (!result.isSucc) throw new Error(result.err.message);
+    if (!result.res.penalty) throw new Error('退出处罚报价不可用');
+    return result.res.penalty;
   }
 
   async invite(request: ReqRoomInvite) {

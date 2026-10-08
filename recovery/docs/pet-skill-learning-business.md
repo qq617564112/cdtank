@@ -1,17 +1,17 @@
 # 宠物技能学习
 
-正式 Home 宠物技能页按已拥有实例和六槽索引查询下一等级报价。费用来自原 PetSkill 表“花费技能点数”；下一记录为 baseID+当前rank，当前战斗被动记录为 baseID+rank−1。PetTable.SkillLv 为各槽等级上限。学习预算与“关于我”的 growth.tech 共用结算账本 account_growth.skill_points；成功确认同时返回完整点数余额和拥有等级。
+正式 Home 宠物技能页按已拥有实例和六槽索引查询下一等级报价。费用来自原 PetSkill 表“花费技能点数”；下一记录为 baseID+当前rank，当前战斗被动记录为 baseID+rank−1。PetTable.SkillLv 为各槽等级上限。显示、报价和扣点共用结算入账的 account_growth.skill_points，与“关于我”的 growth.tech 为同一余额；缺成长记录按0处理，成功确认同时返回完整点数余额和拥有等级。
 
-账户 PetSkillLearning QUERY 不创建角色资料或成长记录。LEARN 验证实例归属、槽索引、原表报价、等级上限及余额，SQLite 事务同时扣减 account_growth.skill_points、增加等级并保存请求确认；保留其它成长字段和原角色资料字节。相同账户和请求ID重复提交返回原确认，不重复扣点；不同实例或槽不能复用该请求ID。失败回滚点数、拥有记录及确认。
+账户 PetSkillLearning QUERY 不创建角色资料或点数。LEARN 验证实例归属、槽索引、原表报价、等级上限及余额，SQLite 事务同时扣减 account_growth.skill_points、增加等级并保存请求确认；保留其它成长字段和原角色资料字节。相同账户和请求ID重复提交返回原确认，不重复扣点；不同实例或槽不能复用该请求ID。失败回滚点数、拥有记录及确认。
 
-CONFIRM 按认证账户和 requestId 读取 pet_skill_learning receipt。实例与槽匹配时返回 confirmation APPLIED、历史 learned 与 replayed true，并同时返回当前 points、quotes、owned 和 profile；learned 是确认时保存的历史结果，当前 points 不回写成该次历史余额。无 receipt 返回 ABSENT 且无 learned；同 requestId 的异实例或槽拒绝。CONFIRM 不 BEGIN 写事务，不扣点、不增级、不改资料、Ready、bind 或 broadcast，可在任意房间阶段读取；mutation hook 仍只处理 LEARN 新确认。本确认链已完成集中静态走查；当前 account_growth ledger 与新增确认交互尚未实测，原服务端点数生产仍未恢复。
+CONFIRM 按认证 account_id 与 requestId 读取已保存 receipt；实例和槽匹配返回 confirmation APPLIED、历史 learned 与 replayed true，同时返回当前 points/quotes/owned/profile，无记录返回 ABSENT 且无 learned，冲突实例或槽拒绝。历史 learned 与当前 points 不是同一时刻，当前余额不回填为历史余额。CONFIRM 只读，不扣点、不增级、不改资料、Ready、绑定或广播；LEARN 原事务与去重不变。本确认链已完成集中静态走查；当前 account_growth ledger 与新增确认交互尚未实测，原服务端点数生产仍未恢复。
 
 正式页面消费服务端报价、下级技能介绍和确认后的 OwnedRoles/Profile。零级显示首级元数据供学习入口使用，费用缺失、封顶、点数不足或请求处理中禁止提交。准备阶段成功重新冻结所选宠物来源并取消准备状态；PLAYING 与 FINISHED 不允许学习。现有 current16 技能槽保持原配置，宠物主动技能未加入战斗输入。
 
 新购宠物六槽从零级开始；原表等级仅作上限，既有及导入记录保持不变。这是 Web 初值重建。账户鉴权、原子事务、请求去重和持久化也属于 Web 服务重建；原客户端请求、下一等级资格、费用和成功资料写入依据见 pet-skill-learn-contract.md。
 
-既有 raw+80 余额链已验普通联机：新购Pet2六级0、学习slot4成本200、技能点200→0、Ready取消、技能来源加入10251、Tank52移动90→100、8共同完整玩家状态及双正常Leave，同库服务重启保持等级与点数。pet-learning-network-root-review.json收该限定范围。该证据不覆盖当前 account_growth 扣点链。账户独立故障夹具证明点数、等级和请求确认整体回滚；空QUERY不生成Profile。
+既有 raw+80 余额链已验普通联机：新购Pet2六级0、学习slot4成本200、技能点200→0、Ready取消、技能来源加入10251、Tank52移动90→100、8共同完整玩家状态及双正常Leave，同库服务重启保持等级与点数。pet-learning-network-root-review.json收该限定范围。账户独立故障夹具证明点数、等级和请求确认整体回滚；空QUERY不生成Profile。该证据不覆盖当前 account_growth 扣点链；当前改动仅静态走查，未运行测试、浏览器、构建或类型检查。
 
-页面验收范围：新购宠物普通学习、准备状态取消及双端来源同步、普通移动实际作用、拒绝和请求去重、同库服务重启保存、正式学习页按钮及费用点数显示。技能点已接当前结算取得链，原服务端点数生产来源仍未恢复；既有验收使用明确预账户点数夹具，不证明当前结算至学习流程。全部宠物、成长奖励、主动施放、原角色绑定指针及整页精度仍属父项开放范围。
+页面验收范围：新购宠物普通学习、准备状态取消及双端来源同步、普通移动实际作用、拒绝和请求去重、同库服务重启保存、正式学习页按钮及费用点数显示。技能点已接当前结算取得链；原服务端点数生产来源仍未恢复，既有验收使用明确预账户点数夹具，不证明当前结算至学习流程。全部宠物、成长奖励、主动施放、原角色绑定指针及整页精度仍属父项开放范围。
 
 正式页面已验三个普通学习动作：200/10/20点，余额400→200→190→170，实例3槽4等级1、槽0等级2。800/1920/3840整页费用与下级介绍可读，封顶按钮禁用、两次Close及重开确认保持。主审索引pet-skill-learning-root-review.json，统一工程pet-learning-engineering.json；完整成长范围仍开放。

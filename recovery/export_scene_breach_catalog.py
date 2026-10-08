@@ -7,12 +7,14 @@ from tempfile import TemporaryDirectory
 from export_effect_models import export_models
 
 
-def export(scenes, source_root: Path, web_root: Path):
+def export(scenes, source_root: Path, web_root: Path, models=None):
     references = set()
     missing = {}
+    models = set(models) if models is not None else None
     for scene in scenes:
         for record in scene['records']:
-            if record['className'] != 'SYcScnObjBreach':
+            if (record['className'] != 'SYcScnObjBreach' or
+                    models is not None and record['model'] not in models):
                 continue
             directory = source_root / f"Data/scnobj/{record['model']}"
             reference = next((f"Data/scnobj/{record['model']}/{name}"

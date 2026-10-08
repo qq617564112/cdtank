@@ -1,16 +1,13 @@
 import type {Scene} from '@babylonjs/core';
-import {Trap3001Visual} from './trap3001-visual';
-import {Trap3002Visual} from './trap3002-visual';
-import {Trap3003Visual} from './trap3003-visual';
-import {Trap3004Visual} from './trap3004-visual';
-import {Trap3005Visual} from './trap3005-visual';
+import {gameContent} from '../../../../shared/content/catalog';
+import {ContentItemVisual} from './content-item-visual';
 
 export interface GroundTrapPresentationSource {
   readonly id: string;
   readonly ownerId: string;
   readonly team: number;
-  readonly itemTableId: 3001 | 3002 | 3003 | 3004 | 3005;
-  readonly modelId: 3001 | 3002 | 3003 | 3004 | 3005;
+  readonly itemTableId: number;
+  readonly modelId: number;
   readonly x: number;
   readonly y: number;
   readonly z: number;
@@ -18,7 +15,7 @@ export interface GroundTrapPresentationSource {
 }
 
 interface Entry {
-  visual: Trap3001Visual | Trap3002Visual | Trap3003Visual | Trap3004Visual | Trap3005Visual;
+  visual: ContentItemVisual;
   loaded: Promise<void>;
 }
 
@@ -30,11 +27,9 @@ export class GroundTrapsPresentation {
   constructor(private readonly scene: Scene) {}
 
   private createVisual(source: GroundTrapPresentationSource): Entry['visual'] {
-    // Ground yaw0/scale1 is the explicit authority reconstruction contract.
-    const Visual = source.modelId === 3001 ? Trap3001Visual
-      : source.modelId === 3002 ? Trap3002Visual
-      : source.modelId === 3005 ? Trap3005Visual : source.modelId === 3004 ? Trap3004Visual : Trap3003Visual;
-    return new Visual(this.scene, source.id,
+    const definition = gameContent().items.get(source.itemTableId);
+    if (!definition) throw new Error(`陷阱内容定义缺失：${source.itemTableId}`);
+    return new ContentItemVisual(this.scene, source.id, definition,
       [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, source.x, source.y, source.z, 1]);
   }
 

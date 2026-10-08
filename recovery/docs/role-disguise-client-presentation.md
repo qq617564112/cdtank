@@ -14,7 +14,9 @@
 
 `BattleRoleDisguises` 按角色持有替身，键为 skillId/style/startedAt/expiresAt/x/y/z。同 epoch 的快照与通知不重复创建副本；epoch 或样式改变先释放旧替身再按新快照创建。`PlayerSnapshot.roleDisguise` 为主、快照 reconcile 覆盖断线、晚加入和模型晚加载；4173/4174 只做身份核对，不合成状态、不重放通知、不建乐观队列。
 
-actor 隐藏与替身创建分离：只要当前快照仍在本角色上持有受支持的 roleDisguise，`applyVisibility` 即在现有光学迷彩观察规则之外隐藏战车 root；角色位姿、动画、相机、插值与碰撞/命中/伤害/HUD/图片路径不变。非 PLAYING、死亡、复活前、新局、离房、reselect、clear 都释放替身并按权威相位恢复战车；不销毁或重载 Tank 以承载临时伪装。
+actor 隐藏与替身创建分离：只要当前快照仍在本角色上持有受支持的 roleDisguise，`applyVisibility` 即在现有光学迷彩观察规则之外隐藏战车 root；角色位姿、动画、相机、插值与碰撞/命中/伤害规则不变。非 PLAYING、死亡、复活前、新局、离房、reselect、clear 都释放替身并按权威相位恢复战车；不销毁或重载 Tank 以承载临时伪装。
+
+Web 与重建 CPU 采用共享 `isHiddenFromOpponent`：敌对观察者不显示伪装角色的雷达标记、飘字或角色归属特效，头顶名称/血条随 actor 隐藏；CPU/自动驾驶不取得或保留伪装敌人作为追踪目标。激活隐藏时释放旧飘字，隐藏期间不排入新飘字；附着特效保留时钟与清理，只停止绘制。自身与队友雷达标记及自身状态 HUD 保留，固定替身仍按原消费者对所有观察者显示。该目标识别与提示隐藏是采用的运行规则，原4173/4174不提供服务端AI识别规则。
 
 ## 生命周期与所有权
 

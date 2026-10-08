@@ -1,3 +1,4 @@
+import {gameContent} from '../content/catalog';
 import type {BattleItemRecord} from './item-hotkeys';
 
 export interface InventoryItemRecord extends BattleItemRecord {
@@ -14,11 +15,7 @@ export interface InventoryRoleBindings {
 
 /** Original4396e0 inventory classification, distinct from shortcut439762. */
 export function classifyInventoryCategory(itemTableId: number): number {
-  const id = itemTableId >>> 0;
-  const ranges = [[1, 1000], [2001, 4000], [10001, 12000], [12001, 13000],
-    [13001, 18000], [20001, 22000], [30001, 33000]];
-  const index = ranges.findIndex(([min, max]) => id >= min && id <= max);
-  return index + 1;
+  return gameContent().items.get(itemTableId >>> 0)?.inventoryCategory ?? 0;
 }
 
 /** Original43ed18 UMsgQueryItemsResult; groups match vector offsets10..80. */

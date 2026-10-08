@@ -32,6 +32,22 @@
   pointer-events: none;
 }
 
+.home-tank-upgrade-picture[data-source-control='kuang'] > [data-source-image] {
+  margin: -1px;
+}
+
+.home-tank-upgrade-picture[data-source-control='kuang'] > [data-source-frame='LeftFrameImage'],
+.home-tank-upgrade-picture[data-source-control='kuang'] > [data-source-frame='RightFrameImage'] {
+  margin-top: -1px;
+  margin-bottom: -1px;
+}
+
+.home-tank-upgrade-picture[data-source-control='kuang'] > [data-source-frame='TopFrameImage'],
+.home-tank-upgrade-picture[data-source-control='kuang'] > [data-source-frame='BottomFrameImage'] {
+  margin-left: -1px;
+  margin-right: -1px;
+}
+
 .home-tank-upgrade-stage button {
   background: transparent;
   cursor: pointer;

@@ -9,3 +9,5 @@ high 走现自适应 DPR 高档，low 使用相同 CSS 尺寸与当前 DPR 下�
 源 INI 的 HighPrecision=1、Silhouette=1 是事实；分辨率选档、浏览器 Fullscreen 与显示偏好的 localStorage 持久为 Web 采用，原 D3D 对应含义/producer 未取得，浏览器存储不是账户服务端保存。原有 audio 即时设置/保存与 fullscreen 即时切换合同保持。
 
 历史 browser-settings-display-mode-2026-10-05T02-46-44-821Z.json 仍只证明当时的窗口/全屏有限范围；首 02-45-17 raw FAIL 与 1920 Lobby 截图缺口保留，不接受为 display 控件像素证据。本批未执行真实低/高画质、描边、保存刷新、浏览器重启、高清或像素操作，M5-14/UI-50 父项保持未勾。
+
+卡通渲染同时控制原25图真实TankView组件的原toon纹理采样，关闭恢复普通MV3；INI门禁与显式effect来源见scene-actor-toon-runtime.md。

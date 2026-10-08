@@ -1,0 +1,54 @@
+.shop-purchase-dialog {
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: #fff;
+  font-family: 'CDTank-SIMSUN', serif;
+}
+
+.shop-purchase-stage {
+  position: relative;
+  width: 307px;
+  height: 120px;
+  transform-origin: top left;
+}
+
+.shop-purchase-stage [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.shop-purchase-stage .source-static-image {
+  pointer-events: none;
+}
+
+.shop-purchase-stage [data-source-control='txtMessage'] {
+  overflow: auto;
+  text-align: center;
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.shop-purchase-stage input,
+.shop-purchase-stage select {
+  color: #fff;
+  background: transparent;
+  font: 12px 'CDTank-Xiangjiao', sans-serif;
+}
+
+.shop-purchase-stage option {
+  color: #fff;
+  background: #142142;
+}
+
+.shop-purchase-stage .source-state-button {
+  background: transparent;
+}
+
+.shop-purchase-stage :focus-visible {
+  outline: 1px solid #fff;
+}

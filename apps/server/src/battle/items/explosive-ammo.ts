@@ -1,29 +1,26 @@
+import {itemForHandler} from '../../../../shared/content/catalog';
 import {combatItems, combatSkills} from '../catalog';
 import type {PlayerState} from '../player-state';
 import type {RoomState} from '../../rooms/state';
 import type {MsgRoomEvent, PlaySkillEffectMessage} from '../../../../shared/protocols';
 
 export interface ExplosiveAmmoRule {
-  itemTableId: 2005;
-  blastSkillId: 4004;
-  damageSkillId: 19;
+  itemTableId: number;
+  blastSkillId: number;
+  damageSkillId: number;
   range: number;
   damage: number;
 }
 
 /** Original item2005 skill2 → 4004 Func15 → terminal19 Func2 HP-100. */
-export function readExplosiveAmmoRule(): ExplosiveAmmoRule | undefined {
-  const item = combatItems.get(2005);
+export function readExplosiveAmmoRule(itemId = itemForHandler('hit', 'explosive').id): ExplosiveAmmoRule | undefined {
+  const item = combatItems.get(itemId);
   const blast = item ? combatSkills.get(item.skillIds[1]) : undefined;
   const effect = blast?.functions[0];
   const damage = effect ? combatSkills.get(effect.y) : undefined;
-  if (!item || item.itemType !== 3 || item.skillIds[0] !== 2005 || item.skillIds[1] !== 4004
-      || !blast || blast.skillId !== 4004 || blast.triggerType !== 8 || blast.target !== 1
-      || blast.range !== 150 || blast.effects[0]?.effectId !== 9
-      || effect?.type !== 15 || effect.y !== 19
-      || !damage || damage.skillId !== 19 || damage.functions[0]?.type !== 2
-      || damage.attributes.HP >= 0) return;
-  return {itemTableId: 2005, blastSkillId: 4004, damageSkillId: 19,
+  if (!item || !blast || blast.range <= 0 || effect?.type !== 15
+      || !damage || damage.functions[0]?.type !== 2 || damage.attributes.HP >= 0) return;
+  return {itemTableId: item.itemTableId, blastSkillId: blast.skillId, damageSkillId: damage.skillId,
     range: blast.range, damage: -damage.attributes.HP};
 }
 
@@ -39,8 +36,9 @@ export function explosiveAmmoWorldEffect(skillId: number, x: number, z: number):
 
 export function resolveExplosiveAmmoBlast(room: Pick<RoomState, 'roomId' | 'phase' | 'mode' | 'players'>,
   owner: PlayerState, center: {x: number; y: number; z: number}, now: number, events: MsgRoomEvent[],
-  hit: (owner: PlayerState, target: PlayerState, damage: number, skillId: number) => void): void {
-  const rule = readExplosiveAmmoRule();
+  hit: (owner: PlayerState, target: PlayerState, damage: number, skillId: number) => void,
+  itemId = itemForHandler('hit', 'explosive').id): void {
+  const rule = readExplosiveAmmoRule(itemId);
   if (!rule || room.phase !== 'PLAYING') return;
   events.push({roomId: room.roomId, type: 'explosiveAmmoBlast', message: '',
     playerId: owner.id, targetId: '', value: 0, x: center.x, y: center.y, z: center.z,

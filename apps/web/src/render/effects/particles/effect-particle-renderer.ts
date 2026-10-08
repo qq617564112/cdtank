@@ -1,5 +1,5 @@
 import {Camera, Scene, Texture} from '@babylonjs/core';
-import {effectCameraCorners} from '../camera/effect-camera';
+import {effectCameraCorners, effectCameraUv} from '../camera/effect-camera';
 import {packEffectColor} from '../common/effect-color';
 import {EffectParticleState} from './effect-particle-state';
 import {EffectRenderPass, EffectSpriteMesh} from '../common/effect-sprite-mesh';
@@ -17,7 +17,7 @@ export class EffectParticleRenderer {
     this.sprite.updateQuads(particles.filter(particle => particle.visible).map(particle => ({
       corners: effectCameraCorners(camera, particle.position,
         [particle.scale, particle.scale, 0], particle.angles[2]),
-      uv: this.frames[particle.frame],
+      uv: effectCameraUv(this.frames[particle.frame]),
       packedColor: packEffectColor(particle.color),
     })));
   }

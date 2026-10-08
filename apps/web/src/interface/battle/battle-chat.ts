@@ -15,7 +15,7 @@ export interface BattleChatSnapshot {
   messages: readonly {id: number; text: string}[];
   draft: string;
   targetName: string;
-  channel: 0 | 1 | 2 | 3 | 5;
+  channel: 0 | 1 | 2 | 3 | 4 | 5;
   status: string;
   pending: boolean;
   generation: number;
@@ -33,7 +33,7 @@ export class BattleChat {
   private readonly familyMessageIds = new Set<string>();
   private readonly unsubscribeAccountContext: () => void;
   private quickChats: QuickChatPreferences = {...DEFAULT_QUICK_CHAT_PREFERENCES};
-  constructor(private readonly send: (text: string, channel: 0 | 1 | 2 | 3 | 5, targetName?: string) => Promise<void>,
+  constructor(private readonly send: (text: string, channel: 0 | 1 | 2 | 3 | 4 | 5, targetName?: string) => Promise<void>,
     private readonly releaseKeys: () => void, readonly family: Family,
     subscribeAccountContext: (listener: () => void) => () => void) {
     this.unsubscribeAccountContext = subscribeAccountContext(() => this.resetSession());
@@ -56,7 +56,7 @@ export class BattleChat {
   setDraft(draft: string): void {this.update({draft});}
   setTargetName(targetName: string): void {if (!this.state.pending) this.update({targetName});}
   setStatus(status: string): void {this.update({status});}
-  setChannel(channel: 0 | 1 | 2 | 3 | 5): void {
+  setChannel(channel: 0 | 1 | 2 | 3 | 4 | 5): void {
     if (this.state.pending) return;
     this.update({channel});
     if (channel === 5) void this.family.refresh();

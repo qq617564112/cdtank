@@ -1,0 +1,79 @@
+{
+  "name": "护士帽",
+  "getMethod": 2,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 2,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10014,
+  "key": "item-10014",
+  "description": "充满白衣天使气质的护士帽。",
+  "prices": {
+    "money": 3000,
+    "tokens": 300
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10014/10014.glb",
+    "modelId": 10014,
+    "modelType": 1,
+    "texture": "10014A",
+    "iconId": 10014,
+    "textures": [
+      "Data/accessory/10014/10014A.png"
+    ],
+    "sourceModel": "Data/accessory/10014/10014.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10014/10014A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

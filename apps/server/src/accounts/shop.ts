@@ -1,8 +1,15 @@
 import type {DatabaseSync} from 'node:sqlite';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
 import type {ReqShop, ResShop, ShopItem} from '../../../shared/protocols/PtlShop';
-import {removeMaintenanceClock} from './maintenance-clock';
+import {anchorMaintenance, removeMaintenanceClock} from './maintenance-clock';
 import {initializeAccountSpending, recordAccountSpending} from './spending';
+
+/** Adopted runtime expiry for a newly purchased category5 hat; Durable remains original metadata. */
+const DECORATION_PURCHASE_MINUTES = 3 * 24 * 60;
+
+function isDecorationPurchase(itemTableId: number): boolean {
+  return itemTableId >= 10001 && itemTableId <= 10040;
+}
 
 /** Rebuilt purchase authority; the caller supplies the bounded source catalog. */
 export class AccountShop {
@@ -31,6 +38,8 @@ export class AccountShop {
     if (typeof requestId !== 'string' || !/^[A-Za-z0-9_-]{8,80}$/.test(requestId)) {
       throw new Error('购买请求ID无效');
     }
+    const decorationPurchase = isDecorationPurchase(itemTableId!);
+    if (decorationPurchase && quantity !== 1) throw new Error('饰品购买数量应为1');
     this.database.exec('BEGIN IMMEDIATE');
     try {
       const profile = this.database.prepare('SELECT payload FROM role_profiles WHERE account_id = ?').get(accountId);
@@ -68,13 +77,17 @@ export class AccountShop {
       }
       if (instanceId > 0xffffffff) throw new Error('账户物品实例ID已用尽');
       removeMaintenanceClock(this.database, accountId, 'part', instanceId);
-      const purchased: InventoryWireRecord = {instanceId, itemTableId: itemTableId!, ownedQuantity: quantity!,
+      const purchased: InventoryWireRecord = {instanceId, itemTableId: itemTableId!,
+        ownedQuantity: decorationPurchase ? DECORATION_PURCHASE_MINUTES : quantity!,
         battleQuantity: 0, state: 0, field8: 0, float24Bits: 0, float28Bits: 0, float2cBits: 0};
       const nextMoney = currency === 'MONEY' ? money - cost : money;
       const nextTokens = currency === 'TOKENS' ? tokens - cost : tokens;
       view.setUint32(currency === 'MONEY' ? 0x70 : 0x74, currency === 'MONEY' ? nextMoney : nextTokens, true);
       this.database.prepare('UPDATE role_profiles SET payload = ? WHERE account_id = ?').run(bytes, accountId);
       this.database.prepare('INSERT INTO inventory VALUES (?, ?, ?)').run(accountId, instanceId, JSON.stringify(purchased));
+      if (decorationPurchase) {
+        anchorMaintenance(this.database, accountId, 'part', instanceId, DECORATION_PURCHASE_MINUTES);
+      }
       this.database.prepare('INSERT INTO shop_purchases VALUES (?, ?, ?, ?, ?, ?)')
         .run(accountId, requestId, itemTableId!, quantity!, currency, JSON.stringify(purchased));
       recordAccountSpending(this.database, accountId, 'shop', requestId,

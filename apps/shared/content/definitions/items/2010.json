@@ -1,0 +1,90 @@
+{
+  "name": "雷达干扰弹",
+  "getMethod": 0,
+  "durable": 0,
+  "breakMode": 2,
+  "itemType": 3,
+  "battleUseMax": 15,
+  "effects": [
+    {
+      "effectId": 53,
+      "sound": "GA08",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 6,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "ammo",
+  "id": 2010,
+  "key": "radarJamAmmo",
+  "description": "会干扰雷达正常工作。",
+  "prices": {
+    "money": 0,
+    "tokens": 0
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 3,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 2010,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 2010,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null,
+    "fireSound": {
+      "id": 50,
+      "asset": "audio/sound/GA09.wav"
+    }
+  },
+  "runtime": {
+    "values": {
+      "baseDamage": 35,
+      "attackScale": 0.08,
+      "durationSeconds": 15,
+      "shopSupplyCount": 1,
+      "breachDropOrder": 3,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 2010,
+      "secondary": 4008,
+      "tertiary": 0
+    },
+    "hit": "radarJam",
+    "defaultAmmo": false,
+    "query": "projectile",
+    "projectileSpeed": 360,
+    "range": 1000,
+    "muzzleForward": 30,
+    "muzzleHeight": 20,
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": true,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": true,
+    "requiresPlayerTarget": true,
+    "markerReward": false
+  }
+}

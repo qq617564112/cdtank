@@ -51,8 +51,19 @@ export function advanceRespawnProtection(roomId: string, player: RespawnProtecti
   const protection = player.respawnProtection;
   if (!protection || now < protection.expiresAt) return false;
   delete player.respawnProtection;
-  events.push({roomId, type: 'respawnProtectionEnded', message: '',
+  const event: MsgRoomEvent = {roomId, type: 'respawnProtectionEnded', message: '',
     playerId: player.id, targetId: player.id, value: 0,
-    x: player.x, y: player.y, z: player.z, skillId: RESPAWN_PROTECTION_SKILL_ID});
+    x: player.x, y: player.y, z: player.z, skillId: RESPAWN_PROTECTION_SKILL_ID};
+  if (player.alive && player.combat.status === 2) {
+    event.playSkillEffect = {
+      skillId: RESPAWN_PROTECTION_SKILL_ID,
+      effectIndex: 1,
+      duration: 0,
+      roleId: Number(player.id.slice(1)),
+      xBits: 0,
+      zBits: 0,
+    };
+  }
+  events.push(event);
   return true;
 }

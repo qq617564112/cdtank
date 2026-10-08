@@ -17,9 +17,17 @@ export class AccountTankShop {
   request(accountId: string, request: ReqTankShop): ResTankShop {
     if (!this.database.prepare('SELECT id FROM accounts WHERE id = ?').get(accountId)) throw new Error('账户不存在');
     const catalog = tankShopCatalog();
-    const tanks = catalog.map(row => row.product);
+    const availableTanks = () => {
+      const records = this.database.prepare("SELECT record FROM role_records WHERE account_id = ? AND kind = 'equipment'").all(accountId);
+      const owned = new Set(records.map(row => {
+        const record = JSON.parse(String(row.record)) as OwnedRoleRecordData;
+        return new Map(record.fields).get(0x24);
+      }));
+      return catalog.map(row => row.product).filter(tank => !owned.has(tank.tankId));
+    };
     const profile = () => this.database.prepare('SELECT payload FROM role_profiles WHERE account_id = ?').get(accountId);
     if (request.operation === 'QUERY') {
+      const tanks = availableTanks();
       const row = profile();
       if (!row) return {tanks};
       const bytes = row.payload as Uint8Array;
@@ -28,7 +36,7 @@ export class AccountTankShop {
     }
     const definition = catalog.find(row => row.product.tankId === request.tankId);
     if (request.operation !== 'BUY' || !definition) throw new Error('战车不在出售范围');
-    if (request.currency !== 'MONEY') throw new Error('此战车只能使用金钱购买');
+    if (request.currency !== 'MONEY' && request.currency !== 'TOKENS') throw new Error('购买币种无效');
     if (typeof request.requestId !== 'string' || !/^[A-Za-z0-9_-]{8,80}$/.test(request.requestId)) throw new Error('购买请求ID无效');
     this.database.exec('BEGIN IMMEDIATE');
     try {
@@ -39,14 +47,18 @@ export class AccountTankShop {
       const money = view.getUint32(0x70, true), tokens = view.getUint32(0x74, true);
       const previous = this.database.prepare('SELECT tank_id, currency, receipt FROM tank_purchases WHERE account_id = ? AND request_id = ?')
         .get(accountId, request.requestId);
+      const tanks = availableTanks();
       if (previous) {
         if (Number(previous.tank_id) !== request.tankId || previous.currency !== request.currency) throw new Error('购买请求ID已用于不同购买');
         const purchased = JSON.parse(String(previous.receipt)) as OwnedRoleRecordData;
         this.database.exec('COMMIT');
         return {tanks, money, tokens, purchased, replayed: true};
       }
-      const cost = definition.product.moneyPrice;
-      if (money < cost) throw new Error('金钱余额不足');
+      if (!tanks.some(tank => tank.tankId === definition.product.tankId)) throw new Error('已拥有此战车，不能重复购买');
+      const payWithMoney = request.currency === 'MONEY';
+      const cost = payWithMoney ? definition.product.moneyPrice : definition.product.tokenPrice;
+      if (!Number.isSafeInteger(cost) || cost < 0 || (!payWithMoney && cost === 0)) throw new Error('战车价格无效');
+      if ((payWithMoney ? money : tokens) < cost) throw new Error(payWithMoney ? '金钱余额不足' : '星币余额不足');
       let instanceId = 1;
       for (const used of this.database.prepare(`SELECT instance_id FROM inventory WHERE account_id = ?
         UNION SELECT instance_id FROM role_records WHERE account_id = ? ORDER BY instance_id`).all(accountId, accountId)) {
@@ -66,14 +78,18 @@ export class AccountTankShop {
         [0x38, 1], [0x48, 1],
         [0x6c, definition.partCapacity]]) fields.set(offset, value);
       const purchased: OwnedRoleRecordData = {name: definition.product.name, fields: [...fields]};
-      view.setUint32(0x70, money - cost, true);
+      const nextMoney = payWithMoney ? money - cost : money;
+      const nextTokens = payWithMoney ? tokens : tokens - cost;
+      view.setUint32(payWithMoney ? 0x70 : 0x74, payWithMoney ? nextMoney : nextTokens, true);
       this.database.prepare('UPDATE role_profiles SET payload = ? WHERE account_id = ?').run(bytes, accountId);
       this.database.prepare('INSERT INTO role_records VALUES (?, ?, ?, ?)').run(accountId, 'equipment', instanceId, JSON.stringify(purchased));
       this.database.prepare('INSERT INTO tank_purchases VALUES (?, ?, ?, ?, ?)')
         .run(accountId, request.requestId, definition.product.tankId, request.currency, JSON.stringify(purchased));
-      recordAccountSpending(this.database, accountId, 'tank-shop', request.requestId, cost, 0);
+      recordAccountSpending(this.database, accountId, 'tank-shop', request.requestId,
+        payWithMoney ? cost : 0, payWithMoney ? 0 : cost);
       this.database.exec('COMMIT');
-      return {tanks, money: money - cost, tokens, purchased, replayed: false};
+      return {tanks: tanks.filter(tank => tank.tankId !== definition.product.tankId),
+        money: nextMoney, tokens: nextTokens, purchased, replayed: false};
     } catch (error) {
       this.database.exec('ROLLBACK');
       throw error;

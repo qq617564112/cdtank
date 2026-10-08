@@ -1,0 +1,17 @@
+.source-progress-control {
+  position: absolute;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.source-progress-fill {
+  position: absolute;
+  inset: 0;
+}
+
+.source-progress-background,
+.source-progress-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+}

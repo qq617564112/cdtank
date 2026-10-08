@@ -1,6 +1,7 @@
-import {useEffect, useRef, useState, type ComponentPropsWithoutRef} from 'react';
+import {useCallback, useEffect, useRef, useState, type ComponentPropsWithoutRef} from 'react';
 import type {HomeSourceLayout, HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
+import {preparedSourceUi, prepareSourceUi} from '../resources/source-ui-resources';
 
 export {sourceProps} from '../resources/source-ui-props';
 
@@ -20,21 +21,22 @@ export function SourceButton({ui, layout, suffix, source, selected = false,
 }
 
 export function useSourceUi(open: boolean, suffixes: readonly string[]) {
-  const [ui, setUi] = useState<HomeSourceUi>(), [error, setError] = useState('');
   const suffixKey = suffixes.join('|');
+  const [resource, setResource] = useState<{key: string; ui: HomeSourceUi}>();
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => {setError(''); setAttempt(value => value + 1);}, []);
+  const ui = resource?.key === suffixKey ? resource.ui : preparedSourceUi(suffixes);
   useEffect(() => {
     if (!open || ui) return;
     let active = true;
     setError('');
-    void fetch('/ui.json').then(async response => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const next = await response.json() as HomeSourceUi;
-      for (const suffix of suffixKey.split('|')) if (!next.layouts.some(layout => layout.path.endsWith(suffix))) throw new Error(`布局缺失：${suffix}`);
-      if (active) setUi(next);
+    void prepareSourceUi(suffixKey.split('|')).then(next => {
+      if (active) setResource({key: suffixKey, ui: next});
     }).catch(reason => {if (active) setError(String(reason));});
     return () => {active = false;};
-  }, [open, ui, suffixKey]);
-  return {ui, error};
+  }, [open, ui, suffixKey, attempt]);
+  return {ui, error, retry};
 }
 
 export function useSourceDialog(open: boolean) {

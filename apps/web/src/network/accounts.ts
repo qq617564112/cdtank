@@ -157,7 +157,7 @@ export class AccountConnection {
     if (!isCurrent(context)) throw new Error('账户或连接已变化，请重新操作');
     const result = await this.client.callApi('ValuableItemSale', request);
     if (!result.isSucc) {
-      const error = new Error(result.err.message) as Error & {code?: string};
+      const error = new Error(result.err.message) as Error & {code?: string | number};
       error.code = result.err.code;
       throw error;
     }

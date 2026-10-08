@@ -1,3 +1,4 @@
+import {itemForHandler, itemTrapHandler} from '../../../../shared/content/catalog';
 import {combatItems, combatSkills} from '../catalog';
 import {readContactMineNumbers} from '../roles/contact-mine-numbers';
 import type {PlayerState} from '../player-state';
@@ -5,16 +6,15 @@ import type {RoomState} from '../../rooms/state';
 import type {MsgRoomEvent} from '../../../../shared/protocols';
 
 /** Original 3002→4023 fields; lifetime and contact geometry follow the Web policy. */
-export function readContactMineRule() {
-  const item = combatItems.get(3002);
+export function readContactMineRule(itemId = itemForHandler('trap', 'contactMine').id) {
+  const item = combatItems.get(itemId);
   const placement = item ? combatSkills.get(item.skillIds[0]) : undefined;
   const create = placement?.functions[0];
   const effect = create ? combatSkills.get(create.y) : undefined;
-  if (!item || item.itemType !== 4 || placement?.skillId !== 3002 ||
-      create?.type !== 12 || create.z !== 3002 || effect?.skillId !== 4023 ||
-      effect.functions[0]?.type !== 2) return;
+  if (!item || item.itemType !== 4 || !placement || create?.type !== 12
+      || !effect || effect.functions[0]?.type !== 2) return;
   const numbers = readContactMineNumbers(create.t, create.x, effect.attributes.HP);
-  return {itemTableId: 3002 as const, placementSkillId: placement.skillId,
+  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId,
     effectSkillId: effect.skillId, groundDurationMs: numbers.durationMs,
     triggerRadius: numbers.triggerRadius, damage: numbers.damage};
 }
@@ -22,11 +22,13 @@ export function readContactMineRule() {
 /** Remove before life settlement; a lethal contact can finish and clear the room. */
 export function advanceContactMines(room: RoomState, now: number, events: MsgRoomEvent[],
   hit: (owner: PlayerState, target: PlayerState, damage: number, skillId: number) => void): void {
-  const rule = readContactMineRule();
-  if (!rule || room.phase !== 'PLAYING') return;
+  if (room.phase !== 'PLAYING') return;
   for (const mine of [...room.groundTraps]) {
     if (room.phase !== 'PLAYING') break;
-    if (mine.itemTableId !== 3002) continue;
+    if (itemTrapHandler(mine.itemTableId) !== 'contactMine') continue;
+    const rule = readContactMineRule(mine.itemTableId);
+    if (!rule) continue;
+    if (mine.itemTableId !== rule.itemTableId) continue;
     const owner = room.players.get(mine.ownerId);
     if (!owner || now >= mine.expiresAt) {
       room.groundTraps = room.groundTraps.filter(trap => trap.id !== mine.id);

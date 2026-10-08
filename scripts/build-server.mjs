@@ -1,5 +1,5 @@
 import {spawnSync} from 'node:child_process';
-import {mkdirSync, rmSync, writeFileSync} from 'node:fs';
+import {cpSync, mkdirSync, rmSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 
@@ -11,7 +11,9 @@ const result = spawnSync(process.execPath,
   {cwd: workspace, stdio: 'inherit'});
 if (result.status !== 0) process.exit(result.status ?? 1);
 mkdirSync(output, {recursive: true});
+cpSync(resolve(workspace, 'apps/shared/content/definitions'),
+  resolve(output, 'shared/content/definitions'), {recursive: true});
 writeFileSync(resolve(output, 'package.json'), JSON.stringify({private: true, type: 'commonjs',
   scripts: {start: 'node server/src/index.js'},
-  dependencies: {tsrpc: '3.4.21'}}, null, 2) + '\n');
+  dependencies: {compression: '1.8.2', 'serve-static': '2.2.1', tsrpc: '3.4.21'}}, null, 2) + '\n');
 console.log('Server built: dist/server/server/src/index.js');

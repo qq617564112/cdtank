@@ -7,7 +7,7 @@ import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {roomModeIconReference} from './room-mode-icons';
 import {sourceProps, useSourceDialog, useSourceUi} from './source-react';
 
-import {RoomCreateImageScale, RoomCreatePasswordSelection, RoomCreateSourceImage, RoomCreateSourceMask, roomCreateInputVisual, useRoomCreateVisual} from './room-create-source-visual';
+import {RoomCreateImageScale, RoomCreatePasswordSelection, RoomCreateSourceImage, roomCreateInputVisual, useRoomCreateVisual} from './room-create-source-visual';
 import {RoomCreateCaret} from './room-create-caret';
 import {RoomCreateNameSelection} from './room-create-name-selection';
 import {SourceButton} from '../resources/source-button';
@@ -85,7 +85,6 @@ export function RoomCreateDialog({open, close, initialDraft, map, submit, editin
         if (!pending && !composing.current && !event.nativeEvent.isComposing) close();
       }
     }}>
-    {ui && layout && <RoomCreateSourceMask ui={ui} layout={layout} scale={scale.scale} viewportWidth={scale.viewportWidth} viewportHeight={scale.viewportHeight}/>}
     <div className="room-create-viewport" style={scale.viewport}><div className="room-create-stage" data-room-create-stage="" style={scale.stage}>
       {ui && layout && <RoomCreateImageScale value={scale.scale}>
         {['daditu','heseditu','xiaoditu','ditu2','tiao1','ditu1','tiao2','ditu4','ditu3','tiao7','daos','fangming','renshu','dituguize','hongtiaotiao', ...(!editing ? ['mima'] : [])].map(name => image(name))}

@@ -1,3 +1,5 @@
+import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
+
 interface SceneBreachLibrary {
   library: string;
   models: readonly string[];
@@ -5,6 +7,11 @@ interface SceneBreachLibrary {
 
 /** Existing map libraries retain their source model and publication identity. */
 const mapLibraries: Readonly<Record<string, readonly SceneBreachLibrary[]>> = {
+  [FIELD_ROAD_HD.sceneId]: [
+    {library: '/scene-breach-1002-05427.json', models: ['obj05427']},
+    {library: '/scene-breach-1002-05422.json', models: ['obj05422']},
+    {library: '/scene-breach-1002-05425-05428.json', models: ['obj05425', 'obj05426', 'obj05428']},
+  ],
   '0002': [
     {library: '/scene-breach-0002-05427.json', models: ['obj05427']},
     {library: '/scene-breach-0021.json', models: ['obj05422']},

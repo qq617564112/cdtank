@@ -1,11 +1,13 @@
-# Pet2 10231 受击移动 Web政策
+# Pet2 10231–10235 受击移动 Web政策
 
-M4-10/FUNC-01/Trigger5。原10231“大麦耍赖”说明被击中后5秒移动速度+10，Trigger5/Target1/Func1 T5、ItemMove1。普通玩家沿最终10211保存库选择既有peer Pet2 instance3，普通LEARN槽2首级费用10；预服务Point10明示为非earned，不改资金或拥有记录。旧10211/10221学习保持。
+大麦耍赖按所选宠物已学等级解析 10231–10235，ItemMove 分别为 1–5，持续时间统一取原 Func1.T=5 秒。大麦 JSON 配置 hit → attributes → self，生产入口由 PlayerState.petBattle 处理；完整规则见 [宠物战斗生命周期](pet-battle-lifecycle.md)。
 
-采用受伤后临时安装原技能的Web规则：所选拥有Pet2槽2 base10231/rank1，attributesReady且alive/status2；接受敌对非self伤害、实际生命减少后仍生命大于0才触发。普通暴击与方向防御仍沿一次原伤害链；医疗、无敌、抵消、零实际伤害与mode≤3同队不触发。普通弹药和地面直接生命伤害均经过同一受伤入口。最终致死不安装新移动状态。
+实际敌对非本人伤害导致生命减少且受害者仍存活时安装增益。医疗、无敌、抵消、闪避、零伤害和同队伤害不触发，致死不安装。普通弹药、持续伤害和地面直接生命伤害共用受伤结果入口。
 
-第一次受伤在原current十六槽空位安装10231，重算现统一ItemMove消费者；不改拥有rank，不新增硬填速度。持续5服务器秒，到期优先于本tick运动；再次合格受伤将同一效果期限刷新至当前时刻+5秒，不重复加技能或累加速度。技能槽无空位时保持原伤害结果、无移动提升。到期只移除本状态安装的10231并重算；死亡、Leave、FINISHED、开新局清理。生命、弹匣、库存和账户保存不受临时移动状态影响。
+效果独立于原十六技能槽，经 runtimeSkillIds 进入统一移动重算；同级刷新至当前服务器时间加 5 秒，不叠加 ItemMove，期限到达时在本 tick 的伤害和运动前撤回。死亡、Leave、结束和再战统一清理，不写账户等级或库存。
 
-root owns battle/pet-hit-speed.ts资格/计时/当前技能消费、PlayerState临时状态、World伤害入口与生命周期；Numeric owns原字段合同、统一移动数字及普通学习/自然受伤/普通移动/到期网络；UI ownsHome来源与原生控制、双网页位移/状态及退出。原Effect110/SE42仅来源字段，未确认原caller前不派新效果；current/selected变化不冒原Trigger5调度已恢复。
+原 Trigger5/Func1 服务端执行器与 Effect110/SE42 派发未恢复，当前为项目采用的战斗规则。
 
-完成条件：普通未学受伤无提升→WAITING正式LEARN与Ready取消→自然受伤安装原10231→普通移动体现统一重算增量→5秒到期移除且移动回基线→正常双Leave/HomeClose、完整owned/学习receipt/库存与同库重启。工程覆盖资格、实际伤害门禁、一次安装/刷新、到期优先、槽满、死亡与各清理。正式consumer/World与生命周期已接，pet-hit-speed-engineering.json记录原source130→140与计时/生命/槽资格工程通过；3670唯一first93331实际exit0，普通未学/学后/到期三次移动实测129.996192/140.003409/130.001206，327共同完整快照与原生所有表、同库实际重启四QUERY通过；pet-hit-speed-network-root-review.json有限接受。3671网页实际验收待完成；原Trigger5/Func1/Effect110/SE42与完整父项保持开放。
+## 验证范围
+
+旧首级有限证据 pet-hit-speed-engineering.json 与 pet-hit-speed-network-root-review.json 记录受击运动约 130→140→130、327 共同快照和同库重启。其旧临时字段与十六槽安装规则不代表当前生命周期实现。全等级及 JSON 路由本轮仅静态走查，未运行测试、浏览器、构建、类型检查或发行。

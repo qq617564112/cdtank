@@ -12,4 +12,4 @@ node tests/browser-tank-daylight.mjs：隔离Vite5298/Chrome9368，正式main模
 
 ## 未完成来源
 
-白色日光曝光是为修正当前过暗而采用的重建场景设置。尚未恢复原场景选灯、方向计算/texToon、完整shader选择与原D3D framebuffer，不把亮度修正标为精确原光照。后续依据登记M3-03/M4-07，本次不扩大到所有场景或全部光照取证。
+白色日光曝光是为修正当前过暗而采用的重建场景设置。原25图角色默认灯方向、texToon及Silhouette显式shader选择已接，详scene-actor-toon-runtime.md；几何toon资格、完整环境／设备与原D3D framebuffer仍开放。图级白光／ambient继续采用既有规则。后续依据登记M3-03/M4-07，本次不扩大到所有场景或全部光照取证。

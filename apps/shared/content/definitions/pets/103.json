@@ -1,0 +1,124 @@
+{
+  "kind": "pet",
+  "id": 103,
+  "key": "pet-103",
+  "name": "黄金母舰",
+  "description": "以“猫是铁，鱼是钢”为猫生目标，视每天吃饭为头等大事。一身肥厚的脂肪没别的，就是耐打！",
+  "prices": {
+    "money": 4000,
+    "tokens": 400
+  },
+  "shop": {
+    "available": true,
+    "group": "pet"
+  },
+  "starter": false,
+  "defaultSelected": false,
+  "petType": 1,
+  "petSize": 3,
+  "attributes": {
+    "maxHp": 750,
+    "critical": 10,
+    "lucky": 14,
+    "mastery": [
+      2,
+      2,
+      3,
+      4
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/103/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/103/m115.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 10811,
+      "initialRank": 0,
+      "rankCap": 5,
+      "levels": [
+        10811,
+        10812,
+        10813,
+        10814,
+        10815
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10821,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10821
+      ],
+      "event": "motion",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "stationary"
+    },
+    {
+      "baseId": 10831,
+      "initialRank": 0,
+      "rankCap": 6,
+      "levels": [
+        10831,
+        10832,
+        10833,
+        10834,
+        10835,
+        10836
+      ],
+      "event": "tick",
+      "handler": "heal",
+      "target": "self",
+      "condition": "stationary"
+    },
+    {
+      "baseId": 10841,
+      "initialRank": 0,
+      "rankCap": 4,
+      "levels": [
+        10841,
+        10842,
+        10843,
+        10844
+      ],
+      "event": "kill",
+      "handler": "attributes",
+      "target": "teammates"
+    },
+    {
+      "baseId": 10851,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10851
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10861,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

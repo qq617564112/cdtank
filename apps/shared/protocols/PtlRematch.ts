@@ -1,5 +1,5 @@
 export interface ReqRematch {
-  /** Prevents a delayed vote from being applied to another round. */
+  /** Continue from this round's summary to the same waiting room. */
   round: number;
 }
 

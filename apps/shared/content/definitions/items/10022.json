@@ -1,0 +1,79 @@
+{
+  "name": "防风镜",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10022,
+  "key": "item-10022",
+  "description": "防风？其实是为了耍帅啦！",
+  "prices": {
+    "money": 3000,
+    "tokens": 300
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10022/10022.glb",
+    "modelId": 10022,
+    "modelType": 1,
+    "texture": "10022A",
+    "iconId": 10022,
+    "textures": [
+      "Data/accessory/10022/10022A.png"
+    ],
+    "sourceModel": "Data/accessory/10022/10022.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10022/10022A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

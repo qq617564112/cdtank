@@ -1,0 +1,91 @@
+{
+  "name": "燃烧弹",
+  "getMethod": 0,
+  "durable": 20,
+  "breakMode": 2,
+  "itemType": 3,
+  "battleUseMax": 15,
+  "effects": [
+    {
+      "effectId": 54,
+      "sound": "GA09",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 6,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "ammo",
+  "id": 2007,
+  "key": "burnAmmo",
+  "description": "把对手烧得哇哇叫！被命中者会燃烧9秒钟，减少生命值210点。",
+  "prices": {
+    "money": 10,
+    "tokens": 20
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 3,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 2007,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 2007,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null,
+    "fireSound": {
+      "id": 50,
+      "asset": "audio/sound/GA09.wav"
+    }
+  },
+  "runtime": {
+    "values": {
+      "baseDamage": 35,
+      "attackScale": 0.08,
+      "burnTicks": 3,
+      "burnIntervalMs": 3000,
+      "burnDamage": 70,
+      "shopSupplyCount": 20,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 2007,
+      "secondary": 4005,
+      "tertiary": 0
+    },
+    "hit": "burn",
+    "defaultAmmo": false,
+    "query": "projectile",
+    "projectileSpeed": 360,
+    "range": 1000,
+    "muzzleForward": 30,
+    "muzzleHeight": 20,
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": true,
+    "requiresPlayerTarget": true,
+    "markerReward": false
+  }
+}

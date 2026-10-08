@@ -4,7 +4,7 @@
 
 Battle 在快照与渲染资源完成后将角色列表、roomId/round 和 PLAYING 状态传给 AmmoBurnPresentation。原4005保留槽0使用014、tag0、oneShotfalse 和空间SE03 selector−1。同角色、同资源实例和同 startedAt 不重新启动。客户端不按本地计时删除燃烧状态；快照缺失、角色死亡、FINISHED、换房换局或退出均停止效果和声音。
 
-现有伤害、燃烧跳点、重复命中不叠加、不刷新和注射解除规则保持已有重建政策。原014无限寿命节点由正式状态缺失停止，未添加替代图片、伤害或生命周期期限。
+燃烧自然完成全部周期时，domain先清状态并返回实际skillId；World仅在room仍PLAYING且目标alive/status2时复用skillStopped发送4005第二槽Effect7/SE30，index1／duration0。其他清理不补播，详remaining-effect-slot-integration.md。现有伤害、燃烧跳点、重复命中不叠加、不刷新和注射解除规则保持已有重建政策。原014无限寿命节点由正式状态缺失停止，未添加替代图片、伤害或生命周期期限。
 
 ammo-burn-snapshot.cts 验实际 playerSnapshot 与协议编码、状态副本隔离、拒绝刷新、最后燃烧跳点后移除、显式清除、死亡和攻击者离场。ammo-burn-presentation.cts 与 ammo-burn-presentation-runtime.cts 分别验证接口与真实效果树的保留、去重和停止。普通双端画面、声音、自然到期和离房必须另由玩家证据证明。
 

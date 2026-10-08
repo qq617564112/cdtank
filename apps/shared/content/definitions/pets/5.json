@@ -1,0 +1,118 @@
+{
+  "kind": "pet",
+  "id": 5,
+  "key": "pet-5",
+  "name": "猎师",
+  "description": "群狗之首，强壮而富有领袖气质。既有勇气和实力，又不乏理智冷静的头脑，在木桶镇有相当的威望。",
+  "prices": {
+    "money": 5000,
+    "tokens": 500
+  },
+  "shop": {
+    "available": true,
+    "group": "pet"
+  },
+  "starter": false,
+  "defaultSelected": false,
+  "petType": 2,
+  "petSize": 3,
+  "attributes": {
+    "maxHp": 700,
+    "critical": 17,
+    "lucky": 5,
+    "mastery": [
+      2,
+      2,
+      3,
+      4
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/005/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/005/m108.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 10511,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10511
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10521,
+      "initialRank": 0,
+      "rankCap": 3,
+      "levels": [
+        10521,
+        10522,
+        10523
+      ],
+      "event": "kill",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10531,
+      "initialRank": 0,
+      "rankCap": 6,
+      "levels": [
+        10531,
+        10532,
+        10533,
+        10534,
+        10535,
+        10536
+      ],
+      "event": "health",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "lowHealth"
+    },
+    {
+      "baseId": 10541,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10541
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "team"
+    },
+    {
+      "baseId": 10551,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10551
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10561,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

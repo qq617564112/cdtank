@@ -1,6 +1,6 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {SourceImageScale} from '../resources/source-static-image';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {loadUiFont} from '../resources/source-ui-fonts';
 import {useSourceUi} from '../lobby/source-react';
 import {HistoryIntroSourcePage} from './history-intro-source-page';
 import './history-intro-source-view.css';
@@ -29,7 +29,7 @@ function HistoryIntroSession({close}: {close: () => void}) {
   useEffect(() => {
     const resize = () => setScale(calculate());
     window.addEventListener('resize', resize);
-    void loadSourceUiFonts();
+    void loadUiFont().catch(() => {});
     return () => window.removeEventListener('resize', resize);
   }, []);
   useLayoutEffect(() => {

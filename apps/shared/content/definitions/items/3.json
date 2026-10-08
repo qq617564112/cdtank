@@ -1,0 +1,78 @@
+{
+  "name": "宠物注射剂",
+  "getMethod": 2,
+  "durable": 10,
+  "breakMode": 2,
+  "itemType": 1,
+  "battleUseMax": 5,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "item",
+  "id": 3,
+  "key": "petInjection",
+  "description": "经阿吉研究所IXO9001认证，一针打下去可以解除宠物所有异常状态。",
+  "prices": {
+    "money": 10,
+    "tokens": 10
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 1,
+  "inventoryCategory": 1,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": "Data/scnobj/00003/00003.glb",
+    "modelId": 3,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 3,
+    "textures": [
+      "Data/scnobj/00003/00003A.png"
+    ],
+    "sourceModel": "Data/scnobj/00003/00003.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/00003/00003A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 10,
+      "battleRewardOrder": 3
+    },
+    "skillRoles": {
+      "primary": 3,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "use": "cure",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

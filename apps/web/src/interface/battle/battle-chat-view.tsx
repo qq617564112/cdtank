@@ -5,8 +5,8 @@ import {ChatEmotes} from './chat-emotes';
 import {normalizeEmoteInput} from './chat-emote-text';
 import {QUICK_CHAT_KEYS} from '../settings/quick-chat-preferences';
 import type {QuickChatKey} from '../settings/quick-chat-preferences';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
-import type {HomeSourceUi} from '../resources/source-ui-layout';
+import {loadUiFont} from '../resources/source-ui-fonts';
+import {loadSourceUi} from '../resources/source-ui-resources';
 import {ChatSourceLayout} from './source-chat-layout';
 import {SourceBattleChat, type SourceChatResources} from './source-battle-chat';
 import {WaitingChatSourceView} from './waiting-chat-source-view';
@@ -43,18 +43,16 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   // Leaving the session must stop any pending incoming-message timers.
   useEffect(() => () => chat.cancelNoticeTimer(), [chat]);
   useEffect(() => {
-    const abort = new AbortController(); let alive = true;
+    let alive = true;
+    void loadUiFont().catch(() => {});
     void (async () => {
-      const response = await fetch('/ui.json', {signal: abort.signal});
-      if (!response.ok) throw new Error('聊天布局资源缺失');
-      const ui = await response.json() as HomeSourceUi;
-      await loadSourceUiFonts();
+      const ui = await loadSourceUi();
       if (!alive) return;
       renderer.load(ui);
       setResources({layout: new ChatSourceLayout(ui, 'game_main_chat_shrinked.xml'),
         channels: new ChatSourceLayout(ui, 'game_main_channellist.xml'), emotes: new ChatSourceLayout(ui, 'game_main_emotelist.xml')});
     })().catch(error => {if (alive) chat.setStatus(String(error));});
-    return () => {alive = false; abort.abort(); renderer.clear();};
+    return () => {alive = false; renderer.clear();};
   }, [chat, renderer]);
   // The log element only exists while the frame is present; skip layout while idle/hidden
   // and re-apply when the frame returns so rich text and scroll metrics stay correct.
@@ -134,7 +132,7 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
       chat.releaseInputKeys(); chat.setTargetName(name); caret.current = at;
       requestAnimationFrame(() => {input.current?.focus(); input.current?.setSelectionRange(at, at);});
     },
-    changeChannel: (value: 0 | 1 | 2 | 3 | 5) => {chat.releaseInputKeys(); chat.setChannel(value);},
+    changeChannel: (value: 0 | 1 | 2 | 3 | 4 | 5) => {chat.releaseInputKeys(); chat.setChannel(value);},
     releaseKeys: () => chat.releaseInputKeys(), insert: (glyph: string, at: number) => {
       if (state.draft.length >= 72) {chat.setStatus('输入已达72字符上限'); return;}
       const next = state.draft.slice(0, at) + glyph + state.draft.slice(at);
@@ -147,8 +145,8 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
       </ol>;
   const editor = <form onSubmit={event => {event.preventDefault(); if (!composing.current) chat.sendDraft();}}>
         <select data-chat-channel="" aria-label="聊天频道" value={state.channel} disabled={state.pending}
-          onFocus={() => chat.releaseInputKeys()} onChange={event => {chat.releaseInputKeys(); chat.setChannel(event.currentTarget.value === '5' ? 5 : event.currentTarget.value === '3' ? 3 : event.currentTarget.value === '2' ? 2 : event.currentTarget.value === '1' ? 1 : 0);}}>
-          <option value="0">房间</option><option value="1">队伍</option><option value="2">密语</option><option value="3">好友</option><option value="5">家族</option>
+          onFocus={() => chat.releaseInputKeys()} onChange={event => {chat.releaseInputKeys(); chat.setChannel(event.currentTarget.value === '5' ? 5 : event.currentTarget.value === '4' ? 4 : event.currentTarget.value === '3' ? 3 : event.currentTarget.value === '2' ? 2 : event.currentTarget.value === '1' ? 1 : 0);}}>
+          <option value="0">房间</option><option value="1">队伍</option><option value="2">密语</option><option value="3">好友</option><option value="4">联系GM</option><option value="5">家族</option>
         </select>
         {state.channel === 2 && <input ref={targetInput} {...targetPosition} data-chat-whisper-target aria-label="密语对象昵称"
           value={state.targetName} disabled={state.pending} autoComplete="off"
@@ -165,8 +163,8 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
               event.preventDefault();
             }
           }} onKeyUp={event => event.stopPropagation()}/>}
-        <input ref={input} {...position} data-chat-input="" aria-label={state.channel === 5 ? '家族聊天内容' : state.channel === 3 ? '好友聊天内容' : state.channel === 2 ? '密语内容' : state.channel ? '队伍聊天内容' : '房间聊天内容'}
-          placeholder={state.channel === 5 ? '家族（Enter发送）' : state.channel === 3 ? '好友（Enter发送）' : state.channel === 2 ? '密语（Enter发送）' : state.channel ? '队伍聊天（Enter发送，Esc返回）' : '房间聊天（Enter发送，Esc返回）'}
+        <input ref={input} {...position} data-chat-input="" aria-label={state.channel === 5 ? '家族聊天内容' : state.channel === 4 ? '提交给GM的问题' : state.channel === 3 ? '好友聊天内容' : state.channel === 2 ? '密语内容' : state.channel ? '队伍聊天内容' : '房间聊天内容'}
+          placeholder={state.channel === 5 ? '家族（Enter发送）' : state.channel === 4 ? '向GM提交问题（Enter发送）' : state.channel === 3 ? '好友（Enter发送）' : state.channel === 2 ? '密语（Enter发送）' : state.channel ? '队伍聊天（Enter发送，Esc返回）' : '房间聊天（Enter发送，Esc返回）'}
           maxLength={72} autoComplete="off" value={state.draft} onFocus={() => chat.releaseInputKeys()}
           onCompositionStart={() => {composing.current = true;}}
           onCompositionEnd={event => {composing.current = false; changeDraft(event.currentTarget.value,
@@ -203,7 +201,7 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   return <section ref={root} data-chat-presentation={presentationKind}
     className={`battle-chat${active ? ' source-battle-chat' : waiting ? ' source-waiting-chat' : ''}`} aria-label="房间聊天"
     hidden={!present} data-chat-notice={notice ? state.noticePhase : undefined}
-    style={source ? {left: (size.width - 800 * scale) / 2, top: (size.height - 600 * scale) / 2 + (waiting ? 402 : 435) * scale,
+    style={source ? {left: waiting ? (size.width - 800 * scale) / 2 : 0, top: (size.height - 600 * scale) / 2 + (waiting ? 402 : 435) * scale,
       width: (waiting ? 612 : 301) * scale, height: (waiting ? 198 : 164) * scale} : undefined}>
     {waiting && resources ? <WaitingChatSourceView ui={resources.layout.ui} scale={scale} {...presentation}>{content}</WaitingChatSourceView>
       : <SourceBattleChat resources={resources} active={interactive} {...presentation}>{content}</SourceBattleChat>}

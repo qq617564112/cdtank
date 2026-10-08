@@ -5,7 +5,7 @@ import type {RespawnProtectionState} from '../respawn-protection';
 import {combatItems, combatSkills} from '../catalog';
 
 export interface InvincibilityState {
-  skillId: 8;
+  skillId: number;
   expiresAt: number;
 }
 
@@ -40,17 +40,17 @@ export function applyInvincibility(roomId: string, player: InvincibilityParticip
     itemTableId: number) => boolean) | undefined, events: MsgRoomEvent[]): void {
   if (request.kind !== 'useItem' || !player.alive || player.combat.status !== 2) return;
   const item = player.inventory.find(record => record.instanceId === request.instanceId);
-  if (!item || item.itemTableId !== 8 || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
-  const definition = combatItems.get(8);
+  if (!item || combatItems.get(item.itemTableId)?.runtime.use !== 'invincibility' || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
+  const definition = combatItems.get(item.itemTableId);
   const skill = definition ? combatSkills.get(definition.skillIds[0]) : undefined;
-  if (!skill || skill.skillId !== 8 || skill.target !== 1 || skill.triggerType !== 1
+  if (!skill || skill.target !== 1 || skill.triggerType !== 1
       || skill.functions[0]?.type !== 6) return;
   const reject = (message: string): void => {
     events.push({roomId, type: 'itemRejected', message, playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0});
   };
   const slots = player.combat.record?.arrays.get(4);
-  if (player.invincibility || slots?.includes(8)) {
+  if (player.invincibility || slots?.includes(skill.skillId)) {
     reject('无敌效果已生效');
     return;
   }
@@ -69,20 +69,20 @@ export function applyInvincibility(roomId: string, player: InvincibilityParticip
   }
   item.ownedQuantity -= 1;
   item.battleQuantity -= 1;
-  player.combat.addSkill(8);
-  player.invincibility = {skillId: 8, expiresAt: now + skill.functions[0].t * 1000};
+  player.combat.addSkill(skill.skillId);
+  player.invincibility = {skillId: skill.skillId, expiresAt: now + skill.functions[0].t * 1000};
   recompute();
-  events.push({roomId, type: 'itemUsed', message: `${player.name}使用${definition!.name}`,
+  events.push({roomId, type: 'itemUsed', itemName: combatItems.get(item.itemTableId)?.name, message: `${player.name}使用${definition!.name}`,
     playerId: player.id, targetId: player.id, value: 0,
-    x: player.x, y: player.y, z: player.z, skillId: 8,
-    playSkillEffect: {skillId: 8, effectIndex: 0, duration: skill.functions[0].t,
+    x: player.x, y: player.y, z: player.z, skillId: skill.skillId,
+    playSkillEffect: {skillId: skill.skillId, effectIndex: 0, duration: skill.functions[0].t,
       roleId: Number(player.id.slice(1)), xBits: 0, zBits: 0}});
 }
 
 /** Remove only the temporary skill installed by the invincibility item. */
 export function clearInvincibility(player: InvincibilityParticipant, recompute: () => void): void {
   if (!player.invincibility) return;
-  const slot = player.combat.record?.arrays.get(4)?.indexOf(8) ?? -1;
+  const slot = player.combat.record?.arrays.get(4)?.indexOf(player.invincibility.skillId) ?? -1;
   if (slot !== -1) player.combat.removeSkillAt(slot);
   delete player.invincibility;
   recompute();
@@ -91,8 +91,9 @@ export function clearInvincibility(player: InvincibilityParticipant, recompute: 
 export function advanceInvincibility(roomId: string, player: InvincibilityParticipant, now: number,
   recompute: () => void, events: MsgRoomEvent[]): void {
   if (!player.invincibility || (player.alive && now < player.invincibility.expiresAt)) return;
+  const skillId = player.invincibility.skillId;
   clearInvincibility(player, recompute);
   events.push({roomId, type: 'skillStopped', message: '', playerId: player.id,
-    targetId: player.id, value: 0, x: player.x, y: player.y, z: player.z, skillId: 8,
-    stopSkillEffect: {skillId: 8, roleId: Number(player.id.slice(1))}});
+    targetId: player.id, value: 0, x: player.x, y: player.y, z: player.z, skillId,
+    stopSkillEffect: {skillId, roleId: Number(player.id.slice(1))}});
 }

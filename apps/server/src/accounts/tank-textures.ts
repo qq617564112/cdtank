@@ -1,5 +1,4 @@
-import {readFileSync} from 'node:fs';
-import {webAssetPath} from '../runtime/content-paths';
+import {content} from '../content';
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
@@ -29,12 +28,8 @@ export function registerTankTextureApi(
   sessionByConnection: ReadonlyMap<string, TankTextureSession>,
   broadcastRoomState: (roomId: string) => void,
 ): void {
-  const textureCatalog = JSON.parse(readFileSync(webAssetPath('tank-textures.json'), 'utf8')) as {
-    rows: TankTextureCatalogRow[];
-  };
-  const textureTanks = JSON.parse(readFileSync(webAssetPath('tanks.json'), 'utf8')) as {
-    id: number; components: {part: string; actions: unknown[]}[];
-  }[];
+  const textureCatalog = {rows: [...content.tanks.values()].flatMap(tank => tank.resources.textureVariants)};
+  const textureTanks = [...content.tanks.values()].map(tank => ({id: tank.id, components: tank.resources.components}));
   // A source row is purchasable here only when every texture used by that actor exists.
   const availableTankTextures = textureCatalog.rows.filter(row => {
     const parts = textureTanks.find(tank => tank.id === row.tankId)?.components

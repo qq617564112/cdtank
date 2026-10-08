@@ -29,12 +29,7 @@
 }
 #account-shop [data-shop-item] option {padding: 10px 6px; background: transparent;}
 #account-shop [data-shop-item] option:checked {background: #365a67; color: white;}
-.shop-product {left: 12px; top: 70px; width: 184px; height: 130px; overflow: auto;}
-.shop-icon {float: left; width: 40px; height: 40px; margin: 0 8px 6px 0; background: center / contain no-repeat;}
-.shop-product p {margin: 0; line-height: 18px; white-space: pre-wrap;}
-.shop-quantity {left: 12px; top: 208px; width: 184px;}
-.shop-currency {left: 12px; top: 244px; width: 184px;}
-#account-shop input, #account-shop .shop-currency select {
+#account-shop input {
   width: 112px;
   height: 24px;
   margin-left: 4px;
@@ -44,18 +39,6 @@
   border: 1px solid #8dabad;
   font: inherit;
 }
-#account-shop [data-shop-buy], #account-shop [data-shop-refresh] {
-  top: 279px;
-  height: 26px;
-  padding: 3px 6px;
-  color: #fff;
-  background: #263b49;
-  border: 1px solid #8dabad;
-  font: inherit;
-}
-#account-shop [data-shop-buy] {left: 12px; width: 72px;}
-#account-shop [data-shop-refresh] {left: 96px; width: 100px;}
-#account-shop [data-shop-status] {left: 224px; top: 379px; width: 372px; height: 22px; overflow: auto; line-height: 18px;}
 .shop-loading-close {left: 570px; top: 0;}
 
 [data-shop-active-page='Item'] #account-shop-title,
@@ -88,33 +71,3 @@
 
 .shop-list-icon {flex: 0 0 32px; width: 32px; height: 32px; background: center / contain no-repeat;}
 .shop-list-text {display: flex; flex-direction: column; gap: 3px;}
-
-[data-shop-active-page='Item'] .shop-product {left: 12px; top: 410px; width: 270px; height: 84px;}
-[data-shop-active-page='Item'] .shop-product p {line-height: 16px;}
-#account-shop [data-shop-active-page='Item'] .shop-quantity {left: 300px; top: 410px; width: 140px; display: flex; align-items: center; white-space: nowrap;}
-#account-shop [data-shop-active-page='Item'] .shop-currency {left: 448px; top: 410px; width: 166px; display: flex; align-items: center; white-space: nowrap;}
-#account-shop [data-shop-active-page='Item'] .shop-quantity input {width: 88px; min-width: 0;}
-#account-shop [data-shop-active-page='Item'] .shop-currency select {width: 100px; min-width: 0;}
-#account-shop [data-shop-active-page='Item'] [data-shop-buy] {left: 300px; top: 444px; width: 100px;}
-#account-shop [data-shop-active-page='Item'] [data-shop-refresh] {left: 414px; top: 444px; width: 150px;}
-#account-shop [data-shop-active-page='Item'] [data-shop-status] {left: 300px; top: 476px; width: 314px; height: 20px;}
-.shop-owned-status {left: 12px; top: 410px; width: 270px; min-height: 18px; background: #263b49;}
-.shop-owned-status:empty {display: none;}
-
-#account-shop [data-shop-active-page='Item'] [data-shop-status][data-shop-no-catalog='true'] {
-  left: 12px;
-  top: 410px;
-  width: 270px;
-  height: 84px;
-  padding: 6px;
-  color: #fff;
-  background: #263b49;
-  overflow-wrap: anywhere;
-}
-
-#account-shop [data-shop-active-page='Item'] .shop-selected-query-prices {
-  left: 230px;
-  top: 410px;
-  width: 68px;
-  min-height: 20px;
-}

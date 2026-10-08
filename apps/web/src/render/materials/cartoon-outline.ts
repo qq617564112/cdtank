@@ -7,7 +7,7 @@ export const CARTOON_INK = 0.65;
 
 interface OutlineRegistration {
   scene: Scene;
-  meshObserver: Observer<Mesh>;
+  meshObserver: Observer<Node>;
   sceneObserver: Observer<Scene>;
   cloneObserver?: Observer<Node>;
 }
@@ -37,7 +37,7 @@ function removeScene(scene: Scene): void {
 function applyOutlinePreference(mesh: Mesh): void {
   mesh.outlineWidth = CARTOON_INK;
   mesh.outlineColor = Color3.Black();
-  mesh.renderOutline = getDisplayPreferences().silhouette;
+  mesh.renderOutline = getDisplayPreferences().silhouette && !mesh.material?.needAlphaBlendingForMesh(mesh);
 }
 
 function updateOutlines(): void {
@@ -88,7 +88,7 @@ function registerOutlineSource(mesh: Mesh): void {
 export function applyCartoonOutlines(meshes: readonly AbstractMesh[]): void {
   for (const mesh of meshes) {
     const source = mesh instanceof InstancedMesh ? mesh.sourceMesh : mesh;
-    if (!(source instanceof Mesh) || !eligibleSource(source)) continue;
+    if (!(source instanceof Mesh) || (!registrations.has(source) && !eligibleSource(source))) continue;
     registerOutlineSource(source);
   }
 }

@@ -1,3 +1,4 @@
+import {content} from '../content';
 import {randomInt} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import type {DatabaseSync} from 'node:sqlite';
@@ -10,6 +11,7 @@ import type {
 import type {OwnedRoleRecordData} from '../../../shared/protocols/PtlOwnedRoles';
 import {sourceTablePath} from '../runtime/content-paths';
 import {initializeAccountSpending, recordAccountSpending} from './spending';
+import {readPersistedAccountGrowth} from './player-profile';
 
 type UpgradeAction = 1 | 2;
 
@@ -46,7 +48,6 @@ const ENABLED_OFFSET: Record<UpgradeAction, number> = {1: 0x38, 2: 0x48};
 const ATTRIBUTE_OFFSET: Record<UpgradeAction, number> = {1: 0x3c, 2: 0x4c};
 const BONUS_OFFSET: Record<UpgradeAction, number> = {1: 0x40, 2: 0x50};
 const MONEY_OFFSET = 0x70;
-const ORIGINALITY_OFFSET = 0x9c;
 
 export type TankUpgradeErrorCode =
   | 'UPGRADE_TARGET_UNAVAILABLE'
@@ -87,20 +88,8 @@ function readTables(): TankUpgradeTables {
   if (targets.size !== 25) throw new Error('TankUp 表不完整');
 
   const tanks = new Map<number, TankUpgradeDefinition>();
-  const tank = JSON.parse(readFileSync(sourceTablePath('tank'), 'utf8')) as SourceTable;
-  for (const row of tank.rows) {
-    const id = sourceNumber(row.values, 'ID');
-    tanks.set(id, {
-      money: sourceNumber(row.values, 'TankMoney'),
-      minAttack: sourceNumber(row.values, 'MinAtkUp'),
-      maxAttack: sourceNumber(row.values, 'MaxAtkUp'),
-      minAttackBonus: sourceNumber(row.values, 'MinAtkBonusUp'),
-      maxAttackBonus: sourceNumber(row.values, 'MaxAtkBonusUp'),
-      minDefense: sourceNumber(row.values, 'MinDefUp'),
-      maxDefense: sourceNumber(row.values, 'MaxDefUp'),
-      minDefenseBonus: sourceNumber(row.values, 'MinDefBonusUp'),
-      maxDefenseBonus: sourceNumber(row.values, 'MaxDefBonusUp'),
-    });
+  for (const tank of content.tanks.values()) {
+    tanks.set(tank.id, {money: tank.basePrices.money, ...tank.growth});
   }
   return {targets, tanks};
 }
@@ -162,6 +151,9 @@ export class AccountTankUpgrade {
 
       const current = this.state(accountId);
       if (!current.profile) throw new TankUpgradeError('账户角色资料尚未建立', 'UPGRADE_REJECTED');
+      const profileView = new DataView(Uint8Array.from(current.profile.bytes).buffer);
+      const money = profileView.getUint32(MONEY_OFFSET, true);
+      const originality = current.growth?.originality ?? 0;
       const record = current.owned.equipment.find(value =>
         new Map(value.fields).get(0x1c) === instanceId);
       if (!record) throw new TankUpgradeError('该战车实例不属于当前账户', 'UPGRADE_REJECTED');
@@ -186,14 +178,11 @@ export class AccountTankUpgrade {
           || !Number.isSafeInteger(originalityCost) || originalityCost < 0 || originalityCost > 0xffff) {
         throw new TankUpgradeError('战车改装费用无效', 'UPGRADE_REJECTED');
       }
-      if (current.money! < moneyCost) {
+      if (money < moneyCost) {
         throw new TankUpgradeError('金钱余额不足', 'UPGRADE_MONEY_REQUIRED');
       }
-      if (current.originality! < originalityCost) {
+      if (originality < originalityCost) {
         throw new TankUpgradeError('创意点余额不足', 'UPGRADE_ORIGINALITY_REQUIRED');
-      }
-      if (current.originality! - originalityCost > 0xffff) {
-        throw new TankUpgradeError('创意点余额超出16位范围', 'UPGRADE_REJECTED');
       }
 
       const roll = randomInt(100);
@@ -215,8 +204,8 @@ export class AccountTankUpgrade {
       const confirmation: TankUpgradeConfirmation = {
         action,
         instanceId,
-        money: current.money! - moneyCost,
-        originality: current.originality! - originalityCost,
+        money: money - moneyCost,
+        originality: originality - originalityCost,
         attribute,
         bonus,
         result,
@@ -236,8 +225,9 @@ export class AccountTankUpgrade {
       const bytes = new Uint8Array(profile.payload as Uint8Array);
       const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
       view.setUint32(MONEY_OFFSET, confirmation.money, true);
-      view.setUint32(ORIGINALITY_OFFSET, confirmation.originality, true);
       this.database.prepare('UPDATE role_profiles SET payload = ? WHERE account_id = ?').run(bytes, accountId);
+      this.database.prepare('UPDATE account_growth SET originality = ? WHERE account_id = ?')
+        .run(confirmation.originality, accountId);
 
       this.database.prepare('INSERT INTO tank_upgrade_receipts VALUES (?, ?, ?, ?, ?)')
         .run(accountId, request.requestId, action, instanceId, JSON.stringify(confirmation));
@@ -268,16 +258,15 @@ export class AccountTankUpgrade {
     const saved = this.database.prepare('SELECT payload, strings FROM role_profiles WHERE account_id = ?')
       .get(accountId);
     let money = 0;
-    let originality = 0;
     const result: ResTankUpgrade = {owned, quotes: []};
+    result.growth = readPersistedAccountGrowth(this.database, accountId);
     if (saved) {
       const bytes = new Uint8Array(saved.payload as Uint8Array);
       const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
       money = view.getUint32(MONEY_OFFSET, true);
-      originality = view.getUint32(ORIGINALITY_OFFSET, true);
       result.profile = {bytes: [...bytes], strings: JSON.parse(String(saved.strings)) as [string, string]};
     }
-    result.quotes = this.quotes(owned.equipment, money, originality);
+    result.quotes = this.quotes(owned.equipment, money, result.growth?.originality ?? 0);
     if (confirmation) result.confirmation = confirmation;
     if (historicalConfirmation) result.historicalConfirmation = historicalConfirmation;
     if (replayed !== undefined) result.replayed = replayed;

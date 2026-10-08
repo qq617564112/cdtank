@@ -6,11 +6,11 @@ import {sourceProps} from '../resources/source-ui-props';
 
 export const SETTINGS_LAYOUT = 'settings.xml';
 
-/** Only XML image-bearing windows contribute a static picture. */
+/** The dialog backdrop owns the mask; other image-bearing windows remain source pictures. */
 export function SettingsSourcePage({ui}: {ui: HomeSourceUi}) {
   const layout = new HomeSourceLayout(ui, SETTINGS_LAYOUT);
   const pictures = ui.layouts.find(page => page.path.endsWith(SETTINGS_LAYOUT))!.windows
-    .filter(control => control.type === 'WindowsLook/StaticImage' && control.properties.Image);
+    .filter(control => control.type === 'WindowsLook/StaticImage' && control.properties.Image && control.name !== 'all');
   return <>{pictures.map(control => <SourceStaticImage key={control.name} ui={ui} layout={layout}
     suffix={SETTINGS_LAYOUT} name={control.name} className="settings-source-picture" aria-hidden="true" />)}</>;
 }

@@ -1,0 +1,41 @@
+.hud-spectator {
+  position: absolute;
+  left: 50%;
+  bottom: 9px;
+  width: 296px;
+  height: 53px;
+  transform: translateX(-50%);
+  background-repeat: no-repeat;
+}
+
+.hud-spectator .source-state-button {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+}
+
+.hud-spectator .source-state-button:disabled {
+  opacity: .45;
+}
+
+.hud-spectator .source-state-button:focus-visible {
+  outline: 2px solid #ffe994;
+  outline-offset: 2px;
+}
+
+.hud-spectator-name {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 0;
+  line-height: 53px;
+  font-size: 16px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 1px 1px #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

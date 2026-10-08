@@ -4,7 +4,7 @@ import type {RoleCombatState} from '../roles/combat-state';
 import {combatItems, combatSkills} from '../catalog';
 
 export interface TurnBoostState {
-  skillId: 7;
+  skillId: number;
   expiresAt: number;
   turnBonus: number;
 }
@@ -30,10 +30,10 @@ export function applyTurnDrink(roomId: string, player: TurnDrinkParticipant,
     itemTableId: number) => boolean) | undefined, events: MsgRoomEvent[]): void {
   if (request.kind !== 'useItem' || !player.alive || player.combat.status !== 2) return;
   const item = player.inventory.find(record => record.instanceId === request.instanceId);
-  if (!item || item.itemTableId !== 7 || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
-  const definition = combatItems.get(7);
+  if (!item || combatItems.get(item.itemTableId)?.runtime.use !== 'turn' || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
+  const definition = combatItems.get(item.itemTableId);
   const skill = definition ? combatSkills.get(definition.skillIds[0]) : undefined;
-  if (!skill || skill.skillId !== 7 || skill.target !== 1 || skill.triggerType !== 1
+  if (!skill || skill.target !== 1 || skill.triggerType !== 1
       || skill.functions[0]?.type !== 1) return;
   const reject = (message: string): void => {
     events.push({roomId, type: 'itemRejected', message, playerId: player.id,
@@ -44,7 +44,7 @@ export function applyTurnDrink(roomId: string, player: TurnDrinkParticipant,
     return;
   }
   const slots = player.combat.record?.arrays.get(4);
-  if (player.turnBoost || slots?.includes(7)) {
+  if (player.turnBoost || slots?.includes(skill.skillId)) {
     reject('回旋提升效果已生效');
     return;
   }
@@ -63,21 +63,21 @@ export function applyTurnDrink(roomId: string, player: TurnDrinkParticipant,
   }
   item.ownedQuantity -= 1;
   item.battleQuantity -= 1;
-  player.combat.addSkill(7);
-  player.turnBoost = {skillId: 7, expiresAt: now + skill.functions[0].t * 1000,
+  player.combat.addSkill(skill.skillId);
+  player.turnBoost = {skillId: skill.skillId, expiresAt: now + skill.functions[0].t * 1000,
     turnBonus: skill.attributes.ItemTurn};
   recompute();
-  events.push({roomId, type: 'itemUsed', message: `${player.name}使用${definition!.name}`,
+  events.push({roomId, type: 'itemUsed', itemName: combatItems.get(item.itemTableId)?.name, message: `${player.name}使用${definition!.name}`,
     playerId: player.id, targetId: player.id, value: 0,
-    x: player.x, y: player.y, z: player.z, skillId: 7,
-    playSkillEffect: {skillId: 7, effectIndex: 0, duration: 0,
+    x: player.x, y: player.y, z: player.z, skillId: skill.skillId,
+    playSkillEffect: {skillId: skill.skillId, effectIndex: 0, duration: 0,
       roleId: Number(player.id.slice(1)), xBits: 0, zBits: 0}});
 }
 
 /** Remove only the temporary skill installed by the turn drink. */
 export function clearTurnDrink(player: TurnDrinkParticipant, recompute: () => void): void {
   if (!player.turnBoost) return;
-  const slot = player.combat.record?.arrays.get(4)?.indexOf(7) ?? -1;
+  const slot = player.combat.record?.arrays.get(4)?.indexOf(player.turnBoost.skillId) ?? -1;
   if (slot !== -1) player.combat.removeSkillAt(slot);
   delete player.turnBoost;
   recompute();
@@ -86,8 +86,16 @@ export function clearTurnDrink(player: TurnDrinkParticipant, recompute: () => vo
 export function advanceTurnDrink(roomId: string, player: TurnDrinkParticipant, now: number,
   recompute: () => void, events: MsgRoomEvent[]): void {
   if (!player.turnBoost || (player.alive && now < player.turnBoost.expiresAt)) return;
+  const skillId = player.turnBoost.skillId;
+  const roleId = Number(player.id.slice(1));
+  const expiredNaturally = player.alive && now >= player.turnBoost.expiresAt;
   clearTurnDrink(player, recompute);
   events.push({roomId, type: 'skillStopped', message: '', playerId: player.id,
-    targetId: player.id, value: 0, x: player.x, y: player.y, z: player.z, skillId: 7,
-    stopSkillEffect: {skillId: 7, roleId: Number(player.id.slice(1))}});
+    targetId: player.id, value: 0, x: player.x, y: player.y, z: player.z, skillId,
+    stopSkillEffect: {skillId, roleId}});
+  if (expiredNaturally) {
+    events.push({roomId, type: 'drinkEndEffect', message: '', playerId: player.id,
+      targetId: player.id, value: 0, x: player.x, y: player.y, z: player.z, skillId,
+      playSkillEffect: {skillId, effectIndex: 1, duration: 0, roleId, xBits: 0, zBits: 0}});
+  }
 }

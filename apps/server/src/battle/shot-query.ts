@@ -27,7 +27,7 @@ export function queryShotTarget(player: Point & {id: string}, look: Point,
   const start = {...player, y: closestPlayer ? 25 : player.y + 20};
   const end = {...free, y: closestPlayer ? 25 : free.y + 20};
   let surface = battlefield.firstSurfaceHit(start, end, 1);
-  const crush = crushes.length ? querySceneCrush(start, end, crushes) : undefined;
+  const crush = crushes.length ? querySceneCrush(start, end, crushes, Number(battlefield.source.id)) : undefined;
   if (crush && (!surface || crush.fraction < surface.fraction)) {
     surface = {boxId: crush.id, fraction: crush.fraction};
   }

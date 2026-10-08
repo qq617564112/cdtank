@@ -1,0 +1,81 @@
+.battle-end-page {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #fff;
+  background: transparent;
+  font-family: 'CDTank-SIMSUN', serif;
+  outline: none;
+}
+
+.battle-end-page[open] {
+  display: grid;
+  place-items: center;
+}
+
+.battle-end-page::backdrop {
+  background: rgb(0 0 0 / 35%);
+}
+
+.battle-end-notice {
+  --battle-end-unit: min(.125vw, .1666666667vh);
+  text-align: center;
+  pointer-events: none;
+  animation: battle-end-appear 220ms ease-out both;
+}
+
+.battle-end-banner {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(359 * var(--battle-end-unit));
+  aspect-ratio: 213 / 153;
+}
+
+.battle-end-burst {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.battle-end-banner h1 {
+  position: relative;
+  margin: 0;
+  font-size: calc(48 * var(--battle-end-unit));
+  letter-spacing: .08em;
+  text-shadow: .04em .04em #000, -.02em -.02em #000, .02em -.02em #000, -.02em .02em #000;
+}
+
+.battle-end-notice p {
+  margin: calc(10 * var(--battle-end-unit)) 0 0;
+  font-size: calc(14 * var(--battle-end-unit));
+  text-shadow: .07em .07em #000;
+}
+
+.battle-summary-transition .battle-summary-viewport {
+  animation: battle-summary-appear 250ms ease-out both;
+}
+
+@keyframes battle-end-appear {
+  from {opacity: 0; transform: scale(1.08);}
+  to {opacity: 1; transform: scale(1);}
+}
+
+@keyframes battle-summary-appear {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-end-notice,
+  .battle-summary-transition .battle-summary-viewport {
+    animation: none;
+  }
+}

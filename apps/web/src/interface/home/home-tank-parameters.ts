@@ -1,3 +1,4 @@
+import {rankedPetSkillId} from '../../../../shared/content/catalog';
 import type {CombatCatalog, CombatSkillAttribute} from '../../../../shared/combat/catalog';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
 
@@ -68,7 +69,7 @@ export function homeTankParameters(record: OwnedRoleRecordData | undefined,
   if (alreadyUsed) {
     for (let slot = 0; slot < 6; slot++) {
       const baseId = petFields.get(0x44 + slot * 4), rank = petFields.get(0x5c + slot * 4);
-      if (baseId !== undefined && rank !== undefined) addSkill((baseId + rank - 1) | 0);
+      if (baseId !== undefined && rank !== undefined) addSkill(rankedPetSkillId(baseId, rank) ?? 0);
     }
     equippedItemIds.forEach(addItem);
   }

@@ -14,15 +14,15 @@
 
 ## 地图组合查看
 
-`recovery/export_scenes.py`生成 `scene-placements.json`。Breach/Plant/General/Crush按模型名匹配POL入口，共2113条；其余122条待接入。转换清单保留全部原记录。25张地图均有基础地形入口。
+`recovery/export_scenes.py`生成 `scene-placements.json`。原25图2235条OBJ与22座Castle中，2135条有静态asset，12条有CVD animation，4条Sequence有精确普通入口，Hook/WaterFall各1条有special，共2153条可见物件已绑定。73条Sound与31条Effect由独立地图owner及各图metadata消费，未计入resolved不代表未接。转换清单保留全部原记录。25张地图均有基础地形入口；十二图1814个原地形分片材质metadata已发布并由SceneTerrainMaterial消费，见battle-remaining-integration.md P。
 
-`apps/web/src/assets/scenes/scene-preview.ts`按资产缓存载入和实例化物件，采用几何原点及矩阵旋转/缩放，并对放置变换作X轴反射以匹配Babylon glTF AUTO导入空间。导入器源码 `glTFLoader.pure.js::_createRootNode` 设置Y轴半圈旋转及Z轴负缩放，合成结果反射X。田野路0002已浏览器显示89个静态物件及2座城堡，4个声音/其他记录待接入；截图 `recovery/output/scene-0002.png`。
+`apps/web/src/assets/scenes/scene-preview.ts`按资产缓存载入和实例化物件，采用几何原点及矩阵旋转/缩放，并对放置变换作X轴反射以匹配Babylon glTF AUTO导入空间。导入器源码 `glTFLoader.pure.js::_createRootNode` 设置Y轴半圈旋转及Z轴负缩放，合成结果反射X。田野路0002既有截图显示89个静态物件及2座城堡；4条声音现由MapEnvironmentSound消费，截图 `recovery/output/scene-0002.png` 不证明当前全部声音或表现验收。
 
 ## 已知限制
 
 正式ScenePreview已有独立CVD动画、Castle动作/状态消费者、Breach几何切换、Crush原051消费、水面及Plant摆动owner；声音与常驻Effect由对应地图owner管理。各模块只在具名来源充分的原地图/原对象范围接线，具体资格、普通玩家证据与未完成范围以 [tasklist](tasklist.md) 为准。资源或owner存在不代表全部放置可见或玩法许可恢复。
 
-原模型匹配、未接分类、完整GPU材质/过滤/CW精度、全部逐实例像素与高清多人性能仍未完成。Sequence、Hook及WaterFall的资源来源不构成非法地图的正式选图资格。Plant数据覆盖401条合法放置，数据覆盖与正式加载资格/实际画布分别记录在scene-plant-legal-data-coverage.json；map04普通双端自然摆动有限通过，map05首验保留客端持续可见性缺口。
+可见物件绑定与分类消费者已齐；完整GPU材质/过滤/CW精度、全部逐实例像素与高清多人性能仍未完成。Sequence、Hook及WaterFall所在地图已有正式入口，消费者与metadata已接；普通表现与完整来源边界见scene-sequence-runtime.md、scene-hook-waterfall-runtime.md。Plant当前原25图919条均有图级metadata，401条原合法放置的旧数据证据仍按scene-plant-legal-data-coverage.json限定范围使用；八图新增518株发布见extended-scene-resources-runtime.md。map04普通双端自然摆动有限通过，map05首验保留客端持续可见性缺口。
 
 原几何和放置源矩阵验证不替代服务端碰撞/伤害授权。Castle、Breach及Crush的正式状态与事务由主线管理，地图模块负责原模型映射和视图owner清理。联机地图接入及静态碰撞验证见 [原地图运行说明](battlefield-runtime.md)。
 

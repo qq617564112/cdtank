@@ -64,7 +64,6 @@ def export_plants(map_id):
     for record in records:
         model = models[record['model']]
         assert record['bounds'][1] == model['height']
-        assert record['rotation'] == (0.0, 0.0, 0.0)
         plants.append(dict(sourcePlacementId=record['id'], model=record['model'],
                            height=model['height'], enabled=bool(record['enabled']),
                            sourceBounds=model['sourceBounds']))

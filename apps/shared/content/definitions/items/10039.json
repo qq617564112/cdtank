@@ -1,0 +1,79 @@
+{
+  "name": "爆竹",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 2,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10039,
+  "key": "item-10039",
+  "description": "不要企图点燃上头的引线……虽然它不会真的爆炸。",
+  "prices": {
+    "money": 3000,
+    "tokens": 300
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10039/10039.glb",
+    "modelId": 10039,
+    "modelType": 1,
+    "texture": "10039A",
+    "iconId": 10039,
+    "textures": [
+      "Data/accessory/10039/10039A.png"
+    ],
+    "sourceModel": "Data/accessory/10039/10039.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10039/10039A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

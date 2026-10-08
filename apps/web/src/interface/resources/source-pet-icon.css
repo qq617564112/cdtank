@@ -1,0 +1,12 @@
+[data-pet-thumbnail][data-source-asset] {
+  background-color: #428cff;
+}
+
+[data-pet-thumbnail]::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 1px solid #000;
+  content: '';
+  pointer-events: none;
+}

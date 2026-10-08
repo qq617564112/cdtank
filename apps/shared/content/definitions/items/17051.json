@@ -1,0 +1,78 @@
+{
+  "name": "自爆炸弹",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 12,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 17051,
+  "key": "item-17051",
+  "description": "被打死时，引爆同归于尽的自爆炸弹。",
+  "prices": {
+    "money": 1500,
+    "tokens": 150
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 12,
+  "inventoryCategory": 5,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 13151,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 13151,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 13151,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "common",
+    "passive": "selfDestruct"
+  },
+  "equipmentTarget": "PART"
+}

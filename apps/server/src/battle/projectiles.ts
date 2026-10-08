@@ -1,3 +1,4 @@
+import {gameContent} from '../../../shared/content/catalog';
 import {createRoleFreeAim} from './roles/free-aim';
 import {queryShotTarget} from './shot-query';
 import type {MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot} from '../../../shared/protocols';
@@ -7,9 +8,11 @@ import {prototypeAttack, type AttackBoostState} from './items/attack-drink';
 import {calculateQualifiedShotAttack} from './roles/qualified-shot-attack';
 import type {recomputeQualifiedRoleArmor} from './roles/recompute-armor';
 import type {ShotModifiers} from './roles/shot-modifiers';
+import {tankTurretYaw} from '../../../shared/combat/tank-turret';
 
 export interface BulletState {
   id: string;
+  shotId?: string;
   ownerId: string;
   x: number;
   y: number;
@@ -21,7 +24,7 @@ export interface BulletState {
   /** Confirmed ammo at creation; later slot changes cannot change this shot. */
   ammoItemId?: number;
   ttl: number;
-  /** Center-based remaining travel for a range-extended functional bullet. */
+  /** Remaining muzzle-to-query-limit travel; lifetime stays aligned with this distance. */
   remainingDistance?: number;
 }
 
@@ -105,7 +108,7 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
       const owner = room.players.get(bullet.ownerId);
       if (hitPlayer && owner) {
         handlers.hitPlayer(owner, hitPlayer, bullet.damage, bullet.ammoItemId,
-          {x: -bullet.vx, z: -bullet.vz}, bullet.id);
+          {x: -bullet.vx, z: -bullet.vz}, bullet.shotId ?? bullet.id);
       } else if (hitObjective && owner) {
         handlers.hitObjective(owner, hitObjective, bullet.damage, bullet.ammoItemId);
       } else if (hitSceneObject && owner) {
@@ -145,8 +148,9 @@ export function fireProjectile(room: {
   id: string;
   name: string;
   yaw: number;
+  bodyYaw?: number;
   aim: number;
-  tank: {attack: number};
+  tank: {id?: number; attack: number};
   attackBoost?: AttackBoostState;
   armorReady?: boolean;
   recoveredArmor?: ReturnType<typeof recomputeQualifiedRoleArmor>;
@@ -155,24 +159,27 @@ export function fireProjectile(room: {
 }, currentSeconds: number, allocateId: () => string, events: MsgRoomEvent[], bodyRadius: number,
   hitSceneObject?: (targetId: string, damage: number, ammoItemId: number) => boolean,
   hitPlayer?: (targetId: string, damage: number, ammoItemId: number, shotId?: string) => void,
-  itemId = player.combat.currentAmmoTableId, shotId?: string, fired?: () => void): void {
-  const speed = 360;
-  const angle = player.yaw + player.aim;
+  itemId = player.combat.currentAmmoTableId, shotId?: string, fired?: () => void,
+  shotModifiers = player.shotModifiers): void {
+  const ammo = gameContent().items.get(itemId)!;
+  const speed = ammo.runtime.projectileSpeed!;
+  const instant = ammo.runtime.query === 'instant';
+  const angle = tankTurretYaw(player.tank.id, player);
   const aim = createRoleFreeAim(player, {x: Math.sin(angle), y: 0, z: Math.cos(angle)}, currentSeconds);
-  const penetratesObstacles = player.shotModifiers?.penetratesObstacles === true;
-  const range = 1000 * (player.shotModifiers?.rangePercent ?? 100) / 100;
+  const penetratesObstacles = shotModifiers?.penetratesObstacles === true;
+  const range = ammo.runtime.range! * (shotModifiers?.rangePercent ?? 100) / 100;
   const target = queryShotTarget(player, {x: Math.sin(angle), y: 0, z: Math.cos(angle)},
     room.players, room.battlefield, bodyRadius,
-    itemId === 2001 ? room.sceneCrushes : undefined, itemId === 2001,
-    {closestPlayer: itemId === 2001 || penetratesObstacles,
+    instant ? room.sceneCrushes : undefined, instant,
+    {closestPlayer: instant || penetratesObstacles,
       range, ignoreObstruction: penetratesObstacles});
   const aimX = aim.x - Math.fround(player.x), aimZ = aim.z - Math.fround(player.z);
   const distance = Math.hypot(aimX, aimZ);
   const directionX = aimX / distance, directionZ = aimZ / distance;
   // Recovered free-aim target; projectile speed and muzzle remain Web rules.
   player.combat.specialFlag12 = 0;
-  const muzzle = {x: player.x + directionX * 30,
-    y: player.y + 20, z: player.z + directionZ * 30};
+  const muzzle = {x: player.x + directionX * ammo.runtime.muzzleForward!,
+    y: player.y + ammo.runtime.muzzleHeight!, z: player.z + directionZ * ammo.runtime.muzzleForward!};
   events.push({roomId: room.roomId, type: 'fire', message: `${player.name}开火`, playerId: player.id,
     targetId: target.kind === 'FREE' ? '' : target.targetId, value: 0,
     x: player.x, y: player.y, z: player.z, skillId: itemId,
@@ -182,10 +189,10 @@ export function fireProjectile(room: {
   // Temporary attack skills already contribute to qualified role recomputation.
   const damage = player.armorReady && player.recoveredArmor
     ? calculateQualifiedShotAttack(player.recoveredArmor)
-    : 35 + prototypeAttack(player.tank.attack, player.attackBoost) * 0.08;
+    : ammo.runtime.values.baseDamage + prototypeAttack(player.tank.attack, player.attackBoost) * ammo.runtime.values.attackScale;
   // Ordinary2001 and FuncType22 resolve one selected target during the accepted
   // query boundary; query geometry and server damage are rebuilt.
-  if (itemId === 2001 || penetratesObstacles) {
+  if (instant || penetratesObstacles) {
     if (target.kind === 'PLAYER') hitPlayer?.(target.targetId, damage, itemId, shotId);
     else if (target.kind === 'SCENE' && !hitSceneObject?.(target.targetId, damage, itemId)) {
       // Original type2 receives remote result feedback without a damage transaction.
@@ -209,9 +216,10 @@ export function fireProjectile(room: {
       skillId: undefined});
     return;
   }
-  room.bullets.push({id: allocateId(), ownerId: player.id, ...muzzle,
+  const travelDistance = Math.max(0, range - ammo.runtime.muzzleForward!);
+  room.bullets.push({id: allocateId(), shotId, ownerId: player.id, ...muzzle,
     vx: directionX * speed, vy: 0, vz: directionZ * speed,
     // Existing damage remains rebuilt; source drink parameters alter attack at shot creation.
-    damage, ammoItemId: itemId, ttl: range > 1000 ? range / speed : 2.2,
-    remainingDistance: range > 1000 ? range - 30 : undefined});
+    damage, ammoItemId: itemId, ttl: travelDistance / speed,
+    remainingDistance: travelDistance});
 }

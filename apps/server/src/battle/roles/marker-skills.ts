@@ -1,7 +1,8 @@
+import {gameContent} from '../../../../shared/content/catalog';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
-import type {RoleItemSkills, RoleSkillRecord} from './skills';
+import type {RoleSkillRecord} from '../../../../shared/contracts/role-skills';
+import type {RoleItemSkills} from './skills';
 
-const EQUIPPED_MARKER_ITEM_IDS = new Set([12501, 12502, 12503]);
 
 /** Resolve Home profile marks through owned inventory; instance IDs never stand in for table or skill IDs. */
 export function readEquippedMarkerItemIds(instanceIds: readonly number[],
@@ -14,7 +15,7 @@ export function readEquippedMarkerItemIds(instanceIds: readonly number[],
     const record = inventory.find(entry => (entry.instanceId >>> 0) === id);
     if (!record || (record.ownedQuantity >>> 0) <= 0) continue;
     const itemId = record.itemTableId >>> 0;
-    if (!EQUIPPED_MARKER_ITEM_IDS.has(itemId) || !items.has(itemId)) continue;
+    if (!gameContent().items.get(itemId)?.runtime.markerReward || !items.has(itemId)) continue;
     itemIds.push(itemId);
   }
   return itemIds;

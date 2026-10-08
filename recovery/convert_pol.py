@@ -7,6 +7,14 @@ from pol import read_pol
 from convert_mv3 import make_glb
 
 
+# Adopted terrain references; source POL material names remain unchanged.
+TERRAIN_TEXTURE_ADOPTIONS = {
+    'data/map/0009/0009.pol': {'00026.tga': 'Data/map/0015/00026.png'},
+    'data/map/0016/0016.pol': {'ct-01-1.tga': 'Data/map/0016/di2.png'},
+    'data/map/0023/0023.pol': {'qiao.tga': 'Data/map/0006/qiao.png'},
+}
+
+
 def convert(model):
     materials, meshes = [], []
     for mesh in model['meshes']:
@@ -54,7 +62,9 @@ def main():
             continue
         original = read_pol(path)
         model = convert(original)
-        local = textures.get(path.parent, {})
+        local = dict(textures.get(path.parent, {}))
+        for reference, asset in TERRAIN_TEXTURE_ADOPTIONS.get(path.relative_to(root).as_posix().lower(), {}).items():
+            local[reference] = output / asset
         missing = sorted({m['textures'][0] for m in model['materials'] if m['textures'][0] and m['textures'][0].lower() not in local})
         dest = output / path.relative_to(root).with_suffix('.glb')
         dest.parent.mkdir(parents=True, exist_ok=True)

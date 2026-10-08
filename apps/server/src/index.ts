@@ -26,6 +26,7 @@ import {accountBattleBinding, consumeAccountBattleItem} from './accounts/battle-
 import {mkdirSync} from 'node:fs';
 import {dirname} from 'node:path';
 import {serverRuntimeConfig} from './runtime/config';
+import {hostWeb} from './runtime/web';
 import {accountMatchHistory} from './settlement/history';
 import {registerGmSupportApi} from './support/gm-support-api';
 import {registerFamilyApi} from './social/family';
@@ -37,10 +38,11 @@ mkdirSync(dirname(accountPath), {recursive: true});
 const accounts = new AccountStore(accountPath);
 const accountByConnection = new Map<string, string>();
 const history = accountMatchHistory(accounts, accountByConnection,
-  error => console.error('Match history save pending; retrying', error));
+  error => console.error('Match history save pending; retrying', error),
+  (accountId, records) => world.publishInventoryGrants(accountId, records));
 const PORT = runtime.port;
 const TICK_RATE = runtime.tickRate;
-const world = new World(Date.now, {
+const world: World = new World(Date.now, {
   minPlayers: runtime.minPlayers,
   timeLimitSeconds: runtime.timeLimitSeconds,
   resolveAccount: connectionId => accountByConnection.get(connectionId),
@@ -83,7 +85,7 @@ registerRoomApis(server, world, sessionByConnection, roomTankId, bindAccountStat
     trades.assertLobbyAvailable(accountId);
     return accounts.displayName(accountId);
   });
-registerRoomLeaveApi(server, world, sessionByConnection, transport);
+registerRoomLeaveApi(server, world, sessionByConnection, transport, accounts, accountByConnection);
 registerRoomKickApi(server, world, sessionByConnection, transport, reconnections);
 registerRoomInvitations(server, world, accountByConnection, sessionByConnection);
 
@@ -92,7 +94,7 @@ registerBattleInputs(server, world, sessionByConnection, broadcastEvent, roomId 
   if (snapshot) transport.broadcastSnapshot(snapshot);
 });
 
-registerRoomMessages(server, world, accountByConnection, sessionByConnection, transport, reconnections);
+registerRoomMessages(server, world, accountByConnection, sessionByConnection, transport, reconnections, accounts);
 registerLobbyChatApi(server, accounts, accountByConnection, sessionByConnection);
 registerLobbyWhisperApi(server, accounts, accountByConnection, sessionByConnection);
 registerRoomWhisperApi(server, accounts, world, accountByConnection, sessionByConnection);
@@ -108,7 +110,7 @@ registerLobbyPresenceApi(server, accountByConnection, sessionByConnection,
   accountId => accounts.displayName(accountId), accountId => accounts.currentTitle(accountId));
 startWorldTicks(world, TICK_RATE, transport, () => world.publishReceipts(history.flush()));
 
-server.start().catch((error: unknown) => {
+server.start().then(() => hostWeb(server, runtime.webRoot)).catch((error: unknown) => {
   console.error(error);
   process.exitCode = 1;
 });

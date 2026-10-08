@@ -1,5 +1,7 @@
 .waiting-chat-history-scrollbar {
   position: absolute;
+  box-sizing: border-box;
+  max-height: 100%;
   overflow: hidden;
   background-repeat: repeat;
 }
@@ -8,6 +10,7 @@
 .waiting-chat-history-scrollbar span,
 .waiting-chat-history-scrollbar button {
   position: absolute;
+  left: 0;
   margin: 0;
   padding: 0;
   border: 0;

@@ -12,8 +12,8 @@
 ## 当前生产接线
 
 server 目录由 `playableMapDirectory(sourceMaps, scene-placements, gamestring)` 生成：
-原 13 图 26 组合保持不变，未授权 scene 扩展 `mode<=3`、有 Castle 时的 mode2、有 Breach
-时的 mode5，模板规则复用同模式源行，人数采用 `2/12`（mode4/5 为 `1/12`）。
+原26组合参数保留；0001–0025各开放mode1/3/4/5，占领仅开放有真实Castle的11图。
+新增组合复用同模式首条源行，人数采用 `2/12`（mode4/5 为 `1/12`）。
 `ListMaps`、`CreateRoom`、`EditRoom`、`Join` 统一读取 `MAPS`。
 
 Web selector `room-map-selector.tsx` 消费 `ListMaps`，按模式取八槽分页、真实地图名、原
@@ -49,8 +49,9 @@ Web selector `room-map-selector.tsx` 消费 `ListMaps`，按模式取八槽分�
    `MapSceneEffects.spawnSceneEffect` 消费。未发布 effect 的图不写空数组冒充。
 6. 12 图 `scene-environment-sound-*.json` 继续由 `MapEnvironmentSound` 按图加载；
    asset 匹配走现有 audio catalog，不在场景代码内造声音。
-7. 12 图未发布 `scene-terrain-material-<id>.json` 的图保持当前 GLB 材质，不补写同色
-   替代材质。
+7. `export_scene_extended_terrain_material.py` 已发布12图1814个地形分片的原kind0/1
+   材质JSON；ScenePreview/SceneTerrainMaterial共用资格消费原纹理×顶点色、透明和alpha-test。
+   三图五处采用纹理已内嵌GLB，精确映射及原空纹理规则见extended-scene-render-runtime.md。
 8. `export_scene_sequence05023.py` 为 0008/0013 导出四条精确 `obj05023`
    `SYcScnObjSequence` placement；`export_scenes.py` 只用这些键扩展 `resolved`，
    不向记录写伪造 `asset`/`animation`。静态主体、screen 模型和 `001–004` 帧 PNG 复用
@@ -97,19 +98,15 @@ Web selector `room-map-selector.tsx` 消费 `ListMaps`，按模式取八槽分�
 
 ## 出版边界
 
-新增 producer 尚未执行，因此新 JSON、材质和 catalog 增量尚未产出。
-`scene-castle-0023.json`、0003/0008/0012/0016/0019/0023/0024/0025 的
-`scene-plant-*.json`、05416 Plant 材质/catalog 增量，以及 05440/05441/05438 和
-05446/05463 的 destruction 字段/库，都是 producer 接线完成但尚未实际出版。
-`scene-sequence05023.json` 同样只有 producer 代码，尚未实际执行出版；其四条
-0008/0013 placement 的生产消费已接线，但不能据此声称实际页面资源已可加载。
-旧 25 图已 published JSON 模型、效果、环境声音和 GLB terrain 保持原范围复用。
-未出版资源不得宣称为 ready；可见、破损、摆动、cleanup 和整图开局未实测。
-
-0023 的 05449/05450 Castle `c1/c2/c3/n1/n2` 五动作 source 与 GLB 已存在，
-`scene-castle-0023.json` 的图级 JSON 产出是真正缺口。八图 Plant 为
-0003/0008/0012/0016/0019/0023/0024/0025，不能漏掉 0008 的 05416。
-未知材质只在 GLB 源已有者复用，不假填。
+默认 Web 目录已实际发布0023两座Castle十动作、八图518株Plant和05416原材质。
+八图为0003/0008/0012/0016/0019/0023/0024/0025；0008全部82株为05416。
+0025原旋转由placement矩阵保留，Plant producer读取高度/边界与enabled。
+05440/05441/05438/05446/05463自身c9/C9及98条fallback绑定已发布，详scene-breach-catalog.md。
+`scene-sequence05023.json`、Hook/WaterFall metadata均已发布；五条General动画绑定及
+0003/0016独立water/waves已接普通入口，详extended-scene-resources-runtime.md。
+十二图地形材质、三图五处采用纹理已发布，动画NORMAL、动态模型priority及图级环境已接，
+详extended-scene-render-runtime.md。效果、环境声及原放置保持复用。普通页面加载、逐实例可见、动画碰撞、
+破损/摆动、cleanup和整图开局未在此范围实测。
 
 所有 54 条 `MAP-EXT-*` 条目继续保持 `[ ]`，因为原正文验收仍要求规则、页面、联机、
 表现和 native/原来源实测。当前代码接通可原位登记，但不能用 code walk 代替实测。
@@ -119,9 +116,7 @@ Limitations / Known Issues:
 - mode/map 组合、资源实际可见、破损/摆动动画、cleanup、真实双端和 high-definition
   验收未在本轮实测。
 - 原 Windows 逐像素等价、原服务器完整伤害/资格规则、全 GPU 材质和全部原回调未恢复。
-- 05440/05441/05438 与 05446/05463 的新库、0023 本图 Castle JSON、八图 Plant JSON
-  与 05416 材质/catalog 增量未在本轮出版。
-- `scene-sequence05023.json` metadata 未出版；0008/0013 Sequence 的实际页面加载、
+- `scene-sequence05023.json` metadata 已出版；0008/0013 Sequence 的实际页面加载、
   逐项像素、双端 phase、高清与 GPU 精度未在本轮验证。原 Windows provider/单位与首帧
   未恢复，Web 侧采用 `performance.now()/1000`。本批最终范围已完成一次集中静态走查。
 - 无 Castle 的图不支持占领模式；G0 缺失点不人工补点。

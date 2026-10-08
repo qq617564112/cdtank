@@ -59,8 +59,9 @@
   "runtime": {
     "values": {
       "shopSupplyCount": 1,
-      "battleRewardOrder": 0,
-      "groundDurationMs": 60000
+      "battleRewardOrder": 25,
+      "groundDurationMs": 60000,
+      "breachDropOrder": 12
     },
     "skillRoles": {
       "primary": 4024,

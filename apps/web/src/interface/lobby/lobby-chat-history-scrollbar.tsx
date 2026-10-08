@@ -1,3 +1,4 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import './lobby-chat-history.css';
 import {useEffect, useRef, useState, type RefObject, type PointerEvent} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
@@ -16,8 +17,12 @@ export function LobbyChatHistoryScrollbar({list, ui, properties}: {
     const match = /^set:(\S+) image:(.+)$/.exec(properties[property] ?? '');
     const sets = ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
     const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
-    const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-    return {'data-source-asset': asset, style: {backgroundImage: asset ? `url('/${asset}')` : undefined}};
+    const image = set?.images.find(image => image.Name === match?.[2]);
+    const asset = image?.asset;
+    return {'data-source-asset': asset, style: {backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined,
+      ...(image && property.endsWith('BackgroundImage') ? {
+        backgroundSize: `${image.Width}px ${image.Height}px`, backgroundPosition: 'left top', backgroundRepeat: 'repeat',
+      } : {})}};
   };
   const refresh = () => {
     const element = list.current;

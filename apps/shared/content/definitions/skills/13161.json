@@ -1,0 +1,88 @@
+{
+  "skillId": 13161,
+  "name": "反应装甲",
+  "info": "可以抵挡1次攻击不受伤害，移动速度-20。",
+  "triggerType": 0,
+  "target": 1,
+  "range": 0,
+  "attributes": {
+    "MaxHP": 0,
+    "HP": 0,
+    "HPRegainRate": 0,
+    "HPDrain": 0,
+    "Critical": 0,
+    "Lucky": 0,
+    "AtkBase": 0,
+    "Atk": 0,
+    "AtkBonus": 0,
+    "Def": 0,
+    "DefBonus": 0,
+    "SideDef": 0,
+    "BackDef": 0,
+    "ItemMove": -2,
+    "ItemTurn": 0,
+    "Delay": 0,
+    "MaxBullet": 0,
+    "LoadTime": 0,
+    "MaxCounter": 1,
+    "StunRate": 0,
+    "PartSlot": 0,
+    "RadarA": 0,
+    "RadarB": 0,
+    "RadarC": 0,
+    "STankMastery": 0,
+    "MTankMastery": 0,
+    "LTankMastery": 0,
+    "StugMastery": 0
+  },
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 0,
+      "method": 0
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 0,
+      "method": 0
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 0,
+      "method": 0
+    }
+  ],
+  "functions": [
+    {
+      "type": 1,
+      "t": 65535,
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "type": 0,
+      "t": 0,
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "type": 0,
+      "t": 0,
+      "x": 0,
+      "y": 0,
+      "z": 0
+    }
+  ],
+  "key": "skill-13161",
+  "runtime": {
+    "retainedEffect": false,
+    "queuedEffect": false,
+    "queueIntervalSeconds": 5,
+    "worldSoundEvents": []
+  }
+}

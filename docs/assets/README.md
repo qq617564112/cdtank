@@ -24,15 +24,16 @@
 
 ## 运行资源与字体
 
-已提取并转换的高清运行资源通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.9.0) 发布。执行 `npm run assets:install` 自动下载解压，普通运行无需原客户端或另行下载字体。
+已提取并转换的高清运行资源通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v1.0.0) 发布。执行 `npm run assets:install` 自动下载解压，普通运行无需原客户端或另行下载字体。
 
 | 安装后的目录或文件 | 内容与来源 |
 | --- | --- |
 | `recovery/output/web-assets/` | 从原 Windows 客户端提取并转换的模型、贴图、音乐、音效、界面、字库与资源目录 |
 | `recovery/output/verified/tables/` | 从原客户端解码的数据表，保存为 JSON 和 CSV |
-| `apps/web/src/assets/` 中的图片 | 源码引用的地图预览、角色缩略图、界面标志与光标；随资源包安装 |
+| `recovery/output/web-assets/sprites/`、`sprite-images.json` | 高清图集及原图片路径映射，包含地图预览、角色缩略图、界面标志与光标 |
 | `recovery/output/web-assets/ui/fonts/SIMSUN.ttf`、`SIMSUN-password.ttf` | 原客户端使用的界面字体及密码字体 |
 | `recovery/output/web-assets/ui/fonts/xiangjiao-brush.ttf` | 项目维护者提供的 `XiangJiaoKuanMaoShuaLingGanTi-2.ttf`，用于动态文字 |
+| `recovery/output/web-assets/ui/fonts/source-*-bold.woff`、`licenses/` | Noto Sans SC、Arimo 和 Archivo Black 的字体子集，以及对应 OFL 许可 |
 
 ## 权利说明
 

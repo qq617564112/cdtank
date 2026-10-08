@@ -5,6 +5,7 @@ import {resolveShotDefenseFacet} from './roles/shot-defense-facet';
 import {applyShotLifeDrain} from './shot-life-drain';
 import {consumeShotCancellation} from './shot-cancellation';
 import {resolveShotCritical} from './shot-critical';
+import {evadeShotWithLuck} from './shot-luck';
 import {resolveShotBackCriticalBonus} from './shot-back-critical';
 import {qualifiedLastStand} from './last-stand';
 import {isBattleInvincible} from './items/invincibility';
@@ -26,12 +27,15 @@ import {
   recordFriendlyFireDamage,
   recordPlayerDeath,
   recordRearDamage,
+  recordVipDamage,
   type RoundStatsCarrier,
 } from './round-statistics';
+import {initialTankVerticalState} from '../../../shared/movement/tank-vertical';
 
 interface LifePlayer extends HealthParticipant, RoundStatsCarrier {
   id: string; name: string; team: number; x: number; y: number; z: number;
   hp: number; alive: boolean; score: number; deaths: number; kills: number;
+  catsInfo?: number; dogsInfo?: number;
   respawnAt: number; vip: boolean;
   defenseBoost?: DefenseBoostState;
   armorReady?: boolean;
@@ -39,12 +43,14 @@ interface LifePlayer extends HealthParticipant, RoundStatsCarrier {
     sideDefensePercent?: number; backDefensePercent?: number};
   attributesReady?: boolean;
   ownedRoles?: Pick<BattleRoleSources, 'snapshot' | 'tables'>;
+  boundGear?: import('../../../shared/contracts/owned-base').OwnedRoleBaseRecord;
   cancellationsSpent?: number;
   attributes: HealthParticipant['attributes'] & {values?: {roleIntegers: Map<number, number>}};
   burn?: AmmoBurnState;
   invincibility?: {expiresAt: number};
   respawnProtection?: RespawnProtectionState;
-  combat: HealthParticipant['combat'] & {readonly status: number; roleFloatFields?: Map<number, number>; setStatus(status: number): void;
+  combat: HealthParticipant['combat'] & {readonly status: number; roleFloatFields?: Map<number, number>;
+    record?: {numericFields?: Map<number, number>}; setStatus(status: number): void;
     setSelectedAmmoSlot(value: number): boolean; setCurrentAmmoTableId(value: number): boolean};
 }
 
@@ -85,6 +91,13 @@ export function damagePlayer(room: {
       x: target.x, y: target.y, z: target.z});
     return;
   }
+  if (ammoItemId !== undefined && !friendly && attacker.id !== target.id && evadeShotWithLuck(target)) {
+    events.push({roomId: room.roomId, type: 'hit', message: `${target.name}闪避攻击`,
+      playerId: attacker.id, targetId: target.id, value: 0,
+      x: target.x, y: target.y, z: target.z,
+      shotPlayerResult: {itemId: ammoItemId, critical: false}});
+    return;
+  }
   const shotCritical = ammoItemId !== undefined && !friendly && attacker.id !== target.id
     ? resolveShotCritical(attacker, damage) : undefined;
   if (shotCritical) damage = shotCritical.attack;
@@ -102,6 +115,7 @@ export function damagePlayer(room: {
     recordFriendlyFireDamage(attacker, applied);
   } else if (attacker.id !== target.id) {
     recordEnemyDamage(attacker, applied);
+    if (target.vip) recordVipDamage(attacker, applied);
     recordDamageTaken(target, applied);
     if (facet === 'BACK') recordRearDamage(attacker, applied);
     if (applied > 0 && ammoItemId !== undefined) countHit(attacker, shotId);
@@ -119,7 +133,7 @@ export function damagePlayer(room: {
   if (ammoItemId !== undefined && !friendly && attacker.id !== target.id) {
     applyShotLifeDrain(room.roomId, attacker, previousHp - target.hp, events);
   }
-  return resolvePlayerLethalState(room, attacker, target, friendly, now(), events);
+  return resolvePlayerLethalState(room, attacker, target, friendly, now(), events, shotId);
 }
 
 /** Direct skill HP loss shares life settlement without the ammunition calculation chain. */
@@ -138,6 +152,7 @@ export function damagePlayerDirectly(room: Parameters<typeof damagePlayer>[0],
   setBattleHealth(target, Math.max(0, previousHp - damage));
   const applied = Math.max(0, previousHp - target.hp);
   recordEnemyDamage(attacker, applied);
+  if (target.vip) recordVipDamage(attacker, applied);
   recordDamageTaken(target, applied);
   attacker.score += room.map.hitScore;
   events.push({roomId: room.roomId, type: 'hit', message: `${attacker.name}命中${target.name}`,
@@ -148,14 +163,15 @@ export function damagePlayerDirectly(room: Parameters<typeof damagePlayer>[0],
 
 function resolvePlayerLethalState(room: Parameters<typeof damagePlayer>[0],
   attacker: LifePlayer, target: LifePlayer, friendly: boolean, now: number,
-  events: MsgRoomEvent[]): ModeOutcome | undefined {
+  events: MsgRoomEvent[], shotId?: string): ModeOutcome | undefined {
   if (target.hp > 0 || target.lastStand) return;
+  if (target.creativeTitleRound) target.creativeTitleRound.lethalShotId = shotId;
   const lethal = qualifiedLastStand(target);
   if (!lethal) return finalizePlayerDeath(room, attacker, target, friendly, now, events);
   target.lastStand = {expiresAt: now + lethal.duration, attackerId: attacker.id,
     attackerName: attacker.name, friendly};
   clearAmmoBurn(target);
-  const skill = lethal.skill;
+  const skill = lethal.source.skill;
   if ((skill.effects[0]?.effectId ?? 0) !== 0) {
     events.push({roomId: room.roomId, type: 'petSkillTriggered',
       message: `${target.name}触发${skill.name}`,
@@ -193,12 +209,16 @@ function finalizePlayerDeath(room: Parameters<typeof damagePlayer>[0],
   target.respawnAt = now + room.map.respawnTime * 1000;
   if (!friendly && attacker) {
     attacker.kills += 1;
-    recordEnemyKill(attacker);
+    if (target.team === 0) attacker.catsInfo = (attacker.catsInfo ?? 0) + 1;
+    else if (target.team === 1) attacker.dogsInfo = (attacker.dogsInfo ?? 0) + 1;
+    recordEnemyKill(attacker, target.id, target.creativeTitleRound?.lethalShotId);
     attacker.score += room.map.destroyScore;
   }
   const outcome = friendly || !attacker ? applyFriendlyKill(room, target) : applyModeKill(room, attacker, target);
   events.push({roomId: room.roomId, type: 'destroy', message: `${attribution?.name ?? ''}击毁${target.name}`,
     playerId: attribution?.id ?? '', targetId: target.id, value: 1,
+    killCombo: !friendly && attacker ? attacker.roundCurrentKillCombo : undefined,
+    destroyScore: !friendly && attacker ? room.map.destroyScore : undefined,
     x: target.x, y: target.y, z: target.z, skillId: undefined});
   return outcome;
 }
@@ -206,18 +226,23 @@ function finalizePlayerDeath(room: Parameters<typeof damagePlayer>[0],
 /** Restore the same participant at the selected free spawn; input watermark is retained. */
 export function respawnPlayer(field: Battlefield, player: LifePlayer & {
   combat: RoleCombatState;
+  lastRespawnPosition?: {x: number; z: number};
   yaw: number; bodyYaw?: number; movementState?: unknown; movementCommand?: number; aim: number; input: MsgPlayerInput;
+  verticalState?: import('../../../shared/movement/tank-vertical').TankVerticalState;
 }, maxHp: number, defaultInput: MsgPlayerInput,
-  spawn: SpawnPoint = field.spawn(Math.floor(Math.random() * field.spawns.length))): void {
+  spawn: SpawnPoint = field.spawn(Math.floor(Math.random() * field.spawnPoints(player.team).length), player.team)): void {
   player.lastStand = undefined;
   clearAmmoBurn(player);
   clearRespawnProtection(player);
   player.x = spawn.x;
   player.y = spawn.y;
   player.z = spawn.z;
+  player.lastRespawnPosition = {x: spawn.x, z: spawn.z};
   player.yaw = spawn.yaw;
   player.bodyYaw = undefined;
   player.movementState = undefined;
+  player.verticalState = initialTankVerticalState(player.y,
+    field.navigation.sample(player.x, player.z)?.height);
   player.movementCommand = 0;
   player.aim = 0;
   setBattleHealth(player, maxHp, maxHp);

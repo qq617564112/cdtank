@@ -1,3 +1,4 @@
+import {rankedPetSkillId} from '../../../../shared/content/catalog';
 import type {PetLearningQuote} from '../../../../shared/contracts/pet-learning';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
@@ -22,7 +23,7 @@ export function HomePetOwnedDetails({ui, record, catalog, description, quotes, p
   useEffect(() => setSelected(undefined), [instanceId]);
   const selectedId = selected && selected.owner === instanceId ? fields?.get(0x44 + selected.index * 4) : undefined;
   const selectedLevel = selected && selected.owner === instanceId ? fields?.get(0x5c + selected.index * 4) : undefined;
-  const selectedSkill = selectedId ? catalog?.skills.find(skill => skill.skillId === selectedId + Math.max(0, (selectedLevel ?? 0) - 1)) : undefined;
+  const selectedSkill = selectedId ? catalog?.skills.find(skill => skill.skillId === rankedPetSkillId(selectedId, Math.max(1, selectedLevel ?? 0))) : undefined;
   const quote = selected && selected.owner === instanceId
     ? quotes?.find(value => value.instanceId === instanceId && value.slot === selected.index) : undefined;
   const nextSkill = quote && quote.kind !== 'rankLimit'
@@ -44,7 +45,7 @@ export function HomePetOwnedDetails({ui, record, catalog, description, quotes, p
       const skillId = value(0x44 + index * 4);
       const level = value(0x5c + index * 4);
       const currentSkillId = skillId !== undefined && level !== undefined
-        ? skillId + Math.max(0, level - 1) : undefined;
+        ? rankedPetSkillId(skillId, Math.max(1, level)) : undefined;
       const skill = currentSkillId ? catalog?.skills.find(definition => definition.skillId === currentSkillId) : undefined;
       const button = `btnViewSkill${index}`;
       return <span key={index} className="home-pet-owned-skill" data-home-pet-skill={index}

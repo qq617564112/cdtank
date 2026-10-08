@@ -6,6 +6,7 @@ import type {RoomState, JoinResult} from './state';
 import {readyCpus} from './preparation';
 import {configureRoomCpuLoadout} from './cpu-loadout';
 import type {CpuLoadoutItem} from '../../../shared/protocols/PtlCpu';
+import {assignRandomCpuRoles} from './cpu-roles';
 
 /** World verifies current membership, round and WAITING before invoking. */
 export function manageRoomCpu(room: RoomState, owner: PlayerState, operation: 'ADD' | 'REMOVE' | 'CONFIGURE',
@@ -35,6 +36,7 @@ export function manageRoomCpu(room: RoomState, owner: PlayerState, operation: 'A
   const cpu = room.players.get(joined.playerId)!;
   if (team !== undefined) cpu.team = team;
   cpu.cpu = new BotController();
+  assignRandomCpuRoles(room, cpu);
   room.ready.clear();
   readyCpus(room);
   return joined.playerId;

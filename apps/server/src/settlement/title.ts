@@ -1,4 +1,6 @@
 import {TITLE_TABLE} from '../config';
+import type {MatchHistoryRecord} from '../../../shared/protocols/PtlHistory';
+import {CREATIVE_TITLE_DEFINITIONS, evaluateCreativeTitleGrants} from './creative-titles';
 
 export type TitleTableRow = Readonly<Record<string, string>>;
 
@@ -36,6 +38,8 @@ export interface TitleStats {
   readonly awardCountsComplete?: boolean;
   /** False when legacy history rows lack shots; shot/hit ratio predicates stay unavailable. */
   readonly roundStatsComplete?: boolean;
+  /** Authoritative rounds in settlement order for event and rolling-window titles. */
+  readonly history?: readonly MatchHistoryRecord[];
 }
 
 export type TitleCondition =
@@ -51,6 +55,7 @@ export type TitleCondition =
   | {readonly kind: 'maxAward'; readonly threshold: number}
   | {readonly kind: 'allAwards'; readonly threshold: number}
   | {readonly kind: 'ownedTitles'; readonly threshold: number}
+  | {readonly kind: 'creative'; readonly id: number}
   | {readonly kind: 'sourceUnavailable'; readonly sourceType: number; readonly reason: string};
 
 export interface TitleDefinition {
@@ -133,6 +138,7 @@ function conditionAvailable(condition: TitleCondition): boolean {
     case 'bothGreater':
       return selectorAvailable(condition.left) && selectorAvailable(condition.right);
     case 'ownedTitles':
+    case 'creative':
       return true;
     case 'maxAward':
     case 'allAwards':
@@ -171,8 +177,10 @@ export function readTitleDefinitions(rows: readonly TitleTableRow[] = TITLE_TABL
   return rows.map(readTitleDefinition);
 }
 
-/** Complete original 158-row catalog, parsed from the normal readTable('title') chain. */
-export const TITLE_DEFINITIONS: readonly TitleDefinition[] = readTitleDefinitions(TITLE_TABLE);
+/** Original source catalog plus the game's additional battle titles. */
+export const TITLE_DEFINITIONS: readonly TitleDefinition[] = [
+  ...readTitleDefinitions(TITLE_TABLE), ...CREATIVE_TITLE_DEFINITIONS,
+];
 
 function statValue(selector: number, stats: TitleStats): number | undefined {
   switch (selector) {
@@ -197,7 +205,8 @@ function statValue(selector: number, stats: TitleStats): number | undefined {
   }
 }
 
-function conditionMatches(condition: TitleCondition, stats: TitleStats, ownedTitleCount: number): boolean {
+function conditionMatches(condition: TitleCondition, stats: TitleStats, ownedTitleCount: number,
+  creativeEligible: ReadonlySet<number>): boolean {
   switch (condition.kind) {
     case 'threshold': {
       const value = statValue(condition.selector, stats);
@@ -240,6 +249,8 @@ function conditionMatches(condition: TitleCondition, stats: TitleStats, ownedTit
     }
     case 'ownedTitles':
       return ownedTitleCount > condition.threshold;
+    case 'creative':
+      return creativeEligible.has(condition.id);
     case 'sourceUnavailable':
       return false;
   }
@@ -251,6 +262,7 @@ function conditionMatches(condition: TitleCondition, stats: TitleStats, ownedTit
  */
 export function evaluateTitleGrants(stats: TitleStats, ownedIds: Iterable<number>): number[] {
   const owned = new Set(ownedIds);
+  const creativeEligible = evaluateCreativeTitleGrants(stats);
   const granted = new Set<number>();
   const grants: number[] = [];
   let changed = true;
@@ -259,7 +271,7 @@ export function evaluateTitleGrants(stats: TitleStats, ownedIds: Iterable<number
     const ownedTitleCount = owned.size + granted.size;
     for (const title of TITLE_DEFINITIONS) {
       if (owned.has(title.id) || granted.has(title.id)
-          || !conditionMatches(title.condition, stats, ownedTitleCount)) continue;
+          || !conditionMatches(title.condition, stats, ownedTitleCount, creativeEligible)) continue;
       granted.add(title.id);
       grants.push(title.id);
       changed = true;

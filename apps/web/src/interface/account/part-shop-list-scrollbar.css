@@ -1,4 +1,5 @@
 #account-shop .part-shop-list-scroll-shell {
+  overflow: hidden;
   padding: 0;
 }
 
@@ -10,21 +11,26 @@
   height: 100%;
   padding: 0;
   overflow: hidden;
+  scrollbar-width: none;
 }
 
 .part-shop-list-scrollbar {
   position: absolute;
+  box-sizing: border-box;
+  max-height: 100%;
   right: 0;
   top: 0;
-  width: 8.5px;
+  width: 28px;
   overflow: hidden;
-  background-size: 100% 100%;
+  background-repeat: repeat;
+  background-position: left top;
 }
 
 #account-shop .part-shop-list-scrollbar div,
 #account-shop .part-shop-list-scrollbar span,
 #account-shop .part-shop-list-scrollbar button {
   position: absolute;
+  left: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -38,7 +44,7 @@
   gap: 0;
 }
 
-.part-shop-list-scroll-track {width: 8.5px;}
+.part-shop-list-scroll-track {width: 100%;}
 .part-shop-list-scroll-thumb {width: 28px; overflow: hidden;}
 .part-shop-list-thumb-top {top: 0; width: 28px; height: 29px;}
 .part-shop-list-thumb-middle {top: 29px; bottom: 17px; width: 28px;}

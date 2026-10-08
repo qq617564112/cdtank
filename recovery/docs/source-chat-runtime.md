@@ -1,11 +1,11 @@
 # 原战斗聊天普通输入与频道选择（M5-12-S）
 
-正式 `SourceBattleChat` 只负责源界面，`BattleChat` 保留文字草稿、组合输入、快捷键、真实请求/确认与旧房间generation门禁。`Battle.reconcile` 选择PLAYING/FINISHED的源战斗界面，WAITING保留现有房间聊天。源资源载入失败时仍可使用原先聊天，离房取消源显示和选择列表。
+正式WAITING／PLAYING／FINISHED聊天由React BattleChatView及源界面组件呈现，BattleChat持有确认消息、房间会话及请求门禁。Battle消费当前快照身份与局号，普通输入、IME、快捷输入、pending、失败保稿和离房／断线清理沿现有消费者执行。
 
-源舞台以800×600等比居中，game_main_chat_shrinked根位于y435；log/input在完整父链源矩形处呈现，上框使用原九块20×20切片及Alpha0.9，下框/普通输入底图与Public/Team三态源图。页面复用同一input、log与form，Enter及IME保护不会因样式切换另建业务实例。原无独立发送按钮，战斗状态隐藏重建submit/select，频道通过源按钮和原列表选择；等待状态恢复原生select/发送按钮。
+源战斗舞台以800×600等比居中，game_main_chat_shrinked根位于y435。原图、矩形、普通／密语输入、光标、频道菜单、表情菜单与历史滚动消费者均已接；源聊天在资源未就绪时使用现有fallback。源菜单仍按Web锚定方式定位，原弹出位置与完整CEGUI文字排版来源范围保持开放。
 
-原Public/Team打开回调清空列表选择但保留频道；源列表公共/队伍选中后更新按钮、保留普通输入并关闭列表。依据chat-channel-selection-source.md：HUD原数值1/5与请求3e82/3e86已确定；新协议继续0/1，公共同房与队伍同队收件范围仍是重建适配。点击root以外的真实pointerdown或窗口blur关闭列表，root内部按钮焦点切换不会提前关闭。原先focusout的microtask在native焦点转移中读取BODY导致列表早关，真实鼠标验收失败后改为目标判定并复验。重建工具面板在源聊天启用时移至左上，避免左下边沿视觉重叠。新界面菜单锚定频道按钮上方且保留内部源矩形，这是明确Web定位，不能称恢复原弹出定位回调。
+普通频道当前为公共0、队伍1、密语2、好友3、GM4、Family5。密语对象名单来自权威RoomSnapshot，好友走FriendChat，Family走确认归属与FamilyChat，GM问题与人工回复沿现支持链路。六频道已有正式请求消费者，Family三页及GM回复新增范围仍待实测；公共／队伍／密语／好友的已有有限证据沿各专题复用。
 
-好友、密语、GM列表源图存在但禁用并带未恢复提示，不伪装业务完成；表情入口、密语输入、原滚动条与CEGUI文本排版尚未接入，不关闭完整UI-11/M5-12/M6-08。浏览器原生滚动和纯文本日志继续使用现有实现。状态提示是Web确认/拒绝适配。
+原Public/Team选择合同见chat-channel-selection-source.md，服务端路由与权限采用规则见[room-chat-runtime.md](room-chat-runtime.md)、[team-chat-runtime.md](team-chat-runtime.md)、[friend-chat-runtime.md](friend-chat-runtime.md)、[family-chat-runtime.md](family-chat-runtime.md)和[gm-support-replies-runtime.md](gm-support-replies-runtime.md)。React归属与已有迁移证据见react-battle-chat.md。
 
-本片没有改变服务端、账户、CPU、道具或渲染资源生产，复用既有两局和保存基线。相关验收为原选择回调对照、真实战斗双端频道/中文/快捷确认与拒绝、源图/矩形/1080p4K/鼠键/离场清理、客户端类型/模块边界与Web发行。命令test:chat:source:browser；机器证据source-chat-*及browser-source-chat专属输出。原精确线上文字编码、服务器路由继续保留父项，下一入口48dcc5/48dd4f→413e8c/413ec4。
+原Windows线上协议、Family／GM服务端来源、完整文本标签／排版、完整页面及高清性能保持各自父项；已接频道、表情与滚动状态不关闭UI-11／M5-12／M6-08完整验收。

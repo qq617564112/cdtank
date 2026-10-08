@@ -65,6 +65,12 @@ export interface MsgRoomEvent {
   roleStyleChanged?: {roleId: number; style: 1 | 2};
   /** Source4174 display identity; authority owns the restore decision. */
   roleStyleRestored?: {roleId: number};
+  /** Consecutive enemy kills since the killer's last death; destroy notifications only. */
+  killCombo?: number;
+  /** Score actually credited for this confirmed destruction. */
+  destroyScore?: number;
+  /** Source item name from an accepted pickup, use or ammunition selection. */
+  itemName?: string;
   /** Authoritative ground-drop creation; visual fields are projected from the stored entity. */
   groundItemDropped?: GroundItemSnapshot;
   /** Successful account/local acquisition; inventory authority commits before this event. */

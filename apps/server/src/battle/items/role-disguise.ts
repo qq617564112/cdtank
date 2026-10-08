@@ -2,9 +2,10 @@ import type {MsgRoomEvent} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
 import type {RoleCombatState} from '../roles/combat-state';
 import {combatItems, combatSkills} from '../catalog';
+import {clearOpticalCamouflage} from './optical-camouflage';
 
 export interface RoleDisguiseState {
-  skillId: 10 | 11;
+  skillId: number;
   style: 1 | 2;
   startedAt: number;
   expiresAt: number;
@@ -22,8 +23,9 @@ export interface RoleDisguiseParticipant {
   z: number;
   combat: RoleCombatState;
   inventory: InventoryWireRecord[];
-  opticalCamouflage?: {skillId: 9; expiresAt: number};
+  opticalCamouflage?: {skillId: number; expiresAt: number};
   roleDisguise?: RoleDisguiseState;
+  movementCommand?: number;
 }
 
 /** Rebuilt self-target authority; source skill10/11 supplies style, duration and display effect. */
@@ -35,25 +37,23 @@ export function applyRoleDisguise(roomId: string, player: RoleDisguiseParticipan
   const item = player.inventory.find(record => record.instanceId === request.instanceId);
   if (!item || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
   const itemTableId = item.itemTableId;
-  if (itemTableId !== 10 && itemTableId !== 11) return;
-  const skillId = itemTableId;
-  const style = itemTableId === 10 ? 1 : 2;
   const definition = combatItems.get(itemTableId);
   const skill = definition ? combatSkills.get(definition.skillIds[0]) : undefined;
   const func = skill?.functions[0];
   const funcStyle = func?.x;
   const durationSeconds = func?.t;
-  if (!definition || definition.battleUseMax !== 5 || !skill || skill.skillId !== skillId
-      || skill.target !== 1 || skill.triggerType !== 1 || skill.range !== 0
-      || func?.type !== 8 || funcStyle !== style || durationSeconds !== 10
-      || skill.effects[0]?.effectId !== 3 || skill.effects[0].sound !== 'GA16') return;
+  if (!definition || definition.runtime.use !== 'disguise' || !skill
+      || skill.target !== 1 || skill.triggerType !== 1 || func?.type !== 8
+      || (funcStyle !== 1 && funcStyle !== 2) || !durationSeconds || durationSeconds <= 0) return;
+  const skillId = skill.skillId, style = funcStyle;
   const reject = (message: string): void => {
     events.push({roomId, type: 'itemRejected', message, playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0});
   };
   const slots = player.combat.record?.arrays.get(4);
   if (player.roleDisguise || player.opticalCamouflage
-      || [9, 10, 11].some(id => slots?.includes(id))) {
+      || [...combatItems.values()].filter(item => ['camouflage', 'disguise'].includes(item.runtime.use ?? ''))
+        .some(item => slots?.includes(item.skillIds[0]))) {
     reject('伪装或隐身效果已生效');
     return;
   }
@@ -77,9 +77,10 @@ export function applyRoleDisguise(roomId: string, player: RoleDisguiseParticipan
   player.combat.addSkill(skillId);
   player.roleDisguise = {skillId, style, startedAt: now, expiresAt: now + durationMs,
     x: player.x, y: player.y, z: player.z};
+  player.movementCommand = 0;
   recompute();
   const roleId = Number(player.id.slice(1));
-  events.push({roomId, type: 'itemUsed', message: `${player.name}使用${definition.name}`,
+  events.push({roomId, type: 'itemUsed', itemName: combatItems.get(item.itemTableId)?.name, message: `${player.name}使用${definition.name}`,
     playerId: player.id, targetId: player.id, value: 0,
     x: player.x, y: player.y, z: player.z, skillId,
     playSkillEffect: {skillId, effectIndex: 0, duration: 0,
@@ -113,8 +114,9 @@ export function advanceRoleDisguise(roomId: string, player: RoleDisguiseParticip
   clearRoleDisguise(player, recompute, roomId, events);
 }
 
-/** An ordinary shot restores display only after ammo/reload/stock acceptance. */
-export function restoreRoleDisguiseAfterAcceptedFire(roomId: string,
+/** An accepted ordinary shot restores the actor's visible appearance. */
+export function restoreConcealmentAfterAcceptedFire(roomId: string,
   player: RoleDisguiseParticipant, recompute: () => void, events: MsgRoomEvent[]): void {
   clearRoleDisguise(player, recompute, roomId, events);
+  clearOpticalCamouflage(player, recompute, roomId, events);
 }

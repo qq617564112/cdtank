@@ -13,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / 'recovery/output/web-assets'
 SOURCE_FIELDS = {'source', 'path', 'ini', 'reference', 'sourceReference', 'tableSource', 'Imagefile', 'Filename', 'imageset', 'remoteImageset'}
 DERIVED_FIELDS = {'asset', 'output', 'terrain', 'remoteAsset'}
+ACTOR_TOON_METADATA = 'scene-actor-toon.json'
+FIELD_ROAD_HD_FILE = 'apps/shared/maps/field-road-hd.ts'
 
 def normalize(value):
     value = value.replace('\\', '/').lower()
@@ -61,15 +63,17 @@ def consumers(documents):
             match = re.fullmatch(re.escape(prefix) + r'(\d{4})\.json', filename)
             if match and 1 <= int(match[1]) <= 25:
                 entries.append(dict(**evidence, entry='map-id-metadata-reference'))
-    for prefix, file, token in [
+    field_road_scene_id, field_road_evidence = field_road_scene_evidence()
+    terrain_scope, terrain_ids = terrain_map_scope()
+    plant_scope, plant_ids = plant_map_scope()
+    for prefix, file, token, scope, map_ids in [
         ('scene-terrain-material-', 'apps/web/src/assets/scenes/scene-terrain-material.ts',
-         'fetch(`/scene-terrain-material-'),
+         'fetch(`/scene-terrain-material-', terrain_scope, terrain_ids | {field_road_scene_id}),
         ('scene-plant-', 'apps/web/src/assets/scenes/scene-plant-sway.ts',
-         'fetch(`/scene-plant-'),
+         'fetch(`/scene-plant-', plant_scope, plant_ids | {field_road_scene_id}),
     ]:
         evidence = code_evidence(file, token)
-        scope = code_evidence(file, '.includes(mapId)')
-        map_ids = set(re.findall(r"'(\d{4})'", scope['code']))
+        scope = dict(scope, fieldRoad=dict(sceneId=field_road_scene_id, **field_road_evidence))
         for filename, entries in result.items():
             match = re.fullmatch(re.escape(prefix) + r'(\d{4})\.json', filename)
             if match and match[1] in map_ids:
@@ -133,6 +137,45 @@ def code_evidence(file, token):
     number = next(i for i, line in enumerate(code, 1) if token in line)
     return dict(file=file, line=number, code=code[number - 1].strip())
 
+def field_road_scene_evidence():
+    code = (ROOT / FIELD_ROAD_HD_FILE).read_text().splitlines()
+    definition_line = next(i for i, line in enumerate(code, 1)
+                           if 'export const FIELD_ROAD_HD ' in line)
+    scene_line = next(i for i in range(definition_line, len(code) + 1)
+                      if re.search(r'\bsceneId\s*:', code[i - 1]))
+    match = re.search(r"\bsceneId\s*:\s*'([^']+)'", code[scene_line - 1])
+    assert match
+    return match[1], dict(
+        file=FIELD_ROAD_HD_FILE, line=scene_line, code=code[scene_line - 1].strip(),
+        definitionLine=definition_line, definition=code[definition_line - 1].strip())
+
+def terrain_map_scope():
+    file = 'apps/web/src/assets/scenes/scene-terrain-material.ts'
+    code = (ROOT / file).read_text().splitlines()
+    found = next((number, match) for number, line in enumerate(code, 1)
+                 if (match := re.search(r'/\^(.*?)\$/\.test\(mapId\)', line)))
+    number, match = found
+    pattern = match[1]
+    map_ids = {f'{value:04d}' for value in range(10000)
+               if re.fullmatch(pattern, f'{value:04d}')}
+    return dict(
+        file=file, line=number, code=code[number - 1].strip(),
+        qualification=dict(kind='terrain-map-id-regex', pattern=pattern,
+                           mapIds=sorted(map_ids))), map_ids
+
+def plant_map_scope():
+    file = 'apps/web/src/assets/scenes/scene-plant-sway.ts'
+    code = (ROOT / file).read_text().splitlines()
+    includes_line = next(i for i, line in enumerate(code, 1) if '.includes(mapId)' in line)
+    start_line = next(i for i in range(includes_line, 0, -1) if 'if (![' in code[i - 1])
+    source_lines = [dict(line=i, code=code[i - 1].strip())
+                    for i in range(start_line, includes_line + 1)]
+    map_ids = set(re.findall(r"'(\d{4})'", ' '.join(line['code'] for line in source_lines)))
+    return dict(
+        file=file, line=includes_line, code=code[includes_line - 1].strip(),
+        lines=source_lines,
+        qualification=dict(kind='map-id-literal-array', mapIds=sorted(map_ids))), map_ids
+
 def table_consumers():
     result = {}
     # These literal calls name decoded tables, rather than Web metadata files.
@@ -174,14 +217,15 @@ def build():
         for field, value, location, parent in leaves(doc):
             if field not in SOURCE_FIELDS or not Path(value.replace('\\', '/')).suffix:
                 continue
+            artifact = parent.get('output') or parent.get('asset') if parent else None
+            if name == ACTOR_TOON_METADATA and parent:
+                artifact = parent.get('texture') or artifact
             if name in ['pol-conversion.json', 'mv3-conversion.json', 'cvd-conversion.json'] and field == 'path':
                 if parent.get('output'):
                     derived.setdefault(normalize(parent['output']), set()).add(normalize(value))
-            elif field == 'source' and parent:
-                for asset_field in ['asset', 'output']:
-                    if parent.get(asset_field):
-                        derived.setdefault(normalize(parent[asset_field]), set()).add(normalize(value))
-            source_fields.append((name, field, value, location, parent))
+            elif field == 'source' and artifact:
+                derived.setdefault(normalize(artifact), set()).add(normalize(value))
+            source_fields.append((name, field, value, location, parent, artifact))
     references = {key: [] for key in by_key}
     outside = []
     loader = consumers(documents)
@@ -194,8 +238,7 @@ def build():
             references[key].append(item)
         else:
             outside.append(dict(key=key, **item, status='outside-inventory'))
-    for name, field, value, location, parent in source_fields:
-        artifact = parent.get('output') or parent.get('asset') if parent else None
+    for name, field, value, location, parent, artifact in source_fields:
         key = normalize(value)
         add(key, name, location, value, 'explicit-source-reference', artifact)
         if key not in references:
@@ -204,7 +247,10 @@ def build():
                 outside[-1]['publishedResolvedSource'] = normalize(parent['source'])
     for name, doc in documents.items():
         for field, value, location, parent in leaves(doc):
-            if field not in DERIVED_FIELDS or not Path(value.replace('\\', '/')).suffix:
+            if field not in DERIVED_FIELDS and not (
+                    name == ACTOR_TOON_METADATA and field == 'texture'):
+                continue
+            if not Path(value.replace('\\', '/')).suffix:
                 continue
             for source_key in sorted(derived.get(normalize(value), [])):
                 add(source_key, name, location, value, 'explicit-derived-artifact-reference', value)

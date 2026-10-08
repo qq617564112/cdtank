@@ -3,6 +3,7 @@ import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
 import type {InventoryWireRecord} from '../../../shared/protocols/PtlInventory';
 import type {ReqPartSale, ResPartSale} from '../../../shared/protocols/PtlPartSale';
+import {currentMaintenanceMinutes} from './maintenance-clock';
 
 /** Web settlement follows the original whole-instance request and success1 receipt. */
 export class AccountPartSale {
@@ -16,7 +17,11 @@ export class AccountPartSale {
     if (!this.database.prepare('SELECT id FROM accounts WHERE id = ?').get(accountId)) throw new Error('账户不存在');
     const response = (sold?: ResPartSale['sold'], replayed?: boolean): ResPartSale => {
       const records = this.database.prepare('SELECT record FROM inventory WHERE account_id = ? ORDER BY instance_id')
-        .all(accountId).map(row => JSON.parse(String(row.record)) as InventoryWireRecord);
+        .all(accountId).map(row => {
+          const record = JSON.parse(String(row.record)) as InventoryWireRecord;
+          return {...record, ownedQuantity: currentMaintenanceMinutes(this.database, accountId, 'part',
+            record.instanceId, record.ownedQuantity)};
+        });
       const hotkeys = Array<number>(7).fill(0);
       for (const row of this.database.prepare('SELECT slot, instance_id FROM hotkeys WHERE account_id = ?').all(accountId)) {
         hotkeys[Number(row.slot) - 1] = Number(row.instance_id);

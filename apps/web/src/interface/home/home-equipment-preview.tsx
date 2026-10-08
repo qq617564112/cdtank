@@ -2,12 +2,15 @@ import {useEffect, useLayoutEffect, useRef, useState, type ComponentPropsWithout
 import {ArcRotateCamera, Color3, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
 import {TankView} from '../../assets/tanks/tank-view';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
+import type {CombatItemDefinition} from '../../../../shared/combat/catalog';
+import {HomeTankDecoration} from './home-tank-decoration';
 import {advanceHomePreviewOrbit, HOME_PREVIEW_CLIP_PLANES} from './home-preview-orbit';
 
 interface PreviewProps extends ComponentPropsWithoutRef<'div'> {
   tankId: number;
   instanceId: number;
   textures?: OwnedTankTextures;
+  decoration?: CombatItemDefinition;
   scale: number;
 }
 
@@ -19,7 +22,7 @@ interface PreviewRuntime {
 }
 
 /** A mounted preview retains its scene while owned tank sources change. */
-export function HomeEquipmentPreview({tankId, instanceId, textures, scale, ...props}: PreviewProps) {
+export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, scale, ...props}: PreviewProps) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const runtime = useRef<PreviewRuntime | undefined>(undefined);
@@ -92,6 +95,7 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, scale, ...pr
     const element = host.current!;
     let active = true;
     let loaded: TankView | undefined;
+    let accessory: HomeTankDecoration | undefined;
     element.dataset.status = 'loading'; element.dataset.meshes = '0';
     delete element.dataset.renderedTankId;
     setMessage('载入战车模型…');
@@ -99,7 +103,13 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, scale, ...pr
       const selectedTextures = U === undefined || M === undefined || XY === undefined ? undefined : {U, M, XY};
       const view = await TankView.loadPreview(current.scene, `home-equipment-${instanceId}`, tankId, selectedTextures);
       if (!active || !current.active) {view.dispose(); return;}
-      loaded = view; current.view = view;
+      loaded = view;
+      if (decoration) {
+        const value = await HomeTankDecoration.load(current.scene, view, decoration);
+        if (!active || !current.active) {value.dispose(); return;}
+        accessory = value;
+      }
+      current.view = view;
       const meshes = view.root.getChildMeshes().filter(mesh => mesh.isEnabled() && mesh.getTotalVertices() > 0);
       let min = new Vector3(Infinity, Infinity, Infinity), max = new Vector3(-Infinity, -Infinity, -Infinity);
       for (const mesh of meshes) {
@@ -115,14 +125,17 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, scale, ...pr
       setMessage('');
     })().catch(error => {
       if (!active || !current.active) return;
+      accessory?.dispose();
       loaded?.dispose(); current.view = undefined;
       element.dataset.status = 'error'; setMessage(`模型载入失败：${String(error)}`);
     });
     return () => {
       active = false;
-      if (loaded && current.view === loaded) {loaded.dispose(); current.view = undefined;}
+      accessory?.dispose();
+      loaded?.dispose();
+      if (current.view === loaded) current.view = undefined;
     };
-  }, [tankId, instanceId, U, M, XY]);
+  }, [tankId, instanceId, U, M, XY, decoration]);
 
   return <div {...props} ref={host} className="home-tank-preview" data-role-preview=""
     data-tank-id={tankId} data-instance-id={instanceId} data-tank-textures={JSON.stringify(textures ?? null)}>

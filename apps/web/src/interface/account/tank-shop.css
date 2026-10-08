@@ -21,49 +21,15 @@
 
 .tank-shop-product {
   overflow: auto;
+  scrollbar-width: none;
   line-height: 15px;
   color: #fff;
 }
 
+.tank-shop-product::-webkit-scrollbar {display: none;}
+
 .tank-shop-product p {
   margin: 0;
-}
-
-.tank-shop-price {
-  left: 12px;
-  top: 410px;
-  width: 200px;
-  line-height: 18px;
-}
-
-.tank-shop-balance {
-  left: 237px;
-  top: 334px;
-  width: 190px;
-  line-height: 18px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-.tank-shop-refresh {
-  left: 458px;
-  top: 410px;
-  width: 126px;
-  padding: 4px;
-  color: #fff;
-  background: #263b49;
-  border: 1px solid #8dabad;
-  font: inherit;
-}
-
-.tank-shop-status {
-  left: 224px;
-  top: 444px;
-  width: 372px;
-  height: 34px;
-  overflow: auto;
-  line-height: 16px;
 }
 
 [data-shop-active-page='Tank'] #account-shop-title {
@@ -73,8 +39,8 @@
   clip-path: inset(50%);
 }
 
-#account-shop [data-tank-shop-owned-list] {overflow: auto; padding: 4px; font: inherit;}
-#account-shop [data-tank-shop-owned-list] button {
+#account-shop [data-tank-shop-owned-list] {font: inherit;}
+#account-shop .role-shop-list-scroll-shell > .role-shop-source-list[data-tank-shop-owned-list] > button {
   position: relative; display: block; box-sizing: border-box; width: 161px; height: 56px; min-height: 0; margin: 0; padding: 0; color: #fff; border: 0;
   background: transparent left top / 161px 51px no-repeat; font: inherit; text-align: left;
 }

@@ -1,3 +1,4 @@
+import {defaultAmmoId, gameContent} from '../../../../shared/content/catalog';
 import {randomUUID} from 'node:crypto';
 import type {MsgRoomEvent} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
@@ -44,6 +45,7 @@ export interface GroundItemRoomPlayer {
   combat: {
     status: number;
     record?: {arrays: ReadonlyMap<number, Int32Array>};
+    setArray?: (index: number, values: readonly number[]) => boolean;
   };
 }
 
@@ -106,12 +108,20 @@ export interface AcquireDiscardCallbacks {
   discard?: DiscardGroundItem;
   /** Successfully consumed quantity for this player/item in the current round. */
   roundUse?: (playerId: string, itemTableId: number) => number;
+  /** Real selected pet kind from the authoritative role/CPU source; absent means none. */
+  petType?: (playerId: string) => number | undefined;
+  /** Contact rejection before acquiring inventory or applying pickup healing. */
+  pickupRejection?: (playerId: string, ground: GroundItemState) => string | undefined;
+  /** Called only for the participant whose committed acquisition removed this entity. */
+  pickupSucceeded?: (playerId: string, ground: GroundItemState, events: MsgRoomEvent[]) => void;
 }
 
 const RUN_ID = randomUUID();
-const BREACH_POOL = [1, 2, 2010, 20001, 20002] as const;
+
 const groundCounters = new Map<string, number>();
 const breachDropKeys = new Map<string, Set<string>>();
+interface PickupRejection {playerId: string; groundId: string; message: string;}
+const pickupRejections = new Map<string, Map<string, PickupRejection>>();
 
 function roundKey(room: Pick<GroundItemRoom, 'roomId' | 'round'>): string {
   return `${room.roomId}:${room.round}`;
@@ -132,6 +142,21 @@ function rejectDiscard(normalEvents: MsgRoomEvent[], player: GroundItemRoomPlaye
     roomId: string, message: string): false {
   normalEvents.push({roomId, type: 'itemRejected', message, playerId: player.id,
     targetId: '', value: 0, x: player.x, y: player.y, z: player.z});
+  return false;
+}
+
+/** Notify once per reason while this player remains in contact with this drop. */
+function rejectPickup(room: GroundItemRoom, player: GroundItemRoomPlayer, ground: GroundItemState,
+    normalEvents: MsgRoomEvent[], message: string): false {
+  if (player.cpu) return false;
+  const scope = roundKey(room);
+  let rejected = pickupRejections.get(scope);
+  if (!rejected) {rejected = new Map(); pickupRejections.set(scope, rejected);}
+  const key = `${player.id}:${ground.id}`;
+  if (rejected.get(key)?.message === message) return false;
+  rejected.set(key, {playerId: player.id, groundId: ground.id, message});
+  normalEvents.push({roomId: room.roomId, type: 'itemRejected', message, playerId: player.id,
+    targetId: ground.id, value: 0, x: ground.x, y: ground.y, z: ground.z});
   return false;
 }
 
@@ -167,6 +192,29 @@ function clearRemovedHotkeys(player: GroundItemRoomPlayer, instanceId: number): 
   }
 }
 
+function assignPickupHotkey(player: GroundItemRoomPlayer, instanceId: number, itemTableId: number): boolean {
+  const item = combatItems.get(itemTableId >>> 0);
+  const hotkeys = player.combat.record?.arrays.get(0);
+  if (!item || !hotkeys) return false;
+  const id = instanceId >>> 0;
+  if (!id) return false;
+  for (let slot = 0; slot < hotkeys.length; slot++) {
+    if ((hotkeys[slot] >>> 0) === id) return true;
+  }
+  const weaponSlot = item.kind === 'ammo' || item.kind === 'trap';
+  const consumableSlot = item.kind === 'item';
+  if (!weaponSlot && !consumableSlot) return false;
+  const first = weaponSlot ? 0 : 3;
+  const last = weaponSlot ? 2 : 6;
+  const next = Array.from({length: 7}, (_, slot) => hotkeys[slot] ?? 0);
+  for (let slot = first; slot <= last; slot++) {
+    if ((next[slot] >>> 0) !== 0) continue;
+    next[slot] = id;
+    return player.combat.setArray?.(0, next) ?? false;
+  }
+  return false;
+}
+
 function replaceInventoryRecord(player: GroundItemRoomPlayer, record: InventoryWireRecord): void {
   const index = player.inventory.findIndex(value =>
     (value.instanceId >>> 0) === (record.instanceId >>> 0));
@@ -196,8 +244,9 @@ function acquiredBattleQuantity(player: GroundItemRoomPlayer, instanceId: number
 }
 
 function applyAcquiredRecord(player: GroundItemRoomPlayer, record: InventoryWireRecord,
-    itemTableId: number, callbacks: AcquireDiscardCallbacks): void {
+    itemTableId: number, callbacks: AcquireDiscardCallbacks, assignHotkey = false): void {
   const owned = record.ownedQuantity >>> 0;
+  if (assignHotkey) assignPickupHotkey(player, record.instanceId, itemTableId);
   const used = Math.max(0, callbacks.roundUse?.(player.id, itemTableId) ?? 0);
   const next = {...record, itemTableId, ownedQuantity: owned,
     battleQuantity: acquiredBattleQuantity(player, record.instanceId, itemTableId, owned, used)};
@@ -207,7 +256,7 @@ function applyAcquiredRecord(player: GroundItemRoomPlayer, record: InventoryWire
 /** Apply one committed canonical inventory update without resetting unrelated combat state. */
 export function reconcileGroundItemInventory(player: GroundItemRoomPlayer,
     record: InventoryWireRecord, callbacks: AcquireDiscardCallbacks): void {
-  applyAcquiredRecord(player, record, record.itemTableId >>> 0, callbacks);
+  applyAcquiredRecord(player, record, record.itemTableId >>> 0, callbacks, false);
 }
 
 function firstUnusedInstanceId(player: GroundItemRoomPlayer): number | undefined {
@@ -247,12 +296,12 @@ function acquireLocally(player: GroundItemRoomPlayer, ground: GroundItemState):
 /**
  * One real Breach destruction creates at most one ground item. The source
  * placement, not the attacker, owns the position. A single uniform roll both
- * gates at 0.5 and selects one of the five equally likely pool entries.
+ * gates at the configured chance and selects one equally likely pool entry.
  */
 export function createBreachDrop(room: GroundItemRoom, source: BreachDropSource,
     ownerId: string, now: number, random: () => number,
     normalEvents: MsgRoomEvent[]): GroundItemState | undefined {
-  if (room.mode !== 5 || room.phase !== 'PLAYING' || source.hp > 0
+  if (![1, 2, 3, 4, 5].includes(room.mode) || room.phase !== 'PLAYING' || source.hp > 0
       || !Number.isFinite(source.destroyedAt)
       || ![source.x, source.y, source.z].every(Number.isFinite)) return undefined;
   const key = roundKey(room);
@@ -266,16 +315,21 @@ export function createBreachDrop(room: GroundItemRoom, source: BreachDropSource,
   triggers.add(trigger);
 
   const roll = random();
-  if (!(roll >= 0 && roll < 1) || roll >= 0.5) return undefined;
-  const poolIndex = Math.min(BREACH_POOL.length - 1,
-    Math.floor(roll * 2 * BREACH_POOL.length));
-  const itemTableId = BREACH_POOL[poolIndex];
-  const visual = selectDropVisual(itemTableId, 1);
+  const rules = gameContent().rules.groundDrops;
+  const chance = rules.chance;
+  const quantity = rules.quantity >>> 0;
+  if (!(chance > 0 && chance <= 1) || !(roll >= 0 && roll < 1) || roll >= chance || !quantity) return undefined;
+  const pool = [...combatItems.values()].filter(item => item.runtime.values.breachDropOrder > 0)
+    .sort((a, b) => a.runtime.values.breachDropOrder - b.runtime.values.breachDropOrder).map(item => item.itemTableId);
+  if (!pool.length) return undefined;
+  const poolIndex = Math.min(pool.length - 1, Math.floor(roll / chance * pool.length));
+  const itemTableId = pool[poolIndex];
+  const visual = selectDropVisual(itemTableId, quantity);
   if (!visual) return undefined;
   const state: GroundItemState = {
     id: nextGroundItemId(room),
     itemTableId,
-    quantity: 1,
+    quantity,
     ...visual,
     x: source.x,
     y: source.y,
@@ -316,7 +370,7 @@ export function discardToGround(room: GroundItemRoom, player: GroundItemRoomPlay
   if (!item) return rejectDiscard(normalEvents, player, room.roomId, '该实例不在当前库存');
   const itemTableId = item.itemTableId >>> 0;
   const category = classifyInventoryCategory(itemTableId);
-  if (itemTableId === 2001 || category < 1 || category > 2 || item.state !== 0
+  if (itemTableId === defaultAmmoId() || category < 1 || category > 2 || item.state !== 0
       || !combatItems.has(itemTableId)) {
     return rejectDiscard(normalEvents, player, room.roomId, '该物品不可丢到地面');
   }
@@ -396,13 +450,25 @@ export function pickupGroundItem(room: GroundItemRoom, player: GroundItemRoomPla
   if (!ground) return false;
   const distance = Math.hypot(player.x - ground.x, player.y - ground.y, player.z - ground.z);
   if (!Number.isFinite(distance) || distance > GROUND_PICKUP_RADIUS) return false;
+  const itemName = combatItems.get(ground.itemTableId)?.name ?? '道具';
+  const requiredPetType = combatItems.get(ground.itemTableId)?.runtime.values.pickupPetType;
+  if (requiredPetType !== undefined && requiredPetType > 0) {
+    const petType = callbacks.petType?.(player.id);
+    if (petType === undefined || (petType >>> 0) !== (requiredPetType >>> 0)) {
+      return rejectPickup(room, player, ground, normalEvents, `${itemName}需要携带对应宠物才能拾取`);
+    }
+  }
+  const rejection = callbacks.pickupRejection?.(player.id, ground);
+  if (rejection) return rejectPickup(room, player, ground, normalEvents, rejection);
 
   let record: InventoryWireRecord | undefined;
   let refreshPlayerIds: readonly string[] = [];
   if (player.cpu) {
     record = acquireLocally(player, ground);
   } else {
-    if (!callbacks.acquire) return false;
+    if (!callbacks.acquire) {
+      return rejectPickup(room, player, ground, normalEvents, `暂时无法拾取${itemName}`);
+    }
     try {
       const result = callbacks.acquire({
         roomId: room.roomId,
@@ -417,13 +483,15 @@ export function pickupGroundItem(room: GroundItemRoom, player: GroundItemRoomPla
       record = result?.record;
       refreshPlayerIds = result?.refreshPlayerIds ?? [];
     } catch {
-      return false;
+      return rejectPickup(room, player, ground, normalEvents, `${itemName}拾取保存失败，请稍后再试`);
     }
   }
   if (!record || !(record.instanceId >>> 0) || !(record.ownedQuantity >>> 0)
-      || (record.itemTableId >>> 0) !== (ground.itemTableId >>> 0)) return false;
+      || (record.itemTableId >>> 0) !== (ground.itemTableId >>> 0)) {
+    return rejectPickup(room, player, ground, normalEvents, `暂时无法拾取${itemName}`);
+  }
 
-  applyAcquiredRecord(player, record, ground.itemTableId, callbacks);
+  applyAcquiredRecord(player, record, ground.itemTableId, callbacks, true);
   for (const playerId of refreshPlayerIds) {
     const target = room.players.get(playerId);
     if (target && target.id !== player.id) {
@@ -434,7 +502,8 @@ export function pickupGroundItem(room: GroundItemRoom, player: GroundItemRoomPla
   pushGroundItemEvent(normalEvents, {
     roomId: room.roomId,
     type: 'groundItemPickedUp',
-    message: '',
+    message: `你拾取了${itemName} × ${ground.quantity}。`,
+    itemName,
     playerId: player.id,
     targetId: ground.id,
     value: ground.quantity,
@@ -456,13 +525,44 @@ export function pickupGroundItem(room: GroundItemRoom, player: GroundItemRoomPla
     z: ground.z,
     groundItemRemoved: {id: ground.id},
   });
+  callbacks.pickupSucceeded?.(player.id, ground, normalEvents);
   return true;
 }
 
 /** Server-side contact scan after movement; the simulation clock is caller-owned. */
-export function advanceGroundItems(room: GroundItemRoom, _now: number,
+export function advanceGroundItems(room: GroundItemRoom, now: number,
     callbacks: AcquireDiscardCallbacks, normalEvents: MsgRoomEvent[]): void {
   if (room.phase !== 'PLAYING') return;
+  const lifetimeMs = Math.max(0, gameContent().rules.groundDrops.lifetimeSeconds) * 1000;
+  const expired = room.groundItems.filter(ground => now - ground.createdAt >= lifetimeMs);
+  if (expired.length) {
+    room.groundItems = room.groundItems.filter(ground => now - ground.createdAt < lifetimeMs);
+    for (const ground of expired) {
+      pushGroundItemEvent(normalEvents, {
+        roomId: room.roomId,
+        type: 'groundItemRemoved',
+        message: '',
+        playerId: ground.ownerId ?? '',
+        targetId: ground.id,
+        value: 0,
+        x: ground.x,
+        y: ground.y,
+        z: ground.z,
+        groundItemRemoved: {id: ground.id},
+      });
+    }
+  }
+  const rejected = pickupRejections.get(roundKey(room));
+  if (rejected) {
+    for (const [key, notice] of rejected) {
+      const player = room.players.get(notice.playerId);
+      const ground = room.groundItems.find(item => item.id === notice.groundId);
+      if (!player || !ground || !player.alive || player.combat.status !== 2
+          || Math.hypot(player.x - ground.x, player.y - ground.y, player.z - ground.z) > GROUND_PICKUP_RADIUS) {
+        rejected.delete(key);
+      }
+    }
+  }
   for (const ground of [...room.groundItems]) {
     for (const player of room.players.values()) {
       if (pickupGroundItem(room, player, ground.id, callbacks, normalEvents)) break;
@@ -475,6 +575,7 @@ export function clearGroundItems(room: Pick<GroundItemRoom, 'roomId' | 'round' |
   const key = roundKey(room);
   groundCounters.delete(key);
   breachDropKeys.delete(key);
+  pickupRejections.delete(key);
 }
 
 export function groundItemSnapshot(state: GroundItemState): GroundItemState {

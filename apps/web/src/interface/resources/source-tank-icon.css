@@ -1,0 +1,28 @@
+[data-tank-icon-mark][data-source-asset] {
+  background-color: #bd8abd;
+}
+
+[data-tank-icon-mark]::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 1px solid #000;
+  content: '';
+  pointer-events: none;
+}
+
+[data-tank-icon-mark]::after {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 2;
+  color: #ff0;
+  font-family: 'CDTank-SIMSUN', sans-serif;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: bold;
+  line-height: 1;
+  text-shadow: -1px 0 #000, 1px 0 #000, 0 -1px #000, 0 1px #000;
+  content: attr(data-tank-icon-mark);
+  pointer-events: none;
+}

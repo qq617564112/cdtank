@@ -1,3 +1,6 @@
+import {TEST_MAP} from '../../../../shared/maps/test-map';
+import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
+
 export interface HudMinimapBounds {
   minX: number;
   maxX: number;
@@ -6,11 +9,41 @@ export interface HudMinimapBounds {
 }
 
 export const HUD_MINIMAP_SIZE = 192;
+export const HUD_MINIMAP_BORDER = 6;
+export const HUD_MINIMAP_WORLD_RADIUS = 500;
+export const HUD_MINIMAP_SCALE = (HUD_MINIMAP_SIZE / 2 - HUD_MINIMAP_BORDER) / HUD_MINIMAP_WORLD_RADIUS;
+
+export interface HudMinimapCamera {
+  x: number;
+  z: number;
+  forwardX: number;
+  forwardZ: number;
+  rightX: number;
+  rightZ: number;
+}
+
+/** Out-of-range marker centres retain their bearing on the inner white border. */
+export function hudMinimapLocalPosition(camera: HudMinimapCamera, x: number,
+  z: number): {left: number; top: number; atEdge: boolean} {
+  const dx = x - camera.x, dz = z - camera.z;
+  const right = (dx * camera.rightX + dz * camera.rightZ) * HUD_MINIMAP_SCALE;
+  const up = (dx * camera.forwardX + dz * camera.forwardZ) * HUD_MINIMAP_SCALE;
+  const distance = Math.hypot(right, up);
+  const visibleRadius = HUD_MINIMAP_SIZE / 2 - HUD_MINIMAP_BORDER;
+  const borderCentreRadius = visibleRadius - .5;
+  const atEdge = distance > visibleRadius;
+  const factor = atEdge ? borderCentreRadius / distance : 1;
+  return {left: HUD_MINIMAP_SIZE / 2 + right * factor,
+    top: HUD_MINIMAP_SIZE / 2 - up * factor, atEdge};
+}
 
 /** Original NAV and all authored RPT spawn positions, square-fitted per map. */
+const testMapSpan = Math.max(TEST_MAP.rows[0].length, TEST_MAP.rows.length) * TEST_MAP.tileSize;
 const HUD_MINIMAP_BOUNDS: Readonly<Record<number, HudMinimapBounds>> = {
   1: {minX: -1506.6226806640625, maxX: 1560.65625, minZ: -1501.20703125, maxZ: 1566.0718994140625},
   2: {minX: -2626.316650390625, maxX: 1016.7206420898438, minZ: -1994.4244079589844, maxZ: 1648.6128845214844},
+  [FIELD_ROAD_HD.id]: {minX: -2626.316650390625, maxX: 1016.7206420898438,
+    minZ: -1994.4244079589844, maxZ: 1648.6128845214844},
   3: {minX: -1972.9508056640625, maxX: 1926.144287109375, minZ: -1812.6487426757812, maxZ: 2086.4463500976562},
   4: {minX: -1118.7362060546875, maxX: 1197.143310546875, minZ: -1153.3997192382812, maxZ: 1162.4797973632812},
   5: {minX: -1725.7015380859375, maxX: 1779.0223388671875, minZ: -1708.949462890625, maxZ: 1795.7744140625},
@@ -34,6 +67,8 @@ const HUD_MINIMAP_BOUNDS: Readonly<Record<number, HudMinimapBounds>> = {
   23: {minX: -1918.953125, maxX: 1876.0538330078125, minZ: -1908.7784423828125, maxZ: 1886.228515625},
   24: {minX: -1329.1696166992188, maxX: 1259.8876342773438, minZ: -1268.3778076171875, maxZ: 1320.679443359375},
   25: {minX: -1118.7362060546875, maxX: 1197.143310546875, minZ: -1153.3997192382812, maxZ: 1162.4797973632812},
+  [TEST_MAP.id]: {minX: -testMapSpan / 2, maxX: testMapSpan / 2,
+    minZ: -testMapSpan / 2, maxZ: testMapSpan / 2},
 };
 
 export function hudMinimapBounds(mapId: number): HudMinimapBounds | undefined {

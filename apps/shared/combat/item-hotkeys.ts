@@ -1,3 +1,4 @@
+import {gameContent} from '../content/catalog';
 import {isTreasureItem} from './treasure-items';
 
 export interface BattleItemRecord {
@@ -14,11 +15,7 @@ export type HotkeyCommand = {kind: 'selectAmmo'; slot: number}
 
 /** Original0x439762 unsigned ID ranges, independent of ItemType table values. */
 export function classifyItemId(itemTableId: number): number {
-  const id = itemTableId >>> 0;
-  for (const [base, count, first] of [[0, 4, 1], [10000, 8, 5], [20000, 2, 13], [30000, 3, 15]]) {
-    if (id > base && id <= base + count * 1000) return first + Math.floor((id - base - 1) / 1000);
-  }
-  return 0;
+  return gameContent().items.get(itemTableId >>> 0)?.category ?? 0;
 }
 
 /** Original0x4cb2f5: request dispatch; quantities change only on later updates. */

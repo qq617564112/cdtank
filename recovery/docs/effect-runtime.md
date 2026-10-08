@@ -312,7 +312,7 @@ Chromium节点131的六个相机／矩阵画面使用原纹理与GBF7，与原�
 
 ### 局限
 
-闪电属于原技能引用分支，目前真实服务器技能通知入口未恢复；浏览器闪电验收是显式源调用，不能计作真实技能对局。以上Web framebuffer对照验证原几何输入的提交，不是原D3D framebuffer对照。原设备完整初始状态、alpha通道、camera、FPU和gfx／heap ownership继续恢复；类型5模型绘制、10后处理、11震动最终呈现仍未接入。
+闪电属于原技能引用分支，目前真实服务器技能通知入口未恢复；浏览器闪电验收是显式源调用，不能计作真实技能对局。以上Web framebuffer对照验证原几何输入的提交，不是原D3D framebuffer对照。原设备完整初始状态、alpha通道、camera、FPU和gfx／heap ownership继续恢复；类型5模型后端与11震动已接入生产树和绘制入口；10后处理index5仍缺实际后端，当前342技能可达树无type10节点，详effect-screen-postprocess.md。
 
 ## 类型8屏幕绘制脚本与顶点
 
@@ -342,16 +342,16 @@ Chromium源384／385／671共18相机帧与原pose的view矩阵最大误差0，�
 
 ### 相机震动局限
 
-原完整基础相机运动／输入仍未复刻，Web保留当前基础相机并应用已恢复的原震动数学。原gfx／D3D最终framebuffer及实际FPU控制字仍未恢复。当前用原source入口显式触发，真实技能通知尚未接入，不能将房间内诊断调用称为真实技能对局。类型5模型绘制、10后处理最终呈现继续恢复。
+原完整基础相机运动／输入仍未复刻，Web保留当前基础相机并应用已恢复的原震动数学。原gfx／D3D最终framebuffer及实际FPU控制字仍未恢复。当前用原source入口显式触发，真实技能通知尚未接入，不能将房间内诊断调用称为真实技能对局。类型5模型后端已接入正式EffectRuntime；10后处理index5仍缺实际后端，当前技能引用范围见effect-screen-postprocess.md。
 
 ## 类型5矩阵、CVD与材质切片
 
 `EffectRuntimeTree`已支持显式type5 model backend，124完整原生命周期／1364 tick直接验证生产源树。完整原`0x47e56a`绘制入口1674样本确认递归透明度／priority和parent→Translate→XYZ rotation→Scale→global顺序，矩阵最大误差9.54×10⁻⁷。现存00012.CVD的原完整node update44 tick、mesh draw40帧／12120顶点及138个material参数调用完成对照；原clock／循环、XYZ／UV／法线与shader参数逐值一致，节点矩阵最大误差4.77×10⁻⁷。
 
-Chromium显式图形状态下44个CVD矩阵／顶点帧RGB误差0，改变像素4283–4741，mesh清理残留0。生产渲染组件为`EffectModelMesh`；当前战斗`EffectRuntime`尚未挂接模型backend，场景ambient／emissive覆盖和完整继承device state仍待确认。本项是diagnostic source检查，serverSkillTriggered=false。完整依据、运行入口和局限见`effect-model-rendering.md`；原资源缺口见`type5-model-resource-inventory.md`。
+Chromium显式图形状态下44个CVD矩阵／顶点帧RGB误差0，改变像素4283–4741，mesh清理残留0。生产渲染组件为`EffectModelMesh`；当前战斗`EffectRuntime.createTree`已挂接`EffectModelRenderer`模型backend；场景ambient／emissive覆盖和完整继承device state仍待确认。本项是diagnostic source检查，serverSkillTriggered=false。完整依据、运行入口和局限见`effect-model-rendering.md`；原资源缺口见`type5-model-resource-inventory.md`。
 
 ### type5生产模型backend
 
 `EffectRuntime`载入`effect-models.json`并为原type5树建立`EffectModelRenderer`。POL直接保留XYZ／UV／顶点色／section材质与索引，CVD按原setTime／setRate／update驱动轨道及顶点帧；绘制使用原type5矩阵和section GBF，结束／clear／退出释放mesh与material。source引用22个中8个具备模型实物；缺失模型与m120纹理仍为资源错误。原gbGeomNode/base完整构造验证+0x7c／+0xbc单位矩阵，POL描述仅复制名称。gfx ambient／emissive初始化原执行为[0.2,0.2,0.2,1]／0；EXE无对应setter或ordinal imports，DLL无setter直接call。原gfx init/reset应用default.gbf，Apply Begin flags3；常规Begin flags0与D3DX End保留状态保存／恢复语义。模型采用原default＋section脚本，其他场景直接设备状态修改的完整继承链仍待恢复。
 
-浏览器通过三个生产source诊断：625103(5mesh／100vertices／1230changed pixels)、13022(1mesh／6vertices／13pixels)、00012.CVD(1mesh／303vertices／178pixels)，clear后0mesh；44原矩阵／顶点帧RGB误差0。sourceInvocation=diagnostic、serverSkillTriggered=false；服务端道具使用链仍未实现。独立普通CPU实战的原攻击／烟雾／死亡sprite／strip与退出清理通过，不计作type5技能触发。
+浏览器通过三个生产source诊断：625103(5mesh／100vertices／1230changed pixels)、13022(1mesh／6vertices／13pixels)、00012.CVD(1mesh／303vertices／178pixels)，clear后0mesh；44原矩阵／顶点帧RGB误差0。sourceInvocation=diagnostic、serverSkillTriggered=false；该证据只覆盖模型生产后端诊断，正式道具/技能触发及实际双端表现按tasklist逐项登记。独立普通CPU实战的原攻击／烟雾／死亡sprite／strip与退出清理通过，不计作type5技能触发。

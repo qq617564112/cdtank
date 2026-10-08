@@ -1,0 +1,80 @@
+{
+  "name": "大包的宠物饲料",
+  "getMethod": 2,
+  "durable": 10,
+  "breakMode": 2,
+  "itemType": 1,
+  "battleUseMax": 5,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "item",
+  "id": 2,
+  "key": "largeFood",
+  "description": "美味的宠物饲料大包装，猫狗们的最爱！可以回复生命400点。",
+  "prices": {
+    "money": 20,
+    "tokens": 20
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 1,
+  "inventoryCategory": 1,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": "Data/scnobj/00002/00002.glb",
+    "modelId": 2,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 2,
+    "textures": [
+      "Data/scnobj/00002/00002A.png"
+    ],
+    "sourceModel": "Data/scnobj/00002/00002.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/00002/00002A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 10,
+      "breachDropOrder": 2,
+      "cpuUrgentHpRatio": 0.35,
+      "battleRewardOrder": 2
+    },
+    "skillRoles": {
+      "primary": 2,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "use": "heal",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

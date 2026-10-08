@@ -1,3 +1,4 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import {useEffect, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {sourceProps} from '../resources/source-ui-props';
 import type {HomeSourceLayout, HomeSourceUi} from '../resources/source-ui-layout';
@@ -48,6 +49,7 @@ export function RoomChatSourceCaret({input, ui, layout, name, value, scale, suff
     const events = ['input', 'select', 'scroll', 'focus', 'blur', 'keyup', 'pointerup', 'compositionend'];
     events.forEach(event => element.addEventListener(event, read));
     document.addEventListener('selectionchange', read);
+    document.fonts.addEventListener('loadingdone', read);
     let active = true;
     void document.fonts.ready.then(() => {if (active) read();});
     read();
@@ -55,6 +57,7 @@ export function RoomChatSourceCaret({input, ui, layout, name, value, scale, suff
       active = false;
       events.forEach(event => element.removeEventListener(event, read));
       document.removeEventListener('selectionchange', read);
+      document.fonts.removeEventListener('loadingdone', read);
       element.classList.remove('room-chat-source-caret-input');
     };
   }, [input, width, value, image?.asset]);
@@ -63,6 +66,6 @@ export function RoomChatSourceCaret({input, ui, layout, name, value, scale, suff
     data-room-chat-caret={name} data-source-asset={image.asset} data-source-caret-width={width}
     data-source-caret-index={view.index} data-source-scroll={view.scroll} data-source-focused={String(view.focused)}
     style={{...sourceProps(ui, layout, suffix, name, undefined, 0, offsetY).style, visibility: view.focused ? 'visible' : 'hidden'}}>
-    <i ref={brush} style={{left: view.left, width, backgroundImage: `url('/${image.asset}')`}}/>
+    <i ref={brush} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
   </span>;
 }

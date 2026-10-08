@@ -1,0 +1,77 @@
+{
+  "name": "蓬絮头像",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 7,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 4,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 12010,
+  "key": "item-12010",
+  "description": "蓬絮的大头像……看起来更像桃子。",
+  "prices": {
+    "money": 500,
+    "tokens": 50
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 7,
+  "inventoryCategory": 4,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 0,
+  "resources": {
+    "model": null,
+    "modelId": 12010,
+    "modelType": 1,
+    "texture": "12010",
+    "iconId": 12010,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "mark"
+  },
+  "equipmentTarget": "MARK"
+}

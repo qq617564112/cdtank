@@ -1,3 +1,4 @@
+import {rankedPetSkillId} from '../content/catalog';
 import type {OwnedRoleBaseRecord} from '../contracts/owned-base';
 
 export interface PetLearningDefinition {
@@ -33,7 +34,7 @@ export function quotePetSkillLearning(input: {
       rankValue === undefined || capValue === undefined) return undefined;
   const rank = rankValue | 0, rankCap = capValue | 0;
   const common = {instanceId: instanceId >>> 0, petId, slot, baseId: baseId >>> 0, rank, rankCap};
-  const nextSkillId = (baseId + rank) >>> 0;
+  const nextSkillId = rankedPetSkillId(baseId, rank + 1) ?? 0;
   const price = prices.get(nextSkillId);
   // The original sender resolves the next record before comparing the rank cap.
   if (!price) return undefined;

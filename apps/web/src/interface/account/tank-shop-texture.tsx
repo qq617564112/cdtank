@@ -1,3 +1,5 @@
+import {loadTankTextureCatalog} from '../../content';
+import {loadCombatCatalog} from '../../content';
 import {HomeOwnedTankRowContent} from '../home/home-owned-tank-row-content';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
@@ -13,7 +15,9 @@ import {sourceProps} from '../resources/source-ui-props';
 import {TankProductPreview} from '../resources/tank-product-preview';
 import {TankShopSourceRegions} from './tank-shop-source-regions';
 import {TankShopTextureSourceRegions} from './tank-shop-texture-source-regions';
+import {RoleShopListScrollbar} from './role-shop-list-scrollbar';
 import {tankCatalog} from '../../assets/tanks/tank-view';
+import {loadStaticJson} from '../../assets/static-resources';
 
 interface TextureRow {
   recordId: number; tankId: number; part: 'U' | 'M' | 'XY'; name: string;
@@ -49,6 +53,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
   const [busy, setBusy] = useState(true);
   const [status, setStatus] = useState('载入拥有战车与迷彩资料…');
   const saveButton = useRef<HTMLButtonElement | null>(null);
+  const ownedList = useRef<HTMLDivElement>(null);
   const focusAfterSave = useRef(false);
   const records = owned?.equipment ?? [];
   const record = records.find(value => new Map(value.fields).get(0x1c) === instance);
@@ -62,21 +67,16 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
   useEffect(() => {onBusy(busy);}, [busy, onBusy]);
   useEffect(() => {
     const currentSession = {active: true, query: false, identity: {}}; session.current = currentSession;
-    const controller = new AbortController();
     let queued = false;
     async function refresh() {
       if (!currentSession.active) return;
       if (currentSession.query) {queued = true; return;}
       currentSession.query = true; setBusy(true);
       try {
-        const [roles, role, response, tanks, metadataResponse] = await Promise.all([
-          source.ownedRoles!(), source.roleProfile!(), fetch('/tank-textures.json', {signal: controller.signal}), tankCatalog(),
-          fetch('/combat-catalog.json', {signal: controller.signal}),
+        const [roles, role, catalog, tanks, metadata] = await Promise.all([
+          source.ownedRoles!(), source.roleProfile!(), loadTankTextureCatalog(), tankCatalog(),
+          loadCombatCatalog(),
         ]);
-        if (!response.ok) throw new Error('迷彩目录载入失败');
-        if (!metadataResponse.ok) throw new Error('战车类别资料载入失败');
-        const metadata = await metadataResponse.json() as CombatCatalog;
-        const catalog = await response.json() as {rows: TextureRow[]};
         if (!currentSession.active) return;
         setTankTypes(metadata.tankTypes); setOwned(roles); setProfile(role.profile); setRows(catalog.rows);
         setActive(new Map(tanks.map(tank => {
@@ -103,7 +103,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
     }
     owner.session = {identity: currentSession.identity, refresh: () => {void refresh();}};
     void refresh();
-    return () => {currentSession.active = false; controller.abort(); if (owner.session?.identity === currentSession.identity) owner.session = undefined;};
+    return () => {currentSession.active = false; if (owner.session?.identity === currentSession.identity) owner.session = undefined;};
   }, [source, owner]);
   useLayoutEffect(() => {
     if (!busy && focusAfterSave.current) {
@@ -152,7 +152,8 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtCoin" text={wallet ? String(wallet.getUint32(0x74, true)) : ''} />
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtName" text={record?.name ?? ''} />
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtListQuantity" text={owned ? String(records.length) : ''} />
-    <div {...sourceProps(ui, layout, 'shop_tankpage.xml', 'lstTank')} data-tank-shop-owned-list="" role="listbox" aria-label="拥有战车" aria-busy={busy}>
+    <div {...sourceProps(ui, layout, 'shop_tankpage.xml', 'lstTank')} className="role-shop-list-scroll-shell">
+    <div ref={ownedList} className="role-shop-source-list" data-tank-shop-owned-list="" role="listbox" aria-label="拥有战车" aria-busy={busy}>
       {records.map((value, index) => {
         const rowFields = new Map(value.fields), id = rowFields.get(0x1c)!, rowTankId = rowFields.get(0x24);
         return <button key={id} type="button" role="option" data-tank-shop-owned-instance={id} data-home-owned-tank-row={id} disabled={busy}
@@ -161,14 +162,18 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
           onClick={() => selectRecord(value)} onKeyDown={event => {
             const destination = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
               : event.key === 'Home' ? 0 : event.key === 'End' ? records.length - 1 : undefined;
-            if (destination === undefined) return; event.preventDefault();
+            if (destination === undefined) return; event.preventDefault(); event.stopPropagation();
             const candidate = records[Math.max(0, Math.min(records.length - 1, destination))]; selectRecord(candidate);
             const button = event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-tank-shop-owned-instance="${new Map(candidate.fields).get(0x1c)}"]`);
             button?.focus(); button?.scrollIntoView({block: 'nearest'});
+          }} onKeyUp={event => {
+            if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
           }}><HomeOwnedTankRowContent ui={ui} name={value.name} tankId={rowTankId}
             tankType={tankTypes?.find(tank => tank.tankId === rowTankId)?.tankType}
             durationMinutes={rowFields.get(0x34)} /></button>;
       })}
+    </div>
+    <RoleShopListScrollbar list={ownedList} ui={ui} properties={layout.control('lstTank').properties}/>
     </div>
     {tankId !== undefined && selected && <TankProductPreview {...sourceProps(ui, layout, 'shop_tankpage.xml', 'picModel')}
       tankId={tankId} textures={selected} scale={scale} data-tank-shop-texture-preview="" data-owned-instance={instance} />}

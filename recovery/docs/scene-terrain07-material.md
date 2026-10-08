@@ -1,8 +1,8 @@
 # Map7 原地形顶点着色
 
-原0007.POL有30mesh、56分片：FVF21，33kind0/23kind1。发布GLB27153展开顶点的UV/packedRGBA逐源值一致，198个展开顶点为非白色，原材质纹理齐。当前地形PBR尚未接入已恢复texture×packedDiffuse消费者，烘焙着色未恢复。
+原0007.POL有30mesh、56分片：FVF21，33kind0/23kind1。发布GLB27153展开顶点的UV/packedRGBA逐源值一致，198个展开顶点为非白色，原材质纹理齐。正式ScenePreview已沿SceneTerrainMaterial消费texture×packedDiffuse，保留原顶点着色。
 
-独立 `export_scene_terrain07_material.py` 按原mesh/kind发布56材质资格。消费者沿已验2/18/11的SceneTerrainMaterial，复用geom_c1/geom_t_c1 selector及Attach执行，新增0007精确地图选择即可；无新原native或底层GPUfixture。透明门禁GREATER100/混合、LESS/write及清理复用已有合同。
+独立 `export_scene_terrain07_material.py` 按原mesh/kind发布56材质资格。ScenePreview与SceneTerrainMaterial共用hasSceneTerrainMaterial，当前资格覆盖0001..0025及FIELD_ROAD_HD，0007正式加载scene-terrain-material-0007.json。消费者复用geom_c1/geom_t_c1 selector及Attach执行，透明门禁GREATER100/混合、LESS/write及清理沿已有合同。
 
 开发归属为独立export/source/docs/runner；共享仅export_scenes独立import/call、SceneTerrainMaterial与ScenePreview追加0007资格。原Crush07/ground/破坏和声音业务保持当前正式消费者。正常mode4/map7选图建房加入→出生附近W/A→真实draw/raw及双完整画布→正常Leave，GPU首次窗口在FX118清理之后，不重复旧远route。
 

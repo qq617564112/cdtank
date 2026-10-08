@@ -1,21 +1,16 @@
-import {readFileSync} from 'node:fs';
+import {content} from '../content';
 import type {PetShopProduct} from '../../../shared/protocols/PtlPetShop';
-import {sourceTablePath} from '../runtime/content-paths';
 
-interface Table {rows: {values: Record<string, string>}[];}
 export interface PetShopDefinition {
   product: PetShopProduct;
   base: {critical: number; lucky: number; skills: number[]; levels: number[]};
 }
-const paidPets = (JSON.parse(readFileSync(sourceTablePath('pet'), 'utf8')) as Table).rows
-  .map(row => row.values).filter(pet => Number(pet.PetMoney) > 0);
-
-/** Positive-price source pets; the recovered purchase entry checks MONEY only. */
+/** Purchase data and newborn ranks come from the pet definition. */
 export function petShopCatalog(): PetShopDefinition[] {
-  return paidPets.map(pet => ({product: {petId: Number(pet.ID), name: pet.PetName, info: pet.PetInfo,
-    moneyPrice: Number(pet.PetMoney), tokenPrice: Number(pet.PetCoin), maxHp: Number(pet.MaxHP),
-    petType: Number(pet.PetType), petSize: Number(pet.PetSize)},
-  base: {critical: Number(pet.Critical), lucky: Number(pet.Lucky),
-    skills: Array.from({length: 6}, (_, index) => Number(pet[`Skill${index}`])),
-    levels: Array.from({length: 6}, (_, index) => Number(pet[`SkillLv${index}`]))}}));
+  return [...content.pets.values()].filter(pet => pet.shop.available).map(pet => ({
+    product: {petId: pet.id, name: pet.name, info: pet.description, moneyPrice: pet.prices.money,
+      tokenPrice: pet.prices.tokens, maxHp: pet.attributes.maxHp, petType: pet.petType, petSize: pet.petSize},
+    base: {critical: pet.attributes.critical, lucky: pet.attributes.lucky,
+      skills: pet.skills.map(skill => skill.baseId), levels: pet.skills.map(skill => skill.initialRank)},
+  }));
 }

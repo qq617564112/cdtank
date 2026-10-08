@@ -1,4 +1,5 @@
 #home-roles .home-owned-role-list-scroll-shell {
+  overflow: hidden;
   position: absolute;
   padding: 0;
 }
@@ -11,21 +12,26 @@
   height: 100%;
   padding: 0;
   overflow: hidden;
+  scrollbar-width: none;
 }
 
 .home-owned-role-list-scrollbar {
   position: absolute;
+  box-sizing: border-box;
+  max-height: 100%;
   right: 0;
   top: 0;
-  width: 8.5px;
+  width: 5%;
   overflow: hidden;
-  background-size: 100% 100%;
+  background-repeat: repeat;
+  background-position: left top;
 }
 
 #home-roles .home-owned-role-list-scrollbar div,
 #home-roles .home-owned-role-list-scrollbar span,
 #home-roles .home-owned-role-list-scrollbar button {
   position: absolute;
+  left: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -39,7 +45,7 @@
   gap: 0;
 }
 
-.home-owned-role-list-scroll-track {width: 8.5px;}
+.home-owned-role-list-scroll-track {width: 100%;}
 .home-owned-role-list-scroll-thumb {width: 28px; overflow: hidden;}
 .home-owned-role-list-thumb-top {top: 0; width: 28px; height: 29px;}
 .home-owned-role-list-thumb-middle {top: 29px; bottom: 17px; width: 28px;}

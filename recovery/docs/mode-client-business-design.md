@@ -89,14 +89,14 @@
 | 1 团队 | 双方剩余出击次数 | `match.teamLives` | `txtSelfInfo`/`txtEnemyInfo` |
 | 2 占领 | 双方对敌方 Castle 的累计伤害 | `teamScores`，上限 `match.targetScore` | `txtSelfInfo`/`txtEnemyInfo`，整数截断 |
 | 3 擒王 | 双方王当前/最大 HP | `players[].isVIP`、`hp`、`maxHp` | `txtSelfInfo`/`txtEnemyInfo` |
-| 4 混战 | 本机权威击毁数 | `players[].kills`，终局优先 `match.result.players[].kills` | `txtInfo` |
+| 4 混战 | 本机猫／狗击毁之和 | `players[].catsInfo + dogsInfo`，终局取冻结 `match.result.players[]` 两字段 | `txtInfo` |
 | 5 破坏 | 仍为完整状态的 Breach 目标数 | `match.objectives` 中 `DESTROY && hp > 0` | `txtInfo` |
 
 传播规则：
 
 - `WAITING`/`LOADING` 不显示计数；`PLAYING` 每 tick 发布变化；`FINISHED` 保留冻结终值；换局或离房清空。
 - 缺失、非法或非有限计数保持空值，不补 0，不从本地击杀、旧公告或客户端状态反推服务器胜局。
-- 模式 4 的 `CatsInfo + DogsInfo` 第二加数没有已确认业务含义，Web 继续显示本机击毁数；模式 5 的角色 `+0x314` 未证明等于剩余目标数，Web 继续显示权威 DESTROY 目标数。
+- 模式 4 按用户要求采用同一死亡链的猫／狗击毁拆分，入房均衡分配猫／狗标识，两数相加等于本人kills；原DogsInfo上游仍缺来源，采用规则见battle-equipment-exit-melee-rules.md。模式 5 的角色 `+0x314` 未证明等于剩余目标数，Web 继续显示权威 DESTROY 目标数。
 - 模式 1/2/3 的双方映射按本机 `team`；模式 4/5 按 `playerId`。模式 3 只使用 `isVIP` 角色，不显示普通成员 HP 代替王 HP。
 
 ### M2-06 团队

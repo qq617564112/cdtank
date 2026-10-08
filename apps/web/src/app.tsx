@@ -6,7 +6,7 @@ import {LobbySocialView} from './interface/lobby/lobby-social-view';
 import {BattleMatchView} from './interface/battle/battle-match';
 import {BattleChatView} from './interface/battle/battle-chat-view';
 import {BattleHudView} from './interface/battle/battle-hud-view';
-import {GmSupportView} from './interface/support/gm-support-view';
+import {BattleScoreboardView} from './interface/battle/battle-scoreboard-view';
 import {VolumeSettingsView} from './interface/settings/volume-settings';
 import {KeySettingsView, KeyBindingsHint} from './interface/settings/key-settings';
 import {SettingsSourceView} from './interface/settings/settings-source-view';
@@ -131,11 +131,10 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
   </>;
   return <>
     <LobbyView battle={battle} canvas={canvas} hud={hud} validation={validation}
-      headerContent={<TutorialSettingsBar onSettings={openSettingsFromHeader} onExit={login.exit}/>}
+      headerContent={<TutorialSettingsBar onSettings={openSettingsFromHeader} onExit={login.back}/>}
       chatContent={<LobbyChatView chat={battle.lobbyChat} presence={battle.lobbyPresence}/>} playerContent={<LobbySocialView battle={battle}/>} openInventory={openInventory}
       openEquipment={()=>{setEquipmentTankInstance(undefined);setEquipmentOpen(true);}} openRoles={()=>setRolesOpen(true)}
       openShop={openShop} openHistory={()=>setHistoryOpen(true)}/>
-    {!validation && <GmSupportView inbox={battle.gmSupport}/>}
     {validation && <aside className="controls">
       <h1>猫狗大作战 · 验证</h1>
       <button id="fullscreen" type="button" onClick={()=>{
@@ -152,22 +151,12 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
     <BattleMatchView validation={validation} panel={battle.matchPanel}/>
     <BattleChatView chat={battle.chat} formal={!validation}/>
     <BattleHudView hud={battle.originalHud} items={battle.itemInventory} onUseSlot={battle.useHudSlot}/>
-    <HomeInventoryView onRolePage={kind => {setRolesKind(kind);closeInventory();setRolesOpen(true);}} battle={battle} open={inventoryOpen} close={closeInventory} navigation={!validation ? <>
-      <button id="open-history" type="button" onClick={()=>setHistoryOpen(true)}>对局记录</button>
-      <button id="open-key-settings" type="button" onClick={()=>setKeysOpen(true)}>键位设置</button>
-      <button id="open-quick-chat-settings" type="button" onClick={()=>setQuickChatOpen(true)}>系统设置</button>
-    </> : undefined}/>
+    <BattleScoreboardView hud={battle.originalHud}/>
+    <HomeInventoryView onRolePage={kind => {setRolesKind(kind);closeInventory();setRolesOpen(true);}} battle={battle} open={inventoryOpen} close={closeInventory}/>
     <HomeEquipmentView battle={battle} open={equipmentOpen} close={closeEquipment} tankInstanceId={equipmentTankInstance}
       onPlayerPage={() => {closeEquipment();openInventory();}}
-      onRolePage={kind => {
-        setRolesKind(kind);setTextureOriginInstance(kind === 'tank' ? equipmentTankInstance : undefined);
-        closeEquipment();setRolesOpen(true);
-      }}/>
-    <HomeRolesView initialSelectedInstance={textureOriginInstance} onTexturePage={instanceId => {
-      closeRoles();
-      setTextureOriginInstance(instanceId);
-      setShopOpen(true);
-    }} onEquipmentPage={instanceId => {closeRoles();setEquipmentTankInstance(instanceId);setEquipmentOpen(true);}} onPlayerPage={() => {closeRoles();openInventory();}} initialKind={rolesKind} battle={battle} open={rolesOpen} close={closeRoles}/>
+      onRolePage={kind => {setRolesKind(kind);setTextureOriginInstance(kind === 'tank' ? equipmentTankInstance : undefined);closeEquipment();setRolesOpen(true);}}/>
+    <HomeRolesView initialSelectedInstance={textureOriginInstance} onEquipmentPage={instanceId => {closeRoles();setEquipmentTankInstance(instanceId);setEquipmentOpen(true);}} onPlayerPage={() => {closeRoles();openInventory();}} initialKind={rolesKind} battle={battle} open={rolesOpen} close={closeRoles}/>
     <AccountShopView onEquipmentPage={() => {
       document.querySelector<HTMLDialogElement>('#account-shop')?.close();
       setShopOpen(false);

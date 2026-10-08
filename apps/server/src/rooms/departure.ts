@@ -4,7 +4,6 @@ import {forfeitOutcome, type ModeOutcome} from '../modes/outcomes';
 import {matchFinishMessage} from '../settlement/match-result';
 import type {RoomState} from './state';
 import {canStartRoom, readyCpus} from './preparation';
-import {ensureDefaultRooms} from './availability';
 import {resetBreachCollision} from '../battle/breach-collision';
 import {resetSceneObjectCollision} from '../battle/environment';
 
@@ -14,9 +13,7 @@ export function leaveRoomPlayer(rooms: Map<string, RoomState>, room: RoomState,
     finish(outcome: ModeOutcome): void;
     /** Freeze an ordinary mid-round participant before removal; not called for immediate FORFEIT. */
     departed(player: PlayerState): void;
-    create(mode: number): void;
     start(): void;
-    rematch(): void;
   }): MsgRoomEvent[] {
   const events: MsgRoomEvent[] = [{roomId: room.roomId, type: 'leave',
     message: `${player.name}离开了战斗`, playerId: player.id, targetId: '',
@@ -41,7 +38,6 @@ export function leaveRoomPlayer(rooms: Map<string, RoomState>, room: RoomState,
     resetBreachCollision(room.battlefield);
     resetSceneObjectCollision(room.battlefield);
     rooms.delete(room.roomId);
-    ensureDefaultRooms(rooms, actions.create);
   } else if (room.phase === 'LOADING') {
     room.phase = 'WAITING';
     room.loaded.clear();
@@ -50,8 +46,6 @@ export function leaveRoomPlayer(rooms: Map<string, RoomState>, room: RoomState,
   } else if (room.phase === 'WAITING' && canStartRoom(room, minPlayers)
       && room.ready.size === room.players.size) {
     actions.start();
-  } else {
-    actions.rematch();
   }
   return events;
 }

@@ -16,7 +16,7 @@ export function applyHealingItem(roomId: string, player: HealthParticipant & {
   events: MsgRoomEvent[]): void {
   if (request.kind !== 'useItem' || !player.alive || player.combat.status !== 2) return;
   const item = player.inventory.find(record => record.instanceId === request.instanceId);
-  if (!item || (item.itemTableId !== 1 && item.itemTableId !== 2)
+  if (!item || combatItems.get(item.itemTableId)?.runtime.use !== 'heal'
       || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
   const definition = combatItems.get(item.itemTableId);
   const skill = definition ? combatSkills.get(definition.skillIds[0]) : undefined;
@@ -51,7 +51,7 @@ export function applyHealingItem(roomId: string, player: HealthParticipant & {
   item.ownedQuantity -= 1;
   item.battleQuantity -= 1;
   setBattleHealth(player, hp, maximum);
-  events.push({roomId, type: 'itemUsed',
+  events.push({roomId, type: 'itemUsed', itemName: combatItems.get(item.itemTableId)?.name,
     message: `${player.name}使用${definition!.name}，恢复${Math.round(restored)}生命`,
     playerId: player.id, targetId: player.id, value: restored,
     x: player.x, y: player.y, z: player.z, skillId: skill.skillId,

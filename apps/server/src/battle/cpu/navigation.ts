@@ -24,7 +24,7 @@ function* searchBotPath(field: Battlefield, start: Point, goal: Point,
   if (traversable(start, goal)) return [goal];
   const grid = field.navigation;
   let cache = edgeCaches.get(field);
-  if (!cache || cache.revision !== field.navigationRevision) {
+  if (!cache) {
     cache = {revision: field.navigationRevision, edges: new Map()};
     edgeCaches.set(field, cache);
   }
@@ -64,12 +64,17 @@ function* searchBotPath(field: Battlefield, start: Point, goal: Point,
   const closed = new Set<string>();
   while (queue.length) {
     yield;
+    if (cache.revision !== field.navigationRevision) {
+      cache.revision = field.navigationRevision;
+      edges.clear();
+    }
     const cell = pop();
     const cellKey = key(cell.x, cell.z);
     if (closed.has(cellKey)) continue;
+    const a = grid.positionAtCell(cell.x, cell.z);
+    if (!a) continue;
     closed.add(cellKey);
     if (cell.x === last.x && cell.z === last.z) break;
-    const a = grid.positionAtCell(cell.x, cell.z)!;
     for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
       const x = cell.x + dx, z = cell.z + dz;
       if (closed.has(key(x, z))) continue;
@@ -93,7 +98,9 @@ function* searchBotPath(field: Battlefield, start: Point, goal: Point,
   const points: Point[] = [goal];
   while (current) {
     const [x, z] = current.split(',').map(Number);
-    points.push(grid.positionAtCell(x, z)!);
+    const point = grid.positionAtCell(x, z);
+    if (!point) return [];
+    points.push(point);
     current = parents.get(current);
   }
   points.push(start);

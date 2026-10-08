@@ -1,3 +1,4 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import {useContext, useEffect, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {SourceImageScale} from '../resources/source-static-image';
 import {sourceProps} from '../resources/source-ui-props';
@@ -64,6 +65,6 @@ export function LobbyChatSourceCaret({input, ui, layout, name, value}: {
     data-lobby-chat-caret={name} data-source-asset={image.asset} data-source-caret-width={width}
     data-source-caret-index={view.index} data-source-scroll={view.scroll} data-source-focused={String(view.focused)}
     style={{...sourceProps(ui, layout, 'chat.xml', name).style, visibility: view.focused ? 'visible' : 'hidden'}}>
-    <i ref={brush} style={{left: view.left, width, backgroundImage: `url('/${image.asset}')`}}/>
+    <i ref={brush} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
   </span>;
 }

@@ -8,10 +8,13 @@ import type {RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
 export interface DepartedParticipantRecord {
   id: string;
   name: string;
+  petId?: number;
   team: number;
   score: number;
   kills: number;
   deaths: number;
+  catsInfo?: number;
+  dogsInfo?: number;
   objectivesDestroyed: number;
   /** Deep clone frozen before removal, so a later round cannot mutate it. */
   roundStats?: RoundStats;

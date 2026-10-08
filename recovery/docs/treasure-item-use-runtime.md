@@ -23,6 +23,13 @@ item20001 鱼骨、item20002 骨头；不开放整类别，不新增 schema、UI
 - 快捷槽资格：沿用 `resolveItemHotkey` 七槽解析与 `requestKitbagAssignment` 的类别 6 配置
   范围（`1..4000` 或 `20001..21000`）。只有已配置到槽、本局可用数非零的两个物品才走新入口；
   原分类 1/2 的 `requestItemUse` 判据不改，整类别 6 不因此开放。
+- 拾取治疗：真正拾取 item20001/20002 才入库存 +1，并按物品 JSON
+  `runtime.values.pickupHealing` 为实际拾取者回血 15，走原健康入口
+  clamp 到玩法当前 `maxHp`；满血仍取得、`lastStand` 不回血、失败不治疗不移除。同账户其它连接
+  只刷新库存不回血。原文案 15 与技能字段 `HP30` 不一致，因此拾取 15 与本文手动自用 30 分开，
+  互不替代。
+- 拾取资格：真人/CPU 按真实已选 pet JSON 的 `petType` 判定，猫 `PetType 1` 拾 20001、狗
+  `PetType 2` 拾 20002，错误种类或未选宠物不拾这两件且保留实体。
 - 普通使用：`dispatchItemHotkey` 命中 item20001/20002 时经 `requestTreasureItemUse` 发普通
   `useItem` 请求，随后 `applyTreasureItemUse` 校验存活 `status===2`、自用、缺失生命与
   skill30005 真实定义。成功先经持久 `consumeItem` CAS 扣一份 owned，再按 skill30005 的

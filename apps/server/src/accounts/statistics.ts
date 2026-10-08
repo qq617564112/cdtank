@@ -1,6 +1,7 @@
 import type {DatabaseSync} from 'node:sqlite';
 import type {AccountStatistics, AwardCounts} from '../../../shared/protocols/PtlRoleProfile';
-import type {AwardType, ResultPlayer, RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
+import type {MatchHistoryRecord} from '../../../shared/protocols/PtlHistory';
+import type {AwardType, RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
 import type {AwardKind, TitleStats} from '../settlement/title';
 import {readAccountSpending} from './spending';
 
@@ -8,6 +9,7 @@ const AWARD_KINDS: readonly AwardKind[] = ['perfect', 'mvp', 'savage', 'console'
   'kind', 'crafty', 'shy', 'greedy'];
 
 interface HistoryAggregate {
+  readonly history: readonly MatchHistoryRecord[];
   readonly wins: number;
   readonly losses: number;
   readonly draws: number;
@@ -60,13 +62,16 @@ function aggregateHistory(database: DatabaseSync, accountId: string): HistoryAgg
   let currentWins = 0, currentLosses = 0, winStreak = 0, loseStreak = 0;
   let statsRows = 0, awardRows = 0;
   let shots = 0, hits = 0, damage = 0, killCombo = 0;
+  const history: MatchHistoryRecord[] = [];
   const counts: Record<AwardKind, number> = {
     perfect: 0, mvp: 0, savage: 0, console: 0, brave: 0,
     kind: 0, crafty: 0, shy: 0, greedy: 0,
   };
 
   for (const row of rows) {
-    const {result} = JSON.parse(String(row.record)) as {result: ResultPlayer};
+    const match = JSON.parse(String(row.record)) as MatchHistoryRecord;
+    history.push(match);
+    const {result} = match;
     if (result.outcome === 'WIN') {wins++; currentWins++; currentLosses = 0;}
     else if (result.outcome === 'LOSE') {losses++; currentLosses++; currentWins = 0;}
     else {draws++; currentWins = 0; currentLosses = 0;}
@@ -91,6 +96,7 @@ function aggregateHistory(database: DatabaseSync, accountId: string): HistoryAgg
   }
 
   return {
+    history,
     wins, losses, draws, winStreak, loseStreak, kills, deaths,
     roundStats: statsRows > 0 ? {shots, hits, damage, killCombo} : undefined,
     awardCounts: awardRows > 0 ? counts : undefined,
@@ -140,6 +146,7 @@ export function readTitleStats(database: DatabaseSync, accountId: string): Title
   const aggregate = aggregateHistory(database, accountId);
   const spending = readAccountSpending(database, accountId);
   return {
+    history: aggregate.history,
     wins: aggregate.wins,
     losses: aggregate.losses,
     draws: aggregate.draws,

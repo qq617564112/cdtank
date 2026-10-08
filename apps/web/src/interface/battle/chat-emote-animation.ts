@@ -1,3 +1,5 @@
+import {loadStaticJson} from '../../assets/static-resources';
+
 export interface ChatEmoteFrame {
   duration: number;
   asset: string;
@@ -30,9 +32,7 @@ export class ChatEmoteSequence {
 let library: Promise<Map<number,ChatEmoteSequence>> | undefined;
 /** Manager providers persist by name across message reformatting and chat owners. */
 export function loadChatEmoteSequences(): Promise<Map<number,ChatEmoteSequence>> {
-  return library ??= fetch('/chat-emote-sequences.json').then(async response=>{
-    if (!response.ok) throw new Error('原表情动画目录缺失');
-    const data = await response.json() as {sequences: ChatEmoteSequenceDefinition[]};
+  return library ??= loadStaticJson<{sequences: ChatEmoteSequenceDefinition[]}>('/chat-emote-sequences.json').then(data=>{
     if (!Array.isArray(data.sequences) || data.sequences.length !== 30) throw new Error('原表情动画目录不完整');
     const sequences = new Map<number,ChatEmoteSequence>();
     for (const sequence of data.sequences) {

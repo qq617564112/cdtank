@@ -33,7 +33,10 @@ export function recomputeBattleAttributes(player: {
   inventory: InventoryWireRecord[];
   hp: number;
   vip: boolean;
+  petBattle?: {attributeSkillIds(): number[]};
 }): void {
+  const vipMaxHp = player.vip ? player.attributes.record.maxHp : undefined;
+  const runtimeSkillIds = player.petBattle?.attributeSkillIds();
   player.attributesReady = false;
   player.magazineReady = false;
   player.armorReady = false;
@@ -51,9 +54,9 @@ export function recomputeBattleAttributes(player: {
     // Resolve available sources independently; missing ownership is not an
     // owned record with invented zero values.
     const ammoSources: RoleSkillSources = owned.equipment
-      ? readRoleSkillSources({currentSkillIds: [...currentSkillIds], boundGear: player.boundGear,
+      ? readRoleSkillSources({currentSkillIds: [...currentSkillIds], runtimeSkillIds, boundGear: player.boundGear,
         equipment: owned.equipment, roleFields: fields})
-      : {currentSkillIds: [...currentSkillIds],
+      : {currentSkillIds: [...currentSkillIds], runtimeSkillIds,
         extraSkill: {baseId: fields.get(0x88)!, rank: fields.get(0x8c)!},
         itemIds: [0xbc, 0xc0, 0xc4, 0xc8, 0xcc, 0x70, 0x6c].map(offset => fields.get(offset)!)};
     player.shotModifiers = resolveSelectedShotModifiers(ammoSources, combatSkills, combatItemSkills);
@@ -82,7 +85,7 @@ export function recomputeBattleAttributes(player: {
   // The movement prefix reads mastery and installed skills, not life or armor.
   if (owned.equipment && fields && currentSkillIds && tables.tank && tables.pet && tables.tank.id === player.tank.id &&
       [0x34, 0x58, 0x5c, 0x60].every(offset => owned.equipment!.fields.has(offset))) {
-    const movementSources = readRoleSkillSources({currentSkillIds: [...currentSkillIds],
+    const movementSources = readRoleSkillSources({currentSkillIds: [...currentSkillIds], runtimeSkillIds,
       boundGear: player.boundGear, equipment: owned.equipment, roleFields: fields});
     player.recoveredMovement = recomputeQualifiedRoleMovement({
       tank: tables.tank.recomputeBase, pet: tables.pet,
@@ -99,7 +102,7 @@ export function recomputeBattleAttributes(player: {
       ownedAtk: owned.equipment.fields.get(0x3c), ownedAtkBonus: owned.equipment.fields.get(0x40),
       ownedDef: owned.equipment.fields.get(0x4c), ownedDefBonus: owned.equipment.fields.get(0x50),
       tank: tables.tank.recomputeBase, tankType: tables.tank.recomputeBase.tankType, pet: tables.pet,
-      sources: readRoleSkillSources({currentSkillIds: [...currentSkillIds], boundGear: player.boundGear,
+      sources: readRoleSkillSources({currentSkillIds: [...currentSkillIds], runtimeSkillIds, boundGear: player.boundGear,
         equipment: owned.equipment, roleFields: fields}),
       skills: combatSkills, items: combatItemSkills, limits: combatLimits,
       roleValue9: player.combat.recomputeCounter});
@@ -110,7 +113,7 @@ export function recomputeBattleAttributes(player: {
       tables.tank.id !== player.tank.id ||
       ![0x2c, 0x34, 0x3c].every(offset => owned.base!.fields.has(offset)) ||
       ![0x34, 0x3c, 0x40, 0x4c, 0x50, 0x58, 0x5c, 0x60].every(offset => owned.equipment!.fields.has(offset))) return;
-  const sources = readRoleSkillSources({currentSkillIds: [...player.combat.record!.arrays.get(4)!],
+  const sources = readRoleSkillSources({currentSkillIds: [...player.combat.record!.arrays.get(4)!], runtimeSkillIds,
     boundGear: player.boundGear, equipment: owned.equipment, roleFields: fields});
   const input = {base: owned.base, equipment: owned.equipment,
     tank: tables.tank.recomputeBase, pet: tables.pet, sources, skills: combatSkills, items: combatItemSkills,
@@ -120,12 +123,15 @@ export function recomputeBattleAttributes(player: {
       const item = player.inventory.find(record => record.instanceId === (instanceId >>> 0));
       return item ? combatItemSkills.get(item.itemTableId) : undefined;
     }};
-  // Movement is computed before the unknown VIP HP multiplier tail. Do not
-  // publish normal HP/attribute readiness or original completion notifications.
-  if (player.vip) {
-    return;
-  }
+  // Web VIP life remains the mode's fixed maximum; all other attributes use ordinary sources.
   player.attributes.record.hp = player.hp;
   player.attributesReady = player.attributes.recompute({...input, vip: 0, vipMultiplier: 0}, player.combat);
+  if (player.attributesReady && vipMaxHp !== undefined) {
+    player.attributes.record.maxHp = vipMaxHp;
+    player.attributes.values!.recordFields.set(0x58, vipMaxHp);
+    player.combat.record!.numericFields!.set(0x58, vipMaxHp);
+    player.lifeReady = true;
+    player.recoveredMaxHp = vipMaxHp;
+  }
   if (player.attributesReady) initializeDefaultAmmoMagazine(player.combat);
 }

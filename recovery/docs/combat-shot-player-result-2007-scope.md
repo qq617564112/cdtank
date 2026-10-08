@@ -20,7 +20,7 @@
 
 `apps/web/src/assets/tanks/ammo-burn-presentation.ts`导出`AmmoBurnPresentation(runtime,roleGetter)`，调用`reconcile(players,context,playing)`和`clear()`。context由主线提供房间与round身份；playing仅在正式PLAYING为true。角色资源就绪后应再次reconcile，snapshot也需调用。主线负责Battle实例、加载回调、快照与Leave接线。
 
-消费者固定4005槽0：原014/tag0/oneShotfalse，SE03 selector-1。相同角色、绘制owner及startedAt只开始一次；expiresAt仅协议元数据，客户端不设置持续时间。权威presence消失、死亡、FINISHED、owner离开、round变化或clear停止原效果与声音。复用原retained三元组及Stop来源，未声明与原packet wire等同；未增加第二槽7/SE30或泛special触发。
+消费者固定4005槽0：原014/tag0/oneShotfalse，SE03 selector-1。相同角色、绘制owner及startedAt只开始一次；expiresAt仅协议元数据，客户端不设置持续时间。权威presence消失、死亡、FINISHED、owner离开、round变化或clear停止原效果与声音。复用原retained三元组及Stop来源，未声明与原packet wire等同；持续首槽仍沿此presence消费者；第二槽7/SE30由World在存活自然完成时单次通知，详remaining-effect-slot-integration.md，其新绘声范围尚未实测。
 
 `tests/ammo-burn-presentation.cts`及`output/ammo-burn-presentation.json/log`为PASS_MODULE_ONLY：late role、开始参数、去重、absence/death/finished/round/clear边界。`tests/ammo-burn-presentation-runtime.cts`及对应output JSON/log以真实EffectRuntime消费已发布014树2449–2452与具名纹理，验证持续粒子几何、活挂点、重复不重播、停止后释放tree/mesh；SE03为recording声音边界，不是实际可听证据。
 

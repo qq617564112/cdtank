@@ -1,25 +1,23 @@
 import type {MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot} from '../../../shared/protocols';
 import type {Battlefield} from '../battlefield';
 import {getSceneBreakables, getSceneCastles, getSceneCrushes} from '../scene-objects';
-import type {RoundStatsCarrier} from './round-statistics';
-
-type BunkerDamageCarrier = RoundStatsCarrier & {
-  roundStats?: NonNullable<RoundStatsCarrier['roundStats']> & {bunkerDamage?: number};
-};
+import {recordBunkerDamage, type RoundStatsCarrier} from './round-statistics';
+import {setCastleDamageAnimation} from './castle-animation';
 
 const active = new WeakMap<Battlefield, Set<string>>();
 const castleTargets = new WeakMap<object, {round: number; mode: number; mapId: number; objects: CastleTargetSnapshot[]}>();
-const remainingBreachMapIds = [1, 3, 8, 9, 12, 13, 15, 16, 19, 23, 24, 25];
 
 /** One Castle instance serves both the mode2 rule target and the rendered scene entity. */
 export interface CastleTargetSnapshot extends SceneObjectSnapshot, ObjectiveSnapshot {
   kind: 'CAPTURE' | 'DESTROY';
+  sourcePlacementId: string;
+  sourceModel: string;
 }
 
 interface CastleRoom {
   mode: number;
   round?: number;
-  map: {mapId: number; bunkerHp?: number};
+  map: {mapId: number; bunkerHp?: number; defaultButt?: number};
 }
 
 /**
@@ -50,24 +48,38 @@ export function castleSceneObjects(room: CastleRoom): CastleTargetSnapshot[] {
 /** Castle rule instances plus the existing rebuilt ordinary breakables. */
 export function createSceneObjects(room: CastleRoom): SceneObjectSnapshot[] {
   const castles = castleSceneObjects(room);
-  const models = [1, 3, 4].includes(room.mode) && remainingBreachMapIds.includes(room.map.mapId) ? undefined
-    : room.mode === 1 && room.map.mapId === 2 ? ['obj05428', 'obj05427', 'obj05425', 'obj05426', 'obj05422']
-    : room.mode === 1 && room.map.mapId === 5 ? ['obj05425', 'obj05426', 'obj05432']
-    : room.mode === 1 && room.map.mapId === 6 ? ['obj05421', 'obj05423', 'obj05443', 'obj05433', 'obj05432']
-    : room.mode === 1 && room.map.mapId === 10 ? ['obj05425', 'obj05426', 'obj05427', 'obj05428', 'obj05429']
-    : room.mode === 1 && room.map.mapId === 11 ? ['obj05430']
-    : room.mode === 1 && room.map.mapId === 4 ? ['obj05466', 'obj05422']
-    : room.mode === 4 && room.map.mapId === 14 ? ['obj05425', 'obj05426', 'obj05428']
-    : room.mode === 4 && room.map.mapId === 17 ? ['obj05469']
-    : room.mode === 4 && room.map.mapId === 18 ? ['obj05424', 'obj05442']
-    : [1, 3].includes(room.mode) && room.map.mapId === 7 ? ['obj05466', 'obj05467', 'obj05468', 'obj05462', 'obj05423', 'obj05445']
-    : [];
-  const sources = models === undefined ? getSceneBreakables(room.map.mapId)
-    : getSceneBreakables(room.map.mapId).filter(source => models.includes(source.model));
+  const sources = [1, 2, 3, 4].includes(room.mode) ? getSceneBreakables(room.map.mapId) : [];
   if (!sources.length) return castles;
+  const initialHp = room.map.defaultButt ?? 200;
+  if (!(initialHp > 0)) return castles;
   return [...castles, ...sources
     .map(source => ({id: `ENV:${source.id}`, sourcePlacementId: source.id, sourceModel: source.model,
-      x: source.matrix[12], y: source.matrix[13], z: source.matrix[14], hp: 200, maxHp: 200}))];
+      x: source.matrix[12], y: source.matrix[13], z: source.matrix[14], hp: initialHp, maxHp: initialHp}))];
+}
+
+/**
+ * Restore ordinary mode1-4 Breaches in place. Source map values define both
+ * the delay and HP; non-positive values disable automatic restoration rather
+ * than repeatedly scheduling a zero-HP object. No private state is needed:
+ * `destroyedAt` is already the round-scoped destruction clock carried by the
+ * room and reconnect snapshots.
+ */
+export function advanceSceneObjects(room: {
+  mode: number;
+  map: {buttReborn: number; buttRebornTime: number};
+  sceneObjects: readonly SceneObjectSnapshot[];
+}, now: number): void {
+  if (![1, 2, 3, 4].includes(room.mode)) return;
+  const rebornHp = room.map.buttReborn;
+  const rebornSeconds = room.map.buttRebornTime;
+  if (!(rebornHp > 0) || !(rebornSeconds > 0)) return;
+  for (const object of room.sceneObjects) {
+    if (object.id.startsWith('CASTLE:') || object.hp > 0 || object.destroyedAt === undefined) continue;
+    if (now - object.destroyedAt < rebornSeconds * 1000) continue;
+    object.hp = rebornHp;
+    object.maxHp = rebornHp;
+    object.destroyedAt = undefined;
+  }
 }
 
 /**
@@ -78,21 +90,20 @@ export function createSceneObjects(room: CastleRoom): SceneObjectSnapshot[] {
  */
 export function damageSceneObject(room: {roomId: string; phase: string; mode: number;
   map: {mapId: number}; teamScores?: number[]},
-  owner: BunkerDamageCarrier & {id: string; name: string; team: number}, target: SceneObjectSnapshot,
+  owner: RoundStatsCarrier & {id: string; name: string; team: number; sceneBreakCount?: number}, target: SceneObjectSnapshot,
   damage: number, now: number, events: MsgRoomEvent[]): void {
   if (room.phase !== 'PLAYING' || !Number.isFinite(damage) || damage <= 0 || target.hp <= 0) return;
   const previousHp = target.hp;
   target.hp = Math.max(0, previousHp - damage);
   const dealt = previousHp - target.hp;
+  setCastleDamageAnimation(target, previousHp, now);
   if (room.mode === 2 && dealt > 0 && target.id.startsWith('CASTLE:')) {
     const castle = getSceneCastles(room.map.mapId).find(source => source.id === target.sourcePlacementId);
     if (castle && (castle.affiliation === 1 || castle.affiliation === 2)
         && (owner.team === 0 || owner.team === 1)
         && castle.affiliation !== owner.team + 1) {
       if (room.teamScores) room.teamScores[owner.team] = (room.teamScores[owner.team] ?? 0) + dealt;
-      if (owner.roundStats) {
-        owner.roundStats.bunkerDamage = (owner.roundStats.bunkerDamage ?? 0) + dealt;
-      }
+      recordBunkerDamage(owner, dealt);
     }
   }
   events.push({roomId: room.roomId, type: 'sceneObjectHit', message: `${owner.name}命中场景物件`,
@@ -102,6 +113,7 @@ export function damageSceneObject(room: {roomId: string; phase: string; mode: nu
     x: target.x, y: target.y, z: target.z});
   if (target.hp === 0) {
     target.destroyedAt = now;
+    owner.sceneBreakCount = (owner.sceneBreakCount ?? 0) + 1;
     events.push({roomId: room.roomId, type: 'sceneObjectDestroyed', message: `${owner.name}摧毁场景物件`,
       playerId: owner.id, targetId: target.id, value: 0, x: target.x, y: target.y, z: target.z});
   }

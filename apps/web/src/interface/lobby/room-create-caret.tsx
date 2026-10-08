@@ -1,3 +1,4 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import {useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject} from 'react';
 import type {HomeSourceLayout, HomeSourceUi} from '../resources/source-ui-layout';
 import {advanceRoomCreateCaret} from './room-create-caret-clock';
@@ -61,6 +62,6 @@ export function RoomCreateCaret({input, ui, layout, name, style, disabled}: {
   return <span aria-hidden="true" className="room-create-source-caret" data-room-create-caret={name}
     data-source-asset={image.asset} data-source-caret-width={width} data-source-caret-index={view.index} data-source-scroll={view.scroll}
     data-source-focused={String(view.focused)} style={{...style, visibility: view.focused ? 'visible' : 'hidden'}}>
-    <i ref={brush} style={{left: view.left, width, backgroundImage: `url('/${image.asset}')`}}/>
+    <i ref={brush} style={{left: view.left, width, backgroundImage: imageResourceBackground(`/${image.asset}`)}}/>
   </span>;
 }

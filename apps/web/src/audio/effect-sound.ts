@@ -4,41 +4,79 @@ interface SoundCatalog {
   sounds: {name: string; asset: string}[];
   defaultSoundVolume: number;
 }
-interface SoundVoice {audio?: HTMLAudioElement; ended: boolean;}
+interface SoundVoice {source?: AudioBufferSourceNode; ended: boolean;}
 
-/** Type4 media voices and the original manager's shared sound descriptor. */
+/** Predecoded Type4 voices and the original manager's shared sound descriptor. */
 export class EffectSound implements EffectSoundBackend<number> {
   readonly shared: EffectSoundStore<number> = {};
-  private readonly sounds = new Map<string, string>();
+  private readonly sounds = new Map<string, AudioBuffer>();
   private readonly voices = new Map<number, SoundVoice>();
   private nextVoice = 0;
   private volume?: number;
+  private context?: AudioContext;
+  private gain?: GainNode;
+  private generation = 0;
 
-  configure(catalog: SoundCatalog): void {
+  async configure(catalog: SoundCatalog, context: AudioContext): Promise<void> {
+    const generation = ++this.generation;
     this.volume ??= catalog.defaultSoundVolume;
-    catalog.sounds.forEach(sound => this.sounds.set(sound.name.toLowerCase(), sound.asset));
+    this.context = context;
+    if (!this.gain) {
+      this.gain = context.createGain();
+      this.gain.connect(context.destination);
+    }
+    this.gain.gain.value = this.volume;
+    const decoded = await Promise.all(catalog.sounds.map(async sound => {
+      const name = sound.name.toLowerCase();
+      const cached = this.sounds.get(name);
+      if (cached) return [name, cached] as const;
+      const response = await fetch(`/${sound.asset}`);
+      if (!response.ok) throw new Error(`特效声音载入失败：${sound.name}`);
+      const buffer = await context.decodeAudioData(await response.arrayBuffer());
+      return [name, buffer] as const;
+    }));
+    if (generation !== this.generation || this.context !== context) return;
+    for (const [name, buffer] of decoded) this.sounds.set(name, buffer);
   }
 
   play(reference: string, _parameter: number): number {
     const handle = ++this.nextVoice;
-    const asset = this.sounds.get(reference.toLowerCase());
-    const voice: SoundVoice = {ended: !asset};
+    const buffer = this.sounds.get(reference.toLowerCase());
+    const voice: SoundVoice = {ended: true};
     this.voices.set(handle, voice);
-    if (asset) {
-      const audio = new Audio(`/${asset}`);
-      audio.volume = this.volume ?? 1;
-      voice.audio = audio;
-      audio.addEventListener('ended', () => {voice.ended = true;}, {once: true});
-      void audio.play().catch(() => {voice.ended = true;});
+    if (buffer && this.context?.state === 'running' && this.gain) {
+      const source = this.context.createBufferSource();
+      source.buffer = buffer;
+      source.loop = false;
+      source.connect(this.gain);
+      voice.source = source;
+      voice.ended = false;
+      source.onended = () => this.finish(handle);
+      source.start();
     }
     return handle;
   }
 
   finished(handle: number): boolean {return this.voices.get(handle)?.ended ?? true;}
 
-  stop(handle: number): void {
+  private finish(handle: number): void {
     const voice = this.voices.get(handle);
-    voice?.audio?.pause();
+    if (!voice) return;
+    voice.ended = true;
+    const source = voice.source;
+    voice.source = undefined;
+    if (!source) return;
+    source.onended = null;
+    source.disconnect();
+  }
+
+  stop(handle: number): void {
+    const source = this.voices.get(handle)?.source;
+    if (source) {
+      source.onended = null;
+      source.stop();
+    }
+    this.finish(handle);
     this.voices.delete(handle);
   }
 
@@ -49,11 +87,20 @@ export class EffectSound implements EffectSoundBackend<number> {
   setVolume(volume: number): void {
     if (!Number.isFinite(volume)) return;
     this.volume = Math.max(0, Math.min(1, volume));
-    for (const voice of this.voices.values()) if (voice.audio) voice.audio.volume = this.volume;
+    if (this.gain) this.gain.gain.value = this.volume;
   }
 
   clear(): void {
     for (const handle of this.voices.keys()) this.stop(handle);
     this.shared.last = undefined;
+  }
+
+  dispose(): void {
+    this.generation++;
+    this.clear();
+    this.sounds.clear();
+    this.gain?.disconnect();
+    this.gain = undefined;
+    this.context = undefined;
   }
 }

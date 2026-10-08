@@ -1,6 +1,12 @@
+import {loadCombatCatalog} from '../../content';
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../../shared/protocols/PtlOwnedRoleSale';
 import {createRequestId} from '../../network/request-id';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
+import {SourceNotice} from '../dialogs/source-notice';
+import {SourceNoticeView} from '../dialogs/source-notice-view';
+import {createPortal} from 'react-dom';
+import type {ShopCurrency} from '../../../../shared/protocols/PtlShop';
+import {ShopPurchaseSource} from './shop-purchase-source';
 import {SourceImageScale} from '../resources/source-static-image';
 import './pet-shop.css';
 import {RoleShopSourceList} from './role-shop-source-list';
@@ -39,6 +45,9 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
   const [owned, setOwned] = useState<ResOwnedRoles>();
   const [sale, setSale] = useState<ResOwnedRoleSale>();
   const [saleConfirm, setSaleConfirm] = useState(false);
+  const [buyConfirm, setBuyConfirm] = useState(false);
+  const [currency, setCurrency] = useState<ShopCurrency>(owner.pending?.currency ?? 'TOKENS');
+  const [notice] = useState(() => new SourceNotice());
   const generation = useRef(0);
   const [catalog, setCatalog] = useState<CombatCatalog>();
   const [ownedSelection, setOwnedSelection] = useState<number>();
@@ -60,6 +69,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
     ? new DataView(Uint8Array.from(sale.profile.bytes).buffer).getUint32(0xa8, true) : undefined;
   const currentTank = currentTankInstance === undefined ? undefined
     : owned?.equipment.find(record => new Map(record.fields).get(0x1c) === currentTankInstance);
+  useEffect(() => () => notice.clear(), [notice]);
   useEffect(() => {onBusy(busy);}, [busy, onBusy]);
   useEffect(() => {
     setOwnedConfirmed(false);
@@ -80,7 +90,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
         setStatus(owner.inFlight ? '等待购买确认…' : owner.pending ? '购买尚未确认，可重试原请求。'
           : owner.purchasedInstance ? `已拥有宠物实例${owner.purchasedInstance}，请在我的家选择。` : '购买后请在我的家选择宠物。');
       } catch (error) {
-        if (current.active) setStatus(error instanceof Error ? error.message : '宠物目录载入失败');
+        if (current.active) void notice.show(error instanceof Error ? error.message : '宠物目录载入失败');
       } finally {
         current.query = false;
         if (current.active) {
@@ -92,7 +102,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
     owner.session = {identity: current.identity, refresh: () => {void refresh();}};
     void refresh();
     return () => {generation.current++; current.active = false; if (owner.session?.identity === current.identity) owner.session = undefined;};
-  }, [source, owner]);
+  }, [source, owner, notice]);
   useLayoutEffect(() => {
     if (busy || !focusAfterCommit.current) return;
     const target = focusAfterCommit.current; focusAfterCommit.current = null;
@@ -104,12 +114,11 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
     if (!current.active || busy || owner.inFlight || owner.saleInFlight || !source.ownedRoles) return;
     const ticket = ++generation.current;
     setOwnedConfirmed(false);
-    setMode('owned'); setBusy(true); setStatus('正在载入拥有宠物…');
+    setBuyConfirm(false); setMode('owned'); setBusy(true); setStatus('正在载入拥有宠物…');
     try {
-      const [result, response] = await Promise.all([source.ownedRoleSale ? source.ownedRoleSale({operation: 'QUERY'}) : undefined, fetch('/combat-catalog.json')]);
+      const [result, metadata] = await Promise.all([source.ownedRoleSale ? source.ownedRoleSale({operation: 'QUERY'}) : undefined,
+        loadCombatCatalog()]);
       const records = result?.owned ?? await source.ownedRoles();
-      if (!response.ok) throw new Error('宠物类别资料载入失败');
-      const metadata = await response.json() as CombatCatalog;
       if (!current.active) return;
       if (generation.current !== ticket) return;
       setOwned(records); setCatalog(metadata); setSale(result);
@@ -119,7 +128,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
         ? value : records.base[0] ? new Map(records.base[0].fields).get(0) : undefined);
       setStatus('');
     } catch (error) {
-      if (current.active) setStatus(error instanceof Error ? error.message : '拥有宠物载入失败');
+      if (current.active) void notice.show(error instanceof Error ? error.message : '拥有宠物载入失败');
     } finally {
       if (current.active) setBusy(Boolean(owner.inFlight || owner.saleInFlight));
     }
@@ -147,7 +156,8 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       setOwnedSelection(value => result.owned.base.some(record => new Map(record.fields).get(0) === value)
         ? value : result.owned.base[0] ? new Map(result.owned.base[0].fields).get(0) : undefined);
       if (result.money !== undefined) {setConfirmed(value => value && {...value, money: result.money!}); onMoney?.(result.money);}
-      setSaleConfirm(false); setStatus(`已出售宠物实例${result.sold?.instanceId}，收入${result.sold?.price}金币。`);
+      setSaleConfirm(false); setStatus('');
+      void notice.show(`已出售宠物，收入${result.sold?.price}金币。`);
     } catch (error) {
       if (current.active && generation.current === ticket) setStatus(error instanceof Error ? error.message : '出售未确认，请重试原请求');
     } finally {
@@ -156,13 +166,19 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       else owner.session?.refresh();
     }
   }
-  async function purchase(button: HTMLButtonElement) {
+  function requestPurchase(button: HTMLButtonElement) {
+    if (busy || session.current.query || owner.inFlight || mode !== 'buy' || !product) return;
+    focusAfterCommit.current = button;
+    setCurrency(owner.pending?.petId === product.petId ? owner.pending.currency ?? 'MONEY'
+      : product.tokenPrice > 0 ? 'TOKENS' : 'MONEY');
+    setStatus(''); setBuyConfirm(true);
+  }
+  async function purchase() {
     const current = session.current;
     if (!current.active || current.query || owner.inFlight || mode !== 'buy' || !product) return;
-    if (!owner.pending || owner.pending.petId !== product.petId) {
-      owner.pending = {operation: 'BUY', petId: product.petId, currency: 'MONEY', requestId: createRequestId()};
+    if (!owner.pending || owner.pending.petId !== product.petId || owner.pending.currency !== currency) {
+      owner.pending = {operation: 'BUY', petId: product.petId, currency, requestId: createRequestId()};
     }
-    focusAfterCommit.current = button;
     setBusy(true); setStatus('等待购买确认…');
     const inFlight = source.petShop!(owner.pending); owner.inFlight = inFlight;
     try {
@@ -171,7 +187,12 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       owner.purchasedInstance = result.purchased?.fields.find(([offset]) => offset === 0x0)?.[1];
       if (current.active) {
         setConfirmed(result);
-        setStatus(`已购买${product.name}，拥有实例${owner.purchasedInstance}，请在我的家选择。`);
+        setSelected(value => {
+          const id = result.pets.some(pet => pet.petId === value) ? value : result.pets[0]?.petId;
+          owner.selected = id; return id;
+        });
+        setBuyConfirm(false); setStatus('');
+        void notice.show(`已购买${product.name}。`);
       }
     } catch (error) {
       if (current.active) setStatus(error instanceof Error ? error.message : '购买未确认，请重试');
@@ -193,7 +214,7 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       data-pet-shop-hp="" data-presentation-colour="web-readable">{displayedHp === undefined ? '' : String(displayedHp)}</span>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_petpage.xml" name="txtListQuantity" text={mode === 'buy' ? confirmed ? String(confirmed.pets.length) : '' : owned ? String(owned.base.length) : ''}/>
     <SourceButton ui={ui} layout={layout} suffix="shop_petpage.xml" source="rdoBuy" selected={mode === 'buy'}
-      data-pet-shop-buy-tab="" aria-label="购买宠物商品" aria-pressed={mode === 'buy'} disabled={busy} onClick={() => {generation.current++; setOwnedConfirmed(false); setSaleConfirm(false); setMode('buy'); setStatus('');}} />
+      data-pet-shop-buy-tab="" aria-label="购买宠物商品" aria-pressed={mode === 'buy'} disabled={busy} onClick={() => {generation.current++; setOwnedConfirmed(false); setSaleConfirm(false); setMode('buy'); setStatus(''); owner.session?.refresh();}} />
     <SourceButton ui={ui} layout={layout} suffix="shop_petpage.xml" source="rdoSell" selected={mode === 'owned'}
       data-pet-shop-owned-tab="" aria-label="拥有宠物" aria-pressed={mode === 'owned'} disabled={busy || !source.ownedRoles}
       onClick={() => {void openOwned();}} />
@@ -213,20 +234,19 @@ export function PetShopView({ui, source, owner, onBusy, scale, onMoney}: {
       role={descriptionText ? 'region' : undefined}
       aria-label={descriptionText ? mode === 'owned' ? '拥有宠物介绍' : '宠物商品介绍' : undefined}
       tabIndex={descriptionText ? 0 : -1}>{descriptionText ?? ''}</div>
-    <p className="pet-shop-price" data-pet-shop-price="">{mode === 'buy' && product ? `售价：${product.moneyPrice}金币` : ''}</p>
-    <p className="pet-shop-balance" data-pet-shop-balance="">{confirmed?.money === undefined ? '账户尚无余额资料'
-      : `金币：${confirmed.money} · 软星币：${confirmed.tokens}`}</p>
     {mode === 'buy' && <SourceButton ui={ui} layout={layout} suffix="shop_petpage.xml" source="btnBuy" data-pet-shop-buy=""
-      aria-label="购买选中宠物" disabled={busy || !product} onClick={event => {void purchase(event.currentTarget);}}/>}
+      aria-label="购买选中宠物" disabled={busy || !product} onClick={event => requestPurchase(event.currentTarget)}/>}
+    {buyConfirm && product && <ShopPurchaseSource ui={ui} name={product.name}
+      moneyPrice={product.moneyPrice} tokenPrice={product.tokenPrice} moneyAvailable={product.moneyPrice > 0} currency={currency}
+      changeCurrency={value => {setCurrency(value); setStatus('');}} pending={busy} status={status}
+      confirm={() => {void purchase();}} cancel={() => {setBuyConfirm(false); setStatus('');}}/>}
     {mode === 'owned' && <SourceButton ui={ui} layout={layout} suffix="shop_petpage.xml" source="btnSell" data-pet-shop-sell=""
       aria-label="出售选中宠物" disabled={busy || !source.ownedRoleSale || !saleQuote?.canSell || saleQuote.selected}
       onClick={event => requestSale(event.currentTarget)} />}
     {saleConfirm && <SourceConfirmView label="出售宠物" binding="owned-pet-sale"
       message="你确定出售这只猫狗吗？" pending={busy} disabled={!saleQuote?.canSell || saleQuote.selected}
       status={status} confirm={() => {void sell();}} cancel={() => {setSaleConfirm(false);}} />}
-    <button type="button" className="pet-shop-refresh" data-pet-shop-refresh="" disabled={busy}
-      onClick={event => {focusAfterCommit.current = event.currentTarget; mode === 'owned' ? void openOwned() : owner.session?.refresh();}}>刷新余额</button>
-    <output className="pet-shop-status" data-pet-shop-status="" data-purchased-pet-instance={owner.purchasedInstance}
-      role="status" aria-live="polite">{status}</output>
+    <output hidden data-pet-shop-status="" data-purchased-pet-instance={owner.purchasedInstance}>{status}</output>
+    {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
   </SourceImageScale>;
 }

@@ -10,8 +10,21 @@ export class BattleTankDecoration {
   private texture?: Texture;
   private attached = false;
   private disposed = false;
+  private opacity?: number;
+  private readonly materialStates = new Map<PBRMaterial, {
+    alpha: number; transparencyMode: number | null; alphaMode: number;
+  }>();
   private readonly anchor: TransformNode;
   private readonly update = (): void => {
+    if (this.opacity !== this.view.opacity) {
+      this.opacity = this.view.opacity;
+      for (const [material, state] of this.materialStates) {
+        material.alpha = state.alpha * this.opacity;
+        material.transparencyMode = this.opacity < 1 ? PBRMaterial.MATERIAL_ALPHABLEND : state.transparencyMode;
+        material.alphaMode = this.opacity < 1 ? Constants.ALPHA_COMBINE : state.alphaMode;
+      }
+      if (this.assets) applyCartoonOutlines(this.assets.meshes);
+    }
     const native = this.view.decorationTag(this.tag);
     this.anchor.setEnabled(!!native);
     if (!native) return;
@@ -46,6 +59,11 @@ export class BattleTankDecoration {
       const assets = await LoadAssetContainerAsync(this.model, this.scene);
       if (this.disposed) {assets.dispose(); return false;}
       this.assets = assets;
+      for (const material of assets.materials) {
+        if (material instanceof PBRMaterial) this.materialStates.set(material, {
+          alpha: material.alpha, transparencyMode: material.transparencyMode, alphaMode: material.alphaMode,
+        });
+      }
       assets.rootNodes.forEach(node => {node.parent = this.anchor;});
       const texturePath = this.texturePath;
       if (texturePath) {
@@ -78,6 +96,7 @@ export class BattleTankDecoration {
     this.disposed = true;
     this.scene.onBeforeRenderObservable.removeCallback(this.update);
     this.assets?.dispose();
+    this.materialStates.clear();
     this.texture?.dispose();
     this.anchor.dispose();
   }

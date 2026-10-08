@@ -20,6 +20,7 @@
 }
 
 .source-room-intimate-scroll-shell {
+  overflow: hidden;
   position: absolute;
 }
 

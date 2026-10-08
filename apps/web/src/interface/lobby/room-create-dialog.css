@@ -161,14 +161,7 @@
 }
 
 [data-room-create-dialog]::backdrop {
-  background: transparent;
-}
-
-.room-create-source-mask {
-  position: fixed;
-  pointer-events: none;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+  background: rgb(0 33 74 / 60%);
 }
 
 .room-create-stage .room-create-source-text {

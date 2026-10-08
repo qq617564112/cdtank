@@ -1,0 +1,77 @@
+{
+  "name": "精良炮管",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 8,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 13015,
+  "key": "item-13015",
+  "description": "额外火力+30，移动速度-20。",
+  "prices": {
+    "money": 1000,
+    "tokens": 100
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 8,
+  "inventoryCategory": 5,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 13011,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 13011,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 13015,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "common"
+  },
+  "equipmentTarget": "PART"
+}

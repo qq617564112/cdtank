@@ -1,16 +1,20 @@
 .room-intimate-scrollbar {
   position: absolute;
+  box-sizing: border-box;
+  max-height: 100%;
   right: 0;
   top: 0;
-  width: 8.5px;
+  width: 5%;
   overflow: hidden;
-  background-size: 100% 100%;
+  background-repeat: repeat;
+  background-position: left top;
 }
 
 .room-intimate-scrollbar div,
 .room-intimate-scrollbar span,
 .room-intimate-scrollbar button {
   position: absolute;
+  left: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -18,7 +22,7 @@
   background: transparent center / 100% 100% no-repeat;
 }
 
-.room-intimate-scroll-track {width: 8.5px;}
+.room-intimate-scroll-track {width: 100%;}
 .room-intimate-scroll-thumb {width: 28px; overflow: hidden;}
 .room-intimate-thumb-top {top: 0; width: 28px; height: 26px;}
 .room-intimate-thumb-middle {top: 26px; bottom: 27px; width: 28px;}

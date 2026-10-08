@@ -1,12 +1,14 @@
 import type {MsgPlayerInput, MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot} from '../../../shared/protocols';
 import {originalMovementParameters, commitBattleMovement, battleMovementPose, type BattleMovementState} from './movement';
-import {predictControlledBattleMovement} from './dynamic-movement';
+import {createBattleMovementCollider, predictControlledBattleMovement} from './dynamic-movement';
 import type {RoleMovementMathInput} from './roles/movement-math';
 import {createOriginalBotNavigation} from './cpu/original-navigation';
 import type {RoleAttributeState} from './roles/attribute-state';
 import type {RoleCombatState} from './roles/combat-state';
+import type {ShotModifiers} from './roles/shot-modifiers';
 import {applyRoleFireReloadNotification, isRoleFireReady} from './roles/reload';
-import {isRoleMovementAllowed, roleMovementCommand} from './roles/movement-permission';
+import {isBattleMovementAllowed, roleMovementCommand} from './roles/movement-permission';
+import type {RoleDisguiseState} from './items/role-disguise';
 import {roleMovementElapsed} from './roles/movement-time';
 import {advanceBattleTurret} from './turret-movement';
 import {advanceDefaultAmmoMagazine, consumeDefaultAmmoMagazine, isDefaultAmmo} from './roles/ammo-magazine';
@@ -15,11 +17,14 @@ import type {TankConfig} from '../config';
 import type {Battlefield} from '../battlefield';
 import {fireProjectile, type BulletState} from './projectiles';
 import type {AttackBoostState} from './items/attack-drink';
-import type {RoleStaticCollider} from './roles/movement-controller';
+import {isRoleControllerMovementAllowed, type RoleStaticCollider} from './roles/movement-controller';
 import type {recomputeQualifiedRoleArmor} from './roles/recompute-armor';
 import {createRoleObbFromPose} from './roles/movement-obb-prediction';
 import {intersectsOriginalObb} from './roles/obb-intersection';
 import {constrainTankPose, tankObstacles} from '../../../shared/movement/tank-collision';
+import {defaultMovementParameters} from './movement-parameters';
+import {advanceTankVertical, initialTankVerticalState,
+  type TankVerticalState} from '../../../shared/movement/tank-vertical';
 
 // Original42b000/42b020 schedules4288fe independently of the03 action clock.
 const SHOT_QUERY_DELAY_SECONDS = Math.fround(0.4);
@@ -34,11 +39,14 @@ interface CombatActor extends BotActor {
   magazineReady?: boolean;
   attributes: RoleAttributeState;
   attackBoost?: AttackBoostState;
+  roleDisguise?: RoleDisguiseState;
   armorReady?: boolean;
+  shotModifiers?: ShotModifiers;
   recoveredArmor?: ReturnType<typeof recomputeQualifiedRoleArmor>;
   bodyYaw?: number;
   movementState?: BattleMovementState;
   movementCommand?: RoleMovementMathInput['command'];
+  verticalState?: TankVerticalState;
   cpu?: BotController;
   autopilot?: BotController;
 }
@@ -63,8 +71,9 @@ export function advanceActors<Player extends CombatActor>(room: {
   allocateBulletId(): string;
   allocateShotId(): string;
   staticObjects?(player: Player): Iterable<RoleStaticCollider>;
+  afterMovement?(player: Player): void;
   beforeFire?(player: Player): boolean;
-  fired?(player: Player): void;
+  fired?(player: Player, shotId: string): void;
   afterFire?(player: Player): void;
   hitSceneObject?(owner: Player, targetId: string, damage: number, ammoItemId: number): boolean;
   hitPlayer?(owner: Player, targetId: string, damage: number, ammoItemId: number,
@@ -89,7 +98,7 @@ export function advanceActors<Player extends CombatActor>(room: {
         handlers.allocateBulletId, events, bodyRadius,
         (targetId, damage, ammoItemId) => handlers.hitSceneObject?.(player, targetId, damage, ammoItemId) ?? false,
         (targetId, damage, ammoItemId) => handlers.hitPlayer?.(player, targetId, damage, ammoItemId, shotId),
-        pendingShot.ammoItemId, shotId, () => handlers.fired?.(player));
+        pendingShot.ammoItemId, shotId, () => handlers.fired?.(player, shotId), pendingShot.shotModifiers);
       handlers.afterFire?.(player);
     } else {
       pendingShot.remainingSeconds = Math.fround(pendingShot.remainingSeconds - elapsed);
@@ -101,6 +110,7 @@ export function advanceActors<Player extends CombatActor>(room: {
     if (!player.alive) {
       player.combat.pendingShot = undefined;
       player.combat.specialFlag12 = 0;
+      (player.cpu ?? player.autopilot)?.resetReaction();
       if (now >= player.respawnAt) {
         handlers.respawn(player);
         if (player.alive) events.push({roomId: room.roomId, type: 'respawn', message: `${player.name}重新出击`,
@@ -121,7 +131,7 @@ export function advanceActors<Player extends CombatActor>(room: {
           navigation: createOriginalBotNavigation(room.battlefield),
           predict: (input: MsgPlayerInput) => {
             const state = predictControlledBattleMovement(player, input, room.battlefield, room.players.values(), dt)!;
-            return {...state.pose.position, yaw: state.yaw};
+            return {...state.pose.position, yaw: state.yaw, bodyYaw: state.bodyYaw};
           },
         } : undefined}, [...room.players.values()], room.objectives,
         room.battlefield, room.mode, now, dt, {mode: room.mode, team: player.team,
@@ -131,9 +141,16 @@ export function advanceActors<Player extends CombatActor>(room: {
     const currentSeconds = (now - room.startedAt) / 1000;
     advanceDefaultAmmoMagazine(player.combat, currentSeconds, player.magazineReady === true);
     if (!controller && input.pose) {
-      const obb = createRoleObbFromPose(battleMovementPose(player));
-      for (const object of handlers.staticObjects?.(player) ?? []) {
-        if (intersectsOriginalObb(obb, object.obb)) object.notify(100);
+      const command = roleMovementCommand(input.move, input.turn);
+      if (command !== 0 && isBattleMovementAllowed(player, command)) {
+        const peers = [...room.players.values()].filter(other => other.alive).map(createBattleMovementCollider);
+        isRoleControllerMovementAllowed(createBattleMovementCollider(player), command,
+          peers, handlers.staticObjects?.(player) ?? [], true, () => {});
+      } else {
+        const obb = createRoleObbFromPose(battleMovementPose(player));
+        for (const object of handlers.staticObjects?.(player) ?? []) {
+          if (intersectsOriginalObb(obb, object.obb)) object.notify(100);
+        }
       }
     } else {
       const movementElapsed = roleMovementElapsed(dt);
@@ -142,27 +159,46 @@ export function advanceActors<Player extends CombatActor>(room: {
       if (original) {
         commitBattleMovement(player, original);
         player.movementCommand = original.command;
-      } else if (movementElapsed > 0
-          && isRoleMovementAllowed(player.combat, roleMovementCommand(input.move, input.turn))) {
+      } else if (movementElapsed > 0) {
+        // Without recovered movement sources, build a horizontal candidate
+        // through the ordinary NAV/terrain move and then resolve the vertical
+        // step once on the final X/Z. Horizontal permission only gates
+        // translation: stationary, refused and collision-blocked bodies still
+        // advance gravity.
         const start = battleMovementPose(player);
-        const turn = input.turn * player.tank.turn * movementElapsed * 0.12;
-        player.bodyYaw = (player.bodyYaw ?? player.yaw) + turn;
-        player.yaw += turn;
-        const forward = Math.sign(input.move) * player.tank.speed * moveScale * movementElapsed;
-        const destination = room.battlefield.move(player, {
-          x: player.x + Math.sin(player.yaw) * forward, y: player.y,
-          z: player.z + Math.cos(player.yaw) * forward,
-        }, bodyRadius);
-        const pose = constrainTankPose(start, battleMovementPose({...player, ...destination}),
-          tankObstacles(player.id, room.players.values()));
-        commitBattleMovement(player, {pose, yaw: Math.atan2(pose.look.x, pose.look.z),
-          bodyYaw: Math.atan2(pose.forward.x, pose.forward.z)});
-        player.movementCommand = pose === start ? 0
-          : roleMovementCommand(input.move, input.turn) as RoleMovementMathInput['command'];
+        const command = roleMovementCommand(input.move, input.turn) as RoleMovementMathInput['command'];
+        let pose = start;
+        if (command !== 0 && isBattleMovementAllowed(player, command)) {
+          const parameters = defaultMovementParameters(player.tank, moveScale);
+          const turn = input.turn * parameters.turn * movementElapsed;
+          const yaw = player.yaw + turn;
+          const bodyYaw = (player.bodyYaw ?? player.yaw) + turn;
+          const forward = Math.sign(input.move) * parameters.speed * movementElapsed;
+          const destination = room.battlefield.move(player, {
+            x: player.x + Math.sin(yaw) * forward, y: player.y,
+            z: player.z + Math.cos(yaw) * forward,
+          }, bodyRadius);
+          // battlefield.move writes the sampled NAV height into Y; restore the
+          // pre-step physical Y so the shared vertical step alone decides the
+          // fall instead of reading an already-grounded candidate.
+          destination.y = start.position.y;
+          pose = constrainTankPose(start, battleMovementPose({...player, ...destination, yaw, bodyYaw}),
+            tankObstacles(player.id, room.players.values()));
+        }
+        const ground = room.battlefield.navigation.sample(pose.position.x, pose.position.z)?.height;
+        const verticalState = {...(player.verticalState
+          ?? initialTankVerticalState(player.y, room.battlefield.navigation.sample(player.x, player.z)?.height))};
+        const vertical = advanceTankVertical(pose.position, room.battlefield.navigation, verticalState,
+          movementElapsed, ground === undefined ? 0 : Math.max(0, ground - start.position.y));
+        const committed = vertical.accepted ? pose : start;
+        commitBattleMovement(player, {pose: committed, yaw: Math.atan2(committed.look.x, committed.look.z),
+          bodyYaw: Math.atan2(committed.forward.x, committed.forward.z),
+          verticalState: vertical.state});
+        player.movementCommand = committed === start ? 0 : command;
       }
-      advanceBattleTurret(player, input.aim, room.battlefield, room.players.values(), dt,
-        handlers.staticObjects?.(player));
+      advanceBattleTurret(player, input.aim, dt);
     }
+    handlers.afterMovement?.(player);
     if (input.fire && !player.combat.pendingShot && isRoleFireReady(player.combat.getFlag(11) !== 0,
         currentSeconds, player.combat.nextAvailableSeconds)) {
       if (!player.magazineReady) continue;
@@ -182,7 +218,8 @@ export function advanceActors<Player extends CombatActor>(room: {
       player.combat.reloadStartedAt = now + SHOT_QUERY_DELAY_SECONDS * 1000;
       player.combat.specialFlag12 = 1;
       player.combat.pendingShot = {remainingSeconds: SHOT_QUERY_DELAY_SECONDS,
-        ammoItemId: player.combat.currentAmmoTableId};
+        ammoItemId: player.combat.currentAmmoTableId,
+        shotModifiers: {...(player.shotModifiers ?? {penetratesObstacles: false, rangePercent: 100})}};
       events.push({roomId: room.roomId, type: 'beforeShot', message: `${player.name}准备开火`,
         playerId: player.id, targetId: '', value: 0, x: player.x, y: player.y, z: player.z,
         skillId: player.combat.pendingShot.ammoItemId});

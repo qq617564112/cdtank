@@ -1,4 +1,7 @@
+import {imageResourceBackground} from '../../assets/image-cache';
+import {loadTankTextureCatalog} from '../../content';
 import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
+import {loadStaticJson} from '../../assets/static-resources';
 import {readOwnedTankTextures, type OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import type {OwnedRoleRecordData, ResOwnedRoles} from '../../../../shared/protocols/PtlOwnedRoles';
 import type {ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
@@ -50,7 +53,7 @@ function sourceProps(ui: HomeSourceUi, suffix: string, name: string, picture = f
   const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
   const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
   const style: CSSProperties = {left, top, width: box[2] - box[0], height: box[3] - box[1],
-    backgroundImage: asset ? `url('/${asset}')` : undefined};
+    backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined};
   return {style, 'data-source-control': name, 'data-source-layout': `ui/layouts/${suffix}`, 'data-source-asset': asset};
 }
 
@@ -85,12 +88,9 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
 
   useEffect(() => {
     const currentSession = {active: true, pending: false}; session.current = currentSession;
-    const controller = new AbortController();
     void (async () => {
       if (!current) throw new Error('拥有战车缺少迷彩三槽资料');
-      const [response, tanks] = await Promise.all([fetch('/tank-textures.json', {signal: controller.signal}), tankCatalog()]);
-      if (!response.ok) throw new Error('迷彩目录载入失败');
-      const catalog = await response.json() as {rows: TextureRow[]};
+      const [catalog, tanks] = await Promise.all([loadTankTextureCatalog(), tankCatalog()]);
       if (!currentSession.active) return;
       const tank = tanks.find(value => value.id === tankId);
       if (!tank) throw new Error('缺少战车组件定义');
@@ -102,7 +102,7 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
     })().catch(error => {
       if (currentSession.active) {setLoading(false); setStatus(String(error));}
     });
-    return () => {currentSession.active = false; controller.abort();};
+    return () => {currentSession.active = false;};
   }, [battle, tankId]);
 
   useLayoutEffect(() => {

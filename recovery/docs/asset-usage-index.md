@@ -2,15 +2,15 @@
 
 `asset-usage-index.json`以`catalog/inventory.json`的4665个路径为闭集，逐条保存原selected、versions、selectionBasis和patchPending。所有4665条均有当前唯一已解码来源；32份下载补丁与当前归档内容相同的结论沿用来源清单，不重新选择补丁文件。
 
-现有发布元数据明确关联3851条资产，814条未匹配。共26605个来源/产物引用，另有2489个不在闭集的引用、涉及353个不同key，单独列于outsideReferences。未匹配表示本次元数据范围尚无引用，不表示原游戏不会加载。
+现有发布元数据明确关联3880条资产，785条未匹配。共27145个来源/产物引用，另有2570个不在闭集的引用、涉及381个不同key，单独列于outsideReferences。未匹配表示本次元数据范围尚无引用，不表示原游戏不会加载。
 
-索引覆盖POL/MV3/CVD转换、25场景与battlefields、战车动作/INI、UI布局/图集/字库、声音、ELK/效果库/效果模型/路径/挂点，以及24张解码表与combat-catalog。每个引用保留metadata文件、JSON Pointer、原字符串、规范化路径、关联产物和用途。`loadingCode`一次扫描apps的`.ts`与`.tsx`源码，实际包含metadata文件名时记录文件、行号和原代码；Home、等待房间、结算及设置等正式React页面的加载入口纳入相同索引。这个入口是代码引用证据，不是单个资产已加载证据。没有代码引用的转换清单保持空数组。
+索引覆盖POL/MV3/CVD转换、原25场景及已发布测试/美术变体与battlefields、战车动作/INI、UI布局/图集/字库、声音、ELK/效果库/效果模型/路径/挂点，以及24张解码表与combat-catalog。每个引用保留metadata文件、JSON Pointer、原字符串、规范化路径、关联产物和用途。`loadingCode`一次扫描apps的`.ts`与`.tsx`源码，实际包含metadata文件名时记录文件、行号和原代码；Home、等待房间、结算及设置等正式React页面的加载入口纳入相同索引。这个入口是代码引用证据，不是单个资产已加载证据。没有代码引用的转换清单保持空数组。
 
 React加载入口已随导出器写入当前全量索引；Home、等待房间、结算、设置、商城和交易页面的明确`ui.json`/`combat-catalog.json`加载入口均记录在对应引用的`loadingCode`中。该入口只是代码引用证据，不把`ui.json`或目录的加载算作其中任一资产的浏览器实载或原表现验收。
 
-原1至25图的`scene-effects-XXXX.json`与`scene-environment-sound-XXXX.json`按两个地图owner的实际四位mapId路径模板记录加载入口，保留模板所在文件、行号和代码。只有这两种准确文件名参与此映射，不扩展到取证或其他相近名称。此范围随全图环境目录接线实现，尚未重新生成全量索引或证明新增地图实际运行。
+原1至25图的`scene-effects-XXXX.json`与`scene-environment-sound-XXXX.json`按两个地图owner的实际四位mapId路径模板记录加载入口，保留模板所在文件、行号和代码。只有这两种准确文件名参与此映射，不扩展到取证或其他相近名称。此范围随全图环境目录接线实现，已进入当前重新导出的全量索引；实际运行仍按对应实测范围登记。
 
-解码表引用另记录服务端明确的`sourceTablePath('名称')`调用，以及`config.ts`中`readTable('tank')`、`readTable('pet')`与显式五模式范围生成的`m001`至`m005`入口。每条保留具名调用、共同读取函数及`CONTENT_TABLES`路径解析的文件/行号/代码；未找到调用的表仍为空，不把相近文件名算作加载来源。TS/TSX与表入口实现已在`ca86c6d...be2401c`范围完成一次集中静态走查，无P1/P2问题；表入口尚未重新导出全量索引，不会改变统一`runtimeAcceptance`。
+解码表引用另记录服务端明确的`sourceTablePath('名称')`调用，以及`config.ts`中`readTable('tank')`、`readTable('pet')`与显式五模式范围生成的`m001`至`m005`入口。每条保留具名调用、共同读取函数及`CONTENT_TABLES`路径解析的文件/行号/代码；未找到调用的表仍为空，不把相近文件名算作加载来源。TS/TSX与表入口实现已在`ca86c6d...be2401c`范围完成一次集中静态走查，无P1/P2问题；表入口已进入当前全量索引，统一`runtimeAcceptance`保持原范围。
 
 明确source→output/asset映射将glb/png使用反向关联源POL/MV3/CVD/DDS；战车动作file相对component.ini目录解析；UI裁切区域关联Imagefile原图集纹理，region名字不是同名独立TGA文件。场景OBJ/CAS/BOX、地形POL/出生RPT/NAV、城堡INI、effect.sav与combat三张源表由导出器明确构造源路径，记录sourceConstruction的代码文件、行号和语句，保留与直接元数据引用的区别。
 
@@ -30,13 +30,19 @@ recovery/.venv/bin/python tests/asset-usage-index.py > recovery/output/asset-usa
 测试检查4665闭集顺序/唯一性、selected完整保留、引用路径规范化、每个JSON Pointer实际存在、每条加载/来源代码行精确一致、闭集外引用独立以及汇总数量一致。若失败，应修复来源关联或索引结构，不能据失败补造运行结论。`asset-usage-summary.json`提供未匹配后缀、外部引用来源根与各元数据引用计数，供后续按明确缺口继续恢复。
 
 
+## 地图资格与角色toon
+
+动态地形材质文件从`hasSceneTerrainMaterial`的正则取得0001–0025资格，植物文件从`ScenePlantSway.load`完整跨行名单取得资格；1002读取`FIELD_ROAD_HD.sceneId`定义。每条保存原代码行和实际地图范围。放置动画与真实fallback破损库保留具体mapId/placementId/JSON Pointer及加载入口。
+
+`scene-actor-toon.json`保留原`Data/image/toon/0.bmp`及25份ctl的source。BMP的显式派生关系指向`scene/actor-toon/0.png`，原文件与PNG均关联`SceneActorToon`元数据加载入口；引用数为27。来源和代码关系不改变runtimeAcceptance。
+
 ## 原模型纹理与嵌入产物
 
 三种转换清单的964个原POL/MV3/CVD均实际解析首纹理字段，逐材质核对GLB的material.name。转换器明确以源模型同目录建立完整文件名及stem+`.tga`别名映射；这里只接受恰好一个原纹理候选。该规则来自convert_pol.py/convert_mv3.py/convert_cvd.py的实际代码，不把全局同名或后缀相近文件作为来源。
 
 4381个材质纹理引用实际对应GLB image的bufferView内嵌PNG；本批GLB不使用image URI。每次关联均比较内嵌PNG字节与转换器同相对目录输出的PNG字节，记录原模型key、原纹理字符串、材质/image索引、PNG路径、GLB路径与转换器代码证据。该比较验证实际产物来源，避免仅凭产物名称关联；不证明原纹理显示行为或浏览器已解码。
 
-964原模型4381处GLB嵌入纹理按同目录唯一来源与PNG字节核对；迷彩目录另关联711条记录/680个精确DDS请求的1361条source/asset引用。当前未匹配DDS363项。44处GLB纹理问题仍单列textureIssues，角色运行覆盖不修改静态引用来源。验证逐原字段核对同目录候选、内嵌PNG、选定DDS像素、JSON Pointer及代码行（owned-textures-asset-usage.log）。未匹配资源用途和全部原加载入口仍待恢复。
+964原模型4381处GLB嵌入纹理按同目录唯一来源与PNG字节核对；迷彩目录另关联711条记录/680个精确DDS请求的1361条source/asset引用。当前未匹配DDS360项。44处GLB纹理问题仍单列textureIssues，角色运行覆盖不修改静态引用来源。验证逐原字段核对同目录候选、内嵌PNG、选定DDS像素、JSON Pointer及代码行（owned-textures-asset-usage.log）。未匹配资源用途和全部原加载入口仍待恢复。
 
 ## 0021环境声音运行证据
 

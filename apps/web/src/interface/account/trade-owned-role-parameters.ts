@@ -1,7 +1,7 @@
 import type {CombatCatalog, CombatSkillAttribute} from '../../../../shared/combat/catalog';
 import type {TradeRecordView} from '../../../../shared/protocols/PtlTrade';
 import {HOME_TANK_PARAMETER_BASES} from '../home/home-tank-parameters';
-import {PET_SHOP_MASTERY} from './pet-shop-mastery';
+import {petShopMastery} from './pet-shop-mastery';
 
 /** Part slot table offsets carried on a confirmed tank record. */
 const TANK_PART_SLOTS = [0x58, 0x5c, 0x60] as const;
@@ -79,7 +79,7 @@ export function tradeTankOwnedParameters(record: TradeRecordView, catalog?: Comb
 export function tradePetOwnedMastery(record: TradeRecordView, catalog?: CombatCatalog): TradeOwnedRoleParameters | undefined {
   if (record.kind !== 'pet' || !record.role || !catalog) return undefined;
   const definitionId = new Map(record.role.fields).get(8);
-  const mastery = definitionId === undefined ? [] : PET_SHOP_MASTERY[definitionId] ?? [];
+  const mastery = definitionId === undefined ? [] : petShopMastery(definitionId);
   const texts: Record<string, string> = {}, progress: Record<string, number> = {};
   if (mastery.length >= PET_MASTERY_CONTROLS.length) {
     PET_MASTERY_CONTROLS.forEach((name, index) => {

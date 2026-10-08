@@ -37,7 +37,7 @@ export function rotateRoleMovementDirection(v: RoleMovementVector, angle: number
 function angleBetween(a: RoleMovementVector, b: RoleMovementVector): number {
   if (Math.abs(a.x - b.x) < EPSILON && Math.abs(a.z - b.z) < EPSILON) return 0;
   const dot = a.z * b.z + a.y * b.y + a.x * b.x;
-  const angle = Math.acos(dot);
+  const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
   if (!Number.isFinite(angle)) throw new RangeError('Original movement acos input outside [-1,1]');
   return angle;
 }

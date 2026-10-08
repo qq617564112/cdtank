@@ -36,7 +36,7 @@ export function readGroupTrapRule(itemTableId = GROUP_TRAP_ITEM_ID): GroupTrapRu
   if (!item || item.itemType !== 4 || item.category !== 4 || item.runtime.trap !== 'groupRestraint'
       || item.resources.modelId !== 9 || roles?.primary !== 4024
       || roles.secondary !== 4025 || roles.tertiary !== 4026
-      || !Number.isFinite(groundDurationMs) || groundDurationMs <= 0) return undefined;
+      || groundDurationMs === undefined || !Number.isFinite(groundDurationMs) || groundDurationMs <= 0) return undefined;
   const move = readLane(roles.primary, 3);
   const turn = readLane(roles.secondary, 4);
   const fire = readLane(roles.tertiary, 5);

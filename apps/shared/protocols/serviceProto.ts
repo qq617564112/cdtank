@@ -291,7 +291,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 119,
+    "version": 120,
     "services": [
         {
             "id": 55,
@@ -1332,6 +1332,30 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
+                    "id": 22,
+                    "name": "killCombo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 23,
+                    "name": "destroyScore",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 24,
+                    "name": "itemName",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
                     "id": 25,
                     "name": "groundItemDropped",
                     "type": {
@@ -2338,8 +2362,7 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 "id": 0,
                                 "name": "skillId",
                                 "type": {
-                                    "type": "Literal",
-                                    "literal": 4001
+                                    "type": "Number"
                                 }
                             },
                             {
@@ -2370,8 +2393,7 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 "id": 0,
                                 "name": "skillId",
                                 "type": {
-                                    "type": "Literal",
-                                    "literal": 4002
+                                    "type": "Number"
                                 }
                             },
                             {
@@ -2402,8 +2424,7 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 "id": 0,
                                 "name": "skillId",
                                 "type": {
-                                    "type": "Literal",
-                                    "literal": 4003
+                                    "type": "Number"
                                 }
                             },
                             {
@@ -2434,16 +2455,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 "id": 0,
                                 "name": "itemId",
                                 "type": {
-                                    "type": "Literal",
-                                    "literal": 2007
+                                    "type": "Number"
                                 }
                             },
                             {
                                 "id": 1,
                                 "name": "skillId",
                                 "type": {
-                                    "type": "Literal",
-                                    "literal": 4005
+                                    "type": "Number"
                                 }
                             },
                             {
@@ -2528,8 +2547,7 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 "id": 0,
                                 "name": "skillId",
                                 "type": {
-                                    "type": "Literal",
-                                    "literal": 9
+                                    "type": "Number"
                                 }
                             },
                             {
@@ -2649,6 +2667,22 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "radarJammed",
                     "type": {
                         "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 46,
+                    "name": "catsInfo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 47,
+                    "name": "dogsInfo",
+                    "type": {
+                        "type": "Number"
                     },
                     "optional": true
                 },
@@ -2920,6 +2954,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
+                    "id": 18,
+                    "name": "animatedBlockers",
+                    "type": {"type": "Array", "elementType": {"type": "Interface", "properties": [
+                        {"id": 0, "name": "id", "type": {"type": "String"}},
+                        {"id": 1, "name": "cells", "type": {"type": "Array", "elementType": {"type": "Number"}}}
+                    ]}},
+                    "optional": true
+                },
+                {
                     "id": 14,
                     "name": "scenePlants",
                     "type": {
@@ -3149,6 +3192,16 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     }
                 },
                 {
+                    "id": 9,
+                    "name": "castleAnimation",
+                    "type": {"type": "Interface", "properties": [
+                        {"id": 0, "name": "action", "type": {"type": "String"}},
+                        {"id": 1, "name": "startedAt", "type": {"type": "Number"}},
+                        {"id": 2, "name": "stopAtEnd", "type": {"type": "Boolean"}}
+                    ]},
+                    "optional": true
+                },
+                {
                     "id": 8,
                     "name": "destroyedAt",
                     "type": {
@@ -3266,88 +3319,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "id": 3,
                     "name": "itemTableId",
                     "type": {
-                        "type": "Union",
-                        "members": [
-                            {
-                                "id": 3,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3001
-                                }
-                            },
-                            {
-                                "id": 4,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3002
-                                }
-                            },
-                            {
-                                "id": 0,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3003
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3004
-                                }
-                            },
-                            {
-                                "id": 2,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3005
-                                }
-                            }
-                        ]
+                        "type": "Number"
                     }
                 },
                 {
                     "id": 4,
                     "name": "modelId",
                     "type": {
-                        "type": "Union",
-                        "members": [
-                            {
-                                "id": 3,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3001
-                                }
-                            },
-                            {
-                                "id": 4,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3002
-                                }
-                            },
-                            {
-                                "id": 0,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3003
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3004
-                                }
-                            },
-                            {
-                                "id": 2,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 3005
-                                }
-                            }
-                        ]
+                        "type": "Number"
                     }
                 },
                 {
@@ -3713,6 +3692,30 @@ export const serviceProto: ServiceProto<ServiceType> = {
                             "type": "Reference",
                             "target": "MsgRoomSnapshot/RoundAward"
                         }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 14,
+                    "name": "petId",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 15,
+                    "name": "catsInfo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 16,
+                    "name": "dogsInfo",
+                    "type": {
+                        "type": "Number"
                     },
                     "optional": true
                 }
@@ -5288,6 +5291,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "type": "Number"
                     },
                     "optional": true
+                },
+                {
+                    "id": 4,
+                    "name": "tankInstanceId",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -5326,6 +5337,24 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     }
                 },
                 {
+                    "id": 5,
+                    "name": "tankInstanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "bindings",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "PtlEquipment/EquipmentBinding"
+                        }
+                    }
+                },
+                {
                     "id": 2,
                     "name": "profile",
                     "type": {
@@ -5357,6 +5386,62 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 }
                             }
                         ]
+                    }
+                }
+            ]
+        },
+        "PtlEquipment/EquipmentBinding": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "tankInstanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "target",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "PART"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "DECORATION"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "MARK"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "slot",
+                    "type": {
+                        "type": "Number"
                     }
                 }
             ]
@@ -5968,6 +6053,22 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Number"
                     }
+                },
+                {
+                    "id": 2,
+                    "name": "quoteOnly",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "confirmedPenaltyPoints",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -5984,6 +6085,42 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 1,
                     "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "penalty",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlLeave/LeavePenalty"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "left",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlLeave/LeavePenalty": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "count",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "points",
                     "type": {
                         "type": "Number"
                     }
@@ -9439,23 +9576,7 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "id": 0,
                     "name": "skillId",
                     "type": {
-                        "type": "Union",
-                        "members": [
-                            {
-                                "id": 0,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 10
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 11
-                                }
-                            }
-                        ]
+                        "type": "Number"
                     }
                 },
                 {
@@ -9551,6 +9672,65 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
+        "MsgRoomSnapshot/ResultItemGrant": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "itemTableId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "iconId",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/ResultTankGrant": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "tankId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
         "MsgRoomSnapshot/ResultAward": {
             "type": "Interface",
             "properties": [
@@ -9609,6 +9789,50 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Number"
                     }
+                },
+                {
+                    "id": 8,
+                    "name": "grantedTitles",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "MsgRoomSnapshot/PlayerTitle"
+                        }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "rankPointsBefore",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 10,
+                    "name": "grantedItems",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "MsgRoomSnapshot/ResultItemGrant"
+                        }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 11,
+                    "name": "grantedTanks",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "MsgRoomSnapshot/ResultTankGrant"
+                        }
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -9738,6 +9962,113 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Number"
                     }
+                },
+                {
+                    "id": 8,
+                    "name": "vipDamage",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "bunkerDamage",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 10,
+                    "name": "shotHits",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 11,
+                    "name": "missesThenKill",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 12,
+                    "name": "consecutiveShotKills",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 13,
+                    "name": "openingDeaths",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 14,
+                    "name": "maxKillsAgainstOpponent",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 15,
+                    "name": "killedOpponentIds",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "String"
+                        }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 16,
+                    "name": "killedAllOpponents",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 17,
+                    "name": "oneKillBehindWinner",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 18,
+                    "name": "completedRound",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 19,
+                    "name": "maxMissesBeforeShotKill",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 20,
+                    "name": "maxConsecutiveShotKills",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -10086,6 +10417,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "replayed",
                     "type": {
                         "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 6,
+                    "name": "growth",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/AccountGrowth"
                     },
                     "optional": true
                 }

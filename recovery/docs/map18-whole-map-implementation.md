@@ -8,7 +8,7 @@
 
 现存重建政策为：命中依次扣减HP，归零后标记`destroyedAt`、停止继续受击，破后2秒内保留原完好包围盒，随后由`syncSceneObjectCollision`移除动态碰撞；新局在`startRoom`按新`createSceneObjects`快照恢复全部34个物件与200HP，Leave经`resetSceneObjectCollision`释放动态碰撞。该政策明确为Web重建，`damageSceneObject`不新增分数、奖励或原刷新。
 
-原4个General obj05018沿`scene-animation-0018.json`与SceneCvdAnimation的正式动画消费者；原地形Data/map/0018/0018.glb与六条BG07环境声音按各自既有加载入口。本图无Castle、Crush、Plant、水面或常驻Effect，不新增这些消费者。
+原4个General obj05018沿`scene-animation-0018.json`与SceneCvdAnimation的正式动画消费者；原地形Data/map/0018/0018.glb与六条BG07环境声音按各自既有加载入口。原BG07实体仍缺，现由`reconstructed/battle/BG07.wav`明确标记补作经`audio.json`解析到共享`MapEnvironmentSound`；六条原位置/参数不改。本图无Castle、Crush、Plant、水面或常驻Effect，不新增这些消费者。
 
 ## 独立消费者与加载入口
 
@@ -16,4 +16,4 @@ Breach完好材质/破损c9由`scene-breach-0018.json`（05424、05442）与Scen
 
 ## 验收范围
 
-原34条放置与源身份、两型号完好材质/c9、General动画、原地形及六原环境声音按各自既有证据范围复用。本图整图生产接线已按现metadata、放置链与场景消费者静态核对，未新增源码接线。未运行测试、浏览器、构建或类型检查。原服务器授权、HP、伤害资格、销毁时序、刷新/掉落、动态NAV、BG07原声资源缺口（见scene-environment-sound-0018-gap.md）及高清父范围保持未完成。
+原34条放置与源身份、两型号完好材质/c9、General动画、原地形及六原环境声音按各自既有证据范围复用。本图整图生产接线已按现metadata、放置链与场景消费者静态核对；本片只增加缺失BG07补作及共享catalog条目，未改运行消费者。未运行测试、浏览器、构建或类型检查。原服务器授权、HP、伤害资格、销毁时序、刷新/掉落、动态NAV、原BG07实体及高清父范围保持未完成。

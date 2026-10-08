@@ -10,9 +10,9 @@ import {SourceChatIntimate, type RoomIntimatePlayer} from './source-chat-intimat
 /** The waiting sheet consumes the existing room-chat session and original chat layouts. */
 export function WaitingChatSourceView({ui, scale, channel, pending, composing, input, changeChannel,
   insert, releaseKeys, players, selectedName, chooseTarget, children}: {
-  ui: HomeSourceUi; scale: number; channel: 0 | 1 | 2 | 3 | 5; pending: boolean;
+  ui: HomeSourceUi; scale: number; channel: 0 | 1 | 2 | 3 | 4 | 5; pending: boolean;
   composing: RefObject<boolean>; input: RefObject<HTMLInputElement | null>;
-  changeChannel: (channel: 0 | 1 | 2 | 3 | 5) => void; insert: (glyph: string, caret: number) => void;
+  changeChannel: (channel: 0 | 1 | 2 | 3 | 4 | 5) => void; insert: (glyph: string, caret: number) => void;
   releaseKeys: () => void; children: ReactNode;
   players: readonly RoomIntimatePlayer[]; selectedName: string; chooseTarget: (name: string) => void;
 }) {
@@ -22,8 +22,7 @@ export function WaitingChatSourceView({ui, scale, channel, pending, composing, i
   const layout = new HomeSourceLayout(ui, 'chat.xml');
   const channels = new HomeSourceLayout(ui, 'chat_channellist.xml');
   const emotes = new HomeSourceLayout(ui, 'chat_emotelist.xml');
-  const toggleName = channel === 5 ? 'btnFamilyChannel' : channel === 3 ? 'btnFriendChannel'
-    : channel === 2 ? 'btnPrivateChannel' : channel === 1 ? 'btnTeamChannel' : 'btnPublicChannel';
+  const toggleName = ['btnPublicChannel', 'btnTeamChannel', 'btnPrivateChannel', 'btnFriendChannel', 'btnGMChannel', 'btnFamilyChannel'][channel];
   useEffect(() => {
     const outside = (event: PointerEvent) => {
       if (event.target instanceof Element && !event.target.closest('[data-waiting-chat-channel-menu], [data-waiting-chat-emote-menu], [data-waiting-chat-toggle], [data-waiting-chat-emotes], [data-room-intimate-menu], [data-room-intimate-toggle]')) setMenu(undefined);
@@ -83,11 +82,11 @@ export function WaitingChatSourceView({ui, scale, channel, pending, composing, i
         {['all', 'biaoqingfuhaokuang'].map(name => <SourceStaticImage key={name} ui={ui} layout={channels}
           suffix="chat_channellist.xml" name={name} className="waiting-chat-picture" aria-hidden="true" />)}
         {([['rdoPublic', '房间', 0], ['rdoTeam', '队伍', 1], ['rdoFriend', '好友', 3],
-          ['rdoPrivate', '密语', 2], ['rdoGM', 'GM', null]] as const).map(([name, label, value]) =>
+          ['rdoPrivate', '密语', 2], ['rdoGM', '联系GM', 4]] as const).map(([name, label, value]) =>
           <SourceButton key={name} ui={ui} layout={channels} suffix="chat_channellist.xml" source={name}
             role="menuitemradio" aria-label={label} selected={channel === value} aria-checked={channel === value}
-            data-waiting-chat-channel={value ?? undefined} disabled={pending || value === null}
-            onClick={() => {if (value !== null) {releaseKeys(); changeChannel(value); setMenu(undefined); input.current?.focus();}}} />)}
+            data-waiting-chat-channel={value} disabled={pending}
+            onClick={() => {releaseKeys(); changeChannel(value); setMenu(undefined); input.current?.focus();}} />)}
         <button type="button" className="waiting-chat-family-option" role="menuitemradio"
           aria-label="家族" aria-checked={channel === 5} data-waiting-chat-channel="5" disabled={pending}
           onClick={() => {releaseKeys(); changeChannel(5); setMenu(undefined); input.current?.focus();}}>家族</button>

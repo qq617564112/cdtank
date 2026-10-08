@@ -4,6 +4,7 @@ import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {ResTankUpgrade, TankUpgradeQuote} from '../../../../shared/protocols/PtlTankUpgrade';
 import type {Battle} from '../../match/battle';
 import {createRequestId} from '../../network/request-id';
+import {decodeImage} from '../../assets/image-resources';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceButton} from '../resources/source-button';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
@@ -33,18 +34,10 @@ async function prepareTankUpgradeAssets(ui: HomeSourceUi) {
   const assets = [...references].map(reference => sourceAsset(ui, reference));
   if (assets.includes(undefined)) throw new Error('改装弹窗图片资源缺失');
   await Promise.all([...new Set(assets as string[])].map(async asset => {
-    const image = new Image();
-    image.src = `/${asset}`;
     try {
-      if (image.complete && image.naturalWidth === 0) {
-        const source = image.src;
-        image.src = '';
-        image.src = source;
-      }
-      await image.decode();
-    } catch {
-      image.src = '';
-      throw new Error(`改装弹窗图片读取失败：${asset}`);
+      await decodeImage(`/${asset}`);
+    } catch (error) {
+      throw new Error(`改装弹窗图片读取失败：${asset}`, {cause: error});
     }
   }));
 }

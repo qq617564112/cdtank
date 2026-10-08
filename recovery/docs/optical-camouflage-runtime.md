@@ -4,7 +4,7 @@
 
 ## 当前生产路径
 
-普通Digit5至Digit8输入经43d4dc重建门禁进入`acceptBattleInput`和`optical-camouflage.ts`。成功路径先用既有消费确认保存拥有数量，再从确认实例扣一份、加入临时skill9，并在`PlayerSnapshot.opticalCamouflage={skillId:9,expiresAt}`暴露服务器期限。拒绝重复、无空技能槽、库存量变化和保存失败时，不改变库存或角色状态。技能时长必须来自原表正数T；当前资料为10秒。普通开火不取消隐身。
+普通Digit5至Digit8输入经43d4dc重建门禁进入`acceptBattleInput`和`optical-camouflage.ts`。成功路径先用既有消费确认保存拥有数量，再从确认实例扣一份、加入临时skill9，并在`PlayerSnapshot.opticalCamouflage={skillId:9,expiresAt}`暴露服务器期限。拒绝重复、无空技能槽、库存量变化和保存失败时，不改变库存或角色状态。技能时长必须来自原表正数T；当前资料为10秒。成功开火在弹匣、装填和库存CAS通过后主动解除隐身；真实延迟发射边界同样清除此时仍存在的效果。`restoreConcealmentAfterAcceptedFire`移除本模块临时skill9和状态、重算属性并发送`skillStopped`，随后快照恢复双方可见性；被拒绝的开火和普通选弹保留效果。隐身本身不限制移动。
 
 到期在普通输入接收前和每个World步推进；死亡、复活、结算、首次开局、再战和正常离房只清理本模块建立的skill9与`opticalCamouflage`，不影响其它技能或输入sequence。死亡及FINISHED后不再发送带该状态的玩家snapshot。
 

@@ -42,3 +42,7 @@
 .tank-shop-row-secondary,
 .tank-shop-row-tertiary {top: 18px;}
 .tank-shop-row-fourth {top: 32px;}
+
+.tank-shop-row-fourth[data-source-binding='tankshop-purchase-prices'] > .source-feedback-text {
+  font-size: 10px;
+}

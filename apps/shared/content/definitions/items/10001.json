@@ -1,0 +1,79 @@
+{
+  "name": "救护车顶灯",
+  "getMethod": 2,
+  "durable": 3,
+  "breakMode": 2,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 2,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10001,
+  "key": "item-10001",
+  "description": "救护车顶灯，嘟哒嘟哒，大家快让路啊！",
+  "prices": {
+    "money": 2000,
+    "tokens": 200
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10001/10001.glb",
+    "modelId": 10001,
+    "modelType": 1,
+    "texture": "10001A",
+    "iconId": 10001,
+    "textures": [
+      "Data/accessory/10001/10001A.png"
+    ],
+    "sourceModel": "Data/accessory/10001/10001.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10001/10001A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

@@ -17,7 +17,7 @@ type5 vtable `0x5c9628`的绘制槽为`+0x20`，入口`0x47e56a`。alpha小于1�
 
 矩阵栈按parent→Translate(position+orbit)→RotateX→RotateY→RotateZ→Scale组合。没有parent时再乘manager+0x68全局矩阵；零parent矩阵跳过模型提交。最后调用model backend vtable+0x10的Attach(0)，恢复矩阵栈。`effectModelDraw`保留这个顺序；精灵的全局矩阵与缩放顺序不能代替它。
 
-`EffectRuntimeTree`通过显式model backend工厂创建`EffectModelNodeState`，复用原controller切换与release流程。world源保留世界起点，attached源使用零起点。完整原生命周期的SetTime、SetRate和Update调用由测试backend记录；`EffectRuntime`的战斗mesh路径尚未调用这个工厂。
+`EffectRuntimeTree`通过显式model backend工厂创建`EffectModelNodeState`，复用原controller切换与release流程。world源保留世界起点，attached源使用零起点。完整原生命周期的SetTime、SetRate和Update调用有既有记录backend对照；正式`EffectRuntime.createTree`已经通过同一工厂创建`EffectModelRenderer`，提交模型绘制并在生命周期结束时释放。
 
 ## CVD时钟、轨道和顶点
 
@@ -41,13 +41,15 @@ DLL默认模型脚本注册包含`newgeom`(1)、`geom_t`(0x81)、`geom_c1`(0x801
 
 ## 局限
 
-资源库存见`type5-model-resource-inventory.md`。22个唯一模型引用只有8个在当前解码目录中可解析；bat／bianfu.cvd和bing_1..13.pol缺失，youlincat.POL的m120.TGA未解析。32个补丁payload尚未完整解码。
+资源库存见`type5-model-resource-inventory.md`。22个唯一模型引用中8个来自原实体；bat／bianfu.cvd和bing_1..13.pol原实体缺失，现由`reconstruct_effect_models.py`按原低多边形卡通风格补作并标记`provenance.kind='reconstructed'`。youlincat.POL原模型保留，m120.TGA在纹理确实缺失时由`reconstruct_battle_media.export_m120`补作，`export_effect_models`把结果写入`part.asset`与`part.textureProvenance`。32份download运输文件已按原XXTEA解码，16个XML/imageset可解析，全部候选与活归档逐字节相同。
 
-浏览器采用诊断source激活，serverSkillTriggered=false；对照为Web framebuffer输入一致，不是原D3D framebuffer。服务端道具使用链尚未实现。当前CVD实现仅覆盖上述实际mode3节点。无fog／灯光参数对照不覆盖其他分支。模型设备状态采用原default.gbf与选中脚本；场景其他直接设备操作造成的继承变化及全场景模型priority排序尚未完整追踪。
+本专题的浏览器证据采用诊断source激活，serverSkillTriggered=false；对照为Web framebuffer输入一致，不是原D3D framebuffer。正式后端已接入，逐技能的服务器触发与实际表现按tasklist独立登记，不能由这些诊断证据推成全技能完成。当前CVD实现仅覆盖上述实际mode3节点。无fog／灯光参数对照不覆盖其他分支。模型设备状态采用原default.gbf与选中脚本；场景其他直接设备操作造成的继承变化及全场景模型priority排序尚未完整追踪。
 
 ## 生产模型接入
 
-`export_effect_models.py`发布原POL XYZ／UV／顶点色、section索引／材质，以及CVD轨道／顶点帧到`effect-models.json`。资源引用22个，8个具有模型文件；缺失模型和youlincat的m120纹理保持明确资源错误。原TGA引用按同目录DDS实物解析并发布PNG。
+`export_effect_models.py`发布原POL XYZ／UV／顶点色、section索引／材质，以及CVD轨道／顶点帧到`effect-models.json`。原文件存在时保持原数据；仅具体目标缺失时，14个蝙蝠/冰块引用调用`build_reconstructed_model`，youlincat的m120在TGA与同路径DDS都缺失时调用共享`export_m120`并记录`part.textureProvenance`。原TGA引用按同目录DDS实物解析并发布PNG。
+
+补作的`effect-models.json`资源统一为`resolution='published'`，renderer消费路径不增加分支。蝙蝠节点9帧、1.0秒周期，冰块为13种静态棱晶/碎片；两者顶点合同、材质属性和原`modelControls`时序保持不变。离线预览见`recovery/output/reconstructed-battle-preview/`。
 
 `EffectModelRenderer`作为`EffectRuntimeTree`的type5 backend，由原节点setTime／setRate／update驱动动画。`EffectRuntime`按原树顺序提交模型，使用原type5 draw矩阵和section脚本，绑定原材质或顶点色；结束、退出和clear释放模型mesh／material。三个生产source调用覆盖625103的5个POL网格、13022顶点色网格和00012的CVD动画网格，浏览器均产生可见像素，clear后保留mesh为0。此项source调用属于诊断。
 

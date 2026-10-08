@@ -4,6 +4,7 @@ import type {MsgChat, MsgRoomSnapshot} from '../../../shared/protocols';
 import type {World, WorldEvent} from '../world';
 import type {RoomReconnections} from './reconnection';
 import {registerRoomChatApi} from './chat';
+import type {AccountStore} from '../account-store';
 
 interface RoomSession {
   roomId: string;
@@ -50,8 +51,8 @@ export function roomTransport(server: WsServer<ServiceType>, world: World,
 
 export function registerRoomMessages(server: WsServer<ServiceType>, world: World,
   accounts: Map<string, string>, sessions: Map<string, RoomSession>,
-  transport: ReturnType<typeof roomTransport>, reconnections: RoomReconnections): void {
-  registerRoomChatApi(server, world, sessions, transport.broadcastEvent);
+  transport: ReturnType<typeof roomTransport>, reconnections: RoomReconnections, store: AccountStore): void {
+  registerRoomChatApi(server, world, sessions, transport.broadcastEvent, store, accounts);
   server.listenMsg('Chat', (call: MsgCall<MsgChat>) => {
     const session = sessions.get(call.conn.id);
     if (!session) return;

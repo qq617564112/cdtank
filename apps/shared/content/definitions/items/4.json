@@ -1,0 +1,81 @@
+{
+  "name": "营养饮料打很猛",
+  "getMethod": 2,
+  "durable": 10,
+  "breakMode": 2,
+  "itemType": 1,
+  "battleUseMax": 5,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "item",
+  "id": 4,
+  "key": "attackDrink",
+  "description": "提升攻击力的神奇饮料。10秒内提高火力100%、额外火力20点。",
+  "prices": {
+    "money": 20,
+    "tokens": 20
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 1,
+  "inventoryCategory": 1,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": "Data/scnobj/00004/00004.glb",
+    "modelId": 4,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 4,
+    "textures": [
+      "Data/scnobj/00004/00004A.png",
+      "Data/scnobj/00004/00004B.png",
+      "Data/scnobj/00004/00004C.png",
+      "Data/scnobj/00004/00004D.png"
+    ],
+    "sourceModel": "Data/scnobj/00004/00004.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/00004/00004A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 10,
+      "battleRewardOrder": 4
+    },
+    "skillRoles": {
+      "primary": 4,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "use": "attack",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

@@ -18,7 +18,7 @@
 | 混战 | `txtInfo` | 本机 `kills`，终局优先 `result.players` | 显示本机击毁数 |
 | 破坏 | `txtInfo` | `match.objectives` 的 `DESTROY` 与 `hp` | 显示仍有生命的破坏目标数 |
 
-团队剩余生命、占领分、双方王血量与剩余目标已由用户确认，属于当前项目采用的业务规则，见 `battle-hud-confirmed-rules.md`。原 `CatsInfo` / `DogsInfo` 的显示消费者及整数格式有已有来源；乱斗第二加数 `DogsInfo` 的业务含义仍未取得，本机击毁数继续显示。零值正常显示，缺失数据保持空白。只有当前模式面板可见，等待阶段清空，终局保留当前最终数值，再战换为新局数值。
+团队剩余生命、占领分、双方王血量与剩余目标已由用户确认，属于当前项目采用的业务规则，见 `battle-hud-confirmed-rules.md`。原 `CatsInfo` / `DogsInfo` 的显示消费者及整数格式有已有来源；原乱斗第二加数 `DogsInfo` 的生产规则仍未取得；当前按用户要求参照 CatsInfo，采用本人击毁猫方/狗方坦克的同链拆分，显示权威 catsInfo + dogsInfo，详见 battle-equipment-exit-melee-rules.md。零值正常显示，缺失数据保持空白。只有当前模式面板可见，等待阶段清空，终局保留当前最终数值，再战换为新局数值。
 
 ## 弹槽与小地图
 

@@ -6,20 +6,20 @@ import './loading-page.css';
 const LOADING_WORDS: Record<number, {left: number; top: number; width: number; height: number;
   empty: string; full: string}> = {
   1: {left: 425, top: 537, width: 342, height: 39,
-    empty: new URL('./loading-words/1-empty.png', import.meta.url).href,
-    full: new URL('./loading-words/1-full.png', import.meta.url).href},
+    empty: '/local-images/interface/resources/loading-words/1-empty.png',
+    full: '/local-images/interface/resources/loading-words/1-full.png'},
   2: {left: 24, top: 533, width: 342, height: 39,
-    empty: new URL('./loading-words/2-empty.png', import.meta.url).href,
-    full: new URL('./loading-words/2-full.png', import.meta.url).href},
+    empty: '/local-images/interface/resources/loading-words/2-empty.png',
+    full: '/local-images/interface/resources/loading-words/2-full.png'},
   3: {left: 8, top: 523, width: 342, height: 39,
-    empty: new URL('./loading-words/3-empty.png', import.meta.url).href,
-    full: new URL('./loading-words/3-full.png', import.meta.url).href},
+    empty: '/local-images/interface/resources/loading-words/3-empty.png',
+    full: '/local-images/interface/resources/loading-words/3-full.png'},
   4: {left: 439, top: 530, width: 342, height: 39,
-    empty: new URL('./loading-words/4-empty.png', import.meta.url).href,
-    full: new URL('./loading-words/4-full.png', import.meta.url).href},
+    empty: '/local-images/interface/resources/loading-words/4-empty.png',
+    full: '/local-images/interface/resources/loading-words/4-full.png'},
   5: {left: 11, top: 554, width: 302, height: 36,
-    empty: new URL('./loading-words/5-empty.png', import.meta.url).href,
-    full: new URL('./loading-words/5-full.png', import.meta.url).href},
+    empty: '/local-images/interface/resources/loading-words/5-empty.png',
+    full: '/local-images/interface/resources/loading-words/5-full.png'},
 };
 
 export function getLoadingArtwork(background: number) {

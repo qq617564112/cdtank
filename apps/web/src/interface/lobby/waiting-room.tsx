@@ -1,3 +1,4 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import './waiting-room.css';
 import {Fragment, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {ComponentPropsWithoutRef, KeyboardEvent, SyntheticEvent} from 'react';
@@ -8,7 +9,9 @@ import {SourceStaticText} from '../resources/source-static-text';
 import {SourceMultilineReading} from '../resources/source-multiline-reading';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {sourceProps} from '../resources/source-ui-props';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {sourceUiImage} from '../resources/source-ui-image';
+import {loadUiFont} from '../resources/source-ui-fonts';
+import {loadSourceUi} from '../resources/source-ui-resources';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {roomModeIconReference} from './room-mode-icons';
@@ -43,10 +46,7 @@ export interface WaitingRoomViewProps {
 }
 
 function sourceAsset(ui: HomeSourceUi, reference: string | undefined): string | undefined {
-  const match = /^set:(\S+) image:(.+)$/.exec(reference ?? '');
-  const sets = ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
-  const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
-  return set?.images.find(image => image.Name === match?.[2])?.asset;
+  return sourceUiImage(ui, reference).asset;
 }
 
 
@@ -121,23 +121,21 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
 
   useEffect(() => {
     if (!open || ui) return;
-    const controller = new AbortController();
+    let active = true;
     setLoadError('');
+    void loadUiFont().catch(() => {});
     void (async () => {
       try {
-        const response = await fetch('/ui.json', {signal: controller.signal});
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const loaded = await response.json() as HomeSourceUi;
+        const loaded = await loadSourceUi();
         if (!loaded.layouts.some(layout => layout.path.endsWith('room_main.xml'))) {
           throw new Error('原等待房间布局缺失');
         }
-        await loadSourceUiFonts();
-        if (!controller.signal.aborted) setUi(loaded);
+        if (active) setUi(loaded);
       } catch {
-        if (!controller.signal.aborted) setLoadError('等待房间界面资源未能载入，请返回大厅后重新进入。');
+        if (active) setLoadError('等待房间界面资源未能载入，请返回大厅后重新进入。');
       }
     })();
-    return () => controller.abort();
+    return () => {active = false;};
   }, [open, ui]);
 
   useLayoutEffect(() => {
@@ -246,11 +244,11 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
           {open && ui && match && available && <SourceImageScale value={scale}>
             {['ditu', 'maogouditu', 'maogouditu2', 'zhongjianditu', 'fenhongdi1', 'fenhongdi2', 'tiao', 'kuang', 'dituguize', 'renshu', 'daos', 'meijushijian', 'sec'].map(name => image(name))}
             {snapshot.roomInfo && <span className="waiting-room-map-preview" role="img" aria-label={`${info.mapName}地图预览`}
-              data-waiting-map-preview={snapshot.roomInfo.mapId} style={{backgroundImage: previewAsset ? `url('/${previewAsset}')` : undefined}}/>}
+              data-waiting-map-preview={snapshot.roomInfo.mapId} style={{backgroundImage: previewAsset ? imageResourceBackground(`/${previewAsset}`) : undefined}}/>}
             <button type="button" className="waiting-room-edit" data-waiting-control="editRoom" data-room-edit=""
               aria-label="房间编辑" title={roomEditor ? '编辑房间地图、模式、人数和密码' : '只有房主可以编辑房间'}
               {...controlProps} disabled={disabled || !readyAvailable || !roomEditor || !snapshot.roomInfo || match.maxPlayers === undefined}
-              style={{backgroundImage: editButtonAsset ? `url('/${editButtonAsset}')` : undefined}}
+              style={{backgroundImage: editButtonAsset ? imageResourceBackground(`/${editButtonAsset}`) : undefined}}
               onClick={() => {
                 const current = generation.current;
                 void request(async () => {

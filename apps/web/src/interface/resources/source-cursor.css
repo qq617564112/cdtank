@@ -1,0 +1,16 @@
+/* Keep the client cursor on controls that declare pointer, grab or wait. */
+*,
+*::before,
+*::after {
+  cursor: var(--source-normal-cursor, default) !important;
+  cursor: var(--source-normal-cursor-images, var(--source-normal-cursor, default)) !important;
+}
+
+input:not([type]):enabled:not([readonly]),
+input:is([type='text'], [type='password'], [type='search'], [type='email'],
+  [type='url'], [type='tel'], [type='number']):enabled:not([readonly]),
+textarea:enabled:not([readonly]),
+[contenteditable]:not([contenteditable='false']),
+[contenteditable]:not([contenteditable='false']) * {
+  cursor: var(--source-input-cursor, text) !important;
+}

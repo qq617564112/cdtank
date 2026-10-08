@@ -1,8 +1,9 @@
-/** Delivered items allowed by the rebuilt waiting-room CPU configuration. The two
- *  Func20 treasures (20001 鱼骨 / 20002 骨头) are the only category6 entries. */
-export const CPU_LOADOUT_ITEM_IDS: readonly number[] = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 502, 2007, 2011, 20001, 20002,
-];
+import {gameContent} from '../content/catalog';
+import {isTreasureItem} from './treasure-items';
+
+export function cpuLoadoutItemIds(): number[] {
+  return [...gameContent().items.values()].filter(item => item.cpuAvailable).map(item => item.id);
+}
 
 const TREASURE_UINT32_MAX = 0xffffffff;
 
@@ -16,6 +17,6 @@ const TREASURE_UINT32_MAX = 0xffffffff;
 export function isValidCpuLoadoutQuantity(itemTableId: number, quantity: number,
     sourceBattleUseMax: number): boolean {
   if (!Number.isInteger(quantity) || quantity <= 0) return false;
-  if (itemTableId === 20001 || itemTableId === 20002) return quantity <= TREASURE_UINT32_MAX;
+  if (isTreasureItem(itemTableId)) return quantity <= TREASURE_UINT32_MAX;
   return quantity <= sourceBattleUseMax;
 }

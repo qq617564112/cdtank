@@ -24,6 +24,7 @@ export function battlePartSources(player: PlayerState): {tableIds: number[]; pas
 }
 
 export function battleSkillSources(player: Pick<PlayerState, 'boundGear' | 'inventory'> & {
+  petBattle?: {attributeSkillIds(): number[]};
   ownedRoles: Pick<PlayerState['ownedRoles'], 'snapshot'> &
     {equipment?: PlayerState['ownedRoles']['equipment']};
   combat: {attributeSourceFields(): ReadonlyMap<number, number> | undefined;
@@ -36,6 +37,7 @@ export function battleSkillSources(player: Pick<PlayerState, 'boundGear' | 'inve
   if (!equipment || !fields || ![0x58, 0x5c, 0x60].every(offset => equipment.fields.has(offset))) return undefined;
   // The reconstructed selected-pet binding stays separate from owned manager sources.
   return {...readRoleSkillSources({currentSkillIds: Array.from(player.combat.record!.arrays.get(4)!),
+    runtimeSkillIds: player.petBattle?.attributeSkillIds(),
     boundGear: player.boundGear, equipment, roleFields: fields}),
     markerItemIds: readEquippedMarkerItemIds(profile.marks, player.inventory, combatItemSkills)};
 }

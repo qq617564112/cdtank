@@ -1,3 +1,4 @@
+import {defaultAmmoId} from '../../../../shared/content/catalog';
 import type {MsgPlayerInput, MsgRoomEvent} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
 import type {RoleCombatState} from '../roles/combat-state';
@@ -13,7 +14,7 @@ export function consumeConfirmedAmmo(roomId: string, player: {
 }, consumeItem: ConsumeAmmoItem | undefined, events: MsgRoomEvent[]): boolean {
   const slot = player.combat.selectedAmmoSlot;
   const itemId = player.combat.currentAmmoTableId;
-  if (slot === 1 && itemId === 2001) return true;
+  if (slot === 1 && itemId === defaultAmmoId()) return true;
   const instanceId = player.combat.record?.arrays.get(0)?.[slot - 2];
   const item = instanceId === undefined ? undefined
     : player.inventory.find(record => (record.instanceId >>> 0) === (instanceId >>> 0));

@@ -25,9 +25,10 @@ import type {InvincibilityState} from './items/invincibility';
 import type {RespawnProtectionState} from './respawn-protection';
 import type {OpticalCamouflageState} from './items/optical-camouflage';
 import type {RoleDisguiseState} from './items/role-disguise';
-import type {PetHitSpeedState} from './pet-hit-speed';
+import type {PetBattleSkills} from './pet-lifecycle';
 import type {ShotModifiers} from './roles/shot-modifiers';
 import type {PlayerTitle, RoundStats} from '../../../shared/protocols/MsgRoomSnapshot';
+import type {CreativeTitleRound} from './creative-title-statistics';
 
 export interface PlayerState {
   id: string;
@@ -41,6 +42,7 @@ export interface PlayerState {
   yaw: number;
   bodyYaw?: number;
   movementState?: BattleMovementState;
+  verticalState?: import('../../../shared/movement/tank-vertical').TankVerticalState;
   movementCommand?: RoleMovementMathInput['command'];
   aim: number;
   hp: number;
@@ -48,7 +50,11 @@ export interface PlayerState {
   score: number;
   kills: number;
   deaths: number;
+  catsInfo?: number;
+  dogsInfo?: number;
+  sceneBreakCount?: number;
   respawnAt: number;
+  lastRespawnPosition?: {x: number; z: number};
   cancellationsSpent: number;
   equipmentSupply?: EquipmentSupplyState;
   lastStand?: LastStandState;
@@ -81,7 +87,7 @@ export interface PlayerState {
   roleDisguise?: RoleDisguiseState;
   speedBoost?: SpeedBoostState;
   turnBoost?: TurnBoostState;
-  petHitSpeed?: PetHitSpeedState;
+  petBattle?: PetBattleSkills;
   inputSequence: number;
   input: MsgPlayerInput;
   vip: boolean;
@@ -92,9 +98,11 @@ export interface PlayerState {
   roundCurrentKillCombo?: number;
   /** Shot identities already charged to hits, so one shot credits at most one hit. */
   roundHitShotIds?: Set<string>;
+  creativeTitleRound?: CreativeTitleRound;
   cpu?: BotController;
+  cpuPetId?: number;
   autopilot?: BotController;
   autopilotInputSequence?: number;
-  /** Authoritative account-owned worn title projected from AccountStore; absent means none shown. */
+  /** Account-owned worn title for players or room-local title for CPUs; absent means none shown. */
   title?: PlayerTitle;
 }

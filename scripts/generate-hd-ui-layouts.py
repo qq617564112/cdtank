@@ -198,7 +198,9 @@ def assemble(jobs, group='lobby'):
                 name = image['Name'].lower().split('\\')[-1]
                 if name not in aliases:
                     continue
-                entry = textures[image['asset']]
+                entry = textures.get(image['asset'])
+                if entry is None:
+                    continue
                 delivered = ROOT / entry['png']
                 delivered.parent.mkdir(parents=True, exist_ok=True)
                 Image.open(destination / aliases[name]).resize(tuple(n * DENSITY for n in entry['size']), Image.Resampling.LANCZOS).save(delivered)

@@ -61,14 +61,18 @@ Web不为购买路径新增API、schema、未知字段、客户端价格或客�
 
 category5已有ordinary owned/equip路径：`apps/shared/combat/equipment-target.ts`将category5/6路由到`DECORATION`；`apps/web/src/interface/home/home-equipment.tsx`按`DECORATION`显示候选；`apps/server/src/accounts/api.ts`的Equipment `DECORATION`请求进入`configureCosmetic`，由`apps/server/src/account-store.ts`校验owned记录并写现profile selector。购买成功后，owned Hat列表和既有装备入口继续使用新owned实例，不新增第二套装备模型。
 
+新购精确40件饰品单次BUY一个实例，采用3天＝4320分钟，从购买成功时以原事务锚定到期时间；这不改变原Durable字段，具体合同见`decoration-purchase-expiry-runtime.md`。
+
 现`apps/web/src/interface/account/part-shop.tsx`与`part-shop-source-page.tsx`复用原`rdoShopHatPage`：仅在确认`Shop QUERY`实际返回category5且命中精确40 gating时开放Hat浏览；Common与Mark保持原行为。商品显示沿用现Part列表、名称、说明、图标及原`ItemMoney/ItemCoin`正价，购买沿用普通BUY与确认后的inventory/profile。
 
 ## 边界与继承
 
-已售category8..12的74件普通部件继续由现`partShopItems`提供，本批不重复追加。`2010`原`ItemMoney/ItemCoin=0`，不进免费`Shop BUY`，继续沿现mode5 breach掉落取得。`2016`不因有原正价和item row加入本批，原自然stop/release路径未完成前不造购买库存。pet世界、原地图002、Seq及其它已关闭范围不改。
+已售category8..12的74件普通部件继续由现`partShopItems`提供，本批不重复追加。`2010`原`ItemMoney/ItemCoin=0`，不进免费`Shop BUY`，继续沿现mode5 breach掉落取得。`2016`已沿普通正价弹药取得链接入，详`ammo2016-client-business-design.md`；原025 stop caller仍为独立来源边界。
 
-原consumer范围只登记现普通BUY、账户事务、钱包、receipt、inventory、owned Hat列表、Home `DECORATION`装配和既有装备入口；不改饰品世界渲染、期限消耗、耐久递减、技能、移动、地图或Pet行为。
+当前consumer包括普通BUY、账户事务、钱包、receipt、inventory、owned Hat列表、Home `DECORATION`装配及战斗饰品显示。`rooms/snapshot.ts`按确认装配实例投影`PlayerSnapshot.decoration`，`BattlePlayers`通过`BattleTankDecoration`加载共享定义的模型／贴图并消费TankView饰品挂点，换型、卸装、换局和离房释放owner。
+
+期限方面，`AccountPartMaintenance`成功维修后以`anchorMaintenance`保存到期时间，库存／维修查询按真实墙钟投影剩余分钟，交易转移到期时间。新购的`AccountShop`在原扣款／库存／receipt事务中为精确40件单实例写入4320分钟并锚定到期时间；重放不重新起算，旧拥有记录不回填。3天与购买成功起算为采用规则，原`Durable=3`初值／起算来源仍未闭合，见`decoration-purchase-expiry-runtime.md`及`battle-remaining-integration.md` X。
 
 ## 待验限制
 
-本批为已生产接线，尚未实测。原server出售授权与successful stock producer、原`Durable`初值/递减、饰品世界表现、逐币种真实支付、余额不足/重放/重启、真实页面操作、双端可见性与HD仍未完成；不据本设计或静态接线勾选M6-06父项，也不把新购买scope承担原世界渲染。
+商城、装配、战斗模型及维修期限生产接线尚未实测。新购期限采用3天并已接；原server出售授权与successful stock producer、原`Durable`初值／起算规则、逐币种真实支付、余额不足／重放／重启、真实页面操作、双端可见性与HD仍未完成。M6-06父项保持开放。

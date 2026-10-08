@@ -1,3 +1,5 @@
+import {sourceUiImage} from './source-ui-image';
+
 export interface HomeSourceControl {
   name: string;
   type?: string;
@@ -38,12 +40,18 @@ export class HomeSourceLayout {
   }
 
   picture(element: HTMLElement, reference: string | undefined): void {
-    const match = /^set:(\S+) image:(.+)$/.exec(reference ?? '');
-    const sets = this.ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
-    const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
-    const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-    element.style.backgroundImage = asset ? `url('/${asset}')` : '';
+    const {asset, backgroundImage, tankThumbnail, petThumbnail, tankMark} = sourceUiImage(this.ui, reference);
+    element.style.backgroundImage = backgroundImage ?? '';
+    if (tankThumbnail || petThumbnail) {
+      element.style.backgroundSize = 'contain';
+      element.style.backgroundPosition = 'center';
+      element.style.backgroundRepeat = 'no-repeat';
+    }
     if (asset) element.dataset.sourceAsset = asset;
     else delete element.dataset.sourceAsset;
+    if (tankMark) element.dataset.tankIconMark = tankMark;
+    else delete element.dataset.tankIconMark;
+    if (petThumbnail) element.dataset.petThumbnail = '';
+    else delete element.dataset.petThumbnail;
   }
 }

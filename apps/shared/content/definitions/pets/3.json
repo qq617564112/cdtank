@@ -1,0 +1,120 @@
+{
+  "kind": "pet",
+  "id": 3,
+  "key": "pet-3",
+  "name": "毛姐",
+  "description": "木桶镇上最无忧无虑的狗，整天只想着做好玩的事。大脑记忆体之小为世所罕见，谁也拿它没办法。",
+  "prices": {
+    "money": 4000,
+    "tokens": 400
+  },
+  "shop": {
+    "available": true,
+    "group": "pet"
+  },
+  "starter": false,
+  "defaultSelected": false,
+  "petType": 2,
+  "petSize": 2,
+  "attributes": {
+    "maxHp": 650,
+    "critical": 15,
+    "lucky": 16,
+    "mastery": [
+      3,
+      4,
+      2,
+      2
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/003/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/003/11009.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 10311,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10311
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10321,
+      "initialRank": 0,
+      "rankCap": 5,
+      "levels": [
+        10321,
+        10322,
+        10323,
+        10324,
+        10325
+      ],
+      "event": "hit",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10331,
+      "initialRank": 0,
+      "rankCap": 4,
+      "levels": [
+        10331,
+        10332,
+        10333,
+        10334
+      ],
+      "event": "respawn",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10341,
+      "initialRank": 0,
+      "rankCap": 4,
+      "levels": [
+        10341,
+        10342,
+        10343,
+        10344
+      ],
+      "event": "kill",
+      "handler": "heal",
+      "target": "teammates"
+    },
+    {
+      "baseId": 10351,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10351
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10361,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

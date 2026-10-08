@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17212b">
+    <title>银红蓝 · 角色模型</title>
+  </head>
+  <body>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="identity">
+          <svg class="identity-mark" viewBox="0 0 32 40" aria-hidden="true">
+            <path d="M16 2 7 10 8 22 16 29 24 22 25 10Z"/>
+            <path class="mark-accent" d="m16 9 3 6-3 6-3-6Z"/>
+            <path d="M6 28 16 35 26 28M16 35v4"/>
+          </svg>
+          <div>
+            <span class="eyebrow">CHARACTER STUDY / 001</span>
+            <h1>银红蓝 <span>角色模型</span></h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span class="engine-tag"><span></span> BABYLON.JS</span>
+          <button class="export-button" id="export-model" type="button">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m-3-3 3 3 3-3M4 13v4h12v-4"/></svg>
+            导出模型 <span>.babylon</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="stage" aria-label="模型工作区">
+        <div class="stage-label">
+          <span class="eyebrow">MODEL VIEWPORT</span>
+          <span id="view-name">正面 / FRONT</span>
+        </div>
+        <div class="stage-tools" aria-label="显示选项">
+          <button id="wireframe" class="tool-button" type="button" aria-pressed="false" title="线框显示">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 2 7 4v8l-7 4-7-4V6Zm0 0v16M3 6l14 8M17 6 3 14"/></svg>
+            <span>线框</span>
+          </button>
+          <button id="background" class="tool-button" type="button" aria-pressed="false" title="切换深色背景">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 3v14"/></svg>
+            <span>背景</span>
+          </button>
+          <button id="capture" class="tool-button" type="button" title="保存当前视图">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h3l1-2h6l1 2h3v10H3Z"/><circle cx="10" cy="11" r="3"/></svg>
+            <span>截图</span>
+          </button>
+        </div>
+        <canvas id="hero-canvas" tabindex="0" aria-label="银红蓝角色三维模型。拖动旋转，滚轮缩放，按 1 至 4 切换视角，按 R 重置。"></canvas>
+        <div class="loading" id="loading" role="status"><span></span>正在准备模型</div>
+        <div class="axis-key" aria-hidden="true"><span class="axis-y">Y</span><span class="axis-z">Z</span><span class="axis-x">X</span></div>
+        <div class="stage-note"><span class="status-dot"></span><span id="mesh-stats">T-POSE · 2.00 M</span></div>
+        <div class="view-controls">
+          <div class="view-tabs" role="group" aria-label="参考视角">
+            <button type="button" data-view="front" aria-pressed="true"><span>01</span>正面</button>
+            <button type="button" data-view="right" aria-pressed="false"><span>02</span>右侧</button>
+            <button type="button" data-view="back" aria-pressed="false"><span>03</span>背面</button>
+            <button type="button" data-view="top" aria-pressed="false"><span>04</span>45° 俯视</button>
+          </div>
+          <button class="rotate-button" id="auto-rotate" type="button" aria-pressed="false">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15 6a6 6 0 1 0 1 7M15 2v4h-4"/></svg>
+            自动旋转
+          </button>
+        </div>
+      </section>
+
+      <aside class="inspector" aria-label="参考与模型信息">
+        <section class="reference-section">
+          <div class="section-heading"><h2>原画参考</h2><span>REFERENCE</span></div>
+          <button class="reference-picture" id="open-reference" type="button" aria-label="放大参考图">
+            <img id="reference-image" alt="银红蓝角色设计图，包含正面、右侧、背面、45 度俯视及 UV 展开示意">
+            <span>查看原图 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9 3h4v4M13 3 7 9M7 3H3v10h10V9"/></svg></span>
+          </button>
+          <p class="reference-caption">三视图 · T 字站姿 · 对称造型</p>
+        </section>
+
+        <section class="materials-section">
+          <div class="section-heading"><h2>材质配色</h2><span>PALETTE</span></div>
+          <div class="material-row"><span class="material-swatch silver"></span><div><strong>金属银</strong><span>头盔 / 手套 / 长靴</span></div><code>#B6B8C0</code></div>
+          <div class="material-row"><span class="material-swatch red"></span><div><strong>绯红</strong><span>颈部 / 肩臂 / 外腿</span></div><code>#B82530</code></div>
+          <div class="material-row"><span class="material-swatch blue"></span><div><strong>深蓝</strong><span>腰腹 / 内腿 / 臂底</span></div><code>#21457E</code></div>
+          <div class="material-row"><span class="material-swatch gold"></span><div><strong>暖金</strong><span>胸前饰带 / 宝石镶座</span></div><code>#C5A25E</code></div>
+          <div class="material-row"><span class="material-swatch teal"></span><div><strong>蓝绿晶石</strong><span>胸口 / 额头</span></div><code>#19A4B8</code></div>
+        </section>
+
+        <section class="details-section">
+          <div class="section-heading"><h2>模型信息</h2><span>DETAILS</span></div>
+          <dl><div><dt>站立高度</dt><dd>2.00 m</dd></div><div><dt>双臂跨度</dt><dd>1.96 m</dd></div><div><dt>投影方式</dt><dd>正交投影</dd></div><div><dt>姿态</dt><dd>T-pose</dd></div></dl>
+          <button class="reset-button" id="reset-view" type="button">恢复参考视角 <span>R</span></button>
+        </section>
+        <p class="interaction-hint"><svg viewBox="0 0 20 24" aria-hidden="true"><rect x="4" y="2" width="12" height="19" rx="6"/><path d="M10 3v6"/></svg><span>拖动旋转 · 滚轮缩放<br>双指捏合缩放</span></p>
+      </aside>
+
+      <footer class="footer"><span>REFERENCE HERO <i>/</i> 001</span><span>曲面造型 <i>·</i> PBR 材质 <i>·</i> Babylon.js 9</span><span id="render-status" role="status">准备中</span></footer>
+    </main>
+
+    <dialog id="reference-dialog" aria-label="原始参考图">
+      <button id="close-reference" class="dialog-close" type="button" aria-label="关闭参考图">×</button>
+      <img id="large-reference-image" alt="角色完整原画参考">
+    </dialog>
+    <script type="module" src="/src/models/reference-hero/main.ts"></script>
+  </body>
+</html>

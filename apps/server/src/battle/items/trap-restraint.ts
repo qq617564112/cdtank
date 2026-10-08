@@ -1,3 +1,4 @@
+import {itemForHandler} from '../../../../shared/content/catalog';
 import {combatItems, combatSkills} from '../catalog';
 import {readGroupTrapRule} from './group-trap-rule';
 
@@ -12,7 +13,7 @@ export interface TrapRestraintRule {
 }
 
 /** Source fields are confirmed; Func12 time/radius/model interpretation is rebuilt. */
-export function readTrapRestraintRule(itemId = 3003): TrapRestraintRule | undefined {
+export function readTrapRestraintRule(itemId = itemForHandler('trap', 'moveRestraint').id): TrapRestraintRule | undefined {
   if (itemId === 3007) {
     const group = readGroupTrapRule(itemId);
     return group ? {itemTableId: group.itemTableId, placementSkillId: group.placementSkillId,
@@ -25,10 +26,10 @@ export function readTrapRestraintRule(itemId = 3003): TrapRestraintRule | undefi
   const create = placement?.functions[0];
   const effect = create ? combatSkills.get(create.y) : undefined;
   const restraint = effect?.functions[0];
-  if (!item || item.itemType !== 4 || !placement || placement.skillId !== 3003
+  if (!item || item.itemType !== 4 || !placement
       || !create || create.type !== 12 || create.z !== item.itemTableId
-      || !effect || effect.skillId !== 4001 || !restraint || restraint.type !== 3) return undefined;
-  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId, effectSkillId: 4001,
+      || !effect || !restraint || restraint.type !== 3) return undefined;
+  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId, effectSkillId: effect.skillId,
     groundModelId: create.z, groundDurationMs: create.t * 1000,
     triggerRadius: create.x, restraintDurationMs: restraint.t * 1000};
 }
@@ -60,7 +61,7 @@ export interface TrapRestraintChange {
 
 /** Rebuilt single-contact authority removes one original uint8 straight-move permission. */
 export function applyTrapRestraint(target: TrapRestraintParticipant, now: number,
-    permission: TrapMovePermissionProvider, itemId = 3003): TrapRestraintChange | undefined {
+    permission: TrapMovePermissionProvider, itemId = itemForHandler('trap', 'moveRestraint').id): TrapRestraintChange | undefined {
   if (!target.alive || target.combat.status !== 2 || target.trapRestraint) return undefined;
   const rule = readTrapRestraintRule(itemId);
   const count = permission.readMovePermissionCount();

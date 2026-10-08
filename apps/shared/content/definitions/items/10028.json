@@ -1,0 +1,79 @@
+{
+  "name": "狗盆",
+  "getMethod": 2,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 2,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10028,
+  "key": "item-10028",
+  "description": "这个吃饭的家伙可是阿狗们最珍爱的宝贝。",
+  "prices": {
+    "money": 3000,
+    "tokens": 300
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10028/10028.glb",
+    "modelId": 10028,
+    "modelType": 1,
+    "texture": "10028A",
+    "iconId": 10028,
+    "textures": [
+      "Data/accessory/10028/10028A.png"
+    ],
+    "sourceModel": "Data/accessory/10028/10028.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10028/10028A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

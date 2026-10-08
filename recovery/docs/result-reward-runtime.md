@@ -21,9 +21,13 @@
    `expPercent` 按下一阶级原阈值区间求 0..100，到顶 100。未取得来源的 21..27/98/99 不授。
 3. 事务：`apps/server/src/accounts/reward.ts` 在 `accounts/history.ts` 的既有
    `BEGIN IMMEDIATE` 内与 `settled_matches`/`match_history` 同事务提交——
-   `money` 累加到现可花费 `profile 0x70`，`rankPoints/level/originality/tech` 写独立
+   `money` 按余额距999999999上限的剩余额度累加到现可花费 `profile 0x70`，收据记录实际入账值；
+   满额时金钱为0，成长、战绩和收据仍正常提交。`rankPoints/level/originality/tech` 写独立
    `account_growth` 明确类型列，本局收据写 `account_reward_ledger`。任一步抛错整场回滚，
    `settled_matches` 不留假成功。
+   装备奖励同事务写入 inventory/role_records，收据只携带实际创建的 grantedItems/grantedTanks；
+   完赛资格、25%道具/5%坦克的采用概率、冻结抽签与退出积分事务见
+   `battle-equipment-exit-melee-rules.md`。
 4. 重试：`settlement/history.ts` 沿既有 `pending` 队列保存失败冻结载荷，由世界 tick 的
    `flush` 重试；即使房间已释放、连接身份已删除，冻结载荷仍能落库。`flush` 成功后返回本次
    提交的 `roomId/round/收据`，`index.ts` 立刻交 `World.publishReceipts`；World 只在房间仍存在、
@@ -59,7 +63,9 @@
 服务端只消费 `@shared/protocols/MsgRoomSnapshot` 既有新增合同：
 
 - `ResultPlayer.award?: ResultAward`，`ResultAward = {money, coin, originality, tech,
-  rankPoints, levelBefore, levelAfter, expPercent}`；无 award 表示无权威收据。
+  rankPoints, levelBefore, levelAfter, expPercent, rankPointsBefore?, grantedTitles?, grantedItems?, grantedTanks?}`；无 award 表示无权威收据。
+  `rankPointsBefore`为事务内读取的实际旧累计积分，供正式结算逐级演出使用；旧持久回执缺此字段时
+  只显示最终成长状态。门槛由`apps/shared/settlement/account-growth.ts`共用，来源见`battle-summary-sequence-source.md`。
 - `PtlRoleProfile.ResRoleProfile.growth?: AccountGrowth`，`AccountGrowth = {rankPoints, level,
   originality, tech}`；`RoleProfile` 回复按账户独立账本返回，不覆写原 profile
   0x5c/0x9c/0xa0/0x80（尤其 `tech` 不写 pet learning 的 0x80）。初始账户若无原积分来源，

@@ -1,7 +1,7 @@
-import type {ObjectiveSnapshot, MsgRoomEvent} from '../../../shared/protocols';
+import type {ObjectiveSnapshot, MsgRoomEvent, SceneObjectSnapshot} from '../../../shared/protocols';
 import type {ModeMapConfig} from '../config';
 import {getSceneBreakables, getSceneCastles} from '../scene-objects';
-import {castleSceneObjects, damageSceneObject} from '../battle/environment';
+import {advanceSceneObjects, castleSceneObjects, damageSceneObject} from '../battle/environment';
 
 type SceneTarget = ObjectiveSnapshot & {sourcePlacementId: string; sourceModel: string};
 
@@ -75,7 +75,8 @@ export function damageObjective(room: {
   roomId: string; phase: string; mode: number;
   map: {mapId: number; hitScore: number; destroyScore: number};
   teamScores?: number[];
-}, owner: {id: string; name: string; team: number; score: number; objectivesDestroyed: number},
+}, owner: {id: string; name: string; team: number; score: number; objectivesDestroyed: number;
+  sceneBreakCount?: number},
   target: ObjectiveSnapshot, bulletDamage: number, now: number, events: MsgRoomEvent[]): void {
   if (room.mode === 2 && target.id.startsWith('CASTLE:') && isSceneTarget(target)) {
     damageSceneObject(room, owner, target, bulletDamage, now, events);
@@ -101,6 +102,7 @@ export function damageObjective(room: {
   if (target.hp <= 0) {
     target.destroyedAt = now;
     owner.objectivesDestroyed++;
+    owner.sceneBreakCount = (owner.sceneBreakCount ?? 0) + 1;
     owner.score += room.map.destroyScore;
     events.push({roomId: room.roomId, type: 'objectiveDestroyed', message: `${owner.name}摧毁了目标`,
       playerId: owner.id, targetId: target.id, value: 1,
@@ -152,7 +154,9 @@ export function advanceObjectives(room: {
   round?: number;
   map: {mapId: number; buttReborn: number; buttRebornTime: number};
   objectives: ObjectiveSnapshot[];
+  sceneObjects: readonly SceneObjectSnapshot[];
 }, now: number): ObjectiveEnd | undefined {
+  if (room.mode >= 1 && room.mode <= 4) advanceSceneObjects(room, now);
   if (room.mode === 2) return objectiveEnd(room);
   if (room.mode !== 5) return undefined;
   const {states} = breachStateStore(room);

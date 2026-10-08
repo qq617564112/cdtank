@@ -209,6 +209,8 @@ def main():
                 continue
             delivered = root / entry['png']
             installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
+            if not installed.is_file():
+                installed = root / 'art/hd-assets/sprite-originals' / installed.relative_to(root)
             if (entry['source'].lower() not in replacements and delivered.is_file()
                     and installed.is_file() and installed.read_bytes() == delivered.read_bytes()):
                 replacements[entry['source'].lower()] = entry
@@ -250,6 +252,9 @@ def main():
           f'skipped {len(selected) - len(completed)} incomplete PNGs')
     subprocess.run([sys.executable, str(root / 'scripts/render-hd-asset-gallery.py'),
                     '--root', str(root)], check=True)
+    if (runtime / 'sprite-images.json').is_file():
+        subprocess.run([sys.executable, str(root / 'scripts/clean-image-assets.py'),
+                        '--root', str(root)], check=True)
 
 
 if __name__ == '__main__':

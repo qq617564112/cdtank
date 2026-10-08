@@ -1,0 +1,77 @@
+{
+  "name": "组合炮管",
+  "getMethod": 2,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 8,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 13022,
+  "key": "item-13022",
+  "description": "火力+15%，额外火力+15，发射间隔+0.2s。",
+  "prices": {
+    "money": 2000,
+    "tokens": 200
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 8,
+  "inventoryCategory": 5,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 13021,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 13021,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 13022,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "common"
+  },
+  "equipmentTarget": "PART"
+}

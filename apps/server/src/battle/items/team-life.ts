@@ -21,25 +21,26 @@ export interface TeamLifeParticipant {
   inventory: InventoryWireRecord[];
 }
 
-/** Rebuilt self-use and mode1 authority for source skill501 FuncType18 x1/y1. */
+/** Self-use in team mode applies the configured FuncType18 x1 life amount. */
 export function applyTeamLifeItem(room: TeamLifeRoom, player: TeamLifeParticipant,
   request: {kind: string; instanceId: number},
   consumeItem: ((playerId: string, instanceId: number, expectedOwned: number,
     itemTableId: number) => boolean) | undefined, events: MsgRoomEvent[]): void {
   if (request.kind !== 'useItem') return;
   const item = player.inventory.find(record => record.instanceId === request.instanceId);
-  if (!item || item.itemTableId !== 501) return;
-  const definition = combatItems.get(501);
+  if (!item || combatItems.get(item.itemTableId)?.runtime.use !== 'teamLife') return;
+  const definition = combatItems.get(item.itemTableId);
   const skill = definition ? combatSkills.get(definition.skillIds[0]) : undefined;
-  if (!skill || skill.skillId !== 501 || skill.target !== 1 || skill.triggerType !== 1
+  if (!skill || skill.target !== 1 || skill.triggerType !== 1
       || skill.functions[0]?.type !== 18 || skill.functions[0].x !== 1
-      || skill.functions[0].y !== 1) return;
+      || !Number.isSafeInteger(skill.functions[0].y) || skill.functions[0].y <= 0) return;
+  const amount = skill.functions[0].y;
   const reject = (message: string): void => {
     events.push({roomId: room.roomId, type: 'itemRejected', message, playerId: player.id,
       targetId: '', value: 0, x: 0, y: 0, z: 0});
   };
   if (room.mode !== 1) {
-    reject('1UP仅可在团队模式使用');
+    reject(`${definition!.name}仅可在团队模式使用`);
     return;
   }
   if (!player.alive || player.combat.status !== 2
@@ -47,7 +48,7 @@ export function applyTeamLifeItem(room: TeamLifeRoom, player: TeamLifeParticipan
   if ((player.team !== 0 && player.team !== 1) || room.teamLives.length !== 2
       || !room.teamLives.every(lives => Number.isFinite(lives)
         && Number.isInteger(lives) && lives > 0)
-      || !Number.isSafeInteger(room.teamLives[player.team] + 1)) {
+      || !Number.isSafeInteger(room.teamLives[player.team] + amount)) {
     reject('团队存量无效，无法使用道具');
     return;
   }
@@ -62,10 +63,10 @@ export function applyTeamLifeItem(room: TeamLifeRoom, player: TeamLifeParticipan
   }
   item.ownedQuantity -= 1;
   item.battleQuantity -= 1;
-  room.teamLives[player.team] += 1;
-  events.push({roomId: room.roomId, type: 'itemUsed', message: `${player.name}使用${definition!.name}`,
-    playerId: player.id, targetId: player.id, value: 1,
-    x: player.x, y: player.y, z: player.z, skillId: 501,
-    playSkillEffect: {skillId: 501, effectIndex: 0, duration: 0,
+  room.teamLives[player.team] += amount;
+  events.push({roomId: room.roomId, type: 'itemUsed', itemName: combatItems.get(item.itemTableId)?.name, message: `${player.name}使用${definition!.name}`,
+    playerId: player.id, targetId: player.id, value: amount,
+    x: player.x, y: player.y, z: player.z, skillId: skill.skillId,
+    playSkillEffect: {skillId: skill.skillId, effectIndex: 0, duration: 0,
       roleId: Number(player.id.slice(1)), xBits: 0, zBits: 0}});
 }

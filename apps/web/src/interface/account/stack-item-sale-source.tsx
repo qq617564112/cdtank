@@ -16,13 +16,14 @@ export interface StackSaleOwner {
 }
 
 /** Confirmed inventory and wallet are installed by the page owner. */
-export function StackItemSaleSource({ui, source, instanceId, activation, refreshKey, owner, onConfirmed, onBusy, disabled = false}: {
+export function StackItemSaleSource({ui, source, instanceId, activation, refreshKey, owner, onConfirmed, onBusy, onError, disabled = false}: {
   ui: HomeSourceUi; source: ShopSource; instanceId?: number;
   activation?: {instanceId: number; sequence: number}; owner: StackSaleOwner;
   refreshKey?: number;
-  onConfirmed: (response: ResStackItemSale) => void; onBusy: (busy: boolean) => void; disabled?: boolean;
+  onConfirmed: (response: ResStackItemSale) => void; onBusy: (busy: boolean) => void;
+  onError?: (message: string) => void; disabled?: boolean;
 }) {
-  const callbacks = useRef({onConfirmed, onBusy}); callbacks.current = {onConfirmed, onBusy};
+  const callbacks = useRef({onConfirmed, onBusy, onError}); callbacks.current = {onConfirmed, onBusy, onError};
   const generation = useRef(0);
   const [response, setResponse] = useState<ResStackItemSale>();
   const [busy, setBusy] = useState(false);
@@ -31,6 +32,9 @@ export function StackItemSaleSource({ui, source, instanceId, activation, refresh
   const [quantity, setQuantity] = useState('1');
   const locked = useRef(false);
   const handledActivation = useRef(activation?.sequence);
+  useEffect(() => {
+    if (status && saleInstance === undefined) callbacks.current.onError?.(status);
+  }, [status, saleInstance]);
   function setPending(value: boolean) {locked.current = value; setBusy(value); callbacks.current.onBusy(value);}
   useEffect(() => {
     const current = ++generation.current;
@@ -92,7 +96,7 @@ export function StackItemSaleSource({ui, source, instanceId, activation, refresh
     {saleInstance !== undefined && <InventorySaleQuantityDialog ui={ui} quantity={quantity} change={setQuantity}
       busy={busy} disabled={disabled || !valid} status={status} confirm={() => void sell()}
       cancel={() => {if (!locked.current) setSaleInstance(undefined);}}/>}
-    {saleInstance === undefined && status && <output role="status" data-stack-sale-status=""><SourceFeedbackText text={status}/></output>}
+    {!onError && saleInstance === undefined && status && <output role="status" data-stack-sale-status=""><SourceFeedbackText text={status}/></output>}
   </>;
 }
 

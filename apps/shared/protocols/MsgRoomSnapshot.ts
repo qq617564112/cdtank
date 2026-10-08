@@ -3,7 +3,7 @@ import type {CpuLoadoutItem} from './PtlCpu';
 
 /** Rebuilt skill10/11 lifetime; the source4173 replacement is created at the activation pose. */
 export interface RoleDisguiseSnapshot {
-  skillId: 10 | 11;
+  skillId: number;
   style: 1 | 2;
   startedAt: number;
   expiresAt: number;
@@ -53,6 +53,9 @@ export interface PlayerSnapshot {
   score: number;
   kills: number;
   deaths: number;
+  /** Rebuilt personal kills split by the destroyed participant's cat/dog side. */
+  catsInfo?: number;
+  dogsInfo?: number;
   respawnAt: number;
   isVIP: boolean;
   objectivesDestroyed?: number;
@@ -81,14 +84,14 @@ export interface PlayerSnapshot {
   /** Rebuilt true-respawn protection; source skill30001 owns a five-second policy lifetime. */
   respawnProtection?: {skillId: number; expiresAt: number};
   /** Confirmed skill9 lifetime; enemy actor visibility is reconstructed from the client contract. */
-  opticalCamouflage?: {skillId: 9; expiresAt: number};
+  opticalCamouflage?: {skillId: number; expiresAt: number};
   /** Confirmed disguise presence for new observers and late model loads. */
   roleDisguise?: RoleDisguiseSnapshot;
   /** Existing rebuilt2007 burn authority; presence controls retained4005 presentation. */
-  trapRestraint?: {skillId: 4001; expiresAt: number; movePermissionCount: number};
-  trapTurnRestraint?: {skillId: 4002; expiresAt: number; turnPermissionCount: number};
-  trapFireRestraint?: {skillId: 4003; expiresAt: number; firePermissionCount: number};
-  ammoBurn?: {itemId: 2007; skillId: 4005; startedAt: number; expiresAt: number};
+  trapRestraint?: {skillId: number; expiresAt: number; movePermissionCount: number};
+  trapTurnRestraint?: {skillId: number; expiresAt: number; turnPermissionCount: number};
+  trapFireRestraint?: {skillId: number; expiresAt: number; firePermissionCount: number};
+  ammoBurn?: {itemId: number; skillId: number; startedAt: number; expiresAt: number};
   /** Rebuilt deadline projection: duration/remaining in seconds, startedAt in server milliseconds.
    * Zero startedAt means no shot in this life; duration excludes the original HUD's extra 0.5s.
    * Durations retain their original-normal or rebuilt source.
@@ -143,6 +146,7 @@ export interface SceneObjectSnapshot {
   hp: number;
   maxHp: number;
   destroyedAt?: number;
+  castleAnimation?: {action: string; startedAt: number; stopAtEnd: boolean};
 }
 
 /** Original Crush visibility; shot permission and geometry selection are rebuilt. */
@@ -168,8 +172,8 @@ export interface GroundTrapSnapshot {
   id: string;
   ownerId: string;
   team: number;
-  itemTableId: 3001 | 3002 | 3003 | 3004 | 3005;
-  modelId: 3001 | 3002 | 3003 | 3004 | 3005;
+  itemTableId: number;
+  modelId: number;
   x: number;
   y: number;
   z: number;
@@ -200,6 +204,21 @@ export interface AccountGrowth {
   tech: number;
 }
 
+/** One owned item record granted by this round's committed account transaction. */
+export interface ResultItemGrant {
+  instanceId: number;
+  itemTableId: number;
+  name: string;
+  iconId: number;
+}
+
+/** One owned tank record granted by this round's committed account transaction. */
+export interface ResultTankGrant {
+  instanceId: number;
+  tankId: number;
+  name: string;
+}
+
 export interface ResultAward {
   money: number;
   coin: number;
@@ -209,6 +228,13 @@ export interface ResultAward {
   levelBefore: number;
   levelAfter: number;
   expPercent: number;
+  /** Titles permanently granted by this round's committed account transaction. */
+  grantedTitles?: PlayerTitle[];
+  /** Committed pre-round balance; older persisted receipts only contain the final balance. */
+  rankPointsBefore?: number;
+  /** Actual owned records, displayed after this receipt's title grants. */
+  grantedItems?: ResultItemGrant[];
+  grantedTanks?: ResultTankGrant[];
 }
 
 export type AwardType = 'perfect' | 'mvp' | 'savage' | 'console' | 'brave' | 'kind' | 'crafty' | 'shy' | 'greedy';
@@ -222,6 +248,25 @@ export interface RoundStats {
   friendlyFireDamage: number;
   healing: number;
   rearDamage: number;
+  /** Actual enemy VIP HP removed this round. */
+  vipDamage?: number;
+  /** Actual enemy Castle HP removed this round in capture mode. */
+  bunkerDamage?: number;
+  /** Enemy-hit results in fired order, one 0/1 character per shot. */
+  shotHits?: string;
+  missesThenKill?: boolean;
+  consecutiveShotKills?: boolean;
+  openingDeaths?: number;
+  maxKillsAgainstOpponent?: number;
+  killedOpponentIds?: string[];
+  killedAllOpponents?: boolean;
+  oneKillBehindWinner?: boolean;
+  /** True for a participant still present at the finish boundary. */
+  completedRound?: boolean;
+  /** Longest miss streak immediately followed by a shot that actually destroyed an opponent. */
+  maxMissesBeforeShotKill?: number;
+  /** Longest run of consecutive fired shots each credited with an actual enemy death. */
+  maxConsecutiveShotKills?: number;
 }
 
 export interface RoundAward {
@@ -232,10 +277,15 @@ export interface RoundAward {
 export interface ResultPlayer {
   id: string;
   name: string;
+  /** Selected pet frozen at finish, including participants who left mid-round. */
+  petId?: number;
   team: number;
   rank: number;
   kills: number;
   deaths: number;
+  /** Same authoritative counters frozen with this round's result. */
+  catsInfo?: number;
+  dogsInfo?: number;
   objectivesDestroyed: number;
   combatScore: number;
   outcomeBonus: number;
@@ -273,6 +323,8 @@ export interface MatchSnapshot {
   sceneObjects?: SceneObjectSnapshot[];
   sceneCrushes?: SceneCrushSnapshot[];
   scenePlants?: ScenePlantSnapshot[];
+  /** Current animated render-face NAV occupancy, replacing the same static placement. */
+  animatedBlockers?: {id: string; cells: number[]}[];
   groundTraps?: GroundTrapSnapshot[];
   groundItems?: GroundItemSnapshot[];
   result?: MatchResult;

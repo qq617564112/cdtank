@@ -1,0 +1,87 @@
+{
+  "name": "速射弹",
+  "getMethod": 2,
+  "durable": 20,
+  "breakMode": 2,
+  "itemType": 3,
+  "battleUseMax": 50,
+  "effects": [
+    {
+      "effectId": 53,
+      "sound": "GA08",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 6,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "ammo",
+  "id": 2004,
+  "key": "item-2004",
+  "description": "就是射得快！发射间隔比普通炮弹快0.4秒。",
+  "prices": {
+    "money": 5,
+    "tokens": 10
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 3,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 2004,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 2004,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null,
+    "fireSound": {
+      "id": 48,
+      "asset": "audio/sound/GA07.wav"
+    }
+  },
+  "runtime": {
+    "values": {
+      "baseDamage": 35,
+      "attackScale": 0.08,
+      "shopSupplyCount": 20,
+      "battleRewardOrder": 13
+    },
+    "skillRoles": {
+      "primary": 2004,
+      "secondary": 4020,
+      "tertiary": 0
+    },
+    "defaultAmmo": false,
+    "query": "projectile",
+    "projectileSpeed": 360,
+    "range": 1000,
+    "muzzleForward": 30,
+    "muzzleHeight": 20,
+    "sceneResult": true,
+    "remoteShotResult": true,
+    "victimShotResult": true,
+    "sceneResultAfterDamage": true,
+    "finiteCpuAmmo": true,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

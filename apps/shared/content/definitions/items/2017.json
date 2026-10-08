@@ -1,0 +1,87 @@
+{
+  "name": "彩球",
+  "getMethod": 0,
+  "durable": 10,
+  "breakMode": 2,
+  "itemType": 3,
+  "battleUseMax": 30,
+  "effects": [
+    {
+      "effectId": 53,
+      "sound": "GA08",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 6,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "ammo",
+  "id": 2017,
+  "key": "item-2017",
+  "description": "彩球弹，用在热闹场合营造气氛再合适不过了。",
+  "prices": {
+    "money": 50,
+    "tokens": 50
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 3,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 2017,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 2017,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null,
+    "fireSound": {
+      "id": 49,
+      "asset": "audio/sound/GA08.wav"
+    }
+  },
+  "runtime": {
+    "values": {
+      "baseDamage": 35,
+      "attackScale": 0.08,
+      "shopSupplyCount": 10,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 2017,
+      "secondary": 4015,
+      "tertiary": 0
+    },
+    "defaultAmmo": false,
+    "query": "projectile",
+    "projectileSpeed": 360,
+    "range": 1000,
+    "muzzleForward": 30,
+    "muzzleHeight": 20,
+    "sceneResult": true,
+    "remoteShotResult": true,
+    "victimShotResult": true,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": true,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

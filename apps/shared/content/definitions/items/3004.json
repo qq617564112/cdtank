@@ -1,0 +1,79 @@
+{
+  "name": "黏呼呼果酱",
+  "getMethod": 2,
+  "durable": 10,
+  "breakMode": 2,
+  "itemType": 4,
+  "battleUseMax": 10,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "trap",
+  "id": 3004,
+  "key": "turnTrap",
+  "description": "看似好吃的果酱却奇黏无比！不小心碰到会被黏住而无法转向。",
+  "prices": {
+    "money": 10,
+    "tokens": 10
+  },
+  "shop": {
+    "available": true,
+    "group": "consumable"
+  },
+  "category": 4,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": "Data/scnobj/03004/03004.glb",
+    "modelId": 3004,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 3004,
+    "textures": [
+      "Data/scnobj/03004/03004A.png"
+    ],
+    "sourceModel": "Data/scnobj/03004/03004.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/03004/03004A.png"
+  },
+  "runtime": {
+    "values": {
+      "triggerRadius": 30,
+      "shopSupplyCount": 10,
+      "battleRewardOrder": 17
+    },
+    "skillRoles": {
+      "primary": 3004,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "trap": "turnRestraint",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

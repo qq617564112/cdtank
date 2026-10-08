@@ -1,0 +1,120 @@
+{
+  "kind": "pet",
+  "id": 104,
+  "key": "pet-104",
+  "name": "刽子猫",
+  "description": "从来不玩弄猎物，追求一击毙命的做法使得没人敢去招惹它。本身极度痛恨狗，对猫老大猞猁忠心耿耿。",
+  "prices": {
+    "money": 4500,
+    "tokens": 450
+  },
+  "shop": {
+    "available": true,
+    "group": "pet"
+  },
+  "starter": false,
+  "defaultSelected": false,
+  "petType": 1,
+  "petSize": 2,
+  "attributes": {
+    "maxHp": 650,
+    "critical": 12,
+    "lucky": 16,
+    "mastery": [
+      4,
+      3,
+      2,
+      3
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/104/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/104/11010.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 10911,
+      "initialRank": 0,
+      "rankCap": 3,
+      "levels": [
+        10911,
+        10912,
+        10913
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10921,
+      "initialRank": 0,
+      "rankCap": 3,
+      "levels": [
+        10921,
+        10922,
+        10923
+      ],
+      "event": "kill",
+      "handler": "attributes",
+      "target": "teammates"
+    },
+    {
+      "baseId": 10931,
+      "initialRank": 0,
+      "rankCap": 4,
+      "levels": [
+        10931,
+        10932,
+        10933,
+        10934
+      ],
+      "event": "motion",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "moving"
+    },
+    {
+      "baseId": 10941,
+      "initialRank": 0,
+      "rankCap": 3,
+      "levels": [
+        10941,
+        10942,
+        10943
+      ],
+      "event": "hit",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10951,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10951
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10961,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

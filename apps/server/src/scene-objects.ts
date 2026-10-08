@@ -2,8 +2,11 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {webAssetPath} from './runtime/content-paths';
 import {CollisionMesh} from './collision-mesh';
-import {loadGlbTriangles, loadCvdTriangles, placedCollisionMesh} from './render-collision-assets';
+import {loadGlbTriangles, loadCvdTriangles, placedCollisionMesh, sampleCvdTriangles,
+  sampleGlbTriangles, hasGlbAnimation} from './render-collision-assets';
 import {castleResourceFile} from '../../shared/maps/castle-resources';
+import {castleAnimationTime, plantSwayParameter, plantSwayDisplacement} from '../../shared/movement/scene-animation-clock';
+import type {RoleObb} from '../../shared/movement/obb-intersection';
 
 export interface SceneBreakable {
   id: string;
@@ -12,6 +15,18 @@ export interface SceneBreakable {
   dimensions: number[];
   mesh?: CollisionMesh;
   placementId?: string;
+}
+
+export interface AnimatedSceneCollider extends SceneBreakable {
+  position: number[];
+  animation: {
+    kind: 'CVD' | 'GLB';
+    asset: string;
+    reference?: string;
+    duration: number;
+    initialTime: number;
+    actions?: Partial<Record<'c2' | 'c3' | 'n1' | 'n2', {asset: string; duration: number}>>;
+  };
 }
 
 interface SourcePlacement {
@@ -31,7 +46,7 @@ interface SourceScene {id: string; terrain: string; records: SourcePlacement[]; 
 interface SceneCollider extends SceneBreakable {mesh: CollisionMesh; placementId: string;}
 interface CastleResource {
   sourcePlacementId: string; model: string; matrix: number[]; position: number[];
-  actions: {name: string; asset: string; available: boolean}[];
+  actions: {name: string; asset: string; available: boolean; durationMs: number}[];
 }
 
 const scenes = JSON.parse(readFileSync(resolve(
@@ -41,6 +56,18 @@ const colliders = new Map<string, SceneCollider>();
 const breakables = new Map<number, readonly SceneCollider[]>();
 const terrains = new Map<number, CollisionMesh>();
 const castleResources = new Map<number, CastleResource[]>();
+const animated = new Map<string, AnimatedSceneCollider>();
+const animatedScenes = new Map<number, readonly AnimatedSceneCollider[]>();
+
+function castleResourcesFor(scene: SourceScene): CastleResource[] {
+  let resources = castleResources.get(Number(scene.id));
+  if (!resources) {
+    resources = (JSON.parse(readFileSync(webAssetPath(castleResourceFile(Number(scene.id))), 'utf8')) as
+      {castles: CastleResource[]}).castles;
+    castleResources.set(Number(scene.id), resources);
+  }
+  return resources;
+}
 
 function sceneAt(mapId: number): SourceScene {
   const scene = scenes.find(scene => Number(scene.id) === mapId);
@@ -54,13 +81,7 @@ function collider(scene: SourceScene, source: SourcePlacement): SceneCollider {
   if (cached) return cached;
   let asset = source.asset, matrix = source.matrix, position = source.position;
   if (source.className === 'SYcCastle') {
-    let resources = castleResources.get(Number(scene.id));
-    if (!resources) {
-      resources = (JSON.parse(readFileSync(webAssetPath(castleResourceFile(Number(scene.id))), 'utf8')) as
-        {castles: CastleResource[]}).castles;
-      castleResources.set(Number(scene.id), resources);
-    }
-    const resource = resources.find(value => value.model === source.model);
+    const resource = castleResourcesFor(scene).find(value => value.model === source.model);
     const action = resource?.actions.find(value => value.name === 'n1' && value.available);
     if (!resource || !action) throw new Error(`缺少城堡初始渲染模型：${scene.id}/${source.id}`);
     asset = action.asset;
@@ -75,6 +96,76 @@ function collider(scene: SourceScene, source: SourcePlacement): SceneCollider {
     placementId: source.id, mesh: placedCollisionMesh(triangles, matrix, position)};
   colliders.set(key, value);
   return value;
+}
+
+function animatedCollider(scene: SourceScene, source: SourcePlacement): AnimatedSceneCollider {
+  const key = `${scene.id}:${source.id}`;
+  const cached = animated.get(key);
+  if (cached) return cached;
+  let asset = source.asset, matrix = source.matrix, position = source.position;
+  let reference: string | undefined;
+  let actions: AnimatedSceneCollider['animation']['actions'];
+  if (source.className === 'SYcCastle') {
+    let resources = castleResources.get(Number(scene.id));
+    if (!resources) {
+      resources = (JSON.parse(readFileSync(webAssetPath(castleResourceFile(Number(scene.id))), 'utf8')) as
+        {castles: CastleResource[]}).castles;
+      castleResources.set(Number(scene.id), resources);
+    }
+    const resource = resources.find(value => value.model === source.model);
+    const action = resource?.actions.find(value => value.name === 'n1' && value.available);
+    if (!resource || !action) throw new Error(`缺少城堡初始渲染模型：${scene.id}/${source.id}`);
+    asset = action.asset;
+    actions = {};
+    for (const value of resource.actions) {
+      if (['c2', 'c3', 'n1', 'n2'].includes(value.name) && value.available) {
+        actions[value.name as keyof NonNullable<typeof actions>] =
+          {asset: value.asset, duration: value.durationMs};
+      }
+    }
+  }
+  if (source.animation) {
+    reference = source.animation.reference;
+  }
+  if (!asset && !source.animation) throw new Error(`缺少场景渲染模型：${scene.id}/${source.id}`);
+  const initialTime = 0;
+  const triangles = source.animation
+    ? sampleCvdTriangles(source.animation.library, source.animation.reference, initialTime)
+    : sampleGlbTriangles(asset!, initialTime);
+  const duration = source.animation ? cvdDuration(source.animation.library, source.animation.reference) : 0;
+  const value = {id: source.id, model: source.model, matrix: source.matrix, dimensions: source.bounds,
+    placementId: source.id, mesh: placedCollisionMesh(triangles, matrix, position),
+    position: [...position],
+    animation: {kind: source.animation ? 'CVD' as const : 'GLB' as const, asset: source.animation?.library ?? asset!,
+      reference, duration, initialTime, actions}};
+  animated.set(key, value);
+  return value;
+}
+
+/** Current collision geometry for one animated placement at round-relative seconds.
+ * Castle actions use their converted GLB's seconds; CVD uses its own published clock.
+ */
+export function sampleAnimatedSceneCollider(collider: AnimatedSceneCollider, timeSeconds: number,
+  action: 'c2' | 'c3' | 'n1' | 'n2' = 'n1', stopAtEnd = false): CollisionMesh {
+  const {animation} = collider;
+  const triangles = animation.kind === 'CVD'
+    ? sampleCvdTriangles(animation.asset, animation.reference!, timeSeconds)
+    : sampleGlbTriangles(animation.actions?.[action]?.asset ?? animation.asset,
+      animation.actions ? castleAnimationTime(timeSeconds, animation.actions[action]!.duration, stopAtEnd) : timeSeconds,
+      !animation.actions);
+  return placedCollisionMesh(triangles, collider.matrix, collider.position);
+}
+
+function cvdDuration(asset: string, reference: string): number {
+  return Math.max(0, ...readCvdResource(asset, reference).nodes.map(node => node.duration ?? 0));
+}
+
+function readCvdResource(asset: string, reference: string): {nodes: {duration?: number}[]} {
+  const library = JSON.parse(readFileSync(webAssetPath(asset), 'utf8')) as
+    {resources: {reference: string; resolution: string; nodes: {duration?: number}[]}[]};
+  const resource = library.resources.find(value => value.reference === reference);
+  if (!resource || resource.resolution !== 'published') throw new Error(`缺少场景渲染几何：${reference}`);
+  return resource;
 }
 
 export function getSceneTerrain(mapId: number): CollisionMesh {
@@ -113,6 +204,19 @@ export function getSceneCastles(mapId: number): readonly (SceneBreakable & {hp: 
     affiliation: Buffer.from(source.tail!, 'hex').readUInt32LE(8)}));
 }
 
+/** Animated scene geometry that changes collision/NAV outside the static instance cache. */
+export function getAnimatedSceneColliders(mapId: number): readonly AnimatedSceneCollider[] {
+  const cached = animatedScenes.get(mapId);
+  if (cached) return cached;
+  const scene = sceneAt(mapId);
+  const sources = [...scene.records, ...scene.castles].filter(source =>
+    ['SYcScnObjBreach', 'SYcScnObjGeneral', 'SYcScnObjCrush', 'SYcCastle'].includes(source.className)
+    && (source.animation || source.className === 'SYcCastle' || (source.asset && hasGlbAnimation(source.asset))))
+    .map(source => animatedCollider(scene, source));
+  animatedScenes.set(mapId, sources);
+  return sources;
+}
+
 /** Original Crush identity, enabled bit and render mesh, separate from its effect parent. */
 export function getSceneCrushes(mapId: number): readonly (SceneBreakable & {enabled: boolean})[] {
   const scene = sceneAt(mapId);
@@ -130,4 +234,37 @@ export function getScenePlants(mapId: number): readonly (SceneBreakable & {enabl
     id: source.id, model: source.model, matrix: source.matrix, dimensions: source.bounds,
     enabled: source.enabled === 1,
   }));
+}
+
+interface PlantGeometry {source: SourcePlacement; vertices: readonly (readonly number[])[]; height: number;}
+const plantGeometry = new Map<string, PlantGeometry>();
+
+/** Deformed local bounds retain the source placement axes; Plant never creates a NAV blocker. */
+export function getScenePlantContactObb(mapId: number, placementId: string, seconds: number): RoleObb {
+  const key = `${mapId}:${placementId}`;
+  let geometry = plantGeometry.get(key);
+  if (!geometry) {
+    const source = sceneAt(mapId).records.find(value => value.id === placementId)!;
+    const vertices = loadGlbTriangles(source.asset!).flatMap(triangle => [...triangle]);
+    const minY = Math.min(...vertices.map(vertex => vertex[1]));
+    const maxY = Math.max(...vertices.map(vertex => vertex[1]));
+    geometry = {source, vertices, height: maxY - minY};
+    plantGeometry.set(key, geometry);
+  }
+  const parameter = plantSwayParameter(placementId, geometry.height, seconds);
+  const minimum = [Infinity, Infinity, Infinity], maximum = [-Infinity, -Infinity, -Infinity];
+  for (const vertex of geometry.vertices) {
+    const point = [Math.fround(vertex[0] + plantSwayDisplacement(parameter, vertex[1])), vertex[1], vertex[2]];
+    point.forEach((value, axis) => {
+      minimum[axis] = Math.min(minimum[axis], value);
+      maximum[axis] = Math.max(maximum[axis], value);
+    });
+  }
+  const center = minimum.map((value, axis) => (value + maximum[axis]) / 2);
+  const matrix = [...geometry.source.matrix];
+  for (let axis = 0; axis < 3; axis++) {
+    matrix[12 + axis] = geometry.source.position[axis] + matrix[axis] * center[0]
+      + matrix[4 + axis] * center[1] + matrix[8 + axis] * center[2];
+  }
+  return {matrix, dimensions: [maximum[0] - minimum[0], maximum[1] - minimum[1], maximum[2] - minimum[2]]};
 }

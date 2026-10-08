@@ -6,8 +6,6 @@ import {combatItems, combatSkills} from '../catalog';
 import {calculateFoodHealing} from '../roles/food-healing';
 import {isTreasureItem} from '../../../../shared/combat/treasure-items';
 
-/** ItemSkill2 of the two Func20 treasures; the real HP effect for ordinary self-use. */
-const TREASURE_HEAL_SKILL = 30005;
 
 interface TreasureUseParticipant extends HealthParticipant {
   id: string; name: string; alive: boolean; hp: number; x: number; y: number; z: number;
@@ -31,9 +29,9 @@ export function applyTreasureItemUse(roomId: string, player: TreasureUseParticip
   if (!item || !isTreasureItem(item.itemTableId)
       || item.ownedQuantity <= 0 || item.battleQuantity <= 0) return;
   const definition = combatItems.get(item.itemTableId);
-  const skill = combatSkills.get(TREASURE_HEAL_SKILL);
-  if (!definition || !definition.skillIds.includes(TREASURE_HEAL_SKILL)
-      || !skill || skill.skillId !== TREASURE_HEAL_SKILL
+  const skill = definition ? combatSkills.get(definition.runtime.skillRoles.secondary) : undefined;
+  if (!definition || definition.runtime.use !== 'treasure'
+      || !skill
       || skill.target !== 1 || skill.triggerType !== 1
       || skill.functions[0]?.type !== 2 || skill.attributes.HP <= 0) return;
   const reject = (message: string): void => {

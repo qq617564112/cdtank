@@ -1,0 +1,79 @@
+{
+  "name": "原始骨头",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 3,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10035,
+  "key": "item-10035",
+  "description": "充满原始风味的骨头，散发着野性的魅力。",
+  "prices": {
+    "money": 3000,
+    "tokens": 300
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10035/10035.glb",
+    "modelId": 10035,
+    "modelType": 1,
+    "texture": "10035A",
+    "iconId": 10035,
+    "textures": [
+      "Data/accessory/10035/10035A.png"
+    ],
+    "sourceModel": "Data/accessory/10035/10035.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10035/10035A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

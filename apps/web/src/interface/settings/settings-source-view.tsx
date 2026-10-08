@@ -13,7 +13,8 @@ import {SettingsSourceButton, SettingsSourceCheckmark, SettingsSourcePage, SETTI
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {SourceImageScale} from '../resources/source-static-image';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {loadUiFont} from '../resources/source-ui-fonts';
+import {loadSourceUi} from '../resources/source-ui-resources';
 import {SettingsResourceFeedback} from './settings-resource-feedback';
 
 export interface SettingsSourceViewProps {
@@ -46,6 +47,7 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
   const dialog = useRef<HTMLDialogElement>(null);
   const [ui, setUi] = useState<HomeSourceUi>();
   const [resourceError, setResourceError] = useState<string>();
+  const [resourceAttempt, setResourceAttempt] = useState(0);
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
   const [bindings, setBindings] = useState(() => cloneKeyBindings(battle.getKeyBindings()));
   const [quickChats, setQuickChats] = useState<QuickChatPreferences>(() => readQuickChatPreferences(localStorage).preferences);
@@ -75,16 +77,15 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
   }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
     let live = true;
-    void Promise.all([fetch('/ui.json', {signal: controller.signal}), loadSourceUiFonts()]).then(async ([response]) => {
-      if (!response.ok) throw new Error('设置界面资源载入失败');
-      const resources = await response.json() as HomeSourceUi;
+    setResourceError(undefined);
+    void loadUiFont().catch(() => {});
+    void loadSourceUi().then(resources => {
       if (!resources.layouts.some(page => page.path.endsWith(SETTINGS_LAYOUT))) throw new Error('原设置布局缺失');
       if (live) setUi(resources);
-    }).catch(() => {if (live) setResourceError('设置界面资源载入失败');});
-    return () => {live = false; controller.abort();};
-  }, []);
+    }).catch(() => {if (live) setResourceError('设置界面资源载入失败，请重试。');});
+    return () => {live = false;};
+  }, [resourceAttempt]);
 
   useEffect(() => {
     const changed = () => setFullscreen(!!document.fullscreenElement);
@@ -249,7 +250,8 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
         <SettingsSourceButton ui={ui} source="btnClose" aria-label="关闭设置" data-settings-close="" onClick={close} />
       </>}
       {ui && <output className="settings-status" role="status" data-settings-status="">{status}</output>}
-      {!ui && <SettingsResourceFeedback error={resourceError} close={close} />}
+      {!ui && <SettingsResourceFeedback error={resourceError} close={close}
+        retry={() => {setResourceError(undefined); setResourceAttempt(attempt => attempt + 1);}} />}
     </div></SourceImageScale>
   </dialog>;
 }

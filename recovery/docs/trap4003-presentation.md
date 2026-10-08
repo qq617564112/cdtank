@@ -2,7 +2,7 @@
 
 原item3005分类4，价格10金币／10软星，关联放置skill3005。放置首010／SE02、Func12.t30／x30／y4003／z3005与地面模型3005分别沿既有来源及地图owned模块复用，FX本片仅作用技能4003。
 
-原4003首槽118／GA20／tag0／method3，Func5.t5。原完整118树[2878,2879,3116]与发布SAV记录一致，两纹理原DDS解码逐RGBA一致，GA20原WAV字节一致。第二槽016／SE15没有到期调用资格，本片不接该槽、不从表推权威恢复。
+原4003首槽118／GA20／tag0／method3，Func5.t5。原完整118树[2878,2879,3116]与发布SAV记录一致，两纹理原DDS解码逐RGBA一致，GA20原WAV字节一致。第二槽016／SE15生产采用存活成功自然恢复时单次通知，原到期调用来源仍缺，新增绘声未实测；本文首槽证据保持其原范围，详remaining-effect-slot-integration.md。
 
 原观察者42f68d–42f6ed读取record+127与缓存role+36b，即flag11 uint8许可计数。old!=new且HP>0，并且new==0或old==new+1时，42f6d5 duration0／42f6d7 skill4003，取角色ID后42f6e8调用4886aa。此分支无flag6 gate；直接原bytes及反汇编保存在trap4003-presentation-source.json，未新跑native。
 

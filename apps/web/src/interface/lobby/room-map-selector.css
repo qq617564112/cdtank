@@ -10,7 +10,7 @@
 }
 
 [data-room-map-selector]::backdrop {
-  background: transparent;
+  background: rgb(0 33 74 / 60%);
 }
 
 .map-selector-viewport {
@@ -27,7 +27,7 @@
 .map-selector-stage > button,
 .map-selector-stage > span,
 .map-selector-stage > output,
-.map-selector-card > span {
+.map-selector-card-content > span {
   position: absolute;
   box-sizing: border-box;
   margin: 0;
@@ -51,7 +51,14 @@
   cursor: pointer;
 }
 
-.map-selector-card > span {
+.map-selector-card-content {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: transform 120ms ease-out;
+}
+
+.map-selector-card-content > span {
   pointer-events: none;
   color: #fff;
   font-size: 12px;
@@ -65,8 +72,7 @@
   pointer-events: none;
 }
 
-.map-selector-stage button:focus-visible,
-.map-selector-card[aria-pressed="true"] {
+.map-selector-stage button:focus-visible {
   outline: 2px solid #fff;
   outline-offset: -2px;
 }
@@ -75,46 +81,32 @@
   cursor: default;
 }
 
-/* Current draft confirmation has no confirmed original control producer. */
-.map-selector-toolbar {
+.map-selector-card:not(:disabled):hover .map-selector-card-content,
+.map-selector-card:not(:disabled):focus-visible .map-selector-card-content {
+  transform: translateY(-6px);
+}
+
+.map-selector-card:not(:disabled):active .map-selector-card-content {
+  transform: translateY(-2px);
+}
+
+.map-selector-status {
   position: absolute;
-  left: 62px;
-  top: 520px;
-  width: 674px;
-  min-height: 45px;
+  z-index: 2;
+  left: 73px;
+  top: 280px;
+  width: 651px;
   box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 5px;
+  padding: 8px;
   background: #172a38;
   color: #fff;
   font-size: 13px;
-}
-
-.map-selector-toolbar button {
-  color: #fff;
-  background: #304a60;
-  border: 1px solid #afc8dd;
-  padding: 5px 10px;
-  font: inherit;
-}
-
-.map-selector-toolbar output {
+  text-align: center;
   overflow-wrap: anywhere;
 }
 
-.map-selector-toolbar[data-map-selector-original] {
-  background-color: transparent;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-}
-
-.map-selector-toolbar[data-map-selector-original] button {
-  flex-shrink: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
+@media (prefers-reduced-motion: reduce) {
+  .map-selector-card-content {
+    transition: none;
+  }
 }

@@ -64,9 +64,10 @@ function fromTotals(totals: SavedTotals): DisplayValues {
  * Confirmed profile statistics drive the full source region; when the profile carries no
  * lifetime statistics the five win/loss fields fall back to the saved-history projection.
  */
-export function HomeBattleSummarySourcePage({ui, source, statistics}: {
-  ui: HomeSourceUi; source: AccountHistorySource; statistics?: AccountStatistics;
+export function HomeBattleSummarySourcePage({ui, source, statistics, onError}: {
+  ui: HomeSourceUi; source: AccountHistorySource; statistics?: AccountStatistics; onError(message: string): void;
 }) {
+  const errorCallback = useRef(onError); errorCallback.current = onError;
   const [totals, setTotals] = useState<SavedTotals>();
   const [pending, setPending] = useState(true);
   const [status, setStatus] = useState('载入已保存对局统计…');
@@ -100,7 +101,10 @@ export function HomeBattleSummarySourcePage({ui, source, statistics}: {
       setTotals(summarize(records));
       setStatus(`已保存对局统计 · ${records.length} 场`);
     } catch (error) {
-      if (current.active) setStatus(`统计载入失败：${error instanceof Error ? error.message : String(error)}`);
+      if (current.active) {
+        const message = `统计载入失败：${error instanceof Error ? error.message : String(error)}`;
+        setStatus(message); errorCallback.current(message);
+      }
     } finally {
       current.pending = false;
       if (current.active) setPending(false);
@@ -116,10 +120,6 @@ export function HomeBattleSummarySourcePage({ui, source, statistics}: {
       data-summary-statistics={key} data-summary-statistics-value={values[key]}
       data-saved-summary-field={FALLBACK.has(key) ? key : undefined}
       data-saved-summary-value={FALLBACK.has(key) ? values[key] : undefined} />)}</SourceImageScale>
-    <output role="status" className="home-battle-summary-status" data-home-saved-summary-status=""
-      data-summary-query-error={queryFailed || undefined} tabIndex={queryFailed ? 0 : undefined}
-      title={queryFailed ? status : undefined}>{status}</output>
-    <button type="button" className="home-battle-summary-refresh" data-home-saved-summary-refresh="" disabled={pending || !!statistics}
-      onClick={() => {void load();}}>刷新统计</button>
+    <output hidden data-home-saved-summary-status="" data-summary-query-error={queryFailed || undefined}>{status}</output>
   </section>;
 }

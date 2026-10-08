@@ -1,4 +1,5 @@
 @import './interface/resources/app-font.css';
+@import './interface/resources/source-cursor.css';
 
 html, body {
   margin: 0;
@@ -7,6 +8,19 @@ html, body {
   color: #fff8da;
   font-family: 'Microsoft YaHei', sans-serif;
   background: #405b6f;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable]:not([contenteditable='false']) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+img {
+  -webkit-user-drag: none;
 }
 
 #world {
@@ -96,6 +110,11 @@ body:has([data-match-panel][data-phase="LOADING"]) #original-battle-hud,
 body:has([data-match-panel][data-phase="LOADING"]) .battle-chat,
 body:has([data-match-panel][data-phase="LOADING"]) .game-status {
   visibility: hidden;
+}
+
+html:has([data-match-panel][data-phase="PLAYING"]),
+body:has([data-match-panel][data-phase="PLAYING"]) {
+  overflow: hidden;
 }
 
 body:has([data-match-panel][data-phase="PLAYING"]) #original-battle-hud {

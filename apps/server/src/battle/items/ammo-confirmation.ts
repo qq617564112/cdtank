@@ -1,3 +1,4 @@
+import {defaultAmmoId} from '../../../../shared/content/catalog';
 import type {BattleItemRecord} from '../../../../shared/combat/item-hotkeys';
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import type {RoleCombatState} from '../roles/combat-state';
@@ -7,7 +8,7 @@ import {ensureSelectedAmmoSkills, resetAmmoMagazine} from '../roles/ammo-magazin
 export function confirmAcceptedAmmoSelection(role: RoleCombatState,
   records: readonly BattleItemRecord[], slot: number): boolean {
   if (!role.record?.numericFields) return false;
-  let itemId = 2001;
+  let itemId = defaultAmmoId();
   let quantity: number | undefined;
   if (slot !== 1) {
     const instanceId = role.record.arrays.get(0)?.[slot - 2];
@@ -33,7 +34,7 @@ export function confirmAcceptedAmmoSelection(role: RoleCombatState,
 /** Rebuilt life/round policy; the original status2 setter does not reset ammo. */
 export function resetConfirmedAmmo(role: RoleCombatState): void {
   role.setSelectedAmmoSlot(1);
-  role.setCurrentAmmoTableId(2001);
+  role.setCurrentAmmoTableId(defaultAmmoId());
   ensureSelectedAmmoSkills(role);
   resetAmmoMagazine(role);
 }

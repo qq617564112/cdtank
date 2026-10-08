@@ -28,7 +28,7 @@ Late asynchronous loads are rejected by the current revision checks. A load resu
 
 ## Known issues
 
-Map18 has six original `SYcScnObjSound` records, ids 57-62, all naming `BG07`. The original `BG07` WAV is absent from the verified source data and the published `audio.json` catalog. The runtime therefore creates no map18 environment voice and creates no substitute. The source gap remains open.
+Map18 has six original `SYcScnObjSound` records, ids 57-62, all naming `BG07`. The original `BG07` WAV remains absent from verified source data and the search report. `export_audio.py` now appends the explicitly reconstructed `reconstructed/battle/BG07.wav` while the source file is absent, so the unchanged map18 placements resolve through the shared catalog. Browser playback and source-audio equivalence are not established here.
 
 All three map22 environment sound records have `intervalMs=0` and `randomGate=false`; they use the retained loop lifecycle rather than interval scheduling. The current published environment-sound tables have no non-zero interval records.
 

@@ -1,12 +1,16 @@
 import type {MatchResult, ResultPlayer, RoundStats} from '../../../shared/protocols';
+import {freezeTitleRoundStatistics, type CreativeTitleCarrier} from '../battle/creative-title-statistics';
 
-interface SettlementPlayer {
+interface SettlementPlayer extends CreativeTitleCarrier {
   readonly id: string;
   readonly name: string;
+  readonly petId?: number;
   readonly team: number;
   readonly score: number;
   readonly kills: number;
   readonly deaths: number;
+  readonly catsInfo?: number;
+  readonly dogsInfo?: number;
   readonly objectivesDestroyed: number;
   /** Real per-round producers; absent on legacy fixtures without a battle path. */
   readonly roundStats?: RoundStats;
@@ -65,11 +69,26 @@ export function computeMatchResult(input: MatchResultInput): MatchResult {
     const rank = previous && metric(previous) === metric(player) && previous.score === player.score
       ? sorted.findIndex(value => metric(value) === metric(player) && value.score === player.score) + 1
       : index + 1;
-    return {id: player.id, name: player.name, team: player.team, rank,
+    const roundStats = freezeTitleRoundStatistics(player);
+    if (roundStats) roundStats.completedRound = active.some(other => other.id === player.id);
+    const killedOpponentIds = roundStats?.killedOpponentIds;
+    if (roundStats && killedOpponentIds) {
+      const enemies = sorted.filter(other => input.mode <= 3
+        ? other.team !== player.team : other.id !== player.id);
+      roundStats.killedAllOpponents = enemies.length > 0
+        && enemies.every(enemy => killedOpponentIds.includes(enemy.id));
+    }
+    if (roundStats && input.mode === 4 && input.reason !== 'FORFEIT') {
+      const winner = active.find(other => other.id === winnerPlayerId);
+      roundStats.oneKillBehindWinner = outcome === 'LOSE' && winner !== undefined
+        && winner.kills - player.kills === 1;
+    }
+    return {id: player.id, name: player.name, petId: player.petId, team: player.team, rank,
       kills: player.kills, deaths: player.deaths, objectivesDestroyed: player.objectivesDestroyed,
+      catsInfo: player.catsInfo, dogsInfo: player.dogsInfo,
       combatScore: Math.round(player.score), outcomeBonus: bonus,
       totalScore: Math.round(player.score) + bonus, outcome,
-      roundStats: player.roundStats ? {...player.roundStats} : undefined};
+      roundStats};
   });
   return {round: input.round, endedAt: input.endedAt, reason: input.reason,
     winnerTeam, winnerPlayerId, players};

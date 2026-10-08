@@ -66,6 +66,9 @@ def export():
         raise ValueError(f'Unexpected obj05023 base output {base_asset}')
     if screen_asset != 'Data/scnobj/obj05023/scr.glb':
         raise ValueError(f'Unexpected obj05023 screen output {screen_asset}')
+    for asset in [BASE_TEXTURE, *(reference[:-4] + '.png' for reference in FRAME_REFERENCES)]:
+        if not (WEB / asset).is_file():
+            raise ValueError(f'Missing published Sequence texture {asset}')
     delay_value = _read_delay()
     result = dict(
         schemaVersion=1,
@@ -88,4 +91,11 @@ def export():
 
 
 if __name__ == '__main__':
-    export()
+    placements = {(p['mapId'], p['sourcePlacementId']) for p in export()}
+    path = WEB / 'scene-placements.json'
+    scenes = json.loads(path.read_text())
+    for scene in scenes:
+        if scene['id'] in ('0008', '0013'):
+            scene['resolved'] = sum(bool(r.get('asset') or r.get('animation') or r.get('special')
+                or (scene['id'], r['id']) in placements) for r in scene['records'] + scene['castles'])
+    path.write_text(json.dumps(scenes, ensure_ascii=False, indent=2) + '\n')

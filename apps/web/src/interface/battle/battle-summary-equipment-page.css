@@ -1,0 +1,7 @@
+.battle-summary-equipment-notice { position: fixed; inset: 0; z-index: 4; margin: auto; padding: 0; border: 0;
+  max-width: none; max-height: none; background: transparent; color: #fff; pointer-events: none; }
+.battle-summary-equipment-stage { position: relative; width: 800px; height: 600px; font-family: 'CDTank-SIMSUN', serif;
+  animation: summary-title-slide 3.4s linear both; }
+.battle-summary-equipment-stage [data-source-control] { position: absolute; }
+.battle-summary-equipment-icon { pointer-events: none; }
+.battle-summary-equipment-notice::backdrop { background: transparent; }

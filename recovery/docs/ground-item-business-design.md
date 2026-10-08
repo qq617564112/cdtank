@@ -118,7 +118,9 @@ A 变体是 `obj05014A.png`，不存在 `obj05008A.png`；`obj05006` A/B 为
 | `ownerId?` | 击毁者或丢弃者，信息用途 |
 | `createdAt` | 服务端注入 `now()`（`Date.now`）毫秒 |
 
-实体本轮不移动、不自动重生，被领取或本轮结束即消失。
+实体本轮不移动、不自动重生，被领取、存活满 30 秒或本轮结束即消失。30 秒为采用值，
+所有地面实体（含 `'DISCARD'`）统一按 `createdAt` 与 server now 判定，先删除到期实体，
+再扫描拾取；原 `VanishTime` 业务含义未确认，未据此反推。
 
 ### dropitem 档位选择
 
@@ -131,14 +133,19 @@ A 变体是 `obj05014A.png`，不存在 `obj05008A.png`；`obj05006` A/B 为
 
 ### 掉落池与概率
 
-- 触发：模式 5 DESTROY 目标 HP>0 转 0 的既存 `objectiveDestroyed` 权威事件。
-- 概率：每次摧毁从服务端 RNG 取 `[0,1)` 均匀值，小于 `0.5` 时掉落；原服务端概率未取得，
-  0.5 是采用值，不猜原概率。
-- 池：`{itemTableId 1, itemTableId 2, itemTableId 2010, itemTableId 20001, itemTableId 20002}`，各 quantity 1，
-  等概率。类别 1/2 已有持久 schema 与普通使用/治疗闭环（`healing-item-runtime.md`）；
-  类别 6 是贵重品，拾取写 owned 库存，效用由物品自身技能链在普通使用路径产生。
-- 目标 HP 与生命来源仍取自 mode 合同（`DefaultButt`/`ButtReborn`），掉落在 HP 归零的
-  同一批 M 事件内生成，不改写源 HP。
+- 触发：模式 1–4 的当前地图原 Breach 放置作为 `sceneObjects` 可破坏实例，含 mode2；
+  模式 5 仍以 `objectives` 的单一 Breach 实体为目标。射击即时查询与 projectile 击毁都
+  接每个真实 placement 的击毁，按 `placement + destroyedAt` 去重一次掉落。Castle 保持
+  原 mode1/mode2 规则，Castle、Plant、Crush 都不走该掉落池。
+- 概率与池：五模式统一采用原先 mode5 的 50% 概率，`runtime.values.breachDropOrder` 构成
+  五项池 `[1, 2, 2010, 20001, 20002]`，触发成功后等概率各 1 份。原服务端按模式的概率与
+  数量来源仍缺，参数取 `shared/content/definitions/index.json` 的 `rules.groundDrops`
+  （`chance 0.5`、`quantity 1`、`lifetimeSeconds 30`），不冒称已证原行为。
+- 类别 1/2 已有持久 schema 与普通使用/治疗闭环（`healing-item-runtime.md`）；类别 6 是
+  贵重品，拾取写 owned 库存，效用由物品自身技能链在普通使用路径产生。
+- 目标 HP 与生命来源仍取自 mode 合同（`DefaultButt`/`ButtReborn`）。mode5 终局判定前仍
+  产出该次掉落实体；目标重生建立新 `destroyedAt` 后再次击毁可重新掷骰，旧同值不重放已
+  产生或已领取的实体。
 
 ### 类别6物品的合法构造
 
@@ -155,7 +162,10 @@ A 变体是 `obj05014A.png`，不存在 `obj05008A.png`；`obj05006` A/B 为
 2. 正常玩家接触：玩家服务端坐标与实体距离 `<= GROUND_PICKUP_RADIUS`（采用值 40 世界单位，
    与 `BODY_RADIUS=20` 同体系）。
 3. 认证活体：真人需有 `accountByConnection` 绑定；CPU 无账户。
-4. 距离与存活以服务端状态为准，不使用 `MsgPlayerInput.clientTime`。
+4. 宠物种类：真人按真实已选 pet JSON 的 `petType` 判定，猫 `PetType 1` 拾 20001 鱼骨、
+   狗 `PetType 2` 拾 20002 骨头；错误种类或未选宠物不拾这两件，物件保留。其它物品不限种类。
+   20002 原说明存在“鱼骨”复制文案冲突，身份按实际 ID、`primary` 技能与 `PetType` 推断。
+5. 距离与存活以服务端状态为准，不使用 `MsgPlayerInput.clientTime`。
 
 普通接触即可完成拾取，不要求显式拾取 input。当前协议只有 `MsgPlayerAction` 的数字 action，
 且没有已证 1/2 旧业务可借；丢弃使用最小新增 typed action：`action=100` 表示丢弃当前选中
@@ -185,14 +195,22 @@ CPU 走同一接触扫描与资格：普通移动真接触，沿同资格在本�
   `20001/20002` 在本角色七槽中时按采用规则取真实剩余 `ownedQuantity` 作为本局可用数；
   其它原物件仍按 `min(ownedQuantity, max(0, BattleUseMax - roundUse))`，已消费的本局数量
   由 `roundUse` 计入，`ownedQuantity` 已反映真实扣量，本局可用数不再二次扣减。
-- 新实例：按现未用 uint32 语义分配 instanceId 建 owned 记录，不自动改用户槽位；玩家
-  正常配置槽位或再战时通过既有 Kitbag/再战流程选择。
+- 新实例：按现未用 uint32 语义分配 instanceId 建 owned 记录。真正拾取时自动填入本局
+  正确栏的首个空槽：Battle2..4 武器/陷阱，Battle5..8 消耗/宝物；不覆盖满槽、不自动使用、
+  不自动切武器。只改当局角色 hotkeys（库存 RPC/HUD 可见），不改保存的账户配置，满栏仍
+  入库但本局无槽可用。已有槽实例按 `remainingBattleQuantity`/`roundUse` 余量补数，不重置
+  本轮已用额度；跨连接 reconcile 不自动填槽。
 - 同账户多连接：用现 `refreshAccountTitle` 同型机制把 owned/本局量广播给该 account 的
-  全部在房角色，及时更新，不遗留旧数量。
+  全部在房角色，及时更新，不遗留旧数量；只刷新库存，不为这些连接回血。
 
 ### 效用
 
-- 拾取一律写 owned 库存，是唯一取得作者，不在拾取时写 HP。
+- 拾取一律写 owned 库存，是唯一取得作者。两件宝物成功领取才入库存 +1，并为实际拾取者
+  回血 15；参数取物品 JSON `runtime.values.pickupPetType` 与 `runtime.values.pickupHealing`，
+  生命走原健康入口并 clamp 到玩法当前 `maxHp`。满血仍取得，`lastStand` 不回血，失败不治疗
+  也不移除实体。
+- 原文案 15 与 `ItemSkill2=30005` 的 `HP 30` 不一致，拾取 15 与既有手动自用技能 30 分开；
+  手动使用仍按原 CAS 扣一份治疗需求与两量单减。
 - HP/治疗等效果由该物件已恢复的普通使用路径产生（类别 1 走 `applyHealingItem`；
   `20001/20002` 的 Func20 只做拾取数量入账，普通 use 走 `ItemSkill2=30005`），沿用现
   `dispatchItemHotkey`/`apply*` 事务与数量消耗。
@@ -279,8 +297,9 @@ metadata 带 `groundItemId`/`sourceModel`；`reconcile(snapshot.match?.groundIte
 
 ## Known Issues
 
-- 原服务端掉落概率未证；0.5、池 `{1,2,2010,20001,20002}`、dropitem 档位解释（含边界取首行）
-  均为采用规则。
+- 原服务端按模式的掉落概率与数量来源未证；五模式统一 0.5、池 `{1,2,2010,20001,20002}`、
+  `rules.groundDrops` 的 `quantity 1`/`lifetimeSeconds 30` 与 dropitem 档位解释
+  （含边界取首行）均为采用规则。原 `VanishTime` 业务含义未确认。
 - 两贵重品 `20001/20002` 的拾取入账无原服务端 writer，采用 Func20 持久加一；
   采用规则对两精确 ID 按真实 owned 暴露可用量，不扩展 category6 全类；普通 use 不再
   加一，`ItemSkill2=30005` 只做一次 AccountStore CAS 后治疗并各减一，最后一份同事务

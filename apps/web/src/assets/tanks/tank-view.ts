@@ -1,7 +1,9 @@
 import {roleAmmoEffectName} from './role-ammo-visual';
-import {applyMv3Materials} from '../../render/materials/mv3-material';
+import {prepareGameContent} from '../../content';
+import {applyMv3Materials, setMv3ActorOpacity} from '../../render/materials/mv3-material';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
-import {loadEmbeddedTrackTextures, loadTankTextures, tankComponentTexture} from './tank-textures';
+import {sceneActorToonBinding} from '../../render/materials/actor-toon';
+import {loadTankDefaultTextures, loadTankTextures, tankComponentTexture} from './tank-textures';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {ShaderMaterial} from '@babylonjs/core';
 import type {Texture} from '@babylonjs/core';
@@ -17,6 +19,12 @@ import {effectTurretPivotCorrection} from './effect-turret-pivot';
 import type {EffectTagFrame} from './effect-tag-sampler';
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import type {EffectActionEvent} from './effect-action-events';
+import type {IGLTFLoaderData} from '@babylonjs/loaders/glTF';
+import {composeEffectWorldTag} from './effect-tag-world';
+
+export const TANK_DECORATION_TAGS = ['tag_iteye', 'tag_itwing', 'tag_ithat', 'tag_itside'] as const;
+export type TankDecorationTag = typeof TANK_DECORATION_TAGS[number];
+interface AttachmentTrack {name: string; frames: EffectTagFrame[];}
 
 export interface TankActionMessage {
   part: string;
@@ -27,7 +35,7 @@ export interface TankActionMessage {
 
 interface TankAction {
   fields: {name: string; file: string};
-  asset: string;
+  model: string;
   duration: number;
   events: EffectActionEvent[];
   primaryTags: Array<{name: string; frames: EffectTagFrame[]}>;
@@ -41,26 +49,27 @@ interface TankComponent {
 interface ActionView {
   root: TransformNode;
   assets: AssetContainer[];
-  components: Array<{part: string; action: TankAction; assets: AssetContainer; clock?: EffectActorActionClock}>;
+  components: Array<{part: string; action: TankAction; assets: AssetContainer;
+    attachmentTracks: AttachmentTrack[]; clock?: EffectActorActionClock}>;
 }
 export interface TankEntry {
   id: number;
   name: string;
   components: TankComponent[];
+  animationSpeed: number;
+  handler: string;
 }
+
+const tankModelLoaders: Readonly<Record<string, typeof LoadAssetContainerAsync>> = {tank: LoadAssetContainerAsync};
 
 // MV3 GLB conversion stores source ticks as milliseconds. Native gbActor
 // advances 4800 ticks/second at its default timeScale=1.
-const MV3_PLAYBACK_RATIO = 4800 / 1000;
 
-let catalog: Promise<TankEntry[]> | undefined;
 export function tankCatalog(): Promise<TankEntry[]> {
-  return catalog ??= fetch('/tanks.json').then(async response => {
-    if (!response.ok) {
-      throw new Error('战车资源目录载入失败');
-    }
-    return response.json() as Promise<TankEntry[]>;
-  });
+  return prepareGameContent().then(content => [...content.tanks.values()].map(tank => ({
+    id: tank.id, name: tank.name, components: tank.resources.components as TankComponent[],
+    animationSpeed: tank.resources.animationSpeed, handler: tank.runtime.handler,
+  })));
 }
 
 /** Source geometry shares one origin; U rotates about its original tag_c X/Z. */
@@ -69,7 +78,10 @@ export class TankView {
   private readonly primaryTags: EffectPrimaryTagMatrices;
   private readonly cachedBodyPivot: readonly [number, number];
   private readonly actions = new Map<string, Promise<ActionView>>();
+  private readonly materials = new Set<ShaderMaterial>();
+  private opticalCamouflage = false;
   private textures = new Map<string, Texture>();
+  private defaultTextures = new Map<string, Texture>();
   private trackPhase = createRoleTrackTextureState();
   private trackMovementPending = false;
   private current?: ActionView;
@@ -91,6 +103,17 @@ export class TankView {
   readonly root: TransformNode;
   activeAction = '';
   ammoAttackEffectName: string | undefined;
+  hiddenFromObserver = false;
+
+  get opacity(): number {return this.opticalCamouflage ? 0.35 : 1;}
+
+  /** Per-actor materials retain camouflage through action changes and late loads. */
+  setOpticalCamouflage(active: boolean): void {
+    if (this.opticalCamouflage === active) return;
+    this.opticalCamouflage = active;
+    for (const material of this.materials) setMv3ActorOpacity(material, this.opacity);
+    applyCartoonOutlines(this.root.getChildMeshes());
+  }
 
   /** Original three-part actor omits the separate U component. */
   get usesThreePartActor(): boolean {
@@ -139,6 +162,7 @@ export class TankView {
     }
     const view = new TankView(scene, tank, name, tankId, textures ? {...textures} : undefined);
     try {
+      view.defaultTextures = await loadTankDefaultTextures(scene, tankId);
       view.textures = await loadTankTextures(scene, view.tankTextures, tank.components.filter(component => component.actions.length > 0).map(component => component.part), tankId);
       await view.activate('01', true);
       return view;
@@ -172,27 +196,31 @@ export class TankView {
         if (!action) {
           throw new Error(`战车 ${this.tankId} 缺少 ${component.part}/${name}`);
         }
-        const assets = await LoadAssetContainerAsync(`/${action.asset}`, this.scene);
+        let attachmentTracks: AttachmentTrack[] = [];
+        const loadModel = tankModelLoaders[this.tank.handler];
+        if (!loadModel) throw new Error(`缺少战车模型处理器 ${this.tank.handler}`);
+        const assets = await loadModel(`/${action.model}`, this.scene, {
+          pluginOptions: {gltf: {useSRGBBuffers: false, onParsed: (data: IGLTFLoaderData) => {
+            const source = data.json as {extras?: {attachmentTracks?: AttachmentTrack[]}};
+            attachmentTracks = (source.extras?.attachmentTracks ?? [])
+              .filter(track => TANK_DECORATION_TAGS.some(name => name === track.name));
+          }}},
+        });
         if (this.disposed) {
           assets.dispose();
           throw new Error('战车已释放');
         }
         view.assets.push(assets);
-        if (name === '01' && component.part === 'X' && !this.textures.has('XY')) {
-          const source = assets.meshes.map(mesh => mesh.material?.metadata?.gltf?.extras?.originalMV3)
-            .find(source => source?.textures?.[0]);
-          if (source) {
-            const frames = await loadEmbeddedTrackTextures(this.scene, this.tankId, source.textures[0]);
-            if (this.disposed) {
-              frames.forEach(texture => texture.dispose());
-              throw new Error('战车已释放');
-            }
-            frames.forEach((texture, name) => this.textures.set(name, texture));
-          }
+        const actorToon = sceneActorToonBinding(this.scene, this.root);
+        const materials = applyMv3Materials(this.scene, assets.meshes,
+          tankComponentTexture(this.textures, component.part), this.defaultTextures, actorToon);
+        assets.materials.push(...materials);
+        for (const material of materials) {
+          this.materials.add(material);
+          setMv3ActorOpacity(material, this.opacity);
         }
-        assets.materials.push(...applyMv3Materials(this.scene, assets.meshes, tankComponentTexture(this.textures, component.part)));
         applyCartoonOutlines(assets.meshes);
-        view.components.push({part: component.part, action, assets});
+        view.components.push({part: component.part, action, assets, attachmentTracks});
         assets.addAllToScene();
         const part = new TransformNode(`${this.root.name}-part-${component.part}`, this.scene);
         part.parent = root;
@@ -235,7 +263,11 @@ export class TankView {
     if (this.disposed || revision !== this.revision) {
       return;
     }
-    if (this.current === view && !restart) {
+    // The native main update returns a finished single action to 01/02 in the
+    // same tick, so a same-action event after "over" restarts from base; only a
+    // still-running target action merges without replaying.
+    const finished = view.components.every(component => component.clock?.overMessage === 0);
+    if (this.current === view && !restart && !finished) {
       return;
     }
     this.current?.root.setEnabled(false);
@@ -245,13 +277,13 @@ export class TankView {
     view.assets.forEach(assets => assets.animationGroups.forEach(group => {
       group.stop();
       group.reset();
-      group.start(true, MV3_PLAYBACK_RATIO);
+      group.start(true, this.tank.animationSpeed);
       group.pause();
     }));
     for (const component of view.components) {
       // CRT startup uses 53-bit precision; post-D3D control word is still under recovery.
       component.clock = new EffectActorActionClock(component.action.duration,
-        component.action.events, !loop, 1, 53);
+        component.action.events, !loop, this.tank.animationSpeed / (4800 / 1000), 53);
     }
     this.activeAction = name;
     this.applyTrackTexture();
@@ -275,7 +307,7 @@ export class TankView {
       return;
     }
     this.transientAction = '03';
-    await this.activate('03', false, true);
+    await this.activate('03', false);
   }
 
   /** Original virtual+88 parameters1..4 select single actions05..08. */
@@ -285,7 +317,7 @@ export class TankView {
     }
     const action = String(selector + 4).padStart(2, '0');
     this.transientAction = action;
-    await this.activate(action, false, true);
+    await this.activate(action, false);
   }
 
   async life(alive: boolean): Promise<void> {
@@ -374,6 +406,22 @@ export class TankView {
     return this.primaryTags.get(name);
   }
 
+  /** Source cosmetic attachment sampled in the tank root's native local space. */
+  decorationTag(name: TankDecorationTag): EffectNativeMatrix | undefined {
+    if (!this.current || this.disposed) return undefined;
+    for (const part of this.usesThreePartActor ? ['M'] : ['U', 'M']) {
+      const component = this.current.components.find(component => component.part === part);
+      const track = component?.attachmentTracks.find(track => track.name === name && track.frames.length > 1);
+      if (!track || !component?.clock) continue;
+      const local = sampleEffectTag(track.frames, component.clock.time);
+      const turretYaw = -this.turret.rotation.y * 180 / Math.PI;
+      const correction = effectTurretPivotCorrection(this.cachedBodyPivot, 0, turretYaw, [0, 1, 0]);
+      return composeEffectWorldTag(local, {position: [0, 0, 0], yaw: 0, turretYaw,
+        pivot: [correction[0], correction[2]]}, part === 'U');
+    }
+    return undefined;
+  }
+
   private updatePrimaryTags(): void {
     const view = this.current;
     if (!view || this.disposed) return;
@@ -419,6 +467,7 @@ export class TankView {
       return;
     }
     this.disposed = true;
+    this.materials.clear();
     this.trackMovementPending = false;
     this.scene.onBeforeRenderObservable.removeCallback(this.animate);
     this.actionMessages.clear();
@@ -430,6 +479,8 @@ export class TankView {
     void Promise.all(cleanup).then(() => {
       this.textures.forEach(texture => texture.dispose());
       this.textures.clear();
+      this.defaultTextures.forEach(texture => texture.dispose());
+      this.defaultTextures.clear();
     });
     this.root.dispose();
   }

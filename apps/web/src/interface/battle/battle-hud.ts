@@ -1,18 +1,19 @@
 import {ReloadProgress} from './reload-progress';
+import {battleInfoMessages} from './battle-info-messages';
 import {BattleInfoOpacity} from './battle-info-opacity';
 import {teamInfo} from './team-info';
-import {LocalDeathCountdown} from '../../match/local-death-countdown';
+import {BattleSpectator} from '../../match/battle-spectator';
+import {BattleScoreboard} from './battle-scoreboard';
 import type {MsgRoomSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import type {MsgRoomEvent} from '../../../../shared/protocols/MsgRoomEvent';
 import {PortraitState} from './portrait-state';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {loadUiFont} from '../resources/source-ui-fonts';
+import {loadStaticJson} from '../../assets/static-resources';
 import {combatState, sameCombatState, type HudCombatSnapshot} from './hud-combat-state';
-import {minimapState, sameMinimapState, type HudMinimapSnapshot} from './hud-minimap-state';
 import {modeInfo, type HudModeInfo} from './hud-mode-info';
 import {battleIntroStage, type BattleIntroStage} from '../../../../shared/combat/battle-start';
 
 export type {HudCombatSnapshot} from './hud-combat-state';
-export type {HudMinimapSnapshot} from './hud-minimap-state';
 
 export interface SourceWindow {
   name: string;
@@ -50,20 +51,20 @@ export interface HudSnapshot {
 export interface HudReloadSnapshot {visible: boolean; fraction: number;}
 
 const EMPTY_COMBAT: HudCombatSnapshot = {visible: false, canUseShortcuts: false, alive: false, serverTime: 0, ammoSlots: [], activeEffects: []};
-const EMPTY_MINIMAP: HudMinimapSnapshot = {visible: false, mode: 1, players: [], objectives: []};
 
 /** Only visible source HUD projections notify React; movement and tick fields do not. */
 export class BattleHud {
+  readonly spectator = new BattleSpectator();
+  readonly scoreboard = new BattleScoreboard();
   private state: HudSnapshot = {visible: false, mode: 1, introStage: 'hidden', timers: Array.from({length: 5}, () => ({text: ''})), slots: [], messages: ''};
   private reload: HudReloadSnapshot = {visible: false, fraction: 1};
   private combat: HudCombatSnapshot = EMPTY_COMBAT;
-  private minimap: HudMinimapSnapshot = EMPTY_MINIMAP;
-  private minimapImage?: {mapId: number; imageUrl: string};
   private readonly listeners = new Set<() => void>();
   private readonly reloadListeners = new Set<() => void>();
   private readonly combatListeners = new Set<() => void>();
-  private readonly minimapListeners = new Set<() => void>();
   private readonly messages: string[] = [];
+  private roomSnapshot?: MsgRoomSnapshot;
+  private localPlayerId = '';
   private readonly portraits = new Map<string, {petId?: number; alive: boolean; state: PortraitState}>();
   private readonly beforeShotPending = new Set<string>();
   private lastUpdate?: number;
@@ -72,10 +73,6 @@ export class BattleHud {
   private reloadRound?: number;
   private loadGeneration = 0;
   private loading?: Promise<void>;
-  private abort?: AbortController;
-  private readonly deathCountdown = new LocalDeathCountdown(count => {
-    this.publish({...this.state, deathCountdown: count});
-  });
   private lifecycle?: string;
   private connected = true;
 
@@ -85,15 +82,9 @@ export class BattleHud {
   readonly subscribeReload = (listener: () => void): (() => void) => {this.reloadListeners.add(listener); return () => {this.reloadListeners.delete(listener);};};
   readonly getCombatSnapshot = (): HudCombatSnapshot => this.combat;
   readonly subscribeCombat = (listener: () => void): (() => void) => {this.combatListeners.add(listener); return () => {this.combatListeners.delete(listener);};};
-  readonly getMinimapSnapshot = (): HudMinimapSnapshot => this.minimap;
-  readonly subscribeMinimap = (listener: () => void): (() => void) => {this.minimapListeners.add(listener); return () => {this.minimapListeners.delete(listener);};};
   setConnected(connected: boolean): void {
     this.connected = connected;
     if (!connected) this.publishCombat({...this.combat, canUseShortcuts: false});
-  }
-  setMinimapImage(mapId: number, imageUrl: string): void {
-    this.minimapImage = {mapId, imageUrl};
-    if (this.minimap.mapId === mapId) this.publishMinimap({...this.minimap, imageUrl});
   }
   readonly getBattleInfoOpacity = this.battleInfoOpacity.getSnapshot;
   readonly subscribeBattleInfoOpacity = this.battleInfoOpacity.subscribe;
@@ -120,27 +111,25 @@ export class BattleHud {
     if (sameCombatState(this.combat, next)) return;
     this.combat = next; for (const listener of this.combatListeners) listener();
   }
-  private publishMinimap(next: HudMinimapSnapshot): void {
-    if (sameMinimapState(this.minimap, next)) return;
-    this.minimap = next; for (const listener of this.minimapListeners) listener();
-  }
   load(): Promise<void> {
     if (this.state.data) return Promise.resolve();
     if (this.loading) return this.loading;
-    const generation = ++this.loadGeneration, abort = new AbortController(); this.abort = abort;
+    const generation = ++this.loadGeneration;
+    void loadUiFont().catch(() => {});
     const operation = (async () => {
-      const response = await fetch('/ui.json', {signal: abort.signal});
-      if (!response.ok) throw new Error('战斗界面资源载入失败');
-      const data = await response.json() as SourceUi;
-      await loadSourceUiFonts();
+      const data = await loadStaticJson<SourceUi>('/ui.json');
       if (generation !== this.loadGeneration) return;
       this.publish({...this.state, data});
     })().catch(error => {if (generation === this.loadGeneration) throw error;}).finally(() => {
-      if (generation === this.loadGeneration) {this.loading = undefined; this.abort = undefined;}
+      if (generation === this.loadGeneration) this.loading = undefined;
     });
     this.loading = operation; return operation;
   }
   update(snapshot: MsgRoomSnapshot, playerId: string, now = performance.now(), serverNow = snapshot.serverTime): void {
+    this.roomSnapshot = snapshot;
+    this.localPlayerId = playerId;
+    this.scoreboard.update(snapshot, playerId);
+    this.spectator.update(snapshot, playerId, serverNow);
     const data = this.state.data; if (!data) return;
     const seconds = this.lastUpdate === undefined ? 0 : (now - this.lastUpdate) / 1000; this.lastUpdate = now;
     this.battleInfoOpacity.advance(seconds);
@@ -170,8 +159,8 @@ export class BattleHud {
       this.lifecycle = lifecycle;
       this.beforeShotPending.clear();
     }
-    this.deathCountdown.update(`${snapshot.roomId}:${snapshot.match?.round}:${playerId}`,
-      snapshot.phase === 'PLAYING', local?.alive);
+    const deathCountdown = snapshot.phase === 'PLAYING' && local?.alive === false && local.respawnAt > 0
+      ? Math.max(0, Math.ceil((local.respawnAt - serverNow) / 1000)) : undefined;
     const friends = snapshot.players.filter(player => mode <= 3 ? player.team === local?.team : player.id === playerId);
     const localIndex = friends.findIndex(player => player.id === playerId);
     if (localIndex > 0) [friends[0], friends[localIndex]] = [friends[localIndex], friends[0]];
@@ -205,16 +194,13 @@ export class BattleHud {
     if (round !== this.reloadRound || !local?.alive || snapshot.phase !== 'PLAYING') this.reloadProgress.reset();
     this.reloadRound = round;
     const visible = !!local?.reload && local.alive && snapshot.phase === 'PLAYING';
-    const fraction = local?.reload && visible ? this.reloadProgress.update(local.reload, snapshot.serverTime, seconds) : 1;
+    const fraction = local?.reload && visible ? this.reloadProgress.update(local.reload, snapshot.serverTime, serverNow) : 1;
     this.publishReload({visible, fraction});
     const combat = combatState(snapshot, local, serverNow);
     this.publishCombat({...combat, canUseShortcuts: this.connected && combat.canUseShortcuts});
-    const minimap = minimapState(snapshot, playerId);
-    this.publishMinimap({...minimap, imageUrl: this.minimapImage?.mapId === minimap.mapId
-      ? this.minimapImage.imageUrl : undefined});
     const introStage = battleIntroStage(snapshot, serverNow);
     this.publish({...this.state, visible: snapshot.phase === 'PLAYING' || snapshot.phase === 'FINISHED', mode, timers, slots,
-      roomId: snapshot.roomId, round, phase: snapshot.phase, introStage, messages: this.messages.join('\n'),
+      roomId: snapshot.roomId, round, phase: snapshot.phase, introStage, deathCountdown, messages: this.messages.join('\n'),
       localHealth: local ? {name: local.name, hp: local.hp, maxHp: local.maxHp} : undefined,
       teamCounts: teamInfo(snapshot, playerId), modeInfo: modeInfo(snapshot, playerId)});
   }
@@ -235,23 +221,29 @@ export class BattleHud {
       this.beforeShotPending.delete(event.playerId);
       this.portraits.get(event.playerId)?.state.set(0x01000000);
     }
-    if (!['hit', 'destroy', 'respawn', 'finish', 'leave', 'chat', 'friendlyFire', 'itemUsed', 'itemRejected'].includes(event.type)) return;
+    const messages = battleInfoMessages(event, this.roomSnapshot, this.localPlayerId);
+    if (!messages.length) return;
     this.battleInfoOpacity.reset();
-    this.messages.push(event.message); if (this.messages.length > 5) this.messages.shift();
+    const receivedAt = new Date();
+    const timestamp = [receivedAt.getHours(), receivedAt.getMinutes(), receivedAt.getSeconds()]
+      .map(value => String(value).padStart(2, '0')).join(':');
+    this.messages.push(...messages.map(message => `[${timestamp}] ${message}`));
+    if (this.messages.length > 5) this.messages.splice(0, this.messages.length - 5);
     this.publish({...this.state, messages: this.messages.join('\n')});
   }
   clear(): void {
+    this.roomSnapshot = undefined;
+    this.localPlayerId = '';
+    this.scoreboard.clear();
     this.connected = true;
-    this.minimapImage = undefined;
-    this.deathCountdown.clear();
-    ++this.loadGeneration; this.abort?.abort(); this.abort = undefined; this.loading = undefined;
+    this.spectator.clear();
+    ++this.loadGeneration; this.loading = undefined;
     this.messages.length = 0; this.portraits.clear(); this.beforeShotPending.clear(); this.lastUpdate = undefined;
     this.lifecycle = undefined;
     this.reloadProgress.reset(); this.reloadRound = undefined;
     this.battleInfoOpacity.reset();
     this.publishReload({visible: false, fraction: 1});
     this.publishCombat(EMPTY_COMBAT);
-    this.publishMinimap(EMPTY_MINIMAP);
     this.publish({...this.state, visible: false, slots: [], localHealth: undefined, introStage: 'hidden',
       roomId: undefined, round: undefined, phase: undefined, deathCountdown: undefined,
       messages: '', teamCounts: undefined, modeInfo: undefined,

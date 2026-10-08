@@ -13,6 +13,7 @@ export function PetShopRowContent({ui, petId, name, petType, petSize, tokenPrice
     `set:gy0 image:data\\ui\\gy\\maogou_${petId}.tga`);
   return <>
     <span className="pet-shop-row-icon" aria-hidden="true" data-pet-row-icon=""
+      data-pet-thumbnail={icon?.['data-pet-thumbnail']}
       data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: icon?.style.backgroundImage}} />
     <span className="pet-shop-row-name" data-pet-row-name=""><SourceFeedbackText text={name}/></span>
     <span className="pet-shop-row-secondary" data-pet-row-secondary="" data-source-binding="pet-table-size-type"><SourceFeedbackText text={sourcePetKind(petSize, petType)}/></span>

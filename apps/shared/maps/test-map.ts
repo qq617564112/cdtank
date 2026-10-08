@@ -1,0 +1,42 @@
+/** Grid columns follow the sketch; native X is reflected by the renderer. */
+export const TEST_MAP = {
+  id: 1001,
+  name: '测试地图',
+  description: '沙土地上的墙阵与木箱，两队穿过中央和两侧通道交战。',
+  mode: 1,
+  timeLimit: 300,
+  minPlayers: 2,
+  maxPlayers: 8,
+  tileSize: 96,
+  rows: [
+    '.........B...',
+    '...S.....S...',
+    'C..SSBSBSS..C',
+    '..B.......B..',
+    '.S.SSS.SSS.S.',
+    '.S..W...W..S.',
+    '.S.........S.',
+    'G.S..S.S..S.G',
+    'G...SS.SSB..G',
+    '.............',
+  ],
+  assets: {
+    box: 'Data/scnobj/obj05424/obj05424.glb',
+    metal: 'Data/map/0018/dimian01.png',
+    brick: 'Data/scnobj/obj05443/obj05443.png',
+    ground: 'Data/map/0014/tiandi.png',
+    plant: 'Data/scnobj/obj05413/obj05413.glb',
+    plantTexture: 'Data/scnobj/obj05413/obj05413.png',
+  },
+  /** Four slots per team, with headings toward the center. */
+  spawns: [
+    {column: 1, row: 1, team: 0, heading: -90},
+    {column: 11, row: 1, team: 1, heading: 90},
+    {column: 2, row: 0, team: 0, heading: -90},
+    {column: 10, row: 0, team: 1, heading: 90},
+    {column: .6, row: 0, team: 0, heading: -90},
+    {column: 11.4, row: 0, team: 1, heading: 90},
+    {column: 1, row: 3, team: 0, heading: -90},
+    {column: 11, row: 3, team: 1, heading: 90},
+  ],
+} as const;

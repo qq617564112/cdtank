@@ -29,7 +29,7 @@
 
 ## 运行资源
 
-高清运行资源、字体和解码数据表已发布到 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v0.9.0)。普通开发与运行使用 Node.js 24.16 或更高版本及支持 `.tar.xz` 的 `tar`，执行 `npm ci` 和 `npm run assets:install` 后即可启动服务端和网页。安装脚本直接解压已处理资源，源码引用的地图预览、角色缩略图和界面图片同步安装到 `apps/web/src/assets/`。主要目录为：
+高清运行资源、字体和解码数据表已发布到 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v1.0.0)。普通开发与运行使用 Node.js 24.16 或更高版本及支持 `.tar.xz` 的 `tar`，执行 `npm ci` 和 `npm run assets:install` 后即可启动服务端和网页。安装脚本直接解压已处理资源，地图预览、角色缩略图与界面图片通过 `sprite-images.json` 和图片缓存加载。主要目录为：
 
 | 目录 | 内容 |
 | --- | --- |
@@ -57,7 +57,7 @@
 | `npm run protocol:generate` | 协议源码变更后重新生成 `serviceProto.ts` |
 | `npm run build:web` | 客户端类型检查与生产构建，输出 `dist/web/` |
 | `npm run build:server` | 编译独立服务端，输出 `dist/server/` |
-| `npm run start:server` | 启动已编译服务端 |
+| `npm run start:server` | 启动已编译服务端，同时托管 `dist/web` 的网页和资源 |
 | `npm run release:package -- /srv/cdtank` | 向新的目标目录组装发行包 |
 | `npm run accounts:backup -- <源库> <新备份路径>` | 在线备份账户数据库 |
 | `npm run accounts:restore -- <备份库> <新数据库路径>` | 停服后恢复存档 |
@@ -66,13 +66,16 @@
 
 Web 开发服务器将同源 `/game` WebSocket 转发到游戏服务端。
 
+构建两端后，`PORT=40171 npm run start:server` 在同一端口提供网页、资源和 `/game`。静态托管模块挂在 TSRPC 3.4.21 的内部 HTTP 监听器上；升级 TSRPC 时需确认该监听器仍可访问。开发时继续使用 Vite 提供页面和热更新。
+
 | 环境变量 | 默认值 | 用途 |
 | --- | --- | --- |
-| `PORT` | `3001` | 游戏服务端端口 |
+| `PORT` | `3001` | 网页、资源与 WebSocket 共用的服务端端口 |
 | `CDTANK_WEB_PORT` | `5173` | Vite 开发端口 |
 | `CDTANK_GAME_SERVER` | `ws://127.0.0.1:3001` | 开发 WebSocket 代理目标 |
 | `CDTANK_WEB_ASSETS` | `recovery/output/web-assets` | Web 静态资源目录 |
 | `WEB_ASSETS` | `recovery/output/web-assets` | 服务端资源目录 |
+| `WEB_ROOT` | `dist/web` | 服务端托管的已构建网页目录，发行包默认 `web` |
 | `CONTENT_TABLES` | `recovery/output/verified/tables` | 服务端内容表目录 |
 | `ACCOUNT_DB_PATH` | `recovery/output/accounts.sqlite` | 账户存档路径 |
 

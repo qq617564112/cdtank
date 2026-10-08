@@ -5,12 +5,13 @@ import {SourceImageScale, SourceStaticImage} from '../resources/source-static-im
 import {SourceStaticText} from '../resources/source-static-text';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceUi} from './source-react';
-import {loadSourceUiFonts} from '../resources/source-ui-fonts';
+import {loadUiFont} from '../resources/source-ui-fonts';
 import {PlayerInfoResourceFeedback} from './player-info-resource-feedback';
 import {waitingTankReference} from './waiting-room-state';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {PlayerInfoSummary} from './player-info-summary';
 import type {ResPlayerProfile} from '../../../../shared/protocols/PtlPlayerProfile';
+import {HistoryIntroScrollbar} from '../account/history-intro-scrollbar';
 
 export interface PlayerInfoPlayer {
   accountId?: string;
@@ -46,6 +47,7 @@ export function PlayerInfoView(props: PlayerInfoViewProps) {
 function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend, onAddBlacklist, onRemoveBlacklist, onClose, onExchange, query, roomDetails}: PlayerInfoViewProps & {player: PlayerInfoPlayer}) {
   const {ui, error} = useSourceUi(true, [suffix]);
   const dialog = useRef<HTMLDialogElement>(null);
+  const descriptionArea = useRef<HTMLTextAreaElement>(null);
   const escapePending = useRef(false);
   const requestedFocus = useRef<'friend' | 'blacklist' | null>(null);
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
@@ -61,7 +63,7 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
     element.showModal();
     const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
     window.addEventListener('resize', resize);
-    void loadSourceUiFonts();
+    void loadUiFont().catch(() => {});
     return () => {
       window.removeEventListener('resize', resize);
       if (element.open) element.close();
@@ -130,14 +132,18 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
     <SourceImageScale value={scale}>
       <div className="player-info-stage" data-player-info-stage="">
         {ui && layout && <>
-          {ui.layouts.find(value => value.path.endsWith(suffix))!.windows.filter(control => control.type === 'WindowsLook/StaticImage')
+          {ui.layouts.find(value => value.path.endsWith(suffix))!.windows
+            .filter(control => control.type === 'WindowsLook/StaticImage' && control.name !== 'picBackgroundMask')
             .map(control => <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix}
               name={control.name} aria-hidden="true" className="player-info-picture"
               reference={roomDetails && control.name === 'picTankIcon' ? waitingTankReference(roomDetails.tankId) : undefined}/>)}
           {ui.layouts.find(value => value.path.endsWith(suffix))!.windows.filter(control => control.type === 'WindowsLook/StaticText')
             .map(control => <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix}
               name={control.name} text={knownText(control.name)} hidden={control.properties.Visible === 'False'}/>)}
-          <textarea {...sourceProps(ui, layout, suffix, 'edtPlayerDescription')} aria-label={roomDetails ? '房间玩家详情' : '玩家介绍'} readOnly value={description} tabIndex={-1}/>
+          <textarea ref={descriptionArea} {...sourceProps(ui, layout, suffix, 'edtPlayerDescription')}
+            className="player-info-description" aria-label={roomDetails ? '房间玩家详情' : '玩家介绍'} readOnly value={description} tabIndex={-1}/>
+          <HistoryIntroScrollbar list={descriptionArea} ui={ui} properties={layout.control('edtPlayerDescription').properties}
+            scale={scale} version={description} label={roomDetails ? '房间玩家详情滚动位置' : '玩家介绍滚动位置'}/>
           <SourceButton ui={ui} layout={layout} suffix={suffix} source={friendSource}
             data-player-info-friend-action="" aria-label={player.isFriend ? '删除好友' : '加好友'} disabled={writePending || !(player.isFriend ? onRemoveFriend : onAddFriend)}
             onClick={() => {requestedFocus.current = 'friend'; if (player.isFriend) onRemoveFriend?.(); else onAddFriend?.();}}/>

@@ -2,7 +2,7 @@
 
 来源：`recovery/output/web-assets/ui.json` 中 `ui/layouts/game_main.xml`，共 165 个控件。下表保留原名字、父节点和类型，区分正式消费者、原资源事实和采用的业务规则。映射表不证明完整页面或原版视觉验收。
 
-主树由 `apps/web/src/interface/battle/battle-hud-view.tsx` 消费；八槽栏由 `hud-item-source-view.tsx` 独占全部41控件，退出由 `battle-play-page.tsx` 的真实按钮负责，小地图两控件由 `hud-minimap-view.tsx` 负责。主树排除这些组件及其完整子树，避免孤立子控件重复绘制。所有文件路径均相对 `apps/web/src/interface/battle/`。
+主树由 `apps/web/src/interface/battle/battle-hud-view.tsx` 消费；八槽栏由 `hud-item-source-view.tsx` 独占全部41控件，退出由 `battle-play-page.tsx` 的真实按钮负责，小地图两控件由 `apps/web/src/render/battle-minimap-renderer.ts` 的 `BattleMinimapRenderer` 负责。主树排除这些组件及其完整子树，避免孤立子控件重复绘制。未注明目录的文件路径均相对 `apps/web/src/interface/battle/`。
 
 动态文字使用用户 XiangJiao 字体；伤害、治疗、暴击原图片继续由世界渲染器负责。称号属性/表名链见 `battle-hud-title-source.md`；称号获取/持有/选用与原阶段、原小地图投影、模式公告生产语义见各自来源文档；有玩家的称号槽缺值时默认显示ID1“嗷嗷待哺”，真实称号优先；其它缺失权威数值保持空白。
 
@@ -148,13 +148,13 @@
 | 138 | `txtItemCount7` | `picItem7` | `WindowsLook/StaticText` | 默认原∞；特殊ammoSlots或Inventory.battleQuantity | `HudItemSourceView` | 原∞＋Web确认数量 |
 | 139 | `lengque8` | `picItem7` | `WindowsLook/ProgressBar` | lengque1–4当前有效槽装填；5–8已确认效果剩余秒 | `HudItemSourceView` | 原覆盖图＋Web期限；原setter未完整恢复 |
 | 140 | `btnExit` | `all` | `WindowsLook/Button` | 既有普通Leave与busy/canLeave | `BattlePlayPage` | 原SourceButton＋Web操作 |
-| 141 | `picMiniMap` | `all` | `WindowsLook/StaticImage` | 当前mapId原场景俯视图、25图NAV/RPT固定范围、玩家与目标快照 | `HudMinimapView` | 原矩形/alpha；逐图映射见hud-minimap-coordinate-source.md |
-| 142 | `picMiniMapBound` | `all` | `WindowsLook/StaticImage` | ditukuang1–8原FrameImage与192×192矩形 | `HudMinimapView` | 原八边框，独立alpha |
+| 141 | `picMiniMap` | `all` | `WindowsLook/StaticImage` | 当前mapId原场景俯视图、25图NAV/RPT固定范围、玩家与目标快照 | `BattleMinimapRenderer` | 原矩形/alpha；逐图映射见hud-minimap-coordinate-source.md |
+| 142 | `picMiniMapBound` | `all` | `WindowsLook/StaticImage` | ditukuang1–8原FrameImage与192×192矩形 | `BattleMinimapRenderer` | 原八边框，独立alpha |
 | 143 | `prgLife` | `all` | `WindowsLook/ProgressBar` | 权威hp/maxHp；原ProgressBar图、颜色、tile/clip | `HealthControl / SourceProgress` | 既有原绘制消费者 |
 | 144 | `prgBullet` | `all` | `WindowsLook/ProgressBar` | ammoMagazine；width=f32(capacity×15)，fraction=f32(remaining/capacity) | `BulletControl / SourceProgress` | 原4cb52f消费者＋Web权威输入 |
 | 145 | `prgCrossbar` | `all` | `WindowsLook/ProgressBar` | 活着且PLAYING的reload；既有duration+.5原进度消费者 | `ReloadControl / SourceProgress` | 既有原装填消费者 |
 | 146 | `picBattleInfoPanel` | `all` | `WindowsLook/StaticImage` | 既有BattleInfoOpacity：消息重置、8秒后alpha.2、hover | `BattleInfoPanel` | 既有原alpha消费者 |
-| 147 | `edtBattleInfo` | `picBattleInfoPanel` | `WindowsLook/RichEditbox` | 确认事件消息、最近五条 | `HudLayout` | Web消息容量与文本 |
+| 147 | `edtBattleInfo` | `picBattleInfoPanel` | `WindowsLook/RichEditbox` | 确认事件消息、最近五条 | `HudBattleInfoView` / `ChatEmotes` | 原五条容量、图文布局及583/584/585/586/591模板已接；原公告上游仍有来源边界 |
 | 148 | `picFight` | `SheetWindow` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；`battleStartsAt`前坦克不动，提示完才计时/移动；离房/终局隐藏 | `HudLayout` | 原资源＋Web开始合同；原producer未恢复 |
 | 149 | `txtCountdown` | `SheetWindow` | `WindowsLook/StaticText` | 既有LocalDeathCountdown；无值隐藏 | `HudLayout` | 既有复活消费者，用户字体 |
 | 150 | `picModeSplash` | `SheetWindow` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；`battleStartsAt`前坦克不动，提示完才计时/移动；离房/终局隐藏 | `HudLayout` | 原资源＋Web开始合同；原producer未恢复 |
@@ -174,4 +174,4 @@
 | 164 | `hunzhan` | `picMeleeMode` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
 | 165 | `moshi5` | `picMeleeMode` | `WindowsLook/StaticImage` | 本局先模式图2秒再Fight1秒；离房/终局隐藏 | `HudLayout` | 原资源＋Web阶段政策；原producer未恢复 |
 
-完整 800×600、1080p、4K 页面与输入焦点尚未实测。当前接线已存在十二槽姓名/称号、VIP、小地图、弹量与开始提示消费者，头像/生命/模式数字/聊天也已接入；真实来源限制按各来源文档保留。称号槽现读取账号已选用`PlayerSnapshot.title.name`，无选用时缺值默认ID1仅作展示；世界标签勋章仍缺完整权威接线。M5-04、M5-05、UI-09 保持未勾选。
+完整 800×600、1080p、4K 页面与输入焦点尚未实测。当前接线已存在十二槽姓名/称号、VIP、小地图、弹量与开始提示消费者，头像/生命/模式数字/聊天也已接入；真实来源限制按各来源文档保留。称号槽现读取账号已选用`PlayerSnapshot.title.name`，无选用时缺值默认ID1仅作展示；原布局没有独立勋章控件，世界标签勋章未取得原执行/资源合同，不列为已证漏接。剩余接线和操作差异见battle-ui-client-audit.md。M5-04、M5-05、UI-09 保持未勾选。

@@ -21,49 +21,15 @@
 
 .pet-shop-product {
   overflow: auto;
+  scrollbar-width: none;
   line-height: 15px;
   color: #fff;
 }
 
+.pet-shop-product::-webkit-scrollbar {display: none;}
+
 .pet-shop-product p {
   margin: 0;
-}
-
-.pet-shop-price {
-  left: 12px;
-  top: 410px;
-  width: 200px;
-  line-height: 18px;
-}
-
-.pet-shop-balance {
-  left: 237px;
-  top: 334px;
-  width: 190px;
-  line-height: 18px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-.pet-shop-refresh {
-  left: 458px;
-  top: 410px;
-  width: 126px;
-  padding: 4px;
-  color: #fff;
-  background: #263b49;
-  border: 1px solid #8dabad;
-  font: inherit;
-}
-
-.pet-shop-status {
-  left: 224px;
-  top: 444px;
-  width: 372px;
-  height: 34px;
-  overflow: auto;
-  line-height: 16px;
 }
 
 [data-shop-active-page='Pet'] #account-shop-title {

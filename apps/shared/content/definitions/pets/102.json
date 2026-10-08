@@ -1,0 +1,120 @@
+{
+  "kind": "pet",
+  "id": 102,
+  "key": "pet-102",
+  "name": "忍者猫",
+  "description": "猫影忍者学校的优秀毕业生，擅长使用各种忍术。不知为何，与叮噹猫多啦B梦组成了所谓的木桶镇名侦探组合。",
+  "prices": {
+    "money": 3500,
+    "tokens": 350
+  },
+  "shop": {
+    "available": true,
+    "group": "pet"
+  },
+  "starter": false,
+  "defaultSelected": false,
+  "petType": 1,
+  "petSize": 2,
+  "attributes": {
+    "maxHp": 650,
+    "critical": 12,
+    "lucky": 16,
+    "mastery": [
+      3,
+      4,
+      2,
+      2
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/102/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/102/11014.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 10711,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10711
+      ],
+      "event": "kill",
+      "handler": "copy",
+      "target": "self"
+    },
+    {
+      "baseId": 10721,
+      "initialRank": 0,
+      "rankCap": 3,
+      "levels": [
+        10721,
+        10722,
+        10723
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10731,
+      "initialRank": 0,
+      "rankCap": 3,
+      "levels": [
+        10731,
+        10732,
+        10733
+      ],
+      "event": "motion",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "moving"
+    },
+    {
+      "baseId": 10741,
+      "initialRank": 0,
+      "rankCap": 5,
+      "levels": [
+        10741,
+        10742,
+        10743,
+        10744,
+        10745
+      ],
+      "event": "health",
+      "handler": "attributes",
+      "target": "self",
+      "condition": "lowHealth"
+    },
+    {
+      "baseId": 10751,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10751
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10761,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

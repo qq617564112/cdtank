@@ -44,6 +44,16 @@ export class AccountTitle {
     for (const titleId of granted) insert.run(accountId, titleId, matchId, round, endedAt);
   }
 
+  /** Read the permanent grants committed with this exact match and round. */
+  grantedTitles(accountId: string, matchId: string, round: number): PlayerTitle[] {
+    return this.database.prepare(`SELECT title_id FROM account_titles
+      WHERE account_id = ? AND granted_match_id = ? AND granted_round = ? ORDER BY title_id`)
+      .all(accountId, matchId, round).flatMap(row => {
+        const title = TITLE_BY_ID.get(Number(row.title_id));
+        return title ? [{id: title.id, name: title.name}] : [];
+      });
+  }
+
   /** Authoritative owned catalog plus the worn id; selection row 0 stays a deliberate clear. */
   titles(accountId: string): AccountTitles {
     const owned = this.ownedIds(accountId).flatMap(id => {

@@ -6,7 +6,7 @@ M5-12 / UI-50。`settings.xml` 的三个源控件 `rdoLow`、`rdoHigh`、`chkSil
 
 `CDTank/Config/SystemSetting.ini` 的 `[Display]` 记录 `HighPrecision = 1`、`Silhouette = 1`。`settings.xml` 中 `rdoLow` 与 `rdoHigh` 是 `GroupID=2` 的 RadioButton，`rdoHigh` 对应 HighPrecision；`chkSilhouette` 是独立 Checkbox。三个控件均保留原 AbsoluteRect、Normal/Hover/Pushed/CheckMark 图和父矩形。
 
-`HighPrecision` 的原完整 D3D producer 未恢复，本批高、低画质采用明确的 Web 后备缓冲比例策略。`chkSilhouette` 复用已登记的 `cartoon-outline` Web 入口；原 Windows 回调、原 HighPrecision 含义和原 D3D framebuffer 均未由本页恢复。
+`HighPrecision` 的原完整 D3D producer 未恢复，本批高、低画质采用明确的 Web 后备缓冲比例策略。`chkSilhouette` 控制已登记的 `cartoon-outline` Web入口及原25图角色toon采样。原Silhouette INI→manager布尔→Render效果选择已恢复静态来源，详scene-actor-toon-runtime.md；原Windows完整界面回调、HighPrecision含义与D3D framebuffer仍开放。
 
 ## Web 合同
 
@@ -27,10 +27,12 @@ export interface DisplayPreferences {
 
 Type8 屏幕 `EffectOverlayDrawState` 随实际 engine 后备缓冲更新 `width`、`height`，保留 UV retention、颜色、`f32` 和 native vertices，不沿用构造时旧尺寸，也不另开材质或纹理。
 
-卡通渲染只调整已注册合格 Mesh 的 `renderOutline`，保持黑色 RGB、Ink 0.65、原 InstancedMesh source、动画和 morph、alpha 混合与 planar alpha-test 排除规则，地形不描边。已加载模型、已注册 source 的实际克隆、设置后的异步新增模型、动作切换和新 scene 对象读取当前 active 值；不创建新 Mesh/Material、不复制 geometry、不逐帧扫描全部 mesh。`sourceMesh` 只注册一次，已注册 source 通过 `onClonedObservable` 将合格克隆 Mesh 接入同一偏好注册，clone observer 自身也随 Mesh/Scene dispose 解绑并释放引用，scene-runtime dispose 解绑 preference listener。
+卡通描边调整已注册合格 Mesh 的 `renderOutline`，保持黑色 RGB、Ink 0.65、原 InstancedMesh source、动画和 morph、alpha 混合与 planar alpha-test 排除规则，地形不描边。已加载模型、已注册 source 的实际克隆、设置后的异步新增模型、动作切换和新 scene 对象读取当前 active 值；不创建新 Mesh/Material、不复制 geometry、不逐帧扫描全部 mesh。`sourceMesh` 只注册一次，已注册 source 通过 `onClonedObservable` 将合格克隆 Mesh 接入同一偏好注册，clone observer 自身也随 Mesh/Scene dispose 解绑并释放引用，scene-runtime dispose 解绑 preference listener。
 
 ## 源界面
 
 `SettingsSourceView` 的 DOM 仍保持当前 800×599 父链、ImageScale 和原 CSS 尺寸。三个控件使用原按钮矩形和原图；RadioButton 通过原 `selected`/`aria-pressed` 语义显示互斥选择，`chkSilhouette` 使用局部 `SourceStaticImage` 叠加真实 CheckMarkImage，checked 层保持 `pointer-events: none`，不改共享 `SourceButton` 逻辑。HUD、字体资产、源 pose、其它按钮键区、20 键、快捷聊天、音量、浏览器全屏、焦点捕获和现有存储键均保持。
 
 本批未运行 tests、browser、build、typecheck、native、高清或保存重启实测，也不把新偏好扩写到既有 0007/战车1 outline 证据或全图证据。M5-14、UI-50、M3-03、M4-07 与 M7 父项保持未完成。
+
+原25图真实TankView组件在材质bind时读取同一active.silhouette，开启原toon纹理／默认灯方向采样，关闭恢复普通MV3光照；不改变显示草稿或保存合同，详scene-actor-toon-runtime.md。

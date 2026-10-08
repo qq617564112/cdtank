@@ -1,0 +1,122 @@
+{
+  "kind": "pet",
+  "id": 2,
+  "key": "pet-2",
+  "name": "大麦",
+  "description": "伟大的大麦殿下！虽然有着骄傲自负、眼高于顶的坏毛病，但是本质并不坏。有个半斤八两的表兄弟名叫大米。",
+  "prices": {
+    "money": 3500,
+    "tokens": 350
+  },
+  "shop": {
+    "available": true,
+    "group": "pet"
+  },
+  "starter": false,
+  "defaultSelected": false,
+  "petType": 2,
+  "petSize": 2,
+  "attributes": {
+    "maxHp": 700,
+    "critical": 20,
+    "lucky": 8,
+    "mastery": [
+      2,
+      3,
+      4,
+      2
+    ]
+  },
+  "growth": {
+    "MinHPUp": 0,
+    "MaxHPUp": 0,
+    "MinCriticalUp": 0,
+    "MaxCriticalUp": 0,
+    "MinLuckyUp": 0,
+    "MaxLuckyUp": 0
+  },
+  "resources": {
+    "model": "Data/Pet/002/n1.glb",
+    "action": "n1",
+    "animationSpeed": 4.8,
+    "textures": [
+      "Data/Pet/002/11005.png"
+    ]
+  },
+  "skills": [
+    {
+      "baseId": 10211,
+      "initialRank": 0,
+      "rankCap": 5,
+      "levels": [
+        10211,
+        10212,
+        10213,
+        10214,
+        10215
+      ],
+      "event": "kill",
+      "handler": "heal",
+      "target": "self"
+    },
+    {
+      "baseId": 10221,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10221
+      ],
+      "event": "shot",
+      "handler": "backCritical",
+      "target": "self"
+    },
+    {
+      "baseId": 10231,
+      "initialRank": 0,
+      "rankCap": 5,
+      "levels": [
+        10231,
+        10232,
+        10233,
+        10234,
+        10235
+      ],
+      "event": "hit",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10241,
+      "initialRank": 0,
+      "rankCap": 5,
+      "levels": [
+        10241,
+        10242,
+        10243,
+        10244,
+        10245
+      ],
+      "event": "death",
+      "handler": "attributes",
+      "target": "teammates"
+    },
+    {
+      "baseId": 10251,
+      "initialRank": 0,
+      "rankCap": 1,
+      "levels": [
+        10251
+      ],
+      "event": "passive",
+      "handler": "attributes",
+      "target": "self"
+    },
+    {
+      "baseId": 10261,
+      "initialRank": 0,
+      "rankCap": 0,
+      "levels": [],
+      "name": "？？？"
+    }
+  ]
+}

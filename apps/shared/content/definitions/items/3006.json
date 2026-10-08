@@ -59,10 +59,10 @@
   "runtime": {
     "values": {
       "shopSupplyCount": 1,
-      "battleRewardOrder": 0,
+      "battleRewardOrder": 24,
       "groundDurationMs": 60000,
       "triggerRadius": 80,
-      "healAmount": 400
+      "breachDropOrder": 11
     },
     "skillRoles": {
       "primary": 4027,
@@ -77,8 +77,5 @@
     "requiresPlayerTarget": false,
     "markerReward": false,
     "trap": "teamHeal"
-  },
-  "unresolvedSkillReferences": [
-    4027
-  ]
+  }
 }

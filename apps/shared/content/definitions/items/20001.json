@@ -1,0 +1,82 @@
+{
+  "name": "鱼骨",
+  "getMethod": 0,
+  "durable": 0,
+  "breakMode": 2,
+  "itemType": 13,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "item",
+  "id": 20001,
+  "key": "fishbone",
+  "description": "猫捡到鱼骨，贵重物品鱼骨数量+1，生命恢复15点。",
+  "prices": {
+    "money": 0,
+    "tokens": 0
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 13,
+  "inventoryCategory": 6,
+  "appearanceEffect": false,
+  "treasure": true,
+  "cpuAvailable": true,
+  "trade": 0,
+  "resources": {
+    "model": "Data/scnobj/00001/00001.glb",
+    "modelId": 1,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 1,
+    "textures": [
+      "Data/scnobj/00001/00001A.png"
+    ],
+    "sourceModel": "Data/scnobj/00001/00001.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/00001/00001A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "breachDropOrder": 4,
+      "cpuUrgentHpRatio": 0.35,
+      "battleRewardOrder": 0,
+      "pickupPetType": 1,
+      "pickupHealing": 15
+    },
+    "skillRoles": {
+      "primary": 20001,
+      "secondary": 30005,
+      "tertiary": 0
+    },
+    "use": "treasure",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

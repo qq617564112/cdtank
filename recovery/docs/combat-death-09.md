@@ -1,5 +1,7 @@
 # 猛虎王 105 普通战斗死亡表现
 
+当前006树声ww154已发布独立补作并映射audio.json，原105死亡动作、ELK及GA12保持。资源与参数见[reconstructed-tree-audio-runtime.md](reconstructed-tree-audio-runtime.md)；新增实际播放未验，以下已有证据仅覆盖其原缺文件输入。
+
 M4-09-COMBAT-DEATH-09：PASS。当前 React 双端在地图 0007 的普通 CPU 战斗中，由真实击毁进入原 09 死亡动作，触发原 ELK Effect6 与 GA12，自然结束并恢复满血 01。两端捕获到真实死亡渲染帧，离房和新房重入后模型、效果及声音清理通过。生产模块无需修改。
 
 ## 来源、模块和实战接线
@@ -8,7 +10,7 @@ M4-09-COMBAT-DEATH-09：PASS。当前 React 双端在地图 0007 的普通 CPU �
 | --- | --- |
 | 原动作 | 猛虎王 105 的 M/U/X/Y 原 09 MV3，duration 均为 5601。M 部件在 time160 发 `effect1`，identifier1416378268。 |
 | 原 ELK | tank105 的 09/effect1 指向 `_root\online\006`，bindingMode3，`tag_efcenter`。根2504；11个绘制节点2506/2507/2508/2509/2510/2511/2512/2513/2514/2515/2518。 |
-| 原声音 | Effect6 的 type4 节点2973使用 GA12，原 WAV 实物与发布 WAV 字节一致。节点2516的 ww154 无声音实物，保持无声；不替换。 |
+| 原声音 | Effect6 的 type4 节点2973使用 GA12，原 WAV 实物与发布 WAV 字节一致。节点2516的 ww154 原声音实物缺失；当前项目已映射独立补作，以下实测覆盖原缺文件输入。 |
 | 正式模块 | `BattlePlayers.render` 按权威 alive 调用 `TankView.life`；死亡切换09并停止攻击，M/U/X/Y 使用原单次动作时钟。`EffectRuntime.message` 消费实际09消息，通过原绑定创建完整Effect6。type4声音由 `EffectSound` 播放。 |
 | 实战接线 | 两个独立账号加载完整原105角色来源和105原皮肤，经普通选车、建房、加入、CPU、Ready及Space开火。服务端真实destroy和respawn事件产生死亡及复活，没有注入动作、伤害、通知或位置。 |
 

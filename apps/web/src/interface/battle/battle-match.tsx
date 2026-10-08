@@ -1,11 +1,13 @@
 import {useSyncExternalStore} from 'react';
 import './match.css';
 import type {MsgRoomSnapshot, ResultPlayer} from '../../../../shared/protocols';
+import type {LeavePenalty} from '../../../../shared/protocols/PtlLeave';
 import {WaitingRoomView} from '../lobby/waiting-room';
 import type {CpuLoadoutItem} from '../../../../shared/protocols/PtlCpu';
 import {BattlePlayPage} from './battle-play-page';
 import {BattleSummaryPage} from './battle-summary-page';
 import {BattleLoadingPage} from './battle-loading-page';
+import {BattleEndPage} from './battle-end-page';
 import type {WaitingRoomActions} from '../lobby/waiting-room';
 import type {RoomEditor} from '../lobby/room-edit-dialog';
 
@@ -19,6 +21,7 @@ interface MatchPlayer {
 }
 
 interface MatchViewState {
+  roomId: string;
   phase: string;
   round: number;
   playerId: string;
@@ -33,9 +36,10 @@ interface MatchViewState {
   isAutopilot: boolean;
   canManageCpu: boolean;
   hasLocalPlayer: boolean;
-  voted: boolean;
   players: MatchPlayer[];
   results: ResultPlayer[];
+  settlementReady: boolean;
+  summaryReady: boolean;
   boosts: {kind: string; text: string}[];
   ammoSlots: {slot: number; itemTableId: number; quantity: number}[];
   waiting?: MsgRoomSnapshot;
@@ -68,6 +72,9 @@ export class BattleMatch {
   private targetSecond = -1;
   private direction = '';
   private readyAvailable = false;
+  private exitQuote?: {roomId: string; round: number; points: number};
+  private endingTimer?: ReturnType<typeof setTimeout>;
+  private endingElapsed = false;
   private loading = {progress: 0, status: '正在载入战斗资源…', error: undefined as string | undefined};
 
   readonly subscribe = (listener: () => void): (() => void) => {
@@ -81,7 +88,7 @@ export class BattleMatch {
     team: team => this.request(() => this.changeTeam(team), '正在换队…'),
     leave: () => this.request(async () => {
       if (!this.leave) throw new Error('退出入口不可用');
-      await this.leave();
+      await this.leave(0);
     }, '正在退出房间…'),
     invite: () => this.request(async () => {
       if (!this.invite) throw new Error('邀请入口不可用');
@@ -89,18 +96,20 @@ export class BattleMatch {
     }, '正在发送邀请…'),
   };
 
-  constructor(private readonly rematch: () => Promise<void>,
+  constructor(private readonly returnToRoom: () => Promise<void>,
               private readonly ready: (isReady: boolean) => Promise<void>,
               private readonly changeTeam: (team: number) => Promise<void>,
               private readonly cpu?: (operation: 'ADD' | 'REMOVE', playerId?: string, team?: number) => Promise<void>,
               private readonly autopilot?: (enabled: boolean) => Promise<void>,
-              private readonly leave?: () => Promise<void>,
+              private readonly leave?: (confirmedPenaltyPoints?: number) => Promise<void>,
               private readonly invite?: () => Promise<number>,
               private readonly configureCpu?: (playerId: string, loadout: CpuLoadoutItem[]) => Promise<void>,
               readonly retryLoading?: () => void,
               editor?: RoomEditor,
               private readonly kick?: (playerId: string) => Promise<void>,
-              private readonly discard?: BattleDiscard) {
+              readonly summarySoundVolume?: () => number | undefined,
+              private readonly discard?: BattleDiscard,
+              private readonly quote?: () => Promise<LeavePenalty>) {
     if (editor) this.roomEditor = {
       listMaps: () => editor.listMaps(),
       save: settings => this.request(() => editor.save(settings), '正在保存房间…'),
@@ -163,9 +172,38 @@ export class BattleMatch {
     }
   }
 
-  requestRematch(): void {this.run(() => this.request(this.rematch, '正在提交再战请求…'));}
+  requestReturnToRoom(): void {this.run(() => this.request(this.returnToRoom, '正在返回原房间…'));}
 
-  requestLeave(): void {this.run(() => this.waitingActions.leave());}
+  quoteExitPenalty(): Promise<LeavePenalty> {
+    const state = this.state;
+    if (!this.quote || !state) return Promise.reject(new Error('退出报价入口不可用'));
+    const roomId = state.roomId, round = state.round;
+    return this.quote().then(penalty => {
+      const current = this.state;
+      if (!current || current.roomId !== roomId || current.round !== round) {
+        throw new Error('房间或局号已变化，请刷新后重试');
+      }
+      this.exitQuote = {roomId, round, points: penalty.points};
+      return penalty;
+    });
+  }
+
+  leaveRoom(confirmedPenaltyPoints?: number): Promise<void> {
+    if (confirmedPenaltyPoints !== undefined && (!this.exitQuote || !this.state
+        || this.exitQuote.roomId !== this.state.roomId || this.exitQuote.round !== this.state.round
+        || this.exitQuote.points !== confirmedPenaltyPoints)) {
+      return Promise.reject(new Error('退出处罚确认已失效，请重新报价'));
+    }
+    return this.request(async () => {
+      if (!this.leave) throw new Error('退出入口不可用');
+      await this.leave(confirmedPenaltyPoints ?? 0);
+    }, '正在退出房间…');
+  }
+
+  matchesExitQuote(roomId: string, round: number, points: number): boolean {
+    return !!this.exitQuote && this.exitQuote.roomId === roomId && this.exitQuote.round === round
+      && this.exitQuote.points === points;
+  }
 
   setReadyAvailable(available: boolean): void {
     if (this.readyAvailable === available) return;
@@ -183,12 +221,25 @@ export class BattleMatch {
     if (!match) {this.clear(); return;}
     const context = `${snapshot.roomId}:${match.round}:${snapshot.phase}:${playerId}`;
     if (this.context !== context) {
+      clearTimeout(this.endingTimer);
+      this.endingTimer = undefined;
+      this.endingElapsed = false;
       this.context = context;
+      this.exitQuote = undefined;
       this.generation++;
       this.pending = false;
       this.requestStatus = '';
       this.targetSecond = -1;
       this.direction = '';
+      if (snapshot.phase === 'FINISHED') {
+        this.endingTimer = setTimeout(() => {
+          this.endingTimer = undefined;
+          this.endingElapsed = true;
+          if (this.state?.phase === 'FINISHED') {
+            this.publish({...this.state, summaryReady: this.state.settlementReady});
+          }
+        }, 1800);
+      }
     }
     const local = snapshot.players.find(player => player.id === playerId);
     const ready = match.readyPlayerIds.includes(playerId);
@@ -236,6 +287,9 @@ export class BattleMatch {
       }
     }
     const result = snapshot.phase === 'FINISHED' ? match.result : undefined;
+    const ownResult = result?.players.find(player => player.id === playerId);
+    // Human account settlement is complete only when its committed receipt arrives.
+    const settlementReady = !!result && (!ownResult || ownResult.award !== undefined);
     if (result) {
       const own = result.players.find(player => player.id === playerId);
       const outcomes = {WIN: '胜利', LOSE: '失败', DRAW: '平局'};
@@ -245,7 +299,6 @@ export class BattleMatch {
         : result.winnerTeam < 0 ? '平局' : result.winnerTeam === 0 ? '猫队' : '狗队';
       const reasons = {TIME_LIMIT: '时间结束', OBJECTIVE: '目标达成', FORFEIT: '对手离开'};
       objective = `${reasons[result.reason]} · ${winner}${winner === '平局' ? '' : '获胜'}`;
-      status = `再战确认 ${match.rematchPlayerIds.length}/${snapshot.players.length} 人。所有在房玩家同意且达到开局人数（${match.minPlayers} 人）时开始下一局。`;
     }
     const boosts: MatchViewState['boosts'] = [];
     const seconds = (expiresAt: number): number => Math.max(0, Math.ceil((expiresAt - snapshot.serverTime) / 1000));
@@ -273,14 +326,15 @@ export class BattleMatch {
         targetScore: match.targetScore, teamLives: [], objectives: [], cpuManagerId: match.cpuManagerId},
     } : undefined;
     this.defaultStatus = status;
-    this.publish({phase: snapshot.phase, round: match.round, playerId, mode: snapshot.mode,
+    this.publish({roomId: snapshot.roomId, phase: snapshot.phase, round: match.round, playerId, mode: snapshot.mode,
       title, objective, status, pending: this.pending, ready, readyAvailable: this.readyAvailable, team: local?.team,
       ammoSlots: local?.ammoSlots?.map(slot => ({...slot})) ?? [],
       isAutopilot: !!local?.isAutopilot, canManageCpu: match.cpuManagerId === playerId,
-      hasLocalPlayer: !!local, voted: match.rematchPlayerIds.includes(playerId),
+      hasLocalPlayer: !!local,
       players: waiting ? snapshot.players.map(player => ({id: player.id, name: player.name, team: player.team,
         isCpu: !!player.isCpu, isAutopilot: !!player.isAutopilot, ready: match.readyPlayerIds.includes(player.id)})) : [],
-      results: result?.players.map(player => ({...player})) ?? [], boosts, waiting: waitingSnapshot,
+      results: result?.players.map(player => ({...player})) ?? [],
+      settlementReady, summaryReady: this.endingElapsed && settlementReady, boosts, waiting: waitingSnapshot,
       loading: this.loading, loadedPlayers: snapshot.players.filter(player => !player.isCpu
         && match.loadedPlayerIds?.includes(player.id)).length,
       loadingPlayers: snapshot.players.filter(player => !player.isCpu).length,
@@ -346,8 +400,12 @@ export class BattleMatch {
   }
 
   clear(): void {
+    clearTimeout(this.endingTimer);
+    this.endingTimer = undefined;
+    this.endingElapsed = false;
     this.loading = {progress: 0, status: '正在载入战斗资源…', error: undefined};
     this.readyAvailable = false;
+    this.exitQuote = undefined;
     this.generation++;
     this.context = '';
     this.defaultStatus = '';
@@ -364,16 +422,19 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
   if (!state) return null;
   if (state.phase === 'LOADING' || (state.phase === 'PLAYING' && state.loading.progress < 1)) return <BattleLoadingPage key={state.round} round={state.round} progress={state.loading.progress}
     status={state.loading.status} error={state.loading.error} loadedPlayers={state.loadedPlayers}
-    totalPlayers={state.loadingPlayers} leave={() => panel.requestLeave()} retry={panel.retryLoading}
+    totalPlayers={state.loadingPlayers} retry={panel.retryLoading}
     pending={state.pending} feedback={state.status}/>;
   const waiting = state.phase === 'WAITING';
   const finished = state.phase === 'FINISHED';
+  if (finished && !validation && !state.summaryReady) return <BattleEndPage
+    key={`${state.round}:${state.playerId}`} round={state.round} settlementReady={state.settlementReady} />;
   if (finished && !validation) return <section data-match-panel="" data-phase={state.phase}
-    data-round={state.round} aria-label="对局结算">
+    className="battle-summary-transition" data-round={state.round} aria-label="对局结算">
     <BattleSummaryPage results={state.results} playerId={state.playerId} round={state.round} mode={state.mode}
       title={state.title} objective={state.objective} status={state.status} pending={state.pending}
-      voted={state.voted} hasLocalPlayer={state.hasLocalPlayer}
-      requestRematch={() => panel.requestRematch()} leave={() => panel.requestLeave()} />
+      hasLocalPlayer={state.hasLocalPlayer}
+      soundVolume={panel.summarySoundVolume}
+      returnToRoom={() => panel.requestReturnToRoom()} />
   </section>;
   if (waiting && !validation) return <section data-match-panel="" data-phase={state.phase}
     data-round={state.round} data-formal-waiting-page="" aria-label="等待房间">
@@ -383,36 +444,11 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
       kickPlayer={panel.supportsKick && state.canManageCpu ? playerId => panel.kickPlayer(playerId) : undefined}
       addRobot={panel.supportsCpu && state.canManageCpu ? team => panel.addRobot(team) : undefined}/>} 
   </section>;
-  if (state.phase === 'PLAYING' && !validation) return <BattlePlayPage round={state.round}
-    busy={state.pending} canLeave={state.hasLocalPlayer} leave={() => {void panel.waitingActions.leave();}}
-    feedback={<>
-      {state.ammoSlots.length > 0 && <p data-ammo-stock="" aria-label="本局特殊弹药">
-        {state.ammoSlots.map(slot => <span key={slot.slot} data-ammo-slot={slot.slot}
-          data-ammo-item={slot.itemTableId} data-ammo-quantity={slot.quantity}>槽{slot.slot}：{slot.quantity}发{' '}</span>)}
-      </p>}
-      {state.discardCandidates.length > 0 && <p data-discard-controls="">
-        <label>所选道具
-          <select data-discard-select="" value={state.discardSelection ?? ''} disabled={state.pending}
-            onChange={event => {
-              const value = Number(event.currentTarget.value);
-              panel.setDiscardSelection(Number.isInteger(value) && value > 0 ? value : undefined);
-            }}>
-            <option value="" disabled>请选择</option>
-            {state.discardCandidates.map(candidate => <option key={candidate.instanceId} value={candidate.instanceId}>
-              {candidate.name}（本局 {candidate.quantity}）
-            </option>)}
-          </select>
-        </label>
-        <button type="button" data-discard-selected="" disabled={state.pending || state.discardSelection === undefined}
-          onClick={() => panel.discardSelected()}>丢弃一份</button>
-      </p>}
-      {state.boosts.map(boost => <p key={boost.kind}
-        {...{[boost.kind === 'invincibility' ? 'data-invincibility-status' : `data-${boost.kind}-boost-status`]: ''}}>{boost.text}</p>)}
-    </>}>
-    <h2>{state.title}</h2>
-    <p>{state.objective}</p>
-    <p role="status">{state.status}</p>
-  </BattlePlayPage>;
+  if (state.phase === 'PLAYING' && !validation) return <BattlePlayPage key={`${state.roomId}:${state.round}`} roomId={state.roomId} round={state.round}
+    busy={state.pending} canLeave={state.hasLocalPlayer}
+    quote={() => panel.quoteExitPenalty()} leave={points => panel.leaveRoom(points)}
+    feedback={state.boosts.map(boost => <p key={boost.kind}
+      {...{[boost.kind === 'invincibility' ? 'data-invincibility-status' : `data-${boost.kind}-boost-status`]: ''}}>{boost.text}</p>)} />;
   return <section className={`battle-match${finished ? ' match-finished' : ''}`} data-match-panel=""
     data-phase={state.phase} data-round={state.round} aria-label="对局目标与结算">
     {state.waiting && <WaitingRoomView key={`${state.waiting.roomId}:${state.round}`} snapshot={state.waiting}
@@ -449,8 +485,8 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
         <td>{player.objectivesDestroyed}</td><td>{player.combatScore}</td><td>{player.outcomeBonus}</td><td>{player.totalScore}</td>
       </tr>)}</tbody>
     </table></div>}
-    {finished && <button type="button" data-rematch="" disabled={state.pending || state.voted}
-      onClick={() => panel.requestRematch()}>{state.voted ? '已同意再战' : '再来一局'}</button>}
+    {finished && <button type="button" data-summary-continue="" disabled={state.pending || !state.hasLocalPlayer}
+      onClick={() => panel.requestReturnToRoom()}>继续，返回原房间</button>}
     <p role="status">{state.status}</p>
   </section>;
 }

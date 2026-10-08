@@ -1,0 +1,101 @@
+.battle-scoreboard-viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.battle-scoreboard-stage {
+  position: relative;
+  width: 800px;
+  height: 600px;
+  color: #fff;
+  font-size: 12px;
+}
+
+.battle-scoreboard-stage > *,
+.battle-scoreboard-row > * {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.battle-scoreboard-title {
+  left: 185px;
+  top: 24px;
+  width: 430px;
+  margin: 0;
+  text-align: center;
+  font-size: 21px;
+}
+
+.battle-scoreboard-subtitle {
+  left: 185px;
+  top: 65px;
+  width: 430px;
+  margin: 0;
+  text-align: center;
+}
+
+.battle-scoreboard-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 16px;
+}
+
+.battle-scoreboard-number,
+.battle-scoreboard-deaths,
+.battle-scoreboard-death-heading {
+  text-align: center;
+  line-height: 16px;
+}
+
+.battle-scoreboard-deaths {
+  left: 311px;
+  top: 21px;
+  width: 48px;
+}
+
+.battle-scoreboard-death-heading {
+  top: 100px;
+  width: 48px;
+}
+
+.battle-scoreboard-row[data-scoreboard-alive='false'] {
+  opacity: .65;
+}
+
+.battle-scoreboard-hint {
+  left: 100px;
+  top: 556px;
+  width: 600px;
+  margin: 0;
+  text-align: center;
+  line-height: 24px;
+}
+
+.battle-scoreboard-pagination {
+  left: 100px;
+  top: 515px;
+  width: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.battle-scoreboard-pagination button {
+  color: inherit;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.battle-scoreboard-pagination button:disabled {
+  opacity: .5;
+  cursor: default;
+}

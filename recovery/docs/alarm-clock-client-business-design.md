@@ -16,7 +16,7 @@ move、turn、fire 三条 lane 分别对应 4024、4025、4026，实际成功时
 
 ## 表现与通知
 
-每个实际成功的 lane 沿现有 `trapTriggered` 与 `playSkillEffect` 链发送首槽通知，`skillId` 为该 lane 的 4024/4025/4026，值为结算后的实际许可计数。已确认的首槽绘声为 4024 的 112/SE44、4025 的 115/SE47、4026 的 118/GA20，均为 effectIndex 0。move 的首槽仅在目标 `hp > 0 && !flag6` 时附加；turn 与 fire 仅在 `hp > 0` 时附加。第二槽的触发来源未恢复，因此不播放第二槽。
+每个实际成功的 lane 沿现有 `trapTriggered` 与 `playSkillEffect` 链发送首槽通知，`skillId` 为该 lane 的 4024/4025/4026，值为结算后的实际许可计数。已确认的首槽绘声为 4024 的 112/SE44、4025 的 115/SE47、4026 的 118/GA20，均为 effectIndex 0。move 的首槽仅在目标 `hp > 0 && !flag6` 时附加；turn 与 fire 仅在 `hp > 0` 时附加。第二槽采用每个lane成功自然恢复时单次播放：先恢复许可并删除状态，再由trapRestraintEnded通知实际skillId的index1／duration0；4024为017/SE16，4025/4026为016/SE15。注射早清、死亡／finish／round／Leave只清理，原触发时机仍缺来源，详remaining-effect-slot-integration.md。
 
 item 3007 自身三条 effects 全为零，`appearanceEffect` 为 false，所以放置阶段不发送 item placement `playSkillEffect`，也不把 primary 4024 冒充放置绘声；4024 只保留为对象身份元数据。实现未改 HP、伤害或原 actor 公式。
 

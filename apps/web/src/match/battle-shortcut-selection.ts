@@ -1,3 +1,4 @@
+import {defaultAmmoId} from '../../../shared/content/catalog';
 import type {ResInventory} from '../../../shared/protocols/PtlInventory';
 import {classifyItemId} from '../../../shared/combat/item-hotkeys';
 
@@ -7,23 +8,8 @@ export interface AmmoSlotSnapshot {
   quantity: number;
 }
 
-export type CycleDirection = 1 | -1;
-
-/** Ordinary weapon cycle candidates: the default slot1 plus this round's
- * confirmed class3 ammo slots2–4 with positive quantity. Ground traps and
- * other placeable inventory records are never treated as ammo. */
-export function weaponCandidateSlots(ammoSlots: readonly AmmoSlotSnapshot[]): number[] {
-  const slots = [1];
-  for (const ammo of ammoSlots) {
-    if (ammo.slot < 2 || ammo.slot > 4 || (ammo.quantity >>> 0) === 0
-        || classifyItemId(ammo.itemTableId) !== 3) continue;
-    slots.push(ammo.slot);
-  }
-  return slots;
-}
-
-/** Confirmed item cycle candidates: hotkey indices3–6 (Battle slots5–8) whose
- * bound instance exists with positive owned and this-round quantity. */
+/** Battle item slots5–8 whose bound instance still exists. Exhausted configured
+ * records stay candidates so the unified4cb2f5 entry can play UI28 and reject. */
 export function itemCandidateSlots(inventory: ResInventory | undefined): number[] {
   if (!inventory) return [];
   const slots: number[] = [];
@@ -31,50 +17,76 @@ export function itemCandidateSlots(inventory: ResInventory | undefined): number[
     const instanceId = inventory.hotkeys[index] >>> 0;
     if (!instanceId) continue;
     const record = inventory.records.find(value => (value.instanceId >>> 0) === instanceId);
-    if (!record || (record.ownedQuantity >>> 0) === 0 || (record.battleQuantity >>> 0) === 0) continue;
+    if (!record) continue;
     slots.push(index + 2);
   }
   return slots;
 }
 
-/** Step along ascending candidate slot numbers and wrap at either end. */
+/** Ordinary weapon cycle candidates: the default slot1, this round's confirmed
+ * class3 ammo slots2–4, and confirmed class4 trap records at those slots.
+ * Configured records stay candidates after exhaustion; the unified entry owns
+ * the quantity gate. Traps come from the client's confirmed inventory hotkeys
+ * because the server ammo snapshot intentionally carries only class3. */
+export function weaponCandidateSlots(ammoSlots: readonly AmmoSlotSnapshot[],
+  inventory: ResInventory | undefined): number[] {
+  const slots = [1];
+  for (const ammo of ammoSlots) {
+    if (ammo.slot < 2 || ammo.slot > 4 || classifyItemId(ammo.itemTableId) !== 3) continue;
+    slots.push(ammo.slot);
+  }
+  for (let index = 0; index <= 2; index++) {
+    const slot = index + 2;
+    if (slots.includes(slot)) continue;
+    const instanceId = (inventory?.hotkeys[index] ?? 0) >>> 0;
+    if (!instanceId) continue;
+    const record = inventory?.records.find(value => (value.instanceId >>> 0) === instanceId);
+    if (!record) continue;
+    if (classifyItemId(record.itemTableId) !== 4) continue;
+    slots.push(slot);
+  }
+  slots.sort((left, right) => left - right);
+  return slots;
+}
+
+/** Step along ascending candidate slot numbers; the original endpoint keeps the
+ * current selection instead of wrapping to the opposite end. */
 export function stepCandidate(slots: readonly number[], current: number | undefined,
-  direction: CycleDirection): number | undefined {
+  direction: 1 | -1): number | undefined {
   if (!slots.length) return undefined;
   if (current === undefined || !slots.includes(current)) {
     return direction > 0 ? slots[0] : slots[slots.length - 1];
   }
   const index = slots.indexOf(current);
-  return slots[(index + direction + slots.length) % slots.length];
+  const next = index + direction;
+  return next < 0 || next >= slots.length ? current : slots[next];
 }
 
-/** An accepted cycle keypress that the server confirmation has not caught up
- * with yet, remembered with the real ammo record that made it meaningful. */
-interface PendingAmmoRequest {
+/** A cycle choice with the confirmed record used to resolve its slot request. */
+interface WeaponCycleChoice {
   slot: number;
+  kind: 'default' | 'ammo' | 'trap';
   itemTableId: number;
   quantity: number;
+  instanceId: number;
 }
 
-/** Transient weapon-cycle intent for useItem slots1–4. Each accepted keydown
- * walks the input order and records its requested slot together with the real
- * confirmed ammo record behind it. A confirmation only advances the cursor once
- * it catches up with that in-order list, so an older acknowledgement never drags
- * a still-newer keypress back. An ordinary `itemRejected`, a send failure, an
- * outstanding slot whose confirmed quantity or table changed, a vanished
- * candidate, a direct pick, or any lifecycle reset returns to the current
- * confirmed baseline. HUD still reads the server value only. */
+/** Weapon navigation is separate from server-confirmed ammunition. A trap
+ * cursor stays at its bound usable slot across ammunition acknowledgements
+ * and consumption. Pending ammunition choices settle in request order, while
+ * direct picks, rejected requests and lifecycle changes reset navigation. */
 export class WeaponCycleSelection {
   private desired?: number;
   private server = 1;
-  private pending: PendingAmmoRequest[] = [];
+  private pending: WeaponCycleChoice[] = [];
+  private trapCursor?: WeaponCycleChoice;
   private ammo: readonly AmmoSlotSnapshot[] = [];
+  private inventory?: ResInventory;
 
-  /** Adopt the confirmed authority value and reconcile the request list against
-   * the current confirmed ammo state. Requests the confirmation has passed are
-   * settled; if any outstanding request's real slot disappeared or its quantity
-   * or table moved, the whole intent returns to the confirmed source. */
-  sync(selectedAmmoSlot: number | undefined, ammoSlots: readonly AmmoSlotSnapshot[]): void {
+  /** Reconcile ammunition requests and the independent trap navigation cursor
+   * against their respective confirmed records. */
+  sync(selectedAmmoSlot: number | undefined, ammoSlots: readonly AmmoSlotSnapshot[],
+    inventory: ResInventory | undefined): void {
     const server = selectedAmmoSlot === 2 || selectedAmmoSlot === 3 || selectedAmmoSlot === 4
       ? selectedAmmoSlot : 1;
     if (server !== this.server) {
@@ -83,9 +95,14 @@ export class WeaponCycleSelection {
       if (confirmed >= 0) this.pending = this.pending.slice(confirmed + 1);
       else this.pending = [];
     }
-    if (this.pending.some(request => !this.stillValid(request, ammoSlots))) this.pending = [];
+    if (this.pending.some(request => !this.stillValid(request, ammoSlots, inventory))) this.pending = [];
+    if (this.trapCursor && !this.stillValid(this.trapCursor, ammoSlots, inventory)) {
+      this.trapCursor = undefined;
+    }
     this.ammo = ammoSlots;
-    this.desired = this.pending.length ? this.pending[this.pending.length - 1].slot : server;
+    this.inventory = inventory;
+    this.desired = this.trapCursor?.slot
+      ?? (this.pending.length ? this.pending[this.pending.length - 1].slot : server);
   }
 
   /** A rejected ordinary weapon request (business rejection or send failure)
@@ -93,6 +110,7 @@ export class WeaponCycleSelection {
    * value itself is never set here. */
   reject(): void {
     this.pending = [];
+    this.trapCursor = undefined;
     this.desired = this.server;
   }
 
@@ -102,34 +120,66 @@ export class WeaponCycleSelection {
     this.reject();
   }
 
-  reset(): void {this.desired = undefined; this.server = 1; this.pending = []; this.ammo = [];}
+  reset(): void {
+    this.desired = undefined;
+    this.server = 1;
+    this.pending = [];
+    this.trapCursor = undefined;
+    this.ammo = [];
+    this.inventory = undefined;
+  }
 
-  next(slots: readonly number[], direction: CycleDirection): number | undefined {
-    if (this.pending.length && (this.desired === undefined || !slots.includes(this.desired))) {
+  next(slots: readonly number[], direction: 1 | -1,
+    inventory: ResInventory | undefined): number | undefined {
+    if ((this.pending.length || this.trapCursor)
+        && (this.desired === undefined || !slots.includes(this.desired))) {
       this.reject();
     }
     const next = stepCandidate(slots, this.desired, direction);
     if (next === undefined) return undefined;
     this.desired = next;
-    this.pending.push(this.record(next));
+    const choice = this.record(next, inventory);
+    if (choice.kind === 'trap') {
+      this.trapCursor = choice;
+    } else {
+      this.trapCursor = undefined;
+      // The current confirmed slot needs no pending acknowledgement unless an
+      // older selection request can still change the server's selection.
+      if (next !== this.server || this.pending.length) this.pending.push(choice);
+    }
     return next;
   }
 
-  /** Real confirmed ammo record for the requested slot at request time; slot1 is
-   * the always-available default. */
-  private record(slot: number): PendingAmmoRequest {
-    if (slot === 1) return {slot: 1, itemTableId: 2001, quantity: 1};
+  /** Real confirmed ammo or trap record for the requested slot at request time;
+   * slot1 is the always-available default. */
+  private record(slot: number, inventory: ResInventory | undefined): WeaponCycleChoice {
+    if (slot === 1) return {slot: 1, kind: 'default', itemTableId: defaultAmmoId(), quantity: 1, instanceId: 0};
     const ammo = this.ammo.find(value => value.slot === slot);
-    return {slot, itemTableId: ammo?.itemTableId ?? 0, quantity: ammo?.quantity ?? 0};
+    if (ammo) return {slot, kind: 'ammo', itemTableId: ammo.itemTableId, quantity: ammo.quantity, instanceId: 0};
+    const resolved = inventory ?? this.inventory;
+    const instanceId = (resolved?.hotkeys[slot - 2] ?? 0) >>> 0;
+    const record = instanceId
+      ? resolved?.records.find(value => (value.instanceId >>> 0) === instanceId) : undefined;
+    return {slot, kind: 'trap', itemTableId: record?.itemTableId ?? 0,
+      quantity: record?.battleQuantity ?? 0, instanceId};
   }
 
-  /** A request stays outstanding while its confirmed record still offers the
-   * same usable slot with the same table and quantity. */
-  private stillValid(request: PendingAmmoRequest, ammoSlots: readonly AmmoSlotSnapshot[]): boolean {
-    if (request.slot === 1) return true;
-    const ammo = ammoSlots.find(value => value.slot === request.slot);
-    if (ammo === undefined) return false;
-    if ((ammo.quantity >>> 0) === 0 || classifyItemId(ammo.itemTableId) !== 3) return false;
-    return request.itemTableId === ammo.itemTableId && request.quantity === ammo.quantity;
+  /** Ammo requests retain their original count; a trap cursor retains its
+   * binding while the configured record remains. Exhausted records stay
+   * navigable and are rejected by the ordinary quantity gate. */
+  private stillValid(request: WeaponCycleChoice, ammoSlots: readonly AmmoSlotSnapshot[],
+    inventory: ResInventory | undefined): boolean {
+    if (request.kind === 'default') return true;
+    if (request.kind === 'ammo') {
+      const ammo = ammoSlots.find(value => value.slot === request.slot);
+      if (ammo === undefined) return false;
+      if (classifyItemId(ammo.itemTableId) !== 3) return false;
+      return request.itemTableId === ammo.itemTableId && request.quantity === ammo.quantity;
+    }
+    const instanceId = (inventory?.hotkeys[request.slot - 2] ?? 0) >>> 0;
+    if (!instanceId || instanceId !== request.instanceId) return false;
+    const record = inventory?.records.find(value => (value.instanceId >>> 0) === instanceId);
+    if (!record) return false;
+    return classifyItemId(record.itemTableId) === 4;
   }
 }

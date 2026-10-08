@@ -1,4 +1,4 @@
-"""Publish unchanged source music/sound bytes and original map music mappings."""
+"""Publish source music/sound bytes, reconstructed Type4 cues, and original map music mappings."""
 from hashlib import sha256
 import configparser
 import json
@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 from inspect_assets import read_table
 from export_audio_events import export as export_audio_events
+from reconstruct_battle_media import export_bg07, export_tree_sounds, export_ww051
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'recovery/output/web-assets'
@@ -34,6 +35,11 @@ def main():
         shutil.copyfile(source, target)
         sounds.append({'name': source.stem, 'asset': asset, 'source': str(source),
                        'sha256': sha256(source.read_bytes()).hexdigest()})
+    if not any(entry['name'] == 'BG07' for entry in sounds):
+        sounds.append(export_bg07(OUT))
+    if not any(entry['name'].lower() == 'ww051' for entry in sounds):
+        sounds.append(export_ww051(OUT))
+    sounds.extend(export_tree_sounds(OUT, {entry['name'] for entry in sounds}))
     strings = read_table(ROOT / 'CDTank/Data/table/musicstring.dat')
     names = {int(row['values']['ID']): row['values']['String'] for row in strings['rows']}
     tracks = {entry['name']: entry for entry in music}
@@ -69,7 +75,7 @@ def main():
         'unmatchedMusicIds': [{'id': key, 'name': name} for key, name in names.items()
                               if name.startswith(('GAM', 'UIM')) and name not in tracks]},
         ensure_ascii=False, indent=2) + '\n')
-    print(f'Published {len(music)} original MP3, {len(sounds)} WAV, {len(maps)} map music mappings')
+    print(f'Published {len(music)} original MP3, {len(sounds)} WAV entries, {len(maps)} map music mappings')
 
 
 if __name__ == '__main__':

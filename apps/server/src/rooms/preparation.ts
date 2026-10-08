@@ -29,7 +29,7 @@ export function readyCpus(room: PreparationRoom): void {
 /** Change the vote, returning whether World should start the waiting round. */
 export function setReady(room: PreparationRoom, playerId: string, isReady: boolean,
   minPlayers: number): boolean {
-  if (room.phase === 'FINISHED') throw new Error('请在结算后选择再来一局');
+  if (room.phase === 'FINISHED') throw new Error('请先点击继续返回房间');
   if (room.phase === 'LOADING') throw new Error('正在载入对局，不能更改准备状态');
   if (room.phase === 'WAITING') {
     if (isReady) room.ready.add(playerId);
@@ -59,13 +59,4 @@ export function changeWaitingTeam(room: PreparationRoom, player: RoomParticipant
 export function voteRematch(room: PreparationRoom, playerId: string): void {
   for (const player of room.players.values()) if (player.cpu) room.rematch.add(player.id);
   room.rematch.add(playerId);
-}
-
-/** Commit the next round vote/number; World resets combat and starts it. */
-export function prepareRematch(room: PreparationRoom, minPlayers: number): boolean {
-  if (room.phase !== 'FINISHED' || !canStartRoom(room, minPlayers)
-      || room.rematch.size !== room.players.size) return false;
-  room.round++;
-  room.ready = new Set(room.players.keys());
-  return true;
 }

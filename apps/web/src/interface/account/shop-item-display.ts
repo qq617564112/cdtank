@@ -1,10 +1,10 @@
+import {gameContent} from '../../../../shared/content/catalog';
 import type {ShopItem} from '../../../../shared/protocols/PtlShop';
 
 /** Original439950 offered count; independent of inventory and purchase quantity. */
 export function sourceShopOfferedQuantity(item: Pick<ShopItem, 'itemTableId' | 'durable'>): number | undefined {
   if (item.durable === undefined) return undefined;
-  const eligible = item.itemTableId <= 4000 || item.itemTableId >= 20001 && item.itemTableId <= 21000;
-  return eligible && item.durable !== 0 ? item.durable : 1;
+  return gameContent().items.get(item.itemTableId)?.runtime.values.shopSupplyCount;
 }
 
 /** Original4d96ba prefix/unit/value order and4d5f76 star-coin scale. */

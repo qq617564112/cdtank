@@ -1,14 +1,12 @@
 import {registerStackItemSaleApi} from './stack-item-sale-api';
 import {registerPartSaleApi} from './part-sale-api';
 import {registerPartMaintenanceApi} from './part-maintenance-api';
-import {readFileSync} from 'node:fs';
+import {combatCatalog} from '../battle/catalog';
 import type {WsServer} from 'tsrpc';
-import type {CombatCatalog} from '../../../shared/combat/catalog';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
 import type {TankConfig} from '../config';
 import type {World} from '../world';
-import {webAssetPath} from '../runtime/content-paths';
 import {registerTankTextureApi} from './tank-textures';
 import {registerShopApi} from './shop-api';
 import {registerTankShopApi} from './tank-shop-api';
@@ -36,7 +34,6 @@ export function registerAccountApis(
   restoreRoom: (accountId: string, connectionId: string) => void,
   assertTradeAvailable: (accountId: string) => void,
 ): void {
-  const combatCatalog = JSON.parse(readFileSync(webAssetPath('combat-catalog.json'), 'utf8')) as CombatCatalog;
 
   registerShopApi(server, accounts, world, combatCatalog, accountByConnection, sessionByConnection, broadcastRoomState);
   registerTankShopApi(server, accounts, world, accountByConnection, sessionByConnection, broadcastRoomState);
@@ -138,11 +135,12 @@ export function registerAccountApis(
     try {
       const tank = session && call.req.kind === 'tank'
         ? ownedTank(accountId, call.req.instanceId) : undefined;
-      const profile = accounts.selectRole(accountId, call.req.kind, call.req.instanceId);
+      const profile = accounts.selectRole(accountId, call.req.kind, call.req.instanceId, combatCatalog);
       if (session && tank) {
         world.selectTank(session.playerId, tank);
       }
       if (session) {
+        world.bindInventory(session.playerId, accounts.inventory(accountId));
         world.bindRoleSources(session.playerId, accounts.selectedRoleSources(accountId));
         world.bindEquipmentProfile(session.playerId, profile);
         broadcastRoomState(session.roomId);
@@ -164,17 +162,18 @@ export function registerAccountApis(
       return call.error('请在准备阶段配置装备', {code: 'EQUIPMENT_REJECTED'});
     }
     try {
-      const result = call.req.operation === 'QUERY' ? accounts.equipment(accountId, combatCatalog)
+      const result = call.req.operation === 'QUERY' ? accounts.equipment(accountId, combatCatalog, call.req.tankInstanceId)
         : call.req.target === 'DECORATION' || call.req.target === 'MARK'
-          ? accounts.configureCosmetic(accountId, combatCatalog, call.req.operation, call.req.target, call.req.instanceId)
-          : accounts.configureEquipment(accountId, combatCatalog, call.req.operation, call.req.slot!, call.req.instanceId);
-      if (session && call.req.operation !== 'QUERY') {
+          ? accounts.configureCosmetic(accountId, combatCatalog, call.req.operation, call.req.target, call.req.instanceId, call.req.tankInstanceId)
+          : accounts.configureEquipment(accountId, combatCatalog, call.req.operation, call.req.slot!, call.req.instanceId, call.req.tankInstanceId);
+      if (session && world.canConfigureInventory(session.playerId)) {
         world.bindInventory(session.playerId, accounts.inventory(accountId));
-        world.bindEquipmentProfile(session.playerId, result.profile);
+        world.bindEquipmentProfile(session.playerId, accounts.roleProfile(accountId));
         broadcastRoomState(session.roomId);
       }
       await call.succ({slots: result.slots, slotCount: result.slotCount,
         decorationInstanceId: result.decorationInstanceId, markInstanceId: result.markInstanceId,
+        tankInstanceId: result.tankInstanceId, bindings: result.bindings,
         profile: {bytes: [...result.profile.bytes], strings: result.profile.strings}});
     } catch (error) {
       await call.error(error instanceof Error ? error.message : '部件配置失败', {code: 'EQUIPMENT_REJECTED'});

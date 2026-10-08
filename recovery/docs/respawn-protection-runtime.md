@@ -26,9 +26,11 @@ for the same life return false and do not refresh the deadline. The first spawn 
 not call this API.
 
 `advanceRespawnProtection` clears the state at the authoritative deadline and emits
-one `respawnProtectionEnded` event without a stop-effect message. `clearRespawnProtection`
-is the lifecycle cleanup helper for death, finish, round reset, and Leave; it never
-emits the natural-expiry event.
+one `respawnProtectionEnded` event without a stop-effect message. For an alive status2
+player, this event carries skill30001/effectIndex1/duration0 with the numeric role ID,
+so the existing slot consumer creates the one-shot Effect37. Other states receive no
+second-slot play field. `clearRespawnProtection` is the lifecycle cleanup helper for
+death, finish, round reset, and Leave; it never emits the natural-expiry event.
 
 `apps/server/src/battle/items/invincibility.ts` also owns the shared damage predicate:
 
@@ -80,6 +82,22 @@ The original measured acceptance evidence has not been run; this document record
 the implemented production bridge and its boundaries. It does not claim a measured
 five-second network or browser run.
 
-The source30001 second slot Effect37 is not redefined here. No extra HP restore,
-transparency, attack clearing, sound, composite-skill rewrite, or source ownership
-grant is introduced by this module.
+## Second-slot integration
+
+The adopted Func6 contract sends Effect100 once on real respawn and Effect37 once
+when its five-second protection naturally expires for an alive status2 role. State
+is deleted before the expiry event is sent; repeated advance calls cannot replay it.
+Death, finish, round loading, explicit clear, and Leave only clear the authority state.
+The first-slot retained timer, immunity deadline, and independent item8 state keep
+their current contract. The event has no new type, stop message, or extra timer.
+
+The shared Web event and slot consumers select effects[1] with duration0, creating
+Effect37 as a one-shot on the role's tag0. Its Type4 node2547 requests ww137; the
+published reconstructed WAV is mapped by audio.json and uses the existing
+EffectSound ended/stop/clear lifecycle. Details are recorded in
+[respawn-protection-second-slot-gap.md](respawn-protection-second-slot-gap.md) and
+[reconstructed-ww137-runtime.md](reconstructed-ww137-runtime.md).
+
+Natural expiry is an adopted timing policy. The original second-slot trigger time
+and ww137 audio content are still unavailable; new network/browser/audio acceptance
+remains open. Only resource publication and static review cover this delivery.

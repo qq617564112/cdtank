@@ -41,7 +41,7 @@ import type {ReqShop, ResShop, ShopItem} from '../../shared/protocols/PtlShop';
 import type {HistoryMatch, HistoryParticipant} from './accounts/history';
 import type {RewardGrant} from './accounts/history';
 import {AccountReward} from './accounts/reward';
-import type {AccountGrowth, ResultAward, ResultPlayer} from '../../shared/protocols/MsgRoomSnapshot';
+import type {AccountGrowth, ResultAward} from '../../shared/protocols/MsgRoomSnapshot';
 import type {ResHistory} from '../../shared/protocols/PtlHistory';
 import type {ResPlayerProfile} from '../../shared/protocols/PtlPlayerProfile';
 import {randomBytes, randomUUID} from 'node:crypto';
@@ -59,10 +59,12 @@ import type {CombatCatalog} from '../../shared/combat/catalog';
 import {classifyItemId} from '../../shared/combat/item-hotkeys';
 import {isTreasureItem} from '../../shared/combat/treasure-items';
 import {roleEquipmentSlotCount} from './accounts/equipment/slot-count';
+import {AccountTankEquipment} from './accounts/tank-equipment';
+import {equipmentTarget} from '../../shared/combat/equipment-target';
+import type {EquipmentBinding} from '../../shared/protocols/PtlEquipment';
 import {requestRoleEquipment} from './accounts/equipment/request';
 import {readRoleProfileEquipment, writeRoleProfileEquipment} from './accounts/profile/equipment';
 import {readRoleProfileCosmetics, writeRoleProfileCosmetic} from './accounts/profile/cosmetics';
-import {requestRoleEquipmentUnload} from './accounts/equipment/unload';
 import type {OwnedTankTextures} from '../../shared/combat/role-owned-textures';
 import {readOwnedTankTextures} from '../../shared/combat/role-owned-textures';
 import type {RoleTankTextureConfirmation} from '../../shared/contracts/tank-textures';
@@ -87,6 +89,8 @@ import {
   type GroundItemDiscardResult,
 } from './accounts/ground-items';
 import {readPersistedAccountGrowth, readPersistedPlayerSummary} from './accounts/player-profile';
+import {AccountExitPenalty, type ExitPenaltyReceipt} from './accounts/exit-penalty';
+import type {LeavePenalty} from '../../shared/protocols/PtlLeave';
 import type {ResGmSupport} from '../../shared/protocols/PtlGmSupport';
 import {GmSupportStore} from './support/gm-support';
 import {FamilyStore} from './social/family';
@@ -104,6 +108,7 @@ export class AccountStore {
   private readonly matchHistory: AccountHistory;
   private readonly accountTitle: AccountTitle;
   private readonly matchReward: AccountReward;
+  private readonly exitPenalty: AccountExitPenalty;
   private readonly accountShop: AccountShop;
   private readonly accountTankShop: AccountTankShop;
   private readonly accountTankUpgrade: AccountTankUpgrade;
@@ -121,6 +126,7 @@ export class AccountStore {
   private readonly accountBlacklist: AccountBlacklist;
   private readonly credentials: AccountCredentials;
   private readonly groundItems: GroundItemAccountRuntime;
+  private readonly tankEquipment: AccountTankEquipment;
   private readonly gmSupport: GmSupportStore;
   private readonly families: FamilyStore;
   constructor(path: string) {
@@ -142,10 +148,12 @@ export class AccountStore {
         text TEXT NOT NULL, created_at INTEGER NOT NULL);
     `);
     initializeMaintenanceClocks(this.database);
+    this.tankEquipment = new AccountTankEquipment(this.database);
     this.matchHistory = new AccountHistory(this.database);
     initializeAccountSpending(this.database);
     this.accountTitle = new AccountTitle(this.database);
     this.matchReward = new AccountReward(this.database);
+    this.exitPenalty = new AccountExitPenalty(this.database);
     this.accountShop = new AccountShop(this.database);
     this.accountTankShop = new AccountTankShop(this.database);
     this.accountTankUpgrade = new AccountTankUpgrade(this.database);
@@ -189,15 +197,15 @@ export class AccountStore {
     return this.families.list(familyId);
   }
 
+  gmSupportReplies(accountId: string, afterId = 0): ResGmSupport {
+    return this.gmSupport.replies(accountId, afterId);
+  }
+
   /** Store an authenticated player's question for subsequent operator handling. */
   submitGmQuestion(accountId: string, roomId: string, playerId: string, text: string): void {
     this.database.prepare(`INSERT INTO gm_requests
       (account_id, room_id, player_id, text, created_at) VALUES (?, ?, ?, ?, ?)`)
       .run(accountId, roomId, playerId, text, Date.now());
-  }
-
-  gmSupportReplies(accountId: string, afterId = 0): ResGmSupport {
-    return this.gmSupport.replies(accountId, afterId);
   }
 
   blacklist(accountId: string, request: ReqBlacklist): string[] {
@@ -340,7 +348,7 @@ export class AccountStore {
 
   /** Apply one round's award inside the caller's existing match-history transaction. */
   grantMatchReward(accountId: string, matchId: string, round: number,
-      result: Pick<ResultPlayer, 'combatScore' | 'totalScore' | 'outcome'>): ResultAward {
+      result: Parameters<AccountReward['apply']>[3]): ResultAward {
     return this.matchReward.apply(accountId, matchId, round, result);
   }
 
@@ -349,8 +357,18 @@ export class AccountStore {
     return this.matchReward.growth(accountId);
   }
 
+  quoteExitPenalty(accountId: string, count: number): LeavePenalty {
+    return this.exitPenalty.quote(accountId, count);
+  }
+
+  applyExitPenalty(accountId: string, roomKey: string, round: number, playerId: string,
+      count: number, expectedPoints: number): ExitPenaltyReceipt {
+    return this.exitPenalty.apply(accountId, roomKey, round, playerId, count, expectedPoints);
+  }
+
   rewardReceipt(accountId: string, matchId: string, round: number): ResultAward | undefined {
-    return this.matchReward.receipt(accountId, matchId, round);
+    const award = this.matchReward.receipt(accountId, matchId, round);
+    return award ? {...award, grantedTitles: this.accountTitle.grantedTitles(accountId, matchId, round)} : undefined;
   }
 
   open(token?: string): AccountSession {
@@ -466,7 +484,7 @@ export class AccountStore {
   }
 
   /** Rebuilt selection authority: owned instance required; original profile selectors28/29. */
-  selectRole(accountId: string, kind: 'pet' | 'tank', instanceId: number): RoleProfilePayload {
+  selectRole(accountId: string, kind: 'pet' | 'tank', instanceId: number, catalog: CombatCatalog): RoleProfilePayload {
     if (!Number.isInteger(instanceId) || instanceId < 0 || instanceId > 0xffffffff) {
       throw new Error('角色实例ID无效');
     }
@@ -476,9 +494,18 @@ export class AccountStore {
     if (!(kind === 'pet' ? owned.base : owned.equipment).has(instanceId)) {
       throw new Error('该角色实例不属于当前账户');
     }
-    const view = new DataView(profile.bytes.buffer, profile.bytes.byteOffset, profile.bytes.byteLength);
-    view.setUint32(kind === 'pet' ? 0xa4 : 0xa8, instanceId, true);
-    this.replaceRoleProfile(accountId, profile);
+    this.database.exec('BEGIN IMMEDIATE');
+    try {
+      this.tankEquipment.initialize(accountId, profile, this.inventory(accountId).records);
+      const view = new DataView(profile.bytes.buffer, profile.bytes.byteOffset, profile.bytes.byteLength);
+      view.setUint32(kind === 'pet' ? 0xa4 : 0xa8, instanceId, true);
+      this.tankEquipment.trim(accountId, profile, this.equipmentSlotCount(accountId, profile, catalog));
+      this.replaceRoleProfile(accountId, profile);
+      this.database.exec('COMMIT');
+    } catch (error) {
+      this.database.exec('ROLLBACK');
+      throw error;
+    }
     return profile;
   }
 
@@ -543,16 +570,45 @@ export class AccountStore {
     }
   }
 
-  equipment(accountId: string, catalog: CombatCatalog): {
+  equipment(accountId: string, catalog: CombatCatalog, tankInstanceId?: number): {
     slots: number[]; slotCount: number; decorationInstanceId: number; markInstanceId: number; profile: RoleProfilePayload;
+    tankInstanceId: number; bindings: EquipmentBinding[];
   } {
-    const profile = this.roleProfile(accountId);
-    if (!profile) throw new Error('账户角色资料尚未建立');
-    const sources = this.selectedRoleSources(accountId);
-    if (!sources.equipment) throw new Error('当前战车实例归属无效');
+    const persistedProfile = this.roleProfile(accountId);
+    if (!persistedProfile) throw new Error('账户角色资料尚未建立');
+    if (tankInstanceId !== undefined && (!Number.isInteger(tankInstanceId) || tankInstanceId < 0 || tankInstanceId > 0xffffffff)) {
+      throw new Error('战车实例ID无效');
+    }
+    const profile = {bytes: new Uint8Array(persistedProfile.bytes), strings: persistedProfile.strings};
+    if (tankInstanceId !== undefined) {
+      new DataView(profile.bytes.buffer).setUint32(0xa8, tankInstanceId, true);
+    }
+    const slotCount = this.equipmentSlotCount(accountId, profile, catalog);
+    this.database.exec('BEGIN IMMEDIATE');
+    try {
+      this.tankEquipment.initialize(accountId, persistedProfile, this.inventory(accountId).records);
+      this.tankEquipment.trim(accountId, profile, slotCount);
+      this.replaceRoleProfile(accountId, this.tankEquipment.tankId(profile) === this.tankEquipment.tankId(persistedProfile)
+        ? profile : persistedProfile);
+      this.database.exec('COMMIT');
+    } catch (error) {
+      this.database.exec('ROLLBACK');
+      throw error;
+    }
+    const cosmetics = readRoleProfileCosmetics(profile);
+    return {profile, slots: readRoleProfileEquipment(profile), slotCount,
+      decorationInstanceId: cosmetics.skinInstanceId, markInstanceId: cosmetics.markInstanceId,
+      tankInstanceId: this.tankEquipment.tankId(profile), bindings: this.tankEquipment.bindings(accountId)};
+  }
+
+  private equipmentSlotCount(accountId: string, profile: RoleProfilePayload, catalog: CombatCatalog): number {
+    const owned = this.roleRecords(accountId);
+    const view = new DataView(profile.bytes.buffer, profile.bytes.byteOffset, profile.bytes.byteLength);
+    const selected = owned.equipment.get(view.getUint32(0xa8, true));
+    if (!selected) throw new Error('当前战车实例归属无效');
     const skills = new Map(catalog.skills.map(skill => [skill.skillId, skill]));
-    const fields = sources.equipment.fields;
-    const gear = sources.base?.fields;
+    const fields = selected.fields;
+    const gear = owned.base.get(view.getUint32(0xa4, true))?.fields;
     const slotCount = roleEquipmentSlotCount({capacity: fields.get(0x6c)!,
       parts: [0x58, 0x5c, 0x60].map(offset => fields.get(offset)!)}, gear ? {
       skillIds: Array.from({length: 6}, (_, slot) => gear.get(0x44 + slot * 4)!),
@@ -561,25 +617,25 @@ export class AccountStore {
       const skill = skills.get(id);
       return skill ? {partSlots: skill.attributes.PartSlot} : undefined;
     });
-    const cosmetics = readRoleProfileCosmetics(profile);
-    return {profile, slots: readRoleProfileEquipment(profile), slotCount,
-      decorationInstanceId: cosmetics.skinInstanceId, markInstanceId: cosmetics.markInstanceId};
+    return Math.max(0, Math.min(5, slotCount));
   }
 
   /** Rebuilt part authority using recovered request gates and the five-slot profile contract. */
   configureEquipment(accountId: string, catalog: CombatCatalog, operation: 'EQUIP' | 'UNEQUIP',
-      slot: number, instanceId?: number): ReturnType<AccountStore['equipment']> {
+      slot: number, instanceId?: number, tankInstanceId?: number): ReturnType<AccountStore['equipment']> {
     if (!Number.isInteger(slot) || slot < 0 || slot >= 5) throw new Error('部件槽应为0至4');
-    const current = this.equipment(accountId, catalog);
+    const current = this.equipment(accountId, catalog, tankInstanceId);
     const records = this.inventory(accountId).records;
-    const selected = this.selectedRoleSources(accountId).equipment!;
-    const previous = [...current.slots];
+    const selected = this.roleRecords(accountId).equipment.get(current.tankInstanceId)!;
+    const previous = [...current.slots, current.decorationInstanceId, current.markInstanceId];
     if (operation === 'EQUIP') {
       const record = records.find(item => item.instanceId === instanceId);
       if (!record || record.ownedQuantity <= 0) throw new Error('该部件不属于当前账户');
-      const category = classifyItemId(record.itemTableId);
-      if (category < 8 || category > 12 || !catalog.items.some(item => item.itemTableId === record.itemTableId)) {
+      if (equipmentTarget(record.itemTableId) !== 'PART' || !catalog.items.some(item => item.itemTableId === record.itemTableId)) {
         throw new Error('该物品不是可装备的战车部件');
+      }
+      if (current.bindings.some(binding => binding.instanceId === record.instanceId && binding.tankInstanceId !== current.tankInstanceId)) {
+        throw new Error('该部件已装备在其它战车，请先卸下');
       }
       requestRoleEquipment({partSlotCount: current.slotCount,
         parts: [0x58, 0x5c, 0x60].map(offset => selected.fields.get(offset)!), equipped: current.slots,
@@ -597,30 +653,30 @@ export class AccountStore {
       current.slots[slot] = 0;
     }
     writeRoleProfileEquipment(current.profile, current.slots);
-    this.saveEquipment(accountId, current.profile, records, previous, current.slots);
+    this.saveEquipment(accountId, current.profile, records, previous,
+      [...current.slots, current.decorationInstanceId, current.markInstanceId]);
+    current.bindings = this.tankEquipment.bindings(accountId);
     return current;
   }
 
-  /** Rebuilt category5/7 authority over the recovered current-instance profile fields. */
+  /** Appearance and mark slots share the same tank-instance ownership as stat parts. */
   configureCosmetic(accountId: string, catalog: CombatCatalog, operation: 'EQUIP' | 'UNEQUIP',
-      target: 'DECORATION' | 'MARK', instanceId?: number): ReturnType<AccountStore['equipment']> {
-    const current = this.equipment(accountId, catalog);
+      target: 'DECORATION' | 'MARK', instanceId?: number, tankInstanceId?: number): ReturnType<AccountStore['equipment']> {
+    const current = this.equipment(accountId, catalog, tankInstanceId);
     const records = this.inventory(accountId).records;
     const kind = target === 'DECORATION' ? 'skin' : 'mark';
     const previousId = kind === 'skin' ? current.decorationInstanceId : current.markInstanceId;
     const record = records.find(item => item.instanceId === (operation === 'EQUIP' ? instanceId : previousId));
-    if (!record || record.ownedQuantity <= 0) throw new Error('该装备不属于当前账户');
-    if (classifyItemId(record.itemTableId) !== (kind === 'skin' ? 5 : 7) ||
+    if (!record || (operation === 'EQUIP' && record.ownedQuantity <= 0)) throw new Error('该装备不属于当前账户');
+    if (equipmentTarget(record.itemTableId) !== target ||
         !catalog.items.some(item => item.itemTableId === record.itemTableId)) {
       throw new Error('该物品不能装备到当前槽');
     }
-    if (operation === 'UNEQUIP') {
-      const lookup = (id: number) => records.find(item => item.instanceId === id);
-      if (!requestRoleEquipmentUnload({parts: [], equipped: current.slots,
-        skinInstanceId: current.decorationInstanceId, markInstanceId: current.markInstanceId,
-        lookupSkin: lookup, lookupMark: lookup, lookupPart: lookup}, record, () => {})) {
-        throw new Error('当前装备状态不允许卸下');
-      }
+    if (current.bindings.some(binding => binding.instanceId === record.instanceId && binding.tankInstanceId !== current.tankInstanceId)) {
+      throw new Error('该装备已安装在其它战车，请先卸下');
+    }
+    if (operation === 'UNEQUIP' && record.state !== 2) {
+      throw new Error('当前装备状态不允许卸下');
     }
     const nextId = operation === 'EQUIP' ? record.instanceId : 0;
     writeRoleProfileCosmetic(current.profile, kind, nextId);
@@ -629,6 +685,7 @@ export class AccountStore {
     else current.markInstanceId = nextId;
     const confirmed = [...current.slots, current.decorationInstanceId, current.markInstanceId];
     this.saveEquipment(accountId, current.profile, records, previous, confirmed);
+    current.bindings = this.tankEquipment.bindings(accountId);
     return current;
   }
 
@@ -637,12 +694,16 @@ export class AccountStore {
     // Persist the confirmed slots and affected equipment markers as one operation.
     this.database.exec('BEGIN');
     try {
-      this.replaceRoleProfile(accountId, profile);
+      this.tankEquipment.save(accountId, profile);
+      if (this.tankEquipment.tankId(this.roleProfile(accountId)!) === this.tankEquipment.tankId(profile)) {
+        this.replaceRoleProfile(accountId, profile);
+      }
+      const installed = new Set(this.tankEquipment.bindings(accountId).map(binding => binding.instanceId));
       const affected = new Set([...previous, ...confirmed]);
       const update = this.database.prepare('UPDATE inventory SET record = ? WHERE account_id = ? AND instance_id = ?');
       for (const record of records) {
         if (!affected.has(record.instanceId)) continue;
-        record.state = confirmed.includes(record.instanceId) ? 2 : 0;
+        record.state = installed.has(record.instanceId) ? 2 : 0;
         update.run(JSON.stringify(record), accountId, record.instanceId);
       }
       this.database.exec('COMMIT');

@@ -1,0 +1,77 @@
+{
+  "name": "回旋驱动器",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 11,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 16017,
+  "key": "item-16017",
+  "description": "回旋速度+12，额外装甲-20。",
+  "prices": {
+    "money": 1000,
+    "tokens": 100
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 11,
+  "inventoryCategory": 5,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": null,
+    "modelId": 13071,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 13071,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 13077,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "common"
+  },
+  "equipmentTarget": "PART"
+}

@@ -4,6 +4,10 @@
 规则见 `title-client-business-design.md` 与 `title-domain-runtime.md`；此处只写已落地的持久结构、
 事务边界、投影路径与来源分界。
 
+趣味战斗称号159–181与原目录共同参与正式授予、拥有清单、佩戴和结算提示。
+新增单场事件、滚动射击和战绩窗口、地图胜场的获取规则与统计来源见
+`creative-battle-titles.md`。
+
 ## 持久结构
 
 `apps/server/src/accounts/title.ts` 拥有三张明确类型表（正常 `CREATE TABLE IF NOT EXISTS`，

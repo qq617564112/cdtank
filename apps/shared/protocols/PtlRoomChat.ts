@@ -1,4 +1,4 @@
-/** Rebuilt room (0) or team (1) text channel; original IDs remain unrecovered. */
+/** Room (0), team (1), or original GM question submission (6). */
 export interface ReqRoomChat {
   channel: number;
   text: string;

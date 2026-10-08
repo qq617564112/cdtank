@@ -5,10 +5,12 @@ import {roleMovementElapsed} from '../../../shared/movement/movement-time';
 import {moveRoleThroughNavigation} from '../../../shared/movement/movement-wrapper';
 import {sampleRoleNavigation} from '../../../shared/movement/movement-navigation';
 import {turnStationaryRolePose} from '../../../shared/movement/keyboard-turn';
-import {normalizeRoleMovementDirection, rotateRoleMovementDirection,
-  type RoleMovementMathInput, type RoleMovementPose} from '../../../shared/movement/movement-math';
+import type {RoleMovementMathInput, RoleMovementPose} from '../../../shared/movement/movement-math';
 import {constrainTankPose, tankObstacles} from '../../../shared/movement/tank-collision';
 import {ClientBattlefield} from './client-battlefield';
+import {hasFixedTurret} from '../../../shared/combat/tank-turret';
+import {advanceTankVertical, initialTankVerticalState,
+  type TankVerticalState} from '../../../shared/movement/tank-vertical';
 
 const DIMENSIONS = {width: 49, depth: 52};
 type Axes = Pick<MsgPlayerInput, 'move' | 'turn' | 'aim'>;
@@ -31,6 +33,7 @@ export class LocalTankMotion {
   private command: RoleMovementMathInput['command'] = 0;
   private playing = false;
   private active = false;
+  private verticalState: TankVerticalState = {velocity: 0, airborne: false};
 
   /** Shared server-clock gate; false during the round intro before the battle start. */
   setActive(active: boolean): void {
@@ -42,6 +45,7 @@ export class LocalTankMotion {
     this.moving = false;
     this.command = 0;
     this.active = false;
+    this.verticalState = {velocity: 0, airborne: false};
   }
 
   synchronize(snapshot: MsgRoomSnapshot, playerId?: string): void {
@@ -55,14 +59,21 @@ export class LocalTankMotion {
         || snapshot.phase !== 'PLAYING' || player.alive &&
         (!previous?.alive || previous.isAutopilot || previous.deaths !== player.deaths || previous.tankId !== player.tankId
           || snapshot.phase === 'PLAYING' && !this.playing
+          || player.roleDisguise?.startedAt !== previous?.roleDisguise?.startedAt
           || constrainTankPose(poseFromPlayer(player), this.pose, tankObstacles(player.id, snapshot.players)) !== this.pose)) {
       this.pose = poseFromPlayer(player);
       this.yaw = player.yaw;
       this.bodyYaw = player.bodyYaw ?? player.yaw;
       this.aim = player.aim;
       this.command = 0;
+      this.verticalState = initialTankVerticalState(player.y,
+        this.field.navigation?.sample(player.x, player.z)?.height);
     }
     this.player = player;
+    if (player && hasFixedTurret(player.tankId)) {
+      const aim = this.bodyYaw - this.yaw;
+      this.aim = Math.atan2(Math.sin(aim), Math.cos(aim));
+    }
     this.round = round;
     this.playing = snapshot.phase === 'PLAYING';
   }
@@ -107,6 +118,8 @@ export class LocalTankMotion {
         if (sampleRoleNavigation(grid, candidate, command, DIMENSIONS.width, DIMENSIONS.depth).accepted) acceptedCommand = command;
         else candidate = initial;
       }
+      // Arc commands rebuild position with y=0; keep the current vertical position.
+      candidate.position.y = initial.position.y;
       const steps = Math.ceil(Math.hypot(candidate.position.x - initial.position.x, candidate.position.z - initial.position.z) / 6);
       const startYaw = Math.atan2(initial.forward.x, initial.forward.z);
       const endYaw = Math.atan2(candidate.forward.x, candidate.forward.z);
@@ -122,47 +135,38 @@ export class LocalTankMotion {
           break;
         }
       }
-      candidate.position.y = grid.sample(candidate.position.x, candidate.position.z)?.height ?? initial.position.y;
-      const constrained = constrainTankPose(initial, candidate, tankObstacles(player.id, players));
-      if (constrained === initial) acceptedCommand = 0;
-      candidate = constrained;
-      this.pose = candidate;
-      this.yaw = Math.atan2(candidate.look.x, candidate.look.z);
-      this.bodyYaw = Math.atan2(candidate.forward.x, candidate.forward.z);
+      candidate = constrainTankPose(initial, candidate, tankObstacles(player.id, players));
+      if (candidate === initial) acceptedCommand = 0;
+      const ground = grid.sample(candidate.position.x, candidate.position.z)?.height;
+      const vertical = advanceTankVertical(candidate.position, grid, this.verticalState, dt,
+        ground === undefined ? 0 : Math.max(0, ground - initial.position.y));
+      this.verticalState = vertical.state;
+      if (!vertical.accepted) acceptedCommand = 0;
+      this.pose = vertical.accepted ? candidate : initial;
+      this.yaw = Math.atan2(this.pose.look.x, this.pose.look.z);
+      this.bodyYaw = Math.atan2(this.pose.forward.x, this.pose.forward.z);
       this.command = acceptedCommand;
     }
-    this.advanceTurret(axes.aim, dt, players);
+    if (!(command !== 0 && permitted)) {
+      const ground = grid.sample(this.pose!.position.x, this.pose!.position.z)?.height;
+      const vertical = advanceTankVertical(this.pose!.position, grid, this.verticalState, dt,
+        ground === undefined ? 0 : Math.max(0, ground - this.pose!.position.y));
+      this.verticalState = vertical.state;
+    }
+    this.advanceTurret(axes.aim, dt);
     this.moving = Math.hypot(this.pose!.position.x - initial.position.x, this.pose!.position.z - initial.position.z) > .0001;
   }
 
-  private advanceTurret(aimInput: number, dt: number, players: readonly PlayerSnapshot[]): void {
-    if (aimInput === 0) return;
-    const pose = this.pose!, movement = this.player!.movement!;
-    const turretYaw = this.yaw + this.aim;
-    const input: RoleMovementMathInput = {...pose, look: direction(turretYaw),
-      command: roleMovementCommand(0, aimInput) as RoleMovementMathInput['command'],
-      tankType: movement.tankType as RoleMovementMathInput['tankType'], move: movement.speed,
-      turn: movement.turn * Math.abs(aimInput), dt};
-    const result = moveRoleThroughNavigation(input, this.field.navigation, DIMENSIONS);
-    if (!result.accepted) return;
-    const forward = result.pose.forward;
-    const bodyDelta = Math.atan2(forward.x * pose.forward.z - forward.z * pose.forward.x,
-      forward.x * pose.forward.x + forward.z * pose.forward.z);
-    if (bodyDelta !== 0 && !movement.canTurn) return;
-    let look = pose.look;
-    if (input.tankType === 4) look = {...forward};
-    else if (bodyDelta !== 0) {
-      look = rotateRoleMovementDirection(normalizeRoleMovementDirection({...look}), bodyDelta);
-      look.x = Math.max(-1, Math.min(look.x, 1));
-      look.z = Math.max(-1, Math.min(look.z, 1));
+  private advanceTurret(aimInput: number, dt: number): void {
+    if (hasFixedTurret(this.player!.tankId)) {
+      const aim = this.bodyYaw - this.yaw;
+      this.aim = Math.atan2(Math.sin(aim), Math.cos(aim));
+      return;
     }
-    const candidate = {position: pose.position, look, forward};
-    if (bodyDelta !== 0 && constrainTankPose(pose, candidate, tankObstacles(this.player!.id, players)) !== candidate) return;
-    this.pose = candidate;
-    this.yaw = Math.atan2(look.x, look.z);
-    this.bodyYaw = Math.atan2(forward.x, forward.z);
-    const aim = Math.atan2(result.pose.look.x, result.pose.look.z) - this.yaw;
-    this.aim = input.tankType === 4 ? 0 : Math.atan2(Math.sin(aim), Math.cos(aim));
+    if (aimInput === 0) return;
+    const angle = Math.fround(Math.fround(this.player!.movement!.turn * aimInput) * dt);
+    const aim = this.aim + angle;
+    this.aim = Math.atan2(Math.sin(aim), Math.cos(aim));
   }
 
   clear(): void {
@@ -173,5 +177,6 @@ export class LocalTankMotion {
     this.playing = false;
     this.active = false;
     this.command = 0;
+    this.verticalState = {velocity: 0, airborne: false};
   }
 }

@@ -33,6 +33,6 @@ actor pose 插值和队伍映射不变。
 
 ## 来源缺口与验证边界
 
-13111/13112 的合法取得入口尚未恢复：已知 item、pet 和 `PetSkill` 没有引用，原 part 表也未冻结。
+13111/13112 已通过采用的正价PART商品接合法取得／装备入口，详[radar-ammo-sources-runtime.md](radar-ammo-sources-runtime.md)。原已知item、pet和`PetSkill`没有这些引用，原part表／server授予来源仍未冻结；新来源不替代原来源证据。
 因此没有真实 `selectedSkillIds` 来源时两个被动效果不生效，不从 13113 或其它雷达部件映射 grant。
 共享谓词和最小地图消费者尚未在真实 mode 4/5 干扰/探测组合中实测。

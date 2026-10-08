@@ -150,20 +150,17 @@ base与screen各加载一次，并分别为当前map的每个放置实例化。`
 - `apps/web/src/assets/scenes/scene-sequence.ts`运行时与`scene-preview.ts`的
   load/advance/clear接口已接入。
 - base、screen与`001–004`普通GLB/PNG为已出版资源，直接复用。
-- `scene-sequence05023.json`的producer代码尚未执行，metadata尚未出版；因此不能声称
-  实际页面资源已可加载、可见或完成普通运行验收。
+- `scene-sequence05023.json`已由定向publisher发布，四条精确placement的resolved已同步；
+  实际页面可加载性、可见性与普通运行验收仍待实测。
 - 本批最终范围已完成一次集中静态走查，不代替实际页面、双端、高清或原来源验收。
 
 ## Hook与WaterFall
 
-`SYcScnObjHook`与`SYcScnObjWaterFall`仍有原精确placement和源资源，但缺原
-loader/update/draw、时序、节点赋值、挂点、材质或循环事实。本范围不实现、不按名称造
-Gate/Switch、不补材质或挂点，也不把0016 WaterFall当作0002 `SceneWater`替名。0002
-`SceneWater`已完成，本范围不追加其验收或改动。
+0012 Hook与0016 WaterFall已接专属消费者和metadata，见[scene-hook-waterfall-runtime.md](scene-hook-waterfall-runtime.md)。原资源事实与采用的挂点/循环/时基分别登记；0002 SceneWater沿既有独立消费者。
 
 ## Limitations
 
-- `scene-sequence05023.json`未在producer实际执行中出版，实际页面加载、可见性与
+- `scene-sequence05023.json`已发布，实际页面加载、可见性与
   `resolved`后的普通运行尚未实测。
 - 原Windows性能计数器provider、单位与首帧时刻未恢复；`performance.now()`是明确Web
   采用时钟，不声明原Windows等价。
@@ -171,4 +168,4 @@ Gate/Switch、不补材质或挂点，也不把0016 WaterFall当作0002 `SceneWa
   未验。
 - 原screen模型初始材质赋值、额外shader/混合/挂点/声音/碰撞语义未从来源恢复，本范围
   不推断。
-- Hook/WaterFall的原loader/update/draw与placement行为合同仍开放。
+- Hook/WaterFall原loader/update/draw完整合同与采用规则的实测仍开放。

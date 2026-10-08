@@ -15,6 +15,7 @@ export function HomeOwnedPetRowContent({ui, name, petId, petType, petSize, curre
     `set:gy0 image:data\\ui\\gy\\maogou_${petId}.tga`);
   return <>
     <span className="home-owned-pet-row-icon" data-home-owned-pet-icon="" aria-hidden="true"
+      data-pet-thumbnail={icon?.['data-pet-thumbnail']}
       data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: icon?.style.backgroundImage}} />
     {current && <HomeRoleRowStatusBadge ui={ui} status="current"/>}
     <span className="home-owned-pet-row-name" data-home-owned-pet-name=""><SourceFeedbackText text={name}/></span>

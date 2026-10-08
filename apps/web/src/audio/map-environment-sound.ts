@@ -1,6 +1,7 @@
 import {Camera, Vector3} from '@babylonjs/core';
 import type {EffectVec3} from '../render/effects/common/types';
 import type {SkillSoundCatalog} from './effect-skill-sound';
+import {FIELD_ROAD_HD} from '../../../shared/maps/field-road-hd';
 
 interface EnvironmentSoundPlacement {
   id: string;
@@ -38,7 +39,7 @@ export class MapEnvironmentSound {
     if (!this.voices.size) return;
     if (this.context.state === 'suspended') void this.context.resume();
     for (const voice of this.voices.values()) {
-      if (voice.audio.paused) void voice.audio.play().catch(() => {});
+      if (voice.audio.paused) this.startVoice(voice);
     }
   };
 
@@ -49,7 +50,7 @@ export class MapEnvironmentSound {
 
   async load(mapId: number): Promise<void> {
     this.clear();
-    if (!Number.isInteger(mapId) || mapId < 1 || mapId > 25) return;
+    if (!Number.isInteger(mapId) || mapId < 1 || (mapId > 25 && mapId !== FIELD_ROAD_HD.id)) return;
     const revision = this.revision;
     const [map, catalog] = await Promise.all([
       this.json<EnvironmentSoundMap>(`/scene-environment-sound-${String(mapId).padStart(4, '0')}.json`),
@@ -86,10 +87,21 @@ export class MapEnvironmentSound {
       source.connect(panner);
       panner.connect(gain);
       gain.connect(this.master);
-      this.voices.set(placement.id, {placement, audio, source, panner, gain});
+      const voice: EnvironmentVoice = {placement, audio, source, panner, gain};
+      this.voices.set(placement.id, voice);
+      audio.onended = () => this.stop(placement.id);
+      audio.onerror = () => this.stop(placement.id);
       this.update();
-      void audio.play().catch(() => {});
+      this.startVoice(voice);
     }
+  }
+
+  private startVoice(voice: EnvironmentVoice): void {
+    void voice.audio.play().catch(error => {
+      if (error?.name !== 'NotAllowedError' && this.voices.get(voice.placement.id) === voice) {
+        this.stop(voice.placement.id);
+      }
+    });
   }
 
   private async json<T>(path: string): Promise<T> {
@@ -131,11 +143,15 @@ export class MapEnvironmentSound {
   private stop(id: string): void {
     const voice = this.voices.get(id);
     if (!voice) return;
+    this.voices.delete(id);
+    voice.audio.onended = null;
+    voice.audio.onerror = null;
     voice.audio.pause();
+    voice.audio.removeAttribute('src');
+    voice.audio.load();
     voice.source.disconnect();
     voice.panner.disconnect();
     voice.gain.disconnect();
-    this.voices.delete(id);
   }
 
   clear(): void {

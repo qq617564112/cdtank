@@ -4,7 +4,7 @@ An ownership-validated selected MyPet record supplies an independent battle skil
 
 Preparation captures all fields in a separate map only when the six skill IDs and six ranks exist. Reselecting replaces or clears the source. Existing participants keep it during PLAYING and FINISHED; Leave clears it. A new room participant starts without a binding until normal account selection is resolved.
 
-The same source feeds life, ammunition, movement and armor through the existing skill selector. Its recovered passive predicate and source order remain unchanged. The current sixteen skill slots are not modified, and active pet abilities are not installed. Room snapshots expose current slots, ranked source entries and the selected skill IDs.
+The same source feeds life, ammunition, movement and armor through the existing skill selector. Ranked passive sources and life-local copied sources select the strongest rank in a shared family. Per-player pet lifecycle hooks route conditional and triggered abilities from each pet's JSON configuration, using a separate runtime skill source without modifying the current sixteen slots. Room snapshots expose current slots, ranked source entries and all selected skill IDs. Runtime rules are documented in pet-battle-lifecycle.md.
 
 ## Validation
 
@@ -14,4 +14,4 @@ The ordinary network representative uses a real Tank52 purchase and selected Pet
 
 ## Limitations
 
-Original role+a0 installation, active pet abilities, skill growth, full damage authority and complete restoration remain open.
+Original role+a0 installation, original server ability dispatch, pet effects and full restoration remain open. The lifecycle implementation has only static source review; existing network evidence below does not validate the new triggered and conditional consumers.

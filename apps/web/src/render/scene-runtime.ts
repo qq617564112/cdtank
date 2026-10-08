@@ -1,10 +1,14 @@
-import {ArcRotateCamera,Color3,Color4,Engine,HemisphericLight,Scene,Vector3} from '@babylonjs/core';
+import {ArcRotateCamera,Color3,Color4,Engine,HemisphericLight,Scene,Tools,Vector3} from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
+import {imageResourceUrl} from '../assets/image-cache';
 import {getDisplayPreferences, subscribeDisplayPreferences} from '../interface/settings/display-preferences';
+import {battleUiLayer} from './battle-ui-layer';
 
 /** Babylon owns its frame loop and resources independently of React. */
 export function createSceneRuntime(canvas: HTMLCanvasElement) {
+  Tools.PreprocessUrl=imageResourceUrl;
   const engine=new Engine(canvas,true,{},true),scene=new Scene(engine);
+  const battleUi=battleUiLayer(scene);
   const displayScale=(): number => (getDisplayPreferences().highPrecision ? 1 : 2)
     / (window.devicePixelRatio || 1);
   const applyDisplayScale=(): void=>{engine.setHardwareScalingLevel(displayScale());};
@@ -22,7 +26,7 @@ export function createSceneRuntime(canvas: HTMLCanvasElement) {
     if (engine.getHardwareScalingLevel() !== scale) engine.setHardwareScalingLevel(scale);
   };
   window.addEventListener('resize',resize);
-  engine.runRenderLoop(()=>{scene.render();});
+  engine.runRenderLoop(()=>{scene.render();battleUi.render();});
   return {scene,camera,dispose(): void {
     window.removeEventListener('resize',resize);
     unsubscribeDisplay();

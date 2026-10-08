@@ -1,9 +1,13 @@
+import {gameContent} from '../../../../shared/content/catalog';
+import {isTreasureItem} from '../../../../shared/combat/treasure-items';
+import {loadCombatCatalog} from '../../content';
 import './cpu-loadout.css';
 import {useEffect, useRef, useState} from 'react';
 import type {PlayerSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import type {CpuLoadoutItem} from '../../../../shared/protocols/PtlCpu';
 import type {CombatCatalog, CombatItemDefinition} from '../../../../shared/combat/catalog';
-import {CPU_LOADOUT_ITEM_IDS} from '../../../../shared/combat/cpu-loadout';
+import {loadStaticJson} from '../../assets/static-resources';
+import {cpuLoadoutItemIds} from '../../../../shared/combat/cpu-loadout';
 
 interface CpuLoadoutViewProps {
   player: PlayerSnapshot;
@@ -12,15 +16,10 @@ interface CpuLoadoutViewProps {
 }
 interface SlotDraft {slot: number; itemTableId: number; quantity: string;}
 const SLOTS = [2, 3, 4, 5, 6, 7, 8];
-const TREASURE_ITEM_IDS = [20001, 20002] as const;
 const TREASURE_QUANTITY_MAX = 0xffffffff;
 
-function isTreasureItemId(itemTableId: number): boolean {
-  return itemTableId === TREASURE_ITEM_IDS[0] || itemTableId === TREASURE_ITEM_IDS[1];
-}
-
 function quantityLimit(item: CombatItemDefinition): number {
-  return isTreasureItemId(item.itemTableId) ? TREASURE_QUANTITY_MAX : item.battleUseMax;
+  return isTreasureItem(item.itemTableId) ? TREASURE_QUANTITY_MAX : item.battleUseMax;
 }
 
 export function CpuLoadoutView(props: CpuLoadoutViewProps) {
@@ -39,25 +38,20 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
   const generation = useRef(0);
   useEffect(() => {
     const current = ++generation.current;
-    const controller = new AbortController();
-    void fetch('/combat-catalog.json', {signal: controller.signal}).then(async response => {
-      if (!response.ok) throw new Error(`道具目录读取失败：${response.status}`);
-      const catalog: CombatCatalog = await response.json();
+    void loadCombatCatalog().then(catalog => {
       if (generation.current === current) {
-        setItems(catalog.items.filter(item => CPU_LOADOUT_ITEM_IDS.includes(item.itemTableId)
-          || item.itemTableId === 13 || isTreasureItemId(item.itemTableId)));
+        setItems(catalog.items.filter(item => cpuLoadoutItemIds().includes(item.itemTableId)));
       }
     }).catch(error => {
-      if (!controller.signal.aborted && generation.current === current) {
+      if (generation.current === current) {
         setStatus(error instanceof Error ? error.message : String(error));
       }
     });
-    return () => {generation.current++; controller.abort();};
+    return () => {generation.current++;};
   }, []);
   const allowed = (slot: number) => items?.filter(item => slot <= 4
-    ? item.itemTableId === 2007 || item.itemTableId === 2011
-    : (item.itemTableId >= 1 && item.itemTableId <= 11) || item.itemTableId === 502
-      || item.itemTableId === 13 || isTreasureItemId(item.itemTableId)) ?? [];
+    ? item.itemType === 3 || item.itemType === 4
+    : !!gameContent().items.get(item.itemTableId)?.runtime.use) ?? [];
   async function save() {
     if (busy || requestPending.current || !items) return;
     const loadout: CpuLoadoutItem[] = [];
@@ -93,7 +87,7 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
           const item = items?.find(value => value.itemTableId === row.itemTableId);
           const confirmed = player.cpuLoadout?.find(value => value.slot === row.slot);
           return <div key={row.slot} data-cpu-loadout-slot={row.slot}>
-            <label>槽{row.slot} {row.slot <= 4 ? '弹药' : '道具'}
+            <label>槽{row.slot} {row.slot <= 4 ? '武器' : '道具'}
               <select data-cpu-loadout-item="" value={row.itemTableId} disabled={busy || pending || !items}
                 onChange={event => {
                   const id = Number(event.currentTarget.value);

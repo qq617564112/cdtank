@@ -1,9 +1,10 @@
+import {gameContent} from '../../../../shared/content/catalog';
 import type {TankView} from './tank-view';
 import type {EffectRuntime} from '../../render/effects/runtime/effect-runtime';
 
 export interface AmmoBurnPresentationState {
-  itemId: 2007;
-  skillId: 4005;
+  itemId: number;
+  skillId: number;
   startedAt: number;
   expiresAt: number;
 }
@@ -40,7 +41,7 @@ export class AmmoBurnPresentation {
     const currentEnded = new Map<string, Set<number>>();
     for (const player of players) {
       const burn = player.ammoBurn;
-      if (!player.alive || burn?.itemId !== 2007 || burn.skillId !== 4005) continue;
+      if (!player.alive || !burn || gameContent().items.get(burn.itemId)?.runtime.hit !== 'burn') continue;
       if (this.ended.get(player.id)?.has(burn.startedAt)) {
         let startedAt = currentEnded.get(player.id);
         if (!startedAt) {startedAt = new Set(); currentEnded.set(player.id, startedAt);}
@@ -51,7 +52,7 @@ export class AmmoBurnPresentation {
     const present = new Set<string>();
     if (playing) for (const player of players) {
       const burn = player.ammoBurn;
-      if (!player.alive || burn?.itemId !== 2007 || burn.skillId !== 4005) continue;
+      if (!player.alive || !burn || gameContent().items.get(burn.itemId)?.runtime.hit !== 'burn') continue;
       const view = this.role(player.id);
       if (!view || view.root.isDisposed()) continue;
       present.add(player.id);
@@ -61,9 +62,11 @@ export class AmmoBurnPresentation {
       // its real startedAt keeps the stopped instance from restarting before the snapshot drops it.
       if (this.ended.get(player.id)?.has(burn.startedAt)) continue;
       this.remove(player.id);
-      const effect = this.runtime.spawnAttachedEffect(view, 14, 0, false);
+      const slot = gameContent().skills.get(burn.skillId)?.effects[0];
+      if (!slot) continue;
+      const effect = this.runtime.spawnAttachedEffect(view, slot.effectId, slot.tag, false);
       if (!effect) continue;
-      const sound = this.runtime.playSkillSound(view, 'SE03', -1);
+      const sound = this.runtime.playSkillSound(view, slot.sound, -1);
       this.active.set(player.id, {startedAt: burn.startedAt, view, effect, sound});
     }
     for (const id of this.active.keys()) if (!present.has(id)) this.remove(id);

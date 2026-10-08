@@ -1,0 +1,79 @@
+{
+  "name": "缎带蝴蝶结（绿）",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10009,
+  "key": "item-10009",
+  "description": "绿茵茵的蝴蝶结，适合大方可爱的性格。",
+  "prices": {
+    "money": 1000,
+    "tokens": 100
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10006/10006.glb",
+    "modelId": 10006,
+    "modelType": 1,
+    "texture": "10009A",
+    "iconId": 10009,
+    "textures": [
+      "Data/accessory/10006/10009A.png"
+    ],
+    "sourceModel": "Data/accessory/10006/10006.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10006/10009A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

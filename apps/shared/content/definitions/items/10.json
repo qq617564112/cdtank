@@ -1,0 +1,91 @@
+{
+  "name": "南瓜变变变",
+  "getMethod": 0,
+  "durable": 0,
+  "breakMode": 2,
+  "itemType": 1,
+  "battleUseMax": 5,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "item",
+  "id": 10,
+  "key": "disguise",
+  "description": "伪装成一个金黄的大南瓜，不要开炮，否则会恢复原形哦。",
+  "prices": {
+    "money": 0,
+    "tokens": 0
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 1,
+  "inventoryCategory": 1,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": true,
+  "trade": 1,
+  "resources": {
+    "model": "Data/scnobj/00010/00010.glb",
+    "modelId": 10,
+    "modelType": 1,
+    "texture": "A",
+    "iconId": 10,
+    "textures": [
+      "Data/scnobj/00010/00010A.png"
+    ],
+    "sourceModel": "Data/scnobj/00010/00010.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/scnobj/00010/00010A.png",
+    "disguise": {
+      "name": "obj05428",
+      "model": "Data/scnobj/obj05428/obj05428.glb",
+      "sourceModel": "Data/scnobj/obj05428/obj05428.POL",
+      "textures": [
+        "Data/scnobj/obj05428/obj05428.png"
+      ],
+      "meshName": "object01/0",
+      "transparent": false
+    }
+  },
+  "runtime": {
+    "values": {
+      "replacementPetId": 103,
+      "shopSupplyCount": 1,
+      "cpuMaxHpRatio": 0.5,
+      "battleRewardOrder": 20,
+      "breachDropOrder": 7
+    },
+    "skillRoles": {
+      "primary": 10,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "use": "disguise",
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

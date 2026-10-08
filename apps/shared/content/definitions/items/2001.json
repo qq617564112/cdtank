@@ -1,0 +1,87 @@
+{
+  "name": "普通炮弹",
+  "getMethod": 0,
+  "durable": 0,
+  "breakMode": 2,
+  "itemType": 3,
+  "battleUseMax": 255,
+  "effects": [
+    {
+      "effectId": 4,
+      "sound": "GA07",
+      "tag": 0,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 6,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "ammo",
+  "id": 2001,
+  "key": "defaultAmmo",
+  "description": "最普通的炮弹。",
+  "prices": {
+    "money": 0,
+    "tokens": 0
+  },
+  "shop": {
+    "available": false,
+    "group": "consumable"
+  },
+  "category": 3,
+  "inventoryCategory": 2,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 0,
+  "resources": {
+    "model": null,
+    "modelId": 2001,
+    "modelType": 1,
+    "texture": "0",
+    "iconId": 2001,
+    "textures": [],
+    "sourceModel": null,
+    "modelStatus": "unresolved",
+    "texturePath": null,
+    "fireSound": {
+      "id": 48,
+      "asset": "audio/sound/GA07.wav"
+    }
+  },
+  "runtime": {
+    "values": {
+      "baseDamage": 35,
+      "attackScale": 0.08,
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 2001,
+      "secondary": 4020,
+      "tertiary": 0
+    },
+    "defaultAmmo": true,
+    "query": "instant",
+    "projectileSpeed": 360,
+    "range": 1000,
+    "muzzleForward": 30,
+    "muzzleHeight": 20,
+    "sceneResult": false,
+    "remoteShotResult": true,
+    "victimShotResult": true,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false
+  }
+}

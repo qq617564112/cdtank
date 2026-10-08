@@ -1,3 +1,4 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import './lobby-intimate-scrollbar.css';
 import {useEffect, useRef, useState, type RefObject, type PointerEvent} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
@@ -16,8 +17,12 @@ export function LobbyIntimateScrollbar({list, ui, properties}: {
     const match = /^set:(\S+) image:(.+)$/.exec(properties[property] ?? '');
     const sets = ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
     const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
-    const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-    return {'data-source-asset': asset, style: {backgroundImage: asset ? `url('/${asset}')` : undefined}};
+    const image = set?.images.find(image => image.Name === match?.[2]);
+    const asset = image?.asset;
+    return {'data-source-asset': asset, style: {backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined,
+      ...(image && property.endsWith('BackgroundImage') ? {
+        backgroundSize: `${image.Width}px ${image.Height}px`, backgroundPosition: 'left top', backgroundRepeat: 'repeat',
+      } : {})}};
   };
   const refresh = () => {
     const element = list.current;
@@ -25,7 +30,7 @@ export function LobbyIntimateScrollbar({list, ui, properties}: {
     const height = element.clientHeight;
     if (!height) {end(); setMetrics(value => ({...value, visible: false})); return;}
     const visible = element.scrollHeight > height;
-    element.style.paddingRight = visible ? '8.5px' : '';
+    element.style.paddingRight = visible ? `${element.clientWidth * .05}px` : '';
     const scale = element.getBoundingClientRect().height / height;
     const extent = Math.max(0, element.scrollHeight - height), track = Math.max(0, height - 52);
     const minimum = 53 / scale;
@@ -62,7 +67,7 @@ export function LobbyIntimateScrollbar({list, ui, properties}: {
     };
   }, []);
   return <div ref={root} className="lobby-intimate-scrollbar" data-lobby-intimate-scrollbar="" hidden={!metrics.visible}
-    data-scroll-geometry-binding="web-list-dimensions" data-scroll-width-binding="web-8.5"
+    data-scroll-geometry-binding="web-list-dimensions" data-scroll-width-binding="relative-list-width"
     data-scroll-minimum-binding="web-53-physical-pixels" data-scroll-step-binding="web-18-row" {...picture('VertScrollbarBackgroundImage')}
     style={{...picture('VertScrollbarBackgroundImage').style, height: metrics.height}}
     onKeyDown={event => {

@@ -31,7 +31,7 @@ export function RoomEditDialog({snapshot, maps, editor, close}: RoomEditDialogPr
     friendlyFire: !!snapshot.match!.friendlyFire,
   }));
   const map = maps.find(value => value.mode === draft.mode && value.mapId === draft.mapId);
-  return selecting ? <RoomMapSelector open maps={maps} busy={false} close={close} closeOnConfirm={false} originalConfirm
+  return selecting ? <RoomMapSelector open maps={maps} busy={false} close={close} closeOnConfirm={false}
     initialMode={draft.mode} initialMapId={draft.mapId} confirm={(mode, mapId) => {
       const selected = maps.find(value => value.mode === mode && value.mapId === mapId);
       if (!selected) return false;

@@ -1,5 +1,7 @@
 import {InstancedMesh, Mesh, TransformNode, VertexBuffer} from '@babylonjs/core';
 import {PlantMaterialModel, ScenePlant05413MaterialOwner} from './scene-plant-material-owner';
+import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
+import {plantSwayParameter, plantSwayDisplacement} from '../../../../shared/movement/scene-animation-clock';
 
 interface PlantResource {
   sourcePlacementId: string;
@@ -21,7 +23,7 @@ interface PlantMesh {
 }
 
 interface PlantOwner {
-  phase: number;
+  id: string;
   parameter: number;
   height: number;
   meshes: PlantMesh[];
@@ -32,12 +34,13 @@ export class ScenePlantSway {
   private readonly resources = new Map<string, PlantResource>();
   private readonly owners = new Map<string, PlantOwner>();
   private disposed = false;
+  private elapsed = 0;
   private materialOwner?: ScenePlant05413MaterialOwner;
   private readonly materials = new Map<string, PlantMaterialResource>();
 
   async load(mapId: string): Promise<void> {
     if (!['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
-      '0021', '0023', '0024', '0025'].includes(mapId)) return;
+      '0021', '0023', '0024', '0025', FIELD_ROAD_HD.sceneId].includes(mapId)) return;
     const response = await fetch(`/scene-plant-${mapId}.json`);
     if (!response.ok) throw new Error('原植物摆动资源载入失败');
     const resource = await response.json() as {mapId: number; plants: PlantResource[]};
@@ -86,29 +89,22 @@ export class ScenePlantSway {
       if (material) this.materialOwner?.register(mesh, material.model, material.properties);
       meshes.push({mesh, source, positions});
     }
-    //45589c supplies rand15 *120*f32(1/32767). Browser entropy is the provider.
-    const phase = Math.fround(Math.floor(Math.random()*32768)*120*Math.fround(1/32767));
-    this.owners.set(id, {phase, parameter: 0, height: resource.height, meshes});
+    this.owners.set(id, {id, parameter: 0, height: resource.height, meshes});
   }
 
-  advance(deltaSeconds: number): void {
+  advance(deltaSeconds: number): void {this.setAnimationTime(this.elapsed + deltaSeconds);}
+
+  setAnimationTime(seconds: number): void {
     if (this.disposed) return;
-    const delta = Math.fround(deltaSeconds);
-    const period = Math.fround(6.28318);
+    this.elapsed = Math.max(0, seconds);
     for (const owner of this.owners.values()) {
-      let phase = owner.phase+delta*2;
-      if (phase > period) phase -= period;
-      owner.phase = Math.fround(phase);
-      owner.parameter = Math.fround(Math.cos(owner.phase)/owner.height*Math.fround(.15));
+      owner.parameter = plantSwayParameter(owner.id, owner.height, this.elapsed);
       for (const value of owner.meshes) {
         for (let index = 0; index < value.source.length; index += 3) {
-          const y = value.source[index+1];
-          // Keep original vertices as the base; deformation never accumulates.
-          const displacement = Math.fround(Math.fround(owner.parameter*y)*y);
-          value.positions[index] = Math.fround(value.source[index]+displacement);
+          const y = value.source[index + 1];
+          value.positions[index] = Math.fround(value.source[index] + plantSwayDisplacement(owner.parameter, y));
         }
         value.mesh.updateVerticesData(VertexBuffer.PositionKind, value.positions, true);
-        // Reconstructed bounds need the placement matrix before frustum culling.
         value.mesh.computeWorldMatrix(true);
       }
     }

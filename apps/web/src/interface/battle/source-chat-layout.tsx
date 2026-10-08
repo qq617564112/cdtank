@@ -1,3 +1,4 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import {useState, type ComponentPropsWithRef, type CSSProperties} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 
@@ -13,7 +14,7 @@ export class ChatSourceLayout {
     const sets = this.ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
     const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
     const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-    return {style: {backgroundImage: asset ? `url('/${asset}')` : undefined}, 'data-source-asset': asset};
+    return {style: {backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined}, 'data-source-asset': asset};
   }
   place(name: string, offsetX = 0, offsetY = 0) {
     const source = this.control(name);

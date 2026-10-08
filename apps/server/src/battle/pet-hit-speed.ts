@@ -1,9 +1,9 @@
-import {combatSkills} from './catalog';
+import {readPetSkills} from './pet-skill-rules';
 import type {RoleCombatState} from './roles/combat-state';
 import type {BattleRoleSources} from '../battle-role-sources';
 
 export interface PetHitSpeedState {
-  skillId: 10231;
+  skillId: number;
   expiresAt: number;
 }
 
@@ -24,20 +24,20 @@ export function applyPetHitSpeed(player: HitParticipant,
   now: number, recompute: () => void): boolean {
   if (!player.alive || player.hp <= 0 || player.hp >= hpBefore ||
       player.combat.status !== 2 || !player.attributesReady || player.id === attacker.id ||
-      (mode <= 3 && player.team === attacker.team) || player.ownedRoles.tables().pet?.id !== 2) return false;
-  const fields = player.ownedRoles.snapshot().base?.fields;
-  const skill = combatSkills.get(10231);
-  if (fields?.get(0x4c) !== 10231 || fields.get(0x64) !== 1 ||
-      skill?.triggerType !== 5 || skill.target !== 1 || skill.functions[0]?.type !== 1) return false;
+      (mode <= 3 && player.team === attacker.team)) return false;
+  const skill = readPetSkills(player).find(source => source.rule.event === 'hit'
+    && source.rule.handler === 'attributes' && source.rule.target === 'self'
+    && source.skill.attributes.ItemMove > 0)?.skill;
+  if (!skill || skill.functions[0]?.type !== 1) return false;
   const expiresAt = now + skill.functions[0].t * 1000;
   if (player.petHitSpeed) {
     player.petHitSpeed.expiresAt = expiresAt;
     return true;
   }
   const slots = player.combat.record?.arrays.get(4);
-  if (!slots?.includes(0) || slots.includes(10231)) return false;
-  player.combat.addSkill(10231);
-  player.petHitSpeed = {skillId: 10231, expiresAt};
+  if (!slots?.includes(0) || slots.includes(skill.skillId)) return false;
+  player.combat.addSkill(skill.skillId);
+  player.petHitSpeed = {skillId: skill.skillId, expiresAt};
   recompute();
   return true;
 }
@@ -46,7 +46,7 @@ export function applyPetHitSpeed(player: HitParticipant,
 export function clearPetHitSpeed(player: Pick<HitParticipant, 'combat' | 'petHitSpeed'>,
   recompute: () => void): void {
   if (!player.petHitSpeed) return;
-  const slot = player.combat.record?.arrays.get(4)?.indexOf(10231) ?? -1;
+  const slot = player.combat.record?.arrays.get(4)?.indexOf(player.petHitSpeed.skillId) ?? -1;
   if (slot !== -1) player.combat.removeSkillAt(slot);
   delete player.petHitSpeed;
   recompute();

@@ -6,14 +6,21 @@
 
 - 装备页按本车 target 查询 `equipment({operation:'QUERY', tankInstanceId})`，confirmed bundle 的 `equipment.tankInstanceId` 为本行所属战车。
 - 原 Home `MyTank/lstEquip` 三分类工厂 Common `4e8a65`（分类5）、Hat/Balloon `4e8865`（分类3）、Mark `4e8651`（分类4）同读 `MyItem+0x1c == 2` 并以 `4bbcfd(1)` 写 `row+0x3c4 = 1`，共用 `4b9e77` 原行；详 home-role-equipment-row-status-source.md。
-- 已确认 per-role PART projection 由 `Equipment.slots` 支持 Common 本车已装备匹配：`equipment.slots.includes(row.instanceId)` 命中即该 PART 属于本 target。
-- 帽子/气球行按 confirmed `equipment.decorationInstanceId === row.instanceId` 匹配本 target 的装饰；标志行按 confirmed `equipment.markInstanceId === row.instanceId` 匹配本 target 的标志。
-- Common 行与帽子/气球/标志行都把本 target 的 `installed` 传给各自 row consumer。
-- 未附加 `ownedQuantity > 0` 或当前槽位额外门禁，现 `available`/drag/槽位/QUERY/保存规则不改。
+- 原 `4e8bd7` 的 `MyItem+0x1c == 2` producer 在当前 Web 采用为同 target 的绑定判定：
+
+  ```ts
+  equipment.bindings.some(binding =>
+    binding.instanceId === row.instanceId &&
+    binding.tankInstanceId === equipment.tankInstanceId)
+  ```
+
+- Common 行与帽子/气球/标志行都把本车已确认 target 的 `installed` 传给各自 row consumer。
+- `selected`、任意全局 `inventory.state 2`、仅凭 `bindingName` 存在都不触发本页 `E`；未附加 `ownedQuantity > 0` 或当前槽位额外门禁，现 `available`/drag/槽位/QUERY/保存规则不改。
 
 ## 两个角色范围
 
-- 目标 `E`：以上 per-role 实例匹配，只标注本页该战车的已装备 Common/帽子/气球/标志行。
+- 目标 `E`：以上同 target 绑定判定，只标注本页该战车的已装备行。
+- 全账号占用标签：`bindingName` 仍按账户级 bindings 显示库存被哪辆战车占用，可指向其它战车；该标签不触发本页 `E`，其它战车占用不画本页 `E`。
 - Trade/Mend/Shop 复用同 row 但不传 `installed`，不扩入本 scope。
 
 ## 图像与共享 consumer
@@ -25,11 +32,11 @@
 
 ## 不涉及新协议
 
-- 复用已确认的 `equipment.tankInstanceId`、`equipment.slots`、`equipment.decorationInstanceId`、`equipment.markInstanceId` 与 row instance；不新增 server/API/schema 字段，不改现有 available/drag/slot/query/保存。
+- 复用已确认的 `equipment.tankInstanceId`、`equipment.bindings[].instanceId`、`equipment.bindings[].tankInstanceId` 与 row instance；不新增 server/API/schema 字段，不改现有 available/drag/slot/query/保存。
 
 ## 尚未实测边界
 
 - 已具原静态 source 与 production 接线；普通 UI 实测、资源 decode、target 切换与确认拒绝、关闭重开、HD 门禁均未完成。
 - 原 14-42-06 Common 名单旧 PNG 仍只含 name/icon/类别/天数/候选/Close，旧 Home 分类截图不含新 `E`/切 target/拒绝/关闭重开实测，不能复用宣 `E` 实测。
 - 原 `Font::drawText` 内部像素放置/坐标轴/基线由 CEGUI 实现决定；两父 root 原 scale 供应为 Web 采用，不称 CEGUI 轴/pixel/Font baseline 恢复。
-- 原来源映射与当前数据合同详 home-equipment-installed-status-source.md、home-role-equipment-row-status-source.md。
+- 原来源映射与当前数据合同详 home-equipment-installed-status-source.md。

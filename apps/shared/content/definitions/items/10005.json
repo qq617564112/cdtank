@@ -1,0 +1,79 @@
+{
+  "name": "猫王帽",
+  "getMethod": 0,
+  "durable": 3,
+  "breakMode": 1,
+  "itemType": 5,
+  "battleUseMax": 0,
+  "effects": [
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": 2,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 3
+    },
+    {
+      "effectId": 0,
+      "sound": "0",
+      "tag": -1,
+      "method": 0
+    }
+  ],
+  "kind": "part",
+  "id": 10005,
+  "key": "item-10005",
+  "description": "木桶镇的前任镇长，常常戴上这顶帽子伪装成“猫王”。",
+  "prices": {
+    "money": 2000,
+    "tokens": 200
+  },
+  "shop": {
+    "available": true,
+    "group": "part"
+  },
+  "category": 5,
+  "inventoryCategory": 3,
+  "appearanceEffect": false,
+  "treasure": false,
+  "cpuAvailable": false,
+  "trade": 1,
+  "resources": {
+    "model": "Data/accessory/10005/10005.glb",
+    "modelId": 10005,
+    "modelType": 1,
+    "texture": "10005A",
+    "iconId": 10005,
+    "textures": [
+      "Data/accessory/10005/10005A.png"
+    ],
+    "sourceModel": "Data/accessory/10005/10005.POL",
+    "modelStatus": "resolved",
+    "texturePath": "Data/accessory/10005/10005A.png"
+  },
+  "runtime": {
+    "values": {
+      "shopSupplyCount": 1,
+      "battleRewardOrder": 0
+    },
+    "skillRoles": {
+      "primary": 0,
+      "secondary": 0,
+      "tertiary": 0
+    },
+    "sceneResult": false,
+    "remoteShotResult": false,
+    "victimShotResult": false,
+    "sceneResultAfterDamage": false,
+    "finiteCpuAmmo": false,
+    "requiresPlayerTarget": false,
+    "markerReward": false,
+    "equipmentGroup": "hat"
+  },
+  "equipmentTarget": "DECORATION"
+}

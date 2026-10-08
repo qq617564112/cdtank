@@ -3,17 +3,26 @@ import type {RoleAttributeState} from './roles/attribute-state';
 import type {RoleCombatState} from './roles/combat-state';
 import type {TankConfig} from '../config';
 import type {MsgPlayerInput} from '../../../shared/protocols';
-import {roleMovementCommand, isRoleMovementAllowed} from './roles/movement-permission';
+import {roleMovementCommand, isBattleMovementAllowed} from './roles/movement-permission';
+import type {RoleDisguiseState} from './items/role-disguise';
 import {roleMovementElapsed} from './roles/movement-time';
 import {moveRoleThroughNavigation} from './roles/movement-wrapper';
 import type {RoleMovementPose, RoleMovementMathInput} from './roles/movement-math';
 import {turnStationaryRolePose} from './roles/keyboard-turn';
 import {sampleRoleNavigation} from './roles/movement-navigation';
+import {adjustedMovementParameters} from './movement-parameters';
+import {advanceTankVertical, initialTankVerticalState,
+  type TankVerticalState} from '../../../shared/movement/tank-vertical';
 
 /** Proven constructor footprint; later role resizing remains a recovery task. */
 export const ORIGINAL_MOVEMENT_DIMENSIONS = {width: 49, depth: 52} as const;
 
-export interface BattleMovementState {pose: RoleMovementPose; yaw: number; bodyYaw: number;}
+export interface BattleMovementState {
+  pose: RoleMovementPose;
+  yaw: number;
+  bodyYaw: number;
+  verticalState: TankVerticalState;
+}
 /** Prediction carries the command the step actually committed, not the raw input. */
 export interface BattleMovementResult extends BattleMovementState {
   command: RoleMovementMathInput['command'];
@@ -21,21 +30,25 @@ export interface BattleMovementResult extends BattleMovementState {
 export interface MovingParticipant {
   x: number; y: number; z: number; yaw: number; bodyYaw?: number;
   movementState?: BattleMovementState;
+  verticalState?: TankVerticalState;
   tank: TankConfig;
   attributes: RoleAttributeState;
   attributesReady: boolean;
   recoveredMovement?: {speed: number; turn: number};
   combat: RoleCombatState;
+  roleDisguise?: RoleDisguiseState;
 }
 
 export function originalMovementParameters(player: MovingParticipant): {speed: number; turn: number} | undefined {
   const {move, turn} = player.attributes.record;
   const recovered = player.recoveredMovement;
   if (recovered && Number.isFinite(recovered.speed) && recovered.speed > 0
-      && Number.isFinite(recovered.turn) && recovered.turn > 0) return recovered;
+      && Number.isFinite(recovered.turn) && recovered.turn > 0) {
+    return adjustedMovementParameters(recovered.speed, recovered.turn);
+  }
   if (!player.attributesReady || !Number.isFinite(move) || !(move > 0)
       || !Number.isFinite(turn) || !(turn > 0)) return undefined;
-  return {speed: move, turn};
+  return adjustedMovementParameters(move, turn);
 }
 
 export function battleMovementPose(player: MovingParticipant): RoleMovementPose {
@@ -57,8 +70,14 @@ export function predictBattleMovement(player: MovingParticipant, input: MsgPlaye
   const dt = roleMovementElapsed(elapsed);
   const command = roleMovementCommand(input.move, input.turn) as RoleMovementMathInput['command'];
   const pose = battleMovementPose(player);
-  if (!(dt > 0) || !isRoleMovementAllowed(player.combat, command)) {
-    return {pose, yaw: player.yaw, bodyYaw: player.bodyYaw ?? player.yaw, command: 0};
+  const verticalState = {...(player.verticalState
+    ?? initialTankVerticalState(player.y, field.navigation.sample(player.x, player.z)?.height))};
+  const ground = field.navigation.sample(pose.position.x, pose.position.z)?.height;
+  const rise = ground === undefined ? 0 : Math.max(0, ground - pose.position.y);
+  if (!(dt > 0) || !isBattleMovementAllowed(player, command)) {
+    const vertical = advanceTankVertical(pose.position, field.navigation, verticalState, dt, rise);
+    return {pose, yaw: player.yaw, bodyYaw: player.bodyYaw ?? player.yaw,
+      verticalState: vertical.state, command: 0};
   }
   // Rebuilt A/D mapping rotates both body and movement reference while stopped.
   // Check the candidate before committing; moving arcs keep the source kernel.
@@ -67,15 +86,22 @@ export function predictBattleMovement(player: MovingParticipant, input: MsgPlaye
     const allowed = sampleRoleNavigation(field.navigation, candidate, command,
       ORIGINAL_MOVEMENT_DIMENSIONS.width, ORIGINAL_MOVEMENT_DIMENSIONS.depth).accepted;
     const accepted = allowed ? candidate : pose;
-    accepted.position.y = field.navigation.sample(accepted.position.x, accepted.position.z)?.height ?? player.y;
-    return {pose: accepted, yaw: Math.atan2(accepted.look.x, accepted.look.z),
-      bodyYaw: Math.atan2(accepted.forward.x, accepted.forward.z), command: allowed ? command : 0};
+    const acceptedGround = field.navigation.sample(accepted.position.x, accepted.position.z)?.height;
+    const vertical = advanceTankVertical(accepted.position, field.navigation, verticalState, dt,
+      acceptedGround === undefined ? 0 : Math.max(0, acceptedGround - pose.position.y));
+    const committed = vertical.accepted ? accepted : pose;
+    return {pose: committed, yaw: Math.atan2(committed.look.x, committed.look.z),
+      bodyYaw: Math.atan2(committed.forward.x, committed.forward.z), verticalState: vertical.state,
+      command: committed === pose ? 0 : command};
   }
   const type = player.tank.recomputeBase.tankType;
   if (type < 1 || type > 4) throw new RangeError('Original movement requires a recovered TankType');
   // Keep role constructor dimensions; map occupancy comes from the render meshes.
   const result = moveRoleThroughNavigation({...pose, command, tankType: type as 1 | 2 | 3 | 4,
     move: parameters.speed, turn: parameters.turn, dt}, field.navigation, ORIGINAL_MOVEMENT_DIMENSIONS);
+  // Arc commands rebuild position with y=0; keep the current vertical position
+  // so a horizontal result never resets the body to the world origin plane.
+  result.pose.position.y = pose.position.y;
   // Sample intermediate footprints so a fast tick cannot jump a thin mesh wall.
   const steps = Math.ceil(Math.hypot(result.pose.position.x - pose.position.x,
     result.pose.position.z - pose.position.z) / 6);
@@ -89,15 +115,18 @@ export function predictBattleMovement(player: MovingParticipant, input: MsgPlaye
     const forward = {x: Math.fround(Math.sin(heading)), y: 0, z: Math.fround(Math.cos(heading))};
     if (!sampleRoleNavigation(field.navigation, {position, forward}, command,
         ORIGINAL_MOVEMENT_DIMENSIONS.width, ORIGINAL_MOVEMENT_DIMENSIONS.depth).accepted) {
-      return {pose, yaw: player.yaw, bodyYaw: player.bodyYaw ?? player.yaw, command: 0};
+      const vertical = advanceTankVertical(pose.position, field.navigation, verticalState, dt, rise);
+      return {pose, yaw: player.yaw, bodyYaw: player.bodyYaw ?? player.yaw,
+        verticalState: vertical.state, command: 0};
     }
   }
-  // Existing rebuilt grounding remains explicit until original vertical/slope
-  // post-processing is recovered. Horizontal NAV collision is the original rule.
-  result.pose.position.y = field.navigation.sample(result.pose.position.x, result.pose.position.z)?.height ?? player.y;
-  return {pose: result.pose, yaw: Math.atan2(result.pose.look.x, result.pose.look.z),
-    bodyYaw: Math.atan2(result.pose.forward.x, result.pose.forward.z),
-    command: result.accepted ? result.command : 0};
+  const resultGround = field.navigation.sample(result.pose.position.x, result.pose.position.z)?.height;
+  const vertical = advanceTankVertical(result.pose.position, field.navigation, verticalState, dt,
+    resultGround === undefined ? 0 : Math.max(0, resultGround - pose.position.y));
+  const committed = vertical.accepted ? result.pose : pose;
+  return {pose: committed, yaw: Math.atan2(committed.look.x, committed.look.z),
+    bodyYaw: Math.atan2(committed.forward.x, committed.forward.z), verticalState: vertical.state,
+    command: result.accepted && committed === result.pose ? result.command : 0};
 }
 
 export function commitBattleMovement(player: MovingParticipant, state: BattleMovementState): void {
@@ -105,4 +134,5 @@ export function commitBattleMovement(player: MovingParticipant, state: BattleMov
   player.yaw = state.yaw;
   player.bodyYaw = state.bodyYaw;
   player.movementState = state;
+  player.verticalState = state.verticalState;
 }

@@ -6,6 +6,7 @@ export interface HealthParticipant {
   lastStand?: import('./last-stand').LastStandState;
   attributes: {record: RoleHealthRecord};
   combat: Pick<RoleCombatState, 'setHealth'>;
+  petBattle?: {healthChanged(): void};
 }
 
 /** Rebuilt authority publishes one life value to all actual role consumers.
@@ -17,4 +18,5 @@ export function setBattleHealth(player: HealthParticipant, value: number,
   player.attributes.record.maxHp = maxHp;
   player.combat.setHealth(player.attributes.record, value);
   player.hp = player.attributes.record.hp;
+  player.petBattle?.healthChanged();
 }

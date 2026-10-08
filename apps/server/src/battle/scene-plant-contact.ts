@@ -2,9 +2,11 @@ import type {MsgRoomEvent, ScenePlantSnapshot} from '../../../shared/protocols';
 import type {Battlefield} from '../battlefield';
 import {getScenePlants} from '../scene-objects';
 import type {RoleStaticCollider} from './roles/movement-controller';
+import {animatedPlantContact} from './plant-animation-contact';
 
 interface PlantContactRoom {
   roomId: string;
+  startedAt: number;
   phase: string;
   map: {mapId: number};
   scenePlants?: ScenePlantSnapshot[];
@@ -12,14 +14,7 @@ interface PlantContactRoom {
 }
 
 /** Enabled Plant participation is rebuilt; original type100 hides without blocking. */
-export function createScenePlants(room: {mode: number; map: {mapId: number}}): ScenePlantSnapshot[] {
-  const supported = [2, 5, 6].includes(room.map.mapId) && [1, 2, 3].includes(room.mode) ||
-    room.map.mapId === 4 && [1, 3].includes(room.mode) ||
-    room.map.mapId === 17 && room.mode === 4 ||
-    room.map.mapId === 21 && room.mode === 5 ||
-    [1, 3, 8, 12, 13, 23].includes(room.map.mapId) && [1, 2, 3, 4, 5].includes(room.mode) ||
-    [9, 15, 16, 19, 24, 25].includes(room.map.mapId) && [1, 3, 4, 5].includes(room.mode);
-  if (!supported) return [];
+export function createScenePlants(room: {map: {mapId: number}}): ScenePlantSnapshot[] {
   return getScenePlants(room.map.mapId).map(source => ({
     id: `PLANT:${source.id}`, sourcePlacementId: source.id, sourceModel: source.model,
     enabled: source.enabled, hidden: !source.enabled,
@@ -28,14 +23,13 @@ export function createScenePlants(room: {mode: number; map: {mapId: number}}): S
 
 /** Source+1e8 Plant order, predicted OBB and the44e081 hidden guard. */
 export function plantContactColliders(room: PlantContactRoom, playerId: string,
-  events: MsgRoomEvent[]): RoleStaticCollider[] {
+  events: MsgRoomEvent[], now: number): RoleStaticCollider[] {
   if (room.phase !== 'PLAYING' || !room.scenePlants?.length) return [];
   const sources = getScenePlants(room.map.mapId);
   return room.scenePlants.filter(state => state.enabled && !state.hidden).map(state => {
     const source = sources.find(source => source.id === state.sourcePlacementId)!;
     return {
-      obb: {matrix: source.matrix,
-        dimensions: [source.dimensions[0], source.dimensions[1], source.dimensions[2]]},
+      obb: animatedPlantContact(room.map.mapId, state.sourcePlacementId, Math.max(0, (now - room.startedAt) / 1000)),
       notify: () => {
         if (state.hidden) return;
         state.hidden = true;

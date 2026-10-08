@@ -1,5 +1,6 @@
 import type {EffectRuntime} from '../../render/effects/runtime/effect-runtime';
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
+import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
 
 interface SceneEffectPlacement {id: string; name: string; enabled: boolean; matrix: EffectNativeMatrix;}
 interface SceneEffectMap {mapId: number; effects: SceneEffectPlacement[];}
@@ -13,7 +14,7 @@ export class MapSceneEffects {
 
   async load(mapId: number): Promise<void> {
     this.clear();
-    if (!Number.isInteger(mapId) || mapId < 1 || mapId > 25) return;
+    if (!Number.isInteger(mapId) || mapId < 1 || (mapId > 25 && mapId !== FIELD_ROAD_HD.id)) return;
     const revision = this.revision;
     const response = await fetch(`/scene-effects-${String(mapId).padStart(4, '0')}.json`);
     if (!response.ok) throw new Error(`Unable to load scene effects: ${response.status}`);

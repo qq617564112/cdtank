@@ -1,4 +1,5 @@
 import {AssetContainer, LoadAssetContainerAsync, PBRMaterial, Scene, Texture} from '@babylonjs/core';
+import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
 
 interface WaterResource {
   mapId: number;
@@ -20,12 +21,12 @@ export class SceneWater {
   constructor(private readonly scene: Scene) {}
 
   async load(mapId: string): Promise<void> {
-    if (mapId !== '0002') return;
-    const response = await fetch('/scene-water-0002.json');
+    if (!['0002', '0003', '0016', FIELD_ROAD_HD.sceneId].includes(mapId)) return;
+    const response = await fetch(`/scene-water-${mapId}.json`);
     if (!response.ok) throw new Error('原水面资源载入失败');
     const resource = await response.json() as WaterResource;
     if (this.disposed) return;
-    if (resource.mapId !== 2) throw new Error('原水面地图身份不符');
+    if (resource.mapId !== Number(mapId)) throw new Error('原水面地图身份不符');
     try {
       for (const entry of resource.geometry) {
         const container = await LoadAssetContainerAsync(`/${entry.asset}`, this.scene);

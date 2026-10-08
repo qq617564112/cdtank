@@ -34,7 +34,7 @@
   min-height: 36px;
   padding: 6px 12px;
   color: #fff;
-  background: white;
+  background: #243e73;
   border: 0;
   font: inherit;
   cursor: pointer;
@@ -53,20 +53,27 @@
   overflow: hidden;
 }
 
-.lobby-game-logo {
+.lobby-game-banner {
   position: absolute;
-  left: 65px;
+  left: calc(10px + var(--lobby-width-extension) / 2);
   top: 6px;
-  width: 475px;
+  width: 595px;
   height: 76px;
-  object-fit: contain;
+  overflow: hidden;
   pointer-events: none;
   user-select: none;
 }
 
+/* The banner occupies the top 80 rows of its 128-row texture. */
+.lobby-game-banner img {
+  display: block;
+  width: 100%;
+  height: 160%;
+}
+
 .lobby-source-header {
   position: absolute;
-  left: 0;
+  left: calc(var(--lobby-width-extension) / 2);
   top: 0;
   width: 800px;
   height: 57px;
@@ -149,4 +156,59 @@
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+.lobby-hd-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.lobby-hd-room-board {
+  position: absolute;
+  left: calc(var(--lobby-width-extension) / 2);
+  top: 84px;
+  width: 615px;
+  height: 317px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.lobby-source-main,
+.lobby-source-sidebar {
+  position: absolute;
+  top: 0;
+  width: 800px;
+  height: 600px;
+  pointer-events: none;
+}
+
+.lobby-source-main {
+  left: calc(var(--lobby-width-extension) / 2);
+}
+
+.lobby-source-sidebar {
+  left: var(--lobby-width-extension);
+}
+
+.lobby-source-main > *,
+.lobby-source-sidebar > * {
+  pointer-events: auto;
+}
+
+.lobby-hd-player-panel {
+  position: absolute;
+  left: 610px;
+  top: 97px;
+  width: 190px;
+  height: 503px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.lobby-source-stage [data-room-card-background] {
+  display: none;
 }

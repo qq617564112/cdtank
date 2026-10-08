@@ -1,31 +1,6 @@
 .hud-item-source-bar,
 .hud-item-source-control {
   position: absolute;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  pointer-events: none;
-}
-
-.hud-item-source-control > img {
-  display: inline-block;
-  vertical-align: top;
-}
-
-.hud-item-infinite {
-  position: absolute;
-  right: 3px;
-  bottom: 1px;
-  width: 15px;
-  height: 14px;
-}
-
-.hud-item-cooldown {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 32px;
-  background: url('/ui/regions/77/70.png') 100% 100% no-repeat;
-  background-size: 100% 100%;
   pointer-events: none;
 }
 

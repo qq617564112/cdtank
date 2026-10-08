@@ -13,6 +13,29 @@
   height: 600px;
   transform-origin: top left;
 }
+
+.source-entry-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.source-entry-content {
+  position: absolute;
+  left: calc(var(--entry-width-extension) / 2);
+  top: 0;
+  width: 800px;
+  height: 600px;
+}
+
+.source-entry[data-entry-page='channel'] [data-source-control='ditu'] {
+  left: calc(var(--entry-width-extension) / -2) !important;
+  width: var(--entry-width) !important;
+}
+
 .source-entry-form { position: absolute; inset: 0; }
 .source-entry-picture { position: absolute; pointer-events: none; }
 .source-entry-text {
@@ -31,12 +54,16 @@
 }
 .source-entry-input {
   position: absolute;
+  appearance: none;
   box-sizing: border-box;
   padding: 0;
   border: 0;
   border-radius: 0;
+  outline: none;
   background: transparent;
+  box-shadow: none;
   color: #fff;
+  caret-color: #fff;
   font-size: 12px;
   line-height: 18px;
 }
@@ -49,13 +76,17 @@
   src: url('/ui/fonts/SIMSUN-password.ttf') format('truetype');
   font-display: swap;
 }
+.source-entry-input:is(:autofill, :-webkit-autofill) {
+  background-clip: text;
+  -webkit-text-fill-color: #fff;
+}
 .source-entry-checkbox {
   position: absolute;
   appearance: none;
   margin: 0;
   cursor: pointer;
 }
-.source-entry :is(button, input):focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.source-entry :is(button, .source-entry-checkbox):focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .source-entry :is(button, input):disabled { cursor: default; }
 .source-entry-status {
   position: absolute;

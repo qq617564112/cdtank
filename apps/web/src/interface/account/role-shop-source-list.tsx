@@ -44,7 +44,7 @@ export function RoleShopSourceList({ui, kind, entries, selected, busy, select}: 
         }}>{kind === 'pet' ? <PetShopRowContent ui={ui} petId={entry.owned ? entry.petId : entry.id} name={entry.name}
           petType={entry.petType} petSize={entry.petSize} tokenPrice={entry.tokenPrice} petMoney={entry.petMoney} owned={entry.owned}/>
           : <TankShopRowContent ui={ui} tankId={entry.owned ? entry.tankId : entry.id} name={entry.name}
-          tankType={entry.tankType} defaultDurability={entry.defaultDurability} tokenPrice={entry.tokenPrice} durationMinutes={entry.durationMinutes} tankMoney={entry.tankMoney} owned={entry.owned}/>}</button>)}
+          tankType={entry.tankType} defaultDurability={entry.defaultDurability} moneyPrice={entry.moneyPrice} tokenPrice={entry.tokenPrice} durationMinutes={entry.durationMinutes} tankMoney={entry.tankMoney} owned={entry.owned}/>}</button>)}
     </div>
     <RoleShopListScrollbar list={list} ui={ui} properties={properties}/>
   </div>;

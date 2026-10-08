@@ -1,10 +1,12 @@
+import {imageResourceBackground} from '../../assets/image-cache';
 import './history-intro-scrollbar.css';
 import {useEffect, useRef, useState, type RefObject, type PointerEvent} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 
-/** Source pictures and relative width surround the original read-only introduction text. */
-export function HistoryIntroScrollbar({list, ui, properties, scale, version}: {
-  list: RefObject<HTMLTextAreaElement | null>; ui: HomeSourceUi; properties: Record<string, string>; scale: number; version: number;
+/** Read-only text uses the scrollbar images and dimensions declared by its source control. */
+export function HistoryIntroScrollbar({list, ui, properties, scale, version, label = '介绍正文'}: {
+  list: RefObject<HTMLTextAreaElement | null>; ui: HomeSourceUi; properties: Record<string, string>;
+  scale: number; version: number | string; label?: string;
 }) {
   const root = useRef<HTMLDivElement>(null), thumb = useRef<HTMLDivElement>(null);
   const [metrics, setMetrics] = useState({visible: false, left: 721.8, top: 127, width: 36.2, height: 379,
@@ -12,12 +14,25 @@ export function HistoryIntroScrollbar({list, ui, properties, scale, version}: {
   const current = useRef(metrics); current.current = metrics;
   const drag = useRef<{pointer: number; y: number; scroll: number; scale: number} | undefined>(undefined);
   const [thumbState, setThumbState] = useState('Normal');
-  const picture = (property: string) => {
+  const region = (property: string) => {
     const match = /^set:(\S+) image:(.+)$/.exec(properties[property] ?? '');
     const sets = ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
     const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
-    const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-    return {'data-source-asset': asset, style: {backgroundImage: asset ? `url('/${asset}')` : undefined}};
+    return set?.images.find(image => image.Name === match?.[2]);
+  };
+  const decrement = region('VertScrollbarDecButtonNormalImage');
+  const increment = region('VertScrollbarIncButtonNormalImage');
+  const decrementHeight = Number(decrement?.Height ?? 0);
+  const scrollbarWidth = Number(increment?.Width ?? 0);
+  const topHeight = Number(region(`VertScrollbarThumb${thumbState}TopFrameImage`)?.Height ?? 0);
+  const bottomHeight = Number(region(`VertScrollbarThumb${thumbState}BottomFrameImage`)?.Height ?? 0);
+  const picture = (property: string) => {
+    const image = region(property);
+    const asset = image?.asset;
+    return {'data-source-asset': asset, style: {backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined,
+      ...(image && property.endsWith('BackgroundImage') ? {
+        backgroundSize: `${image.Width}px ${image.Height}px`, backgroundPosition: 'left top', backgroundRepeat: 'repeat',
+      } : {})}};
   };
   const refresh = () => {
     const element = list.current;
@@ -25,13 +40,13 @@ export function HistoryIntroScrollbar({list, ui, properties, scale, version}: {
     const height = element.clientHeight;
     if (!height) {end(); setMetrics(value => ({...value, visible: false})); return;}
     const visible = element.scrollHeight > height;
-    element.style.paddingRight = visible ? `${element.clientWidth * .05}px` : '';
+    element.style.paddingRight = visible ? `${scrollbarWidth}px` : '';
     const scale = element.getBoundingClientRect().height / height;
-    const extent = Math.max(0, element.scrollHeight - height), track = Math.max(0, height - 52);
-    const minimum = Number(properties.VertScrollbarThumbMinExtent ?? 10) / scale;
+    const extent = Math.max(0, element.scrollHeight - height), track = Math.max(0, height - 2 * decrementHeight);
+    const minimum = Number(properties.VertScrollbarThumbMinExtent ?? 10);
     const thumbSize = Math.max(minimum, track * height / element.scrollHeight);
-    const next = {visible, left: element.offsetLeft + element.clientWidth - element.clientWidth * .05,
-      top: element.offsetTop, width: element.clientWidth * .05, height, extent, scroll: element.scrollTop, scale,
+    const next = {visible, left: element.offsetLeft + element.clientWidth - scrollbarWidth,
+      top: element.offsetTop, width: scrollbarWidth, height, extent, scroll: element.scrollTop, scale,
       track, thumb: thumbSize, travel: track - thumbSize};
     current.current = next; setMetrics(next);
   };
@@ -68,7 +83,7 @@ export function HistoryIntroScrollbar({list, ui, properties, scale, version}: {
       window.removeEventListener('resize', resize); window.removeEventListener('blur', end);
       cancelAnimationFrame(resizeFrame); element.style.removeProperty('padding-right');
     };
-  }, [scale, version]);
+  }, [scale, version, scrollbarWidth, decrementHeight]);
   return <div ref={root} className="history-intro-scrollbar" data-history-intro-scrollbar="" hidden={!metrics.visible}
     data-scroll-geometry-binding="original-multiline-layout-web-text-extent" data-scroll-scale={metrics.scale} {...picture('VertScrollbarBackgroundImage')}
     style={{...picture('VertScrollbarBackgroundImage').style, left: metrics.left, top: metrics.top,
@@ -81,14 +96,15 @@ export function HistoryIntroScrollbar({list, ui, properties, scale, version}: {
       event.stopPropagation(); event.preventDefault(); scrollTo(targets[event.key]);
     }} onKeyUp={event => {if (['Home', 'End', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)) event.stopPropagation();}}>
     <div className="history-intro-scroll-track" data-history-intro-scroll-track=""
-      style={{top: 26, height: metrics.track}} onPointerDown={event => {
+      style={{top: decrementHeight, height: metrics.track}} onPointerDown={event => {
         if (event.button !== 0 || event.target !== event.currentTarget) return;
         event.preventDefault(); scrollTo(metrics.scroll + (event.clientY < thumb.current!.getBoundingClientRect().top ? -metrics.height : metrics.height));
       }}>
       <div ref={thumb} className="history-intro-scroll-thumb" data-history-intro-scroll-thumb=""
-        data-thumb-state={thumbState} tabIndex={0} role="scrollbar" aria-label="介绍正文"
+        data-thumb-state={thumbState} tabIndex={0} role="scrollbar" aria-label={label}
         aria-orientation="vertical" aria-valuemin={0} aria-valuemax={metrics.extent} aria-valuenow={metrics.scroll}
-        style={{top: metrics.extent ? metrics.scroll / metrics.extent * metrics.travel : 0, height: metrics.thumb}}
+        style={{top: metrics.extent ? metrics.scroll / metrics.extent * metrics.travel : 0,
+          height: metrics.thumb, width: scrollbarWidth}}
         onPointerDown={event => {
           if (event.button !== 0) return;
           event.preventDefault(); event.currentTarget.focus();
@@ -101,26 +117,32 @@ export function HistoryIntroScrollbar({list, ui, properties, scale, version}: {
         }} onPointerUp={end} onPointerCancel={end} onLostPointerCapture={end}
         onPointerEnter={() => {if (!drag.current) setThumbState('Hover');}}
         onPointerLeave={() => {if (!drag.current) setThumbState('Normal');}}>
-        <span className="history-intro-thumb-top" {...picture(`VertScrollbarThumb${thumbState}TopFrameImage`)} />
-        <span className="history-intro-thumb-middle" {...picture('VertScrollbarThumbBackgroundImage')} />
-        <span className="history-intro-thumb-bottom" {...picture(`VertScrollbarThumb${thumbState}BottomFrameImage`)} />
+        <span className="history-intro-thumb-top" {...picture(`VertScrollbarThumb${thumbState}TopFrameImage`)}
+          style={{...picture(`VertScrollbarThumb${thumbState}TopFrameImage`).style, width: '100%', height: topHeight}} />
+        <span className="history-intro-thumb-middle" {...picture('VertScrollbarThumbBackgroundImage')}
+          style={{...picture('VertScrollbarThumbBackgroundImage').style, width: '100%', top: topHeight, bottom: bottomHeight}} />
+        <span className="history-intro-thumb-bottom" {...picture(`VertScrollbarThumb${thumbState}BottomFrameImage`)}
+          style={{...picture(`VertScrollbarThumb${thumbState}BottomFrameImage`).style, width: '100%', height: bottomHeight}} />
       </div>
     </div>
     <Arrow direction="up" disabled={metrics.scroll <= 0} picture={picture}
+      width={Number(decrement?.Width ?? 0)} height={decrementHeight}
       scroll={() => scrollTo(current.current.scroll - lineStep())} />
     <Arrow direction="down" disabled={metrics.scroll >= metrics.extent} picture={picture}
+      width={scrollbarWidth} height={Number(increment?.Height ?? 0)}
       scroll={() => scrollTo(current.current.scroll + lineStep())} />
   </div>;
 }
 
-function Arrow({direction, disabled, picture, scroll}: {
-  direction: 'up' | 'down'; disabled: boolean;
+function Arrow({direction, disabled, picture, scroll, width, height}: {
+  direction: 'up' | 'down'; disabled: boolean; width: number; height: number;
   picture(property: string): {style: {backgroundImage?: string}; 'data-source-asset'?: string}; scroll(): void;
 }) {
   const element = useRef<HTMLButtonElement>(null);
   const pointer = useRef<number | undefined>(undefined), releasedInside = useRef(false);
   const [state, setState] = useState({inside: false, held: false});
   const name = disabled ? 'Disabled' : state.inside !== state.held ? 'Hover' : state.held ? 'Pushed' : 'Normal';
+  const image = picture(`VertScrollbar${direction === 'up' ? 'Dec' : 'Inc'}Button${name}Image`);
   const inside = (event: PointerEvent<HTMLButtonElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const clip = event.currentTarget.closest('.history-intro-scrollbar')!.getBoundingClientRect();
@@ -143,7 +165,7 @@ function Arrow({direction, disabled, picture, scroll}: {
   }, []);
   return <button ref={element} type="button" className={`history-intro-scroll-${direction}`} data-history-intro-scroll-arrow={direction}
     data-arrow-state={name} disabled={disabled} aria-label={direction === 'up' ? '向上浏览介绍' : '向下浏览介绍'}
-    {...picture(`VertScrollbar${direction === 'up' ? 'Dec' : 'Inc'}Button${name}Image`)}
+    {...image} style={{...image.style, width, height}}
     onPointerEnter={() => setState(value => ({...value, inside: true}))}
     onPointerLeave={() => setState(value => ({...value, inside: false}))}
     onPointerDown={event => {

@@ -25,6 +25,8 @@
 
 `finishRound` first freezes the pre-award `MatchResult` (with the deep-cloned `roundStats`), then computes `computeRoundAwards(map, participants)` over every real participant with a `roundStats` producer, including mid-round departures with their frozen `playedSeconds`. Every such result carries a real `awards` array, including `[]` when no award applies, while legacy results without `roundStats` remain unknown. Each player's award scores are summed once into `combatScore` and `totalScore`; `outcomeBonus` is untouched and MVP is resolved before any award score is added. All real awards stay in `ResultPlayer.awards`; the result UI's five slots are only a display limit.
 
+Selection uses the competitive policy in `nine-awards-domain-runtime.md`: every category has at most one round recipient; threshold categories require both qualification and a leading performance. MVP receives the outcome from the pre-award frozen result and only selects a WIN participant with at least one kill. Perfect requires three kills/objectives without a death, Brave requires a three-kill streak and a death, Console requires at least three deaths and more deaths than kills, Crafty requires rear damage to make up at least half of enemy damage, and individual-mode Greedy ranks kills rather than damage. Unqualified categories stay empty. Historical frozen awards retain their committed values.
+
 Mid-round ordinary leavers are frozen in `captureDeparted` with a deep-cloned `roundStats` and their real `playedSeconds`. The freeze passed to `onMatchCommitted` deep-copies `roundStats` and `awards` so later rounds cannot mutate an already-frozen result.
 
 ## Unverified

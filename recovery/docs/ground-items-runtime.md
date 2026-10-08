@@ -35,9 +35,9 @@
 
 | 导出 | 行为 |
 | --- | --- |
-| `createBreachDrop(room, source, ownerId, now, random, normalEvents)` | 只为 mode5、`PLAYING`、已转为 0 HP 的源 Breach 生成一次；真实位置取 `source.x/y/z`；不写点数、生命或其它效果。 |
+| `createBreachDrop(room, source, ownerId, now, random, normalEvents)` | 为 `PLAYING` 且已转为 0 HP 的源 Breach 生成一次；真实位置取 `source.x/y/z`；不写点数、生命或其它效果。mode5 用单一 Breach 实体，mode1–4 用当前地图原 Breach 的 `sceneObjects` 可破坏实例（含 mode2），按 `placement + destroyedAt` 去重。 |
 | `discardToGround(room, player, instanceId, now, callbacks, normalEvents)` | 普通 `action=100` 的一份丢弃；先做本地资格和视觉校验，再调用权威 discard callback，成功后才生成 `DISCARD` 地面实体。 |
-| `advanceGroundItems(room, now, callbacks, normalEvents)` | 在移动后由 World 调用；扫描 `PLAYING` 房间内存活且 `status===2` 的玩家，逐实体按三维 XYZ 距离 `<=40` 接触。 |
+| `advanceGroundItems(room, now, callbacks, normalEvents)` | 在移动后由 World 调用；先按 `createdAt` 与 server now 删除存活满 30 秒的地面实体，再扫描 `PLAYING` 房间内存活且 `status===2` 的玩家，逐实体按三维 XYZ 距离 `<=40` 接触。 |
 | `pickupGroundItem(room, player, groundId, callbacks, normalEvents)` | 复用接触资格；真人走 acquire callback，CPU 只走本轮 local 库存；成功后删除实体并产生拾取/删除事件。 |
 | `clearGroundItems(room)` | 清空本轮实体、counter 和 Breach 触发记录；不向任何 source owner 退款。 |
 | `groundItemSnapshot(state)` | 返回实体字段副本。 |
@@ -68,9 +68,12 @@ SQL、不保存 connection map、不把 receipt 写入库存；持久层在成�
 
 ## 采用规则
 
-- Breach 掉落：真实 HP 归零事件每次只调用一次。概率使用一次 `[0,1)` 权威均匀值，
-  `<0.5` 才掉落；同一个成功值再映射 `{1,2,2010,20001,20002}` 五等分池，因此条件概率各 1/5。
-  每次只生成 quantity 1；重生只恢复源目标，不重放已生成/已领取实体。
+- Breach 掉落：真实 HP 归零事件每次只调用一次。五模式统一用原先 mode5 的 50% 概率，
+  参数取 `shared/content/definitions/index.json` 的 `rules.groundDrops`（`chance 0.5`、
+  `quantity 1`、`lifetimeSeconds 30`）；一次 `[0,1)` 权威均匀值 `<0.5` 才掉落，同一个成功
+  值再映射 `runtime.values.breachDropOrder` 五项池 `{1,2,2010,20001,20002}`，等概率各 1 份。
+  每次只生成 quantity 1；目标重生建立新 `destroyedAt`，新击毁可再次掷骰，
+  旧同值/已领取实体不重放。原服务端按模式的概率与数量来源仍缺，属采用规则。
 - 身份：`GROUND` counter 属于服务端进程随机 UUID 加 `roomId/round`，
   `counter` 每轮从 1 单调递增；同轮稳定，换轮不复用。
 - 丢弃：只接受当前库存中的精确实例，且 `state===0`、类别 1/2、owned/battle 均正、
@@ -78,16 +81,27 @@ SQL、不保存 connection map、不把 receipt 写入库存；持久层在成�
   quantity 固定一份。真人先由持久 callback 按 `expectedOwned` 做 CAS，成功返回更新后的
   权威记录，domain 才更新本地库存并创建地面实体；失败/异常不扣本地库存、不产生实体。
   CPU 只在本地库存扣一，无账户 grant。
+- 生命周期：所有地面实体（含 `DISCARD`）30 秒消失，用 `createdAt` 与 server now 判定，
+  先删除到期再扫描拾取。原 `VanishTime` 业务含义未确认，采用独立 30 秒。
 - 拾取：实体接触半径采用三维 XYZ `<=40`，不增加 Y/地形高度门禁，也不信任客户端
   `clientTime`。真人必须由 World 先在认证/房间/轮次/状态门禁内调用 callback；
   `(roomId, round, groundId, playerId)` 交给持久层作为 receipt 键。callback 成功后
   domain 才移除实体并生成拾取/删除事件；失败保留实体，不重复 late force-consume。
   同一账户多连接只通过 callback 返回的 `refreshPlayerIds` 刷新已绑定的在房角色。
+- 种类与治疗：真人/CPU 按真实已选 pet JSON `petType` 判定，猫 `1` 拾 20001、狗 `2` 拾
+  20002，错误种类或未选宠物不拾这两件且保留实体，其它物品不限种类。成功领取两宝物才入
+  库存 +1 并为实际拾取者回血 15（`runtime.values.pickupPetType` 与
+  `runtime.values.pickupHealing`），走原健康入口 clamp 到玩法当前 `maxHp`；满血仍取得，
+  `lastStand` 不回血，失败不治疗不移除；同账户其它连接只刷新库存不回血。
 - 战斗数量：World 以真实成功 `consumeItem` 回调累计本轮每玩家/物品使用量。`ownedQuantity`
   已经扣过真实消费，`roundUse` 只限制剩余可用上限：已占 hotkey 的实例按
   `battleQuantity=max(0,min(ownedQuantity,max(0,BattleUseMax-roundUse)))` 更新；未占 hotkey
-  的实例为 0，不自动占槽。重置只发生在新 round 或离场，拾取、丢弃和连接刷新不会重置或
-  补回本轮已消耗额度；数量归零清实例时同步清 hotkey。
+  的实例为 0。真正拾取时新未装实例自动填入本局正确栏首个空槽（Battle2..4 武器/陷阱、
+  Battle5..8 消耗/宝物），不覆盖满槽、不自动使用/切武器，只改当局角色 hotkeys（库存
+  RPC/HUD 可见），不改保存的账户配置，满栏仍入库但无槽可用。已有槽实例按
+  `remainingBattleQuantity`/`roundUse` 余量补数。重置只发生在新 round 或离场，拾取、丢弃
+  和连接刷新不会重置或补回本轮已消耗额度；数量归零清实例时同步清 hotkey。跨连接 reconcile
+  不自动填槽。
 - CPU：没有账户绑定，只在本轮 local inventory 中合并已有堆叠；没有同表记录时分配不与
   旧实例冲突的正 uint32 local instance，并沿用 `InventoryWireRecord` 真实字段构造，
   不从 0x58 Treasure record 或未知 raw 字段推导拥有物。
@@ -95,9 +109,11 @@ SQL、不保存 connection map、不把 receipt 写入库存；持久层在成�
 ## 生产桥
 
 `World.startRoom`、`beginRoomLoading` 和终局清理调用 `clearGroundItems`；移动结算后、
-投射物处理前调用 `advanceGroundItems`。mode5 的真实 Breach HP 归零在
-`objectiveEnd`/finish 之前调用 `createBreachDrop`，其它 mode、Castle 和普通 scene
-object 不产生该掉落。真实重生建立新的 `destroyedAt` 时可再次掷骰，旧的同值不会重放。
+投射物处理前调用 `advanceGroundItems`。射击即时查询与 projectile 击毁都接每个真实
+placement+`destroyedAt` 去重掉落，五模式统一走 `createBreachDrop`：mode5 用单一 Breach
+实体，mode1–4 用 `sceneObjects` 可破坏实例（含 mode2）。mode5 终局判定前仍产出该次掉落。
+Castle 保持原 mode1/2 规则，Castle、Plant、Crush 不产生该掉落。真实重生建立新的
+`destroyedAt` 时可再次掷骰，旧的同值不会重放。
 
 普通 `PlayerAction` 的 `action=100` 使用 current selected hotkey 中的 instanceId 作为
 `value`。World 在认证参与者、房间、round、intro 后和 PLAYING 门禁内检查普通 sequence

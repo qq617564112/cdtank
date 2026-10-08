@@ -1,6 +1,7 @@
 import {sourceUiImage} from '../resources/source-ui-image';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import './home-role-row-status-badge.css';
+import {SourceTextArtwork} from '../resources/source-text-artwork';
 
 const STATUS_GLYPHS = {
   current: {reference: 'set:xiaoheitizi0 image:data\\ui\\xiaoheitizi\\n.tga', label: '当前使用'},
@@ -16,5 +17,7 @@ export function HomeRoleRowStatusBadge({ui, status}: {ui: HomeSourceUi; status: 
     data-home-owned-role-current={status === 'current' ? '' : undefined}
     data-home-equipment-installed={status === 'installed' ? '' : undefined}
     data-trade-owned-row-offered={status === 'offered' ? '' : undefined}
-    data-source-asset={asset} style={{backgroundImage}}/>;
+    data-source-asset={asset} style={{backgroundImage}}>
+    {asset && <SourceTextArtwork asset={asset}/>}
+  </span>;
 }

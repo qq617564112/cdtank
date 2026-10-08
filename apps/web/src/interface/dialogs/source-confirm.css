@@ -2,6 +2,7 @@
   padding: 0;
   border: 0;
   overflow: visible;
+  pointer-events: auto;
   background: transparent;
   color: white;
   font-family: 'CDTank-SIMSUN', serif;

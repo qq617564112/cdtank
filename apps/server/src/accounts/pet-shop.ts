@@ -16,9 +16,17 @@ export class AccountPetShop {
   request(accountId: string, request: ReqPetShop): ResPetShop {
     if (!this.database.prepare('SELECT id FROM accounts WHERE id = ?').get(accountId)) throw new Error('账户不存在');
     const catalog = petShopCatalog();
-    const pets = catalog.map(row => row.product);
+    const availablePets = () => {
+      const records = this.database.prepare("SELECT record FROM role_records WHERE account_id = ? AND kind = 'base'").all(accountId);
+      const owned = new Set(records.map(row => {
+        const record = JSON.parse(String(row.record)) as OwnedRoleRecordData;
+        return new Map(record.fields).get(8);
+      }));
+      return catalog.map(row => row.product).filter(pet => !owned.has(pet.petId));
+    };
     const profile = () => this.database.prepare('SELECT payload FROM role_profiles WHERE account_id = ?').get(accountId);
     if (request.operation === 'QUERY') {
+      const pets = availablePets();
       const row = profile();
       if (!row) return {pets};
       const bytes = row.payload as Uint8Array;
@@ -38,12 +46,14 @@ export class AccountPetShop {
       const money = view.getUint32(0x70, true), tokens = view.getUint32(0x74, true);
       const previous = this.database.prepare('SELECT pet_id, currency, receipt FROM pet_purchases WHERE account_id = ? AND request_id = ?')
         .get(accountId, request.requestId);
+      const pets = availablePets();
       if (previous) {
         if (Number(previous.pet_id) !== request.petId || previous.currency !== request.currency) throw new Error('购买请求ID已用于不同购买');
         const purchased = JSON.parse(String(previous.receipt)) as OwnedRoleRecordData;
         this.database.exec('COMMIT');
         return {pets, money, tokens, purchased, replayed: true};
       }
+      if (!pets.some(pet => pet.petId === definition.product.petId)) throw new Error('已拥有此宠物，不能重复购买');
       const count = this.database.prepare("SELECT count(*) AS n FROM role_records WHERE account_id = ? AND kind = 'base'").get(accountId)!;
       if (Number(count.n) >= 10) throw new Error('拥有宠物数量已达10只');
       const cost = definition.product.moneyPrice;
@@ -66,7 +76,7 @@ export class AccountPetShop {
       for (let index = 0; index < 6; index++) {
         fields.set(0x44 + index * 4, definition.base.skills[index]);
         // Web newborn policy: source levels are caps; existing records are preserved.
-        fields.set(0x5c + index * 4, 0);
+        fields.set(0x5c + index * 4, definition.base.levels[index]);
       }
       const purchased: OwnedRoleRecordData = {name: definition.product.name, fields: [...fields]};
       view.setUint32(0x70, money - cost, true);
@@ -76,7 +86,7 @@ export class AccountPetShop {
         .run(accountId, request.requestId, definition.product.petId, request.currency, JSON.stringify(purchased));
       recordAccountSpending(this.database, accountId, 'pet-shop', request.requestId, cost, 0);
       this.database.exec('COMMIT');
-      return {pets, money: money - cost, tokens, purchased, replayed: false};
+      return {pets: pets.filter(pet => pet.petId !== definition.product.petId), money: money - cost, tokens, purchased, replayed: false};
     } catch (error) {
       this.database.exec('ROLLBACK');
       throw error;

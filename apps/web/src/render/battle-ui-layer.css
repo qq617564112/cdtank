@@ -1,0 +1,8 @@
+/* Source controls retain their native input, focus and accessibility bindings. */
+[data-battle-ui-draw] {
+  mask-image: linear-gradient(transparent, transparent) !important;
+}
+
+dialog[data-battle-ui-draw]::backdrop {
+  background: transparent !important;
+}

@@ -1,9 +1,10 @@
 import {
   AbstractMesh, AssetContainer, BaseTexture, InstantiatedEntries, LoadAssetContainerAsync, Material, Matrix,
-  MultiMaterial, PBRMaterial, Quaternion, Scene, StandardMaterial, Texture, TransformNode, Vector3,
+  MultiMaterial, PBRMaterial, Quaternion, Scene, ShaderMaterial, StandardMaterial, Texture, TransformNode, Vector3,
 } from '@babylonjs/core';
 import {loadStaticJson} from '../static-resources';
 import type {SceneSequenceLibrary, SceneSequenceMapId} from '../../../../shared/maps/scene-sequence';
+import {SceneGeneralMaterial} from './scene-general-material';
 
 export interface SourceSequencePlacement {
   id: string;
@@ -27,6 +28,8 @@ export class SceneSequence {
   private readonly frameSlots: FrameSlot[] = [];
   private readonly clonedMaterials = new Set<Material>();
   private readonly replacedBaseTextures = new Set<BaseTexture>();
+  private readonly baseMaterial = new SceneGeneralMaterial();
+  private readonly screenMaterial = new SceneGeneralMaterial();
   private disposed = false;
   private delaySeconds = 0;
   private frameIndex = 0;
@@ -56,12 +59,18 @@ export class SceneSequence {
         if (this.disposed || this.scene.isDisposed) {texture.dispose(); return;}
         this.frames.push(texture);
       }
-      const base = await LoadAssetContainerAsync(`/${library.base.asset}`, this.scene);
+      const base = await LoadAssetContainerAsync(`/${library.base.asset}`, this.scene, {
+        pluginOptions: {gltf: {useSRGBBuffers: false}},
+      });
       if (this.disposed || this.scene.isDisposed) {base.dispose(); return;}
       this.base = base;
-      const screen = await LoadAssetContainerAsync(`/${library.screen.asset}`, this.scene);
+      this.baseMaterial.register(base, 'obj05023');
+      const screen = await LoadAssetContainerAsync(`/${library.screen.asset}`, this.scene, {
+        pluginOptions: {gltf: {useSRGBBuffers: false}},
+      });
       if (this.disposed || this.scene.isDisposed) {screen.dispose(); return;}
       this.screen = screen;
+      this.screenMaterial.register(screen, 'obj05023/scr');
       for (const placement of selected) this.instantiatePlacement(placement, library);
       if (!this.frameSlots.length) throw new Error('原Sequence screen模型缺少基础色纹理槽');
       this.applyFrame(0);
@@ -90,11 +99,14 @@ export class SceneSequence {
     this.frameSlots.length = 0;
     for (const material of this.clonedMaterials) {
       if (material instanceof MultiMaterial) material.dispose(true, true, true);
+      else if (material instanceof ShaderMaterial) material.dispose(false, false);
       else material.dispose(true, true);
     }
     this.clonedMaterials.clear();
     this.replacedBaseTextures.forEach(texture => {texture.dispose();});
     this.replacedBaseTextures.clear();
+    this.baseMaterial.dispose();
+    this.screenMaterial.dispose();
     this.base?.dispose();
     this.base = undefined;
     this.screen?.dispose();
@@ -177,7 +189,11 @@ export class SceneSequence {
     const materials = mesh.material instanceof MultiMaterial ? mesh.material.subMaterials : [mesh.material];
     const slots: FrameSlot[] = [];
     for (const material of materials) {
-      if (material instanceof PBRMaterial && material.albedoTexture) {
+      if (material instanceof ShaderMaterial && material.metadata?.sourceGeneralShader === 'geom_c1.gbf') {
+        const texture = material.getActiveTextures()[0];
+        if (texture) this.replacedBaseTextures.add(texture);
+        slots.push(texture => {material.setTexture('sourceTexture', texture);});
+      } else if (material instanceof PBRMaterial && material.albedoTexture) {
         this.replacedBaseTextures.add(material.albedoTexture);
         slots.push(texture => {material.albedoTexture = texture;});
       } else if (material instanceof StandardMaterial && material.diffuseTexture) {

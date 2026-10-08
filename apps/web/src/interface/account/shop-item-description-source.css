@@ -1,8 +1,8 @@
 #account-shop .shop-item-description-source {
-  left: 0;
-  top: 374px;
   width: 218px;
   height: 103px;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .shop-item-description-source > [data-source-control] {
@@ -22,9 +22,12 @@
   color: white;
   background: transparent;
   overflow: auto;
+  scrollbar-width: none;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font-family: 'CDTank-SIMSUN', serif;
   font-size: 12px;
   line-height: 17px;
 }
+
+.shop-item-description-source [data-shop-description-text]::-webkit-scrollbar {display: none;}

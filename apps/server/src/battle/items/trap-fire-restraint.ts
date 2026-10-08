@@ -1,3 +1,4 @@
+import {itemForHandler} from '../../../../shared/content/catalog';
 import {combatItems, combatSkills} from '../catalog';
 import {readGroupTrapRule} from './group-trap-rule';
 
@@ -12,7 +13,7 @@ export interface TrapFireRestraintRule {
 }
 
 /** Source fields are confirmed; Func12 time/radius/model interpretation is rebuilt. */
-export function readTrapFireRestraintRule(itemId = 3005): TrapFireRestraintRule | undefined {
+export function readTrapFireRestraintRule(itemId = itemForHandler('trap', 'fireRestraint').id): TrapFireRestraintRule | undefined {
   if (itemId === 3007) {
     const group = readGroupTrapRule(itemId);
     return group ? {itemTableId: group.itemTableId, placementSkillId: group.placementSkillId,
@@ -25,10 +26,10 @@ export function readTrapFireRestraintRule(itemId = 3005): TrapFireRestraintRule 
   const create = placement?.functions[0];
   const effect = create ? combatSkills.get(create.y) : undefined;
   const restraint = effect?.functions[0];
-  if (!item || item.itemType !== 4 || !placement || placement.skillId !== 3005
+  if (!item || item.itemType !== 4 || !placement
       || !create || create.type !== 12 || create.z !== item.itemTableId
-      || !effect || effect.skillId !== 4003 || !restraint || restraint.type !== 5) return undefined;
-  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId, effectSkillId: 4003,
+      || !effect || !restraint || restraint.type !== 5) return undefined;
+  return {itemTableId: item.itemTableId, placementSkillId: placement.skillId, effectSkillId: effect.skillId,
     groundModelId: create.z, groundDurationMs: create.t * 1000,
     triggerRadius: create.x, restraintDurationMs: restraint.t * 1000};
 }
@@ -60,7 +61,7 @@ export interface TrapFireRestraintChange {
 
 /** Rebuilt single-contact authority removes one original uint8 fire permission. */
 export function applyTrapFireRestraint(target: TrapFireRestraintParticipant, now: number,
-    permission: TrapFirePermissionProvider, itemId = 3005): TrapFireRestraintChange | undefined {
+    permission: TrapFirePermissionProvider, itemId = itemForHandler('trap', 'fireRestraint').id): TrapFireRestraintChange | undefined {
   if (!target.alive || target.combat.status !== 2 || target.trapFireRestraint) return undefined;
   const rule = readTrapFireRestraintRule(itemId);
   const count = permission.readFirePermissionCount();

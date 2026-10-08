@@ -1,3 +1,4 @@
+import {gameContent} from '../../../shared/content/catalog';
 import type {MsgRoomEvent} from '../../../shared/protocols/MsgRoomEvent';
 import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 
@@ -56,16 +57,15 @@ export class BattleSound {
       this.gain = this.context.createGain();
       this.gain.connect(this.context.destination);
     }
-    const ids = [...new Set([...catalog.battleKill.selections.map(row => row.soundId), 41,
-      ...catalog.battleFire.map(row => row.soundId)])];
-    const decoded = await Promise.all(ids.map(async id => {
-      const cached = this.buffers.get(id);
-      if (cached) return [id, cached] as const;
-      const entry = catalog.soundIds.find(row => row.id === id);
-      if (!entry) throw new Error(`缺少原战斗声音：${id}`);
+    const definitions = [...gameContent().items.values()].flatMap(item => item.resources.fireSound ? [item.resources.fireSound] : [])
+      .concat([...gameContent().tanks.values()].map(tank => tank.resources.destroySound));
+    const sounds = new Map(definitions.map(sound => [sound.id, sound]));
+    const decoded = await Promise.all([...sounds.values()].map(async entry => {
+      const cached = this.buffers.get(entry.id);
+      if (cached) return [entry.id, cached] as const;
       const response = await fetch(`/${entry.asset}`);
-      if (!response.ok) throw new Error(`原战斗声音载入失败：${id}`);
-      return [id, await context.decodeAudioData(await response.arrayBuffer())] as const;
+      if (!response.ok) throw new Error(`战斗声音载入失败：${entry.id}`);
+      return [entry.id, await context.decodeAudioData(await response.arrayBuffer())] as const;
     }));
     if (generation !== this.generation) return;
     decoded.forEach(([id, buffer]) => this.buffers.set(id, buffer));
@@ -84,7 +84,7 @@ export class BattleSound {
   /** Original4247aa remote tail calls423092 with message+10, without BeforeShot. */
   shotItemResult(event: MsgRoomEvent, snapshot: MsgRoomSnapshot, localId: string,
     itemId: number): void {
-    if (event.playerId === localId || ![2001, 2002, 2003, 2004, 2005, 2006, 2008, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021].includes(itemId)) return;
+    if (event.playerId === localId || !gameContent().items.get(itemId)?.runtime.remoteShotResult) return;
     this.playEvent(event, snapshot, localId, itemId);
   }
 
@@ -100,11 +100,9 @@ export class BattleSound {
     const rules = this.catalog.battleKill;
     let soundId: number | undefined;
     if (event.type === 'fire' || shotItemId !== undefined) {
-      soundId = this.catalog.battleFire.find(row => row.skillId === (shotItemId ?? event.skillId))?.soundId;
+      soundId = gameContent().items.get(shotItemId ?? event.skillId ?? 0)?.resources.fireSound?.id;
     } else {
-      const type = rules.tankTypes.find(tank => tank.id === attacker.tankId)?.type;
-      if (type === undefined) return;
-      soundId = rules.selections.find(row => row.tankType === type)?.soundId ?? 41;
+      soundId = gameContent().tanks.get(attacker.tankId)?.resources.destroySound.id;
     }
     if (soundId === undefined) return;
     const buffer = this.buffers.get(soundId);
