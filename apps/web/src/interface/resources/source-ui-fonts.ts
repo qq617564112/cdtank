@@ -15,10 +15,10 @@ export interface SourceUiFontLibrary {fonts: SourceUiFont[];}
 
 let loading: Promise<void> | undefined;
 
-/** Load the original dynamic face and source bitmap fonts. */
+/** The selected app font is declared in app-font.css and shared across page sessions. */
 export function loadUiFont(): Promise<void> {
   loading ??= withResourceTimeout(Promise.all([
-    document.fonts.load('16px "CDTank-SIMSUN"'),
+    document.fonts.load('16px "CDTank-Xiangjiao"'),
     loadSourceBitmapFonts(),
   ]), '界面字体')
     .then(() => {}).catch(error => {loading = undefined; throw error;});

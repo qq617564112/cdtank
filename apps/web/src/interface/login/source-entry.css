@@ -14,19 +14,6 @@
   transform-origin: top left;
 }
 
-.source-entry-content {
-  position: absolute;
-  left: calc(var(--entry-width-extension) / 2);
-  top: 0;
-  width: 800px;
-  height: 600px;
-}
-
-.source-entry [data-source-control='ditu'] {
-  left: calc(var(--entry-width-extension) / -2) !important;
-  width: var(--entry-width) !important;
-}
-
 .source-entry-form { position: absolute; inset: 0; }
 .source-entry-picture { position: absolute; pointer-events: none; }
 .source-entry-text {

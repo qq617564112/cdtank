@@ -1,8 +1,13 @@
 interface Point {x: number; y: number; z: number;}
 export type Vertex = readonly number[];
 export type Triangle = readonly [Vertex, Vertex, Vertex];
-interface Bounds {minimum: number[]; maximum: number[];}
-interface IndexedTriangle extends Bounds {vertices: Triangle; normal: number[];}
+export interface Bounds {minimum: number[]; maximum: number[];}
+export interface IndexedTriangle extends Bounds {vertices: Triangle; normal: number[];}
+export interface SerializedCollisionMesh extends Bounds {
+  triangles: readonly IndexedTriangle[];
+  cells: readonly (readonly [number, number, readonly number[]])[];
+}
+type CollisionMeshSource = readonly Triangle[] | SerializedCollisionMesh;
 const CELL_SIZE = 128;
 const EPSILON = 1e-8;
 
@@ -19,7 +24,16 @@ export class CollisionMesh implements Bounds {
   private readonly cells = new Map<string, IndexedTriangle[]>();
   readonly triangles: readonly IndexedTriangle[];
 
-  constructor(vertices: readonly Triangle[]) {
+  constructor(vertices: CollisionMeshSource) {
+    if (isSerializedCollisionMesh(vertices)) {
+      this.minimum.splice(0, 3, ...vertices.minimum);
+      this.maximum.splice(0, 3, ...vertices.maximum);
+      this.triangles = vertices.triangles;
+      for (const [x, z, indexes] of vertices.cells) {
+        this.cells.set(`${x},${z}`, indexes.map(index => this.triangles[index]));
+      }
+      return;
+    }
     this.triangles = vertices.flatMap(triangle => {
       const normal = cross(subtract(triangle[1], triangle[0]), subtract(triangle[2], triangle[0]));
       const length = Math.hypot(...normal);
@@ -39,6 +53,16 @@ export class CollisionMesh implements Bounds {
       }
       return [indexed];
     });
+  }
+
+  /** Build-time representation; runtime construction from this value performs no geometry work. */
+  serialize(): SerializedCollisionMesh {
+    const indexes = new Map(this.triangles.map((triangle, index) => [triangle, index] as const));
+    return {minimum: [...this.minimum], maximum: [...this.maximum], triangles: this.triangles,
+      cells: [...this.cells].map(([cell, triangles]) => {
+        const [x, z] = cell.split(',').map(Number);
+        return [x, z, triangles.map(triangle => indexes.get(triangle)!)] as const;
+      })};
   }
 
   firstHit(start: Point, end: Point, radius: number): number | undefined {
@@ -105,6 +129,10 @@ export class CollisionMesh implements Bounds {
     }
     return result;
   }
+}
+
+function isSerializedCollisionMesh(value: CollisionMeshSource): value is SerializedCollisionMesh {
+  return !Array.isArray(value);
 }
 
 /** Clip a render face against the six cell-prism planes, retaining thin faces. */

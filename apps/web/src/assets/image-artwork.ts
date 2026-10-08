@@ -17,11 +17,12 @@ export function imageBackgroundStyle(url: string, crop?: {left: number; width: n
     backgroundSize: `${width / cellWidth * 100}% ${height / sprite.height * 100}%`,
     backgroundPosition: `${width === cellWidth ? 0 : cellX / (width - cellWidth) * 100}% ${height === sprite.height ? 0 : sprite.y / (height - sprite.height) * 100}%`,
     backgroundRepeat: 'no-repeat',
+    filter: sprite.filter,
   };
 }
 
 /** Copy image properties when a source control supplies geometry for a different box. */
 export function backgroundStyle(style?: CSSProperties): CSSProperties {
   return {backgroundImage: style?.backgroundImage, backgroundSize: style?.backgroundSize,
-    backgroundPosition: style?.backgroundPosition, backgroundRepeat: style?.backgroundRepeat};
+    backgroundPosition: style?.backgroundPosition, backgroundRepeat: style?.backgroundRepeat, filter: style?.filter};
 }

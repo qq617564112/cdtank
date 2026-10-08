@@ -55,7 +55,7 @@
 
 .lobby-game-banner {
   position: absolute;
-  left: calc(10px + var(--lobby-width-extension) / 2);
+  left: 10px;
   top: 6px;
   width: 595px;
   height: 76px;
@@ -73,7 +73,7 @@
 
 .lobby-source-header {
   position: absolute;
-  left: calc(var(--lobby-width-extension) / 2);
+  left: 0;
   top: 0;
   width: 800px;
   height: 57px;
@@ -168,11 +168,11 @@
 }
 
 .lobby-source-main {
-  left: calc(var(--lobby-width-extension) / 2);
+  left: 0;
 }
 
 .lobby-source-sidebar {
-  left: var(--lobby-width-extension);
+  left: 0;
 }
 
 .lobby-source-main > *,

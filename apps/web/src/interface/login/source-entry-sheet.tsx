@@ -1,34 +1,23 @@
-import {useEffect, useState, type CSSProperties, type ReactNode} from 'react';
+import type {ReactNode} from 'react';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
+import {useSourceScale} from '../lobby/source-react';
 import './source-entry.css';
 
 export function SourceEntrySheet({page, ui, error, busy, status, children}: {
   page: 'login' | 'channel'; ui?: HomeSourceUi; error: string; busy: boolean;
   status: string; children: ReactNode;
 }) {
-  const calculate = () => {
-    const width = innerWidth / innerHeight >= 1.55 ? 600 * 16 / 9 : 800;
-    return {width, scale: Math.min(innerWidth / width, innerHeight / 600)};
-  };
-  const [{width, scale}, setViewport] = useState(calculate);
-  useEffect(() => {
-    const resize = () => setViewport(calculate());
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
+  const scale = useSourceScale(800, 600, 0, 0, 0, Infinity);
   return <main className="source-entry" data-entry-page={page} aria-label={page === 'login' ? '登录' : '频道选择'} aria-busy={busy}>
-    <div className="source-entry-viewport" style={{width: width * scale, height: 600 * scale}}>
-      <div className="source-entry-stage" style={{width, transform: `scale(${scale})`,
-        '--entry-width': `${width}px`, '--entry-width-extension': `${width - 800}px`} as CSSProperties}>
-        <div className="source-entry-content">
-          <SourceImageScale value={scale}>{children}</SourceImageScale>
-          <output className={`source-entry-status source-entry-status-${page}`} role="status" aria-live="polite">
-            <SourceFeedbackText text={error ? '界面资源载入失败，请重新打开页面。' : !ui ? '正在载入界面…' : status}/>
-          </output>
-        </div>
+    <div className="source-entry-viewport" style={scale.viewport}>
+      <div className="source-entry-stage" style={scale.stage}>
+        <SourceImageScale value={scale.viewport.width / 800}>{children}</SourceImageScale>
+        <output className={`source-entry-status source-entry-status-${page}`} role="status" aria-live="polite">
+          <SourceFeedbackText text={error ? '界面资源载入失败，请重新打开页面。' : !ui ? '正在载入界面…' : status}/>
+        </output>
       </div>
     </div>
   </main>;

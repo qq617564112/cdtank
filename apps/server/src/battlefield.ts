@@ -4,7 +4,7 @@ import {webAssetPath} from './runtime/content-paths';
 import {NavigationGrid, SourceNavigationLayer} from './navigation';
 import {CollisionMesh, type Triangle} from './collision-mesh';
 import {navigationOccupancy} from '../../shared/movement/navigation-collision';
-import {getSceneSolids, getSceneTerrain} from './scene-objects';
+import {getSceneSolids, getSceneTerrain, getSceneTerrainNavigationCells} from './scene-objects';
 
 export interface Point {
   x: number;
@@ -17,6 +17,7 @@ interface SourceBox {
   dimensions: number[];
   mesh?: CollisionMesh;
   placementId?: string;
+  navigationCells?: readonly number[];
 }
 interface SourceSpawn {
   position: number[];
@@ -58,8 +59,8 @@ export class Battlefield {
   readonly boxes: SourceBox[];
   readonly navigation: NavigationGrid;
   private readonly dynamicBoxes = new Map<string, SourceBox>();
-  private readonly animatedBlockers = new Map<string, {id: string; cells: readonly number[]}>();
   private readonly replacedPlacements = new Set<string>();
+  private readonly noAnimatedBlockers: {id: string; cells: number[]}[] = [];
   private readonly terrain: CollisionMesh;
   navigationRevision = 0;
 
@@ -76,7 +77,10 @@ export class Battlefield {
         navigationChanged = this.navigation.setBlocker(`SCN:${box.placementId}`);
       }
       if (box.mesh) {
-        navigationChanged = this.navigation.setBlocker(id, cells ?? navigationOccupancy(box.mesh, this.navigation))
+        const occupied = cells ?? (box.navigationCells === undefined
+          ? navigationOccupancy(box.mesh, this.navigation)
+          : new Set(box.navigationCells));
+        navigationChanged = this.navigation.setBlocker(id, occupied)
           || navigationChanged;
         if (navigationChanged) this.navigationRevision++;
         return;
@@ -98,20 +102,9 @@ export class Battlefield {
     if (navigationChanged) this.navigationRevision++;
   }
 
-  /** Animated source occupancy is published to clients without rebuilding static surfaces. */
-  setAnimatedBox(box: SourceBox | undefined, id: string): void {
-    if (!box) {
-      this.animatedBlockers.delete(id);
-      this.setDynamicBox(undefined, id);
-      return;
-    }
-    const cells = box.mesh ? navigationOccupancy(box.mesh, this.navigation, false, false) : new Set<number>();
-    this.setDynamicBox(box, id, cells);
-    this.animatedBlockers.set(id, {id: box.placementId ?? id, cells: [...cells]});
-  }
-
+  /** Animated scene meshes are baked to their first frame, so no per-tick blockers remain. */
   animatedBlockersSnapshot(): {id: string; cells: number[]}[] {
-    return [...this.animatedBlockers.values()].map(({id, cells}) => ({id, cells: [...cells]}));
+    return this.noAnimatedBlockers;
   }
 
   constructor(readonly source: SourceField) {
@@ -165,8 +158,8 @@ export class Battlefield {
       ...(spawn.team === undefined ? {} : {team: spawn.team})})));
     this.spawns = this.spawnGroups.reduce((best, group) =>
       group.length > best.length ? group : best, this.spawnGroups[0]);
-    for (const box of this.boxes) this.navigation.setBlocker(box.id, navigationOccupancy(box.mesh!, this.navigation));
-    this.navigation.setBlocker('terrain', navigationOccupancy(this.terrain, this.navigation, true));
+    for (const box of this.boxes) this.navigation.setBlocker(box.id, new Set(box.navigationCells ?? []));
+    this.navigation.setBlocker('terrain', new Set(getSceneTerrainNavigationCells(Number(source.id))));
   }
 
   heightAt(x: number, z: number, nearY: number): number | undefined {

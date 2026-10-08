@@ -33,9 +33,9 @@
 | 0015/103、108 | obj05018 | scene-animation-0018.json |
 
 这五条原 enabled1 记录使用各自 `Data/scnobj/<model>/<model>.CVD`，不增加静态替代模型。
-`SceneCvdAnimation` 复用原节点、顶点及纹理；server 的 `getSceneSolids`、
-`getAnimatedSceneColliders` 和既有动态同步消费同一 `animation.library/reference`，
-按共同局时钟更新射击三角面与 NAV 占用。三图 `resolved` 包含新增动画实例。
+`SceneCvdAnimation` 复用原节点、顶点及纹理；server 的 `getSceneSolids`
+只消费构建阶段从同一 `animation.library/reference` 生成的静态首帧碰撞，
+不再按局时钟更新射击三角面与 NAV 占用。三图 `resolved` 包含新增动画实例。
 
 ## 水面合同
 

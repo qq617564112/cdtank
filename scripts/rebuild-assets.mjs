@@ -1,23 +1,31 @@
 import {spawnSync} from 'node:child_process';
-import {existsSync} from 'node:fs';
-import {resolve} from 'node:path';
+import {copyFileSync, existsSync, mkdirSync} from 'node:fs';
+import {dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const workspace = fileURLToPath(new URL('../', import.meta.url));
 const arguments_ = process.argv.slice(2);
 let reuseVerified = false;
+let fontInput = resolve(workspace, 'deployment/assets/ui/fonts/xiangjiao-brush.ttf');
 for (let index = 0; index < arguments_.length; index++) {
   const argument = arguments_[index];
   if (argument === '--reuse-verified') {
     reuseVerified = true;
+  } else if (argument === '--font' && arguments_[index + 1] &&
+    !arguments_[index + 1].startsWith('--')) {
+    fontInput = resolve(arguments_[++index]);
   } else {
-    throw new Error('Usage: node scripts/rebuild-assets.mjs [--reuse-verified]');
+    throw new Error('Usage: node scripts/rebuild-assets.mjs [--reuse-verified] [--font /path/to/font.ttf]');
   }
 }
 
 const python = resolve(workspace, 'recovery/.venv/bin/python');
 const verified = resolve(workspace, 'recovery/output/verified');
+const fontOutput = resolve(workspace, 'recovery/output/web-assets/ui/fonts/xiangjiao-brush.ttf');
 if (!existsSync(python)) throw new Error('Create recovery/.venv and install recovery/requirements.txt first.');
+if (!existsSync(fontInput)) {
+  throw new Error(`Missing XiangJiaoKuanMaoShuaLingGanTi-2.ttf: ${fontInput}`);
+}
 if (reuseVerified) {
   for (const input of ['summary.json', 'assets/data/Data', 'assets/music', 'tables']) {
     if (!existsSync(resolve(verified, input))) throw new Error(`Missing extracted input: ${input}`);
@@ -38,6 +46,8 @@ if (!reuseVerified) {
 }
 run('npm', ['run', 'assets:catalog']);
 run('npm', ['run', 'assets']);
+mkdirSync(dirname(fontOutput), {recursive: true});
+if (fontInput !== fontOutput) copyFileSync(fontInput, fontOutput);
 run(python, ['scripts/install-hd-assets.py']);
 run('npm', ['run', 'assets:usage']);
 console.log('Assets published: recovery/output/web-assets');

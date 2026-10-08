@@ -2,7 +2,6 @@ import type {MsgRoomEvent, ScenePlantSnapshot} from '../../../shared/protocols';
 import type {Battlefield} from '../battlefield';
 import {getScenePlants} from '../scene-objects';
 import type {RoleStaticCollider} from './roles/movement-controller';
-import {animatedPlantContact} from './plant-animation-contact';
 
 interface PlantContactRoom {
   roomId: string;
@@ -21,15 +20,15 @@ export function createScenePlants(room: {map: {mapId: number}}): ScenePlantSnaps
   }));
 }
 
-/** Source+1e8 Plant order, predicted OBB and the44e081 hidden guard. */
+/** Source+1e8 Plant order, build-time first-frame OBB and the44e081 hidden guard. */
 export function plantContactColliders(room: PlantContactRoom, playerId: string,
-  events: MsgRoomEvent[], now: number): RoleStaticCollider[] {
+  events: MsgRoomEvent[], _now: number): RoleStaticCollider[] {
   if (room.phase !== 'PLAYING' || !room.scenePlants?.length) return [];
   const sources = getScenePlants(room.map.mapId);
   return room.scenePlants.filter(state => state.enabled && !state.hidden).map(state => {
     const source = sources.find(source => source.id === state.sourcePlacementId)!;
     return {
-      obb: animatedPlantContact(room.map.mapId, state.sourcePlacementId, Math.max(0, (now - room.startedAt) / 1000)),
+      obb: source.contactObb,
       notify: () => {
         if (state.hidden) return;
         state.hidden = true;

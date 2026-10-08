@@ -15,7 +15,7 @@ git remote add forgejo http://192.168.10.140:13000/13352889546/cdtank.git
 git push forgejo HEAD:main
 ```
 
-流水线使用 Node.js 24.16，安装锁定依赖，构建 Web 与服务端，再组装独立发行目录。运行资源来自目标 Docker 上的 `cdtank-assets:1.0.0-20261008-original` 镜像，包含原版界面素材、模型贴图和 27 张彩铅小地图，后续源码更新直接复用。首次构建需要访问 npm 和 Docker 镜像源。
+流水线使用 Node.js 24.16，安装锁定依赖，构建 Web 与服务端，再组装独立发行目录。运行资源来自目标 Docker 上的 `cdtank-assets:1.0.0-20261008-original` 镜像，包含原版界面素材、模型贴图和 27 张彩铅小地图。构建阶段会把 `deployment/assets/ui/fonts/xiangjiao-brush.ttf` 注入 Web 资源，资源镜像可以继续复用。首次构建需要访问 npm 和 Docker 镜像源。
 
 ## 运行资源与 runner
 

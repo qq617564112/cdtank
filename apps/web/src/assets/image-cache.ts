@@ -2,7 +2,7 @@ import {loadStaticJson} from './static-resources';
 
 export interface ImageAsset {url: string; bytes: number; modifiedAt: number;}
 
-export interface SpriteImage {atlas: string; x: number; y: number; width: number; height: number;}
+export interface SpriteImage {atlas: string; x: number; y: number; width: number; height: number; filter?: string;}
 interface SpriteDirectory {images: Record<string, SpriteImage>;}
 
 interface CachedImage {url: string; version: number | string; blob: Blob;}
@@ -30,7 +30,7 @@ export function spriteImage(url: string): SpriteImage | undefined {
 export function imageResourceKey(url: string): string {
   const key = imageKey(url);
   const sprite = spriteImages.get(key);
-  return sprite ? `${imageKey(sprite.atlas)}#${sprite.x},${sprite.y},${sprite.width},${sprite.height}` : key;
+  return sprite ? `${imageKey(sprite.atlas)}#${sprite.x},${sprite.y},${sprite.width},${sprite.height}${sprite.filter ? `:${sprite.filter}` : ''}` : key;
 }
 
 export function prepareSpriteImages(): Promise<SpriteDirectory> {
@@ -59,6 +59,7 @@ async function spriteBody(sprite: SpriteImage, source: PreparedImage): Promise<B
     canvas.width = sprite.width; canvas.height = sprite.height;
     const context = canvas.getContext('2d')!;
     context.imageSmoothingEnabled = false;
+    context.filter = sprite.filter ?? 'none';
     context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height,
       0, 0, sprite.width, sprite.height);
     return await new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => {

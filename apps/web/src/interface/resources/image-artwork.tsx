@@ -12,7 +12,7 @@ export function ImageArtwork({asset, fit = 'stretch', repeat, style, ...props}: 
   const href = imageResourceUrl(spriteImage(asset)?.atlas ?? asset);
   return <span {...props} data-image-artwork="" data-source-asset={asset.replace(/^\//, '')}
     data-image-fit={fit} data-image-repeat-width={repeat?.width} data-image-repeat-height={repeat?.height}
-    style={{display: 'inline-block', ...style}}>
+    style={{display: 'inline-block', filter: spriteImage(asset)?.filter, ...style}}>
     {repeat ? <svg width="100%" height="100%" aria-hidden="true" style={{display: 'block', pointerEvents: 'none'}}>
       <defs><pattern id={id} patternUnits="userSpaceOnUse" width={repeat.width} height={repeat.height}
         viewBox={`${region.x} ${region.y} ${region.width} ${region.height}`} preserveAspectRatio="none">

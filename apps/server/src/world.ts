@@ -76,7 +76,6 @@ import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSc
 import {attachProjectileSceneResult} from './battle/projectile-scene-result';
 import {createObjectives, advanceObjectives, damageObjective, objectiveEnd} from './modes/objectives';
 import {resetBreachCollision, syncBreachCollision} from './battle/breach-collision';
-import {resetAnimatedSceneCollision, syncAnimatedSceneCollision} from './battle/animated-scene-collision';
 import {applyRespawnProtection, advanceRespawnProtection, clearRespawnProtection} from './battle/respawn-protection';
 import type {
   GroundItemAcquireContext,
@@ -971,7 +970,6 @@ export class World {
     const rebirth = advanceObjectives(room, now);
     syncBreachCollision(room, now);
     syncSceneObjectCollision(room, now);
-    syncAnimatedSceneCollision(room, now);
     if (rebirth) {
       this.finishObjective(room, now, rebirth, events);
       return;
@@ -1170,7 +1168,6 @@ export class World {
     if (room.phase !== 'PLAYING') return;
     advanceGroundTraps(room, now, events, this.groundTrapHealing(room));
     if (room.phase !== 'PLAYING') return;
-    syncAnimatedSceneCollision(room, now);
     for (const player of room.players.values()) {
       advanceEquipmentSupply(room.roomId, room.phase, player, now,
         player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), events);
@@ -1312,7 +1309,6 @@ export class World {
     room.airstrikes = [];
     resetBreachCollision(room.battlefield);
     resetSceneObjectCollision(room.battlefield);
-    resetAnimatedSceneCollision(room.battlefield);
     room.startedAt = this.now() + BATTLE_INTRO_MS;
     room.endedAt = 0;
     room.tick = 0;
@@ -1328,7 +1324,6 @@ export class World {
     room.scenePlants = createScenePlants(room);
     syncSceneObjectCollision(room, this.now());
     syncBreachCollision(room, this.now());
-    syncAnimatedSceneCollision(room, this.now());
     initializeBattleParticipants(room.battlefield, room.players.values(), DEFAULT_INPUT,
       assignVip, player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), this.now, room.mode);
     room.phase = 'PLAYING';

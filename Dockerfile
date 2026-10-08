@@ -6,10 +6,12 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.json ./
 COPY apps/ apps/
-COPY scripts/build-server.mjs scripts/package-release.mjs scripts/account-snapshot.mjs scripts/
+COPY scripts/build-server.mjs scripts/package-release.mjs scripts/account-snapshot.mjs scripts/export-scene-collision.ts scripts/
 COPY deployment/ deployment/
 COPY --from=assets /recovery/output/ recovery/output/
-RUN npm exec -- vite build --config apps/web/vite.config.ts \
+COPY deployment/assets/ui/fonts/xiangjiao-brush.ttf recovery/output/web-assets/ui/fonts/xiangjiao-brush.ttf
+RUN npm run assets:collision \
+    && npm exec -- vite build --config apps/web/vite.config.ts \
     && npm run build:server \
     && node scripts/package-release.mjs /release
 

@@ -25,7 +25,7 @@ interface UiRoot {element: HTMLElement; backdrop?: string; observer: MutationObs
 const layers = new WeakMap<Scene, BattleUiLayer>();
 const ROOTS = [
   '#original-battle-hud', '.battle-chat', '[data-match-panel][data-phase="PLAYING"]',
-  '[data-match-panel][data-phase="FINISHED"]',
+  '[data-match-panel][data-phase="FINISHED"]:not(.battle-summary-transition)',
   '[data-battle-scoreboard]', '.battle-summary-viewport', 'dialog[data-battle-ending]',
   'dialog[data-confirm-binding="web-battle-leave"]', 'dialog[data-summary-equipment-kind]',
   'dialog[data-summary-title-grant]',

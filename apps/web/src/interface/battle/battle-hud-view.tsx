@@ -150,7 +150,7 @@ function HudLayout({source, data, state, hud, filterId, scale, mode, intro}: {
       style.transform = 'translateX(-50%)';
       const value = count === undefined ? '' : String(count);
       const text = count === undefined ? '' : `等待复活中，还剩${count}秒`;
-      extra = {'data-value': value || undefined, 'data-dynamic-font': 'SIMSUN',
+      extra = {'data-value': value || undefined, 'data-dynamic-font': 'xiangjiao-brush',
         role: 'timer', 'aria-label': text || undefined};
       content = text;
     }

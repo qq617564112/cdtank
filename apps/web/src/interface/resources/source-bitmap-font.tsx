@@ -2,6 +2,8 @@ import {useEffect, useSyncExternalStore, type ReactNode} from 'react';
 import {decodeImage} from '../../assets/image-resources';
 import {imageResourceUrl} from '../../assets/image-cache';
 import {loadStaticJson} from '../../assets/static-resources';
+import {ImageArtwork} from './image-artwork';
+import {loadReviewedGlyphFonts, reviewedFontGlyph, ReviewedFontGlyph} from './reviewed-font-glyph';
 
 export interface SourceBitmapGlyph {
   codepoint: number;
@@ -39,6 +41,7 @@ function notify(): void {
 export function loadSourceBitmapFonts(): Promise<void> {
   loading ??= loadStaticJson<SourceUiFontLibrary>('/ui-fonts.json').then(async library => {
     const faces = library.fonts.filter(font => font.glyphs?.length);
+    await loadReviewedGlyphFonts();
     await Promise.all([...new Set(faces.flatMap(font => font.glyphs!.map(glyph => glyph.asset)))]
       .map(asset => decodeImage(`/${asset}`)));
     fonts.clear();
@@ -74,7 +77,7 @@ function useSourceBitmapFont(name?: string): SourceBitmapFont | undefined {
   return sourceBitmapFont(name);
 }
 
-/** Original static-font glyph images retain their published metrics and pixels. */
+/** Reviewed font glyphs and image glyphs retain their original display metrics. */
 export function SourceBitmapText({text, font, className = '', fallback, ariaLabel}: {
   text: string;
   font: string;
@@ -97,7 +100,12 @@ export function SourceBitmapText({text, font, className = '', fallback, ariaLabe
   }
   return <span className={className} data-source-font={font} data-source-bitmap-font={font} role="img" aria-label={label}
     style={{display: 'inline-flex', alignItems: 'flex-start', flex: '0 0 auto', whiteSpace: 'nowrap', verticalAlign: 'top'}}>
-    {glyphs.map((glyph, index) => <img key={`${glyph.codepoint}-${index}`} src={imageResourceUrl(`/${glyph.asset}`)}
+    {glyphs.map((glyph, index) => reviewedFontGlyph(glyph.asset)
+      ? <ReviewedFontGlyph key={`${glyph.codepoint}-${index}`} asset={glyph.asset} width={glyph.width} height={glyph.height}/>
+      : /^ui\/regions\/(7|8|9)\//.test(glyph.asset)
+      ? <ImageArtwork key={`${glyph.codepoint}-${index}`} asset={`/${glyph.asset}`} aria-hidden="true"
+          style={{display: 'block', flex: '0 0 auto', width: glyph.width, height: glyph.height}}/>
+      : <img key={`${glyph.codepoint}-${index}`} src={imageResourceUrl(`/${glyph.asset}`)}
       alt="" aria-hidden="true" draggable={false} data-source-text-image={glyph.asset}
       width={glyph.width} height={glyph.height}
       style={{display: 'block', flex: '0 0 auto', width: glyph.width, height: glyph.height}} />)}
