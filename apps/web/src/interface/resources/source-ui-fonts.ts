@@ -1,5 +1,6 @@
 import {withResourceTimeout} from '../../assets/static-resources';
 import './source-text-artwork.css';
+import {loadSourceBitmapFonts} from './source-bitmap-font';
 
 export interface SourceUiFont {
   name: string;
@@ -22,6 +23,7 @@ export function loadUiFont(): Promise<void> {
     document.fonts.load('700 16px "CDTank-SourceLatin"'),
     document.fonts.load('700 16px "CDTank-SourceDigits"'),
     document.fonts.load('700 16px "CDTank-SourceSerif"'),
+    loadSourceBitmapFonts(),
   ]), '界面字体')
     .then(() => {}).catch(error => {loading = undefined; throw error;});
   return loading;

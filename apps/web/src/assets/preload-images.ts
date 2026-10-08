@@ -1,9 +1,7 @@
 import {loadUiFont} from '../interface/resources/source-ui-fonts';
 import {bundledImageUrls, decodeImage} from './image-resources';
-import {loadImageResource, prepareImageCache, prepareSpriteImages, releaseSpriteAtlas, releaseSpriteAtlases,
+import {loadImageResource, prepareImageCache, prepareSpriteImages,
   type ImageAsset} from './image-cache';
-import {isSourceTextImage} from '../interface/resources/source-text-artwork';
-import {isSimpleUiImage} from './simple-ui-artwork';
 import {bindButtonBackgrounds, buttonArtwork} from './button-artwork';
 import {imageResourceUrl} from './image-cache';
 
@@ -21,7 +19,7 @@ export interface ImageLoadingProgress {
 interface ImageManifest {images: ImageAsset[];}
 
 const imageManifestUrl = '/image-assets.json';
-const needsRaster = (url: string) => !isSourceTextImage(url) && !isSimpleUiImage(url) && !buttonArtwork(url);
+const needsRaster = (url: string) => !buttonArtwork(url)?.background;
 
 /** Download and decode all published and bundled images before entering the game. */
 export class ImagePreloader {
@@ -56,20 +54,10 @@ export class ImagePreloader {
 
   async load(onProgress: (progress: ImageLoadingProgress) => void, signal: AbortSignal): Promise<void> {
     const images = await this.prepare(signal);
-    const sprites = await prepareSpriteImages();
-    const atlasUrls = new Set(Object.values(sprites.images).map(sprite => new URL(sprite.atlas, location.href).href));
-    const standalone = [...new Set([...images.map(image => image.url), ...bundledImageUrls]
-      .map(url => new URL(url, location.href).href))].filter(url => !atlasUrls.has(url));
-    const spriteGroups = new Map<string, string[]>();
-    for (const [url, sprite] of Object.entries(sprites.images)) {
-      if (!needsRaster(url)) continue;
-      const group = spriteGroups.get(sprite.atlas) ?? [];
-      group.push(url);
-      spriteGroups.set(sprite.atlas, group);
-    }
-    const decodeGroups: [string, string[]][] = [['', standalone], ...spriteGroups.entries()];
+    const decodeUrls = [...new Set([...images.map(image => image.url), ...bundledImageUrls]
+      .map(url => new URL(url, location.href).href))];
     const progress: ImageLoadingProgress = {
-      phase: 'download', decoded: 0, decodeTotal: standalone.length + [...spriteGroups.values()].reduce((total, urls) => total + urls.length, 0),
+      phase: 'download', decoded: 0, decodeTotal: decodeUrls.length,
       completed: 0, cached: 0, total: images.length, loadedBytes: 0,
       totalBytes: images.reduce((total, image) => total + image.bytes, 0),
     };
@@ -101,9 +89,9 @@ export class ImagePreloader {
     signal.throwIfAborted();
     progress.phase = 'decode';
     onProgress({...progress});
-    releaseSpriteAtlases();
     failure = undefined;
-    async function decode(decodeUrls: readonly string[]): Promise<void> {
+    next = 0;
+    async function decode(): Promise<void> {
       while (!failure && next < decodeUrls.length) {
         signal.throwIfAborted();
         const url = decodeUrls[next++];
@@ -120,15 +108,8 @@ export class ImagePreloader {
         }
       }
     }
-    for (const [atlas, urls] of decodeGroups) {
-      next = 0;
-      try {
-        await Promise.all(Array.from({length: Math.min(8, urls.length)}, () => decode(urls)));
-        if (failure) throw failure;
-      } finally {
-        if (atlas) releaseSpriteAtlas(atlas);
-      }
-    }
+    await Promise.all(Array.from({length: Math.min(8, decodeUrls.length)}, () => decode()));
+    if (failure) throw failure;
     signal.throwIfAborted();
     await loadUiFont();
     bindButtonBackgrounds(imageResourceUrl);

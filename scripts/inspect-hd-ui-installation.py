@@ -15,9 +15,7 @@ def document(path):
 
 
 def main():
-    simple = document(ROOT / 'apps/web/src/assets/simple-ui-artwork.json')['assets']
     buttons = document(ROOT / 'apps/web/src/assets/button-artwork.json')['assets']
-    lettering = document(ROOT / 'apps/web/src/interface/resources/source-text-artwork.json')['assets']
     inventory = {entry['source']: entry for entry in document(ROOT / 'art/hd-assets/inventory.json')['textures']}
     directory = document(RUNTIME / 'sprite-images.json')['images']
     records = {record['source']: record for record in document(ART / 'installed-framed-ui-jobs.json')}
@@ -30,27 +28,72 @@ def main():
     for name in ('installed-sunburst-pilot-jobs.json', 'installed-framed-smooth-jobs.json'):
         emotes.extend(record for record in document(ART / name) if record['installed'])
     records.update((record['source'], record) for record in emotes)
+    quality_jobs = ART / 'quality-ui-jobs.json'
+    quality_sources = {source for job in document(quality_jobs) for source in job['sources']} \
+        if quality_jobs.is_file() else set()
+    quality_installation = ART / 'installed-quality-ui-jobs.json'
+    quality_records = {record['source']: record for record in document(quality_installation) if record['installed']} \
+        if quality_installation.is_file() else {}
+    records.update(quality_records)
+    latest_raster = {}
+    for name in ('installed-raster-ui-solid-sources.json', 'installed-raster-ui-jobs.json'):
+        path = ART / name
+        if path.is_file():
+            latest_raster.update((record['source'], record) for record in document(path) if record['installed'])
+    records.update(latest_raster)
+    backgrounds = {}
+    for name in ('installed-blank-button-jobs.json', 'installed-blank-settings-illustration-jobs.json',
+                 'installed-quality-button-background-jobs.json', 'installed-raster-button-jobs.json'):
+        path = ART / name
+        if path.is_file():
+            backgrounds.update((record['source'], record) for record in document(path) if record['installed'])
+    coverage_path = ART / 'raster-ui-coverage.json'
+    coverage = document(coverage_path)['sources'] if coverage_path.is_file() else []
+    awaiting = {row['source'] for row in coverage if row['status'] in ('queued', 'alias')
+                and row['source'] not in latest_raster}
     groups = defaultdict(list)
     outcomes, issues = [], []
-    for issue in document(ART / 'issues.json'):
-        source = issue['source']
+    sources = dict.fromkeys(issue['source'] for issue in document(ART / 'issues.json'))
+    sources.update(dict.fromkeys(sorted(quality_sources | set(buttons))))
+    sources.update(dict.fromkeys(row['source'] for row in coverage if row['status'] != 'excluded'))
+    for source in sources:
         if source.startswith('ui/regions/71/'):
             outcome = {'source': source, 'rendering': 'removed', 'feature': 'screen keyboard'}
-        elif source in simple:
-            outcome = {'source': source, 'rendering': 'html-css', 'recipe': simple[source]}
         elif source in buttons:
-            outcome = {'source': source, 'rendering': 'html-button',
-                       'background': buttons[source]['background'], 'text': buttons[source]['text']['text']}
-        elif source in lettering:
-            outcome = {'source': source, 'rendering': 'html-font', 'text': lettering[source]['text']}
+            button = buttons[source]
+            if not button['background']:
+                outcomes.append({'source': source, 'rendering': 'awaiting-unlettered-button'})
+                issues.append({'source': source, 'issue': 'Accepted unlettered button PNG is not installed'})
+                continue
+            outcome = {'source': source, 'rendering': 'unlettered-image-font-button',
+                       'background': button['background'], 'text': button['text']['text']}
+            target = RUNTIME / button['background'].lstrip('/')
+            record = backgrounds.get(source)
+            if not target.is_file():
+                issues.append({'source': source, 'issue': 'Missing unlettered runtime button PNG'})
+            elif record is None:
+                issues.append({'source': source, 'issue': 'No accepted unlettered button candidate'})
+            else:
+                with Image.open(target) as installed, Image.open(ROOT / record['candidate']) as candidate:
+                    if installed.size != candidate.size or installed.convert('RGBA').tobytes() != candidate.convert('RGBA').tobytes():
+                        issues.append({'source': source, 'issue': 'Runtime background differs from accepted candidate'})
+        elif source in awaiting:
+            outcome = {'source': source, 'rendering': 'awaiting-raster-redraw'}
+            issues.append({'source': source, 'issue': 'Raster redraw is not installed'})
+        elif source in quality_sources and source not in quality_records:
+            outcome = {'source': source, 'rendering': 'awaiting-raster-redraw'}
+            issues.append({'source': source, 'issue': 'No visually accepted raster redraw is installed'})
         elif source in records:
             record = records[source]
             outcome = {'source': source, 'rendering': 'image', 'candidate': record['candidate']}
-            cell = directory['/' + source]
-            groups[cell['atlas']].append((record, cell))
+            cell = directory.get('/' + source)
+            if cell is None:
+                issues.append({'source': source, 'issue': 'Missing runtime sprite mapping'})
+            else:
+                groups[cell['atlas']].append((record, cell))
         else:
             outcome = {'source': source, 'rendering': 'unresolved'}
-            issues.append({'source': source, 'issue': 'No installed image or HTML artwork'})
+            issues.append({'source': source, 'issue': 'No installed raster artwork'})
         outcomes.append(outcome)
     inspected = 0
     for atlas, members in groups.items():
@@ -72,17 +115,10 @@ def main():
         backup = ART / 'previous' / (RUNTIME / atlas.lstrip('/')).relative_to(ROOT)
         if not backup.is_file():
             issues.append({'atlas': atlas, 'issue': 'Missing previous sprite sheet'})
-    backgrounds = document(ART / 'installed-blank-button-jobs.json')
-    for record in backgrounds:
-        target = RUNTIME / record['background']
-        with Image.open(target) as installed, Image.open(ROOT / record['candidate']) as candidate:
-            if installed.size != candidate.size or installed.convert('RGBA').tobytes() != candidate.convert('RGBA').tobytes():
-                issues.append({'background': record['background'], 'issue': 'Runtime background differs from candidate'})
     report = {'problemSources': len(outcomes), 'outcomes': dict(Counter(row['rendering'] for row in outcomes)),
               'emotes': len(emotes), 'imageCells': inspected, 'runtimeSheets': len(groups),
-              'simpleUiSources': len(simple), 'buttonSources': len(buttons),
-              'fontSources': len(lettering),
-              'sharedButtonBackgrounds': len(backgrounds), 'issues': issues}
+              'buttonSources': len(buttons), 'pendingRasterSources': len(awaiting),
+              'unletteredButtonBackgrounds': len(buttons), 'issues': issues}
     (ART / 'installed-current-emotes.json').write_text(json.dumps(emotes, ensure_ascii=False, indent=2) + '\n')
     (ART / 'resolved-ui-sources.json').write_text(json.dumps(outcomes, ensure_ascii=False, indent=2) + '\n')
     (ART / 'final-installation-check.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')

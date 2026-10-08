@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {gameContent, rankedPetSkillId} from '../../../../shared/content/catalog';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
@@ -105,8 +106,7 @@ export function HomePetOwnedMastery({ui, selectedBase, currentTank, currentPetIn
         data-mastery-value={value} data-mastery-fraction={values.progress[index]}
         role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={Math.max(5, value)} aria-valuenow={value}>
         <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, width, height,
-          clipPath: `inset(0 ${width - extent}px 0 0)`, backgroundImage: fill.style.backgroundImage,
-          backgroundSize: '100% 100%'}} />
+          clipPath: `inset(0 ${width - extent}px 0 0)`, ...backgroundStyle(fill.style)}} />
       </div>;
     })}
   </>;

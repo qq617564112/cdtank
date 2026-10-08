@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -15,7 +16,7 @@ export function ShopItemRowContent({ui, name, itemTableId, iconId, ownedQuantity
   const attr = (name: string) => ({[`data-${mode === 'owned' ? 'shop-owned-row' : 'shop-product-row'}-${name}`]: ''});
   return <>
     <span className={`shop-item-row-icon ${prefix}-icon`} aria-hidden="true"
-      data-source-asset={icon['data-source-asset']} style={{backgroundImage: icon.style.backgroundImage}} />
+      data-source-asset={icon['data-source-asset']} style={{...backgroundStyle(icon.style)}} />
     <span className={`shop-item-row-name ${prefix}-name`} {...attr('name')}>{name}</span>
     <span className={`shop-item-row-type ${prefix}-type`} {...attr('type')}>{{1: '道具', 2: '道具', 3: '炮弹', 4: '陷阱'}[kind] ?? ''}</span>
     {sourcePrice !== undefined && <span className="shop-item-row-price" {...attr('price')}

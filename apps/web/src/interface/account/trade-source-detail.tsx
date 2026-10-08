@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {rankedPetSkillId} from '../../../../shared/content/catalog';
 import {useLayoutEffect, useRef} from 'react';
 import {createPortal} from 'react-dom';
@@ -44,8 +45,7 @@ function TradeProgressBar({ui, layout, suffix, name, progress, caption}: {
     <div {...background} className="trade-source-progress" role="meter" aria-valuemin={0} aria-valuemax={1}
       aria-valuenow={value} data-trade-progress={name}>
       <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, width, height,
-        clipPath: `inset(0 ${width - extent}px 0 0)`, backgroundImage: fill.style.backgroundImage,
-        backgroundSize: '100% 100%'}}/>
+        clipPath: `inset(0 ${width - extent}px 0 0)`, ...backgroundStyle(fill.style)}}/>
     </div>
     {caption !== undefined && <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={name}
       text={caption} className="trade-source-progress-caption"/>}

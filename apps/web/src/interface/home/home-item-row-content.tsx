@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -14,7 +15,7 @@ export function HomeItemRowContent({ui, name, itemTableId, iconId, ownedQuantity
     `set:daoju0 image:data\\ui\\daoju\\${String(iconId).padStart(5, '0')}.tga`);
   return <>
     <span className="home-item-row-icon" aria-hidden="true" data-source-asset={icon['data-source-asset']}
-      style={{backgroundImage: icon.style.backgroundImage}} />
+      style={{...backgroundStyle(icon.style)}} />
     <span className="home-item-row-name" data-home-item-row-name="">{name}</span>
     <span className="home-item-row-type" data-home-item-row-type="">{TYPE_LABELS[classifyItemId(itemTableId)] ?? ''}</span>
     <span className="home-item-row-quantity" data-home-item-row-quantity=""

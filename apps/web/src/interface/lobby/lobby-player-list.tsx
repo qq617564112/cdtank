@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import './lobby-player-list.css';
 import {PlayerListScrollbar} from './player-list-scrollbar';
@@ -53,7 +54,7 @@ export function LobbyPlayerListView({players, status, chooseTarget, openPlayer}:
     {players.map((player, index) => <li key={player.accountId} role="presentation">
       <button type="button" role="option" data-lobby-player-account={player.accountId} data-lobby-player-index={index}
         aria-selected={selectedId === player.accountId} title={player.name}
-        style={selectedId === player.accountId ? {backgroundImage: selection?.style.backgroundImage} : undefined}
+        style={selectedId === player.accountId ? {...backgroundStyle(selection?.style)} : undefined}
         data-source-selection-asset={selectedId === player.accountId ? selection?.['data-source-asset'] : undefined}
         onContextMenu={event => {event.preventDefault(); setSelected(player.accountId); openPlayer?.(player);}}
         onClick={() => setSelected(player.accountId)} onDoubleClick={() => chooseTarget?.(player)} onKeyDown={event => move(event, index)}

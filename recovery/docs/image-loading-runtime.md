@@ -1,6 +1,6 @@
 # 进入游戏前加载图片
 
-正式入口与validation入口先显示图片加载页，完整图片目录下载完成、全部发布图片和源码打包图片解码就绪、入口布局准备完成后再初始化场景、登录页面和游戏音频。进度分别显示下载与解码数量、本地复用数量、资源大小和完成比例；完成比例按下载及解码任务数计算，资源大小是当前图片目录的压缩文件大小，不表示实际网络流量或解码内存。任一下载或解码失败均保留加载页，可重试并复用已下载、已解码图片。离开页面终止当前下载与解码等待。
+正式入口与validation入口先显示图片加载页，完整图片目录下载完成、发布图集、独立图片和源码打包图片解码就绪、入口布局准备完成后再初始化场景、登录页面和游戏音频。进度分别显示下载与解码数量、本地复用数量、资源大小和完成比例；完成比例按下载及解码任务数计算，资源大小是当前图片目录的压缩文件大小，不表示实际网络流量或解码内存。任一下载或解码失败均保留加载页，可重试并复用已下载、已解码图片。离开页面终止当前下载与解码等待。
 
 首次加载与进入正式对局共用 `interface/resources/loading-page.tsx` 和同一套样式，均采用800×600原坐标布局、4:3等比缩放和画面内叠加。背景复用原Data/ui/loading/1–5.jpg的已发布PNG，每次进入从五张中选择一张，重试保持同一张；先解码当前背景、键位图、战车图和两张进度图，再开始全量下载。背景按左上800×600有效画面裁切，去除1024×1024纹理的黑色填充。键位图位于144/100，战车图位于右下，256×64进度词距底30；状态、图片数量与下载大小位于左下状态区，失败时在其下显示重新载入按钮。原loading_1是深色底图，loading_2按完成比例从左到右裁切叠加，不压缩文字。原客户端0x45a56e–0x45a58b分别将两图加载到对象0xec/0x128；0x458277回调中的0x4582c0–0x4582f8根据亮图宽度与进度计算至少1像素的裁切宽度，0x458375–0x4583a4先绘底图再绘裁切亮图。网页共用组件在零进度时完全隐藏亮图，完成时显示完整亮图。
 
@@ -14,11 +14,13 @@ HTTP、HTTPS与localhost统一使用IndexedDB的`cdtank-image-assets`数据库�
 
 共享 `decodeImage` 对非abort失败按绝对URL登记该失败URL；下一次现有显式重试只对该失败URL经 `assets/image-cache.ts` 唯一owner以no-cache重新获取、按同version写入IndexedDB Blob并替换该URL的PreparedImage Blob URL，后续DOM、引擎 `imageResourceUrl` 与背景使用新图。成功图片的decoderPromise、PreparedImage与IndexedDB版本保持不动；不自动重试、不清空全部缓存、不改动成功图片，其余图片继续复用原Promise与HTMLImage。HTTPS与localhost及普通远程HTTP统一使用IndexedDB，不使用Service Worker／CacheStorage或请求头。首次加载出现的PNG解码失败原因仍未确定，本范围不作为稳定性或修复的实测结论。完整合同见 [image-decode-retry-runtime.md](image-decode-retry-runtime.md)。
 
-共享`assets/image-cache.ts`提供缓存读取与Blob URL解析，`assets/image-resources.ts`按原绝对URL共享解码Promise。界面源区域、框图、滚动条、Loading、登录与大厅背景、聊天图像、战斗提示、记分板头像和HUD都读取已准备的Blob URL，保留原资源路径与源控件元数据。战斗SVG的图片href同样使用该解析器，覆盖HUD、准星及伤害／收益文字；改装弹窗通过共享decodeImage准备图片。独立参考模型页先准备图片目录，其参考图与颜色图使用同一缓存和解码入口。Babylon的`Tools.PreprocessUrl`在场景初始化时接到同一解析器，原纹理URL在图片读取时映射到本地Blob，模型、音频与其它非图片请求仍沿原路径。图片下载失败或IndexedDB打开、读取、保存失败时保留加载页并提示重试；本地持久缓存不可用时不切换到HTTP缓存后端。已有`image-cache-worker.js`注册按该脚本的精确URL注销，当前加载不注册Service Worker，构建不发布该worker。页面离开先停止场景与UI，再释放本页Blob URL；IndexedDB记录保留。
+共享 `assets/image-cache.ts` 提供缓存读取与 Blob URL 解析。`assets/image-resources.ts` 的 `decodeImageRegion` 复用完整图集的解码结果，返回源区域坐标和尺寸；Canvas 直接通过源区域绘制，UI 背景保留整张图集 URL、背景尺寸及背景位置，复制控件图片样式时一起传递这些属性。加载页、头像、战斗提示和大厅美术使用 SVG 区域视口，聊天图像与动画直接显示对应格子。启动不遍历全部小图进行 PNG 编码和解码。
+
+Babylon 在场景初始化时安装模型图片加载入口；GLB 的外部贴图通过 `preprocessUrlAsync` 准备独立图片，直接创建的纹理在图片加载时准备。只为实际使用的模型贴图裁切 PNG，保留原 UV、平铺和滚动采样。鼠标光标保留独立图片。图片下载失败或 IndexedDB 打开、读取、保存失败时保留加载页并提示重试。已有 `image-cache-worker.js` 注册按该脚本的精确 URL 注销，当前加载不注册 Service Worker，构建不发布该 worker。页面离开先停止场景与 UI，再释放本页 Blob URL；IndexedDB 记录保留。
 
 进度中的本地复用数量按IndexedDB命中或当前页面已有图片计算。资源大小是当前图片目录的压缩文件大小，开发目录包含源码图片；大小包含从本地读取的图片，不表示实际网络下载流量。重新复制或生成目录图片改变文件修改时间时，对应图片会更新缓存；没有变化的目录刷新只请求目录，图片从本地读取。
 
-全量解码将所有图片的CPU准备工作放在进入游戏之前，并保留解码图像；启动等待时间和内存占用会增加。浏览器仍管理内部图像缓存，HTMLImageElement就绪不代表Babylon的GPU纹理已上传。
+启动保留整张图集的解码结果，小图通过坐标共享图集。完整资源目录仍在进入游戏前下载，图集像素内存和首次下载体积仍取决于实际资源大小。HTMLImageElement 就绪不代表 Babylon 的 GPU 纹理已上传。
 
 ## 验证范围
 

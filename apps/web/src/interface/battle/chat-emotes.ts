@@ -1,6 +1,4 @@
-import {imageResourceUrl} from '../../assets/image-cache';
-import {isSimpleUiImage} from '../../assets/simple-ui-artwork';
-import {buttonArtwork} from '../../assets/button-artwork';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {createSourceTextArtwork, sourceTextArtwork} from '../resources/source-text-artwork';
 import {EMOTE_COUNT, EMOTE_FIRST_CODEPOINT} from './chat-emote-text';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
@@ -81,8 +79,8 @@ export class ChatEmotes {
         const id = glyph.charCodeAt(0)-EMOTE_FIRST_CODEPOINT+1;
         const sequence = this.sequences?.get(id), image = sequence?.definition.frames[0] ?? this.images.get(id);
         if (!image) {element.append(document.createTextNode(glyph)); continue;}
-        const img = document.createElement('img'); img.alt=glyph; img.dataset.chatEmote=String(id); img.draggable=false;
-        img.src=imageResourceUrl(`/${image.asset}`); img.width=image.width; img.height=image.height;
+        const img = document.createElement('span'); img.setAttribute('role','img'); img.setAttribute('aria-label',glyph); img.dataset.chatEmote=String(id); img.draggable=false;
+        img.dataset.sourceAsset=image.asset; Object.assign(img.style,{display:'inline-block',width:`${image.width}px`,height:`${image.height}px`,...imageBackgroundStyle(`/${image.asset}`)});
         if (sequence) this.paint(img,sequence);
         element.append(img);
       }
@@ -159,14 +157,11 @@ export class ChatEmotes {
         if (item.image) {
           const image=this.imageCatalog!.image(item.image.set,item.image.name)!;
           const textArtwork=sourceTextArtwork(image.asset);
-          const artwork=textArtwork || isSimpleUiImage(image.asset) || buttonArtwork(image.asset)
-            ? document.createElement('span') : document.createElement('img');
+          const artwork=document.createElement('span');
           artwork.dataset.chatSourceImage=item.image.name;artwork.dataset.chatSourceImageset=item.image.set;
           artwork.dataset.sourceAsset=image.asset;
-          if (artwork instanceof HTMLImageElement) {
-            artwork.draggable=false;artwork.alt='';artwork.src=imageResourceUrl(`/${image.asset}`);
-            artwork.width=image.width;artwork.height=image.height;
-          } else artwork.setAttribute('aria-hidden','true');
+          artwork.setAttribute('aria-hidden','true');
+          Object.assign(artwork.style,imageBackgroundStyle(`/${image.asset}`));
           Object.assign(artwork.style,{position:'absolute',left:'0px',top:'0px',width:`${image.width}px`,height:`${image.height}px`});
           if (textArtwork) {
             artwork.dataset.sourceButtonLabel='external';
@@ -176,9 +171,9 @@ export class ChatEmotes {
         } else if (item.emoteId===undefined) piece.textContent=item.text;
         else {
           const sequence=this.sequences?.get(item.emoteId),image=sequence?.definition.frames[0]??this.images.get(item.emoteId)!;
-          const img=document.createElement('img');img.alt=item.text;img.draggable=false;
-          img.dataset.chatEmote=String(item.emoteId);img.src=imageResourceUrl(`/${image.asset}`);
-          img.width=image.width;img.height=image.height;
+          const img=document.createElement('span');img.setAttribute('role','img');img.setAttribute('aria-label',item.text);img.draggable=false;
+          img.dataset.chatEmote=String(item.emoteId);img.dataset.sourceAsset=image.asset;
+          Object.assign(img.style,imageBackgroundStyle(`/${image.asset}`));
           Object.assign(img.style,{position:'absolute',left:'1px',top:'0px',width:`${image.width-1}px`,height:`${image.height}px`});
           applyChatEmoteColour(img,colour,piece);
           if (sequence) this.paint(img,sequence);
@@ -194,10 +189,10 @@ export class ChatEmotes {
     this.animation=undefined;
     const delta = this.previousTime === undefined ? 0 : (time-this.previousTime)/1000;
     this.previousTime=time;
-    const instances: HTMLImageElement[]=[];
+    const instances: HTMLSpanElement[]=[];
     for (const element of this.rows.keys()) {
       if (!element.isConnected) {this.rows.delete(element);continue;}
-      instances.push(...element.querySelectorAll<HTMLImageElement>('img[data-chat-emote]'));
+      instances.push(...element.querySelectorAll<HTMLSpanElement>('[data-chat-emote]'));
     }
     const active=new Set(instances.map(image=>Number(image.dataset.chatEmote)));
     // A RichEditbox updates each unique provider once, irrespective of glyph count.
@@ -210,7 +205,7 @@ export class ChatEmotes {
     else this.previousTime=undefined;
   }
 
-  private paint(image: HTMLImageElement, sequence: ChatEmoteSequence): void {
+  private paint(image: HTMLSpanElement, sequence: ChatEmoteSequence): void {
     const index=sequence.frame();
     image.dataset.chatEmoteElapsed=String(sequence.elapsed);
     image.dataset.chatEmoteFrame=index===undefined?'none':String(index);
@@ -218,8 +213,12 @@ export class ChatEmotes {
     image.style.visibility=index===undefined?'hidden':'';
     if (index===undefined) return;
     const frame=sequence.definition.frames[index];
-    const source=imageResourceUrl(`/${frame.asset}`);
-    if (image.getAttribute('src')!==source) image.src=source;
-    image.width=frame.width; image.height=frame.height;
+    if (image.dataset.sourceAsset!==frame.asset) {
+      image.dataset.sourceAsset=frame.asset;
+      Object.assign(image.style,imageBackgroundStyle(`/${frame.asset}`));
+    }
+    if (!image.closest('[data-chat-rich-item]')) {
+      image.style.width=`${frame.width}px`; image.style.height=`${frame.height}px`;
+    }
   }
 }

@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {loadCombatCatalog} from '../../content';
 import {petSkillLearningOwner} from './pet-skill-learning-owner';
 import {HomeResourceFeedback} from './home-resource-feedback';
@@ -49,7 +49,7 @@ function sourceProps(ui: HomeSourceUi, kind: RoleKind, name: string, picture?: s
   const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
   const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
   const style: CSSProperties = {left, top, width: box[2] - box[0], height: box[3] - box[1],
-    backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined};
+    ...(asset ? imageBackgroundStyle(`/${asset}`) : {})};
   return {style, 'data-source-control': name, 'data-source-layout': `ui/layouts/${suffix}`, 'data-source-asset': asset};
 }
 

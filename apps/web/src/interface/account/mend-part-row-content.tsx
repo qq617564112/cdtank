@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
@@ -19,7 +20,7 @@ export function MendPartRowContent({ui, name, itemTableId, iconId, ownedQuantity
   const days = Math.ceil((ownedQuantity >>> 0) / 1440);
   return <>
     <span className="mend-part-icon" aria-hidden="true" data-source-asset={icon?.['data-source-asset']}
-      style={{backgroundImage: icon?.style.backgroundImage}} />
+      style={{...backgroundStyle(icon?.style)}} />
     {installed && <HomeRoleRowStatusBadge ui={ui} status="installed"/>}
     <span className="mend-part-name" data-mend-part-name="">{name}</span>
     <span className="mend-part-type" data-mend-part-type="">{TYPE_LABELS[classifyItemId(itemTableId)] ?? ''}</span>

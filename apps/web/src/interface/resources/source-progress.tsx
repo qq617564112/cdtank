@@ -1,4 +1,5 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
+import {ImageArtwork} from './image-artwork';
 import './source-progress.css';
 import {useId, type ComponentProps, type CSSProperties} from 'react';
 import {lifeProgress} from '../battle/life-progress';
@@ -24,7 +25,8 @@ export function SourceProgress({control, data, fraction, scale, style, className
   const rgb = [2, 4, 6].map(offset => parseInt(colour.slice(offset, offset + 2), 16) / 255);
   const clip = vertical ? `inset(${height - projection.extent / scale}px 0 0 0)`
     : `inset(0 ${width - projection.extent / scale}px 0 0)`;
-  function tile(reference: string | undefined): {style: CSSProperties; 'data-source-asset'?: string} {
+  function tile(reference: string | undefined): {style: CSSProperties; 'data-source-asset'?: string;
+    repeat?: {width: number; height: number}} {
     const match = /^set:(\S+) image:(.+)$/.exec(reference ?? '');
     const sets = data.imagesets.filter(set => set.attributes.Name === match?.[1]);
     const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
@@ -38,10 +40,16 @@ export function SourceProgress({control, data, fraction, scale, style, className
     const tileWidth = dimension('Width'), tileHeight = dimension('Height');
     const columns = Math.trunc((width * scale + tileWidth - 1) / tileWidth);
     const rows = Math.trunc((height * scale + tileHeight - 1) / tileHeight);
-    return {'data-source-asset': region.asset, style: {width: columns * tileWidth / scale, height: rows * tileHeight / scale,
-      backgroundImage: imageResourceBackground(`/${region.asset}`), backgroundSize: `${tileWidth / scale}px ${tileHeight / scale}px`, backgroundRepeat: 'repeat'}};
+    return {'data-source-asset': region.asset, repeat: {width: tileWidth / scale, height: tileHeight / scale},
+      style: {width: columns * tileWidth / scale, height: rows * tileHeight / scale,
+        ...imageBackgroundStyle(`/${region.asset}`), backgroundImage: 'none'}};
   }
   const background = tile(properties.BackgroundImage), fill = tile(properties.ProgressImage);
+  const artwork = (source: ReturnType<typeof tile>) => {
+    const asset = source['data-source-asset'];
+    return asset ? <ImageArtwork asset={`/${asset}`} repeat={source.repeat}
+      style={{position: 'absolute', inset: 0}} aria-hidden="true"/> : null;
+  };
   return <div {...props} className={`source-control source-progress-control ${className ?? ''}`} style={{...style, backgroundImage: 'none'}}
     data-progress-format={vertical ? 'Vertical' : 'Horizontal'} data-source-progress-fraction={projection.fraction}
     data-source-progress-extent={projection.extent} data-source-progress-colour={colour}
@@ -49,9 +57,11 @@ export function SourceProgress({control, data, fraction, scale, style, className
     <svg width="0" height="0"><filter id={filterId} colorInterpolationFilters="sRGB">
       <feColorMatrix type="matrix" values={`${rgb[0]} 0 0 0 0  0 ${rgb[1]} 0 0 0  0 0 ${rgb[2]} 0 0  0 0 0 1 0`} />
     </filter></svg>
-    <div className="source-life-background source-progress-background" {...background} />
+    <div className="source-life-background source-progress-background" data-source-asset={background['data-source-asset']}
+      style={background.style}>{artwork(background)}</div>
     <div className="source-progress-fill" style={{clipPath: clip}}>
-      <div className="source-life-image source-progress-image" {...fill} style={{...fill.style, filter: `url(#${filterId})`}} />
+      <div className="source-life-image source-progress-image" data-source-asset={fill['data-source-asset']}
+        style={{...fill.style, filter: `url(#${filterId})`}}>{artwork(fill)}</div>
     </div>
   </div>;
 }

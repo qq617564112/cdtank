@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import './waiting-room.css';
 import {Fragment, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {ComponentPropsWithoutRef, KeyboardEvent, SyntheticEvent} from 'react';
@@ -244,11 +244,11 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
           {open && ui && match && available && <SourceImageScale value={scale}>
             {['ditu', 'maogouditu', 'maogouditu2', 'zhongjianditu', 'fenhongdi1', 'fenhongdi2', 'tiao', 'kuang', 'dituguize', 'renshu', 'daos', 'meijushijian', 'sec'].map(name => image(name))}
             {snapshot.roomInfo && <span className="waiting-room-map-preview" role="img" aria-label={`${info.mapName}地图预览`}
-              data-waiting-map-preview={snapshot.roomInfo.mapId} style={{backgroundImage: previewAsset ? imageResourceBackground(`/${previewAsset}`) : undefined}}/>}
+              data-waiting-map-preview={snapshot.roomInfo.mapId} style={{...(previewAsset ? imageBackgroundStyle(`/${previewAsset}`) : {})}}/>}
             <button type="button" className="waiting-room-edit" data-waiting-control="editRoom" data-room-edit=""
               aria-label="房间编辑" title={roomEditor ? '编辑房间地图、模式、人数和密码' : '只有房主可以编辑房间'}
               {...controlProps} disabled={disabled || !readyAvailable || !roomEditor || !snapshot.roomInfo || match.maxPlayers === undefined}
-              style={{backgroundImage: editButtonAsset ? imageResourceBackground(`/${editButtonAsset}`) : undefined}}
+              style={{...(editButtonAsset ? imageBackgroundStyle(`/${editButtonAsset}`) : {})}}
               onClick={() => {
                 const current = generation.current;
                 void request(async () => {

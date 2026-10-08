@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import './source-button.css';
 import {useEffect, useRef, useState, type ComponentPropsWithoutRef} from 'react';
 import type {HomeSourceLayout, HomeSourceUi} from './source-ui-layout';
@@ -39,7 +40,8 @@ export function SourceButton({ui, layout, source, suffix, offsetX = 0, offsetY =
   const hovering = !disabled && !view.keyHeld && (view.inside !== pushed);
   const state = hovering ? 'Hover' : pushed ? 'Pushed' : disabled ? 'Disabled' : 'Normal';
   const property = radio && selected && (state === 'Normal' || state === 'Hover') ? 'PushedImage' : `${state}Image`;
-  const imageKeys = [property, ...(radio && selected ? ['CheckMarkImage'] : [])].filter(key => properties[key]);
+  const stateImage = disabled && !properties[property] ? 'NormalImage' : property;
+  const imageKeys = [stateImage, ...(radio && selected ? ['CheckMarkImage'] : [])].filter(key => properties[key]);
   const alpha = Number(properties.Alpha ?? 1);
   const place = sourceProps(ui, layout, suffix, source, undefined, offsetX, offsetY);
   const inside = (x: number, y: number) => {
@@ -71,7 +73,9 @@ export function SourceButton({ui, layout, source, suffix, offsetX = 0, offsetY =
     onBlur={cancel}
     onClick={event => {if (!disabled && (event.detail === 0 || releasedInside.current)) onClick?.(event);}}>
     {imageProps.map(({key, props: image}) => <i key={key} aria-hidden="true" data-room-button-image={key}
-      data-source-asset={image['data-source-asset']} style={{backgroundImage: image.style.backgroundImage, opacity: alpha}}>
+      data-source-asset={image['data-source-asset']}
+      data-source-button-label={sourceTextArtwork(image['data-source-asset']) ? 'external' : undefined}
+      style={{...backgroundStyle(image.style), filter: 'none', opacity: alpha}}>
       {sourceTextArtwork(image['data-source-asset']) && <SourceTextArtwork asset={image['data-source-asset']!}/>}
     </i>)}
     {children}

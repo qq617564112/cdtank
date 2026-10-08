@@ -1,0 +1,31 @@
+name: Build and deploy CDTank
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cdtank-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: cdtank-deploy
+    timeout-minutes: 90
+    env:
+      CDTANK_IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: https://code.forgejo.org/actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Build image
+        run: docker build --tag "cdtank:${CDTANK_IMAGE_TAG}" --tag cdtank:latest .
+
+      - name: Deploy
+        run: docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
+
+      - name: Deployment URL
+        run: echo 'CDTank is available at http://192.168.10.140:61002/'

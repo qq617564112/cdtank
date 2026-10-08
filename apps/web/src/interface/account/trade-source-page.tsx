@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {loadCombatCatalog} from '../../content';
 import './trade-source-page.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
@@ -208,7 +209,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
   const checkmark = (name: string, checked: boolean) => {
     if (!ui || !layout || !checked) return null;
     const props = sourceProps(ui, layout, suffix, name, layout.control(name).properties.CheckMarkImage);
-    return <i data-trade-checkmark={name} data-source-asset={props['data-source-asset']} style={{backgroundImage: props.style.backgroundImage}}/>;
+    return <i data-trade-checkmark={name} data-source-asset={props['data-source-asset']} style={{...backgroundStyle(props.style)}}/>;
   };
   const candidateAvailable = (record: TradeRecordView) => {
     const display = tradeRecordPresentation(record, catalog);
@@ -258,7 +259,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
               <button type="button" className="trade-source-candidate-row" role="option" aria-selected={selected}
                 aria-pressed={selected} disabled={!candidateAvailable(record)}
                 {...rowData} aria-label={display.name || undefined}
-                style={selected && candidateSelection ? {backgroundImage: candidateSelection.style.backgroundImage} : undefined}
+                style={selected && candidateSelection ? {...backgroundStyle(candidateSelection.style)} : undefined}
                 data-source-selection-asset={selected ? candidateSelection?.['data-source-asset'] : undefined}
                 onClick={() => toggle(record)} data-trade-record-toggle={keyOf(record)} onKeyDown={event => {
                   const next = event.key === 'ArrowDown' ? candidates.indexOf(record) + 1

@@ -1,7 +1,7 @@
 import './battle-ui-layer.css';
 import {DynamicTexture, Texture} from '@babylonjs/core';
 import type {Scene} from '@babylonjs/core';
-import {decodeImage} from '../assets/image-resources';
+import {decodeImageRegion, drawImageRegion, type ImageRegion} from '../assets/image-resources';
 import {BattleScreenQuads, createBattleScreenLayer} from './battle-screen-quads';
 import type {BattleVectorShape, VectorRectangle} from './battle-screen-vectors';
 import {BattleUiRaster} from './battle-ui-raster';
@@ -51,7 +51,7 @@ export class BattleUiLayer {
   private readonly raster = new BattleUiRaster(this.context, (url, tint) => this.image(url, tint));
   private readonly entries = new Set<BattleImageEntry>();
   private readonly roots = new Map<HTMLElement, UiRoot>();
-  private readonly images = new Map<string, HTMLImageElement>();
+  private readonly images = new Map<string, ImageRegion>();
   private readonly loading = new Set<string>();
   private readonly coloured = new Map<string, HTMLCanvasElement>();
   private readonly resizeObserver = new ResizeObserver(() => {this.dirty = true;});
@@ -166,12 +166,12 @@ export class BattleUiLayer {
     }
   }
 
-  private image(url: string, tint: readonly [number, number, number] = [1, 1, 1]): HTMLImageElement | HTMLCanvasElement | undefined {
+  private image(url: string, tint: readonly [number, number, number] = [1, 1, 1]): ImageRegion | undefined {
     const image = this.images.get(url);
     if (!image) {
       if (!this.loading.has(url)) {
         this.loading.add(url);
-        void decodeImage(url).then(decoded => {
+        void decodeImageRegion(url).then(decoded => {
           if (!this.disposed) {this.images.set(url, decoded); this.dirty = true;}
         }).catch(error => {console.error(error);});
       }
@@ -181,16 +181,16 @@ export class BattleUiLayer {
     const key = `${url}:${tint.join(',')}`;
     let canvas = this.coloured.get(key);
     if (!canvas) {
-      canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+      canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
       const context = canvas.getContext('2d')!;
-      context.drawImage(image, 0, 0);
+      drawImageRegion(context, image, 0, 0);
       const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
       for (let index = 0; index < pixels.data.length; index += 4) {
         for (let channel = 0; channel < 3; channel++) pixels.data[index + channel] *= tint[channel];
       }
       context.putImageData(pixels, 0, 0); this.coloured.set(key, canvas);
     }
-    return canvas;
+    return {image: canvas, x: 0, y: 0, width: canvas.width, height: canvas.height};
   }
 
   private paintImage(draw: BattleImageDraw, bounds: DOMRect): void {
@@ -204,7 +204,7 @@ export class BattleUiLayer {
     context.globalAlpha = draw.tint[3]; context.beginPath();
     context.rect(left + draw.clip[0] / draw.shape.width * w, top + draw.clip[1] / draw.shape.height * h,
       (draw.clip[2] - draw.clip[0]) / draw.shape.width * w, (draw.clip[3] - draw.clip[1]) / draw.shape.height * h);
-    context.clip(); context.drawImage(image, left, top, w, h); context.restore();
+    context.clip(); drawImageRegion(context, image, left, top, w, h); context.restore();
   }
 
   private releaseRoots(): void {

@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {loadCombatCatalog} from '../../content';
 import './hud.css';
 import {HudItemSourceView} from './hud-item-source-view';
@@ -11,7 +11,7 @@ import {lifeProgress} from './life-progress';
 import {SourceProgress} from '../resources/source-progress';
 import {useEffect, useId, useState, useSyncExternalStore, type CSSProperties} from 'react';
 import type {BattleHud, HudPlayer, HudSnapshot, SourceLayout, SourceRegion, SourceUi, SourceWindow} from './battle-hud';
-import {SourceNumericText} from '../resources/source-text-artwork';
+import {SourceNumericText} from '../resources/source-bitmap-font';
 
 export interface HudItemInventoryStore {
   getSnapshot(): {inventory?: ResInventory; selectedWeaponSlot?: number; selectedItemSlot?: number};
@@ -89,7 +89,7 @@ function image(data: SourceUi, reference?: string): SourceRegion | undefined {
 }
 function picture(data: SourceUi, reference?: string): CSSProperties {
   const asset = image(data, reference)?.asset;
-  return asset ? {backgroundImage: imageResourceBackground(`/${asset}`), backgroundSize: '100% 100%'} : {};
+  return asset ? {...imageBackgroundStyle(`/${asset}`)} : {};
 }
 function baseStyle(data: SourceUi, control: SourceWindow): CSSProperties {
   const properties = control.properties, rect = properties.AbsoluteRect.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
@@ -126,8 +126,7 @@ function HudLayout({source, data, state, hud, filterId, scale, mode, intro}: {
     const iconStyle: CSSProperties = {};
     if (/^picPlayerIcon\d+$/.test(name)) {
       hidden = !player?.asset;
-      iconStyle.backgroundImage = player?.asset ? imageResourceBackground(`/${player.asset}`) : 'none';
-      iconStyle.backgroundSize = '100% 100%';
+      Object.assign(iconStyle, player?.asset ? imageBackgroundStyle(`/${player.asset}`) : {backgroundImage: 'none'});
       extra = {'data-tank-id': player ? String(player.tankId) : undefined, 'data-pet-id': player?.petId === undefined ? undefined : String(player.petId), 'data-expression': player?.expression,
         role: player ? 'img' : undefined, 'aria-label': player ? `${player.name}宠物头像` : undefined};
     }

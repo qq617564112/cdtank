@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import './history-intro-scrollbar.css';
 import {useEffect, useRef, useState, type RefObject, type PointerEvent} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
@@ -29,7 +29,7 @@ export function HistoryIntroScrollbar({list, ui, properties, scale, version, lab
   const picture = (property: string) => {
     const image = region(property);
     const asset = image?.asset;
-    return {'data-source-asset': asset, style: {backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined,
+    return {'data-source-asset': asset, style: {...(asset ? imageBackgroundStyle(`/${asset}`) : {}),
       ...(image && property.endsWith('BackgroundImage') ? {
         backgroundSize: `${image.Width}px ${image.Height}px`, backgroundPosition: 'left top', backgroundRepeat: 'repeat',
       } : {})}};

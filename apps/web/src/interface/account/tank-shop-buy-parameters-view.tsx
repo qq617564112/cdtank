@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {SourceFeedbackStaticText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -24,7 +25,7 @@ export function TankShopBuyParametersView({ui, tankId}: {ui: HomeSourceUi; tankI
       data-capacity={values.capacity} data-progress={values.progress}
       role="meter" aria-label="商品炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values.capacity}>
       <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, clipPath: `inset(0 ${width - extent}px 0 0)`,
-        width, height, backgroundImage: fill.style.backgroundImage, backgroundSize: '100% 100%'}} />
+        width, height, ...backgroundStyle(fill.style)}} />
     </div>
   </div>;
 }

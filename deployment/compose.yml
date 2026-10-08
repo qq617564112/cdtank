@@ -1,0 +1,26 @@
+name: cdtank
+
+services:
+  app:
+    image: cdtank:${CDTANK_IMAGE_TAG:-latest}
+    container_name: cdtank
+    restart: unless-stopped
+    init: true
+    ports:
+      - "61002:3001"
+    volumes:
+      - accounts:/app/state
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3001/').then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+
+volumes:
+  accounts:
+    name: cdtank-accounts

@@ -1,6 +1,6 @@
 import {Constants, Mesh, ShaderMaterial, UtilityLayerRenderer, Vector2, Vector3, VertexBuffer} from '@babylonjs/core';
 import type {BaseTexture, Scene} from '@babylonjs/core';
-import {decodeImage} from '../assets/image-resources';
+import {decodeImageRegion, type ImageRegion} from '../assets/image-resources';
 
 export type ScreenUv = readonly [number, number, number, number];
 export type ScreenColour = readonly [number, number, number, number];
@@ -155,6 +155,6 @@ export class BattleScreenQuads {
 }
 
 /** Source images are rasterized into an atlas once, before battle readiness. */
-export function loadBattleOverlayImage(asset: string): Promise<HTMLImageElement> {
-  return decodeImage(`/${asset}`);
+export function loadBattleOverlayImage(asset: string): Promise<ImageRegion> {
+  return decodeImageRegion(`/${asset}`);
 }

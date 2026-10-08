@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {gameContent} from '../../../../shared/content/catalog';
 import {HomeEquipmentCommonRowContent} from './home-equipment-common-row-content';
 import {isAppearanceEffectItem} from '../../../../shared/combat/equipment-target';
@@ -50,7 +51,7 @@ export function HomeEquipmentSourceList({ui, entries, selected, busy, select, dr
           data-equipment-item={entry.instanceId} data-home-equipment-common-row={common ? entry.instanceId : undefined} data-home-equipment-hat-mark-row={hat || balloon || mark ? entry.instanceId : undefined} aria-selected={selected === entry.instanceId}
           aria-pressed={selected === entry.instanceId}
           aria-describedby={described === entry.instanceId ? 'home-item-description' : undefined}
-          style={selected === entry.instanceId ? {backgroundImage: selection.style.backgroundImage} : undefined}
+          style={selected === entry.instanceId ? {...backgroundStyle(selection.style)} : undefined}
           data-source-selection-asset={selected === entry.instanceId ? selection['data-source-asset'] : undefined}
           onMouseEnter={event => describe?.(entry, event.currentTarget)}
           onFocus={event => describe?.(entry, event.currentTarget)}
@@ -75,7 +76,7 @@ export function HomeEquipmentSourceList({ui, entries, selected, busy, select, dr
             itemTableId={entry.itemTableId} ownedQuantity={entry.ownedQuantity}
             installed={common || hat || balloon || mark ? entry.installed : undefined}
             kindLabel={isAppearanceEffectItem(entry.itemTableId) ? '外观特效' : hat ? '坦克帽子' : balloon ? '坦克气球' : mark ? '坦克标志' : undefined}/> : <>
-          <span className="home-equipment-source-icon" style={{backgroundImage: icon.style.backgroundImage}}
+          <span className="home-equipment-source-icon" style={{...backgroundStyle(icon.style)}}
             data-source-asset={icon['data-source-asset']} aria-hidden="true" />
           <span>{entry.name} ×{entry.ownedQuantity}</span></>}
           {entry.bindingName && <span className="home-equipment-binding">已装备：{entry.bindingName}</span>}

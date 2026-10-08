@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {SourceButton} from '../resources/source-button';
 import {useRef} from 'react';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
@@ -53,7 +54,7 @@ export function ChannelSourceView(props: ChannelSourceViewProps) {
           data-channel-id={channel.id} aria-selected={props.selectedId === channel.id}
           tabIndex={channel.id === focusId ? 0 : -1}
           title={`${channel.name} · ${channel.levelLabel} · ${channel.available ? '可进入' : '不可进入'}`}
-          style={props.selectedId === channel.id ? {backgroundImage: selection?.style.backgroundImage} : undefined}
+          style={props.selectedId === channel.id ? {...backgroundStyle(selection?.style)} : undefined}
           data-source-selection-asset={props.selectedId === channel.id ? selection?.['data-source-asset'] : undefined}
           disabled={props.busy || !channel.available} onClick={() => props.onSelect(channel.id)}
           onDoubleClick={() => {if (props.selectedId === channel.id) props.onEnter();}}

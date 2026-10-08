@@ -1,0 +1,12 @@
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!apps/
+!apps/**
+!scripts/
+!scripts/build-server.mjs
+!scripts/package-release.mjs
+!scripts/account-snapshot.mjs
+!deployment/
+!deployment/**

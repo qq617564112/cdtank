@@ -5,7 +5,7 @@ import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceUi} from './source-react';
 import {lobbyBannerUrl} from '../resources/source-ui-resources';
-import {imageResourceUrl} from '../../assets/image-cache';
+import {ImageArtwork} from '../resources/image-artwork';
 
 interface LobbySourcePageProps {
   visible: boolean;
@@ -50,17 +50,17 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
       <div className="lobby-source-stage" data-lobby-stage="" style={{width, transform: `scale(${scale})`, '--lobby-width-extension': `${width - 800}px`} as CSSProperties}>
         <SourceImageScale value={scale}>
           {ui && players && chat && <>
-            <img src={imageResourceUrl(`/hd-ui/lobby/background-${width > 800 ? '16-9' : '4-3'}.png`)}
-              data-lobby-background="" className="lobby-hd-background" alt="" draggable={false}/>
-            {!room && <img src={imageResourceUrl('/hd-ui/lobby/room-board.png')} className="lobby-hd-room-board"
-              data-lobby-room-board="" alt="" draggable={false}/>}
+            <ImageArtwork asset={`/hd-ui/lobby/background-${width > 800 ? '16-9' : '4-3'}.png`}
+              data-lobby-background="" className="lobby-hd-background" aria-hidden="true"/>
+            {!room && <ImageArtwork asset="/hd-ui/lobby/room-board.png" className="lobby-hd-room-board"
+              data-lobby-room-board="" aria-hidden="true"/>}
             {!room && <div className="lobby-game-banner" data-lobby-banner="">
-              <img src={imageResourceUrl(lobbyBannerUrl)} alt="阿猫阿狗大作战，游戏免费" draggable={false}/>
+              <ImageArtwork asset={lobbyBannerUrl} role="img" aria-label="阿猫阿狗大作战，游戏免费"/>
             </div>}
             {!room && headerContent && <div className="lobby-source-header" data-lobby-header="">{headerContent}</div>}
             <div className="lobby-source-sidebar">
-              <img src={imageResourceUrl('/hd-ui/lobby/player-panel.png')} className="lobby-hd-player-panel"
-                data-lobby-player-panel="" alt="" draggable={false}/>
+              <ImageArtwork asset="/hd-ui/lobby/player-panel.png" className="lobby-hd-player-panel"
+                data-lobby-player-panel="" aria-hidden="true"/>
               {room ? ['房间', roomName].map((text, index) => {
                 const plaque = sourceProps(ui, players, 'playerlist.xml', 'datingmingchengditu',
                   players.control('datingmingchengditu').properties.Image);

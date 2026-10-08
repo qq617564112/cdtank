@@ -25,10 +25,8 @@ def main():
     ]
     for source, subject, reason, prompt in additional:
         issues[source] = dict(source=source, subject=subject, reason=reason, prompt=prompt)
-    text = json.loads((ROOT / 'apps/web/src/interface/resources/source-text-artwork.json').read_text())
-    fonts = set(text['assets']) | set(text['replacedImages'])
-    simple = html_ui_sources()
-    issues = {source: issue for source, issue in issues.items() if source not in fonts | simple}
+    buttons = html_ui_sources()
+    issues = {source: issue for source, issue in issues.items() if source not in buttons}
     inventory = {entry['source']: entry for entry in
                  json.loads((ROOT / 'art/hd-assets/inventory.json').read_text())['textures']}
     categories = defaultdict(list)

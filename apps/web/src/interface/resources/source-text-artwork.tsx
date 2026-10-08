@@ -1,7 +1,5 @@
 import {useLayoutEffect, useRef, type CSSProperties} from 'react';
-import catalogue from './source-text-artwork.json';
 import './source-text-artwork.css';
-import './source-text-artwork-generated.css';
 import {buttonArtwork} from '../../assets/button-artwork';
 
 export interface SourceTextStyle {
@@ -23,20 +21,9 @@ export interface SourceTextStyle {
   runs?: SourceTextStyle[];
 }
 
-const assets: Readonly<Record<string, SourceTextStyle>> = catalogue.assets;
-const numeric: Readonly<Record<string, Readonly<Record<string, string>>>> = catalogue.numeric;
-const replacedImages = new Set<string>(catalogue.replacedImages);
-
 export function sourceTextArtwork(asset?: string): SourceTextStyle | undefined {
-  return asset ? assets[asset] ?? buttonArtwork(asset)?.text : undefined;
-}
-
-export function isSourceTextImage(path: string): boolean {
-  return replacedImages.has(path.replace(/^\//, ''));
-}
-
-export function hasSourceNumericFont(name?: string): boolean {
-  return name !== undefined && numeric[name] !== undefined;
+  const button = asset ? buttonArtwork(asset) : undefined;
+  return button?.background ? button.text : undefined;
 }
 
 function inkStyle(text: SourceTextStyle): CSSProperties {
@@ -95,25 +82,5 @@ export function SourceTextArtwork({asset, style}: {asset: string; style?: CSSPro
       {(text.runs ?? [text]).map((run, index) => <span key={index} className="source-text-ink"
         data-source-text-face={run.face} style={inkStyle(run)}>{run.text}</span>)}
     </span>
-  </span>;
-}
-
-/** Keep each source glyph's advance, palette and outline for changing values. */
-export function SourceNumericText({text, font}: {text: string; font: string}) {
-  const glyphs = numeric[font];
-  const sample = assets[Object.values(glyphs)[0]];
-  return <span className="source-numeric-text" data-source-numeric-font={font}
-    role="img" aria-label={text.replace(/#/g, '∞').replace(/\*/g, '×')}>
-    {[...text].map((character, index) => {
-      const visible = character === '#' ? '∞' : character === '*' ? '×' : character;
-      const asset = glyphs[visible];
-      const glyph = asset ? assets[asset] : undefined;
-      return glyph ? <span key={index} className="source-text-glyph" aria-hidden="true"
-        data-source-text-image={asset} style={{width: glyph.width, height: glyph.height}}>
-        <span className="source-text-ink" data-source-text-face={glyph.face} style={inkStyle(glyph)}>{visible}</span>
-      </span> : <span key={index} className="source-numeric-fallback" data-source-text-face="digits"
-        aria-hidden="true" style={{fontSize: sample.size, lineHeight: `${sample.height}px`,
-          color: sample.colour, WebkitTextStroke: `${sample.stroke}px ${sample.outline}`}}>{visible}</span>;
-    })}
   </span>;
 }

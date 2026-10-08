@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import './home-title-summary-source-page.css';
 import {useRef} from 'react';
 import type {AccountTitles} from '../../../../shared/protocols/PtlRoleProfile';
@@ -27,7 +28,7 @@ export function HomeTitleSummarySourcePage({ui, titles, pending, select}: {
             disabled={pending} aria-label={title.name}
             data-home-title-id={title.id} aria-selected={selectedId === title.id}
             data-source-selection-asset={selectedId === title.id ? selection['data-source-asset'] : undefined}
-            style={selectedId === title.id ? {backgroundImage: selection.style.backgroundImage} : undefined}
+            style={selectedId === title.id ? {...backgroundStyle(selection.style)} : undefined}
             onClick={() => select(selectedId === title.id ? 0 : title.id)}
             onContextMenu={event => {event.preventDefault(); if (!pending && selectedId === title.id) select(0);}}
             onKeyDown={event => {

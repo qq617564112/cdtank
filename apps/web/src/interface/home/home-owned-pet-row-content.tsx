@@ -1,3 +1,4 @@
+import {ImageArtwork} from '../resources/image-artwork';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -16,7 +17,10 @@ export function HomeOwnedPetRowContent({ui, name, petId, petType, petSize, curre
   return <>
     <span className="home-owned-pet-row-icon" data-home-owned-pet-icon="" aria-hidden="true"
       data-pet-thumbnail={icon?.['data-pet-thumbnail']}
-      data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: icon?.style.backgroundImage}} />
+      data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: 'none'}}>
+      {icon?.['data-source-asset'] && <ImageArtwork asset={`/${icon['data-source-asset']}`} fit="contain"
+        style={{width: '100%', height: '100%'}} aria-hidden="true"/>}
+    </span>
     {current && <HomeRoleRowStatusBadge ui={ui} status="current"/>}
     <span className="home-owned-pet-row-name" data-home-owned-pet-name=""><SourceFeedbackText text={name}/></span>
     <span className="home-owned-pet-row-secondary" data-home-owned-pet-secondary=""><SourceFeedbackText text={sourcePetKind(petSize, petType)}/></span>

@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {useRef} from 'react';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -28,7 +29,7 @@ export function RoleShopSourceList({ui, kind, entries, selected, busy, select}: 
       {entries.map((entry, index) => <button key={entry.id} type="button" role="option" {...{[identity]: entry.id}}
         {...{[kind === 'pet' ? 'data-pet-shop-source-row' : 'data-tank-shop-source-row']: entry.id}}
         disabled={busy} aria-selected={selected === entry.id} tabIndex={selected === entry.id ? 0 : -1}
-        style={selected === entry.id ? {backgroundImage: selection.style.backgroundImage} : undefined}
+        style={selected === entry.id ? {...backgroundStyle(selection.style)} : undefined}
         data-source-selection-asset={selected === entry.id ? selection['data-source-asset'] : undefined}
         onClick={() => select(entry.id)} onKeyDown={event => {
           const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1

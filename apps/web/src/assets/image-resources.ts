@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import {withResourceTimeout} from './static-resources';
-import {commitFreshImage, imageResourceKey, loadFreshImage, loadImageResource, prepareSpriteImages} from './image-cache';
+import {commitFreshImage, imageResourceKey, imageResourceUrl, loadFreshImage, loadImageResource, prepareSpriteImages, spriteImage} from './image-cache';
 
 export const bundledImageUrls = Object.values(import.meta.glob<string>(
   '../**/*.{png,jpg,jpeg,gif,webp,svg,avif,bmp,ico}',
@@ -8,7 +8,38 @@ export const bundledImageUrls = Object.values(import.meta.glob<string>(
 ));
 
 const decodedImages = new Map<string, Promise<HTMLImageElement>>();
+const readyImages = new Map<string, HTMLImageElement>();
 const needsFreshResponse = new Set<string>();
+
+export interface ImageRegion {
+  image: HTMLImageElement | HTMLCanvasElement;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** UI and Canvas share the complete decoded sheet and select a source rectangle. */
+export function imageRegion(url: string): ImageRegion | undefined {
+  const sprite = spriteImage(url);
+  const image = readyImages.get(imageResourceKey(sprite?.atlas ?? url));
+  return image ? {image, x: sprite?.x ?? 0, y: sprite?.y ?? 0,
+    width: sprite?.width ?? image.naturalWidth, height: sprite?.height ?? image.naturalHeight} : undefined;
+}
+
+export async function decodeImageRegion(url: string, signal?: AbortSignal): Promise<ImageRegion> {
+  await prepareSpriteImages();
+  signal?.throwIfAborted();
+  const ready = imageRegion(url);
+  if (ready) return ready;
+  await decodeImage(spriteImage(url)?.atlas ?? url, signal);
+  return imageRegion(url)!;
+}
+
+export function drawImageRegion(context: Pick<CanvasRenderingContext2D, 'drawImage'>, region: ImageRegion,
+  x: number, y: number, width = region.width, height = region.height): void {
+  context.drawImage(region.image, region.x, region.y, region.width, region.height, x, y, width, height);
+}
 
 /** Retain decoded images for startup and every subsequent page. */
 export async function decodeImage(url: string, signal?: AbortSignal): Promise<HTMLImageElement> {
@@ -51,6 +82,10 @@ export async function decodeImage(url: string, signal?: AbortSignal): Promise<HT
           return image;
         });
     void withResourceTimeout(ready, url).then(resolve, reject);
+  }).then(image => {
+    readyImages.set(key, image);
+    readyImages.set(imageResourceUrl(url), image);
+    return image;
   }).catch(error => {
     if (decodedImages.get(key) === loading) decodedImages.delete(key);
     image.removeAttribute('src');
@@ -69,5 +104,7 @@ export async function decodeImage(url: string, signal?: AbortSignal): Promise<HT
 export function forgetDecodedImage(url: string): void {
   const key = imageResourceKey(url);
   decodedImages.delete(key);
+  readyImages.delete(imageResourceUrl(url));
+  readyImages.delete(key);
   needsFreshResponse.delete(key);
 }

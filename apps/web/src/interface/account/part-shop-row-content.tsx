@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -16,7 +17,7 @@ export function PartShopRowContent({ui, name, iconId, itemTableId, ownedQuantity
   const colour = installed === true && !product ? '#808080' : undefined;
   return <>
     <span className="part-shop-owned-row-icon" data-part-owned-row-icon="" aria-hidden="true"
-      data-source-asset={icon['data-source-asset']} style={{backgroundImage: icon.style.backgroundImage}} />
+      data-source-asset={icon['data-source-asset']} style={{...backgroundStyle(icon.style)}} />
     <span className="part-shop-owned-row-name" data-part-owned-row-name=""><SourceFeedbackText text={name} colour={colour}/></span>
     <span className="part-shop-owned-row-secondary" data-part-owned-row-kind="" data-source-binding="item-id-kind"><SourceFeedbackText text={sourcePartOwnedKind(itemTableId)} colour={colour}/></span>
     <span className="part-shop-owned-row-tertiary" data-part-owned-row-days="" data-source-binding={product ? "item-durable" : "myitem-quantity"}><SourceFeedbackText text={product ? product.durable === undefined ? '' : `（${product.durable | 0}天）` : sourcePartOwnedDays(ownedQuantity)} colour={colour}/></span>

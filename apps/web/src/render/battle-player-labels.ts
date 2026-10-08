@@ -1,3 +1,4 @@
+import {drawImageRegion} from '../assets/image-resources';
 import {ArcRotateCamera, DynamicTexture, Frustum, Matrix, Scene, Texture, Vector3, Viewport} from '@babylonjs/core';
 import type {UtilityLayerRenderer} from '@babylonjs/core';
 import type {PlayerSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
@@ -87,9 +88,9 @@ export class BattlePlayerLabels {
       if (this.disposed) return;
       const context = this.icons.getContext();
       context.clearRect(0, 0, 256, 32);
-      context.drawImage(background, 0, 0, 96, 4);
-      context.drawImage(fill, 0, 8, 96, 4);
-      context.drawImage(vip, 112, 0, 22, 12);
+      drawImageRegion(context, background, 0, 0, 96, 4);
+      drawImageRegion(context, fill, 0, 8, 96, 4);
+      drawImageRegion(context, vip, 112, 0, 22, 12);
       this.icons.update(false);
       this.ready = true;
       this.updateTexts();

@@ -3,10 +3,8 @@ import './source-pet-icon.css';
 import {tankThumbnails} from '../../assets/tanks/thumbnails';
 import {petThumbnails} from '../../assets/pets/thumbnails';
 import type {HomeSourceUi} from './source-ui-layout';
-import {imageResourceBackground, imageResourceUrl} from '../../assets/image-cache';
-import {isSourceTextImage} from './source-text-artwork';
-import {isSimpleUiImage} from '../../assets/simple-ui-artwork';
-import {buttonArtwork} from '../../assets/button-artwork';
+import type {CSSProperties} from 'react';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 
 const TANK_ICON_MARKS = ['轻', '中', '重', 'Ⅱ', 'Ⅲ'];
 
@@ -17,21 +15,19 @@ export function sourceUiImage(ui: HomeSourceUi, reference?: string) {
   if (thumbnail) {
     const id = Number(tank![1]);
     const category = id < 50 ? 0 : id < 100 ? 1 : id < 150 ? 2 : id < 155 ? 3 : 4;
-    return {asset: thumbnail, url: imageResourceUrl(thumbnail), tankThumbnail: true, petThumbnail: false, tankMark: TANK_ICON_MARKS[category],
-      backgroundImage: imageResourceBackground(thumbnail)};
+    return {asset: thumbnail, tankThumbnail: true, petThumbnail: false, tankMark: TANK_ICON_MARKS[category],
+      style: imageBackgroundStyle(thumbnail)};
   }
   const pet = /^set:gy0 image:data\\ui\\gy\\maogou_(\d+)\.tga$/i.exec(reference ?? '');
   const portrait = pet && petThumbnails[String(Number(pet[1])).padStart(3, '0')];
   if (portrait) {
-    return {asset: portrait, url: imageResourceUrl(portrait), tankThumbnail: false, petThumbnail: true, tankMark: undefined,
-      backgroundImage: imageResourceBackground(portrait)};
+    return {asset: portrait, tankThumbnail: false, petThumbnail: true, tankMark: undefined,
+      style: imageBackgroundStyle(portrait)};
   }
   const match = /^set:(\S+) image:(.+)$/.exec(reference ?? '');
   const sets = ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
   const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
   const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-  const url = asset && !isSourceTextImage(asset) && !isSimpleUiImage(asset)
-    ? imageResourceUrl(buttonArtwork(asset)?.background ?? `/${asset}`) : undefined;
-  return {asset, url, tankThumbnail: false, petThumbnail: false, tankMark: undefined,
-    backgroundImage: asset && (isSimpleUiImage(asset) || buttonArtwork(asset)) ? 'none' : url ? `url('${url}')` : undefined};
+  const style: CSSProperties = asset ? imageBackgroundStyle(`/${asset}`) : {};
+  return {asset, tankThumbnail: false, petThumbnail: false, tankMark: undefined, style};
 }

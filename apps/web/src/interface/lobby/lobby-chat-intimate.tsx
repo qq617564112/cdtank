@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import './lobby-chat-intimate.css';
 import {useEffect, useRef, useState, type RefObject} from 'react';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
@@ -63,7 +64,7 @@ export function LobbyChatIntimate({ui, players, selected, open, pending, status,
         {players.map((player, index) => <button key={player.accountId} type="button" role="option"
           data-lobby-intimate-account={player.accountId} aria-selected={active === player.accountId}
           tabIndex={active === player.accountId ? 0 : -1} disabled={pending} title={player.name}
-          style={active === player.accountId ? {backgroundImage: selection.style.backgroundImage} : undefined}
+          style={active === player.accountId ? {...backgroundStyle(selection.style)} : undefined}
           data-source-selection-asset={active === player.accountId ? selection['data-source-asset'] : undefined}
           onClick={() => {if (!pending && !composing.current) choose(player);}}
           onFocus={() => setCandidate(player.accountId)} onKeyDown={event => {

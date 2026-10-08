@@ -1,5 +1,5 @@
 import {useEffect, useState, type ComponentPropsWithoutRef, type ReactNode} from 'react';
-import {imageResourceUrl} from '../../assets/image-cache';
+import {ImageArtwork} from './image-artwork';
 import './loading-page.css';
 
 /** Embedded letter fills in the original 800×600 background content. */
@@ -62,19 +62,19 @@ export function LoadingPage({background, progress, status, details, artworkReady
   return <section {...attributes} className={`loading-page${className ? ` ${className}` : ''}`}>
     <div className="loading-viewport" style={{width: stageWidth * scale, height: 600 * scale}}>
       <div className="loading-stage" style={{width: stageWidth, transform: `scale(${scale})`}}>
-        {artworkReady && <img className="loading-background"
-          src={imageResourceUrl(stageWidth > 800 ? artwork.backgroundWide : artwork.backgroundClassic)}
-          alt="" draggable={false}/>}
+        {artworkReady && <ImageArtwork className="loading-background"
+          asset={stageWidth > 800 ? artwork.backgroundWide : artwork.backgroundClassic}
+          aria-hidden="true"/>}
         <div className="loading-content">
           {artworkReady && <>
-            <img className="loading-tank" src={imageResourceUrl(artwork.tank)} alt="" draggable={false}/>
+            <ImageArtwork className="loading-tank" asset={artwork.tank} aria-hidden="true"/>
             <div className="loading-word" style={{left, top, width, height}}
               role="progressbar" aria-label="本机资源加载进度"
               aria-valuemin={0} aria-valuemax={100}
               aria-valuenow={progress === undefined ? undefined : Math.round(fraction * 100)}
               aria-valuetext={status}>
-              <img src={imageResourceUrl(artwork.progressEmpty)} alt="" draggable={false}/>
-              <img src={imageResourceUrl(artwork.progressFull)} alt="" draggable={false}
+              <ImageArtwork asset={artwork.progressEmpty} aria-hidden="true"/>
+              <ImageArtwork asset={artwork.progressFull} aria-hidden="true"
                 style={{clipPath: `inset(0 ${(1 - fraction) * 100}% 0 0)`}}/>
             </div>
           </>}

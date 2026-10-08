@@ -68,26 +68,112 @@ def transparent_artwork(artwork, remove_fringes=False):
     return artwork
 
 
-def place_artwork(artwork, original, target):
-    native_box = original.getchannel('A').getbbox()
+def matte_artwork(artwork, colour):
+    rgb = np.asarray(artwork.convert('RGB')).astype(np.float32) / 255
+    matte = np.asarray(colour, dtype=np.float32) / 255
+    coverage = np.max(np.where(matte >= .5,
+                              (matte - rgb) / np.maximum(matte, .001),
+                              (rgb - matte) / np.maximum(1 - matte, .001)), axis=2)
+    coverage = np.clip(coverage, 0, 1)
+    tinted = (np.minimum(rgb[:, :, 0], rgb[:, :, 2]) - rgb[:, :, 1] > .06) \
+        & (np.abs(rgb[:, :, 0] - rgb[:, :, 2]) < .5)
+    _, labels = cv2.connectedComponents(np.uint8(tinted), connectivity=8)
+    surrounding = np.unique(np.concatenate((labels[0], labels[-1], labels[:, 0], labels[:, -1])))
+    surrounding = surrounding[surrounding != 0]
+    if not len(surrounding):
+        raise ValueError('No colour-key background around the artwork')
+    holes = np.unique(labels[coverage < .1])
+    surrounding = np.union1d(surrounding, holes[holes != 0])
+    background = np.isin(labels, surrounding)
+    edge = cv2.dilate(np.uint8(background), np.ones((3, 3), dtype=np.uint8)).astype(bool)
+    coverage[~edge] = 1
+    coverage[background & (coverage < .1)] = 0
+    clean_rgb = np.clip((rgb - (1 - coverage[:, :, None]) * matte)
+                        / np.maximum(coverage[:, :, None], .001), 0, 1)
+    alpha = np.minimum(np.asarray(artwork.getchannel('A')),
+                       np.round(coverage * 255).astype(np.uint8))
+    return Image.fromarray(np.dstack((np.round(clean_rgb * 255).astype(np.uint8), alpha)))
+
+
+def framed_artwork(generated, cell, job):
+    artwork = generated.crop(frame_interior(generated, cell, job))
+    if artwork.getchannel('A').getextrema()[0] == 0:
+        return transparent_artwork(artwork, remove_fringes=bool(cell.get('panelBox')))
+    if job.get('matteColor'):
+        return matte_artwork(artwork, job['matteColor'])
+    return transparent_artwork(artwork, remove_fringes=bool(cell.get('panelBox')))
+
+
+def place_artwork(artwork, original, target, native_box=None):
+    native_box = native_box if native_box is not None else original.getchannel('A').getbbox()
     generated_box = artwork.getchannel('A').getbbox()
     if generated_box is None:
         raise ValueError('The generated cell has no artwork')
     left, top, right, bottom = [value * 4 for value in native_box]
-    artwork = artwork.crop(generated_box)
-    factor = min((right - left) / artwork.width, (bottom - top) / artwork.height)
-    artwork = artwork.resize((max(1, round(artwork.width * factor)),
-                              max(1, round(artwork.height * factor))), Image.Resampling.LANCZOS)
+    artwork = artwork.crop(generated_box).resize((right - left, bottom - top), Image.Resampling.LANCZOS)
     result = Image.new('RGBA', target)
-    result.paste(artwork, (left + (right - left - artwork.width) // 2,
-                          top + (bottom - top - artwork.height) // 2))
+    result.paste(artwork, (left, top))
     return result
+
+
+def match_level_colours(artwork, original):
+    def regions(pixels):
+        red, green, blue, alpha = pixels.transpose(2, 0, 1)
+        return [(blue > red + 40) & (blue > green + 40) & (alpha > 0),
+                (red > 120) & (green > 80) & (red > blue + 80) & (green > blue + 60) & (alpha > 0),
+                (green > red + 60) & (green > blue + 60) & (alpha > 0),
+                (red > green + 80) & (red > blue + 80) & (alpha > 0)]
+
+    pixels = np.asarray(artwork).astype(np.float32)
+    native = np.asarray(original).astype(np.float32)
+    for source_region, region in zip(regions(native), regions(pixels)):
+        source_pixels = native[source_region & (native[:, :, 3] > 128)]
+        generated_pixels = pixels[region & (pixels[:, :, 3] > 128)]
+        if not len(source_pixels) or not len(generated_pixels):
+            continue
+        source_colour, generated_colour = np.median(source_pixels, axis=0), np.median(generated_pixels, axis=0)
+        pixels[region, :3] += source_colour[:3] - generated_colour[:3]
+        pixels[region, 3] *= source_colour[3] / generated_colour[3]
+    return Image.fromarray(np.round(np.clip(pixels, 0, 255)).astype(np.uint8))
 
 
 def publish_sprites(records, inventory, originals):
     runtime = ROOT / 'recovery/output/web-assets'
     directory_path = runtime / 'sprite-images.json'
     directory = json.loads(directory_path.read_text())
+    restored = [record for record in records if record['installed'] and
+                ('/' + record['source'] not in directory['images'] or
+                 record['size'] != [directory['images']['/' + record['source']][key] for key in ('width', 'height')])]
+    if restored:
+        remaining = sorted(restored, key=lambda record: (-record['size'][1], -record['size'][0]))
+        while remaining:
+            atlas = f'/sprites/ui-restored-{len(directory["sheets"]):03}.png'
+            target = runtime / atlas.lstrip('/')
+            image = Image.new('RGBA', (4096, 4096))
+            x = y = row_height = width = height = count = 0
+            pending = []
+            for record in remaining:
+                w, h = record['size']
+                if w > 4096 or h > 4096:
+                    raise ValueError(f"UI sprite exceeds 4096 pixels: {record['source']}")
+                if x + w > 4096:
+                    x = 0
+                    y += row_height
+                    row_height = 0
+                if y + h > 4096:
+                    pending.append(record)
+                    continue
+                with Image.open(ROOT / record['candidate']) as candidate:
+                    image.paste(candidate.convert('RGBA'), (x, y))
+                directory['images']['/' + record['source']] = dict(atlas=atlas, x=x, y=y, width=w, height=h)
+                width, height = max(width, x + w), max(height, y + h)
+                row_height = max(row_height, h)
+                x += w
+                count += 1
+            image.crop((0, 0, width, height)).save(target, compress_level=6)
+            directory['sheets'].append(dict(path=atlas.lstrip('/'), width=width, height=height,
+                                            cells=count, references=count, bytes=target.stat().st_size))
+            remaining = pending
     updates = {}
     for record in records:
         if not record['installed']:
@@ -130,7 +216,7 @@ def publish_sprites(records, inventory, originals):
                 delivery = ROOT / inventory[source]['png']
                 backup = ART / 'previous' / inventory[source]['png']
                 backup.parent.mkdir(parents=True, exist_ok=True)
-                if not backup.exists():
+                if not backup.exists() and delivery.exists():
                     shutil.copyfile(delivery, backup)
                 shutil.copyfile(candidate, delivery)
             if source in originals:
@@ -145,13 +231,31 @@ def publish_sprites(records, inventory, originals):
     return list(updates)
 
 
+def match_result_colours(result, original):
+    """Keep result lettering and its translucent black shadow in the source palette."""
+    pixels = np.asarray(result).astype(np.float64)
+    reference = np.asarray(original).astype(np.float64)
+    source_rgb, generated_rgb = reference[:, :, :3], pixels[:, :, :3]
+    dark_source = (source_rgb.max(axis=2) < 100) & (reference[:, :, 3] > 0)
+    dark_result = (generated_rgb.max(axis=2) < 100) & (pixels[:, :, 3] > 0)
+    if dark_source.any() and dark_result.any():
+        colour = np.median(reference[dark_source], axis=0)
+        pixels[dark_result, :3] = colour[:3]
+        pixels[dark_result, 3] *= colour[3] / 255
+    source_ink = (reference[:, :, 3] > 128) & ((source_rgb.max(axis=2) - source_rgb.min(axis=2)) > 120)
+    generated_ink = (pixels[:, :, 3] > 128) & ((generated_rgb.max(axis=2) - generated_rgb.min(axis=2)) > 120) & ~dark_result
+    if source_ink.any() and generated_ink.any():
+        pixels[generated_ink, :3] += np.median(reference[source_ink, :3], axis=0) - np.median(pixels[generated_ink, :3], axis=0)
+    return Image.fromarray(np.round(np.clip(pixels, 0, 255)).astype(np.uint8))
+
+
 def extract(job, cell, entry):
     with Image.open(ROOT / job['folder'] / 'output-1.png') as generated:
         generated = generated.convert('RGBA')
     with Image.open(ROOT / entry['original']) as original:
         original = original.convert('RGBA')
     target = tuple(size * 4 for size in original.size)
-    if cell['source'] in ('ui/regions/74/41.png', 'ui/regions/74/42.png'):
+    if cell['source'] in ('ui/regions/74/41.png', 'ui/regions/74/42.png') and not job.get('framed'):
         x, y, width, height = wood_box(generated)
         left, top, native_width, native_height = wood_box(original)
         artwork = generated.crop((x, y, x + width, y + height))
@@ -162,9 +266,13 @@ def extract(job, cell, entry):
         artwork = transparent_artwork(generated.crop(tuple(cell['artworkBox'])))
         result = place_artwork(artwork, original, target)
     elif cell.get('panelBox'):
-        artwork = transparent_artwork(generated.crop(frame_interior(generated, cell, job)), remove_fringes=True)
-        artwork = artwork.crop(artwork.getchannel('A').getbbox()).resize(
-            tuple(size * 4 for size in cell.get('panelSize', job.get('panelSize'))), Image.Resampling.LANCZOS)
+        artwork = framed_artwork(generated, cell, job)
+        panel_target = tuple(size * 4 for size in cell.get('panelSize', job.get('panelSize')))
+        if cell.get('panelInkBounds'):
+            artwork = place_artwork(artwork, original, panel_target, cell['panelInkBounds'])
+        else:
+            artwork = artwork.crop(artwork.getchannel('A').getbbox()).resize(
+                panel_target, Image.Resampling.LANCZOS)
         result = artwork.crop(tuple(value * 4 for value in cell['panelBox'])).resize(
             target, Image.Resampling.LANCZOS)
         opacity = original.getchannel('A').getextrema()[1]
@@ -182,8 +290,8 @@ def extract(job, cell, entry):
         artwork.putalpha(Image.fromarray(alpha))
         result = artwork.resize(target, Image.Resampling.LANCZOS)
     elif job.get('framed'):
-        artwork = transparent_artwork(generated.crop(frame_interior(generated, cell, job)))
-        result = place_artwork(artwork, original, target)
+        artwork = framed_artwork(generated, cell, job)
+        result = Image.new('RGBA', target) if cell.get('emptyButton') else place_artwork(artwork, original, target)
     else:
         slot = [round(value * (generated.width / 1024 if index % 2 == 0 else generated.height / 768))
                 for index, value in enumerate(cell['slot'])]
@@ -210,6 +318,14 @@ def extract(job, cell, entry):
             result = background
     if cell['source'] in ('ui/regions/74/41.png', 'ui/regions/74/42.png'):
         result.putalpha(255)
+    if cell['source'] in ('ui/regions/59/11.png', 'ui/regions/59/12.png'):
+        result = match_level_colours(result, original)
+    if cell['source'] in ('ui/regions/59/4.png', 'ui/regions/59/5.png', 'ui/regions/59/10.png'):
+        result = match_result_colours(result, original)
+    if cell.get('solidColour'):
+        fill = Image.new('RGBA', result.size, tuple(cell['solidColour']) + (255,))
+        fill.putalpha(result.getchannel('A'))
+        result = fill
     return result
 
 
@@ -261,7 +377,7 @@ def main():
                 delivery = ROOT / entry['png']
                 previous = ART / 'previous' / entry['png']
                 previous.parent.mkdir(parents=True, exist_ok=True)
-                if not previous.exists():
+                if not previous.exists() and delivery.exists():
                     shutil.copyfile(delivery, previous)
                 shutil.copyfile(candidate, delivery)
                 if source in originals:

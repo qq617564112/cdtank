@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import type {ShopItem} from '../../../../shared/protocols/PtlShop';
 import {sourceShopOfferedQuantity, sourceShopPrice, sourceShopOwnedPrice} from './shop-item-display';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
@@ -48,7 +49,7 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
         {...(ownedItemRow ? {'data-shop-source-owned-item-row': ''} : source === 'lstShopItem' ? {'data-shop-source-product-row': ''} : {})}
         {...(source === 'lstShopItem' ? {'data-shop-product-id': entry.id} : {'data-shop-owned-instance': entry.id})}
         tabIndex={entry.id === selected || selected === undefined && index === 0 ? 0 : -1}
-        style={entry.id === selected ? {backgroundImage: selection.style.backgroundImage} : undefined}
+        style={entry.id === selected ? {...backgroundStyle(selection.style)} : undefined}
         data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
         data-stack-sale-available={source === 'lstMyItem' && Boolean(activate && canActivate?.(entry.id))}
         onMouseEnter={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
@@ -68,7 +69,7 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
           <ShopItemRowContent ui={ui} name={entry.name} itemTableId={entry.id} iconId={entry.iconId}
             mode="product" offeredQuantity={entry.product && sourceShopOfferedQuantity(entry.product)}
             sourcePrice={entry.product ? sourceShopPrice(entry.product) : '' }/> : <>
-        <span className="shop-list-icon" aria-hidden="true" style={{backgroundImage: icon.style.backgroundImage}}
+        <span className="shop-list-icon" aria-hidden="true" style={{...backgroundStyle(icon.style)}}
           data-source-asset={icon['data-source-asset']} />
         <span className="shop-list-text"><span><SourceFeedbackText text={entry.name}/></span><span><SourceFeedbackText text={entry.detail}/></span></span>
         </>}

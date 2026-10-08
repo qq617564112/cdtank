@@ -251,7 +251,7 @@
       ],
       "colour": "#17cdff",
       "outline": "#000000",
-      "stroke": 2,
+      "stroke": 1,
       "plain": false,
       "bodyColour": "#fff25b",
       "bodyBounds": [
@@ -275,7 +275,7 @@
       ],
       "colour": "#5bffcc",
       "outline": "#000000",
-      "stroke": 2,
+      "stroke": 1,
       "plain": false,
       "bodyColour": "#ff7b5b",
       "bodyBounds": [
@@ -299,7 +299,7 @@
       ],
       "colour": "#ffff00",
       "outline": "#000000",
-      "stroke": 2,
+      "stroke": 1,
       "plain": false,
       "bodyColour": "#5be3ff",
       "bodyBounds": [
@@ -1108,14 +1108,14 @@
       "text": "G M",
       "face": "latin",
       "inkBounds": [
-        29,
-        11,
+        13,
+        6,
         35,
-        15
+        18
       ],
       "colour": "#21cbf7",
       "outline": "#000000",
-      "stroke": 2,
+      "stroke": 1,
       "plain": false,
       "bodyColour": "#fff35a",
       "bodyBounds": [
@@ -1139,7 +1139,7 @@
       ],
       "colour": "#5affce",
       "outline": "#000000",
-      "stroke": 2,
+      "stroke": 1,
       "plain": false,
       "bodyColour": "#ff7d5a",
       "bodyBounds": [
@@ -1156,14 +1156,14 @@
       "text": "G M",
       "face": "latin",
       "inkBounds": [
-        26,
-        8,
-        32,
-        16
+        12,
+        5,
+        33,
+        17
       ],
       "colour": "#ffff00",
       "outline": "#000000",
-      "stroke": 2,
+      "stroke": 1,
       "plain": false,
       "bodyColour": "#5ae3ff",
       "bodyBounds": [
@@ -1730,7 +1730,7 @@
     },
     "ui/regions/59/16.png": {
       "text": "继续",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         66,
         7,
@@ -1757,7 +1757,7 @@
     },
     "ui/regions/59/17.png": {
       "text": "继续",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         66,
         8,
@@ -1784,7 +1784,7 @@
     },
     "ui/regions/59/18.png": {
       "text": "继续",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         61,
         3,
@@ -1811,7 +1811,7 @@
     },
     "ui/regions/64/39.png": {
       "text": "阶级",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         6,
         4,
@@ -1838,7 +1838,7 @@
     },
     "ui/regions/64/40.png": {
       "text": "阶级",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         5,
         5,
@@ -1865,7 +1865,7 @@
     },
     "ui/regions/64/41.png": {
       "text": "亲密",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         5,
         5,
@@ -1892,7 +1892,7 @@
     },
     "ui/regions/64/42.png": {
       "text": "亲密",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         5,
         5,
@@ -1919,7 +1919,7 @@
     },
     "ui/regions/64/43.png": {
       "text": "亲密",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         9,
         7,
@@ -1946,7 +1946,7 @@
     },
     "ui/regions/64/44.png": {
       "text": "性别",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         5,
         5,
@@ -1973,7 +1973,7 @@
     },
     "ui/regions/64/45.png": {
       "text": "性别",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         5,
         5,
@@ -2000,7 +2000,7 @@
     },
     "ui/regions/64/46.png": {
       "text": "性别",
-      "face": "brush",
+      "face": "sans",
       "inkBounds": [
         9,
         7,
@@ -2448,7 +2448,8 @@
         69,
         56
       ],
-      "preserveCanvas": true
+      "preserveCanvas": true,
+      "face": "sans"
     },
     "ui/regions/74/66.png": {
       "background": "settings-music",
@@ -2459,7 +2460,1229 @@
         65,
         47
       ],
-      "preserveCanvas": true
+      "preserveCanvas": true,
+      "face": "sans"
+    },
+    "ui/regions/60/13.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/14.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/15.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/38.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/39.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/52.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/53.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/54.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/55.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/56.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/57.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/58.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/59.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/60.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/61.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/62.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/63.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/64.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/65.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/66.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/67.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/68.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/69.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/70.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/71.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/72.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/73.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/74.png": {
+      "face": "sans"
+    },
+    "ui/regions/60/75.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/0.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/1.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/2.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/3.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/4.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/5.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/6.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/7.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/8.png": {
+      "face": "sans",
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2024%22%3E%3Cpath%20d%3D%22M5%2015h6l-1%205H6z%22%20fill%3D%22%2332666b%22%20stroke%3D%22%2317383d%22%2F%3E%3Cpath%20d%3D%22M8%201C1%201%200%209%204%2012l1%203h6l1-3C16%209%2015%201%208%201z%22%20fill%3D%22%23fff9ce%22%20stroke%3D%22%2367866b%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%205v5%22%20fill%3D%22none%22%20stroke%3D%22%23c6ffff%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M6%2021h4%22%20stroke%3D%22%23294e4b%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#981e29 0 8%, #c53b4b 8% 14%, #ff5d6d 14%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      }
+    },
+    "ui/regions/64/9.png": {
+      "face": "sans",
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2024%22%3E%3Cpath%20d%3D%22M11%201h8l-7%209h5L3%2023l4-10H1z%22%20fill%3D%22%23ffdf00%22%20stroke%3D%22%238d6500%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M12%203h3l-4%205%22%20fill%3D%22none%22%20stroke%3D%22%23fff774%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#981e29 0 8%, #c53b4b 8% 14%, #ff6273 14%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      }
+    },
+    "ui/regions/64/10.png": {
+      "face": "sans",
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2024%22%3E%3Cpath%20d%3D%22M11%201h8l-7%209h5L3%2023l4-10H1z%22%20fill%3D%22%23ffdf00%22%20stroke%3D%22%238d6500%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M12%203h3l-4%205%22%20fill%3D%22none%22%20stroke%3D%22%23fff774%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#fff 0 5%, #5dffef 5% 78%, color-mix(in srgb, #5dffef 65%, black) 78% 91%, #12142b 91%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      },
+      "outline": "#b3fff3",
+      "stroke": 0.7
+    },
+    "ui/regions/64/11.png": {
+      "face": "sans",
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2024%22%3E%3Cpath%20d%3D%22M5%2015h6l-1%205H6z%22%20fill%3D%22%2332666b%22%20stroke%3D%22%2317383d%22%2F%3E%3Cpath%20d%3D%22M8%201C1%201%200%209%204%2012l1%203h6l1-3C16%209%2015%201%208%201z%22%20fill%3D%22%23fff9ce%22%20stroke%3D%22%2367866b%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%205v5%22%20fill%3D%22none%22%20stroke%3D%22%23c6ffff%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M6%2021h4%22%20stroke%3D%22%23294e4b%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#fff 0 5%, #fffc5d 5% 78%, color-mix(in srgb, #fffc5d 65%, black) 78% 91%, #12142b 91%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      }
+    },
+    "ui/regions/64/12.png": {
+      "face": "sans",
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2016%2024%22%3E%3Cpath%20d%3D%22M5%2015h6l-1%205H6z%22%20fill%3D%22%2332666b%22%20stroke%3D%22%2317383d%22%2F%3E%3Cpath%20d%3D%22M8%201C1%201%200%209%204%2012l1%203h6l1-3C16%209%2015%201%208%201z%22%20fill%3D%22%23fff9ce%22%20stroke%3D%22%2367866b%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M3%205v5%22%20fill%3D%22none%22%20stroke%3D%22%23c6ffff%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M6%2021h4%22%20stroke%3D%22%23294e4b%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#fff 0 5%, #5dffef 5% 78%, color-mix(in srgb, #5dffef 65%, black) 78% 91%, #12142b 91%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      },
+      "outline": "#b3fff3",
+      "stroke": 0.7
+    },
+    "ui/regions/64/13.png": {
+      "face": "sans",
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2024%22%3E%3Cpath%20d%3D%22M11%201h8l-7%209h5L3%2023l4-10H1z%22%20fill%3D%22%23ffdf00%22%20stroke%3D%22%238d6500%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M12%203h3l-4%205%22%20fill%3D%22none%22%20stroke%3D%22%23fff774%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#fff 0 5%, #fffc5d 5% 78%, color-mix(in srgb, #fffc5d 65%, black) 78% 91%, #12142b 91%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      }
+    },
+    "ui/regions/64/14.png": {
+      "face": "sans",
+      "inkBounds": [
+        26,
+        7,
+        74,
+        20
+      ],
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2024%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2212%22%20r%3D%228%22%20fill%3D%22%23ffe58d%22%20stroke%3D%22%23a27628%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M5%208q1-3%205-3%22%20fill%3D%22none%22%20stroke%3D%22%23fffcd1%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M13%2016l2-3%22%20stroke%3D%22%23daa744%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#981e29 0 8%, #c53b4b 8% 14%, #ff6273 14%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      },
+      "runs": [
+        {
+          "text": "金",
+          "inkBounds": [
+            26,
+            7,
+            43,
+            20
+          ]
+        },
+        {
+          "text": "钱",
+          "inkBounds": [
+            58,
+            7,
+            74,
+            20
+          ]
+        }
+      ]
+    },
+    "ui/regions/64/15.png": {
+      "face": "sans",
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2024%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2212%22%20r%3D%228%22%20fill%3D%22%23ffe58d%22%20stroke%3D%22%23a27628%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M5%208q1-3%205-3%22%20fill%3D%22none%22%20stroke%3D%22%23fffcd1%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M13%2016l2-3%22%20stroke%3D%22%23daa744%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#fff 0 5%, #5dffef 5% 78%, color-mix(in srgb, #5dffef 65%, black) 78% 91%, #12142b 91%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      },
+      "outline": "#b3fff3",
+      "stroke": 0.7,
+      "runs": [
+        {
+          "text": "金",
+          "inkBounds": [
+            26,
+            5,
+            43,
+            20
+          ]
+        },
+        {
+          "text": "钱",
+          "inkBounds": [
+            57,
+            5,
+            73,
+            20
+          ]
+        }
+      ]
+    },
+    "ui/regions/64/16.png": {
+      "face": "sans",
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2024%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2212%22%20r%3D%228%22%20fill%3D%22%23ffe58d%22%20stroke%3D%22%23a27628%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M5%208q1-3%205-3%22%20fill%3D%22none%22%20stroke%3D%22%23fffcd1%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M13%2016l2-3%22%20stroke%3D%22%23daa744%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(#fff 0 5%, #fffc5d 5% 78%, color-mix(in srgb, #fffc5d 65%, black) 78% 91%, #12142b 91%)",
+        "background-size": "8% 84%, 100% 100%",
+        "background-position": "7% 50%, 0 0",
+        "background-repeat": "no-repeat",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      },
+      "runs": [
+        {
+          "text": "金",
+          "inkBounds": [
+            26,
+            5,
+            43,
+            20
+          ]
+        },
+        {
+          "text": "钱",
+          "inkBounds": [
+            57,
+            5,
+            73,
+            20
+          ]
+        }
+      ]
+    },
+    "ui/regions/64/17.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/18.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/19.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/20.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/21.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/22.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/23.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/24.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/25.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/26.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/27.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/28.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/29.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/30.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/31.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/32.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/33.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/34.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/35.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/36.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/37.png": {
+      "face": "sans"
+    },
+    "ui/regions/64/38.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/0.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/1.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/2.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/3.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/4.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/5.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/6.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/7.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/8.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/9.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/10.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/11.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/12.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/13.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/14.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/15.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/16.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/17.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/18.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/19.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/20.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/21.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/22.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/23.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/24.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/25.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/26.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/27.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/28.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/29.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/30.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/31.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/32.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/33.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/34.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/35.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/36.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/37.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/38.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/39.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/40.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/41.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/42.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/43.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/44.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/45.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/46.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/47.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/48.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/49.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/50.png": {
+      "face": "sans"
+    },
+    "ui/regions/65/51.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/0.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/1.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/2.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/3.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/4.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/5.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/6.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/7.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/8.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/9.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/10.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/11.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/12.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/13.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/14.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/15.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/16.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/17.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/18.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/19.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/20.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/21.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/22.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/23.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/24.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/25.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/26.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/27.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/28.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/29.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/30.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/31.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/32.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/33.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/34.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/35.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/36.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/37.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/38.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/39.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/40.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/41.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/42.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/43.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/44.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/45.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/46.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/47.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/48.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/49.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/50.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/51.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/52.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/53.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/54.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/55.png": {
+      "face": "sans"
+    },
+    "ui/regions/66/56.png": {
+      "face": "sans",
+      "bodyClip": "ellipse(50% 50% at 50% 50%)",
+      "bodyStyle": {
+        "border-radius": "50%",
+        "background": "radial-gradient(ellipse at 35% 25%, color-mix(in srgb, #5a41ff 55%, white), #5a41ff 55%, color-mix(in srgb, #5a41ff 65%, black) 85%)",
+        "border": "1px solid #12142b",
+        "box-shadow": "inset 0 -2px 0 #4b3500"
+      }
+    },
+    "ui/regions/66/57.png": {
+      "face": "sans",
+      "bodyClip": "ellipse(50% 50% at 50% 50%)",
+      "bodyStyle": {
+        "border-radius": "50%",
+        "background": "radial-gradient(ellipse at 35% 25%, color-mix(in srgb, #ff417b 55%, white), #ff417b 55%, color-mix(in srgb, #ff417b 65%, black) 85%)",
+        "border": "1px solid #12142b",
+        "box-shadow": "inset 0 -2px 0 #4b3500"
+      }
+    },
+    "ui/regions/66/58.png": {
+      "face": "sans",
+      "bodyClip": "ellipse(50% 50% at 50% 50%)",
+      "bodyStyle": {
+        "border-radius": "50%",
+        "background": "radial-gradient(ellipse at 35% 25%, color-mix(in srgb, #9f9e9f 55%, white), #9f9e9f 55%, color-mix(in srgb, #9f9e9f 65%, black) 85%)",
+        "border": "1px solid #12142b",
+        "box-shadow": "inset 0 -2px 0 #4b3500"
+      }
+    },
+    "ui/regions/66/59.png": {
+      "face": "sans",
+      "bodyClip": "ellipse(50% 50% at 50% 50%)",
+      "bodyStyle": {
+        "border-radius": "50%",
+        "background": "radial-gradient(ellipse at 35% 25%, color-mix(in srgb, #ffef42 55%, white), #ffef42 55%, color-mix(in srgb, #ffef42 65%, black) 85%)",
+        "border": "1px solid #12142b",
+        "box-shadow": "inset 0 -2px 0 #4b3500"
+      }
+    },
+    "ui/regions/69/10.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/11.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/12.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/13.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/14.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/15.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/16.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/17.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/18.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/19.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/20.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/21.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/22.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/30.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/31.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/32.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/33.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/34.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/35.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/39.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/40.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/41.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/42.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/43.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/44.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/57.png": {
+      "face": "latin",
+      "text": "LV"
+    },
+    "ui/regions/69/58.png": {
+      "face": "latin",
+      "text": "LV"
+    },
+    "ui/regions/69/59.png": {
+      "face": "latin",
+      "text": "LV"
+    },
+    "ui/regions/69/63.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/64.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/65.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/66.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/67.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/68.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/69.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/70.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/71.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/72.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/73.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/74.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/75.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/76.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/77.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/80.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/81.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/82.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/83.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/84.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/85.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/86.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/87.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/88.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/89.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/90.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/91.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/92.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/93.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/94.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/95.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/96.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/97.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/98.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/99.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/100.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/101.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/102.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/103.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/104.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/105.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/106.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/107.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/108.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/109.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/110.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/112.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/113.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/115.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/116.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/117.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/119.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/121.png": {
+      "face": "sans",
+      "background": null,
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background": "linear-gradient(#9c3c00 0 8%, #bd8400 8% 14%, #ffbb00 14%)",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      },
+      "colour": "#00ffff",
+      "outline": "#000000",
+      "stroke": 0.7
+    },
+    "ui/regions/69/122.png": {
+      "face": "sans",
+      "background": null,
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background": "linear-gradient(#fff 0 5%, #5dffef 5% 78%, color-mix(in srgb, #5dffef 65%, black) 78% 91%, #12142b 91%)",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      },
+      "colour": "#00205a",
+      "outline": "#ffffff",
+      "stroke": 0.7
+    },
+    "ui/regions/69/123.png": {
+      "face": "sans",
+      "background": null,
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background": "linear-gradient(#fff 0 5%, #fffc5d 5% 78%, color-mix(in srgb, #fffc5d 65%, black) 78% 91%, #12142b 91%)",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      }
+    },
+    "ui/regions/69/124.png": {
+      "face": "sans",
+      "background": null,
+      "bodyStyle": {
+        "border-radius": "3px",
+        "background": "linear-gradient(#fff 0 5%, #adaead 5% 78%, color-mix(in srgb, #adaead 65%, black) 78% 91%, #12142b 91%)",
+        "border": "1px solid #12142b",
+        "box-shadow": "none"
+      }
+    },
+    "ui/regions/69/158.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/159.png": {
+      "face": "sans",
+      "colour": "#00205a",
+      "outline": "#ffffff",
+      "stroke": 0.7
+    },
+    "ui/regions/69/160.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/161.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/162.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/163.png": {
+      "face": "sans",
+      "colour": "#00205a",
+      "outline": "#ffffff",
+      "stroke": 0.7
+    },
+    "ui/regions/69/164.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/165.png": {
+      "face": "sans",
+      "colour": "#00205a",
+      "outline": "#ffffff",
+      "stroke": 0.7
+    },
+    "ui/regions/69/166.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/167.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/168.png": {
+      "face": "sans",
+      "colour": "#00205a",
+      "outline": "#ffffff",
+      "stroke": 0.7
+    },
+    "ui/regions/69/169.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/170.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/171.png": {
+      "face": "sans",
+      "colour": "#00205a",
+      "outline": "#ffffff",
+      "stroke": 0.7
+    },
+    "ui/regions/69/172.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/173.png": {
+      "face": "sans"
+    },
+    "ui/regions/69/174.png": {
+      "face": "sans",
+      "colour": "#00205a",
+      "outline": "#ffffff",
+      "stroke": 0.7
+    },
+    "ui/regions/69/175.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/29.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/30.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/31.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/32.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/33.png": {
+      "face": "sans",
+      "text": "离开游戏"
+    },
+    "ui/regions/74/34.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/45.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/46.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/47.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/48.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/49.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/50.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/51.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/52.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/53.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/54.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/55.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/57.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/58.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/59.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/61.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/62.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/63.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/68.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/69.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/70.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/78.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/79.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/80.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/81.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/82.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/83.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/84.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/85.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/96.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/97.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/98.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/99.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/100.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/101.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/102.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/103.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/104.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/105.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/115.png": {
+      "face": "sans"
+    },
+    "ui/regions/74/116.png": {
+      "face": "sans"
     }
   },
   "textAssets": {
@@ -2625,6 +3848,93 @@
           ]
         }
       ]
+    },
+    "ui/regions/69/0.png": {
+      "text": "称 号 家 族 创意点 技能点 积 分",
+      "face": "sans",
+      "inkBounds": [
+        46,
+        34,
+        93,
+        139
+      ],
+      "colour": "#5a5900",
+      "outline": "#fffed0",
+      "stroke": 0,
+      "runs": [
+        {
+          "text": "称",
+          "inkBounds": [
+            46,
+            34,
+            61,
+            48
+          ]
+        },
+        {
+          "text": "号",
+          "inkBounds": [
+            79,
+            34,
+            94,
+            48
+          ]
+        },
+        {
+          "text": "家",
+          "inkBounds": [
+            46,
+            54,
+            61,
+            69
+          ]
+        },
+        {
+          "text": "族",
+          "inkBounds": [
+            79,
+            54,
+            94,
+            69
+          ]
+        },
+        {
+          "text": "创意点",
+          "inkBounds": [
+            46,
+            75,
+            94,
+            90
+          ]
+        },
+        {
+          "text": "技能点",
+          "inkBounds": [
+            46,
+            96,
+            94,
+            111
+          ]
+        },
+        {
+          "text": "积",
+          "inkBounds": [
+            46,
+            124,
+            61,
+            139
+          ]
+        },
+        {
+          "text": "分",
+          "inkBounds": [
+            79,
+            124,
+            94,
+            139
+          ]
+        }
+      ]
     }
   },
   "drawings": {
@@ -2632,56 +3942,56 @@
       "before": {
         "background": "linear-gradient(#efa28c, #ef9a86)",
         "border": "0",
-        "inset": "0"
+        "inset": "4.761905% 0.000000% 4.761905% 1.923077%"
       }
     },
     "ui/regions/74/107.png": {
       "before": {
         "background": "linear-gradient(#efa28c, #ef9a86)",
         "border": "0",
-        "inset": "0"
+        "inset": "4.761905% 0.000000% 4.761905% 1.923077%"
       }
     },
     "ui/regions/74/108.png": {
       "before": {
         "background": "linear-gradient(#efa28c, #ef9a86)",
         "border": "0",
-        "inset": "0"
+        "inset": "4.761905% 0.000000% 4.761905% 1.923077%"
       }
     },
     "ui/regions/74/109.png": {
       "before": {
         "background": "linear-gradient(#efa28c, #ef9a86)",
         "border": "0",
-        "inset": "0"
+        "inset": "4.761905% 0.000000% 4.761905% 1.923077%"
       }
     },
     "ui/regions/74/110.png": {
       "before": {
         "background": "linear-gradient(#efa28c, #ef9a86)",
         "border": "0",
-        "inset": "0"
+        "inset": "4.761905% 0.000000% 4.761905% 1.923077%"
       }
     },
     "ui/regions/74/111.png": {
       "before": {
         "background": "linear-gradient(#efa28c, #ef9a86)",
         "border": "0",
-        "inset": "0"
+        "inset": "4.761905% 0.000000% 4.761905% 1.923077%"
       }
     },
     "ui/regions/74/112.png": {
       "before": {
         "background": "linear-gradient(#efa28c, #ef9a86)",
         "border": "0",
-        "inset": "0"
+        "inset": "4.761905% 0.000000% 4.761905% 1.923077%"
       }
     },
     "ui/regions/74/113.png": {
       "before": {
         "background": "linear-gradient(#efa28c, #ef9a86)",
         "border": "0",
-        "inset": "0"
+        "inset": "4.761905% 0.000000% 4.761905% 1.923077%"
       }
     },
     "ui/regions/69/24.png": {
@@ -2691,16 +4001,6 @@
         "border-radius": "50%",
         "box-shadow": "0 2px 1px #000",
         "mask-image": "conic-gradient(from 323deg, transparent 0 28deg, #000 29deg 360deg)"
-      }
-    },
-    "ui/regions/74/127.png": {
-      "before": {
-        "background": "radial-gradient(ellipse at 26% 44%, #ffffde 0 9%, #ffe308 18% 31%, transparent 46%), radial-gradient(ellipse at 62% 53%, #ffcf08 0 17%, #f79a00 32%, #d67900 65%, #000 82%)",
-        "clip-path": "polygon(evenodd, 4.7619% 25.0000%, 4.7619% 25.0000%, 0.0000% 67.1875%, 23.8095% 98.4375%, 79.7619% 98.4375%, 98.8095% 67.1875%, 98.8095% 31.2500%, 79.7619% 12.5000%, 52.3810% 12.5000%, 42.8571% 0.0000%, 41.6667% 12.5000%, 4.7619% 25.0000%, 4.7619% 25.0000%)"
-      },
-      "after": {
-        "inset": "0 47.619% 87.5% 47.619%",
-        "background": "#000"
       }
     },
     "ui/regions/74/132.png": {
@@ -2722,9 +4022,138 @@
         "inset": "10% 10% 10% 0",
         "border-radius": "0 45% 45% 0"
       }
+    },
+    "ui/regions/69/8.png": {
+      "before": {
+        "background": "#fffcd0",
+        "border": "1px solid #f7ffd6",
+        "border-radius": "6px",
+        "inset": "1.818182% 0.448430% 1.818182% 0.448430%"
+      }
+    },
+    "ui/regions/44/1.png": {
+      "before": {
+        "inset": "0",
+        "background": "#000000",
+        "clip-path": "polygon(50% 0,61% 20%,84% 7%,79% 33%,100% 36%,78% 49%,96% 66%,73% 68%,82% 94%,56% 78%,46% 100%,38% 77%,13% 91%,21% 66%,0 62%,24% 49%,2% 33%,28% 30%)"
+      },
+      "after": {
+        "inset": "0",
+        "background": "#d73130",
+        "clip-path": "polygon(50% 0,61% 20%,84% 7%,79% 33%,100% 36%,78% 49%,96% 66%,73% 68%,82% 94%,56% 78%,46% 100%,38% 77%,13% 91%,21% 66%,0 62%,24% 49%,2% 33%,28% 30%)",
+        "transform": "scale(.90)"
+      }
+    },
+    "ui/regions/44/11.png": {
+      "before": {
+        "inset": "0",
+        "background": "#000000",
+        "clip-path": "polygon(50% 0,61% 19%,84% 8%,79% 32%,100% 38%,77% 49%,96% 67%,73% 68%,81% 95%,57% 78%,46% 100%,37% 76%,12% 92%,20% 67%,0 61%,23% 49%,2% 31%,27% 29%)"
+      },
+      "after": {
+        "inset": "0",
+        "background": "#da2f2e",
+        "clip-path": "polygon(50% 0,61% 19%,84% 8%,79% 32%,100% 38%,77% 49%,96% 67%,73% 68%,81% 95%,57% 78%,46% 100%,37% 76%,12% 92%,20% 67%,0 61%,23% 49%,2% 31%,27% 29%)",
+        "transform": "scale(.90)"
+      }
+    },
+    "ui/regions/68/32.png": {
+      "before": {
+        "background": "rgb(13 0 76 / .733)",
+        "box-shadow": "inset 0 1px 0 #fff, inset 0 2px 0 #00ccff",
+        "border-top": "1px solid #00ccff"
+      }
+    },
+    "ui/regions/68/34.png": {
+      "before": {
+        "background": "rgb(13 0 76 / .733)",
+        "box-shadow": "inset -1px 0 0 #fff, inset -2px 0 0 #00ccff",
+        "border-right": "1px solid #00ccff"
+      }
+    },
+    "ui/regions/77/12.png": {
+      "before": {
+        "inset": "24.528% 0.602% 1.887% 22.892%",
+        "border": "0",
+        "border-radius": "14px",
+        "box-shadow": "none",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20x%3D%220.5%22%20y%3D%221%22%20width%3D%2299%22%20height%3D%2243%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.65%22%20stroke-width%3D%222%22%2F%3E%3Crect%20x%3D%220.5%22%20y%3D%2256%22%20width%3D%2299%22%20height%3D%2243%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.65%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(rgba(74,163,241,.60),rgba(74,163,241,.60)), linear-gradient(rgba(74,163,241,.60),rgba(74,163,241,.60))",
+        "background-size": "100% 100%, 100% 45%, 100% 45%",
+        "background-position": "0 0, top, bottom",
+        "background-repeat": "no-repeat"
+      }
+    },
+    "ui/regions/77/13.png": {
+      "before": {
+        "inset": "24.528% 0.602% 1.887% 22.892%",
+        "border": "0",
+        "border-radius": "14px",
+        "box-shadow": "none",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20x%3D%220.5%22%20y%3D%221%22%20width%3D%2299%22%20height%3D%2243%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.65%22%20stroke-width%3D%222%22%2F%3E%3Crect%20x%3D%220.5%22%20y%3D%2256%22%20width%3D%2299%22%20height%3D%2243%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.65%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(rgba(84,241,96,.60),rgba(84,241,96,.60)), linear-gradient(rgba(84,241,96,.60),rgba(84,241,96,.60))",
+        "background-size": "100% 100%, 100% 45%, 100% 45%",
+        "background-position": "0 0, top, bottom",
+        "background-repeat": "no-repeat"
+      }
+    },
+    "ui/regions/77/14.png": {
+      "before": {
+        "inset": "24.528% 0.602% 1.887% 22.892%",
+        "border": "0",
+        "border-radius": "14px",
+        "box-shadow": "none",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20x%3D%220.5%22%20y%3D%221%22%20width%3D%2299%22%20height%3D%2243%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.65%22%20stroke-width%3D%222%22%2F%3E%3Crect%20x%3D%220.5%22%20y%3D%2256%22%20width%3D%2299%22%20height%3D%2243%22%20rx%3D%228%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-opacity%3D%22.65%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\"), linear-gradient(rgba(241,79,107,.60),rgba(241,79,107,.60)), linear-gradient(rgba(241,79,107,.60),rgba(241,79,107,.60))",
+        "background-size": "100% 100%, 100% 45%, 100% 45%",
+        "background-position": "0 0, top, bottom",
+        "background-repeat": "no-repeat"
+      }
+    },
+    "ui/regions/60/17.png": {
+      "before": {
+        "inset": "0",
+        "background": "linear-gradient(#d6f7c6 0 18%, #fffbd0 18% 84%, #d6f7c6 84%)",
+        "border": "0"
+      }
+    },
+    "ui/regions/69/188.png": {
+      "before": {
+        "inset": "0",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2060%2012%22%3E%3Cg%20transform%3D%22translate%281.000%201%29%20scale%280.500000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23ffff00%22%20stroke%3D%22%23242800%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2813.000%201%29%20scale%280.500000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23ffff00%22%20stroke%3D%22%23242800%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2825.000%201%29%20scale%280.500000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23ffff00%22%20stroke%3D%22%23242800%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2837.000%201%29%20scale%280.500000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23ffff00%22%20stroke%3D%22%23242800%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2849.000%201%29%20scale%280.500000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23ffff00%22%20stroke%3D%22%23242800%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E\")",
+        "background-size": "100% 100%",
+        "background-repeat": "no-repeat"
+      }
+    },
+    "ui/regions/74/64.png": {
+      "before": {
+        "inset": "0",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20138%2023%22%3E%3Cg%20transform%3D%22translate%281.000%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23efb57e%22%20stroke%3D%22%23050404%22%20stroke-width%3D%221.3%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2829.750%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23efb57e%22%20stroke%3D%22%23050404%22%20stroke-width%3D%221.3%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2858.500%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23efb57e%22%20stroke%3D%22%23050404%22%20stroke-width%3D%221.3%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2887.250%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23efb57e%22%20stroke%3D%22%23050404%22%20stroke-width%3D%221.3%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28116.000%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22%23efb57e%22%20stroke%3D%22%23050404%22%20stroke-width%3D%221.3%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E\")",
+        "background-size": "100% 100%",
+        "background-repeat": "no-repeat"
+      }
+    },
+    "ui/regions/74/65.png": {
+      "before": {
+        "inset": "0",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20138%2023%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22gold%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fffbd0%22%2F%3E%3Cstop%20offset%3D%22.38%22%20stop-color%3D%22%23fff12c%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffbb00%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cg%20transform%3D%22translate%281.000%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22url%28%23gold%29%22%20stroke%3D%22%23111500%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2829.750%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22url%28%23gold%29%22%20stroke%3D%22%23111500%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2858.500%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22url%28%23gold%29%22%20stroke%3D%22%23111500%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%2887.250%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22url%28%23gold%29%22%20stroke%3D%22%23111500%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate%28116.000%201%29%20scale%281.050000%29%22%3E%3Cpolygon%20points%3D%2210.000%2C1.000%2012.645%2C6.359%2018.560%2C7.219%2014.280%2C11.391%2015.290%2C17.281%2010.000%2C14.500%204.710%2C17.281%205.720%2C11.391%201.440%2C7.219%207.355%2C6.359%22%20fill%3D%22url%28%23gold%29%22%20stroke%3D%22%23111500%22%20stroke-width%3D%221.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E\")",
+        "background-size": "100% 100%",
+        "background-repeat": "no-repeat"
+      }
+    },
+    "ui/regions/69/0.png": {
+      "before": {
+        "inset": "0",
+        "background-image": "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20379%20160%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22paper%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ffe3ad%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffdfa5%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22panel%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23ce7555%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23bd694b%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M1%207L62%206%2073%200%20350%201%20359%204%20378%203V159H3z%22%20fill%3D%22url%28%23paper%29%22%2F%3E%3Cpath%20d%3D%22M1%207L62%206%2073%200%20350%201%20359%204%20378%203V24L347%2022%20311%2025H31L8%2023%201%2028z%22%20fill%3D%22%23947b4f%22%2F%3E%3Crect%20x%3D%22211%22%20y%3D%2235%22%20width%3D%22160%22%20height%3D%22107%22%20rx%3D%226%22%20fill%3D%22url%28%23panel%29%22%20stroke%3D%22%23a65138%22%20stroke-width%3D%222%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%22120%22%20width%3D%22150%22%20height%3D%2223%22%20rx%3D%2211.5%22%20fill%3D%22%23fffed7%22%2F%3E%3Ccircle%20cx%3D%22188%22%20cy%3D%22127%22%20r%3D%2218%22%20fill%3D%22%23fffdf0%22%20stroke%3D%22%23fffed0%22%20stroke-width%3D%222%22%2F%3E%3Ccircle%20cx%3D%22188%22%20cy%3D%22127%22%20r%3D%2216%22%20fill%3D%22none%22%20stroke%3D%22%23be8174%22%20stroke-width%3D%222%22%2F%3E%3Cpath%20d%3D%22M188%20117l3.5%206.5%207.5%201-5.5%205.5%201%208-6.5-4-6.5%204%201-8-5.5-5.5%207.5-1z%22%20fill%3D%22%23fffed6%22%20stroke%3D%22%23ffff22%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E\")",
+        "background-size": "100% 100%",
+        "background-repeat": "no-repeat"
+      }
     }
   },
   "reviewed": [
+    "ui/regions/44/1.png",
+    "ui/regions/44/100.png",
+    "ui/regions/44/101.png",
+    "ui/regions/44/102.png",
+    "ui/regions/44/103.png",
+    "ui/regions/44/11.png",
     "ui/regions/44/49.png",
     "ui/regions/44/50.png",
     "ui/regions/44/51.png",
@@ -2757,14 +4186,77 @@
     "ui/regions/44/97.png",
     "ui/regions/44/98.png",
     "ui/regions/44/99.png",
-    "ui/regions/44/100.png",
-    "ui/regions/44/101.png",
-    "ui/regions/44/102.png",
-    "ui/regions/44/103.png",
+    "ui/regions/59/10.png",
     "ui/regions/59/16.png",
     "ui/regions/59/17.png",
     "ui/regions/59/18.png",
+    "ui/regions/59/4.png",
+    "ui/regions/59/5.png",
+    "ui/regions/60/13.png",
+    "ui/regions/60/14.png",
+    "ui/regions/60/15.png",
+    "ui/regions/60/17.png",
+    "ui/regions/60/38.png",
+    "ui/regions/60/39.png",
+    "ui/regions/60/52.png",
+    "ui/regions/60/53.png",
+    "ui/regions/60/54.png",
+    "ui/regions/60/55.png",
+    "ui/regions/60/56.png",
+    "ui/regions/60/57.png",
+    "ui/regions/60/58.png",
+    "ui/regions/60/59.png",
+    "ui/regions/60/60.png",
+    "ui/regions/60/61.png",
+    "ui/regions/60/62.png",
+    "ui/regions/60/63.png",
+    "ui/regions/60/64.png",
+    "ui/regions/60/65.png",
+    "ui/regions/60/66.png",
+    "ui/regions/60/67.png",
+    "ui/regions/60/68.png",
+    "ui/regions/60/69.png",
+    "ui/regions/60/70.png",
+    "ui/regions/60/71.png",
+    "ui/regions/60/72.png",
+    "ui/regions/60/73.png",
+    "ui/regions/60/74.png",
+    "ui/regions/60/75.png",
+    "ui/regions/64/0.png",
+    "ui/regions/64/1.png",
+    "ui/regions/64/10.png",
+    "ui/regions/64/11.png",
+    "ui/regions/64/12.png",
+    "ui/regions/64/13.png",
+    "ui/regions/64/14.png",
+    "ui/regions/64/15.png",
+    "ui/regions/64/16.png",
+    "ui/regions/64/17.png",
+    "ui/regions/64/18.png",
+    "ui/regions/64/19.png",
+    "ui/regions/64/2.png",
+    "ui/regions/64/20.png",
+    "ui/regions/64/21.png",
+    "ui/regions/64/22.png",
+    "ui/regions/64/23.png",
+    "ui/regions/64/24.png",
+    "ui/regions/64/25.png",
+    "ui/regions/64/26.png",
+    "ui/regions/64/27.png",
+    "ui/regions/64/28.png",
+    "ui/regions/64/29.png",
+    "ui/regions/64/3.png",
+    "ui/regions/64/30.png",
+    "ui/regions/64/31.png",
+    "ui/regions/64/32.png",
+    "ui/regions/64/33.png",
+    "ui/regions/64/34.png",
+    "ui/regions/64/35.png",
+    "ui/regions/64/36.png",
+    "ui/regions/64/37.png",
+    "ui/regions/64/38.png",
     "ui/regions/64/39.png",
+    "ui/regions/64/4.png",
     "ui/regions/64/40.png",
     "ui/regions/64/41.png",
     "ui/regions/64/42.png",
@@ -2772,107 +4264,240 @@
     "ui/regions/64/44.png",
     "ui/regions/64/45.png",
     "ui/regions/64/46.png",
+    "ui/regions/64/5.png",
+    "ui/regions/64/6.png",
+    "ui/regions/64/7.png",
+    "ui/regions/64/8.png",
+    "ui/regions/64/9.png",
+    "ui/regions/65/0.png",
+    "ui/regions/65/1.png",
+    "ui/regions/65/10.png",
+    "ui/regions/65/11.png",
+    "ui/regions/65/12.png",
+    "ui/regions/65/13.png",
+    "ui/regions/65/14.png",
+    "ui/regions/65/15.png",
+    "ui/regions/65/16.png",
+    "ui/regions/65/17.png",
+    "ui/regions/65/18.png",
+    "ui/regions/65/19.png",
+    "ui/regions/65/2.png",
+    "ui/regions/65/20.png",
+    "ui/regions/65/21.png",
+    "ui/regions/65/22.png",
+    "ui/regions/65/23.png",
+    "ui/regions/65/24.png",
+    "ui/regions/65/25.png",
+    "ui/regions/65/26.png",
+    "ui/regions/65/27.png",
+    "ui/regions/65/28.png",
+    "ui/regions/65/29.png",
+    "ui/regions/65/3.png",
+    "ui/regions/65/30.png",
+    "ui/regions/65/31.png",
+    "ui/regions/65/32.png",
+    "ui/regions/65/33.png",
+    "ui/regions/65/34.png",
+    "ui/regions/65/35.png",
+    "ui/regions/65/36.png",
+    "ui/regions/65/37.png",
+    "ui/regions/65/38.png",
+    "ui/regions/65/39.png",
+    "ui/regions/65/4.png",
+    "ui/regions/65/40.png",
+    "ui/regions/65/41.png",
+    "ui/regions/65/42.png",
+    "ui/regions/65/43.png",
+    "ui/regions/65/44.png",
+    "ui/regions/65/45.png",
+    "ui/regions/65/46.png",
+    "ui/regions/65/47.png",
+    "ui/regions/65/48.png",
+    "ui/regions/65/49.png",
+    "ui/regions/65/5.png",
+    "ui/regions/65/50.png",
+    "ui/regions/65/51.png",
+    "ui/regions/65/6.png",
+    "ui/regions/65/7.png",
+    "ui/regions/65/8.png",
+    "ui/regions/65/9.png",
+    "ui/regions/66/0.png",
+    "ui/regions/66/1.png",
+    "ui/regions/66/10.png",
+    "ui/regions/66/11.png",
+    "ui/regions/66/12.png",
+    "ui/regions/66/13.png",
+    "ui/regions/66/14.png",
+    "ui/regions/66/15.png",
+    "ui/regions/66/16.png",
+    "ui/regions/66/17.png",
+    "ui/regions/66/18.png",
+    "ui/regions/66/19.png",
+    "ui/regions/66/2.png",
+    "ui/regions/66/20.png",
+    "ui/regions/66/21.png",
+    "ui/regions/66/22.png",
+    "ui/regions/66/23.png",
+    "ui/regions/66/24.png",
+    "ui/regions/66/25.png",
+    "ui/regions/66/26.png",
+    "ui/regions/66/27.png",
+    "ui/regions/66/28.png",
+    "ui/regions/66/29.png",
+    "ui/regions/66/3.png",
+    "ui/regions/66/30.png",
+    "ui/regions/66/31.png",
+    "ui/regions/66/32.png",
+    "ui/regions/66/33.png",
+    "ui/regions/66/34.png",
+    "ui/regions/66/35.png",
+    "ui/regions/66/36.png",
+    "ui/regions/66/37.png",
+    "ui/regions/66/38.png",
+    "ui/regions/66/39.png",
+    "ui/regions/66/4.png",
+    "ui/regions/66/40.png",
+    "ui/regions/66/41.png",
+    "ui/regions/66/42.png",
+    "ui/regions/66/43.png",
+    "ui/regions/66/44.png",
+    "ui/regions/66/45.png",
+    "ui/regions/66/46.png",
+    "ui/regions/66/47.png",
+    "ui/regions/66/48.png",
+    "ui/regions/66/49.png",
+    "ui/regions/66/5.png",
+    "ui/regions/66/50.png",
+    "ui/regions/66/51.png",
+    "ui/regions/66/52.png",
+    "ui/regions/66/53.png",
+    "ui/regions/66/54.png",
+    "ui/regions/66/55.png",
+    "ui/regions/66/56.png",
+    "ui/regions/66/57.png",
+    "ui/regions/66/58.png",
+    "ui/regions/66/59.png",
+    "ui/regions/66/6.png",
+    "ui/regions/66/7.png",
+    "ui/regions/66/8.png",
+    "ui/regions/66/9.png",
+    "ui/regions/68/32.png",
+    "ui/regions/68/34.png",
+    "ui/regions/69/0.png",
+    "ui/regions/69/10.png",
+    "ui/regions/69/100.png",
+    "ui/regions/69/101.png",
+    "ui/regions/69/102.png",
+    "ui/regions/69/103.png",
+    "ui/regions/69/104.png",
+    "ui/regions/69/105.png",
+    "ui/regions/69/106.png",
+    "ui/regions/69/107.png",
+    "ui/regions/69/108.png",
+    "ui/regions/69/109.png",
+    "ui/regions/69/11.png",
+    "ui/regions/69/110.png",
+    "ui/regions/69/112.png",
+    "ui/regions/69/113.png",
+    "ui/regions/69/115.png",
+    "ui/regions/69/116.png",
+    "ui/regions/69/117.png",
+    "ui/regions/69/119.png",
+    "ui/regions/69/12.png",
+    "ui/regions/69/121.png",
+    "ui/regions/69/122.png",
+    "ui/regions/69/123.png",
+    "ui/regions/69/124.png",
+    "ui/regions/69/13.png",
+    "ui/regions/69/14.png",
+    "ui/regions/69/15.png",
+    "ui/regions/69/158.png",
+    "ui/regions/69/159.png",
+    "ui/regions/69/16.png",
+    "ui/regions/69/160.png",
+    "ui/regions/69/161.png",
+    "ui/regions/69/162.png",
+    "ui/regions/69/163.png",
+    "ui/regions/69/164.png",
+    "ui/regions/69/165.png",
+    "ui/regions/69/166.png",
+    "ui/regions/69/167.png",
+    "ui/regions/69/168.png",
+    "ui/regions/69/169.png",
+    "ui/regions/69/17.png",
+    "ui/regions/69/170.png",
+    "ui/regions/69/171.png",
+    "ui/regions/69/172.png",
+    "ui/regions/69/173.png",
+    "ui/regions/69/174.png",
+    "ui/regions/69/175.png",
+    "ui/regions/69/18.png",
+    "ui/regions/69/188.png",
+    "ui/regions/69/19.png",
+    "ui/regions/69/20.png",
+    "ui/regions/69/21.png",
+    "ui/regions/69/22.png",
+    "ui/regions/69/24.png",
+    "ui/regions/69/30.png",
+    "ui/regions/69/31.png",
+    "ui/regions/69/32.png",
+    "ui/regions/69/33.png",
+    "ui/regions/69/34.png",
+    "ui/regions/69/35.png",
+    "ui/regions/69/39.png",
+    "ui/regions/69/40.png",
+    "ui/regions/69/41.png",
+    "ui/regions/69/42.png",
+    "ui/regions/69/43.png",
+    "ui/regions/69/44.png",
+    "ui/regions/69/54.png",
+    "ui/regions/69/55.png",
+    "ui/regions/69/56.png",
+    "ui/regions/69/57.png",
+    "ui/regions/69/58.png",
+    "ui/regions/69/59.png",
+    "ui/regions/69/60.png",
+    "ui/regions/69/61.png",
+    "ui/regions/69/62.png",
+    "ui/regions/69/63.png",
+    "ui/regions/69/64.png",
+    "ui/regions/69/65.png",
+    "ui/regions/69/66.png",
+    "ui/regions/69/67.png",
+    "ui/regions/69/68.png",
+    "ui/regions/69/69.png",
+    "ui/regions/69/70.png",
+    "ui/regions/69/71.png",
+    "ui/regions/69/72.png",
+    "ui/regions/69/73.png",
+    "ui/regions/69/74.png",
+    "ui/regions/69/75.png",
+    "ui/regions/69/76.png",
+    "ui/regions/69/77.png",
     "ui/regions/69/8.png",
+    "ui/regions/69/80.png",
+    "ui/regions/69/81.png",
+    "ui/regions/69/82.png",
+    "ui/regions/69/83.png",
+    "ui/regions/69/84.png",
+    "ui/regions/69/85.png",
+    "ui/regions/69/86.png",
+    "ui/regions/69/87.png",
+    "ui/regions/69/88.png",
+    "ui/regions/69/89.png",
+    "ui/regions/69/90.png",
+    "ui/regions/69/91.png",
+    "ui/regions/69/92.png",
+    "ui/regions/69/93.png",
+    "ui/regions/69/94.png",
+    "ui/regions/69/95.png",
+    "ui/regions/69/96.png",
+    "ui/regions/69/97.png",
+    "ui/regions/69/98.png",
+    "ui/regions/69/99.png",
     "ui/regions/71/0.png",
     "ui/regions/71/1.png",
-    "ui/regions/71/2.png",
-    "ui/regions/71/3.png",
-    "ui/regions/71/4.png",
-    "ui/regions/71/5.png",
-    "ui/regions/71/6.png",
-    "ui/regions/71/7.png",
-    "ui/regions/71/8.png",
-    "ui/regions/71/9.png",
     "ui/regions/71/10.png",
-    "ui/regions/71/11.png",
-    "ui/regions/71/12.png",
-    "ui/regions/71/13.png",
-    "ui/regions/71/14.png",
-    "ui/regions/71/15.png",
-    "ui/regions/71/16.png",
-    "ui/regions/71/17.png",
-    "ui/regions/71/18.png",
-    "ui/regions/71/19.png",
-    "ui/regions/71/20.png",
-    "ui/regions/71/21.png",
-    "ui/regions/71/22.png",
-    "ui/regions/71/23.png",
-    "ui/regions/71/24.png",
-    "ui/regions/71/25.png",
-    "ui/regions/71/26.png",
-    "ui/regions/71/27.png",
-    "ui/regions/71/28.png",
-    "ui/regions/71/29.png",
-    "ui/regions/71/30.png",
-    "ui/regions/71/31.png",
-    "ui/regions/71/32.png",
-    "ui/regions/71/33.png",
-    "ui/regions/71/34.png",
-    "ui/regions/71/35.png",
-    "ui/regions/71/36.png",
-    "ui/regions/71/37.png",
-    "ui/regions/71/38.png",
-    "ui/regions/71/39.png",
-    "ui/regions/71/40.png",
-    "ui/regions/71/41.png",
-    "ui/regions/71/42.png",
-    "ui/regions/71/43.png",
-    "ui/regions/71/44.png",
-    "ui/regions/71/45.png",
-    "ui/regions/71/46.png",
-    "ui/regions/71/47.png",
-    "ui/regions/71/48.png",
-    "ui/regions/71/49.png",
-    "ui/regions/71/50.png",
-    "ui/regions/71/51.png",
-    "ui/regions/71/52.png",
-    "ui/regions/71/53.png",
-    "ui/regions/71/54.png",
-    "ui/regions/71/55.png",
-    "ui/regions/71/56.png",
-    "ui/regions/71/57.png",
-    "ui/regions/71/58.png",
-    "ui/regions/71/59.png",
-    "ui/regions/71/60.png",
-    "ui/regions/71/61.png",
-    "ui/regions/71/62.png",
-    "ui/regions/71/63.png",
-    "ui/regions/71/64.png",
-    "ui/regions/71/65.png",
-    "ui/regions/71/66.png",
-    "ui/regions/71/67.png",
-    "ui/regions/71/68.png",
-    "ui/regions/71/69.png",
-    "ui/regions/71/70.png",
-    "ui/regions/71/71.png",
-    "ui/regions/71/72.png",
-    "ui/regions/71/73.png",
-    "ui/regions/71/74.png",
-    "ui/regions/71/75.png",
-    "ui/regions/71/76.png",
-    "ui/regions/71/77.png",
-    "ui/regions/71/78.png",
-    "ui/regions/71/79.png",
-    "ui/regions/71/80.png",
-    "ui/regions/71/81.png",
-    "ui/regions/71/82.png",
-    "ui/regions/71/83.png",
-    "ui/regions/71/84.png",
-    "ui/regions/71/85.png",
-    "ui/regions/71/86.png",
-    "ui/regions/71/87.png",
-    "ui/regions/71/88.png",
-    "ui/regions/71/89.png",
-    "ui/regions/71/90.png",
-    "ui/regions/71/91.png",
-    "ui/regions/71/92.png",
-    "ui/regions/71/93.png",
-    "ui/regions/71/94.png",
-    "ui/regions/71/95.png",
-    "ui/regions/71/96.png",
-    "ui/regions/71/97.png",
-    "ui/regions/71/98.png",
-    "ui/regions/71/99.png",
     "ui/regions/71/100.png",
     "ui/regions/71/101.png",
     "ui/regions/71/102.png",
@@ -2883,7 +4508,110 @@
     "ui/regions/71/107.png",
     "ui/regions/71/108.png",
     "ui/regions/71/109.png",
+    "ui/regions/71/11.png",
     "ui/regions/71/110.png",
+    "ui/regions/71/12.png",
+    "ui/regions/71/13.png",
+    "ui/regions/71/14.png",
+    "ui/regions/71/15.png",
+    "ui/regions/71/16.png",
+    "ui/regions/71/17.png",
+    "ui/regions/71/18.png",
+    "ui/regions/71/19.png",
+    "ui/regions/71/2.png",
+    "ui/regions/71/20.png",
+    "ui/regions/71/21.png",
+    "ui/regions/71/22.png",
+    "ui/regions/71/23.png",
+    "ui/regions/71/24.png",
+    "ui/regions/71/25.png",
+    "ui/regions/71/26.png",
+    "ui/regions/71/27.png",
+    "ui/regions/71/28.png",
+    "ui/regions/71/29.png",
+    "ui/regions/71/3.png",
+    "ui/regions/71/30.png",
+    "ui/regions/71/31.png",
+    "ui/regions/71/32.png",
+    "ui/regions/71/33.png",
+    "ui/regions/71/34.png",
+    "ui/regions/71/35.png",
+    "ui/regions/71/36.png",
+    "ui/regions/71/37.png",
+    "ui/regions/71/38.png",
+    "ui/regions/71/39.png",
+    "ui/regions/71/4.png",
+    "ui/regions/71/40.png",
+    "ui/regions/71/41.png",
+    "ui/regions/71/42.png",
+    "ui/regions/71/43.png",
+    "ui/regions/71/44.png",
+    "ui/regions/71/45.png",
+    "ui/regions/71/46.png",
+    "ui/regions/71/47.png",
+    "ui/regions/71/48.png",
+    "ui/regions/71/49.png",
+    "ui/regions/71/5.png",
+    "ui/regions/71/50.png",
+    "ui/regions/71/51.png",
+    "ui/regions/71/52.png",
+    "ui/regions/71/53.png",
+    "ui/regions/71/54.png",
+    "ui/regions/71/55.png",
+    "ui/regions/71/56.png",
+    "ui/regions/71/57.png",
+    "ui/regions/71/58.png",
+    "ui/regions/71/59.png",
+    "ui/regions/71/6.png",
+    "ui/regions/71/60.png",
+    "ui/regions/71/61.png",
+    "ui/regions/71/62.png",
+    "ui/regions/71/63.png",
+    "ui/regions/71/64.png",
+    "ui/regions/71/65.png",
+    "ui/regions/71/66.png",
+    "ui/regions/71/67.png",
+    "ui/regions/71/68.png",
+    "ui/regions/71/69.png",
+    "ui/regions/71/7.png",
+    "ui/regions/71/70.png",
+    "ui/regions/71/71.png",
+    "ui/regions/71/72.png",
+    "ui/regions/71/73.png",
+    "ui/regions/71/74.png",
+    "ui/regions/71/75.png",
+    "ui/regions/71/76.png",
+    "ui/regions/71/77.png",
+    "ui/regions/71/78.png",
+    "ui/regions/71/79.png",
+    "ui/regions/71/8.png",
+    "ui/regions/71/80.png",
+    "ui/regions/71/81.png",
+    "ui/regions/71/82.png",
+    "ui/regions/71/83.png",
+    "ui/regions/71/84.png",
+    "ui/regions/71/85.png",
+    "ui/regions/71/86.png",
+    "ui/regions/71/87.png",
+    "ui/regions/71/88.png",
+    "ui/regions/71/89.png",
+    "ui/regions/71/9.png",
+    "ui/regions/71/90.png",
+    "ui/regions/71/91.png",
+    "ui/regions/71/92.png",
+    "ui/regions/71/93.png",
+    "ui/regions/71/94.png",
+    "ui/regions/71/95.png",
+    "ui/regions/71/96.png",
+    "ui/regions/71/97.png",
+    "ui/regions/71/98.png",
+    "ui/regions/71/99.png",
+    "ui/regions/74/100.png",
+    "ui/regions/74/101.png",
+    "ui/regions/74/102.png",
+    "ui/regions/74/103.png",
+    "ui/regions/74/104.png",
+    "ui/regions/74/105.png",
     "ui/regions/74/106.png",
     "ui/regions/74/107.png",
     "ui/regions/74/108.png",
@@ -2892,6 +4620,57 @@
     "ui/regions/74/111.png",
     "ui/regions/74/112.png",
     "ui/regions/74/113.png",
+    "ui/regions/74/115.png",
+    "ui/regions/74/116.png",
+    "ui/regions/74/29.png",
+    "ui/regions/74/30.png",
+    "ui/regions/74/31.png",
+    "ui/regions/74/32.png",
+    "ui/regions/74/33.png",
+    "ui/regions/74/34.png",
+    "ui/regions/74/45.png",
+    "ui/regions/74/46.png",
+    "ui/regions/74/47.png",
+    "ui/regions/74/48.png",
+    "ui/regions/74/49.png",
+    "ui/regions/74/50.png",
+    "ui/regions/74/51.png",
+    "ui/regions/74/52.png",
+    "ui/regions/74/53.png",
+    "ui/regions/74/54.png",
+    "ui/regions/74/55.png",
+    "ui/regions/74/56.png",
+    "ui/regions/74/57.png",
+    "ui/regions/74/58.png",
+    "ui/regions/74/59.png",
+    "ui/regions/74/61.png",
+    "ui/regions/74/62.png",
+    "ui/regions/74/63.png",
+    "ui/regions/74/64.png",
+    "ui/regions/74/65.png",
+    "ui/regions/74/66.png",
+    "ui/regions/74/68.png",
+    "ui/regions/74/69.png",
+    "ui/regions/74/70.png",
+    "ui/regions/74/78.png",
+    "ui/regions/74/79.png",
+    "ui/regions/74/80.png",
+    "ui/regions/74/81.png",
+    "ui/regions/74/82.png",
+    "ui/regions/74/83.png",
+    "ui/regions/74/84.png",
+    "ui/regions/74/85.png",
+    "ui/regions/74/96.png",
+    "ui/regions/74/97.png",
+    "ui/regions/74/98.png",
+    "ui/regions/74/99.png",
+    "ui/regions/77/100.png",
+    "ui/regions/77/101.png",
+    "ui/regions/77/102.png",
+    "ui/regions/77/103.png",
+    "ui/regions/77/12.png",
+    "ui/regions/77/13.png",
+    "ui/regions/77/14.png",
     "ui/regions/77/49.png",
     "ui/regions/77/50.png",
     "ui/regions/77/51.png",
@@ -2923,17 +4702,6 @@
     "ui/regions/77/96.png",
     "ui/regions/77/97.png",
     "ui/regions/77/98.png",
-    "ui/regions/77/99.png",
-    "ui/regions/77/100.png",
-    "ui/regions/77/101.png",
-    "ui/regions/77/102.png",
-    "ui/regions/77/103.png",
-    "ui/regions/69/24.png",
-    "ui/regions/69/54.png",
-    "ui/regions/69/55.png",
-    "ui/regions/69/56.png",
-    "ui/regions/69/60.png",
-    "ui/regions/69/61.png",
-    "ui/regions/69/62.png"
+    "ui/regions/77/99.png"
   ]
 }

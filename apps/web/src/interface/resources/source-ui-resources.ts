@@ -1,9 +1,7 @@
 import type {HomeSourceUi} from './source-ui-layout';
 import {roomModeIconReference} from '../lobby/room-mode-icons';
 import {loadStaticJson} from '../../assets/static-resources';
-import {decodeImage} from '../../assets/image-resources';
-import {isSourceTextImage} from './source-text-artwork';
-import {isSimpleUiImage} from '../../assets/simple-ui-artwork';
+import {decodeImageRegion} from '../../assets/image-resources';
 import {bindButtonBackgrounds, buttonArtwork} from '../../assets/button-artwork';
 import {imageResourceUrl} from '../../assets/image-cache';
 import {loadUiFont} from './source-ui-fonts';
@@ -44,11 +42,7 @@ export async function prepareSourceUi(suffixes: readonly string[]): Promise<Home
     const sets = ui.imagesets.filter(set => set.attributes.Name === match[1]);
     const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
     const asset = set?.images.find(image => image.Name === match[2])?.asset;
-    if (asset) {
-      const button = buttonArtwork(asset);
-      if (button?.background) urls.add(button.background);
-      else if (!button && !isSourceTextImage(asset) && !isSimpleUiImage(asset)) urls.add(`/${asset}`);
-    }
+    if (asset) urls.add(buttonArtwork(asset)?.background ?? `/${asset}`);
   };
   for (const suffix of suffixes) {
     const layout = ui.layouts.find(layout => layout.path.endsWith(suffix));
@@ -69,7 +63,7 @@ export async function prepareSourceUi(suffixes: readonly string[]): Promise<Home
       for (let mode = 1; mode <= 5; mode++) addReference(roomModeIconReference(mode));
     }
   }
-  await Promise.all([loadUiFont(), ...[...urls].map(url => decodeImage(url))]);
+  await Promise.all([loadUiFont(), ...[...urls].map(url => decodeImageRegion(url))]);
   bindButtonBackgrounds(imageResourceUrl);
   for (const suffix of suffixes) preparedLayouts.add(suffix);
   return ui;

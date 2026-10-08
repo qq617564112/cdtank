@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import './settings-source.css';
 import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent} from 'react';
 import type {Battle} from '../../match/battle';
@@ -185,11 +186,11 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
       {([['TrackLeftImage', 'left'], ['TrackMiddleImage', 'middle'], ['TrackRightImage', 'right']] as const).map(([property, part]) => {
         const artwork = image(property);
         return <span key={property} className={`settings-volume-track-${part}`} aria-hidden="true"
-          data-source-asset={artwork.asset} style={{backgroundImage: artwork.backgroundImage}} />;
+          data-source-asset={artwork.asset} style={{...backgroundStyle(artwork.style)}} />;
       })}
       <span className="settings-volume-thumb" aria-hidden="true" data-source-asset={image('ThumbNormalImage').asset}
         style={{left: value * (Number(style.width) - Number(thumb?.Width ?? 7)),
-          backgroundImage: image('ThumbNormalImage').backgroundImage}} />
+          ...backgroundStyle(image('ThumbNormalImage').style)}} />
     </>};
   }
   return <dialog ref={dialog} id="source-settings" aria-label="系统设置" aria-busy={!ui && !resourceError} style={{zoom: scale}}

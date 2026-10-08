@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import {loadTankTextureCatalog} from '../../content';
 import {loadCombatCatalog} from '../../content';
 import {HomeOwnedTankRowContent} from '../home/home-owned-tank-row-content';
@@ -160,7 +161,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
         const rowFields = new Map(value.fields), id = rowFields.get(0x1c)!, rowTankId = rowFields.get(0x24);
         return <button key={id} type="button" role="option" data-tank-shop-owned-instance={id} data-home-owned-tank-row={id} disabled={busy}
           aria-selected={id === instance} tabIndex={id === instance ? 0 : -1}
-          style={id === instance ? {backgroundImage: selection.style.backgroundImage} : undefined}
+          style={id === instance ? {...backgroundStyle(selection.style)} : undefined}
           data-source-selection-asset={id === instance ? selection['data-source-asset'] : undefined}
           onClick={() => selectRecord(value)} onKeyDown={event => {
             const destination = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
@@ -200,7 +201,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
       aria-label="保存战车迷彩" disabled={busy || !profile || !changed} onClick={event => {void save(event.currentTarget);}}>
       {(busy || !profile || !changed) && <span className="tank-shop-texture-save-unavailable" data-presentation-state="web-disabled"
         data-source-asset={unavailable['data-source-asset']} data-source-button-label="external"
-        style={{backgroundImage: unavailable.style.backgroundImage}} />}
+        style={{...backgroundStyle(unavailable.style)}} />}
     </SourceButton>
     <button type="button" className="tank-shop-refresh" disabled={busy} onClick={() => owner.session?.refresh()} data-tank-shop-texture-refresh="">刷新拥有资料</button>
     <output className="tank-shop-status" data-tank-shop-texture-status="" data-texture-selection={selected ? JSON.stringify(selected) : undefined}

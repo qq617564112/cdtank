@@ -15,62 +15,20 @@ from ui_artwork_scope import html_ui_sources
 
 LAYOUTS = {'tiny': (32, 8, 128), 'small': (64, 4, 256),
            'medium': (256, 2, 512)}
-REGULAR_FONTS = {'baiseheitizi', 'cheapfont', 'daheitizi', 'fangjianbianhao',
-                 'hongseheitizi', 'xiaoheitizi'}
-REGULAR_LABELS = {'huofeichuangyi', 'xianyoujineng', 'xianyouchuangyi',
-                  'huafeijineng', 'huafeidaibidian', 'huofeichuangyidianshu', 'huofeidaibi'}
-REGULAR_TEXT_REGIONS = {
-    'gy': {'daibi2', 'jinqian', 'xingbi', 'chuangyidianshu', 'daibi', 'jinengdianshu'},
-    'lobby_ditu2': {
-        'huolidengji', 'zhuangjiadengji', 'dituguize2', 'mima', 'fangming', 'renshu',
-        'dituguize', 'huafeidaibi2', 'beimianzhuangjia', 'cemianzhuangjia',
-        'lingjiantanwei', 'huixuansudu', 'yidongsudu', 'zhuangdanxiuzheng',
-        'fashejiange', 'diaobaoshengming', 'qingtanke', 'shuliandu', 'tujipao',
-        'shumingzhi', 'zhongtanke', 'zhongtanke2', 'tankecunliang', 'fangjian',
-        'naijiudu', 'meijushijian', 'baifenbi', 'jineng', 'haoyun', 'sudu',
-        'xiongmeng', 'sec3', 'baifenbi2', 'sec2', 'km', 'daos', 'dao_s',
-    },
-    'mycabin0': {
-        'yongyouchenghao3', 'zhandoutongji3', 'huojiangtongji3', 'zhuangjiadengji',
-        'huoli', 'xuanzhuansudu', 'shengyutianshu', 'yidongsudu', 'fashejiange',
-        'cemianzhuangjia', 'beimianzhuangjia', 'zhuangdanxiuzheng', 'shuliandu',
-        'shengmiangzhi', 'jineng', 'xiongmeng', 'haoyun', 'xiegang_sec', 'sec',
-        'baifenbijiahao', 'baifenbi', 'km',
-    },
-}
-
-
 def defer_regular_text(root, inventory):
-    runtime = root / 'recovery/output/web-assets'
-    ui = json.loads((runtime / 'ui.json').read_text())
-    sources = set()
-    for filename in ['ui-font-raster.json', 'five-page-font-raster.json']:
-        for face in json.loads((runtime / filename).read_text())['faces']:
-            sources.add(face['atlas']['asset'])
-    for imageset in ui['imagesets']:
-        family = Path(imageset['path']).stem.removesuffix('_0')
-        regular_font = imageset['path'].startswith('ui/fonts/') and family in REGULAR_FONTS
-        if regular_font:
-            path = imageset['attributes']['Imagefile'].replace('\\', '/')
-            sources.add(str(Path(path).with_suffix('.png')))
-        for region in imageset['images']:
-            name = Path(region['Name'].replace('\\', '/')).stem
-            if (regular_font or name in REGULAR_LABELS
-                    or name in REGULAR_TEXT_REGIONS.get(family, set())):
-                sources.add(region['asset'])
-    sources = {source.lower() for source in sources}
-    canonical = {entry['canonical'] for entry in inventory['textures'] if entry['source'].lower() in sources}
     for entry in inventory['textures']:
-        if entry['source'].lower() in sources or entry['canonical'] in canonical:
-            entry['deferred'] = 'font-rendering'
-    return sum(entry.get('deferred') == 'font-rendering' for entry in inventory['textures'])
+        if entry.get('deferred') == 'font-rendering':
+            entry.pop('deferred')
+    return 0
 
 
 def defer_simple_ui(root, inventory):
-    sources = html_ui_sources()
+    buttons = html_ui_sources()
     for entry in inventory['textures']:
-        if entry['source'] in sources:
-            entry['deferred'] = 'html-css-rendering'
+        if entry['source'] in buttons:
+            entry['deferred'] = 'unlettered-button'
+        elif entry.get('deferred') == 'html-css-rendering':
+            entry.pop('deferred')
 
 
 def category(entry):

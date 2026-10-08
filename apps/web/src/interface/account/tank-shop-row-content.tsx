@@ -1,3 +1,4 @@
+import {ImageArtwork} from '../resources/image-artwork';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -15,7 +16,10 @@ export function TankShopRowContent({ui, tankId, name, tankType, defaultDurabilit
   return <>
     <span className="tank-shop-row-icon" aria-hidden="true" data-tank-row-icon=""
       data-tank-icon-mark={icon?.['data-tank-icon-mark']}
-      data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: icon?.style.backgroundImage}} />
+      data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: 'none'}}>
+      {icon?.['data-source-asset'] && <ImageArtwork asset={`/${icon['data-source-asset']}`} fit="contain"
+        style={{width: '100%', height: '100%'}} aria-hidden="true"/>}
+    </span>
     <span className="tank-shop-row-name" data-tank-row-name=""><SourceFeedbackText text={name}/></span>
     <span className="tank-shop-row-secondary" data-tank-row-secondary="" data-source-binding="tank-table-type"><SourceFeedbackText text={sourceTankKind(tankType)}/></span>
     <span className="tank-shop-row-tertiary" data-tank-row-tertiary="" data-source-binding={owned ? 'mytank-duration-minutes' : 'tankshop-default-durability'}><SourceFeedbackText text={owned ? sourceOwnedTankDays(durationMinutes) : sourceTankDays(defaultDurability)}/></span>

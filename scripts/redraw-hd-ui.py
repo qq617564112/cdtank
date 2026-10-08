@@ -113,7 +113,7 @@ def prepare(job, inventory):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--jobs', type=Path, default=ART / 'jobs.json')
-    parser.add_argument('--workers', type=int, default=8)
+    parser.add_argument('--workers', type=int, default=10)
     parser.add_argument('--prepare-only', action='store_true')
     parser.add_argument('--collect-only', action='store_true')
     args = parser.parse_args()

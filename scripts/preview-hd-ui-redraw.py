@@ -41,7 +41,7 @@ def main():
                     image = image.convert('RGBA')
                     ratio = min(186 / image.width, 148 / image.height)
                     image = image.resize((max(1, round(image.width * ratio)), max(1, round(image.height * ratio))),
-                                         Image.Resampling.LANCZOS)
+                                         Image.Resampling.NEAREST if key == 'original' else Image.Resampling.LANCZOS)
                     canvas.paste(image, (x + column * 200 + 7 + (186 - image.width) // 2,
                                         y + 36 + (148 - image.height) // 2), image)
         path = folder / f'{start // 32:03}.png'

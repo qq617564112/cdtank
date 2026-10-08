@@ -1,4 +1,4 @@
-import {imageResourceBackground} from '../../assets/image-cache';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {useState, type ComponentPropsWithRef, type CSSProperties} from 'react';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceTextArtwork, SourceTextArtwork} from '../resources/source-text-artwork';
@@ -15,7 +15,7 @@ export class ChatSourceLayout {
     const sets = this.ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
     const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
     const asset = set?.images.find(image => image.Name === match?.[2])?.asset;
-    return {style: {backgroundImage: asset ? imageResourceBackground(`/${asset}`) : undefined}, 'data-source-asset': asset};
+    return {style: {...(asset ? imageBackgroundStyle(`/${asset}`) : {})}, 'data-source-asset': asset};
   }
   place(name: string, offsetX = 0, offsetY = 0) {
     const source = this.control(name);
@@ -37,12 +37,14 @@ export function SourceChatButton({layout, name, offsetX = 0, offsetY = 0, style,
   const [state, setState] = useState('NormalImage');
   const position = layout.place(name, offsetX, offsetY);
   const image = layout.picture(layout.control(name).properties[state]);
+  const text = sourceTextArtwork(image['data-source-asset']);
   return <button {...props} {...position} {...image} type="button" style={{...position.style, ...image.style, ...style}}
+    data-source-button-label={text ? 'external' : undefined}
     onMouseEnter={event => {setState('HoverImage'); props.onMouseEnter?.(event);}}
     onMouseLeave={event => {setState('NormalImage'); props.onMouseLeave?.(event);}}
     onMouseDown={event => {setState('PushedImage'); props.onMouseDown?.(event);}}
     onMouseUp={event => {setState('HoverImage'); props.onMouseUp?.(event);}}>
-    {image['data-source-asset'] && sourceTextArtwork(image['data-source-asset']) && <SourceTextArtwork asset={image['data-source-asset']}/>}
+    {text && <SourceTextArtwork asset={image['data-source-asset']!}/>}
     {props.children}
   </button>;
 }

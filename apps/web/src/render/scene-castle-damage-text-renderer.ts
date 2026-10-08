@@ -1,6 +1,6 @@
 import {Vector2} from '@babylonjs/core';
 import type {Scene} from '@babylonjs/core';
-import {decodeImage} from '../assets/image-resources';
+import {decodeImageRegion} from '../assets/image-resources';
 import type {CastleDamageTextRecord, CastleDamageTextRenderer, CastleDamageTextViewport} from '../assets/scenes/scene-castle-damage-text';
 import {BattleScreenVector, type BattleVectorShape} from './battle-screen-vectors';
 
@@ -41,7 +41,7 @@ export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
     if (this.disposed) throw new Error('Castle文字资源已释放');
     try {
       const {BATTLE_TEXT_VECTORS} = await import('./battle-text-vector-geometry');
-      await Promise.all(this.font.glyphs.map(glyph => decodeImage(`/${glyph.asset}`)));
+      await Promise.all(this.font.glyphs.map(glyph => decodeImageRegion(`/${glyph.asset}`)));
       if (this.disposed) throw new Error('Castle文字资源已释放');
       for (const glyph of this.font.glyphs) {
         const shape = BATTLE_TEXT_VECTORS[glyph.asset];

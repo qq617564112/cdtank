@@ -1,3 +1,4 @@
+import {backgroundStyle} from '../../assets/image-artwork';
 import './source-multiline-reading.css';
 import {useContext, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent} from 'react';
 import type {HomeSourceLayout, HomeSourceUi} from './source-ui-layout';
@@ -122,7 +123,7 @@ export function SourceMultilineReading({ui, layout, name, text, suffix}: {
         const image = picture(direction);
         return <button key={direction} type="button" data-source-description-arrow={direction}
           data-source-asset={image['data-source-asset']} aria-label={direction === 'up' ? '向上阅读地图说明' : '向下阅读地图说明'}
-          style={{backgroundImage: image.style.backgroundImage, top: direction === 'up' ? 0 : height - incrementHeight,
+          style={{...backgroundStyle(image.style), top: direction === 'up' ? 0 : height - incrementHeight,
             width: arrowWidth, height: direction === 'up' ? decrementHeight : incrementHeight}}
           onPointerEnter={() => setArrow(old => ({...old, [direction]: arrowPointers.current[direction] === undefined ? 'Hover' : 'Pushed'}))}
           onPointerLeave={() => setArrow(old => ({...old, [direction]: arrowPointers.current[direction] === undefined ? 'Normal' : 'Hover'}))}

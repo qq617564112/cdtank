@@ -25,7 +25,7 @@
 
   function dimensions(asset) {
     var original = asset.size.join(' × ');
-    if (asset.deferred) return `${original} · 字体渲染`;
+    if (asset.deferred) return `${original} · 无字按钮${asset.hdSize ? ` → ${asset.hdSize.join(' × ')}` : ' · 待处理'}`;
     return asset.hdSize ? `${original} → ${asset.hdSize.join(' × ')}` : `${original} · 待处理`;
   }
 
@@ -48,13 +48,7 @@
   }
 
   function hdFigure(asset, lazy) {
-    if (!asset.deferred) return figure(asset.hd, '高清图', asset.source, lazy);
-    var node = figure(undefined, '字体渲染', asset.source, lazy, '已替换为轮廓字体');
-    var link = element('a', '查看原图与字体对照');
-    link.href = 'font-rendering-preview.html';
-    link.target = '_blank';
-    node.append(link);
-    return node;
+    return figure(asset.hd, asset.deferred ? '无字高清按钮' : '高清图', asset.source, lazy);
   }
 
   function openAsset(asset) {
@@ -89,7 +83,7 @@
     });
     var completed = filtered.filter(asset => asset.hd).length;
     var deferred = filtered.filter(asset => asset.deferred).length;
-    document.getElementById('results').textContent = `${filtered.length.toLocaleString()} 项 · 已完成 ${completed.toLocaleString()} 项 · 字体渲染 ${deferred.toLocaleString()} 项`;
+    document.getElementById('results').textContent = `${filtered.length.toLocaleString()} 项 · 已完成 ${completed.toLocaleString()} 项 · 无字按钮 ${deferred.toLocaleString()} 项`;
     document.getElementById('page').textContent = `${page + 1} / ${pages}`;
     document.getElementById('previous').disabled = page === 0;
     document.getElementById('next').disabled = page === pages - 1;
@@ -101,9 +95,9 @@
     filtered = assets.filter(asset => (!group.value || asset.groups.includes(group.value))
       && (!query || asset.source.toLowerCase().includes(query))
       && (status.value === 'all'
-        || (status.value === 'font-rendering' && asset.deferred)
-        || (status.value === 'complete' && !asset.deferred && asset.hd)
-        || (status.value === 'pending' && !asset.deferred && !asset.hd)));
+        || (status.value === 'unlettered-button' && asset.deferred)
+        || (status.value === 'complete' && asset.hd)
+        || (status.value === 'pending' && !asset.hd)));
     page = 0;
     render();
   }
@@ -111,17 +105,17 @@
   var groups = [...new Set(assets.flatMap(asset => asset.groups))];
   for (var value of groups) {
     var members = assets.filter(asset => asset.groups.includes(value));
-    var planned = members.filter(asset => !asset.deferred);
+    var planned = members;
     var complete = members.filter(asset => asset.hd).length;
-    var deferred = members.length - planned.length;
-    var option = element('option', `${groupName(value)} (${complete}/${planned.length})${deferred ? ` · 字体渲染 ${deferred}` : ''}`);
+    var deferred = members.filter(asset => asset.deferred).length;
+    var option = element('option', `${groupName(value)} (${complete}/${planned.length})${deferred ? ` · 无字按钮 ${deferred}` : ''}`);
     option.value = value;
     group.append(option);
   }
   var base = assets.filter(asset => !asset.layer && !asset.deferred);
   var layers = assets.filter(asset => asset.layer);
   var deferred = assets.filter(asset => asset.deferred);
-  document.getElementById('progress').textContent = `基础资源 ${base.filter(asset => asset.hd).length.toLocaleString()} / ${base.length.toLocaleString()} · 独立图层 ${layers.filter(asset => asset.hd).length} / ${layers.length} · 字体渲染 ${deferred.length}`;
+  document.getElementById('progress').textContent = `基础资源 ${base.filter(asset => asset.hd).length.toLocaleString()} / ${base.length.toLocaleString()} · 独立图层 ${layers.filter(asset => asset.hd).length} / ${layers.length} · 无字按钮 ${deferred.length}`;
   document.getElementById('updated').textContent = `资源快照：${new Date(data.updated).toLocaleString()} · 每组安装完成后更新，刷新页面查看最新进度。`;
   var previewList = document.getElementById('preview-list');
   for (var preview of data.previews) {
