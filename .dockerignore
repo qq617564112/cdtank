@@ -5,7 +5,6 @@
 !apps/
 !apps/**
 !scripts/
-!scripts/install-assets.mjs
 !scripts/build-server.mjs
 !scripts/package-release.mjs
 !scripts/account-snapshot.mjs

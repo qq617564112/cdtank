@@ -14,7 +14,7 @@ jobs:
     runs-on: cdtank-deploy
     timeout-minutes: 90
     env:
-      CDTANK_IMAGE_TAG: ${{ forgejo.sha }}
+      CDTANK_IMAGE_TAG: ${{ github.sha }}
     steps:
       - name: Checkout
         uses: https://code.forgejo.org/actions/checkout@v4
