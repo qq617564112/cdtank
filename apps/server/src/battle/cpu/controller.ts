@@ -24,6 +24,7 @@ import {hasFixedTurret, tankTurretYaw} from '../../../../shared/combat/tank-turr
 import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, treasureHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, roleDisguiseHotkey, turnDrinkHotkey, teamLifeHotkey, airstrikeHotkey, type TeamLifeContext} from './items';
 import {trapPlacementHotkey, trapSweepHotkey} from './traps';
 import {BOT_BEHAVIORS, randomBotDelay, type BotSkill} from './behavior';
+import {tankRouteClear, teammateAvoidancePoint, teammateInWay, teammateWaypointClear} from './teammate-avoidance';
 
 export interface BotActor extends Point {
   id: string;
@@ -35,8 +36,8 @@ export interface BotActor extends Point {
   alive: boolean;
   vip: boolean;
   tank: {id?: number; speed: number; turn: number};
-  cpu?: {readonly objectiveTargetId: string | undefined};
-  autopilot?: {readonly objectiveTargetId: string | undefined};
+  cpu?: {readonly objectiveTargetId: string | undefined; readonly teammateWaypoint?: Point};
+  autopilot?: {readonly objectiveTargetId: string | undefined; readonly teammateWaypoint?: Point};
   hp?: number;
   maxHp?: number;
   fireReady?: boolean;
@@ -75,6 +76,8 @@ export class BotController {
   private combatWaypoint?: Point;
   private combatDirection = 1;
   private nextCombatMove = 0;
+  private avoidancePoint?: Point;
+  private nextTeammateMove = 0;
   private readonly failedApproaches = new Map<string, number>();
   private readonly unavailableUntil = new Map<string, number>();
   private reaction?: {targetId: string; readyAt: number; lastSeenAt: number; triggerAt?: number};
@@ -118,6 +121,11 @@ export class BotController {
   /** Current intent for CPU coordination; deferred targets are available to others. */
   get objectiveTargetId(): string | undefined {
     return this.targetId && !this.unavailableUntil.has(this.targetId) ? this.targetId : undefined;
+  }
+
+  /** Reserve the position being approached without changing world movement. */
+  get teammateWaypoint(): Point | undefined {
+    return this.avoidancePoint ?? this.escapePoint ?? this.combatWaypoint ?? this.goal;
   }
 
   input(actor: BotActor, actors: readonly BotActor[], objectives: readonly ObjectiveSnapshot[],
@@ -164,6 +172,7 @@ export class BotController {
       this.previousPosition = undefined; this.requestedMovement = false; this.blockedMovementSeconds = 0;
       this.escapePoint = undefined;
       this.combatWaypoint = undefined; this.nextCombatMove = 0;
+      this.avoidancePoint = undefined; this.nextTeammateMove = 0;
       this.resetReaction();
       return input;
     }
@@ -171,6 +180,8 @@ export class BotController {
     input.useItem = healingHotkey(actor) || input.useItem;
     input.useItem = treasureHotkey(actor) || input.useItem;
     const distance = (point: Point) => Math.hypot(point.x - actor.x, point.z - actor.z);
+    const teammates = mode <= 3 ? actors.filter(other => other.alive
+      && other.id !== actor.id && other.team === actor.team) : [];
     const enemies = actors.filter(other => other.alive && other.id !== actor.id
       && (mode >= 4 || other.team !== actor.team)
       && !isHiddenFromOpponent(other, actor, mode));
@@ -196,7 +207,7 @@ export class BotController {
     const available = targets.filter(target => !this.unavailableUntil.has(target.id));
     // Let an in-flight search finish for its living target rather than replacing
     // it each time two enemies exchange nearest-distance order.
-    const retainTarget = this.planner || this.escapePoint || this.combatWaypoint
+    const retainTarget = this.planner || this.escapePoint || this.combatWaypoint || this.avoidancePoint
       || (mode === 5 && this.targetId && !claimed.has(this.targetId));
     const retained = retainTarget ? available.find(target => target.id === this.targetId) : undefined;
     // Work on a reachable firing line before committing to a route around a wall.
@@ -216,8 +227,7 @@ export class BotController {
       const distance = Math.hypot(target.x - position.x, target.z - position.z);
       const endpoint = {x: position.x + Math.sin(heading) * distance, y: position.y + 20,
         z: position.z + Math.cos(heading) * distance};
-      if (mode <= 3 && actors.some(other => other.alive && other.id !== actor.id
-          && other.team === actor.team && blocksShot(position, endpoint, other))) return false;
+      if (teammates.some(other => blocksShot(position, endpoint, other))) return false;
       if (source) return canShootSource(position, heading, source, field, actors, actor.id);
       if (distance >= 700 || Math.abs(target.y - position.y) >= 18) return false;
       if (objectiveTarget) {
@@ -278,12 +288,38 @@ export class BotController {
         }
         return input;
       };
+      if (this.avoidancePoint) {
+        const reached = reach(actor, this.avoidancePoint);
+        if (distance(this.avoidancePoint) < 7) {
+          this.avoidancePoint = undefined;
+          // Rejoin from the passing position rather than return to the crowded lane.
+          this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
+          input.move = 0; input.turn = 0;
+        } else if (Math.hypot(reached.x - this.avoidancePoint.x, reached.z - this.avoidancePoint.z) >= .01
+            || !teammateWaypointClear(this.avoidancePoint, teammates)
+            || !tankRouteClear(actor, this.avoidancePoint, actors)) this.avoidancePoint = undefined;
+      }
+      if (!this.avoidancePoint && now >= this.nextTeammateMove) {
+        const heading = actor.yaw + input.turn * parameters.turn * dt;
+        const route = this.escapePoint ?? this.combatWaypoint ?? this.path[0]
+          ?? (input.move !== 0 ? {x: actor.x + Math.sin(heading) * Math.sign(input.move) * 144,
+            y: actor.y, z: actor.z + Math.cos(heading) * Math.sign(input.move) * 144}
+            : this.planner ? this.goal : undefined);
+        if (teammateInWay(actor, route, teammates)) {
+          this.avoidancePoint = teammateAvoidancePoint(actor, route, teammates, actors, field,
+            this.combatDirection, reach, target ? point => canShoot(point,
+              Math.atan2(target.x - point.x, target.z - point.z)) : undefined);
+          this.nextTeammateMove = now + 250;
+        }
+      }
+      if (this.avoidancePoint) steerToward(actor, input, this.avoidancePoint, dt, true);
+      this.requestedMovement = Math.abs(input.move) > .1;
       if (!target) {
         this.resetReaction();
         return finishItems();
       }
       if (fixedTurret && input.fire && input.move === 0 && !this.path.length && !this.planner
-          && !this.escapePoint && !this.combatWaypoint && !this.repositionDestroy) {
+          && !this.escapePoint && !this.combatWaypoint && !this.avoidancePoint && !this.repositionDestroy) {
         const bearing = Math.atan2(target.x - actor.x, target.z - actor.z);
         const error = angle(bearing - (actor.bodyYaw ?? actor.yaw));
         input.turn = Math.abs(error) < aimTolerance ? 0
@@ -307,8 +343,13 @@ export class BotController {
       const error = angle(bearing - tankTurretYaw(actor.tank.id, {yaw, bodyYaw, aim: actor.aim}));
       input.aim = reacted && aimStep > 0 ? Math.max(-1, Math.min(1, error / aimStep)) : 0;
       const shotAngle = tankTurretYaw(actor.tank.id, {yaw, bodyYaw, aim: actor.aim}) + input.aim * aimStep;
+      const shotDistance = Math.hypot(target.x - position.x, target.z - position.z);
+      const shotEnd = {x: position.x + Math.sin(shotAngle) * shotDistance, y: position.y + 20,
+        z: position.z + Math.cos(shotAngle) * shotDistance};
+      const friendly = teammates.some(other => blocksShot(position, shotEnd, other));
       const aiming = reacted && !actor.roleDisguise && Math.abs(angle(bearing - shotAngle)) < aimTolerance;
-      input.fire = this.confirmShot(aiming, reacted && !actor.roleDisguise && actor.fireReady === true, now);
+      input.fire = this.confirmShot(aiming,
+        reacted && !actor.roleDisguise && actor.fireReady === true && !friendly, now);
       if (mode === 5 && aiming && !this.repositionDestroy && !this.escapePoint) {
         this.ineffectiveFireSeconds += dt;
       }
@@ -323,8 +364,12 @@ export class BotController {
       this.previousPosition = undefined; this.requestedMovement = false; this.blockedMovementSeconds = 0;
       this.escapePoint = undefined;
       this.combatWaypoint = undefined; this.nextCombatMove = 0;
+      this.avoidancePoint = undefined; this.nextTeammateMove = 0;
       this.resetReaction();
       this.combatDirection = actor.id.charCodeAt(actor.id.length - 1) % 2 === 0 ? 1 : -1;
+    }
+    if (this.goal && !teammateWaypointClear(this.goal, teammates)) {
+      this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
     }
     if (this.escapePoint && distance(this.escapePoint) < 7) {
       this.escapePoint = undefined; this.goal = undefined; this.path = []; this.nextPlan = 0;
@@ -349,7 +394,9 @@ export class BotController {
         const desired = {x: actor.x + Math.sin(bearing) * 36, y: actor.y,
           z: actor.z + Math.cos(bearing) * 36};
         const reached = reach(actor, desired);
-        if (Math.hypot(reached.x - desired.x, reached.z - desired.z) < .01) escapes.push(reached);
+        if (Math.hypot(reached.x - desired.x, reached.z - desired.z) < .01
+            && teammateWaypointClear(reached, teammates)
+            && tankRouteClear(actor, reached, actors)) escapes.push(reached);
       }
       escapes.sort((a, b) => Math.hypot(a.x - target.x, a.z - target.z)
         - Math.hypot(b.x - target.x, b.z - target.z));
@@ -380,8 +427,7 @@ export class BotController {
       const origin = {...actor, y: actor.y + 20};
       const end = {...target, y: source || mode === 5 ? actor.y + 20 : target.y + 20};
       const wall = source ? undefined : field.firstSurfaceHit(origin, end, 1);
-      friendly = mode <= 3 && actors.some(other => other.id !== actor.id && other.alive
-        && other.team === actor.team && blocksShot(origin, end, other));
+      friendly = teammates.some(other => blocksShot(origin, end, other));
       const visible = (source ? canShootSource(actor, bearing, source, field, actors, actor.id) : !wall && distance(target) < 700)
         && (source || Math.abs(actor.y - target.y) < 18);
       input.fire = !actor.roleDisguise && visible && (fixedTurret || Math.abs(error) < .06) && !friendly;
@@ -419,12 +465,14 @@ export class BotController {
       const mobileCombat = !objectiveTarget && visible && distance(target) < engagementDistance;
       if (!this.escapePoint && !this.repositionDestroy && (friendly || mobileCombat)) {
         if (this.combatWaypoint && (distance(this.combatWaypoint) < 7
+            || !teammateWaypointClear(this.combatWaypoint, teammates)
+            || !tankRouteClear(actor, this.combatWaypoint, actors)
             || !objectiveTarget && Math.abs(Math.hypot(target.x - this.combatWaypoint.x,
               target.z - this.combatWaypoint.z) - spacing.preferred) > 40
             || !canShoot(this.combatWaypoint, Math.atan2(target.x - this.combatWaypoint.x,
               target.z - this.combatWaypoint.z)))) this.combatWaypoint = undefined;
         if (!this.combatWaypoint && now >= this.nextCombatMove) {
-          this.combatWaypoint = combatMovementPoint(actor, target, actors, field,
+          this.combatWaypoint = combatMovementPoint(actor, target, actors, teammates, field,
             this.combatDirection, fixedTurret && !friendly,
             objectiveTarget ? {minimum: 160, preferred: 280} : spacing, reach, canShoot);
           this.nextCombatMove = now + randomBotDelay(behavior.movementMs);
@@ -459,6 +507,7 @@ export class BotController {
             const cell = field.navigation.sample(x, z);
             if (!cell?.valid) continue;
             const candidate = {x, y: cell.height, z};
+            if (!teammateWaypointClear(candidate, teammates)) continue;
             if (actor.movement && !actor.movement.navigation.canTraverse(
                 {x: x - Math.sin(a) * 6, y: cell.height, z: z - Math.cos(a) * 6}, candidate)) continue;
             if (mode === 5 ? Math.abs(candidate.y + 20 - target.y) > 50
@@ -469,8 +518,7 @@ export class BotController {
             const wall = field.firstSurfaceHit(origin, endpoint, 1);
             if (wall && !field.isPlacementHit(wall.boxId, source?.id ?? '')) continue;
             if (source && segmentBox(origin, endpoint, source, 1) === undefined) continue;
-            if (mode <= 3 && actors.some(other => other.id !== actor.id && other.alive
-              && other.team === actor.team && blocksShot(origin, endpoint, other))) continue;
+            if (teammates.some(other => blocksShot(origin, endpoint, other))) continue;
             candidates.push(candidate);
           }
         }
@@ -573,7 +621,7 @@ function combatRetreat(actor: BotActor, threats: readonly BotActor[], input: Msg
 
 /** Traversable combat moves preserve firing angles and the engagement distance. */
 function combatMovementPoint(actor: BotActor, target: Point, actors: readonly BotActor[],
-  field: Battlefield, direction: number, fixedTurret: boolean,
+  teammates: readonly BotActor[], field: Battlefield, direction: number, fixedTurret: boolean,
   spacing: {minimum: number; preferred: number},
   reach: (start: Point, end: Point) => Point,
   canShoot: (position: Point, heading: number) => boolean): Point | undefined {
@@ -596,8 +644,7 @@ function combatMovementPoint(actor: BotActor, target: Point, actors: readonly Bo
       desired.y = cell.height;
       const reached = reach(actor, desired);
       if (Math.hypot(reached.x - desired.x, reached.z - desired.z) >= .01) continue;
-      if (actors.some(other => other.alive && other.id !== actor.id
-          && segmentSphere(actor, reached, other, 30) !== undefined)) continue;
+      if (!teammateWaypointClear(reached, teammates) || !tankRouteClear(actor, reached, actors)) continue;
       const heading = Math.atan2(target.x - reached.x, target.z - reached.z);
       if (canShoot(reached, heading)) return reached;
     }

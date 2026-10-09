@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from './world-interface';
 import type {roomTransport} from './transport';
 
 /** Explicit departure uses the same lifecycle as disconnect, preserving account authentication. */
@@ -26,7 +26,7 @@ export function registerRoomLeaveApi(server: WsServer<ServiceType>, world: World
       }
       const accountId = accountByConnection.get(call.conn.id);
       if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
-      const count = world.exitPenaltyCount(session.playerId);
+      const count = await world.exitPenaltyCount(session.playerId);
       let penalty = accounts.quoteExitPenalty(accountId, count);
       if (call.req.quoteOnly) {
         return call.succ({roomId: session.roomId, round: call.req.round, penalty, left: false});
@@ -44,7 +44,7 @@ export function registerRoomLeaveApi(server: WsServer<ServiceType>, world: World
             {code: 'LEAVE_PENALTY_CONFLICT'});
         }
       }
-      const events = world.leave(session.playerId);
+      const events = await world.leave(session.playerId);
       sessions.delete(call.conn.id);
       await call.succ({roomId: session.roomId, round: call.req.round, penalty, left: true});
       for (const event of events) transport.broadcastEvent(event);

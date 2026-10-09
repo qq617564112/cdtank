@@ -124,21 +124,22 @@ export function syncSceneObjectCollision(room: {map: {mapId: number}; battlefiel
   sceneObjects: readonly SceneObjectSnapshot[]; sceneCrushes?: readonly SceneCrushSnapshot[]}, now: number): void {
   const previous = active.get(room.battlefield) ?? new Set<string>();
   const present = new Set<string>();
-  const sources = room.sceneObjects.length
-    ? [...getSceneBreakables(room.map.mapId), ...getSceneCastles(room.map.mapId)] : [];
   for (const object of room.sceneObjects) {
     if (object.hp <= 0 && object.destroyedAt !== undefined && now - object.destroyedAt > 2000) continue;
-    const source = sources.find(source => source.id === object.sourcePlacementId);
+    if (previous.has(object.id)) {present.add(object.id); continue;}
+    const source = getSceneBreakables(room.map.mapId).find(source => source.id === object.sourcePlacementId)
+      ?? getSceneCastles(room.map.mapId).find(source => source.id === object.sourcePlacementId);
     if (!source) continue;
     present.add(object.id);
-    if (!previous.has(object.id)) room.battlefield.setDynamicBox({...source, id: object.id}, object.id);
+    room.battlefield.setDynamicBox({...source, id: object.id}, object.id);
   }
   for (const object of room.sceneCrushes ?? []) {
     if (!object.enabled || object.hidden) continue;
+    if (previous.has(object.id)) {present.add(object.id); continue;}
     const source = getSceneCrushes(room.map.mapId).find(source => source.id === object.sourcePlacementId);
     if (!source) continue;
     present.add(object.id);
-    if (!previous.has(object.id)) room.battlefield.setDynamicBox({...source, id: object.id}, object.id);
+    room.battlefield.setDynamicBox({...source, id: object.id}, object.id);
   }
   for (const id of previous) if (!present.has(id)) room.battlefield.setDynamicBox(undefined, id);
   active.set(room.battlefield, present);

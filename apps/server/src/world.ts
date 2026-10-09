@@ -76,7 +76,6 @@ import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSc
 import {attachProjectileSceneResult} from './battle/projectile-scene-result';
 import {createObjectives, advanceObjectives, damageObjective, objectiveEnd} from './modes/objectives';
 import {resetBreachCollision, syncBreachCollision} from './battle/breach-collision';
-import {resetAnimatedSceneCollision, syncAnimatedSceneCollision} from './battle/animated-scene-collision';
 import {applyRespawnProtection, advanceRespawnProtection, clearRespawnProtection} from './battle/respawn-protection';
 import type {
   GroundItemAcquireContext,
@@ -160,6 +159,9 @@ export class World {
 
   constructor(private readonly now: () => number = Date.now,
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
+                allocateRoomId?: () => string;
+                allocatePlayerId?: () => string;
+                onInventoryRecord?: (accountId: string, record: InventoryWireRecord) => void;
                 consumeItem?: (playerId: string, instanceId: number, expectedOwned: number, itemTableId: number) => boolean;
                 acquireOwnedItem?: (accountId: string, context: GroundItemAcquireContext) =>
                   InventoryWireRecord | undefined;
@@ -221,7 +223,11 @@ export class World {
 
   private insertPlayer(room: RoomState, clientId: string, name: string, tankId: number): JoinResult {
     return insertRoomPlayer(this.rooms, room, clientId, name, tankId,
-      () => `P${this.nextPlayerId++}`, id => {this.leave(id);}, DEFAULT_INPUT);
+      () => {
+        const localId = this.nextPlayerId++;
+        return this.options.allocatePlayerId?.() ?? `P${localId}`;
+      },
+      id => {this.leave(id);}, DEFAULT_INPUT);
   }
 
   manageCpu(playerId: string, round: number, operation: ReqCpu['operation'], tankId = 1,
@@ -712,13 +718,19 @@ export class World {
     return [...rooms];
   }
 
-  private syncGroundItemRecord(accountId: string, record: InventoryWireRecord): void {
+  private syncGroundItemRecord(accountId: string, record: InventoryWireRecord, publish = true): void {
     for (const playerId of this.accountPlayerIds(accountId)) {
       const player = this.findPlayer(playerId)?.player;
       if (!player) continue;
       reconcileGroundItemInventory(player, record, this.groundItemCallbacks);
       this.pendingInventoryChanged.add(playerId);
     }
+    if (publish) this.options.onInventoryRecord?.(accountId, record);
+  }
+
+  /** Apply a committed inventory change from another room of the same account. */
+  synchronizeInventoryRecord(accountId: string, record: InventoryWireRecord): void {
+    this.syncGroundItemRecord(accountId, record, false);
   }
 
   /**
@@ -815,6 +827,7 @@ export class World {
       const other = this.findPlayer(otherId)?.player;
       if (other) reconcileGroundItemInventory(other, record, this.groundItemCallbacks);
     }
+    this.options.onInventoryRecord?.(accountId, record);
   }
 
   useAction(playerId: string, message: MsgPlayerAction): {events: WorldEvent[]; affectedRoomIds: string[]} | undefined {
@@ -897,7 +910,8 @@ export class World {
   }
 
   private createRoom(mode: number, mapId?: number, minPlayers?: number, maxPlayers?: number, friendlyFire = false): RoomState {
-    const room = createWaitingRoom(mode, mapId, () => `R${this.nextRoomId++}`, minPlayers, maxPlayers, friendlyFire);
+    const room = createWaitingRoom(mode, mapId,
+      () => this.options.allocateRoomId?.() ?? `R${this.nextRoomId++}`, minPlayers, maxPlayers, friendlyFire);
     this.rooms.set(room.roomId, room);
     return room;
   }
@@ -971,7 +985,6 @@ export class World {
     const rebirth = advanceObjectives(room, now);
     syncBreachCollision(room, now);
     syncSceneObjectCollision(room, now);
-    syncAnimatedSceneCollision(room, now);
     if (rebirth) {
       this.finishObjective(room, now, rebirth, events);
       return;
@@ -1064,9 +1077,9 @@ export class World {
       input: (id, input, autonomous) => this.updateInput(id, input, autonomous),
       allocateBulletId: () => `B${this.nextBulletId++}`,
       allocateShotId: () => `S${this.nextShotId++}`,
-      staticObjects: player => [
-        ...plantContactColliders(room, player.id, events, now),
-        ...sceneCrushContactColliders(room, player.id, events),
+      staticObjects: (player, proposed) => [
+        ...plantContactColliders(room, player.id, events, proposed),
+        ...sceneCrushContactColliders(room, player.id, events, proposed),
       ],
       afterMovement: player => player.petBattle?.motion(now, events),
       beforeFire: player => {
@@ -1170,7 +1183,6 @@ export class World {
     if (room.phase !== 'PLAYING') return;
     advanceGroundTraps(room, now, events, this.groundTrapHealing(room));
     if (room.phase !== 'PLAYING') return;
-    syncAnimatedSceneCollision(room, now);
     for (const player of room.players.values()) {
       advanceEquipmentSupply(room.roomId, room.phase, player, now,
         player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), events);
@@ -1312,7 +1324,6 @@ export class World {
     room.airstrikes = [];
     resetBreachCollision(room.battlefield);
     resetSceneObjectCollision(room.battlefield);
-    resetAnimatedSceneCollision(room.battlefield);
     room.startedAt = this.now() + BATTLE_INTRO_MS;
     room.endedAt = 0;
     room.tick = 0;
@@ -1328,7 +1339,6 @@ export class World {
     room.scenePlants = createScenePlants(room);
     syncSceneObjectCollision(room, this.now());
     syncBreachCollision(room, this.now());
-    syncAnimatedSceneCollision(room, this.now());
     initializeBattleParticipants(room.battlefield, room.players.values(), DEFAULT_INPUT,
       assignVip, player => player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), this.now, room.mode);
     room.phase = 'PLAYING';

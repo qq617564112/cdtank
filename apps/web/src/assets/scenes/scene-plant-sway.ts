@@ -1,7 +1,6 @@
-import {InstancedMesh, Mesh, TransformNode, VertexBuffer} from '@babylonjs/core';
+import {InstancedMesh, Mesh, TransformNode} from '@babylonjs/core';
 import {PlantMaterialModel, ScenePlant05413MaterialOwner} from './scene-plant-material-owner';
 import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
-import {plantSwayParameter, plantSwayDisplacement} from '../../../../shared/movement/scene-animation-clock';
 
 interface PlantResource {
   sourcePlacementId: string;
@@ -16,23 +15,9 @@ interface PlantMaterialResource {
   properties: number[];
 }
 
-interface PlantMesh {
-  mesh: Mesh;
-  source: Float32Array;
-  positions: Float32Array;
-}
-
-interface PlantOwner {
-  id: string;
-  parameter: number;
-  height: number;
-  meshes: PlantMesh[];
-}
-
 /** Original Plant cosine producer and plant80.gbf vertex displacement. */
 export class ScenePlantSway {
   private readonly resources = new Map<string, PlantResource>();
-  private readonly owners = new Map<string, PlantOwner>();
   private disposed = false;
   private elapsed = 0;
   private materialOwner?: ScenePlant05413MaterialOwner;
@@ -62,34 +47,13 @@ export class ScenePlantSway {
   register(id: string, root: TransformNode): void {
     const resource = this.resources.get(id);
     if (!resource || this.disposed) return;
-    const meshes: PlantMesh[] = [];
+    const phase = Math.fround((Number(id) % 32768) * 120 * Math.fround(1 / 32767));
     for (const child of root.getChildMeshes()) {
-      let mesh: Mesh;
-      if (child instanceof InstancedMesh) {
-        mesh = child.sourceMesh.clone(child.name, child.parent, true)!;
-        mesh.position.copyFrom(child.position);
-        mesh.scaling.copyFrom(child.scaling);
-        mesh.rotation.copyFrom(child.rotation);
-        mesh.rotationQuaternion = child.rotationQuaternion?.clone() ?? null;
-        mesh.isVisible = child.isVisible;
-        mesh.visibility = child.visibility;
-        mesh.setEnabled(child.isEnabled(false));
-        child.dispose();
-      } else if (child instanceof Mesh && child.getTotalVertices()) {
-        mesh = child;
-      } else {
-        continue;
-      }
-      mesh.makeGeometryUnique();
-      const source = Float32Array.from(mesh.getVerticesData(VertexBuffer.PositionKind)!);
-      const positions = Float32Array.from(source);
-      mesh.setVerticesData(VertexBuffer.PositionKind, positions, true);
-      mesh.metadata = {...mesh.metadata, sourcePlantSway: id};
+      if (!(child instanceof InstancedMesh || child instanceof Mesh) || !child.getTotalVertices()) continue;
+      child.metadata = {...child.metadata, sourcePlantSway: id};
       const material = this.materials.get(resource.model);
-      if (material) this.materialOwner?.register(mesh, material.model, material.properties);
-      meshes.push({mesh, source, positions});
+      if (material) this.materialOwner?.register(child, material.model, material.properties, phase, resource.height);
     }
-    this.owners.set(id, {id, parameter: 0, height: resource.height, meshes});
   }
 
   advance(deltaSeconds: number): void {this.setAnimationTime(this.elapsed + deltaSeconds);}
@@ -97,17 +61,7 @@ export class ScenePlantSway {
   setAnimationTime(seconds: number): void {
     if (this.disposed) return;
     this.elapsed = Math.max(0, seconds);
-    for (const owner of this.owners.values()) {
-      owner.parameter = plantSwayParameter(owner.id, owner.height, this.elapsed);
-      for (const value of owner.meshes) {
-        for (let index = 0; index < value.source.length; index += 3) {
-          const y = value.source[index + 1];
-          value.positions[index] = Math.fround(value.source[index] + plantSwayDisplacement(owner.parameter, y));
-        }
-        value.mesh.updateVerticesData(VertexBuffer.PositionKind, value.positions, true);
-        value.mesh.computeWorldMatrix(true);
-      }
-    }
+    this.materialOwner?.setAnimationTime(this.elapsed);
   }
 
   dispose(): void {
@@ -115,10 +69,6 @@ export class ScenePlantSway {
     this.materialOwner?.dispose();
     this.materialOwner = undefined;
     this.materials.clear();
-    for (const owner of this.owners.values()) {
-      owner.meshes.forEach(value => {value.mesh.dispose();});
-    }
-    this.owners.clear();
     this.resources.clear();
   }
 }

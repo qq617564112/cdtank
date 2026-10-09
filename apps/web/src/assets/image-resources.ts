@@ -10,6 +10,7 @@ export const bundledImageUrls = Object.values(import.meta.glob<string>(
 const decodedImages = new Map<string, Promise<HTMLImageElement>>();
 const readyImages = new Map<string, HTMLImageElement>();
 const needsFreshResponse = new Set<string>();
+const filteredRegions = new Map<string, ImageRegion>();
 
 export interface ImageRegion {
   image: HTMLImageElement | HTMLCanvasElement;
@@ -20,9 +21,23 @@ export interface ImageRegion {
 }
 
 /** UI and Canvas share the complete decoded sheet and select a source rectangle. */
-export function imageRegion(url: string): ImageRegion | undefined {
+export function imageRegion(url: string, applyFilter = true): ImageRegion | undefined {
   const sprite = spriteImage(url);
   const image = readyImages.get(imageResourceKey(sprite?.atlas ?? url));
+  if (image && sprite?.filter && applyFilter) {
+    const key = imageResourceKey(url);
+    let region = filteredRegions.get(key);
+    if (!region) {
+      const canvas = document.createElement('canvas');
+      canvas.width = sprite.width; canvas.height = sprite.height;
+      const context = canvas.getContext('2d')!;
+      context.filter = sprite.filter;
+      context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height, 0, 0, sprite.width, sprite.height);
+      region = {image: canvas, x: 0, y: 0, width: canvas.width, height: canvas.height};
+      filteredRegions.set(key, region);
+    }
+    return region;
+  }
   return image ? {image, x: sprite?.x ?? 0, y: sprite?.y ?? 0,
     width: sprite?.width ?? image.naturalWidth, height: sprite?.height ?? image.naturalHeight} : undefined;
 }
@@ -103,6 +118,7 @@ export async function decodeImage(url: string, signal?: AbortSignal): Promise<HT
 /** A downloaded replacement must also replace the image retained in memory. */
 export function forgetDecodedImage(url: string): void {
   const key = imageResourceKey(url);
+  filteredRegions.clear();
   decodedImages.delete(key);
   readyImages.delete(imageResourceUrl(url));
   readyImages.delete(key);

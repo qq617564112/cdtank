@@ -1,5 +1,6 @@
-import {useEffect, useState, type ComponentPropsWithoutRef, type ReactNode} from 'react';
+import type {ComponentPropsWithoutRef, ReactNode} from 'react';
 import {ImageArtwork} from './image-artwork';
+import {useSourceScale} from '../lobby/source-react';
 import './loading-page.css';
 
 /** Embedded letter fills in the original 800×600 background content. */
@@ -41,26 +42,16 @@ interface LoadingPageProps extends Omit<ComponentPropsWithoutRef<'section'>, 'ch
   actions?: ReactNode;
 }
 
-function loadingViewport() {
-  const width = innerWidth / innerHeight >= 1.55 ? 600 * 16 / 9 : 800;
-  return {width, scale: Math.min(innerWidth / width, innerHeight / 600)};
-}
-
 /** Shared loading backdrop with centered 800×600 progress and actions. */
 export function LoadingPage({background, progress, status, details, artworkReady = true,
   actions, className, ...attributes}: LoadingPageProps) {
-  const [{width: stageWidth, scale}, setViewport] = useState(loadingViewport);
-  useEffect(() => {
-    const resize = () => setViewport(loadingViewport());
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
+  const {viewport, stage} = useSourceScale(800, 600, 0, 0, 0.1, Infinity);
   const artwork = getLoadingArtwork(background);
   const {left, top, width, height} = LOADING_WORDS[background];
   const fraction = Math.max(0, Math.min(1, progress ?? 0));
   return <section {...attributes} className={`loading-page${className ? ` ${className}` : ''}`}>
-    <div className="loading-viewport" style={{width: stageWidth * scale, height: 600 * scale}}>
-      <div className="loading-stage" style={{width: stageWidth, transform: `scale(${scale})`}}>
+    <div className="loading-viewport" style={viewport}>
+      <div className="loading-stage" style={stage}>
         {artworkReady && <div className="loading-background" aria-hidden="true">
           <ImageArtwork asset={artwork.background}
             style={{width: `${1024 / 800 * 100}%`, height: `${1024 / 600 * 100}%`}}/>

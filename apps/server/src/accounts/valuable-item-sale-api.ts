@@ -2,7 +2,7 @@ import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 
 export function registerValuableItemSaleApi(server: WsServer<ServiceType>, accounts: AccountStore,
   world: World, catalog: CombatCatalog, identities: ReadonlyMap<string, string>,
@@ -20,7 +20,9 @@ export function registerValuableItemSaleApi(server: WsServer<ServiceType>, accou
       } catch (error) {
         return call.error(error instanceof Error ? error.message : '请先结束交易', {code: 'VALUABLE_ITEM_SALE_REJECTED'});
       }
-      if (accountSessions.some(session => !world.canConfigureInventory(session.playerId))) {
+      const configurable = await Promise.all(accountSessions.map(session =>
+        world.canConfigureInventory(session.playerId)));
+      if (configurable.some(allowed => !allowed)) {
         return call.error('请在准备阶段出售贵重品', {code: 'VALUABLE_ITEM_SALE_REJECTED'});
       }
     }
@@ -30,7 +32,7 @@ export function registerValuableItemSaleApi(server: WsServer<ServiceType>, accou
         const inventory = accounts.inventory(accountId);
         const rooms = new Set<string>();
         for (const session of accountSessions) {
-          world.bindInventory(session.playerId, inventory, true);
+          await world.bindInventory(session.playerId, inventory, true);
           rooms.add(session.roomId);
         }
         for (const roomId of rooms) broadcast(roomId);

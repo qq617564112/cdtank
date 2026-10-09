@@ -29,32 +29,26 @@ export function sampleRoleNavigation(grid: NavigationGrid, pose: SamplingPose,
   // Original61e5f8 is an approximate f32 2pi, not Math.PI * 2.
   if (pose.forward.x < 0) angle = Math.fround(6.283180236816406 - angle);
   const cosine = Math.fround(Math.cos(angle)), sine = Math.fround(Math.sin(angle));
-  const points: Point[][] = [];
-  for (let row = 0; row < rows; row++) {
-    const line: Point[] = [];
-    for (let column = 0; column < columns; column++) {
-      const moving = command === 1 || command === 2 || command >= 5 && command <= 8;
-      const localX = moving ? Math.fround(column * 12 - Math.fround(width) + 24) : 0;
-      const localZ = !moving ? 0 : command === 1 || command === 5 || command === 6
-        ? Math.fround(length - row * 22) : Math.fround(row * 22 - Math.fround(depth) + 24);
-      const x = Math.fround(localX * cosine + localZ * sine);
-      const z = Math.fround(localZ * cosine - localX * sine);
-      line.push({x: Math.fround(x + pose.position.x), y: pose.position.y,
-        z: Math.fround(z + pose.position.z)});
-    }
-    points.push(line);
-  }
-  const valid = (point: Point): boolean => grid.sample(point.x, point.z)?.valid ?? false;
-  const first = valid(points[0][0]), last = valid(points[0][columns - 1]);
-  // Commands1/5/6 reverse the side-to-failure-code assignment.
+  const moving = command === 1 || command === 2 || command >= 5 && command <= 8;
   const reverse = command === 1 || command === 5 || command === 6;
+  const width32 = Math.fround(width), depth32 = Math.fround(depth);
+  const valid = (row: number, column: number): boolean => {
+    const localX = moving ? Math.fround(column * 12 - width32 + 24) : 0;
+    const localZ = !moving ? 0 : reverse
+      ? Math.fround(length - row * 22) : Math.fround(row * 22 - depth32 + 24);
+    const x = Math.fround(localX * cosine + localZ * sine);
+    const z = Math.fround(localZ * cosine - localX * sine);
+    return grid.isValidAt(Math.fround(x + pose.position.x), Math.fround(z + pose.position.z));
+  };
+  const first = valid(0, 0), last = valid(0, columns - 1);
+  // Commands1/5/6 reverse the side-to-failure-code assignment.
   const side0 = reverse ? last : first, side1 = reverse ? first : last;
   if (!side0 && !side1) return {accepted: false, failureCode: 2};
   if (!side1) return {accepted: false, failureCode: 0};
   if (!side0) return {accepted: false, failureCode: 1};
-  for (const line of points) {
+  for (let row = 0; row < rows; row++) {
     for (let column = 0; column < columns; column++) {
-      if (!valid(line[column])) {
+      if (!valid(row, column)) {
         const failureCode = command === 1 || command === 2
           ? (column >= Math.trunc(columns / 2) ? 1 : 0)
           : (command === 5 || command === 8 ? 1 : 0);

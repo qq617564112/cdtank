@@ -49,7 +49,7 @@
 
 ## 本地运行
 
-需要 **Node.js 24.16 或更高版本**、浏览器和支持 `.tar.xz` 的 `tar`。高清贴图、模型、音频、界面、字体和数据表通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v1.0.0) 提供，安装脚本自动下载解压，无需原客户端、Python 或另行准备字体。Windows 10/11 和 macOS 使用系统 `tar`；Linux 需安装 `tar` 和 `xz-utils`。以下命令在仓库根目录执行。
+需要 **Node.js 24.16 或更高版本**、支持 **WebGPU** 的浏览器和支持 `.tar.xz` 的 `tar`。客户端通过 HTTPS 或 localhost 访问。高清贴图、模型、音频、界面、字体和数据表通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v1.0.0) 提供，安装脚本自动下载解压，无需原客户端、Python 或另行准备字体。Windows 10/11 和 macOS 使用系统 `tar`；Linux 需安装 `tar` 和 `xz-utils`。以下命令在仓库根目录执行。
 
 ### 1. 安装依赖和资源
 
@@ -88,7 +88,7 @@ npm run build:server
 PORT=40171 npm run start:server
 ```
 
-打开 `http://服务器局域网IP:40171/`。默认账户数据库仍为 `recovery/output/accounts.sqlite`，可通过 `ACCOUNT_DB_PATH` 指定已有存档。
+本机打开 [http://localhost:40171/](http://localhost:40171/)，局域网及远程访问通过 HTTPS 反向代理连接该端口，以满足 WebGPU 的安全上下文要求。默认账户数据库仍为 `recovery/output/accounts.sqlite`，可通过 `ACCOUNT_DB_PATH` 指定已有存档。渲染实现见 [WebGPU 客户端渲染](docs/webgpu-rendering.md)。
 
 | 默认按键 | 操作 |
 | --- | --- |

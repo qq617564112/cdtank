@@ -1,7 +1,7 @@
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 import type {MsgFriendChat} from '../../../shared/protocols/MsgFriendChat';
 
 /** Rebuilt unilateral friends across authenticated lobby and room connections. */

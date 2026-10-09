@@ -1,6 +1,6 @@
 import {spawnSync} from 'node:child_process';
 import {createWriteStream} from 'node:fs';
-import {mkdtemp, rm} from 'node:fs/promises';
+import {copyFile, mkdir, mkdtemp, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {Readable} from 'node:stream';
@@ -50,6 +50,18 @@ async function installAssets() {
     }
     if (extraction.status !== 0) {
       throw new Error('资源解压失败，请确认 tar 支持 .xz；Linux 需要安装 xz-utils。');
+    }
+    var fontDirectory = join(workspace, 'recovery/output/web-assets/ui/fonts');
+    await mkdir(fontDirectory, {recursive: true});
+    await copyFile(join(workspace, 'deployment/assets/ui/fonts/xiangjiao-brush.ttf'),
+      join(fontDirectory, 'xiangjiao-brush.ttf'));
+    var collision = spawnSync(process.platform === 'win32' ? 'npm.cmd' : 'npm',
+      ['run', 'assets:collision'], {cwd: workspace, stdio: 'inherit'});
+    if (collision.error) {
+      throw collision.error;
+    }
+    if (collision.status !== 0) {
+      throw new Error('场景碰撞资产生成失败。');
     }
     console.log('资源安装完成：recovery/output/web-assets/、recovery/output/verified/tables/');
   } finally {

@@ -67,6 +67,15 @@ export class NavigationGrid {
       Math.trunc((z - this.source.minimum[2]) * INVERSE_SIZE) || 0);
   }
 
+  /** World-coordinate validity query without allocating a height/fields result. */
+  isValidAt(x: number, z: number): boolean {
+    const column = Math.trunc((x - this.source.minimum[0]) * INVERSE_SIZE) || 0;
+    const row = Math.trunc((z - this.source.minimum[2]) * INVERSE_SIZE) || 0;
+    if (column < 0 || row < 0 || column >= this.source.width || row >= this.source.height) return false;
+    const index = row * this.source.width + column;
+    return (this.cells.getUint32(index * 8 + 4, true) & 255) > 1 && !this.occupied.has(index);
+  }
+
   positionAtCell(x: number, z: number): {x: number; y: number; z: number} | undefined {
     const cell = this.cellAt(x, z);
     if (!cell?.valid) {

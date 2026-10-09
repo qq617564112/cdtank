@@ -1,9 +1,9 @@
 import './lobby-source-page.css';
-import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode} from 'react';
+import {useLayoutEffect, useRef, type ReactNode} from 'react';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-feedback-text';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {sourceProps, useSourceUi} from './source-react';
+import {sourceProps, useSourceScale, useSourceUi} from './source-react';
 import {lobbyBannerUrl} from '../resources/source-ui-resources';
 import {ImageArtwork} from '../resources/image-artwork';
 
@@ -22,16 +22,7 @@ interface LobbySourcePageProps {
 export function LobbySourcePage({visible, children, chatContent, playerContent, headerContent, status, room = false, roomName = ''}: LobbySourcePageProps) {
   const {ui, error, retry: retryResources} = useSourceUi(visible, ['default.xml', 'roomlist.xml', 'playerlist.xml', 'chat.xml']);
   const retry = useRef<HTMLButtonElement>(null);
-  const calculate = () => {
-    const width = innerWidth / innerHeight >= 1.55 ? 600 * 16 / 9 : 800;
-    return {width, scale: Math.min(innerWidth / width, innerHeight / 600)};
-  };
-  const [{width, scale}, setViewport] = useState(calculate);
-  useEffect(() => {
-    const resize = () => setViewport(calculate());
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
+  const scale = useSourceScale(800, 600, 0, 0, 0, Infinity);
   useLayoutEffect(() => {
     if (visible && error && document.activeElement === document.body) retry.current?.focus();
   }, [visible, error]);
@@ -48,12 +39,12 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
         <button ref={retry} type="button" data-lobby-resource-retry="" onClick={retryResources}>重试</button>
       </>}
     </section>}
-    <div className="lobby-source-viewport" style={{width: width * scale, height: 600 * scale}}>
-      <div className="lobby-source-stage" data-lobby-stage="" style={{width, transform: `scale(${scale})`, '--lobby-width-extension': `${width - 800}px`} as CSSProperties}>
-        <SourceImageScale value={scale}>
+    <div className="lobby-source-viewport" style={scale.viewport}>
+      <div className="lobby-source-stage" data-lobby-stage="" style={scale.stage}>
+        <SourceImageScale value={scale.viewport.width / 800}>
           {ui && players && chat && <>
             <SourceStaticImage ui={ui} layout={defaults!} suffix="default.xml" name="picMainBackground"
-              className="lobby-source-picture" style={{left: 0, top: 0, width, height: 600}} aria-hidden="true"/>
+              className="lobby-source-picture" aria-hidden="true"/>
             {!room && <div className="lobby-source-main">
               <SourceStaticImage ui={ui} layout={rooms!} suffix="roomlist.xml" name="ditu"
                 className="lobby-source-picture" aria-hidden="true"/>

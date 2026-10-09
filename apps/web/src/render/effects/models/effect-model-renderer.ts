@@ -1,5 +1,5 @@
 import {Mesh, Scene, Texture} from '@babylonjs/core';
-import {EffectModelAnimation, EffectModelAnimationNode, effectModelVertices} from './effect-model-animation';
+import {EffectModelAnimation, EffectModelAnimationNode} from './effect-model-animation';
 import {EffectModelDraw} from './effect-model-draw';
 import {EffectAttachMaterialCache} from './effect-attach-material-sol';
 import {effectModelAmbient, EffectModelGraphicsState} from './effect-model-material';
@@ -7,6 +7,7 @@ import {EffectModelMesh} from './effect-model-mesh';
 import {EffectModelBackend} from './effect-model-node';
 import {EFFECT_IDENTITY, multiplyEffectMatrices} from '../common/effect-render-transform';
 import {setSceneModelPriority} from '../../scene-model-order';
+import {EffectModelVertices} from './effect-model-vertices';
 
 interface ModelPart {kind: number; properties: number[]; asset: string | null; indices: number[];}
 interface ModelNode {
@@ -26,6 +27,7 @@ interface PartDraw {node: number; part: ModelPart; material?: EffectAttachMateri
 export class EffectModelRenderer implements EffectModelBackend {
   private readonly animations: (EffectModelAnimation | undefined)[];
   private readonly draws: PartDraw[];
+  private readonly vertices: (EffectModelVertices | undefined)[] = [];
   constructor(private readonly scene: Scene, private readonly resource: EffectModelResource,
     private readonly library: EffectModelLibrary, private readonly textures: ReadonlyMap<string, Texture>,
     private readonly delta: () => number, private readonly sourceNode: number, private readonly name: string) {
@@ -52,6 +54,9 @@ export class EffectModelRenderer implements EffectModelBackend {
     };
     for (const draw of this.draws) {
       const node = this.resource.nodes[draw.node];
+      const vertices = this.vertices[draw.node] ??=
+        new EffectModelVertices(this.scene, node, !!node.animation);
+      vertices.setTime(this.animations[draw.node]?.time ?? 0);
       const script = (draw.material ??= new EffectAttachMaterialCache()).select(node.fvf, draw.part.kind, state.blend).script;
       if (draw.script !== script) {
         draw.renderer?.dispose();
@@ -69,19 +74,19 @@ export class EffectModelRenderer implements EffectModelBackend {
           depthTest: states.has('ZEnable') ? states.get('ZEnable') === 'TRUE' : true,
           blend: states.get('AlphaBlendEnable') === 'TRUE',
           alphaTest: states.get('AlphaTestEnable') === 'TRUE',
-        });
+        }, vertices, draw.part.indices);
         draw.renderer.mesh.metadata = {originalEffect: this.name, sourceNode: this.sourceNode,
           sourceModel: this.resource.reference, sourceModelNode: draw.node};
         draw.script = script;
       }
-      const animation = this.animations[draw.node];
-      const vertices = animation ? effectModelVertices(node.frames!, node.times!, animation.time) : node.vertices!;
       setSceneModelPriority(draw.renderer!.mesh, state.priority);
       draw.renderer!.mesh.setEnabled(true);
-      draw.renderer!.update(vertices, draw.part.indices, matrices[draw.node],
-        effectModelAmbient(draw.part.properties, state.alpha, graphics), node.colors);
+      draw.renderer!.update(matrices[draw.node], effectModelAmbient(draw.part.properties, state.alpha, graphics));
     }
   }
   get meshes(): Mesh[] {return this.draws.flatMap(draw => draw.renderer ? [draw.renderer.mesh] : []);}
-  dispose(): void {this.draws.forEach(draw => draw.renderer?.dispose());}
+  dispose(): void {
+    this.draws.forEach(draw => draw.renderer?.dispose());
+    this.vertices.forEach(vertices => vertices?.dispose());
+  }
 }

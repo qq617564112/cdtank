@@ -1,8 +1,13 @@
 interface Point {x: number; y: number; z: number;}
 export type Vertex = readonly number[];
 export type Triangle = readonly [Vertex, Vertex, Vertex];
-interface Bounds {minimum: number[]; maximum: number[];}
-interface IndexedTriangle extends Bounds {vertices: Triangle; normal: number[];}
+export interface Bounds {minimum: number[]; maximum: number[];}
+export interface IndexedTriangle extends Bounds {vertices: Triangle; normal: number[];}
+export interface SerializedCollisionMesh extends Bounds {
+  triangles: readonly IndexedTriangle[];
+  cells: readonly (readonly [number, number, readonly number[]])[];
+}
+type CollisionMeshSource = readonly Triangle[] | SerializedCollisionMesh;
 const CELL_SIZE = 128;
 const EPSILON = 1e-8;
 
@@ -19,7 +24,16 @@ export class CollisionMesh implements Bounds {
   private readonly cells = new Map<string, IndexedTriangle[]>();
   readonly triangles: readonly IndexedTriangle[];
 
-  constructor(vertices: readonly Triangle[]) {
+  constructor(vertices: CollisionMeshSource) {
+    if (isSerializedCollisionMesh(vertices)) {
+      this.minimum.splice(0, 3, ...vertices.minimum);
+      this.maximum.splice(0, 3, ...vertices.maximum);
+      this.triangles = vertices.triangles;
+      for (const [x, z, indexes] of vertices.cells) {
+        this.cells.set(`${x},${z}`, indexes.map(index => this.triangles[index]));
+      }
+      return;
+    }
     this.triangles = vertices.flatMap(triangle => {
       const normal = cross(subtract(triangle[1], triangle[0]), subtract(triangle[2], triangle[0]));
       const length = Math.hypot(...normal);
@@ -39,6 +53,16 @@ export class CollisionMesh implements Bounds {
       }
       return [indexed];
     });
+  }
+
+  /** Build-time representation; runtime construction from this value performs no geometry work. */
+  serialize(): SerializedCollisionMesh {
+    const indexes = new Map(this.triangles.map((triangle, index) => [triangle, index] as const));
+    return {minimum: [...this.minimum], maximum: [...this.maximum], triangles: this.triangles,
+      cells: [...this.cells].map(([cell, triangles]) => {
+        const [x, z] = cell.split(',').map(Number);
+        return [x, z, triangles.map(triangle => indexes.get(triangle)!)] as const;
+      })};
   }
 
   firstHit(start: Point, end: Point, radius: number): number | undefined {
@@ -107,6 +131,10 @@ export class CollisionMesh implements Bounds {
   }
 }
 
+function isSerializedCollisionMesh(value: CollisionMeshSource): value is SerializedCollisionMesh {
+  return !Array.isArray(value);
+}
+
 /** Clip a render face against the six cell-prism planes, retaining thin faces. */
 export function triangleIntersectsBounds(vertices: Triangle, minimum: number[], maximum: number[]): boolean {
   let polygon = vertices.map(vertex => [...vertex]);
@@ -147,9 +175,16 @@ function crossesCell(start: Vertex, end: Vertex, x: number, z: number, radius: n
   return true;
 }
 
-function inside(point: Vertex, triangle: IndexedTriangle): boolean {
+function inside(x: number, y: number, z: number, triangle: IndexedTriangle): boolean {
   const {vertices, normal} = triangle;
-  return vertices.every((a, index) => dot(cross(subtract(vertices[(index + 1) % 3], a), subtract(point, a)), normal) >= -EPSILON);
+  for (let index = 0; index < 3; index++) {
+    const a = vertices[index], b = vertices[(index + 1) % 3];
+    const ex = b[0] - a[0], ey = b[1] - a[1], ez = b[2] - a[2];
+    const px = x - a[0], py = y - a[1], pz = z - a[2];
+    const cx = ey * pz - ez * py, cy = ez * px - ex * pz, cz = ex * py - ey * px;
+    if (!(cx * normal[0] + cy * normal[1] + cz * normal[2] >= -EPSILON)) return false;
+  }
+  return true;
 }
 
 /** Sweep a sphere against both face sides, finite edge cylinders and vertex spheres. */
@@ -160,13 +195,17 @@ function sweepTriangle(start: Vertex, delta: Vertex, triangle: IndexedTriangle, 
     if (fraction >= 0 && fraction <= 1 && (closest === undefined || fraction < closest)) closest = fraction;
   };
   const offset = subtract(start, vertices[0]), distance = dot(offset, normal), speed = dot(delta, normal);
-  const projected = start.map((value, axis) => value - distance * normal[axis]);
-  if (Math.abs(distance) <= radius + EPSILON && inside(projected, triangle)) accept(0);
+  if (Math.abs(distance) <= radius + EPSILON) {
+    if (inside(start[0] - distance * normal[0], start[1] - distance * normal[1],
+      start[2] - distance * normal[2], triangle)) accept(0);
+  }
   if (Math.abs(speed) > EPSILON) {
     for (const side of [-radius, radius]) {
       const fraction = (side - distance) / speed;
-      const point = start.map((value, axis) => value + delta[axis] * fraction - normal[axis] * side);
-      if (inside(point, triangle)) accept(fraction);
+      if (fraction < 0 || fraction > 1) continue;
+      if (inside(start[0] + delta[0] * fraction - normal[0] * side,
+        start[1] + delta[1] * fraction - normal[1] * side,
+        start[2] + delta[2] * fraction - normal[2] * side, triangle)) accept(fraction);
     }
   }
   for (let index = 0; index < 3; index++) {

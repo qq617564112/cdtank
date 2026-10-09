@@ -1,19 +1,20 @@
 import type {MsgCall, WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {MsgPlayerInput, MsgPlayerAction} from '../../../shared/protocols';
-import type {World, WorldEvent} from '../world';
+import type {WorldEvent} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 
 /** Route ordinary inputs to their authenticated participant; World decides effects. */
 export function registerBattleInputs(server: WsServer<ServiceType>, world: World,
   sessions: ReadonlyMap<string, {roomId: string; playerId: string}>,
   broadcastEvent: (event: WorldEvent) => void,
   broadcastRoomSnapshot: (roomId: string) => void): void {
-  server.listenMsg('PlayerInput', (call: MsgCall<MsgPlayerInput>) => {
+  server.listenMsg('PlayerInput', async (call: MsgCall<MsgPlayerInput>) => {
     const session = sessions.get(call.conn.id);
     if (!session) {
       return;
     }
-    const events = world.updateInput(session.playerId, call.msg);
+    const events = await world.updateInput(session.playerId, call.msg);
     if (events.some(event => event.roleStyleChanged || event.roleStyleRestored)) {
       broadcastRoomSnapshot(session.roomId);
     }
@@ -22,7 +23,7 @@ export function registerBattleInputs(server: WsServer<ServiceType>, world: World
     }
   });
 
-  server.listenMsg('PlayerAction', (call: MsgCall<MsgPlayerAction>) => {
+  server.listenMsg('PlayerAction', async (call: MsgCall<MsgPlayerAction>) => {
     const session = sessions.get(call.conn.id);
     if (!session) {
       return;
@@ -31,7 +32,7 @@ export function registerBattleInputs(server: WsServer<ServiceType>, world: World
     if (call.msg.roomId !== session.roomId || !snapshot || call.msg.round !== snapshot.match?.round) {
       return;
     }
-    const result = world.useAction(session.playerId, call.msg);
+    const result = await world.useAction(session.playerId, call.msg);
     if (!result) return;
     const affectedRooms = new Set(result.affectedRoomIds);
     if (affectedRooms.size) {

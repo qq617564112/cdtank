@@ -1,6 +1,7 @@
 import './home-player-model-preview.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {ArcRotateCamera, Color3, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
+import {ArcRotateCamera, Color3, Color4, HemisphericLight, Scene, Vector3, type WebGPUEngine} from '@babylonjs/core';
+import {createWebGpuEngine} from '../../render/webgpu-engine';
 import {readOwnedTankTextures, type OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import type {ResOwnedRoles} from '../../../../shared/protocols/PtlOwnedRoles';
 import type {ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
@@ -71,7 +72,7 @@ function PlayerModels({tankId, petId, tankInstanceId, textures, scale}: Selected
   useEffect(() => {
     const element = host.current!;
     let active = true;
-    let engine: Engine | undefined;
+    let engine: WebGPUEngine | undefined;
     let scene: Scene | undefined;
     let tank: TankView | undefined;
     let pet: PetView | undefined;
@@ -91,9 +92,11 @@ function PlayerModels({tankId, petId, tankInstanceId, textures, scale}: Selected
       tank?.dispose(); pet?.dispose(); scene?.dispose(); engine?.dispose();
     };
     setMessage('载入模型…'); setReady(false);
-    try {
-      const renderer = new Engine(canvas.current!, true, {alpha: true, stencil: true}, true);
+    const surface = canvas.current!;
+    pending = (async () => {
+      const renderer = await createWebGpuEngine(surface, true);
       engine = renderer;
+      if (!active) return;
       const world = new Scene(renderer); scene = world;
       world.clearColor = new Color4(0, 0, 0, 0); world.ambientColor = Color3.White();
       const camera = new ArcRotateCamera('home-player-camera', -65 * Math.PI / 180,
@@ -106,21 +109,17 @@ function PlayerModels({tankId, petId, tankInstanceId, textures, scale}: Selected
       window.addEventListener('resize', scheduleResize);
       resize();
       renderer.runRenderLoop(() => {if (renderReady) world.render();});
-      pending = (async () => {
-        const selectedTextures = U === undefined || M === undefined || XY === undefined ? undefined : {U, M, XY};
-        tank = await TankView.loadPreview(world, `home-player-tank-${tankInstanceId}`, tankId, selectedTextures);
-        if (!active) return;
-        pet = await PetView.load(world, petId);
-        if (!active) return;
-        positionHomePlayerModels(world, camera, tank.root, pet.root,
-          renderer.getRenderWidth() / renderer.getRenderHeight());
-        renderReady = true; setReady(true); setMessage('');
-      })().catch(() => {
-        if (active) setMessage('模型载入失败');
-      });
-    } catch {
-      setMessage('模型载入失败');
-    }
+      const selectedTextures = U === undefined || M === undefined || XY === undefined ? undefined : {U, M, XY};
+      tank = await TankView.loadPreview(world, `home-player-tank-${tankInstanceId}`, tankId, selectedTextures);
+      if (!active) return;
+      pet = await PetView.load(world, petId);
+      if (!active) return;
+      positionHomePlayerModels(world, camera, tank.root, pet.root,
+        renderer.getRenderWidth() / renderer.getRenderHeight());
+      renderReady = true; setReady(true); setMessage('');
+    })().catch(() => {
+      if (active) setMessage('模型载入失败');
+    });
     return () => {
       active = false; resizeAfterCommit.current = undefined;
       observer?.disconnect(); window.removeEventListener('resize', scheduleResize);

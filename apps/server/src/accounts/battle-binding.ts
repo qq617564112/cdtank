@@ -1,5 +1,5 @@
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 import {TANKS, type TankConfig} from '../config';
 import {resolveOwnedRoleTank} from './owned/definition';
 
@@ -22,13 +22,13 @@ export function accountBattleBinding(accounts: AccountStore, world: World,
       const view = new DataView(profile.bytes.buffer, profile.bytes.byteOffset, profile.bytes.byteLength);
       return ownedTank(accountId, view.getUint32(0xa8, true)).id;
     },
-    bindAccountState(connectionId: string, playerId: string): void {
+    async bindAccountState(connectionId: string, playerId: string): Promise<void> {
       const accountId = accountByConnection.get(connectionId);
       if (accountId) {
-        world.bindInventory(playerId, accounts.inventory(accountId));
-        world.bindRoleSources(playerId, accounts.selectedRoleSources(accountId));
-        world.bindEquipmentProfile(playerId, accounts.roleProfile(accountId));
-        world.bindTitle(playerId, accounts.currentTitle(accountId));
+        await world.bindInventory(playerId, accounts.inventory(accountId));
+        await world.bindRoleSources(playerId, accounts.selectedRoleSources(accountId));
+        await world.bindEquipmentProfile(playerId, accounts.roleProfile(accountId));
+        await world.bindTitle(playerId, accounts.currentTitle(accountId));
       }
     },
   };

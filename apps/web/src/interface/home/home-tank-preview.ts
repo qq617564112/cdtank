@@ -1,4 +1,6 @@
-import {ArcRotateCamera, Color3, Color4, Engine, HemisphericLight, Scene, Vector3} from '@babylonjs/core';
+import {ArcRotateCamera, Color3, Color4, HemisphericLight, Scene, Vector3, type WebGPUEngine} from '@babylonjs/core';
+import {createWebGpuEngine} from '../../render/webgpu-engine';
+import {selectEnabledMeshCandidates} from '../../render/scene-mesh-candidates';
 import {TankView} from '../../assets/tanks/tank-view';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {advanceHomePreviewOrbit, HOME_PREVIEW_CLIP_PLANES} from './home-preview-orbit';
@@ -8,7 +10,8 @@ export class HomeTankPreview {
   readonly element = document.createElement('div');
   private readonly canvas = document.createElement('canvas');
   private readonly message = document.createElement('output');
-  private engine?: Engine;
+  private engine?: WebGPUEngine;
+  private initializing?: Promise<void>;
   private scene?: Scene;
   private camera?: ArcRotateCamera;
   private view?: TankView;
@@ -42,26 +45,33 @@ export class HomeTankPreview {
     delete this.element.dataset.renderedTankId;
     this.element.dataset.meshes = '0'; this.message.value = '载入战车模型…';
     try {
-      if (!this.engine) {
-        this.engine = new Engine(this.canvas, true, {alpha: true}, true);
-        this.scene = new Scene(this.engine); this.scene.clearColor = new Color4(0, 0, 0, 0);
-        this.scene.ambientColor = Color3.White();
-        this.camera = new ArcRotateCamera('home-camera', -Math.PI / 2.5, Math.PI / 3, 100, Vector3.Zero(), this.scene);
-        this.camera.minZ = HOME_PREVIEW_CLIP_PLANES.near;
-        this.camera.maxZ = HOME_PREVIEW_CLIP_PLANES.far;
-        this.camera.attachControl(this.canvas, true);
-        new HemisphericLight('home-light', new Vector3(0, 1, 0), this.scene).intensity = 1.2;
-        this.engine.runRenderLoop(() => {
-          const previous = this.orbit.orbitYaw;
-          advanceHomePreviewOrbit(this.orbit);
-          // Reflect native X into the converted model coordinates; positive native
-          // Y orbit advances Babylon alpha in the same direction after reflection.
-          if (this.camera) this.camera.alpha += this.orbit.orbitYaw - previous;
-          this.element.dataset.orbitYaw = String(this.orbit.orbitYaw);
-          this.scene?.render(); this.element.dataset.frames = String(++this.frames);
-          if (this.view) this.element.dataset.renderedTankId = String(this.view.tankId);
-        });
+      if (!this.engine && !this.initializing) {
+        const initializing: Promise<void> = createWebGpuEngine(this.canvas, true).then(engine => {
+          if (this.initializing !== initializing) {engine.dispose(); return;}
+          this.engine = engine;
+          this.scene = new Scene(this.engine); this.scene.clearColor = new Color4(0, 0, 0, 0);
+          selectEnabledMeshCandidates(this.scene);
+          this.scene.ambientColor = Color3.White();
+          this.camera = new ArcRotateCamera('home-camera', -Math.PI / 2.5, Math.PI / 3, 100, Vector3.Zero(), this.scene);
+          this.camera.minZ = HOME_PREVIEW_CLIP_PLANES.near;
+          this.camera.maxZ = HOME_PREVIEW_CLIP_PLANES.far;
+          this.camera.attachControl(this.canvas, true);
+          new HemisphericLight('home-light', new Vector3(0, 1, 0), this.scene).intensity = 1.2;
+          this.engine.runRenderLoop(() => {
+            const previous = this.orbit.orbitYaw;
+            advanceHomePreviewOrbit(this.orbit);
+            // Reflect native X into the converted model coordinates; positive native
+            // Y orbit advances Babylon alpha in the same direction after reflection.
+            if (this.camera) this.camera.alpha += this.orbit.orbitYaw - previous;
+            this.element.dataset.orbitYaw = String(this.orbit.orbitYaw);
+            this.scene?.render(); this.element.dataset.frames = String(++this.frames);
+            if (this.view) this.element.dataset.renderedTankId = String(this.view.tankId);
+          });
+        }).finally(() => {if (this.initializing === initializing) this.initializing = undefined;});
+        this.initializing = initializing;
       }
+      await this.initializing;
+      if (revision !== this.revision) return;
       this.resize();
       const scene = this.scene!;
       const view = await TankView.loadPreview(scene, `home-tank-${instanceId}`, tankId, textures);
@@ -91,6 +101,7 @@ export class HomeTankPreview {
 
   clear(): void {
     ++this.revision; this.desired = undefined;
+    this.initializing = undefined;
     this.view?.dispose(); this.view = undefined;
     this.scene?.dispose(); this.scene = undefined;
     this.engine?.dispose(); this.engine = undefined; this.camera = undefined;

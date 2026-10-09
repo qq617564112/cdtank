@@ -2,7 +2,7 @@
 
 使用 Node.js 24.16 或更高版本。Web 构建为 `npm run build`，服务端构建为 `npm run build:server`。服务端直接托管构建后的网页和资源，与 WebSocket `/game` 共用一个端口；`index.html` 是正式玩家入口，`validation.html` 是独立验证入口。
 
-在仓库中完成两端构建后，运行 `PORT=40171 npm run start:server`，通过 `http://服务器局域网IP:40171/` 访问。服务监听所有网络接口，默认网页目录为 `dist/web`，账户库沿用 `recovery/output/accounts.sqlite`。
+在仓库中完成两端构建后，运行 `PORT=40171 npm run start:server`，本机通过 `http://localhost:40171/` 访问。客户端要求 WebGPU；局域网及远程访问使用 HTTPS 反向代理，以满足浏览器安全上下文要求。服务监听所有网络接口，默认网页目录为 `dist/web`，账户库沿用 `recovery/output/accounts.sqlite`。
 
 转换后的运行资源、字体和内容表通过 GitHub Releases 提供。克隆或下载后执行 `npm ci` 和 `npm run assets:install` 下载解压，即可使用这些资源构建与打包，无需原客户端、Python 或外部字体。
 
@@ -19,7 +19,7 @@ node /srv/cdtank/start.mjs
 
 `start.mjs` 可从任意工作目录启动。默认网页和 Web 资源目录为发行包的 `web`，原数据表为 `content/tables`，账户库为 `state/accounts.sqlite`。包内不带玩家账户数据；已有存档通过备份恢复命令导入新路径。服务运行依赖在 `server/package-lock.json` 固定，目标设备无需项目源码或开发依赖。
 
-默认入口为 `http://服务器:3001/`，通过 `PORT` 修改端口。页面、模型、音频和 WebSocket 均由同一 Node.js 进程提供。静态响应包含正确的 MIME、ETag 和 Last-Modified；文本资源支持压缩，音频支持 Range 分段下载。Vite 生成的带版本文件名资源缓存一年，其余资源和 HTML 每次访问重新验证缓存。
+服务端默认监听 3001 端口，通过 `PORT` 修改；本机入口为 `http://localhost:3001/`，远程入口由 HTTPS 反向代理提供。页面、模型、音频和 WebSocket 均由同一 Node.js 进程提供。静态响应包含正确的 MIME、ETag 和 Last-Modified；文本资源支持压缩，音频支持 Range 分段下载。Vite 生成的带版本文件名资源缓存一年，其余资源和 HTML 每次访问重新验证缓存。
 
 如需单独部署网页，包内保留 `nginx.conf.example`：根目录设为 `/srv/cdtank/web`，将 `/game` 转发至服务端，标准配置包含 `include /etc/nginx/mime.types;`。浏览器和服务端分别部署时须配置同一 WebSocket 接入路径。
 

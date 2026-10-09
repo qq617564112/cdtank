@@ -27,8 +27,19 @@ export class EffectOverlayMesh {
     let mesh: Mesh | undefined;
     try {
       material = new ShaderMaterial('original-screen-effect', scene, {
-        vertexSource: 'precision highp float; attribute vec3 position; attribute vec2 uv; attribute vec4 color; uniform vec2 viewport; varying vec2 vUV; varying vec4 vColor; void main(){gl_Position=vec4(position.x*2.0/viewport.x-1.0,1.0-position.y*2.0/viewport.y,position.z*2.0-1.0,1.0);vUV=uv;vColor=color;}',
-        fragmentSource: 'precision highp float; varying vec2 vUV; varying vec4 vColor; uniform sampler2D effectTexture; void main(){gl_FragColor=texture2D(effectTexture,vUV)*vColor;}',
+        vertexSource: `precision highp float;
+attribute vec3 position;
+attribute vec2 uv;
+attribute vec4 color;
+uniform vec2 viewport;
+varying vec2 vUV;
+varying vec4 vColor;
+void main(){gl_Position=vec4(position.x*2.0/viewport.x-1.0,1.0-position.y*2.0/viewport.y,position.z,1.0);vUV=uv;vColor=color;}`,
+        fragmentSource: `precision highp float;
+varying vec2 vUV;
+varying vec4 vColor;
+uniform sampler2D effectTexture;
+void main(){gl_FragColor=texture2D(effectTexture,vUV)*vColor;}`,
       }, {attributes: ['position', 'uv', 'color'], uniforms: ['viewport'], samplers: ['effectTexture'], needAlphaBlending: true});
       material.setTexture('effectTexture', texture);
       material.backFaceCulling = cull !== 'NONE';

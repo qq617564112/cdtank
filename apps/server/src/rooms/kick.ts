@@ -1,6 +1,6 @@
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
-import type {World} from '../world';
+import type {RoomWorld as World} from './world-interface';
 import type {roomTransport} from './transport';
 import type {RoomReconnections} from './reconnection';
 
@@ -10,9 +10,9 @@ export function registerRoomKickApi(server: WsServer<ServiceType>, world: World,
   server.implementApi('KickRoomPlayer', async call => {
     const session = sessions.get(call.conn.id);
     if (!session) return call.error('请先加入房间', {code: 'NOT_JOINED'});
-    let removed: ReturnType<World['kickRoomPlayer']>;
+    let removed: Awaited<ReturnType<World['kickRoomPlayer']>>;
     try {
-      removed = world.kickRoomPlayer(session.playerId, call.req.round, call.req.playerId);
+      removed = await world.kickRoomPlayer(session.playerId, call.req.round, call.req.playerId);
     } catch (error) {
       return call.error(error instanceof Error ? error.message : '踢出失败', {code: 'ROOM_KICK_REJECTED'});
     }

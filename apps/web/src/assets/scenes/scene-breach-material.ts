@@ -41,10 +41,13 @@ export class SceneBreachMaterial {
     const texture = original.albedoTexture!;
     const material = new ShaderMaterial(`${prefix}/${meshName}`, asset.scene, {
       vertexSource: `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
-attribute vec3 position; attribute vec2 uv; attribute vec4 color;
+attribute vec3 position;
+attribute vec2 uv;
+attribute vec4 color;
 uniform mat4 viewProjection;
 #include<instancesDeclaration>
-varying vec2 sourceUv; varying vec4 sourceDiffuse;
+varying vec2 sourceUv;
+varying vec4 sourceDiffuse;
 void main() {
 #include<instancesVertex>
   sourceUv = uv; sourceDiffuse = color;
@@ -55,7 +58,8 @@ void main() {
 }`,
       fragmentSource: `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
 uniform sampler2D sourceTexture;
-varying vec2 sourceUv; varying vec4 sourceDiffuse;
+varying vec2 sourceUv;
+varying vec4 sourceDiffuse;
 void main() {
   vec4 result = texture2D(sourceTexture, sourceUv) * sourceDiffuse;
 #ifdef SOURCE_ALPHA_TEST

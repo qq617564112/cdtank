@@ -142,7 +142,7 @@ def restore(root, runtime):
     # Remove replacements that have no original client counterpart.
     shutil.rmtree(runtime / 'hd-ui', ignore_errors=True)
     font_dir = runtime / 'ui/fonts'
-    for pattern in ('xiangjiao*', 'source-*.woff'):
+    for pattern in ('source-*.woff',):
         for path in font_dir.glob(pattern):
             path.unlink()
     for folder in ('assets/tanks/thumbnails', 'assets/pets/thumbnails'):

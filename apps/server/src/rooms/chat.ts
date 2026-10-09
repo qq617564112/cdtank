@@ -1,7 +1,7 @@
 import type {MsgRoomEvent} from '../../../shared/protocols';
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
-import type {World} from '../world';
+import type {RoomWorld as World} from './world-interface';
 import type {AccountStore} from '../account-store';
 
 /** Acknowledged normal-page chat, using the same authority as legacy messages. */
@@ -31,7 +31,7 @@ export function registerRoomChatApi(server: WsServer<ServiceType>, world: World,
         message: '你提交的问题已被接受，待管理人员确认后，会进行处理。此为系统自动回复。'});
     }
     if (!session) return call.error('请先加入房间', {code: 'NOT_JOINED'});
-    const event = world.chat(session.playerId, call.req.text, call.req.channel)[0];
+    const event = (await world.chat(session.playerId, call.req.text, call.req.channel))[0];
     if (!event || event.roomId !== session.roomId) {
       return call.error('请选择当前玩法支持的频道并输入1至72字符的有效文本', {code: 'CHAT_REJECTED'});
     }

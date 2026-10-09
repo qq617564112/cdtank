@@ -128,7 +128,7 @@ export function InventorySaleQuantityDialog({ui, quantity, change, busy, disable
           <SourceStaticImage key={name} ui={ui} layout={layout} suffix={suffix} name={name} aria-hidden="true"/>)}
         <div {...sourceProps(ui, layout, suffix, 'txtMessage')} role="document">请输入你想要售出的道具的数量。</div>
         <input {...sourceProps(ui, layout, suffix, 'edtInput')} aria-label="出售数量" {...{[inputAttribute]: ''}}
-          data-feedback-font="SIMSUN"
+          data-feedback-font="xiangjiao-brush"
           inputMode="numeric" value={quantity} disabled={busy} onChange={event => change(event.target.value)}/>
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnOK" aria-label="确认出售"
           {...{[okAttribute]: ''}} disabled={busy || disabled} onClick={confirm}/>

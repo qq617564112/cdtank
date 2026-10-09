@@ -1,6 +1,7 @@
 import {Constants, Mesh, ShaderMaterial, UtilityLayerRenderer, Vector2, Vector3, VertexBuffer} from '@babylonjs/core';
 import type {BaseTexture, Scene} from '@babylonjs/core';
 import {decodeImageRegion, type ImageRegion} from '../assets/image-resources';
+import {setDynamicMeshIndexCount} from './webgpu-draw-cache';
 
 export type ScreenUv = readonly [number, number, number, number];
 export type ScreenColour = readonly [number, number, number, number];
@@ -87,7 +88,6 @@ export class BattleScreenQuads {
 
   begin(width: number, height: number): void {
     this.count = 0;
-    this.positions.fill(0);
     this.material.setVector2('viewport', new Vector2(width, height));
   }
 
@@ -120,6 +120,7 @@ export class BattleScreenQuads {
     this.mesh.updateVerticesData(VertexBuffer.PositionKind, this.positions);
     this.mesh.updateVerticesData(VertexBuffer.UVKind, this.uvs);
     this.mesh.updateVerticesData(VertexBuffer.ColorKind, this.colours);
+    setDynamicMeshIndexCount(this.mesh, this.count * 6);
   }
 
   clear(): void {this.mesh.setEnabled(false);}

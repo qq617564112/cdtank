@@ -67,6 +67,8 @@
 
 Web 开发服务器将同源 `/game` WebSocket 转发到游戏服务端。
 
+客户端与资源查看器要求 WebGPU，通过 HTTPS 或 localhost 访问。引擎异步初始化和 HUD/场景优化见 [WebGPU 客户端渲染](webgpu-rendering.md)。
+
 构建两端后，`PORT=40171 npm run start:server` 在同一端口提供网页、资源和 `/game`。静态托管模块挂在 TSRPC 3.4.21 的内部 HTTP 监听器上；升级 TSRPC 时需确认该监听器仍可访问。开发时继续使用 Vite 提供页面和热更新。
 
 | 环境变量 | 默认值 | 用途 |

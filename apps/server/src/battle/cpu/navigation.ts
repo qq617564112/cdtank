@@ -1,6 +1,11 @@
 import {performance} from 'node:perf_hooks';
 import {type Battlefield, type Point} from '../../battlefield';
-const edgeCaches = new WeakMap<Battlefield, {revision: number; edges: Map<string, boolean>}>();
+const edgeCaches = new WeakMap<Battlefield, {revision: number; edges: Map<string, Map<number, boolean>>}>();
+const diagonalCost = Math.hypot(1, 1);
+const neighbors: readonly (readonly [number, number, number])[] = [
+  [1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1],
+  [1, 1, diagonalCost], [-1, 1, diagonalCost], [1, -1, diagonalCost], [-1, -1, diagonalCost],
+];
 
 /** Collision policy selected by the participant's actual movement source. */
 export interface BotNavigationPolicy {
@@ -28,10 +33,15 @@ function* searchBotPath(field: Battlefield, start: Point, goal: Point,
     cache = {revision: field.navigationRevision, edges: new Map()};
     edgeCaches.set(field, cache);
   }
-  const edges = cache.edges;
+  let edges = cache.edges.get(policyKey);
+  if (!edges) {
+    edges = new Map();
+    cache.edges.set(policyKey, edges);
+  }
   const first = grid.sample(start.x, start.z)!;
   const last = grid.sample(goal.x, goal.z)!;
-  const key = (x: number, z: number) => `${x},${z}`;
+  const {width, height} = grid.source;
+  const key = (x: number, z: number) => z * width + x;
   const queue: Array<{x: number; z: number; priority: number}> = [];
   const push = (entry: {x: number; z: number; priority: number}): void => {
     queue.push(entry);
@@ -60,13 +70,14 @@ function* searchBotPath(field: Battlefield, start: Point, goal: Point,
   const costs = new Map([[key(first.x, first.z), 0]]);
   const heuristic = (x: number, z: number) => Math.hypot(x - last.x, z - last.z);
   push({x: first.x, z: first.z, priority: heuristic(first.x, first.z)});
-  const parents = new Map<string, string | undefined>([[key(first.x, first.z), undefined]]);
-  const closed = new Set<string>();
+  const parents = new Map<number, number | undefined>([[key(first.x, first.z), undefined]]);
+  const closed = new Set<number>();
   while (queue.length) {
     yield;
     if (cache.revision !== field.navigationRevision) {
       cache.revision = field.navigationRevision;
-      edges.clear();
+      // Other suspended planners retain these maps across ticks.
+      for (const policyEdges of cache.edges.values()) policyEdges.clear();
     }
     const cell = pop();
     const cellKey = key(cell.x, cell.z);
@@ -75,29 +86,33 @@ function* searchBotPath(field: Battlefield, start: Point, goal: Point,
     if (!a) continue;
     closed.add(cellKey);
     if (cell.x === last.x && cell.z === last.z) break;
-    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    const cellCost = costs.get(cellKey)!;
+    for (let direction = 0; direction < neighbors.length; direction++) {
+      const [dx, dz, stepCost] = neighbors[direction];
       const x = cell.x + dx, z = cell.z + dz;
-      if (closed.has(key(x, z))) continue;
+      if (x < 0 || z < 0 || x >= width || z >= height) continue;
+      const nextKey = key(x, z);
+      if (closed.has(nextKey)) continue;
       const b = grid.positionAtCell(x, z);
-      const cost = costs.get(key(cell.x, cell.z))! + Math.hypot(dx, dz);
-      if (cost >= (costs.get(key(x, z)) ?? Infinity) || !b) continue;
-      const edge = `${policyKey}:${cell.x},${cell.z}:${x},${z}`;
+      const cost = cellCost + stepCost;
+      if (cost >= (costs.get(nextKey) ?? Infinity) || !b) continue;
+      const edge = cellKey * neighbors.length + direction;
       let accepted = edges.get(edge);
       if (accepted === undefined) {
         accepted = traversable(a, b);
         edges.set(edge, accepted);
       }
       if (!accepted) continue;
-      costs.set(key(x, z), cost);
-      parents.set(key(x, z), key(cell.x, cell.z));
+      costs.set(nextKey, cost);
+      parents.set(nextKey, cellKey);
       push({x, z, priority: cost + heuristic(x, z)});
     }
   }
-  let current: string | undefined = key(last.x, last.z);
+  let current: number | undefined = key(last.x, last.z);
   if (!parents.has(current)) return [];
   const points: Point[] = [goal];
-  while (current) {
-    const [x, z] = current.split(',').map(Number);
+  while (current !== undefined) {
+    const x = current % width, z = Math.floor(current / width);
     const point = grid.positionAtCell(x, z);
     if (!point) return [];
     points.push(point);
@@ -109,8 +124,12 @@ function* searchBotPath(field: Battlefield, start: Point, goal: Point,
   let a: Point = start;
   for (let at = 1; at < points.length;) {
     let end = points.length - 1;
-    while (end > at && !traversable(a, points[end])) {end--; yield;}
-    if (!traversable(a, points[end])) return [];
+    let accepted = false;
+    while (end > at) {
+      if (traversable(a, points[end])) {accepted = true; break;}
+      end--; yield;
+    }
+    if (!accepted && !traversable(a, points[end])) return [];
     a = points[end];
     simplified.push(a);
     at = end + 1;

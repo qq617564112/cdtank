@@ -52,6 +52,8 @@ export class BattleUiRaster {
       this.artwork(element, rect, mirroredX, mirroredY, nextTint);
     } else if (element instanceof HTMLImageElement) {
       if (element.complete && element.naturalWidth) this.picture(element, rect, mirroredX, mirroredY, nextTint);
+    } else if (element instanceof HTMLCanvasElement) {
+      context.drawImage(element, rect.left, rect.top, rect.width, rect.height);
     } else if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
       this.input(element, style, rect, scaleX, scaleY, nextTint);
     } else if (element instanceof HTMLSelectElement) {
@@ -98,7 +100,7 @@ export class BattleUiRaster {
     }
     const url = /^url\(["']?(.*?)["']?\)$/.exec(style.backgroundImage)?.[1];
     const sprite = asset ? spriteImage(`/${asset.replace(/^\//, '')}`) : undefined;
-    const colouredCell = sprite && tint.some(value => value !== 1)
+    const colouredCell = sprite && (sprite.filter || tint.some(value => value !== 1))
       && url === imageResourceUrl(sprite.atlas) ? sprite : undefined;
     const image = url ? this.image(url, colouredCell ? undefined : tint) : undefined;
     const painted = colouredCell ? this.image(`/${asset!.replace(/^\//, '')}`, tint) : image;

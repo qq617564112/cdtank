@@ -2,7 +2,7 @@ import {content} from '../content';
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 
 interface TankTextureSession {
   roomId: string;
@@ -44,7 +44,7 @@ export function registerTankTextureApi(
     const accountId = accountByConnection.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessionByConnection.get(call.conn.id);
-    if (session && !world.canConfigureInventory(session.playerId)) {
+    if (session && !(await world.canConfigureInventory(session.playerId))) {
       return call.error('请在准备阶段更换战车迷彩', {code: 'TANK_TEXTURES_REJECTED'});
     }
     try {
@@ -53,8 +53,8 @@ export function registerTankTextureApi(
       const profile = accounts.roleProfile(accountId)!;
       const owned = accounts.roleRecords(accountId);
       if (session && confirmation.result === 3) {
-        world.bindRoleSources(session.playerId, accounts.selectedRoleSources(accountId));
-        world.bindEquipmentProfile(session.playerId, profile);
+        await world.bindRoleSources(session.playerId, accounts.selectedRoleSources(accountId));
+        await world.bindEquipmentProfile(session.playerId, profile);
         broadcastRoomState(session.roomId);
       }
       await call.succ({confirmation,
