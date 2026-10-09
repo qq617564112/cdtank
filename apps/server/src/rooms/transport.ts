@@ -1,7 +1,8 @@
 import type {MsgCall, WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {MsgChat, MsgRoomSnapshot} from '../../../shared/protocols';
-import type {World, WorldEvent} from '../world';
+import type {WorldEvent} from '../world';
+import type {RoomWorld as World} from './world-interface';
 import type {RoomReconnections} from './reconnection';
 import {registerRoomChatApi} from './chat';
 import type {AccountStore} from '../account-store';
@@ -53,20 +54,24 @@ export function registerRoomMessages(server: WsServer<ServiceType>, world: World
   accounts: Map<string, string>, sessions: Map<string, RoomSession>,
   transport: ReturnType<typeof roomTransport>, reconnections: RoomReconnections, store: AccountStore): void {
   registerRoomChatApi(server, world, sessions, transport.broadcastEvent, store, accounts);
-  server.listenMsg('Chat', (call: MsgCall<MsgChat>) => {
+  server.listenMsg('Chat', async (call: MsgCall<MsgChat>) => {
     const session = sessions.get(call.conn.id);
     if (!session) return;
-    for (const event of world.chat(session.playerId, call.msg.text, call.msg.channel)) {
+    for (const event of await world.chat(session.playerId, call.msg.text, call.msg.channel)) {
       transport.broadcastEvent(event);
     }
   });
   server.flows.postDisconnectFlow.push(async input => {
-    if (reconnections.retain(input.conn.id)) return input;
+    if (await reconnections.retain(input.conn.id)) return input;
     const session = sessions.get(input.conn.id);
     if (session) {
       sessions.delete(input.conn.id);
-      for (const event of world.leave(session.playerId)) transport.broadcastEvent(event);
-      transport.broadcastRoomState(session.roomId);
+      try {
+        for (const event of await world.leave(session.playerId)) transport.broadcastEvent(event);
+        transport.broadcastRoomState(session.roomId);
+      } catch (error) {
+        console.error('Disconnected room departure failed', error);
+      }
     }
     accounts.delete(input.conn.id);
     return input;

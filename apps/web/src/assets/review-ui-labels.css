@@ -1,0 +1,1145 @@
+@font-face {
+  font-family: 'CDTank Review UI Sans';
+  src: url('/ui/fonts/review-ui-sans.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+}
+
+.source-text-artwork {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.source-text-coordinates {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: left top;
+}
+
+.source-text-ink {
+  position: absolute;
+  display: block;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  letter-spacing: 0;
+  paint-order: stroke fill;
+}
+
+[data-source-text-face='review'] {
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-kerning: none;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: 'CDTank Review UI Condensed';
+  src: url('/ui/fonts/review-ui-condensed.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+[data-source-text-face='review-latin'] {
+  font-family: 'CDTank Review UI Condensed', sans-serif !important;
+  font-style: normal;
+  font-weight: 400;
+}
+
+[data-source-asset="ui/regions/27/13.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/13.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/13.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/13.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "回上页";
+  position: absolute;
+  left: 29.281768cqw;
+  top: 0.135052cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.186523);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 12.572130cqw;
+  line-height: 18.858195cqw;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #01000f;
+  -webkit-text-stroke: 2.430939cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/14.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/14.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/14.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/14.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "回上页";
+  position: absolute;
+  left: 29.834254cqw;
+  top: 0.376918cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.233553);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 11.943524cqw;
+  line-height: 17.915286cqw;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #020010;
+  -webkit-text-stroke: 1.546961cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/15.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/15.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/15.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/15.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "回上页";
+  position: absolute;
+  left: 29.281768cqw;
+  top: 0.135052cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.186523);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 12.572130cqw;
+  line-height: 18.858195cqw;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #fff4b5;
+  -webkit-text-stroke: 2.430939cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/52.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/52.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/52.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/52.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "玩家";
+  position: absolute;
+  left: 18.750000cqw;
+  top: 0.171664cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.973575);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 30.493273cqw;
+  line-height: 45.739911cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #000;
+  -webkit-text-stroke: 3.437500cqw #fff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/53.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/53.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/53.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/53.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好友";
+  position: absolute;
+  left: 18.750000cqw;
+  top: -0.561725cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.997830);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 29.752066cqw;
+  line-height: 44.628098cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #000;
+  -webkit-text-stroke: 3.437500cqw #fff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/54.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/54.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/54.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/54.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好友";
+  position: absolute;
+  left: 21.875000cqw;
+  top: 3.667355cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.004394);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 26.446281cqw;
+  line-height: 39.669422cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #000;
+  -webkit-text-stroke: 3.437500cqw #fff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/55.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/55.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/55.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/55.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好友";
+  position: absolute;
+  left: 18.750000cqw;
+  top: 1.000775cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.997830);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 29.752066cqw;
+  line-height: 44.628098cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #000;
+  -webkit-text-stroke: 3.437500cqw #fff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/56.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/56.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/56.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/56.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "玩家";
+  position: absolute;
+  left: 21.875000cqw;
+  top: 3.184558cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.987240);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 26.905830cqw;
+  line-height: 40.358744cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #000;
+  -webkit-text-stroke: 3.437500cqw #fff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/57.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/57.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/57.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/57.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "玩家";
+  position: absolute;
+  left: 18.750000cqw;
+  top: -1.390836cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.973575);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 30.493273cqw;
+  line-height: 45.739911cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #000;
+  -webkit-text-stroke: 3.437500cqw #fff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/58.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/58.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/58.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/58.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "队伍";
+  position: absolute;
+  left: 21.311475cqw;
+  top: 1.010136cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.035547);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 26.120672cqw;
+  line-height: 39.181008cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #ffff00;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/59.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/59.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/59.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/59.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "密语";
+  position: absolute;
+  left: 21.311475cqw;
+  top: 1.487552cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.044140);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 25.905687cqw;
+  line-height: 38.858531cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #ffff00;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/60.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/60.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/60.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/60.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "密语";
+  position: absolute;
+  left: 19.672131cqw;
+  top: 0.930985cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.067871);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.632733cqw;
+  line-height: 41.449100cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #5bffcc;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/61.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/61.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/61.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/61.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "聊天";
+  position: absolute;
+  left: 18.032787cqw;
+  top: 0.460643cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.093018);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.746918cqw;
+  line-height: 41.620377cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #5bffcc;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/62.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/62.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/62.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/62.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "聊天";
+  position: absolute;
+  left: 18.032787cqw;
+  top: -1.178702cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.093018);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.746918cqw;
+  line-height: 41.620377cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #17cdff;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/63.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/63.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/63.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/63.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "密语";
+  position: absolute;
+  left: 19.672131cqw;
+  top: -0.708359cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.067871);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.632733cqw;
+  line-height: 41.449100cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #17cdff;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/64.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/64.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/64.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/64.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "聊天";
+  position: absolute;
+  left: 19.672131cqw;
+  top: 1.046607cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.071354);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 26.012736cqw;
+  line-height: 39.019103cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #ffff00;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/65.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/65.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/65.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/65.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "队伍";
+  position: absolute;
+  left: 19.672131cqw;
+  top: 0.421739cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.059082);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.862051cqw;
+  line-height: 41.793075cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #5bffcc;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/66.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/66.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/66.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/66.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "队伍";
+  position: absolute;
+  left: 19.672131cqw;
+  top: -1.217605cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.059082);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.862051cqw;
+  line-height: 41.793075cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #17cdff;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/67.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/67.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/67.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/67.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "家族";
+  position: absolute;
+  left: 21.311475cqw;
+  top: 1.555705cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.052735);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 25.694211cqw;
+  line-height: 38.541318cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #ffff00;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/68.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/68.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/68.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/68.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "G M";
+  position: absolute;
+  left: 26.229508cqw;
+  top: -1.257266cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.301701);
+  font-family: 'CDTank Review UI Condensed', sans-serif !important;
+  font-size: 25.080008cqw;
+  line-height: 37.620011cqw;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #17cdff;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/69.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/69.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/69.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/69.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "G M";
+  position: absolute;
+  left: 26.229508cqw;
+  top: 0.382079cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.301701);
+  font-family: 'CDTank Review UI Condensed', sans-serif !important;
+  font-size: 25.080008cqw;
+  line-height: 37.620011cqw;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #5bffcc;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/70.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/70.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/70.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/70.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "G M";
+  position: absolute;
+  left: 31.147541cqw;
+  top: 5.551564cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.265543);
+  font-family: 'CDTank Review UI Condensed', sans-serif !important;
+  font-size: 20.064007cqw;
+  line-height: 30.096010cqw;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #ffff00;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/71.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/71.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/71.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/71.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好友";
+  position: absolute;
+  left: 18.032787cqw;
+  top: -1.070316cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.093017);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.746918cqw;
+  line-height: 41.620377cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #17cdff;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/72.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/72.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/72.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/72.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好友";
+  position: absolute;
+  left: 18.032787cqw;
+  top: 0.569028cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.093017);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.746918cqw;
+  line-height: 41.620377cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #5bffcc;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/73.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/73.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/73.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/73.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "好友";
+  position: absolute;
+  left: 19.672131cqw;
+  top: 1.148218cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.039844);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 26.012736cqw;
+  line-height: 39.019103cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #ffff00;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/74.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/74.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/74.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/74.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "家族";
+  position: absolute;
+  left: 19.672131cqw;
+  top: -0.635664cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.076660);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.407159cqw;
+  line-height: 41.110739cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #17cdff;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/75.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/75.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/75.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/75.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "家族";
+  position: absolute;
+  left: 19.672131cqw;
+  top: 1.003680cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.076660);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 27.407159cqw;
+  line-height: 41.110739cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #5bffcc;
+  -webkit-text-stroke: 3.442623cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/91.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/91.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/91.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/91.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费创意点数";
+  position: absolute;
+  left: 2.500000cqw;
+  top: -2.378112cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.098307);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 14.605809cqw;
+  line-height: 21.908714cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #00f0ff;
+  -webkit-text-stroke: 0.000000cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/92.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/92.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/92.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/92.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花 费 代 币";
+  position: absolute;
+  left: 2.500000cqw;
+  top: -2.378112cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.389512);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 14.605809cqw;
+  line-height: 21.908714cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #00f0ff;
+  -webkit-text-stroke: 0.000000cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/95.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/95.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/95.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/95.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "赠  点";
+  position: absolute;
+  left: 9.433962cqw;
+  top: -4.262898cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.048573);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 30.063415cqw;
+  line-height: 45.095123cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #00aeef;
+  -webkit-text-stroke: 6.792453cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/96.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/96.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/96.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/96.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "金  钱";
+  position: absolute;
+  left: 5.660377cqw;
+  top: -4.109102cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.192047);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 30.314992cqw;
+  line-height: 45.472487cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #fff799;
+  -webkit-text-stroke: 6.792453cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/97.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/97.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/97.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/97.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "星  币";
+  position: absolute;
+  left: 7.547170cqw;
+  top: -3.498079cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.156331);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 29.921523cqw;
+  line-height: 44.882285cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #00aeef;
+  -webkit-text-stroke: 6.792453cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/98.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/98.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/98.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/98.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "创意点";
+  position: absolute;
+  left: 5.660377cqw;
+  top: -4.221892cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.987326);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 29.939187cqw;
+  line-height: 44.908779cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #9fdd4c;
+  -webkit-text-stroke: 6.792453cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/99.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/99.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/99.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/99.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "Q    点";
+  position: absolute;
+  left: 11.320755cqw;
+  top: -4.039451cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.155898);
+  font-family: 'CDTank Review UI Condensed', sans-serif !important;
+  font-size: 30.737564cqw;
+  line-height: 46.106347cqw;
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #00aeef;
+  -webkit-text-stroke: 6.792453cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/100.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/100.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/100.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/100.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "技能点";
+  position: absolute;
+  left: 5.660377cqw;
+  top: -4.338843cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(0.987326);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 29.939187cqw;
+  line-height: 44.908779cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #ffa800;
+  -webkit-text-stroke: 6.792453cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/130.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/130.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/130.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/130.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费创意点";
+  position: absolute;
+  left: 1.515152cqw;
+  top: -4.397712cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.095455);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 17.704011cqw;
+  line-height: 26.556017cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/131.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/131.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/131.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/131.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "现有技能点";
+  position: absolute;
+  left: 1.515152cqw;
+  top: -5.550065cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.045455);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 18.550724cqw;
+  line-height: 27.826086cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/132.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/132.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/132.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/132.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "现有创意点";
+  position: absolute;
+  left: 1.515152cqw;
+  top: -5.550065cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.045455);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 18.550724cqw;
+  line-height: 27.826086cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/133.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/133.png"]:not(.source-static-image):not(.source-state-button) {
+  container-type: size;
+  overflow: hidden;
+}
+
+[data-source-asset="ui/regions/27/133.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after,
+[data-source-asset="ui/regions/60/133.png"]:not(.source-static-image):not(.source-state-button):not([data-source-button-label="external"]):not(:has(> .source-text-artwork))::after {
+  content: "花费技能点";
+  position: absolute;
+  left: 1.515152cqw;
+  top: -4.397712cqw;
+  width: max-content;
+  white-space: pre;
+  transform-origin: left top;
+  transform: scaleX(1.095455);
+  font-family: 'CDTank Review UI Sans', sans-serif !important;
+  font-size: 17.704011cqw;
+  line-height: 26.556017cqw;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #024e98;
+  -webkit-text-stroke: 0.000000cqw #000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}

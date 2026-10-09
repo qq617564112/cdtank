@@ -1,18 +1,26 @@
 import {useId, type ComponentPropsWithoutRef} from 'react';
 import {imageResourceUrl, spriteImage} from '../../assets/image-cache';
 import {imageRegion} from '../../assets/image-resources';
+import {sourceReviewGlyph, SourceReviewGlyph} from './source-review-glyph';
+import {buttonArtwork} from '../../assets/button-artwork';
+import {sourceTextArtwork, SourceTextArtwork} from './source-text-artwork';
 
 /** A clipped SVG viewport displays a sheet region without creating another image. */
 export function ImageArtwork({asset, fit = 'stretch', repeat, style, ...props}: {
   asset: string; fit?: 'stretch' | 'contain'; repeat?: {width: number; height: number};
 } & ComponentPropsWithoutRef<'span'>) {
   const id = `image-tile-${useId().replace(/:/g, '')}`;
-  const region = imageRegion(asset)!;
+  const glyph = sourceReviewGlyph(asset);
+  if (glyph) return <SourceReviewGlyph {...props} asset={asset} glyph={glyph} fit={fit} style={style}/>;
+  const text = sourceTextArtwork(asset);
+  const background = buttonArtwork(asset)?.background ?? asset;
+  const region = imageRegion(background, false)!;
   const image = region.image;
-  const href = imageResourceUrl(spriteImage(asset)?.atlas ?? asset);
+  const href = imageResourceUrl(spriteImage(background)?.atlas ?? background);
   return <span {...props} data-image-artwork="" data-source-asset={asset.replace(/^\//, '')}
     data-image-fit={fit} data-image-repeat-width={repeat?.width} data-image-repeat-height={repeat?.height}
-    style={{display: 'inline-block', filter: spriteImage(asset)?.filter, ...style}}>
+    data-source-button-label={text ? 'external' : undefined}
+    style={{display: 'inline-block', position: text ? 'relative' : undefined, filter: spriteImage(background)?.filter, ...style}}>
     {repeat ? <svg width="100%" height="100%" aria-hidden="true" style={{display: 'block', pointerEvents: 'none'}}>
       <defs><pattern id={id} patternUnits="userSpaceOnUse" width={repeat.width} height={repeat.height}
         viewBox={`${region.x} ${region.y} ${region.width} ${region.height}`} preserveAspectRatio="none">
@@ -29,5 +37,6 @@ export function ImageArtwork({asset, fit = 'stretch', repeat, style, ...props}: 
         <image href={href} width={image.width} height={image.height}/>
       </svg>
     </svg>}
+    {text && <SourceTextArtwork asset={asset}/>}
   </span>;
 }

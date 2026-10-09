@@ -177,10 +177,11 @@ void main(){
   private end(indexCount: number): void {
     this.mesh.setEnabled(indexCount > 0);
     if (!indexCount) return;
-    this.mesh.updateVerticesDataDirectly(VertexBuffer.PositionKind, this.positions.subarray(0, this.count * 3), 0);
-    this.mesh.updateVerticesDataDirectly(VertexBuffer.UVKind, this.uvs.subarray(0, this.count * 2), 0);
-    this.mesh.updateVerticesDataDirectly(VertexBuffer.ColorKind, this.colors.subarray(0, this.count * 4), 0);
-    if (this.billboard) this.mesh.updateVerticesDataDirectly('particleShape', this.shapes.subarray(0, this.count * 2), 0);
+    const geometry = this.mesh.geometry!;
+    geometry.updateVerticesDataDirectly(VertexBuffer.PositionKind, this.positions.subarray(0, this.count * 3), 0);
+    geometry.updateVerticesDataDirectly(VertexBuffer.UVKind, this.uvs.subarray(0, this.count * 2), 0);
+    geometry.updateVerticesDataDirectly(VertexBuffer.ColorKind, this.colors.subarray(0, this.count * 4), 0);
+    if (this.billboard) geometry.updateVerticesDataDirectly('particleShape', this.shapes.subarray(0, this.count * 2), 0);
     this.bounds.reConstruct(this.minimum, this.maximum, this.mesh.getWorldMatrix());
     this.mesh.setBoundingInfo(this.bounds);
     setDynamicMeshIndexCount(this.mesh, indexCount);

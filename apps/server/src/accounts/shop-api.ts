@@ -3,7 +3,7 @@ import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import {consumableShopItems, partShopItems} from './shop-catalog';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 
 /** Rebuilt purchase authority; source prices do not establish GGet eligibility. */
 export function registerShopApi(server: WsServer<ServiceType>, accounts: AccountStore,
@@ -15,14 +15,14 @@ export function registerShopApi(server: WsServer<ServiceType>, accounts: Account
     const accountId = identities.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessions.get(call.conn.id);
-    if (call.req.operation === 'BUY' && session && !world.canConfigureInventory(session.playerId)) {
+    if (call.req.operation === 'BUY' && session && !(await world.canConfigureInventory(session.playerId))) {
       return call.error('请在准备阶段购买道具', {code: 'SHOP_REJECTED'});
     }
     try {
       const result = accounts.shop(accountId, items, call.req);
       if (session && call.req.operation === 'BUY' && !result.replayed) {
-        world.bindInventory(session.playerId, accounts.inventory(accountId));
-        world.bindEquipmentProfile(session.playerId, accounts.roleProfile(accountId)!);
+        await world.bindInventory(session.playerId, accounts.inventory(accountId));
+        await world.bindEquipmentProfile(session.playerId, accounts.roleProfile(accountId)!);
         broadcast(session.roomId);
       }
       await call.succ(result);

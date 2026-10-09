@@ -1,0 +1,32 @@
+@font-face {
+  font-family: 'CDTank Review Sans';
+  src: url('/ui/fonts/review-sans.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'CDTank Review Heavy';
+  src: url('/ui/fonts/review-heavy.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+}
+
+[data-review-font] text {
+  font-size: 128px;
+  font-style: normal;
+  font-kerning: none;
+  -webkit-text-stroke: 0;
+}
+
+[data-review-font='sans'] text {
+  font-family: 'CDTank Review Sans', sans-serif !important;
+  font-weight: 700;
+}
+
+[data-review-font='heavy'] text {
+  font-family: 'CDTank Review Heavy', sans-serif !important;
+  font-weight: 900;
+}

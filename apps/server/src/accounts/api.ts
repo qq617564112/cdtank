@@ -6,7 +6,7 @@ import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
 import type {TankConfig} from '../config';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 import {registerTankTextureApi} from './tank-textures';
 import {registerShopApi} from './shop-api';
 import {registerTankShopApi} from './tank-shop-api';
@@ -31,7 +31,7 @@ export function registerAccountApis(
   sessionByConnection: ReadonlyMap<string, AccountSession>,
   broadcastRoomState: (roomId: string) => void,
   ownedTank: (accountId: string, instanceId: number) => TankConfig,
-  restoreRoom: (accountId: string, connectionId: string) => void,
+  restoreRoom: (accountId: string, connectionId: string) => void | Promise<void>,
   assertTradeAvailable: (accountId: string) => void,
 ): void {
 
@@ -62,10 +62,11 @@ export function registerAccountApis(
     if (sessionByConnection.has(call.conn.id)) return call.error('请离开房间后登录账户', {code: 'ACCOUNT_IN_ROOM'});
     try {
       const session = accounts.authenticate(call.req);
-      restoreRoom(session.accountId, call.conn.id);
       accountByConnection.set(call.conn.id, session.accountId);
+      await restoreRoom(session.accountId, call.conn.id);
       await call.succ(session);
     } catch (error) {
+      accountByConnection.delete(call.conn.id);
       await call.error(error instanceof Error ? error.message : '账户登录失败', {code: 'ACCOUNT_REJECTED'});
     }
   });
@@ -83,7 +84,7 @@ export function registerAccountApis(
     const accountId = accountByConnection.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessionByConnection.get(call.conn.id);
-    await call.succ(session ? world.inventory(session.playerId) : accounts.inventory(accountId));
+    await call.succ(session ? await world.inventory(session.playerId) : accounts.inventory(accountId));
   });
 
   server.implementApi('OwnedRoles', async call => {
@@ -101,12 +102,12 @@ export function registerAccountApis(
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     if (call.req.selectTitleId !== undefined) {
       const session = sessionByConnection.get(call.conn.id);
-      if (session && !world.canConfigureInventory(session.playerId)) {
+      if (session && !(await world.canConfigureInventory(session.playerId))) {
         return call.error('对局进行中不能更换称号', {code: 'TITLE_SELECTION_REJECTED'});
       }
       try {
         const titles = accounts.selectTitle(accountId, call.req.selectTitleId);
-        for (const roomId of world.refreshAccountTitle(accountId, accounts.currentTitle(accountId))) {
+        for (const roomId of await world.refreshAccountTitle(accountId, accounts.currentTitle(accountId))) {
           broadcastRoomState(roomId);
         }
         await call.succ({titles});
@@ -129,7 +130,7 @@ export function registerAccountApis(
     const accountId = accountByConnection.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessionByConnection.get(call.conn.id);
-    if (session && !world.canConfigureInventory(session.playerId)) {
+    if (session && !(await world.canConfigureInventory(session.playerId))) {
       return call.error('对局进行中不能更换角色', {code: 'ROLE_SELECTION_REJECTED'});
     }
     try {
@@ -137,12 +138,12 @@ export function registerAccountApis(
         ? ownedTank(accountId, call.req.instanceId) : undefined;
       const profile = accounts.selectRole(accountId, call.req.kind, call.req.instanceId, combatCatalog);
       if (session && tank) {
-        world.selectTank(session.playerId, tank);
+        await world.selectTank(session.playerId, tank);
       }
       if (session) {
-        world.bindInventory(session.playerId, accounts.inventory(accountId));
-        world.bindRoleSources(session.playerId, accounts.selectedRoleSources(accountId));
-        world.bindEquipmentProfile(session.playerId, profile);
+        await world.bindInventory(session.playerId, accounts.inventory(accountId));
+        await world.bindRoleSources(session.playerId, accounts.selectedRoleSources(accountId));
+        await world.bindEquipmentProfile(session.playerId, profile);
         broadcastRoomState(session.roomId);
       }
       await call.succ({code: call.req.kind === 'pet' ? 0 : 1,
@@ -158,7 +159,7 @@ export function registerAccountApis(
     const accountId = accountByConnection.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessionByConnection.get(call.conn.id);
-    if (call.req.operation !== 'QUERY' && session && !world.canConfigureInventory(session.playerId)) {
+    if (call.req.operation !== 'QUERY' && session && !(await world.canConfigureInventory(session.playerId))) {
       return call.error('请在准备阶段配置装备', {code: 'EQUIPMENT_REJECTED'});
     }
     try {
@@ -166,9 +167,9 @@ export function registerAccountApis(
         : call.req.target === 'DECORATION' || call.req.target === 'MARK'
           ? accounts.configureCosmetic(accountId, combatCatalog, call.req.operation, call.req.target, call.req.instanceId, call.req.tankInstanceId)
           : accounts.configureEquipment(accountId, combatCatalog, call.req.operation, call.req.slot!, call.req.instanceId, call.req.tankInstanceId);
-      if (session && world.canConfigureInventory(session.playerId)) {
-        world.bindInventory(session.playerId, accounts.inventory(accountId));
-        world.bindEquipmentProfile(session.playerId, accounts.roleProfile(accountId));
+      if (session && (await world.canConfigureInventory(session.playerId))) {
+        await world.bindInventory(session.playerId, accounts.inventory(accountId));
+        await world.bindEquipmentProfile(session.playerId, accounts.roleProfile(accountId));
         broadcastRoomState(session.roomId);
       }
       await call.succ({slots: result.slots, slotCount: result.slotCount,
@@ -184,14 +185,14 @@ export function registerAccountApis(
     const accountId = accountByConnection.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessionByConnection.get(call.conn.id);
-    if (session && !world.canConfigureInventory(session.playerId)) {
+    if (session && !(await world.canConfigureInventory(session.playerId))) {
       return call.error('请在准备阶段配置快捷槽', {code: 'KITBAG_IN_BATTLE'});
     }
     try {
       const result = call.req.operation === 'ASSIGN'
         ? accounts.assign(accountId, call.req.instanceId ?? 0, call.req.slot)
         : accounts.cancel(accountId, call.req.slot);
-      if (session) world.confirmKitbag(session.playerId, result);
+      if (session) await world.confirmKitbag(session.playerId, result);
       await call.succ({...result, instanceId: call.req.operation === 'ASSIGN' ? call.req.instanceId! : 0,
         hotkeys: accounts.inventory(accountId).hotkeys});
     } catch (error) {

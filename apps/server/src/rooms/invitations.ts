@@ -1,7 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
-import type {World} from '../world';
+import type {RoomWorld as World} from './world-interface';
 
 /** Rebuilt untargeted recruitment: only authenticated lobby connections receive it. */
 export function registerRoomInvitations(server: WsServer<ServiceType>, world: World,

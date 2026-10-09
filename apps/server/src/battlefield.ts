@@ -19,6 +19,11 @@ interface SourceBox {
   placementId?: string;
   navigationCells?: readonly number[];
 }
+interface DynamicBox {
+  box: SourceBox;
+  order: number;
+  cells: readonly string[];
+}
 interface SourceSpawn {
   position: number[];
   heading: number;
@@ -58,7 +63,10 @@ export class Battlefield {
   readonly spawnGroups: SpawnPoint[][];
   readonly boxes: SourceBox[];
   readonly navigation: NavigationGrid;
-  private readonly dynamicBoxes = new Map<string, SourceBox>();
+  private readonly dynamicBoxes = new Map<string, DynamicBox>();
+  private readonly dynamicBoxCells = new Map<string, Set<string>>();
+  private readonly dynamicObbIds = new Set<string>();
+  private nextDynamicBoxOrder = 0;
   private readonly replacedPlacements = new Set<string>();
   private readonly noAnimatedBlockers: {id: string; cells: number[]}[] = [];
   private readonly terrain: CollisionMesh;
@@ -66,12 +74,28 @@ export class Battlefield {
 
   /** Dynamic actors take ownership of the static render placement and its occupancy. */
   setDynamicBox(box: SourceBox | undefined, id: string, cells?: ReadonlySet<number>): void {
+    const previous = this.dynamicBoxes.get(id);
+    if (previous) {
+      this.dynamicObbIds.delete(id);
+      for (const key of previous.cells) {
+        const occupants = this.dynamicBoxCells.get(key)!;
+        occupants.delete(id);
+        if (!occupants.size) this.dynamicBoxCells.delete(key);
+      }
+    }
     let navigationChanged = false;
     if (!box) {
       if (!this.dynamicBoxes.delete(id)) return;
       navigationChanged = this.navigation.setBlocker(id);
     } else {
-      this.dynamicBoxes.set(id, box);
+      const keys = boxCellKeys(box);
+      this.dynamicBoxes.set(id, {box, cells: keys, order: previous?.order ?? this.nextDynamicBoxOrder++});
+      if (!box.mesh) this.dynamicObbIds.add(id);
+      for (const key of keys) {
+        let occupants = this.dynamicBoxCells.get(key);
+        if (!occupants) {occupants = new Set(); this.dynamicBoxCells.set(key, occupants);}
+        occupants.add(id);
+      }
       if (box.placementId !== undefined) {
         this.replacedPlacements.add(box.placementId);
         navigationChanged = this.navigation.setBlocker(`SCN:${box.placementId}`);
@@ -186,13 +210,17 @@ export class Battlefield {
   firstBoxHit(start: Point, end: Point, radius: number): SurfaceHit | undefined {
     let closest: SurfaceHit | undefined;
     const candidates = new Set<number>();
+    const dynamicCandidates = new Set<string>();
     const minX = Math.floor((Math.min(start.x, end.x) - radius) / CELL_SIZE);
     const maxX = Math.floor((Math.max(start.x, end.x) + radius) / CELL_SIZE);
     const minZ = Math.floor((Math.min(start.z, end.z) - radius) / CELL_SIZE);
     const maxZ = Math.floor((Math.max(start.z, end.z) + radius) / CELL_SIZE);
     for (let x = minX; x <= maxX; x++) {
       for (let z = minZ; z <= maxZ; z++) {
-        for (const index of this.boxCells.get(`${x},${z}`) ?? []) candidates.add(index);
+        if (!segmentCrossesCell(start, end, x, z, radius)) continue;
+        const key = `${x},${z}`;
+        for (const index of this.boxCells.get(key) ?? []) candidates.add(index);
+        for (const id of this.dynamicBoxCells.get(key) ?? []) dynamicCandidates.add(id);
       }
     }
     // Source order decides ties between overlapping boxes.
@@ -204,7 +232,12 @@ export class Battlefield {
         closest = {fraction, boxId: box.id};
       }
     }
-    for (const box of this.dynamicBoxes.values()) {
+    // OBB sweeps enlarge local axes; retain their full query outside the mesh index.
+    for (const id of this.dynamicObbIds) dynamicCandidates.add(id);
+    // Retain Map insertion order for dynamic ties, after all static candidates.
+    const dynamic = [...dynamicCandidates].map(id => this.dynamicBoxes.get(id)!)
+      .sort((a, b) => a.order - b.order);
+    for (const {box} of dynamic) {
       const fraction = segmentBox(start, end, box, radius);
       if (fraction !== undefined && (!closest || fraction < closest.fraction)) {
         closest = {fraction, boxId: box.id};
@@ -221,7 +254,7 @@ export class Battlefield {
   }
 
   isPlacementHit(hitId: string, placementId: string): boolean {
-    return hitId === `SCN:${placementId}` || this.dynamicBoxes.get(hitId)?.placementId === placementId;
+    return hitId === `SCN:${placementId}` || this.dynamicBoxes.get(hitId)?.box.placementId === placementId;
   }
 
   move(start: Point, end: Point, radius: number): Point {
@@ -258,6 +291,34 @@ export class Battlefield {
     }
     return spawns[index % spawns.length];
   }
+}
+
+function boxCellKeys(box: SourceBox): string[] {
+  if (!box.mesh) return [];
+  const minX = Math.floor(box.mesh.minimum[0] / CELL_SIZE), maxX = Math.floor(box.mesh.maximum[0] / CELL_SIZE);
+  const minZ = Math.floor(box.mesh.minimum[2] / CELL_SIZE), maxZ = Math.floor(box.mesh.maximum[2] / CELL_SIZE);
+  const keys: string[] = [];
+  for (let x = minX; x <= maxX; x++) for (let z = minZ; z <= maxZ; z++) keys.push(`${x},${z}`);
+  return keys;
+}
+
+/** Segment clipped to the cell enlarged by the sweep radius. */
+function segmentCrossesCell(start: Point, end: Point, x: number, z: number, radius: number): boolean {
+  const minX = x * CELL_SIZE - radius, maxX = (x + 1) * CELL_SIZE + radius;
+  const minZ = z * CELL_SIZE - radius, maxZ = (z + 1) * CELL_SIZE + radius;
+  const dx = end.x - start.x, dz = end.z - start.z;
+  let entry = 0, exit = 1;
+  if (dx === 0) {
+    if (start.x < minX || start.x > maxX) return false;
+  } else {
+    const first = (minX - start.x) / dx, second = (maxX - start.x) / dx;
+    entry = Math.max(entry, Math.min(first, second));
+    exit = Math.min(exit, Math.max(first, second));
+    if (entry > exit) return false;
+  }
+  if (dz === 0) return start.z >= minZ && start.z <= maxZ;
+  const first = (minZ - start.z) / dz, second = (maxZ - start.z) / dz;
+  return Math.max(entry, Math.min(first, second)) <= Math.min(exit, Math.max(first, second));
 }
 
 // Scene meshes use their render faces. Actor/contact OBBs retain source dimensions.

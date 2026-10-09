@@ -1,6 +1,6 @@
 import type {MsgPlayerInput, MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot} from '../../../shared/protocols';
 import {originalMovementParameters, commitBattleMovement, battleMovementPose, type BattleMovementState} from './movement';
-import {createBattleMovementCollider, predictControlledBattleMovement} from './dynamic-movement';
+import {createBattleMovementCollider, createBattleMovementPredictor, predictControlledBattleMovement} from './dynamic-movement';
 import type {RoleMovementMathInput} from './roles/movement-math';
 import {createOriginalBotNavigation} from './cpu/original-navigation';
 import type {RoleAttributeState} from './roles/attribute-state';
@@ -20,7 +20,7 @@ import type {AttackBoostState} from './items/attack-drink';
 import {isRoleControllerMovementAllowed, type RoleStaticCollider} from './roles/movement-controller';
 import type {recomputeQualifiedRoleArmor} from './roles/recompute-armor';
 import {createRoleObbFromPose} from './roles/movement-obb-prediction';
-import {intersectsOriginalObb} from './roles/obb-intersection';
+import {intersectsOriginalObb, type RoleObb} from './roles/obb-intersection';
 import {constrainTankPose, tankObstacles} from '../../../shared/movement/tank-collision';
 import {defaultMovementParameters} from './movement-parameters';
 import {advanceTankVertical, initialTankVerticalState,
@@ -70,7 +70,7 @@ export function advanceActors<Player extends CombatActor>(room: {
   input(playerId: string, input: MsgPlayerInput, autonomous: boolean): MsgRoomEvent[];
   allocateBulletId(): string;
   allocateShotId(): string;
-  staticObjects?(player: Player): Iterable<RoleStaticCollider>;
+  staticObjects?(player: Player, proposed: RoleObb): Iterable<RoleStaticCollider>;
   afterMovement?(player: Player): void;
   beforeFire?(player: Player): boolean;
   fired?(player: Player, shotId: string): void;
@@ -129,10 +129,7 @@ export function advanceActors<Player extends CombatActor>(room: {
         movement: parameters ? {
           ...parameters,
           navigation: createOriginalBotNavigation(room.battlefield),
-          predict: (input: MsgPlayerInput) => {
-            const state = predictControlledBattleMovement(player, input, room.battlefield, room.players.values(), dt)!;
-            return {...state.pose.position, yaw: state.yaw, bodyYaw: state.bodyYaw};
-          },
+          predict: createBattleMovementPredictor(player, room.battlefield, room.players.values(), dt),
         } : undefined}, [...room.players.values()], room.objectives,
         room.battlefield, room.mode, now, dt, {mode: room.mode, team: player.team,
           initialLives: room.map.tankLimit, lives: room.teamLives}, room), !!player.autopilot));
@@ -144,18 +141,19 @@ export function advanceActors<Player extends CombatActor>(room: {
       const command = roleMovementCommand(input.move, input.turn);
       if (command !== 0 && isBattleMovementAllowed(player, command)) {
         const peers = [...room.players.values()].filter(other => other.alive).map(createBattleMovementCollider);
-        isRoleControllerMovementAllowed(createBattleMovementCollider(player), command,
-          peers, handlers.staticObjects?.(player) ?? [], true, () => {});
+        const role = createBattleMovementCollider(player);
+        isRoleControllerMovementAllowed(role, command,
+          peers, handlers.staticObjects?.(player, role.predictObb(command, Math.fround(.3))) ?? [], true, () => {});
       } else {
         const obb = createRoleObbFromPose(battleMovementPose(player));
-        for (const object of handlers.staticObjects?.(player) ?? []) {
+        for (const object of handlers.staticObjects?.(player, obb) ?? []) {
           if (intersectsOriginalObb(obb, object.obb)) object.notify(100);
         }
       }
     } else {
       const movementElapsed = roleMovementElapsed(dt);
       const original = predictControlledBattleMovement(player, input, room.battlefield, room.players.values(), dt,
-        handlers.staticObjects?.(player));
+        handlers.staticObjects ? proposed => handlers.staticObjects!(player, proposed) : undefined);
       if (original) {
         commitBattleMovement(player, original);
         player.movementCommand = original.command;

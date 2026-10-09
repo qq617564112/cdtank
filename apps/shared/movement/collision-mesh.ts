@@ -175,9 +175,16 @@ function crossesCell(start: Vertex, end: Vertex, x: number, z: number, radius: n
   return true;
 }
 
-function inside(point: Vertex, triangle: IndexedTriangle): boolean {
+function inside(x: number, y: number, z: number, triangle: IndexedTriangle): boolean {
   const {vertices, normal} = triangle;
-  return vertices.every((a, index) => dot(cross(subtract(vertices[(index + 1) % 3], a), subtract(point, a)), normal) >= -EPSILON);
+  for (let index = 0; index < 3; index++) {
+    const a = vertices[index], b = vertices[(index + 1) % 3];
+    const ex = b[0] - a[0], ey = b[1] - a[1], ez = b[2] - a[2];
+    const px = x - a[0], py = y - a[1], pz = z - a[2];
+    const cx = ey * pz - ez * py, cy = ez * px - ex * pz, cz = ex * py - ey * px;
+    if (!(cx * normal[0] + cy * normal[1] + cz * normal[2] >= -EPSILON)) return false;
+  }
+  return true;
 }
 
 /** Sweep a sphere against both face sides, finite edge cylinders and vertex spheres. */
@@ -188,13 +195,17 @@ function sweepTriangle(start: Vertex, delta: Vertex, triangle: IndexedTriangle, 
     if (fraction >= 0 && fraction <= 1 && (closest === undefined || fraction < closest)) closest = fraction;
   };
   const offset = subtract(start, vertices[0]), distance = dot(offset, normal), speed = dot(delta, normal);
-  const projected = start.map((value, axis) => value - distance * normal[axis]);
-  if (Math.abs(distance) <= radius + EPSILON && inside(projected, triangle)) accept(0);
+  if (Math.abs(distance) <= radius + EPSILON) {
+    if (inside(start[0] - distance * normal[0], start[1] - distance * normal[1],
+      start[2] - distance * normal[2], triangle)) accept(0);
+  }
   if (Math.abs(speed) > EPSILON) {
     for (const side of [-radius, radius]) {
       const fraction = (side - distance) / speed;
-      const point = start.map((value, axis) => value + delta[axis] * fraction - normal[axis] * side);
-      if (inside(point, triangle)) accept(fraction);
+      if (fraction < 0 || fraction > 1) continue;
+      if (inside(start[0] + delta[0] * fraction - normal[0] * side,
+        start[1] + delta[1] * fraction - normal[1] * side,
+        start[2] + delta[2] * fraction - normal[2] * side, triangle)) accept(fraction);
     }
   }
   for (let index = 0; index < 3; index++) {

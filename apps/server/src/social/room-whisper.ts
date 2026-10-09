@@ -1,7 +1,7 @@
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 
 /** Rebuilt cross-account delivery; room/round belongs to the sender, not the target. */
 export function registerRoomWhisperApi(server: WsServer<ServiceType>, accounts: AccountStore,

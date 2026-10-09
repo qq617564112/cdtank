@@ -2,7 +2,7 @@ import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {CombatCatalog} from '../../../shared/combat/catalog';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 
 export function registerStackItemSaleApi(server: WsServer<ServiceType>, accounts: AccountStore,
   world: World, catalog: CombatCatalog, identities: ReadonlyMap<string, string>,
@@ -11,13 +11,13 @@ export function registerStackItemSaleApi(server: WsServer<ServiceType>, accounts
     const accountId = identities.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessions.get(call.conn.id);
-    if (call.req.operation === 'SELL' && session && !world.canConfigureInventory(session.playerId)) {
+    if (call.req.operation === 'SELL' && session && !(await world.canConfigureInventory(session.playerId))) {
       return call.error('请在准备阶段出售物品', {code: 'STACK_ITEM_SALE_REJECTED'});
     }
     try {
       const result = accounts.stackItemSale(accountId, call.req, catalog);
       if (session && result.sold && !result.replayed) {
-        world.bindInventory(session.playerId, accounts.inventory(accountId), true);
+        await world.bindInventory(session.playerId, accounts.inventory(accountId), true);
         broadcast(session.roomId);
       }
       await call.succ(result);

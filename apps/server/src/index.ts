@@ -14,7 +14,7 @@ import {roomTransport, registerRoomMessages} from './rooms/transport';
 import {startWorldTicks} from './runtime/tick';
 import {WsServer} from 'tsrpc';
 import {serviceProto, type ServiceType} from '../../shared/protocols/serviceProto';
-import {World} from './world';
+import {RoomProcesses} from './runtime/room-processes';
 import {AccountStore} from './account-store';
 import {registerAccountApis} from './accounts/api';
 import {registerRoomApis} from './rooms/api';
@@ -42,7 +42,7 @@ const history = accountMatchHistory(accounts, accountByConnection,
   (accountId, records) => world.publishInventoryGrants(accountId, records));
 const PORT = runtime.port;
 const TICK_RATE = runtime.tickRate;
-const world: World = new World(Date.now, {
+const world = new RoomProcesses(TICK_RATE, {
   minPlayers: runtime.minPlayers,
   timeLimitSeconds: runtime.timeLimitSeconds,
   resolveAccount: connectionId => accountByConnection.get(connectionId),
@@ -68,9 +68,19 @@ const {broadcastRoomState, broadcastEvent} = transport;
 const {ownedTank, roomTankId, bindAccountState} = accountBattleBinding(
   accounts, world, accountByConnection);
 
-const reconnections = new RoomReconnections(world, accountByConnection, sessionByConnection, session => {
-  for (const event of world.leave(session.playerId)) broadcastEvent(event);
+const reconnections = new RoomReconnections(world, accountByConnection, sessionByConnection, async session => {
+  for (const event of await world.leave(session.playerId)) broadcastEvent(event);
   broadcastRoomState(session.roomId);
+});
+world.onRoomFailure((roomId, error) => {
+  for (const [connectionId, session] of sessionByConnection) {
+    if (session.roomId !== roomId) continue;
+    broadcastEvent({roomId, type: 'kicked', message: '房间进程已停止，请重新创建或加入房间',
+      playerId: '', targetId: session.playerId, value: 0, x: 0, y: 0, z: 0});
+    reconnections.releasePlayer(session.playerId);
+    sessionByConnection.delete(connectionId);
+  }
+  console.error('Room simulation stopped', roomId, error);
 });
 const trades = registerTradeApi(server, accounts, accountByConnection, sessionByConnection);
 registerAccountApis(server, accounts, world, accountByConnection, sessionByConnection, broadcastRoomState,
@@ -108,9 +118,19 @@ registerFamilyApi(server, accounts, accountByConnection);
 registerFamilyChatApi(server, accounts, world, accountByConnection, sessionByConnection);
 registerLobbyPresenceApi(server, accountByConnection, sessionByConnection,
   accountId => accounts.displayName(accountId), accountId => accounts.currentTitle(accountId));
-startWorldTicks(world, TICK_RATE, transport, () => world.publishReceipts(history.flush()));
+const retryTimer = startWorldTicks(world, TICK_RATE, transport, () => world.publishReceipts(history.flush()));
+const shutdown = (): void => {
+  clearInterval(retryTimer);
+  world.close();
+};
+process.on('exit', shutdown);
+for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => {
+  shutdown();
+  process.exit(0);
+});
 
 server.start().then(() => hostWeb(server, runtime.webRoot)).catch((error: unknown) => {
   console.error(error);
+  shutdown();
   process.exitCode = 1;
 });

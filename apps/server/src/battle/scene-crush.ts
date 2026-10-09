@@ -2,6 +2,14 @@ import type {MsgRoomEvent, SceneCrushSnapshot} from '../../../shared/protocols';
 import type {Battlefield, Point} from '../battlefield';
 import {getSceneCrushes} from '../scene-objects';
 import type {RoleStaticCollider} from './roles/movement-controller';
+import type {RoleObb} from './roles/obb-intersection';
+import {SceneContactIndex} from './scene-contact-index';
+
+interface CrushContact {
+  state: SceneCrushSnapshot;
+  obb: RoleObb;
+}
+const contacts = new WeakMap<readonly SceneCrushSnapshot[], SceneContactIndex<CrushContact>>();
 
 interface CrushContactRoom {
   roomId: string;
@@ -53,18 +61,26 @@ export function acceptSceneCrush(room: {roomId: string; phase: string; map: {map
 
 /** Original4272d7 appends Crush after Plant and hides without rejecting movement. */
 export function sceneCrushContactColliders(room: CrushContactRoom, playerId: string,
-  events: MsgRoomEvent[]): RoleStaticCollider[] {
+  events: MsgRoomEvent[], proposed: RoleObb): RoleStaticCollider[] {
   if (room.phase !== 'PLAYING' || !room.sceneCrushes?.length) return [];
-  const sources = getSceneCrushes(room.map.mapId);
-  return room.sceneCrushes.filter(state => state.enabled && !state.hidden).flatMap(state => {
-    const source = sources.find(source => source.id === state.sourcePlacementId);
-    if (!source) return [];
-    return [{
-      obb: {matrix: source.matrix,
-        dimensions: [source.dimensions[0], source.dimensions[1], source.dimensions[2]]},
+  let index = contacts.get(room.sceneCrushes);
+  if (!index) {
+    const sources = new Map(getSceneCrushes(room.map.mapId).map(source => [source.id, source]));
+    const entries: CrushContact[] = [];
+    for (const state of room.sceneCrushes) {
+      const source = sources.get(state.sourcePlacementId);
+      if (source) entries.push({state, obb: {matrix: source.matrix,
+        dimensions: [source.dimensions[0], source.dimensions[1], source.dimensions[2]]}});
+    }
+    index = new SceneContactIndex(entries);
+    contacts.set(room.sceneCrushes, index);
+  }
+  return index.nearby(proposed).filter(({state}) => state.enabled && !state.hidden).map(({state, obb}) => {
+    return {
+      obb,
       notify: () => {
         acceptSceneCrush(room, playerId, state, events);
       },
-    }];
+    };
   });
 }

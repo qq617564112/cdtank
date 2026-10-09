@@ -159,6 +159,9 @@ export class World {
 
   constructor(private readonly now: () => number = Date.now,
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
+                allocateRoomId?: () => string;
+                allocatePlayerId?: () => string;
+                onInventoryRecord?: (accountId: string, record: InventoryWireRecord) => void;
                 consumeItem?: (playerId: string, instanceId: number, expectedOwned: number, itemTableId: number) => boolean;
                 acquireOwnedItem?: (accountId: string, context: GroundItemAcquireContext) =>
                   InventoryWireRecord | undefined;
@@ -220,7 +223,11 @@ export class World {
 
   private insertPlayer(room: RoomState, clientId: string, name: string, tankId: number): JoinResult {
     return insertRoomPlayer(this.rooms, room, clientId, name, tankId,
-      () => `P${this.nextPlayerId++}`, id => {this.leave(id);}, DEFAULT_INPUT);
+      () => {
+        const localId = this.nextPlayerId++;
+        return this.options.allocatePlayerId?.() ?? `P${localId}`;
+      },
+      id => {this.leave(id);}, DEFAULT_INPUT);
   }
 
   manageCpu(playerId: string, round: number, operation: ReqCpu['operation'], tankId = 1,
@@ -711,13 +718,19 @@ export class World {
     return [...rooms];
   }
 
-  private syncGroundItemRecord(accountId: string, record: InventoryWireRecord): void {
+  private syncGroundItemRecord(accountId: string, record: InventoryWireRecord, publish = true): void {
     for (const playerId of this.accountPlayerIds(accountId)) {
       const player = this.findPlayer(playerId)?.player;
       if (!player) continue;
       reconcileGroundItemInventory(player, record, this.groundItemCallbacks);
       this.pendingInventoryChanged.add(playerId);
     }
+    if (publish) this.options.onInventoryRecord?.(accountId, record);
+  }
+
+  /** Apply a committed inventory change from another room of the same account. */
+  synchronizeInventoryRecord(accountId: string, record: InventoryWireRecord): void {
+    this.syncGroundItemRecord(accountId, record, false);
   }
 
   /**
@@ -814,6 +827,7 @@ export class World {
       const other = this.findPlayer(otherId)?.player;
       if (other) reconcileGroundItemInventory(other, record, this.groundItemCallbacks);
     }
+    this.options.onInventoryRecord?.(accountId, record);
   }
 
   useAction(playerId: string, message: MsgPlayerAction): {events: WorldEvent[]; affectedRoomIds: string[]} | undefined {
@@ -896,7 +910,8 @@ export class World {
   }
 
   private createRoom(mode: number, mapId?: number, minPlayers?: number, maxPlayers?: number, friendlyFire = false): RoomState {
-    const room = createWaitingRoom(mode, mapId, () => `R${this.nextRoomId++}`, minPlayers, maxPlayers, friendlyFire);
+    const room = createWaitingRoom(mode, mapId,
+      () => this.options.allocateRoomId?.() ?? `R${this.nextRoomId++}`, minPlayers, maxPlayers, friendlyFire);
     this.rooms.set(room.roomId, room);
     return room;
   }
@@ -1062,9 +1077,9 @@ export class World {
       input: (id, input, autonomous) => this.updateInput(id, input, autonomous),
       allocateBulletId: () => `B${this.nextBulletId++}`,
       allocateShotId: () => `S${this.nextShotId++}`,
-      staticObjects: player => [
-        ...plantContactColliders(room, player.id, events, now),
-        ...sceneCrushContactColliders(room, player.id, events),
+      staticObjects: (player, proposed) => [
+        ...plantContactColliders(room, player.id, events, proposed),
+        ...sceneCrushContactColliders(room, player.id, events, proposed),
       ],
       afterMovement: player => player.petBattle?.motion(now, events),
       beforeFire: player => {

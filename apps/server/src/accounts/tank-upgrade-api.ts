@@ -1,7 +1,7 @@
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 import {TankUpgradeError} from './tank-upgrade';
 
 interface TankUpgradeSession {
@@ -21,15 +21,15 @@ export function registerTankUpgradeApi(
     const accountId = accountByConnection.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessionByConnection.get(call.conn.id);
-    if (call.req.operation === 'UPGRADE' && session && !world.canConfigureInventory(session.playerId)) {
+    if (call.req.operation === 'UPGRADE' && session && !(await world.canConfigureInventory(session.playerId))) {
       return call.error('请在准备阶段改装战车', {code: 'UPGRADE_REJECTED'});
     }
     try {
       const result = accounts.tankUpgrade(accountId, call.req);
       if (session && call.req.operation === 'UPGRADE' && !result.replayed) {
-        world.bindInventory(session.playerId, accounts.inventory(accountId), true);
-        world.bindRoleSources(session.playerId, accounts.selectedRoleSources(accountId));
-        world.bindEquipmentProfile(session.playerId, accounts.roleProfile(accountId));
+        await world.bindInventory(session.playerId, accounts.inventory(accountId), true);
+        await world.bindRoleSources(session.playerId, accounts.selectedRoleSources(accountId));
+        await world.bindEquipmentProfile(session.playerId, accounts.roleProfile(accountId));
         broadcastRoomState(session.roomId);
       }
       await call.succ(result);

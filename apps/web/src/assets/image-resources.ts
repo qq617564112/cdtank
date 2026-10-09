@@ -21,10 +21,10 @@ export interface ImageRegion {
 }
 
 /** UI and Canvas share the complete decoded sheet and select a source rectangle. */
-export function imageRegion(url: string): ImageRegion | undefined {
+export function imageRegion(url: string, applyFilter = true): ImageRegion | undefined {
   const sprite = spriteImage(url);
   const image = readyImages.get(imageResourceKey(sprite?.atlas ?? url));
-  if (image && sprite?.filter) {
+  if (image && sprite?.filter && applyFilter) {
     const key = imageResourceKey(url);
     let region = filteredRegions.get(key);
     if (!region) {

@@ -1,0 +1,880 @@
+[data-source-asset="ui/regions/26/74.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/59/74.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/26/74.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/59/74.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0.00000% 0.00000% 0.00000% 0.00000%;
+  box-sizing: border-box;
+  pointer-events: none;
+  background: #3b6ba2;
+  border-radius: 0.00000cqw;
+}
+
+[data-source-asset="ui/regions/26/74.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/59/74.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/26/75.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/59/75.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/26/75.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/59/75.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0.00000% 33.33333% 0.00000% 33.33333%;
+  box-sizing: border-box;
+  pointer-events: none;
+  background: #7772c7;
+  border-radius: 0.00000cqw;
+}
+
+[data-source-asset="ui/regions/26/75.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/59/75.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/17.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/17.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/17.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/17.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0.00000% 0.00000% 0.00000% 0.00000%;
+  box-sizing: border-box;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #dbf6b7 0%, #dbf6b7 20%, #fffbd0 20%, #fffbd0 80%, #dbf6b7 80%, #dbf6b7 100%);
+  border-radius: 0.00000cqw;
+}
+
+[data-source-asset="ui/regions/27/17.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/17.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/1.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/1.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/1.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/1.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0.649351% 2.702703% 3.896104% 0.675676%;
+  box-sizing: border-box;
+  border: 0.675676cqw solid #09172b;
+  border-radius: 2.702703cqw;
+  background: #ffb97f;
+  box-shadow: inset 1.013514cqw 1.216216cqw 0.540541cqw #fff, inset -1.351351cqw -1.486486cqw 0.540541cqw #e66c22, 1.351351cqw 2.027027cqw 0.337838cqw #082c55;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/1.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/1.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/2.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/2.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/2.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/2.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 4.117647% 6.153846% 4.117647% 5.384615%;
+  box-sizing: border-box;
+  border: 0.769231cqw solid #09172b;
+  border-radius: 3.846154cqw;
+  background: #ffe086;
+  box-shadow: inset 1.153846cqw 1.384615cqw 0.615385cqw #fff, inset -1.538462cqw -1.692308cqw 0.615385cqw #c29426, 1.538462cqw 2.307692cqw 0.384615cqw #4d3e15, 0 0 3.076923cqw 1.538462cqw #fff6ae;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/2.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/2.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/3.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/3.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/3.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/3.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 8.235294% 10.000000% 8.823529% 10.000000%;
+  box-sizing: border-box;
+  border: 0.769231cqw solid #09172b;
+  border-radius: 3.076923cqw;
+  background: #ff9f89;
+  box-shadow: inset 1.153846cqw 1.384615cqw 0.615385cqw #fff, inset -1.538462cqw -1.692308cqw 0.615385cqw #d95332, 1.538462cqw 2.307692cqw 0.384615cqw #000a23;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/3.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/3.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/4.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/4.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/4.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/4.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 5.882353% 6.923077% 4.705882% 7.692308%;
+  box-sizing: border-box;
+  border: 0.769231cqw solid #09172b;
+  border-radius: 3.076923cqw;
+  background: #ffc68c;
+  box-shadow: inset 1.153846cqw 1.384615cqw 0.615385cqw #fff, inset -1.538462cqw -1.692308cqw 0.615385cqw #c47732, 1.538462cqw 2.307692cqw 0.384615cqw #063644;
+  pointer-events: none;
+}
+
+[data-source-asset="ui/regions/27/4.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/4.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/118.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/118.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/118.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/118.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 5.00000% 13.10000%, curve to 13.19000% 9.05000% with 5.00000% 5.00000%, line to 87.81000% 45.95000%, curve to 87.81000% 54.05000% with 96.00000% 50.00000%, line to 13.19000% 90.95000%, curve to 5.00000% 86.90000% with 5.00000% 95.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/118.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/118.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-144.86521deg, rgba(255, 255, 255, 0.53566) 37.32244%, rgba(255, 255, 255, 0) 41.19227%), linear-gradient(-35.13479deg, rgba(0, 0, 0, 0.94260) 37.32244%, rgba(0, 0, 0, 0) 41.19227%), linear-gradient(90.00000deg, rgba(255, 255, 255, 0.80355) 9.42308%, rgba(255, 255, 255, 0) 16.15385%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #999999 84%, #fff) 0%, #999999 58%, color-mix(in srgb, #999999 78%, #000) 100%);
+  clip-path: shape(from 9.42308% 18.79025%, curve to 17.31221% 14.88903% with 9.42308% 10.98781%, line to 80.42527% 46.09878%, curve to 80.42527% 53.90122% with 88.31440% 50.00000%, line to 17.31221% 85.11097%, curve to 9.42308% 81.20975% with 9.42308% 89.01219%, close);
+}
+
+[data-source-asset="ui/regions/27/118.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/118.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/119.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/119.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/119.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/119.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 5.00000% 13.10000%, curve to 13.19000% 9.05000% with 5.00000% 5.00000%, line to 87.81000% 45.95000%, curve to 87.81000% 54.05000% with 96.00000% 50.00000%, line to 13.19000% 90.95000%, curve to 5.00000% 86.90000% with 5.00000% 95.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/119.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/119.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-144.86521deg, rgba(255, 255, 255, 0.53566) 37.32244%, rgba(255, 255, 255, 0) 41.19227%), linear-gradient(-35.13479deg, rgba(0, 0, 0, 0.94260) 37.32244%, rgba(0, 0, 0, 0) 41.19227%), linear-gradient(90.00000deg, rgba(255, 255, 255, 0.80355) 9.42308%, rgba(255, 255, 255, 0) 16.15385%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #effb3d 84%, #fff) 0%, #effb3d 58%, color-mix(in srgb, #effb3d 78%, #000) 100%);
+  clip-path: shape(from 9.42308% 18.79025%, curve to 17.31221% 14.88903% with 9.42308% 10.98781%, line to 80.42527% 46.09878%, curve to 80.42527% 53.90122% with 88.31440% 50.00000%, line to 17.31221% 85.11097%, curve to 9.42308% 81.20975% with 9.42308% 89.01219%, close);
+}
+
+[data-source-asset="ui/regions/27/119.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/119.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/120.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/120.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/120.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/120.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 95.00000% 13.10000%, curve to 86.81000% 9.05000% with 95.00000% 5.00000%, line to 12.19000% 45.95000%, curve to 12.19000% 54.05000% with 4.00000% 50.00000%, line to 86.81000% 90.95000%, curve to 95.00000% 86.90000% with 95.00000% 95.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/120.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/120.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(144.86521deg, rgba(255, 255, 255, 0.94260) 37.32244%, rgba(255, 255, 255, 0) 41.19227%), linear-gradient(35.13479deg, rgba(0, 0, 0, 0.53566) 37.32244%, rgba(0, 0, 0, 0) 41.19227%), linear-gradient(-90.00000deg, rgba(0, 0, 0, 0.80355) 9.42308%, rgba(0, 0, 0, 0) 16.15385%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #59f4ec 84%, #fff) 0%, #59f4ec 58%, color-mix(in srgb, #59f4ec 78%, #000) 100%);
+  clip-path: shape(from 90.57692% 18.79025%, curve to 82.68779% 14.88903% with 90.57692% 10.98781%, line to 19.57473% 46.09878%, curve to 19.57473% 53.90122% with 11.68560% 50.00000%, line to 82.68779% 85.11097%, curve to 90.57692% 81.20975% with 90.57692% 89.01219%, close);
+}
+
+[data-source-asset="ui/regions/27/120.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/120.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/121.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/121.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/121.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/121.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 95.00000% 13.10000%, curve to 86.81000% 9.05000% with 95.00000% 5.00000%, line to 12.19000% 45.95000%, curve to 12.19000% 54.05000% with 4.00000% 50.00000%, line to 86.81000% 90.95000%, curve to 95.00000% 86.90000% with 95.00000% 95.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/121.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/121.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(144.86521deg, rgba(255, 255, 255, 0.94260) 37.32244%, rgba(255, 255, 255, 0) 41.19227%), linear-gradient(35.13479deg, rgba(0, 0, 0, 0.53566) 37.32244%, rgba(0, 0, 0, 0) 41.19227%), linear-gradient(-90.00000deg, rgba(0, 0, 0, 0.80355) 9.42308%, rgba(0, 0, 0, 0) 16.15385%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #999999 84%, #fff) 0%, #999999 58%, color-mix(in srgb, #999999 78%, #000) 100%);
+  clip-path: shape(from 90.57692% 18.79025%, curve to 82.68779% 14.88903% with 90.57692% 10.98781%, line to 19.57473% 46.09878%, curve to 19.57473% 53.90122% with 11.68560% 50.00000%, line to 82.68779% 85.11097%, curve to 90.57692% 81.20975% with 90.57692% 89.01219%, close);
+}
+
+[data-source-asset="ui/regions/27/121.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/121.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/122.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/122.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/122.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/122.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 95.00000% 13.10000%, curve to 86.81000% 9.05000% with 95.00000% 5.00000%, line to 12.19000% 45.95000%, curve to 12.19000% 54.05000% with 4.00000% 50.00000%, line to 86.81000% 90.95000%, curve to 95.00000% 86.90000% with 95.00000% 95.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/122.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/122.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(144.86521deg, rgba(255, 255, 255, 0.94260) 37.32244%, rgba(255, 255, 255, 0) 41.19227%), linear-gradient(35.13479deg, rgba(0, 0, 0, 0.53566) 37.32244%, rgba(0, 0, 0, 0) 41.19227%), linear-gradient(-90.00000deg, rgba(0, 0, 0, 0.80355) 9.42308%, rgba(0, 0, 0, 0) 16.15385%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #effb3d 84%, #fff) 0%, #effb3d 58%, color-mix(in srgb, #effb3d 78%, #000) 100%);
+  clip-path: shape(from 90.57692% 18.79025%, curve to 82.68779% 14.88903% with 90.57692% 10.98781%, line to 19.57473% 46.09878%, curve to 19.57473% 53.90122% with 11.68560% 50.00000%, line to 82.68779% 85.11097%, curve to 90.57692% 81.20975% with 90.57692% 89.01219%, close);
+}
+
+[data-source-asset="ui/regions/27/122.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/122.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/123.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/123.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/123.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/123.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 91.53846% 17.08919%, curve to 83.97846% 13.47703% with 91.53846% 9.86486%, line to 15.09846% 46.38784%, curve to 15.09846% 53.61216% with 7.53846% 50.00000%, line to 83.97846% 86.52297%, curve to 91.53846% 82.91081% with 91.53846% 90.13514%, close);
+}
+
+[data-source-asset="ui/regions/27/123.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/123.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(145.78645deg, rgba(255, 255, 255, 0.94116) 38.81475%, rgba(255, 255, 255, 0) 42.68503%), linear-gradient(34.21355deg, rgba(0, 0, 0, 0.54357) 38.81475%, rgba(0, 0, 0, 0) 42.68503%), linear-gradient(-90.00000deg, rgba(0, 0, 0, 0.80355) 12.88462%, rgba(0, 0, 0, 0) 19.61538%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #ff7b43 84%, #fff) 0%, #ff7b43 58%, color-mix(in srgb, #ff7b43 78%, #000) 100%);
+  clip-path: shape(from 87.11538% 22.58939%, curve to 79.94433% 19.16306% with 87.11538% 15.73674%, line to 22.57586% 46.57367%, curve to 22.57586% 53.42633% with 15.40480% 50.00000%, line to 79.94433% 80.83694%, curve to 87.11538% 77.41061% with 87.11538% 84.26326%, close);
+}
+
+[data-source-asset="ui/regions/27/123.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/123.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/124.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/124.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/124.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/124.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 5.00000% 13.10000%, curve to 13.19000% 9.05000% with 5.00000% 5.00000%, line to 87.81000% 45.95000%, curve to 87.81000% 54.05000% with 96.00000% 50.00000%, line to 13.19000% 90.95000%, curve to 5.00000% 86.90000% with 5.00000% 95.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/124.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/124.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-144.86521deg, rgba(255, 255, 255, 0.53566) 37.32244%, rgba(255, 255, 255, 0) 41.19227%), linear-gradient(-35.13479deg, rgba(0, 0, 0, 0.94260) 37.32244%, rgba(0, 0, 0, 0) 41.19227%), linear-gradient(90.00000deg, rgba(255, 255, 255, 0.80355) 9.42308%, rgba(255, 255, 255, 0) 16.15385%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #59f4ec 84%, #fff) 0%, #59f4ec 58%, color-mix(in srgb, #59f4ec 78%, #000) 100%);
+  clip-path: shape(from 9.42308% 18.79025%, curve to 17.31221% 14.88903% with 9.42308% 10.98781%, line to 80.42527% 46.09878%, curve to 80.42527% 53.90122% with 88.31440% 50.00000%, line to 17.31221% 85.11097%, curve to 9.42308% 81.20975% with 9.42308% 89.01219%, close);
+}
+
+[data-source-asset="ui/regions/27/124.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/124.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/125.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/125.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/125.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/125.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 8.46154% 17.08919%, curve to 16.02154% 13.47703% with 8.46154% 9.86486%, line to 84.90154% 46.38784%, curve to 84.90154% 53.61216% with 92.46154% 50.00000%, line to 16.02154% 86.52297%, curve to 8.46154% 82.91081% with 8.46154% 90.13514%, close);
+}
+
+[data-source-asset="ui/regions/27/125.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/125.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-145.78645deg, rgba(255, 255, 255, 0.54357) 38.81475%, rgba(255, 255, 255, 0) 42.68503%), linear-gradient(-34.21355deg, rgba(0, 0, 0, 0.94116) 38.81475%, rgba(0, 0, 0, 0) 42.68503%), linear-gradient(90.00000deg, rgba(255, 255, 255, 0.80355) 12.88462%, rgba(255, 255, 255, 0) 19.61538%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #ff7b43 84%, #fff) 0%, #ff7b43 58%, color-mix(in srgb, #ff7b43 78%, #000) 100%);
+  clip-path: shape(from 12.88462% 22.58939%, curve to 20.05567% 19.16306% with 12.88462% 15.73674%, line to 77.42414% 46.57367%, curve to 77.42414% 53.42633% with 84.59520% 50.00000%, line to 20.05567% 80.83694%, curve to 12.88462% 77.41061% with 12.88462% 84.26326%, close);
+}
+
+[data-source-asset="ui/regions/27/125.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/125.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/136.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/136.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/136.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/136.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 13.27679% 13.92000%, curve to 16.73214% 6.00000% with 9.82143% 6.00000%, line to 79.69643% 6.00000%, curve to 83.15179% 13.92000% with 86.60714% 6.00000%, line to 51.66964% 86.08000%, curve to 44.75893% 86.08000% with 48.21429% 94.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/136.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/136.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-180.00000deg, rgba(255, 255, 255, 0.80355) 10.25926%, rgba(255, 255, 255, 0) 16.74074%), linear-gradient(-65.65605deg, rgba(0, 0, 0, 0.91785) 41.01656%, rgba(0, 0, 0, 0) 45.79273%), linear-gradient(65.65605deg, rgba(255, 255, 255, 0.62638) 38.52998%, rgba(255, 255, 255, 0) 43.30616%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #ff7b43 84%, #fff) 0%, #ff7b43 58%, color-mix(in srgb, #ff7b43 78%, #000) 100%);
+  clip-path: shape(from 19.39029% 17.60007%, curve to 22.59296% 10.25926% with 16.18763% 10.25926%, line to 73.83561% 10.25926%, curve to 77.03828% 17.60007% with 80.24095% 10.25926%, line to 51.41695% 76.32653%, curve to 45.01162% 76.32653% with 48.21429% 83.66734%, close);
+}
+
+[data-source-asset="ui/regions/27/136.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/136.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/137.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/137.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/137.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/137.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 13.27679% 13.92000%, curve to 16.73214% 6.00000% with 9.82143% 6.00000%, line to 79.69643% 6.00000%, curve to 83.15179% 13.92000% with 86.60714% 6.00000%, line to 51.66964% 86.08000%, curve to 44.75893% 86.08000% with 48.21429% 94.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/137.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/137.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-180.00000deg, rgba(255, 255, 255, 0.80355) 10.25926%, rgba(255, 255, 255, 0) 16.74074%), linear-gradient(-65.65605deg, rgba(0, 0, 0, 0.91785) 41.01656%, rgba(0, 0, 0, 0) 45.79273%), linear-gradient(65.65605deg, rgba(255, 255, 255, 0.62638) 38.52998%, rgba(255, 255, 255, 0) 43.30616%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #effb3d 84%, #fff) 0%, #effb3d 58%, color-mix(in srgb, #effb3d 78%, #000) 100%);
+  clip-path: shape(from 19.39029% 17.60007%, curve to 22.59296% 10.25926% with 16.18763% 10.25926%, line to 73.83561% 10.25926%, curve to 77.03828% 17.60007% with 80.24095% 10.25926%, line to 51.41695% 76.32653%, curve to 45.01162% 76.32653% with 48.21429% 83.66734%, close);
+}
+
+[data-source-asset="ui/regions/27/137.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/137.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/138.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/138.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/138.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/138.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 13.27679% 13.92000%, curve to 16.73214% 6.00000% with 9.82143% 6.00000%, line to 79.69643% 6.00000%, curve to 83.15179% 13.92000% with 86.60714% 6.00000%, line to 51.66964% 86.08000%, curve to 44.75893% 86.08000% with 48.21429% 94.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/138.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/138.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-180.00000deg, rgba(255, 255, 255, 0.80355) 10.25926%, rgba(255, 255, 255, 0) 16.74074%), linear-gradient(-65.65605deg, rgba(0, 0, 0, 0.91785) 41.01656%, rgba(0, 0, 0, 0) 45.79273%), linear-gradient(65.65605deg, rgba(255, 255, 255, 0.62638) 38.52998%, rgba(255, 255, 255, 0) 43.30616%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #42a9f5 84%, #fff) 0%, #42a9f5 58%, color-mix(in srgb, #42a9f5 78%, #000) 100%);
+  clip-path: shape(from 19.39029% 17.60007%, curve to 22.59296% 10.25926% with 16.18763% 10.25926%, line to 73.83561% 10.25926%, curve to 77.03828% 17.60007% with 80.24095% 10.25926%, line to 51.41695% 76.32653%, curve to 45.01162% 76.32653% with 48.21429% 83.66734%, close);
+}
+
+[data-source-asset="ui/regions/27/138.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/138.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/142.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/142.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/142.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/142.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 10.48179% 86.08000%, curve to 14.21357% 94.00000% with 6.75000% 94.00000%, line to 82.21500% 94.00000%, curve to 85.94679% 86.08000% with 89.67857% 94.00000%, line to 51.94607% 13.92000%, curve to 44.48250% 13.92000% with 48.21429% 6.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/142.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/142.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(0.00000deg, rgba(0, 0, 0, 0.80355) 10.42308%, rgba(0, 0, 0, 0) 17.15385%), linear-gradient(-116.90461deg, rgba(0, 0, 0, 0.60530) 40.25223%, rgba(0, 0, 0, 0) 45.01615%), linear-gradient(116.90461deg, rgba(255, 255, 255, 0.92527) 37.82464%, rgba(255, 255, 255, 0) 42.58856%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #42a9f5 84%, #fff) 0%, #42a9f5 58%, color-mix(in srgb, #42a9f5 78%, #000) 100%);
+  clip-path: shape(from 16.91720% 82.19669%, curve to 20.39465% 89.57692% with 13.43974% 89.57692%, line to 76.03392% 89.57692%, curve to 79.51138% 82.19669% with 82.98883% 89.57692%, line to 51.69174% 23.15485%, curve to 44.73683% 23.15485% with 48.21429% 15.77462%, close);
+}
+
+[data-source-asset="ui/regions/27/142.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/142.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/143.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/143.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/143.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/143.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 10.48179% 86.08000%, curve to 14.21357% 94.00000% with 6.75000% 94.00000%, line to 82.21500% 94.00000%, curve to 85.94679% 86.08000% with 89.67857% 94.00000%, line to 51.94607% 13.92000%, curve to 44.48250% 13.92000% with 48.21429% 6.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/143.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/143.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(0.00000deg, rgba(0, 0, 0, 0.80355) 10.42308%, rgba(0, 0, 0, 0) 17.15385%), linear-gradient(-116.90461deg, rgba(0, 0, 0, 0.60530) 40.25223%, rgba(0, 0, 0, 0) 45.01615%), linear-gradient(116.90461deg, rgba(255, 255, 255, 0.92527) 37.82464%, rgba(255, 255, 255, 0) 42.58856%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #effb3d 84%, #fff) 0%, #effb3d 58%, color-mix(in srgb, #effb3d 78%, #000) 100%);
+  clip-path: shape(from 16.91720% 82.19669%, curve to 20.39465% 89.57692% with 13.43974% 89.57692%, line to 76.03392% 89.57692%, curve to 79.51138% 82.19669% with 82.98883% 89.57692%, line to 51.69174% 23.15485%, curve to 44.73683% 23.15485% with 48.21429% 15.77462%, close);
+}
+
+[data-source-asset="ui/regions/27/143.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/143.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/144.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/144.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/144.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/144.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 10.48179% 86.08000%, curve to 14.21357% 94.00000% with 6.75000% 94.00000%, line to 82.21500% 94.00000%, curve to 85.94679% 86.08000% with 89.67857% 94.00000%, line to 51.94607% 13.92000%, curve to 44.48250% 13.92000% with 48.21429% 6.00000%, close);
+}
+
+[data-source-asset="ui/regions/27/144.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/144.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(0.00000deg, rgba(0, 0, 0, 0.80355) 10.42308%, rgba(0, 0, 0, 0) 17.15385%), linear-gradient(-116.90461deg, rgba(0, 0, 0, 0.60530) 40.25223%, rgba(0, 0, 0, 0) 45.01615%), linear-gradient(116.90461deg, rgba(255, 255, 255, 0.92527) 37.82464%, rgba(255, 255, 255, 0) 42.58856%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #ff7b43 84%, #fff) 0%, #ff7b43 58%, color-mix(in srgb, #ff7b43 78%, #000) 100%);
+  clip-path: shape(from 16.91720% 82.19669%, curve to 20.39465% 89.57692% with 13.43974% 89.57692%, line to 76.03392% 89.57692%, curve to 79.51138% 82.19669% with 82.98883% 89.57692%, line to 51.69174% 23.15485%, curve to 44.73683% 23.15485% with 48.21429% 15.77462%, close);
+}
+
+[data-source-asset="ui/regions/27/144.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/144.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/145.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/145.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/145.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/145.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 91.34615% 15.73571%, curve to 83.47115% 11.97500% with 91.34615% 8.21429%, line to 11.72115% 46.23929%, curve to 11.72115% 53.76071% with 3.84615% 50.00000%, line to 83.47115% 88.02500%, curve to 91.34615% 84.26429% with 91.34615% 91.78571%, close);
+}
+
+[data-source-asset="ui/regions/27/145.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/145.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(152.78389deg, rgba(255, 255, 255, 0.92610) 38.20863%, rgba(255, 255, 255, 0) 42.96521%), linear-gradient(27.21611deg, rgba(0, 0, 0, 0.60271) 38.20863%, rgba(0, 0, 0, 0) 42.96521%), linear-gradient(-90.00000deg, rgba(0, 0, 0, 0.80355) 13.07692%, rgba(0, 0, 0, 0) 19.80769%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #effb3d 84%, #fff) 0%, #effb3d 58%, color-mix(in srgb, #effb3d 78%, #000) 100%);
+  clip-path: shape(from 86.92308% 21.95599%, curve to 79.58250% 18.45049% with 86.92308% 14.94499%, line to 20.85787% 46.49450%, curve to 20.85787% 53.50550% with 13.51729% 50.00000%, line to 79.58250% 81.54951%, curve to 86.92308% 78.04401% with 86.92308% 85.05501%, close);
+}
+
+[data-source-asset="ui/regions/27/145.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/145.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/146.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/146.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/146.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/146.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 84.42308% 21.00714%, curve to 77.80808% 17.82500% with 84.42308% 14.64286%, line to 17.53808% 46.81786%, curve to 17.53808% 53.18214% with 10.92308% 50.00000%, line to 77.80808% 82.17500%, curve to 84.42308% 78.99286% with 84.42308% 85.35714%, close);
+}
+
+[data-source-asset="ui/regions/27/146.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/146.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(152.61343deg, rgba(255, 255, 255, 0.92656) 40.43086%, rgba(255, 255, 255, 0) 45.18350%), linear-gradient(27.38657deg, rgba(0, 0, 0, 0.60130) 40.43086%, rgba(0, 0, 0, 0) 45.18350%), linear-gradient(-90.00000deg, rgba(0, 0, 0, 0.80355) 20.00000%, rgba(0, 0, 0, 0) 26.73077%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #42a9f5 84%, #fff) 0%, #42a9f5 58%, color-mix(in srgb, #42a9f5 78%, #000) 100%);
+  clip-path: shape(from 80.00000% 27.11691%, curve to 74.05386% 24.25652% with 80.00000% 21.39614%, line to 26.48477% 47.13961%, curve to 26.48477% 52.86039% with 20.53864% 50.00000%, line to 74.05386% 75.74348%, curve to 80.00000% 72.88309% with 80.00000% 78.60386%, close);
+}
+
+[data-source-asset="ui/regions/27/146.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/146.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/147.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/147.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/147.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/147.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 8.65385% 15.73571%, curve to 16.52885% 11.97500% with 8.65385% 8.21429%, line to 88.27885% 46.23929%, curve to 88.27885% 53.76071% with 96.15385% 50.00000%, line to 16.52885% 88.02500%, curve to 8.65385% 84.26429% with 8.65385% 91.78571%, close);
+}
+
+[data-source-asset="ui/regions/27/147.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/147.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-152.78389deg, rgba(255, 255, 255, 0.60271) 38.20863%, rgba(255, 255, 255, 0) 42.96521%), linear-gradient(-27.21611deg, rgba(0, 0, 0, 0.92610) 38.20863%, rgba(0, 0, 0, 0) 42.96521%), linear-gradient(90.00000deg, rgba(255, 255, 255, 0.80355) 13.07692%, rgba(255, 255, 255, 0) 19.80769%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #999999 84%, #fff) 0%, #999999 58%, color-mix(in srgb, #999999 78%, #000) 100%);
+  clip-path: shape(from 13.07692% 21.95599%, curve to 20.41750% 18.45049% with 13.07692% 14.94499%, line to 79.14213% 46.49450%, curve to 79.14213% 53.50550% with 86.48271% 50.00000%, line to 20.41750% 81.54951%, curve to 13.07692% 78.04401% with 13.07692% 85.05501%, close);
+}
+
+[data-source-asset="ui/regions/27/147.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/147.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}
+
+[data-source-asset="ui/regions/27/148.png"]:not(.source-static-image):not(.source-state-button),
+[data-source-asset="ui/regions/60/148.png"]:not(.source-static-image):not(.source-state-button) {
+  position: relative;
+  container-type: size;
+  background-image: none !important;
+  background-color: transparent;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+[data-source-asset="ui/regions/27/148.png"]:not(.source-static-image):not(.source-state-button)::before,
+[data-source-asset="ui/regions/60/148.png"]:not(.source-static-image):not(.source-state-button)::before {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  background: #02071b;
+  clip-path: shape(from 15.57692% 21.00714%, curve to 22.19192% 17.82500% with 15.57692% 14.64286%, line to 82.46192% 46.81786%, curve to 82.46192% 53.18214% with 89.07692% 50.00000%, line to 22.19192% 82.17500%, curve to 15.57692% 78.99286% with 15.57692% 85.35714%, close);
+}
+
+[data-source-asset="ui/regions/27/148.png"]:not(.source-static-image):not(.source-state-button)::after,
+[data-source-asset="ui/regions/60/148.png"]:not(.source-static-image):not(.source-state-button)::after {
+  content: '';
+  position: absolute;
+  display: block;
+  inset: 0;
+  pointer-events: none;
+  transform: none;
+  background: linear-gradient(-152.61343deg, rgba(255, 255, 255, 0.60130) 40.43086%, rgba(255, 255, 255, 0) 45.18350%), linear-gradient(-27.38657deg, rgba(0, 0, 0, 0.92656) 40.43086%, rgba(0, 0, 0, 0) 45.18350%), linear-gradient(90.00000deg, rgba(255, 255, 255, 0.80355) 20.00000%, rgba(255, 255, 255, 0) 26.73077%), radial-gradient(ellipse at 36% 26%, color-mix(in srgb, #42a9f5 84%, #fff) 0%, #42a9f5 58%, color-mix(in srgb, #42a9f5 78%, #000) 100%);
+  clip-path: shape(from 20.00000% 27.11691%, curve to 25.94614% 24.25652% with 20.00000% 21.39614%, line to 73.51523% 47.13961%, curve to 73.51523% 52.86039% with 79.46136% 50.00000%, line to 25.94614% 75.74348%, curve to 20.00000% 72.88309% with 20.00000% 78.60386%, close);
+}
+
+[data-source-asset="ui/regions/27/148.png"]:not(.source-static-image):not(.source-state-button) > svg,
+[data-source-asset="ui/regions/60/148.png"]:not(.source-static-image):not(.source-state-button) > svg {
+  display: none;
+}

@@ -1,7 +1,7 @@
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 
 /** Acquisition leaves the selected pet unchanged until an explicit SelectRole. */
 export function registerPetShopApi(server: WsServer<ServiceType>, accounts: AccountStore,
@@ -11,7 +11,7 @@ export function registerPetShopApi(server: WsServer<ServiceType>, accounts: Acco
     const accountId = identities.get(call.conn.id);
     if (!accountId) return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
     const session = sessions.get(call.conn.id);
-    if (call.req.operation === 'BUY' && session && !world.canConfigureInventory(session.playerId)) {
+    if (call.req.operation === 'BUY' && session && !(await world.canConfigureInventory(session.playerId))) {
       return call.error('请在准备阶段购买宠物', {code: 'PET_SHOP_REJECTED'});
     }
     try {

@@ -2,7 +2,7 @@ import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 import type {MsgFamilyChat} from '../../../shared/protocols/MsgFamilyChat';
 import type {AccountStore} from '../account-store';
-import type {World} from '../world';
+import type {RoomWorld as World} from '../rooms/world-interface';
 
 /** Live operator-assigned family channel across authenticated lobby and room connections. */
 export function registerFamilyChatApi(server: WsServer<ServiceType>, accounts: AccountStore,

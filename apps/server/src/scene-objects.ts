@@ -55,6 +55,11 @@ const assets = new Map<number, SceneCollisionAsset>();
 const colliders = new Map<number, Map<string, SceneCollider>>();
 const terrains = new Map<number, CollisionMesh>();
 const terrainNavigation = new Map<number, readonly number[]>();
+const solids = new Map<number, readonly SceneCollider[]>();
+const breakables = new Map<number, readonly SceneBreakable[]>();
+const castles = new Map<number, readonly (SceneBreakable & {hp: number; affiliation: number})[]>();
+const crushes = new Map<number, readonly (SceneBreakable & {enabled: boolean})[]>();
+const plants = new Map<number, readonly ScenePlant[]>();
 
 function collisionAt(mapId: number): SceneCollisionAsset {
   const cached = assets.get(mapId);
@@ -106,26 +111,51 @@ export function getSceneTerrainNavigationCells(mapId: number): readonly number[]
 
 /** Solid rendered instances. Plants retain their existing pass-through contact policy. */
 export function getSceneSolids(mapId: number): readonly SceneCollider[] {
-  return collisionAt(mapId).solids.map(id => ({...collider(mapId, id), id: `SCN:${id}`}));
+  let values = solids.get(mapId);
+  if (!values) {
+    values = collisionAt(mapId).solids.map(id => ({...collider(mapId, id), id: `SCN:${id}`}));
+    solids.set(mapId, values);
+  }
+  return values;
 }
 
 /** Intact render mesh and source instance identity. */
 export function getSceneBreakables(mapId: number): readonly SceneBreakable[] {
-  return collisionAt(mapId).breakables.map(id => collider(mapId, id));
+  let values = breakables.get(mapId);
+  if (!values) {
+    values = collisionAt(mapId).breakables.map(id => collider(mapId, id));
+    breakables.set(mapId, values);
+  }
+  return values;
 }
 
 /** Original CAS placement, initial HP and source affiliation; attack permission is battle policy. */
 export function getSceneCastles(mapId: number): readonly (SceneBreakable & {hp: number; affiliation: number})[] {
-  return collisionAt(mapId).castles.map(source => ({...collider(mapId, source.id),
-    hp: source.hp, affiliation: source.affiliation}));
+  let values = castles.get(mapId);
+  if (!values) {
+    values = collisionAt(mapId).castles.map(source => ({...collider(mapId, source.id),
+      hp: source.hp, affiliation: source.affiliation}));
+    castles.set(mapId, values);
+  }
+  return values;
 }
 
 /** Original Crush identity, enabled bit and static first-frame render mesh. */
 export function getSceneCrushes(mapId: number): readonly (SceneBreakable & {enabled: boolean})[] {
-  return collisionAt(mapId).crushes.map(source => ({...collider(mapId, source.id), enabled: source.enabled}));
+  let values = crushes.get(mapId);
+  if (!values) {
+    values = collisionAt(mapId).crushes.map(source => ({...collider(mapId, source.id), enabled: source.enabled}));
+    crushes.set(mapId, values);
+  }
+  return values;
 }
 
 /** Original Plant order and build-time first-frame OBB. */
 export function getScenePlants(mapId: number): readonly ScenePlant[] {
-  return collisionAt(mapId).plants.map(source => ({...source, contactObb: source.contactObb}));
+  let values = plants.get(mapId);
+  if (!values) {
+    values = collisionAt(mapId).plants.map(source => ({...source, contactObb: source.contactObb}));
+    plants.set(mapId, values);
+  }
+  return values;
 }
