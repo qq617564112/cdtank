@@ -7,4 +7,4 @@ install -D -m 0644 \
   "$workspace/recovery/output/web-assets/ui/fonts/xiangjiao-brush.ttf"
 tar -C "$workspace" --exclude='*.tmp' -cf - \
   recovery/output/web-assets recovery/output/verified/tables \
-  | docker import - cdtank-assets:1.0.0-20261008-original
+  | docker import - cdtank-assets:1.0.0-20261009-review-ui
