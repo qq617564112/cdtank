@@ -269,6 +269,21 @@ def prepare(base, panels, mask):
     return clean, extended
 
 
+def preserved_mask(definition, part_definition, part, skin, size):
+    mask = Image.new('L', (size, size))
+    draw = ImageDraw.Draw(mask)
+    scale = size / 256
+    regions = definition.get('preservedRegions', []) + part_definition.get('preservedRegions', [])
+    for region in regions:
+        if part not in region.get('part', part) or skin not in region.get('skins', [skin]):
+            continue
+        if 'box' in region:
+            draw.rectangle([round(v * scale) for v in region['box']], fill=255)
+        elif 'points' in region:
+            draw.polygon([(round(x * scale), round(y * scale)) for x, y in region['points']], fill=255)
+    return mask
+
+
 def render(tank, workspace):
     output = workspace / f'output/tank-hd/{tank}'
     public = workspace / f'apps/web/public/tank-audit/hd/{tank}'
@@ -297,9 +312,16 @@ def render(tank, workspace):
         for i, file in enumerate(files):
             original = Image.open(file)
             base = original.convert('RGB').resize((512, 512), Image.Resampling.BILINEAR)
-            clean, extended = prepare(base, panels, mask)
+            skin = file.stem.split('_')[1]
+            protected_512 = preserved_mask(definition, part_definition, part, skin, 512)
+            skin_mask = Image.fromarray(np.minimum(np.asarray(mask), 255 - np.asarray(protected_512)))
+            clean, extended = prepare(base, panels, skin_mask)
             result = extended.resize((SIZE, SIZE), Image.Resampling.BILINEAR).convert('RGBA')
-            result = Image.alpha_composite(result, hardware.layer)
+            protected = preserved_mask(definition, part_definition, part, skin, SIZE)
+            result.paste(base.resize((SIZE, SIZE), Image.Resampling.BILINEAR).convert('RGBA'), (0, 0), protected)
+            layer = hardware.layer.copy()
+            layer.putalpha(Image.fromarray(np.minimum(np.asarray(layer.getchannel('A')), 255 - np.asarray(protected))))
+            result = Image.alpha_composite(result, layer)
             result, uv_mask = raster.extrude_uv(result, triangles)
             final = result.resize((1024, 1024), Image.Resampling.LANCZOS)
             final.save(public / file.name)
@@ -326,6 +348,7 @@ def render(tank, workspace):
             draw.text((x + 8, y + 8), f'{tank}{part} / {label}', fill='white', font=font)
             canvas.paste(image.convert('RGB').resize((512, 512), Image.Resampling.LANCZOS), (x, y + 36))
     canvas.save(output / 'comparison.jpg', quality=94)
+    manifest['preservedRegions'] = definition.get('preservedRegions', [])
     (output / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     return manifest
 

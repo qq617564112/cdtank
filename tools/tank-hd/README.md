@@ -12,3 +12,5 @@ python3 /workspace/cdtank/tools/tank-hd/process.py render 001 --workspace <workt
 ```
 
 `inspect` 输出 UV 图、三角形编号、候选连续轮廓、原图与各皮肤缩略图。`render` 从指定 worktree 读取细节定义，读取原工作区的原始素材，输出透明 PNG、清理掩码、代表皮肤 2048 合成、对照图以及全部最终贴图。运行 PNG 置于 `apps/web/public/tank-audit/hd/<车型>/`。
+
+特殊皮肤替换硬件位置的彩绘可在 `preservedRegions` 中记录 `{part, skins, box, content}`，`box` 使用相同的 256 坐标。该区域保留原图，不清除旧像素、不叠加通用硬件层。没有替换硬件的迷彩和装饰正常保留底图并叠加细节。

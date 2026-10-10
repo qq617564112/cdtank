@@ -90,9 +90,10 @@ class Hardware:
 
     def rectangle(self, box, color):
         x0, y0, x1, y1 = box
-        self.draw.rectangle((round(x0 * SCALE), round(y0 * SCALE),
-                             round(x1 * SCALE) - 1, round(y1 * SCALE) - 1),
-                            fill=tuple(color))
+        bounds = (round(x0 * SCALE), round(y0 * SCALE),
+                  round(x1 * SCALE) - 1, round(y1 * SCALE) - 1)
+        if bounds[2] >= bounds[0] and bounds[3] >= bounds[1]:
+            self.draw.rectangle(bounds, fill=tuple(color))
 
     def line(self, points, color, width):
         self.draw.line([(round(x * SCALE), round(y * SCALE))
