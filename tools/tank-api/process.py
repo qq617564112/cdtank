@@ -274,14 +274,14 @@ def finish(tank, workspace, selected):
             _, nearest = cv2.distanceTransformWithLabels(np.uint8(~valid), cv2.DIST_L2, 5,
                                                         labelType=cv2.DIST_LABEL_PIXEL)
             pixels[wanted & ~valid] = pixels[valid][nearest[wanted & ~valid] - 1]
-        rgba = np.dstack((pixels, np.uint8(wanted) * 255))
-        final = Image.fromarray(rgba).resize(final_size, Image.Resampling.LANCZOS)
+        final = Image.fromarray(pixels).resize(final_size, Image.Resampling.LANCZOS)
         final.save(public / source.name)
         path = output / 'metadata' / f'{source.stem}.json'
         metadata = json.loads(path.read_text())
         if metadata.get('status') == 'received':
             metadata.pop('error', None)
         metadata.update(finalSize=list(final_size), resampledTo4k=native.size != final_size,
+                        runtimeMode='RGB',
                         registration=registrations, corrections=corrections.get(source.name, []),
                         runtime=f'apps/web/public/tank-audit/api4k/{tank}/{source.name}')
         save_json(path, metadata)
