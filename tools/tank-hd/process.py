@@ -269,11 +269,16 @@ def prepare(base, panels, mask):
     return clean, extended
 
 
-def preserved_mask(definition, part_definition, part, skin, size):
+def preserved_mask(definition, part_definition, part, skin, size, triangles):
     mask = Image.new('L', (size, size))
     draw = ImageDraw.Draw(mask)
     scale = size / 256
-    regions = definition.get('preservedRegions', []) + part_definition.get('preservedRegions', [])
+    regions = []
+    for source in [definition.get('preservedRegions', []), part_definition.get('preservedRegions', [])]:
+        if isinstance(source, dict):
+            regions.extend(source.get(f"{definition['tank']}{part}_{skin}.png", []))
+        else:
+            regions.extend(source)
     for region in regions:
         if part not in region.get('part', part) or skin not in region.get('skins', [skin]):
             continue
@@ -281,6 +286,12 @@ def preserved_mask(definition, part_definition, part, skin, size):
             draw.rectangle([round(v * scale) for v in region['box']], fill=255)
         elif 'points' in region:
             draw.polygon([(round(x * scale), round(y * scale)) for x, y in region['points']], fill=255)
+        elif 'uvTriangles' in region:
+            geometry = unary_union([Polygon(triangles[i]) for i in region['uvTriangles']
+                                    if Polygon(triangles[i]).area > .00001])
+            uv_mask = raster.geometry_mask(geometry, size)
+            mask = Image.fromarray(np.maximum(np.asarray(mask), np.asarray(uv_mask)))
+            draw = ImageDraw.Draw(mask)
     return mask
 
 
@@ -313,11 +324,11 @@ def render(tank, workspace):
             original = Image.open(file)
             base = original.convert('RGB').resize((512, 512), Image.Resampling.BILINEAR)
             skin = file.stem.split('_')[1]
-            protected_512 = preserved_mask(definition, part_definition, part, skin, 512)
+            protected_512 = preserved_mask(definition, part_definition, part, skin, 512, triangles)
             skin_mask = Image.fromarray(np.minimum(np.asarray(mask), 255 - np.asarray(protected_512)))
             clean, extended = prepare(base, panels, skin_mask)
             result = extended.resize((SIZE, SIZE), Image.Resampling.BILINEAR).convert('RGBA')
-            protected = preserved_mask(definition, part_definition, part, skin, SIZE)
+            protected = preserved_mask(definition, part_definition, part, skin, SIZE, triangles)
             result.paste(base.resize((SIZE, SIZE), Image.Resampling.BILINEAR).convert('RGBA'), (0, 0), protected)
             layer = hardware.layer.copy()
             layer.putalpha(Image.fromarray(np.minimum(np.asarray(layer.getchannel('A')), 255 - np.asarray(protected))))
