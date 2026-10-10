@@ -114,20 +114,25 @@ async function loadSelection(): Promise<void> {
   const tankCode = String(tank.id).padStart(3, '0');
   const hdTank = hdManifest.tanks.find(row => row.tank === tankCode);
   const suffix = skin?.suffix ?? '001';
-  const hdTextures: TankTextureSample = {};
-  if (!sample && qualitySelect.value === 'hd') {
+  const textureOverrides: TankTextureSample = {};
+  let useHd = false;
+  if (!sample) {
     for (const part of ['M', 'U'] as const) {
-      const filename = `${tankCode}${part}_${suffix}.png`;
-      if (hdTank?.textures.includes(filename)) {
-        hdTextures[part] = `tank-audit/hd/${tankCode}/${filename}`;
+      if (!tank.resources.components.some(component => component.part === part)) continue;
+      const partSuffix = skin && skin.ids[part] === 0 ? '001' : suffix;
+      const filename = `${tankCode}${part}_${partSuffix}.png`;
+      if (qualitySelect.value === 'hd' && hdTank?.textures.includes(filename)) {
+        textureOverrides[part] = `tank-audit/hd/${tankCode}/${filename}`;
+        useHd = true;
+      } else {
+        textureOverrides[part] = `tank-audit/original/${tankCode}/${filename}`;
       }
     }
   }
-  const useHd = Object.keys(hdTextures).length > 0;
   try {
     await preview.load(tank.id, ids, sample ? {
       M: `tank-audit/${sampleFolder}/001M_001.png`, U: `tank-audit/${sampleFolder}/001U_001.png`,
-    } : useHd ? hdTextures : undefined);
+    } : textureOverrides);
     const label = sample ? skinSelect.selectedOptions[0].text : skin ? `${skin.suffix} · ${skin.name}` : '默认外观';
     document.querySelector('#asset-title')!.textContent = `${String(tank.id).padStart(3, '0')} · ${tank.name}`;
     const version = sample ? '' : useHd ? '高清 1024 · ' : '原版 · ';
