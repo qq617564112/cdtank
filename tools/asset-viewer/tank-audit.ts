@@ -36,6 +36,7 @@ let tanks: TankDefinition[] = [];
 let animations: Record<string, TrackAnimation> = {};
 let skins: Skin[] = [];
 let hdManifest: HdManifest;
+let apiManifest: HdManifest;
 
 function tankSkins(tank: TankDefinition): Skin[] {
   const grouped = new Map<string, Skin>();
@@ -113,15 +114,22 @@ async function loadSelection(): Promise<void> {
   const ids = {...(skin?.ids ?? {M: 0, U: 0, XY: 0}), XY: Number(tracksSelect.value)};
   const tankCode = String(tank.id).padStart(3, '0');
   const hdTank = hdManifest.tanks.find(row => row.tank === tankCode);
+  const apiTank = apiManifest.tanks.find(row => row.tank === tankCode);
   const suffix = skin?.suffix ?? '001';
   const textureOverrides: TankTextureSample = {};
   let useHd = false;
+  let apiParts = 0;
+  let totalParts = 0;
   if (!sample) {
     for (const part of ['M', 'U'] as const) {
       if (!tank.resources.components.some(component => component.part === part)) continue;
+      totalParts++;
       const partSuffix = skin && skin.ids[part] === 0 ? '001' : suffix;
       const filename = `${tankCode}${part}_${partSuffix}.png`;
-      if (qualitySelect.value === 'hd' && hdTank?.textures.includes(filename)) {
+      if (qualitySelect.value === 'api4k' && apiTank?.textures.includes(filename)) {
+        textureOverrides[part] = `tank-audit/api4k/${tankCode}/${filename}`;
+        apiParts++;
+      } else if (qualitySelect.value === 'hd' && hdTank?.textures.includes(filename)) {
         textureOverrides[part] = `tank-audit/hd/${tankCode}/${filename}`;
         useHd = true;
       } else {
@@ -135,7 +143,9 @@ async function loadSelection(): Promise<void> {
     } : textureOverrides);
     const label = sample ? skinSelect.selectedOptions[0].text : skin ? `${skin.suffix} · ${skin.name}` : '默认外观';
     document.querySelector('#asset-title')!.textContent = `${String(tank.id).padStart(3, '0')} · ${tank.name}`;
-    const version = sample ? '' : useHd ? '高清 1024 · ' : '原版 · ';
+    const version = sample ? '' : qualitySelect.value === 'api4k' ?
+      apiParts === totalParts ? 'API 4K · ' : `API 4K ${apiParts}/${totalParts} 部件（其余原版） · ` :
+      useHd ? '高清 1024 · ' : '原版 · ';
     document.querySelector('#asset-detail')!.textContent = `${version}${label} / ${tracksSelect.selectedOptions[0].text}`;
     status.value = `已载入 · ${version}M ${ids.M} / U ${ids.U} / XY ${ids.XY}`;
     const url = new URL(location.href);
@@ -160,17 +170,21 @@ function updatePlay(playing: boolean): void {
 
 async function initialize(): Promise<void> {
   preview = new TankPreview(document.querySelector<HTMLCanvasElement>('#world')!);
-  const [content, trackAnimations, hdTextures] = await Promise.all([
+  const [content, trackAnimations, hdTextures, apiTextures] = await Promise.all([
     prepareGameContent(), loadStaticJson<Record<string, TrackAnimation>>('/tank-track-animations.json'),
     loadStaticJson<HdManifest>('/tank-audit/hd/manifest.json'),
+    loadStaticJson<HdManifest>('/tank-audit/api4k/manifest.json'),
   ]);
   tanks = [...content.tanks.values()].sort((a, b) => a.id - b.id);
   animations = trackAnimations;
   hdManifest = hdTextures;
+  apiManifest = apiTextures;
   tankSelect.replaceChildren(...tanks.map(tank => new Option(
     `${String(tank.id).padStart(3, '0')} · ${tank.name}`, String(tank.id))));
   const params = new URL(location.href).searchParams;
-  if (params.get('quality') === 'original') qualitySelect.value = 'original';
+  if (['original', 'hd', 'api4k'].includes(params.get('quality') ?? '')) {
+    qualitySelect.value = params.get('quality')!;
+  }
   if (tanks.some(tank => String(tank.id) === params.get('tank'))) tankSelect.value = params.get('tank')!;
   selectTank();
   if ([...skinSelect.options].some(option => option.value === params.get('skin'))) {
@@ -181,7 +195,7 @@ async function initialize(): Promise<void> {
   }
   const skinCount = tanks.reduce((sum, tank) => sum + tankSkins(tank).length, 0);
   document.querySelector('#coverage')!.textContent =
-    `${tanks.length} 辆坦克 · ${skinCount} 套皮肤 · ${hdManifest.textureCount} 张高清贴图`;
+    `${tanks.length} 辆坦克 · ${skinCount} 套皮肤 · API 4K 已就绪 ${apiManifest.textureCount}/518 张`;
   await loadSelection();
 }
 
