@@ -179,6 +179,7 @@ def generate_one(tank, workspace, filename, revision):
             image.save(native)
             metadata.update(status='received', nativeSize=list(image.size),
                             usage=payload.get('usage'), revisedPrompt=item.get('revised_prompt'))
+            metadata.pop('error', None)
             save_json(metadata_path, metadata)
             print(f'{filename}: native {image.width}x{image.height}', flush=True)
             return
@@ -278,6 +279,8 @@ def finish(tank, workspace, selected):
         final.save(public / source.name)
         path = output / 'metadata' / f'{source.stem}.json'
         metadata = json.loads(path.read_text())
+        if metadata.get('status') == 'received':
+            metadata.pop('error', None)
         metadata.update(finalSize=list(final_size), resampledTo4k=native.size != final_size,
                         registration=registrations, corrections=corrections.get(source.name, []),
                         runtime=f'apps/web/public/tank-audit/api4k/{tank}/{source.name}')
