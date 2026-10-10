@@ -9,6 +9,7 @@ import struct
 import numpy as np
 import cv2
 from PIL import Image, ImageDraw, ImageFont
+from shapely import set_precision
 from shapely.geometry import Polygon
 from shapely.geometry.polygon import orient
 from shapely.ops import unary_union
@@ -211,7 +212,7 @@ class ReusableHardware(raster.Hardware):
 def resolve(triangles, definition):
     panels = []
     for item in definition.get('panels', []):
-        geometry = unary_union([Polygon(triangles[i]) for i in item['uvTriangles']
+        geometry = unary_union([set_precision(Polygon(triangles[i]), .001) for i in item['uvTriangles']
                                 if Polygon(triangles[i]).area > .00001]).simplify(.00001)
         polygons = [geometry] if geometry.geom_type == 'Polygon' else geometry.geoms
         for polygon in polygons:
@@ -222,7 +223,7 @@ def resolve(triangles, definition):
     features = []
     for item in definition.get('features', []):
         if 'uvTriangles' in item:
-            geometry = unary_union([Polygon(triangles[i]) for i in item['uvTriangles']
+            geometry = unary_union([set_precision(Polygon(triangles[i]), .001) for i in item['uvTriangles']
                                     if Polygon(triangles[i]).area > .00001]).simplify(.00001)
             polygons = [geometry] if geometry.geom_type == 'Polygon' else geometry.geoms
             polygon = max((p for p in polygons if p.geom_type == 'Polygon'), key=lambda p: p.area)
