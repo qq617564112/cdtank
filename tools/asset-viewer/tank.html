@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CDTank · 高清坦克审计</title>
+  </head>
+  <body>
+    <main class="audit">
+      <aside class="panel">
+        <header>
+          <p class="eyebrow">CDTANK / ASSET REVIEW</p>
+          <h1>高清坦克审计</h1>
+          <p id="coverage" class="muted">载入素材目录…</p>
+        </header>
+        <fieldset id="selectors" disabled>
+          <legend>外观</legend>
+          <label for="tank">坦克</label>
+          <select id="tank"></select>
+          <label for="skin">皮肤</label>
+          <select id="skin"></select>
+          <label for="quality">贴图版本</label>
+          <select id="quality">
+            <option value="hd">手绘细节 · 高清 1024</option>
+            <option value="original">原版贴图</option>
+          </select>
+          <div class="pair">
+            <button id="previous-skin" type="button">上一套</button>
+            <button id="next-skin" type="button">下一套</button>
+          </div>
+          <label for="tracks">履带颜色</label>
+          <select id="tracks"></select>
+        </fieldset>
+        <fieldset id="motion-controls" disabled>
+          <legend>动作</legend>
+          <label for="motion">运动方向</label>
+          <select id="motion">
+            <option value="0">停车</option>
+            <option value="1">前进</option>
+            <option value="2">倒车</option>
+            <option value="3">原地左转</option>
+            <option value="4">原地右转</option>
+          </select>
+          <label for="speed">播放速度</label>
+          <select id="speed">
+            <option value="1">正常 · 1×</option>
+            <option value="0.25">慢速 · ¼×</option>
+            <option value="0.1">慢速 · ⅒×</option>
+          </select>
+          <div class="pair">
+            <button id="play" type="button" aria-pressed="true">暂停</button>
+            <button id="step" type="button">推进一帧</button>
+          </div>
+          <p id="animation-info" class="muted"></p>
+        </fieldset>
+        <fieldset id="camera-controls" disabled>
+          <legend>视角</legend>
+          <div class="views">
+            <button type="button" data-view="center">复位</button>
+            <button type="button" data-view="top">俯视</button>
+            <button type="button" data-view="left">左侧</button>
+            <button type="button" data-view="right">右侧</button>
+            <button type="button" data-view="front">正面</button>
+            <button type="button" data-view="rear">背面</button>
+          </div>
+          <label for="background">背景</label>
+          <select id="background">
+            <option value="#171c21">深灰</option>
+            <option value="#747c80">中灰</option>
+            <option value="#e3e5df">浅灰</option>
+          </select>
+        </fieldset>
+        <output id="status" aria-live="polite">载入资源…</output>
+        <button id="retry" type="button" hidden>重试载入</button>
+      </aside>
+      <section class="viewport" aria-label="三维预览">
+        <canvas id="world" tabindex="0" aria-label="坦克三维模型，可拖动旋转、滚轮缩放"></canvas>
+        <div class="viewport-title">
+          <strong id="asset-title">CDTank</strong>
+          <span id="asset-detail"></span>
+        </div>
+        <p class="viewport-hint">拖动旋转 · 滚轮缩放 · 右键拖动平移</p>
+      </section>
+    </main>
+    <script type="module" src="/tank-audit.ts"></script>
+  </body>
+</html>
