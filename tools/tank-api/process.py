@@ -165,19 +165,21 @@ def prepare(tank, workspace, selected=None, input_rotation=0):
             uv_mask = uv_mask.transpose(rotation)
         prepared.save(output / 'inputs' / source.name)
         uv_mask.save(output / 'inputs' / f'{source.stem}-uv.png')
-        part = '车身' if source.name[3] == 'M' else '炮塔'
+        part = 'hull' if source.name[3] == 'M' else 'turret'
         prompt = (
-            f'对这张坦克{part}二维UV贴图进行忠实的高清放大描摹，输出{requested[0]}x{requested[1]}，'
-            '保持原来的卡通风格、配色和全部图案，线条清晰锐利。'
-            '灰色是不透明辅助背景，白色细边是固定图块边界。'
-            '所有图块的位置、大小、轮廓和方向必须与输入完全一致，不得移动、旋转、变形或重新排版。'
-            '直线必须平直，圆形和孔槽保持规则形状。只高清化边界内已有内容，'
-            '边界外灰底和白色引导细边保持原样。'
-            '保留全部孔槽、格栅、接缝、迷彩及装饰的数量、形状与位置。'
-            '原有标志和文字仅沿输入中的实际笔画和轮廓逐形描摹，保留其旋转和镜像方向；'
-            '不得根据图案含义替换为其它图标、字体或装饰。'
-            '不添加新细节，不改变颜色、明暗或风格。'
-            '输出一张同布局的平面二维贴图，无透视、无3D效果、无模型、无水印。')
+            f'Restore this original cartoon tank {part} UV texture atlas at '
+            f'{requested[0]}x{requested[1]} pixels. Preserve the existing artwork exactly; '
+            'make its existing contours smooth, crisp and clean without redesigning them. '
+            'Keep every UV island at exactly the same position, dimensions, outline and orientation. '
+            'The opaque gray background and thin white UV guides remain unchanged. '
+            'Restore only the existing artwork inside those boundaries. '
+            'Preserve the exact number, shape, placement and connected strokes of all slots, '
+            'grilles, seams, camouflage, symbols, letters and ornaments. '
+            'Trace the actual reference contours, including tilted, rotated and mirrored artwork; '
+            'do not substitute familiar icons or straighten individual designs. '
+            'Keep the original colors, shading and cartoon style. Add no marks or details. '
+            'Return one complete flat 2D atlas with the identical layout, without perspective, '
+            'a model render or a watermark.')
         (output / 'prompts' / f'{source.stem}.txt').write_text(prompt + '\n')
     save_json(output / 'inventory.json', {'tank': tank, 'textures': rows})
     print(f'Prepared {tank}: {len(rows)} bounded inputs', flush=True)
