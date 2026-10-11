@@ -1,0 +1,1691 @@
+{
+  "mapCount": 27,
+  "objectCount": 48,
+  "textureCount": 59,
+  "objects": [
+    {
+      "model": "obj05015",
+      "maps": [
+        "0003",
+        "0010"
+      ],
+      "classes": [
+        "SYcScnObjGeneral"
+      ],
+      "publishedAssets": [],
+      "models": [
+        "Data/scnobj/obj05015/obj05015.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05015.png",
+          "reference": "art/original/Data/scnobj/obj05015/obj05015.png",
+          "sourceSize": [
+            128,
+            256
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05018",
+      "maps": [
+        "0009",
+        "0015",
+        "0018"
+      ],
+      "classes": [
+        "SYcScnObjGeneral"
+      ],
+      "publishedAssets": [],
+      "models": [
+        "Data/scnobj/obj05018/obj05018.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05018.png",
+          "reference": "art/original/Data/scnobj/obj05018/obj05018.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05023",
+      "maps": [
+        "0008",
+        "0013"
+      ],
+      "classes": [
+        "SYcScnObjSequence"
+      ],
+      "publishedAssets": [],
+      "models": [
+        "Data/scnobj/obj05023/obj05023.glb",
+        "Data/scnobj/obj05023/scr.glb"
+      ],
+      "textures": [
+        {
+          "filename": "001.png",
+          "reference": "art/original/Data/scnobj/obj05023/001.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        },
+        {
+          "filename": "002.png",
+          "reference": "art/original/Data/scnobj/obj05023/002.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        },
+        {
+          "filename": "003.png",
+          "reference": "art/original/Data/scnobj/obj05023/003.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        },
+        {
+          "filename": "004.png",
+          "reference": "art/original/Data/scnobj/obj05023/004.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        },
+        {
+          "filename": "obj05023.png",
+          "reference": "art/original/Data/scnobj/obj05023/obj05023.png",
+          "sourceSize": [
+            64,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05025",
+      "maps": [
+        "0007",
+        "0021"
+      ],
+      "classes": [
+        "SYcScnObjGeneral"
+      ],
+      "publishedAssets": [],
+      "models": [
+        "Data/scnobj/obj05025/obj05025.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05025.png",
+          "reference": "art/original/Data/scnobj/obj05025/obj05025.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05027",
+      "maps": [
+        "0012"
+      ],
+      "classes": [
+        "SYcScnObjHook"
+      ],
+      "publishedAssets": [],
+      "models": [
+        "Data/scnobj/obj05027/c1.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05027.png",
+          "reference": "art/original/Data/scnobj/obj05027/obj05027.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05202",
+      "maps": [
+        "0016"
+      ],
+      "classes": [
+        "SYcScnObjWaterFall"
+      ],
+      "publishedAssets": [],
+      "models": [
+        "Data/scnobj/obj05202/obj05202.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj052021.png",
+          "reference": "art/original/Data/scnobj/obj05202/obj052021.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            187,
+            221
+          ]
+        },
+        {
+          "filename": "obj052022.png",
+          "reference": "art/original/Data/scnobj/obj05202/obj052022.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            187,
+            221
+          ]
+        },
+        {
+          "filename": "obj052023.png",
+          "reference": "art/original/Data/scnobj/obj05202/obj052023.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            187,
+            221
+          ]
+        },
+        {
+          "filename": "obj052024.png",
+          "reference": "art/original/Data/scnobj/obj05202/obj052024.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            187,
+            221
+          ]
+        },
+        {
+          "filename": "obj052025.png",
+          "reference": "art/original/Data/scnobj/obj05202/obj052025.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            187,
+            221
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05401",
+      "maps": [
+        "0004",
+        "0006",
+        "0016",
+        "0017",
+        "0023",
+        "0024"
+      ],
+      "classes": [
+        "SYcScnObjPlant"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05401/obj05401.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05401/obj05401.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05401.png",
+          "reference": "art/original/Data/scnobj/obj05401/obj05401.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05403",
+      "maps": [
+        "0004",
+        "0006",
+        "0016",
+        "0017",
+        "0023",
+        "0024"
+      ],
+      "classes": [
+        "SYcScnObjPlant"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05403/obj05403.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05403/obj05403.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05403.png",
+          "reference": "art/original/Data/scnobj/obj05403/obj05403.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05405",
+      "maps": [
+        "0004",
+        "0006",
+        "0016",
+        "0017",
+        "0023",
+        "0024"
+      ],
+      "classes": [
+        "SYcScnObjPlant"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05405/obj05405.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05405/obj05405.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05405.png",
+          "reference": "art/original/Data/scnobj/obj05405/obj05405.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05413",
+      "maps": [
+        "0002",
+        "0003",
+        "0004",
+        "0005",
+        "0006",
+        "0012",
+        "0016",
+        "0017",
+        "0019",
+        "0021",
+        "0023",
+        "0024",
+        "0025",
+        "1001",
+        "1002"
+      ],
+      "classes": [
+        "SYcScnObjPlant"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05413/obj05413.glb",
+        "custom-maps/1002/Data/scnobj/obj05413/obj05413.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05413/obj05413.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05413.png",
+          "reference": "art/original/Data/scnobj/obj05413/obj05413.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05416",
+      "maps": [
+        "0008"
+      ],
+      "classes": [
+        "SYcScnObjPlant"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05416/obj05416.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05416/obj05416.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05416.png",
+          "reference": "art/original/Data/scnobj/obj05416/obj05416.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05420",
+      "maps": [
+        "0007"
+      ],
+      "classes": [
+        "SYcScnObjCrush"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05420/obj05420.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05420/c9.glb",
+        "Data/scnobj/obj05420/obj05420.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05420.png",
+          "reference": "art/original/Data/scnobj/obj05420/obj05420.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05421",
+      "maps": [
+        "0006",
+        "0023"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05421/obj05421.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05421/c9.glb",
+        "Data/scnobj/obj05421/obj05421.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05421.png",
+          "reference": "art/original/Data/scnobj/obj05421/obj05421.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05422",
+      "maps": [
+        "0002",
+        "0003",
+        "0004",
+        "0012",
+        "0021",
+        "1002"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05422/obj05422.glb",
+        "custom-maps/1002/Data/scnobj/obj05422/obj05422.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05422/c9.glb",
+        "Data/scnobj/obj05422/obj05422.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05422.png",
+          "reference": "art/original/Data/scnobj/obj05422/obj05422.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            238,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05423",
+      "maps": [
+        "0003",
+        "0006",
+        "0007",
+        "0023"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05423/obj05423.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05423/c9.glb",
+        "Data/scnobj/obj05423/obj05423.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05423.png",
+          "reference": "art/original/Data/scnobj/obj05423/obj05423.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05424",
+      "maps": [
+        "0006",
+        "0009",
+        "0015",
+        "0018",
+        "0022",
+        "0023",
+        "1001"
+      ],
+      "classes": [
+        "SYcScnObjBreach",
+        "SYcScnObjGeneral"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05424/obj05424.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05424/c9.glb",
+        "Data/scnobj/obj05424/obj05424.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05424.png",
+          "reference": "art/original/Data/scnobj/obj05424/obj05424.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05425",
+      "maps": [
+        "0002",
+        "0005",
+        "0010",
+        "0012",
+        "0014",
+        "1002"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05425/obj05425.glb",
+        "custom-maps/1002/Data/scnobj/obj05425/obj05425.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05425/c9.glb",
+        "Data/scnobj/obj05425/obj05425.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05425.png",
+          "reference": "art/original/Data/scnobj/obj05425/obj05425.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05426",
+      "maps": [
+        "0002",
+        "0005",
+        "0010",
+        "0012",
+        "0014",
+        "1002"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05426/obj05426.glb",
+        "custom-maps/1002/Data/scnobj/obj05426/obj05426.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05426/c9.glb",
+        "Data/scnobj/obj05426/obj05426.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05426.png",
+          "reference": "art/original/Data/scnobj/obj05426/obj05426.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05427",
+      "maps": [
+        "0002",
+        "0010",
+        "1002"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05427/obj05427.glb",
+        "custom-maps/1002/Data/scnobj/obj05427/obj05427.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05427/c9.glb",
+        "Data/scnobj/obj05427/obj05427.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05427.png",
+          "reference": "art/original/Data/scnobj/obj05427/obj05427.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05428",
+      "maps": [
+        "0002",
+        "0010",
+        "0012",
+        "0014",
+        "0019",
+        "1002"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05428/obj05428.glb",
+        "custom-maps/1002/Data/scnobj/obj05428/obj05428.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05428/c9.glb",
+        "Data/scnobj/obj05428/obj05428.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05428.png",
+          "reference": "art/original/Data/scnobj/obj05428/obj05428.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05429",
+      "maps": [
+        "0010"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05429/obj05429.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05429/c9.glb",
+        "Data/scnobj/obj05429/obj05429.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05429.png",
+          "reference": "art/original/Data/scnobj/obj05429/obj05429.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05430",
+      "maps": [
+        "0011"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05430/obj05430.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05430/c9.glb",
+        "Data/scnobj/obj05430/obj05430.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05430.png",
+          "reference": "art/original/Data/scnobj/obj05430/obj05430.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05431",
+      "maps": [
+        "0011"
+      ],
+      "classes": [
+        "SYcScnObjGeneral"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05431/obj05431.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05431/c9.glb",
+        "Data/scnobj/obj05431/obj05431.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05431.png",
+          "reference": "art/original/Data/scnobj/obj05431/obj05431.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05432",
+      "maps": [
+        "0003",
+        "0005",
+        "0006",
+        "0012",
+        "0016",
+        "0023"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05432/obj05432.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05432/c9.glb",
+        "Data/scnobj/obj05432/obj05432.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05432A.png",
+          "reference": "art/original/Data/scnobj/obj05432/obj05432A.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05433",
+      "maps": [
+        "0006",
+        "0023"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05433/obj05433.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05433/c9.glb",
+        "Data/scnobj/obj05433/obj05433.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05433A.png",
+          "reference": "art/original/Data/scnobj/obj05433/obj05433A.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05434",
+      "maps": [
+        "0020"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05434/obj05434.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05434/c9.glb",
+        "Data/scnobj/obj05434/obj05434.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05434.png",
+          "reference": "art/original/Data/scnobj/obj05434/obj05434.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05435",
+      "maps": [
+        "0020"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05435/obj05435.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05435/c9.glb",
+        "Data/scnobj/obj05435/obj05435.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05435.png",
+          "reference": "art/original/Data/scnobj/obj05435/obj05435.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05436",
+      "maps": [
+        "0020"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05436/obj05436.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05436/c9.glb",
+        "Data/scnobj/obj05436/obj05436.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05436.png",
+          "reference": "art/original/Data/scnobj/obj05436/obj05436.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05438",
+      "maps": [
+        "0008"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05438/obj05438.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05438/C9.glb",
+        "Data/scnobj/obj05438/obj05438.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05438.png",
+          "reference": "art/original/Data/scnobj/obj05438/obj05438.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            0,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05440",
+      "maps": [
+        "0001"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05440/obj05440.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05440/C9.glb",
+        "Data/scnobj/obj05440/obj05440.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05440.png",
+          "reference": "art/original/Data/scnobj/obj05440/obj05440.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05441",
+      "maps": [
+        "0001"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05441/obj05441.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05441/C9.glb",
+        "Data/scnobj/obj05441/obj05441.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05441.png",
+          "reference": "art/original/Data/scnobj/obj05441/obj05441.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05442",
+      "maps": [
+        "0008",
+        "0009",
+        "0015",
+        "0018",
+        "0020"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05442/obj05442.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05442/c9.glb",
+        "Data/scnobj/obj05442/obj05442.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05442.png",
+          "reference": "art/original/Data/scnobj/obj05442/obj05442.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05443",
+      "maps": [
+        "0006",
+        "0023",
+        "1001"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05443/obj05443.glb",
+        "custom-maps/1001/brick.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05443/c9.glb",
+        "Data/scnobj/obj05443/obj05443.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05443.png",
+          "reference": "art/original/Data/scnobj/obj05443/obj05443.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05445",
+      "maps": [
+        "0007"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05445/obj05445.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05445/c9.glb",
+        "Data/scnobj/obj05445/obj05445.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05445A.png",
+          "reference": "art/original/Data/scnobj/obj05445/obj05445A.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05446",
+      "maps": [
+        "0012"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05446/obj05446.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05446/c9.glb",
+        "Data/scnobj/obj05446/obj05446.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05446A.png",
+          "reference": "art/original/Data/scnobj/obj05446/obj05446A.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05447",
+      "maps": [
+        "0001",
+        "0002",
+        "0003",
+        "0005",
+        "0008",
+        "0010",
+        "0011",
+        "0012",
+        "0013",
+        "1002"
+      ],
+      "classes": [
+        "SYcCastle"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05447/c1.glb",
+        "custom-maps/1002/Data/scnobj/obj05447/c1.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05447/c1.glb",
+        "Data/scnobj/obj05447/c2.glb",
+        "Data/scnobj/obj05447/c3.glb",
+        "Data/scnobj/obj05447/n1.glb",
+        "Data/scnobj/obj05447/n2.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05447A.png",
+          "reference": "art/original/Data/scnobj/obj05447/obj05447A.png",
+          "sourceSize": [
+            512,
+            512
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        },
+        {
+          "filename": "obj05447B.png",
+          "reference": "art/original/Data/scnobj/obj05447/obj05447B.png",
+          "sourceSize": [
+            512,
+            512
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        },
+        {
+          "filename": "obj05447C.png",
+          "reference": "art/original/Data/scnobj/obj05447/obj05447C.png",
+          "sourceSize": [
+            512,
+            512
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05448",
+      "maps": [
+        "0001",
+        "0002",
+        "0003",
+        "0005",
+        "0008",
+        "0010",
+        "0011",
+        "0012",
+        "0013",
+        "1002"
+      ],
+      "classes": [
+        "SYcCastle"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05448/c1.glb",
+        "custom-maps/1002/Data/scnobj/obj05448/c1.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05448/c1.glb",
+        "Data/scnobj/obj05448/c2.glb",
+        "Data/scnobj/obj05448/c3.glb",
+        "Data/scnobj/obj05448/n1.glb",
+        "Data/scnobj/obj05448/n2.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05448A.png",
+          "reference": "art/original/Data/scnobj/obj05448/obj05448A.png",
+          "sourceSize": [
+            512,
+            512
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05449",
+      "maps": [
+        "0006",
+        "0023"
+      ],
+      "classes": [
+        "SYcCastle"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05449/c2.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05449/c1.glb",
+        "Data/scnobj/obj05449/c2.glb",
+        "Data/scnobj/obj05449/c3.glb",
+        "Data/scnobj/obj05449/n1.glb",
+        "Data/scnobj/obj05449/n2.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05449A.png",
+          "reference": "art/original/Data/scnobj/obj05449/obj05449A.png",
+          "sourceSize": [
+            512,
+            512
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05450",
+      "maps": [
+        "0006",
+        "0023"
+      ],
+      "classes": [
+        "SYcCastle"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05450/c1.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05450/c1.glb",
+        "Data/scnobj/obj05450/c2.glb",
+        "Data/scnobj/obj05450/c3.glb",
+        "Data/scnobj/obj05450/n1.glb",
+        "Data/scnobj/obj05450/n2.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05450A.png",
+          "reference": "art/original/Data/scnobj/obj05450/obj05450A.png",
+          "sourceSize": [
+            512,
+            512
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05459",
+      "maps": [
+        "0001"
+      ],
+      "classes": [
+        "SYcScnObjCrush"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05459/obj05459.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05459/c9.glb",
+        "Data/scnobj/obj05459/obj05459.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05459.png",
+          "reference": "art/original/Data/scnobj/obj05459/obj05459.png",
+          "sourceSize": [
+            64,
+            64
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05460",
+      "maps": [
+        "0008",
+        "0013",
+        "0020"
+      ],
+      "classes": [
+        "SYcScnObjBreach",
+        "SYcScnObjGeneral"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05460/obj05460.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05460/c9.glb",
+        "Data/scnobj/obj05460/obj05460.glb"
+      ],
+      "textures": [
+        {
+          "filename": "che1.png",
+          "reference": "art/original/Data/scnobj/obj05460/che1.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        },
+        {
+          "filename": "che2.png",
+          "reference": "art/original/Data/scnobj/obj05460/che2.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05461",
+      "maps": [
+        "0008",
+        "0013",
+        "0020"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05461/obj05461.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05461/c9.glb",
+        "Data/scnobj/obj05461/obj05461.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05461.png",
+          "reference": "art/original/Data/scnobj/obj05461/obj05461.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05462",
+      "maps": [
+        "0007",
+        "0020"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05462/obj05462.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05462/c9.glb",
+        "Data/scnobj/obj05462/obj05462.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05462.png",
+          "reference": "art/original/Data/scnobj/obj05462/obj05462.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05463",
+      "maps": [
+        "0012",
+        "0019"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05463/obj05463.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05463/c9.glb",
+        "Data/scnobj/obj05463/obj05463.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05463.png",
+          "reference": "art/original/Data/scnobj/obj05463/obj05463.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05466",
+      "maps": [
+        "0004",
+        "0007",
+        "0021",
+        "0025"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05466/obj05466.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05466/c9.glb",
+        "Data/scnobj/obj05466/obj05466.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05466.png",
+          "reference": "art/original/Data/scnobj/obj05466/obj05466.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05467",
+      "maps": [
+        "0007",
+        "0021"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05467/obj05467.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05467/c9.glb",
+        "Data/scnobj/obj05467/obj05467.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05467.png",
+          "reference": "art/original/Data/scnobj/obj05467/obj05467.png",
+          "sourceSize": [
+            128,
+            128
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05468",
+      "maps": [
+        "0007",
+        "0021"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05468/obj05468.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05468/c9.glb",
+        "Data/scnobj/obj05468/obj05468.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05468.png",
+          "reference": "art/original/Data/scnobj/obj05468/obj05468.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "obj05469",
+      "maps": [
+        "0017",
+        "0022",
+        "0024"
+      ],
+      "classes": [
+        "SYcScnObjBreach"
+      ],
+      "publishedAssets": [
+        "Data/scnobj/obj05469/obj05469.glb"
+      ],
+      "models": [
+        "Data/scnobj/obj05469/c9.glb",
+        "Data/scnobj/obj05469/obj05469.glb"
+      ],
+      "textures": [
+        {
+          "filename": "obj05469A.png",
+          "reference": "art/original/Data/scnobj/obj05469/obj05469A.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -218,6 +218,13 @@ def generate_one(tank, workspace, filename, revision, input_rotation=0):
                 'inputRotation': input_rotation,
                 'reference': str(source), 'input': str(input_path),
                 'inputPreparation': 'original atlas with opaque background and UV guides'}
+    submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
+
+
+def submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt):
+    filename = metadata['filename']
+    request_size = metadata['requestedSize']
+    key = config['key']
     save_json(metadata_path, metadata)
     print(f'{filename}: submitted {config["model"]} {request_size}', flush=True)
     for attempt in range(3):
