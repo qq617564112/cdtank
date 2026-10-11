@@ -72,13 +72,8 @@ def prepare(model, workspace, selected=None):
         alpha = np.array(image.getchannel('A'))
         background = (255, 0, 255) if alpha.min() < 255 else (190,) * 3
         background_name = '高饱和紫色（#FF00FF）' if alpha.min() < 255 else '灰色'
-        core = np.uint8(alpha > 0) * 255
-        gutter = max(2, round(factor))
-        grown = cv2.dilate(core, np.ones((gutter * 2 + 1,) * 2, np.uint8))
-        ring = (cv2.dilate(grown, np.ones((5, 5), np.uint8)) > 0) & (grown == 0)
         opaque = Image.new('RGBA', size, (*background, 255))
         pixels = np.array(Image.alpha_composite(opaque, image).convert('RGB'))
-        pixels[ring] = 245
         margin = tuple(max(8, round(value / 64)) for value in size)
         canvas = Image.new('RGB', (size[0] + margin[0] * 2, size[1] + margin[1] * 2), background)
         canvas.paste(Image.fromarray(pixels), margin)
@@ -88,7 +83,7 @@ def prepare(model, workspace, selected=None):
         subject = item.get('promptSubject', '地图物体')
         prompt = (f'这是一张{subject}的完整二维UV贴图。将这张贴图忠实高清化，输出4K。'
             '保持原来的卡通风格、全部图案、配色、明暗关系和细节数量，线条清晰锐利。'
-            f'{background_name}是不透明辅助背景，白色细边是固定边界。保留整个画布和外框，'
+            f'{background_name}是不透明辅助背景，画布外围白色细边是固定边界。保留整个画布和外框，'
             '边界内图块的位置、大小、方向、形状与输入完全一致，不移动、旋转、变形或重新排版。'
             f'树叶、孔洞和缺口的轮廓保持原样，辅助底色保持{background_name}，白色引导边保持白色。'
             '文字和符号逐笔忠实描摹，保留原始方向；'
@@ -100,6 +95,7 @@ def prepare(model, workspace, selected=None):
             'atlasSize': list(size), 'margin': list(margin), 'canvasSize': list(canvas.size),
             'sourceSize': list(original.size), 'inputRotation': rotation,
             'inputResampling': 'bilinear',
+            'helperGuides': 'canvas-frame',
             'helperBackground': list(background), 'alphaComposited': True})
         print(f'{source.name}: opaque complete atlas prepared, background={background_name}', flush=True)
 
@@ -150,6 +146,7 @@ def generate(model, workspace, selected, revision):
         metadata['helperBackground'] = prepared['helperBackground']
         metadata['alphaComposited'] = prepared['alphaComposited']
         metadata['inputResampling'] = prepared['inputResampling']
+        metadata['helperGuides'] = prepared['helperGuides']
         with one_request(workspace):
             api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
 
