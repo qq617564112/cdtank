@@ -122,7 +122,8 @@ async function loadSelection(): Promise<void> {
   let totalParts = 0;
   if (!sample) {
     for (const part of ['M', 'U'] as const) {
-      if (!tank.resources.components.some(component => component.part === part)) continue;
+      if (!tank.resources.components.some(component =>
+        component.part === part && component.actions.length > 0)) continue;
       totalParts++;
       const partSuffix = skin && skin.ids[part] === 0 ? '001' : suffix;
       const filename = `${tankCode}${part}_${partSuffix}.png`;

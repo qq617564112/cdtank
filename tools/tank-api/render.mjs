@@ -16,8 +16,10 @@ for(const row of definition.resources.textureVariants){
  if(row.part!=='M'&&row.part!=='U')continue;
  const suffix=/[MU]_(\d+)\./.exec(row.filename)?.[1];
  if(!suffix)continue;
+ const asset=row.textures.A.asset;
+ if(!asset)continue;
  if(!rows.has(suffix))rows.set(suffix,{suffix,ids:{M:0,U:0,XY:0},assets:{}});
- const skin=rows.get(suffix);skin.ids[row.part]=row.recordId;skin.assets[row.part]=row.textures.A.asset.split('/').at(-1);
+ const skin=rows.get(suffix);skin.ids[row.part]=row.recordId;skin.assets[row.part]=asset.split('/').at(-1);
 }
 const only=process.argv.indexOf('--only');
 const selected=[...rows.values()].filter(s=>only<0 || s.suffix===process.argv[only+1]).sort((a,b)=>a.suffix.localeCompare(b.suffix));
@@ -110,7 +112,7 @@ try{
  const rendered=[];
  for(const skin of selected){
   for(const part of ['M','U']){
-   if(definition.resources.components.some(c=>c.part===part)&&!skin.assets[part]){
+   if(definition.resources.components.some(c=>c.part===part&&c.actions.length>0)&&!skin.assets[part]){
     skin.assets[part]=role+part+'_001.png';
    }
   }
