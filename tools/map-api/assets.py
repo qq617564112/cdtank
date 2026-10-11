@@ -59,6 +59,9 @@ def object_entry(model):
 def uv_triangles(model, filename):
     rows = []
     entry = object_entry(model)
+    filename = next((row.get('uvReference', filename) for row in entry['textures']
+                     if row['filename'].lower() == filename.lower()), filename)
+    used_names = set()
     for relative in entry['models']:
         path = ROOT / 'art/original' / relative
         document, binary = glb(path)
@@ -68,6 +71,7 @@ def uv_triangles(model, filename):
             for primitive in mesh['primitives']:
                 material = document.get('materials', [])[primitive.get('material', 0)]
                 name = entry.get('textureAliases', {}).get(material.get('name'), texture_name(material))
+                used_names.add(name)
                 if name.lower() != filename.lower():
                     continue
                 if primitive.get('mode', 4) != 4 or 'TEXCOORD_0' not in primitive['attributes']:
@@ -76,19 +80,20 @@ def uv_triangles(model, filename):
                 if 'indices' in primitive:
                     uv = uv[accessor(document, binary, primitive['indices']).ravel()]
                 rows.extend(uv.reshape(-1, 3, 2))
-    if not rows:
-        # Animated screen/waterfall frames and the alternate car skin share UVs.
-        primary = next(iter(sorted(model_folder(model).glob('*.glb'))), None)
-        if primary:
-            document, _ = glb(primary)
-            material = next(iter(document.get('materials', [])), None)
-            if material and texture_name(material).lower() != filename.lower():
-                return uv_triangles(model, texture_name(material))
+    if not rows and len(used_names) == 1:
+        # One-texture animation and alternate skins share the named material UVs.
+        primary = next(iter(used_names))
+        if primary.lower() != filename.lower():
+            return uv_triangles(model, primary)
     return np.asarray(rows, dtype=np.float32).reshape(-1, 3, 2)
 
 
 def inventory():
     entries = json.loads((ROOT / 'apps/web/public/scene-placements.json').read_text())
+    sequence = json.loads((ROOT / 'apps/web/public/scene-sequence05023.json').read_text())
+    screen, _ = glb(ROOT / 'art/original' / sequence['screen']['asset'])
+    screen_texture = texture_name(screen['materials'][0])
+    frames = {Path(row['asset']).name for row in sequence['frames']}
     groups = {}
     for entry in entries:
         for placement in entry['records'] + entry['castles']:
@@ -113,6 +118,8 @@ def inventory():
                 row['textures'].append({'filename': path.name,
                     'reference': str(path.relative_to(ROOT)), 'sourceSize': list(image.size),
                     'alphaRange': list(image.convert('RGBA').getchannel('A').getextrema())})
+                if model == sequence['model'] and path.name in frames and path.name != screen_texture:
+                    row['textures'][-1]['uvReference'] = screen_texture
         rows.append(row)
     for kind, source in [('brick', 'Data/scnobj/obj05443/obj05443.png'),
                          ('steel', 'Data/map/0018/dimian01.png')]:

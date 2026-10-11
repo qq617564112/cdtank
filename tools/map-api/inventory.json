@@ -97,7 +97,8 @@
           "alphaRange": [
             255,
             255
-          ]
+          ],
+          "uvReference": "001.png"
         },
         {
           "filename": "003.png",
@@ -109,7 +110,8 @@
           "alphaRange": [
             255,
             255
-          ]
+          ],
+          "uvReference": "001.png"
         },
         {
           "filename": "004.png",
@@ -121,7 +123,8 @@
           "alphaRange": [
             255,
             255
-          ]
+          ],
+          "uvReference": "001.png"
         },
         {
           "filename": "obj05023.png",
