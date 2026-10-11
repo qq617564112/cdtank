@@ -243,7 +243,9 @@ def finish(model, workspace, selected):
         # Remove neutral guide contamination only at the known UV/cutout edge.
         source_scale = native.width / original.width
         edge_width = max(4, round(source_scale * 1.5))
-        edge = (mask > 0) & (cv2.erode(mask, np.ones((edge_width * 2 + 1,) * 2, np.uint8)) == 0)
+        interior = cv2.erode(mask, np.ones((edge_width * 2 + 1,) * 2, np.uint8),
+                             borderType=cv2.BORDER_CONSTANT, borderValue=0)
+        edge = (mask > 0) & (interior == 0)
         edge_pixels = pixels[edge].astype(np.float32)
         neutral = edge_pixels.max(axis=1) - edge_pixels.min(axis=1) < 10
         intensity = edge_pixels.mean(axis=1)
