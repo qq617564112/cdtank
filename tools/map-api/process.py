@@ -109,6 +109,7 @@ def generate(model, workspace, selected, revision):
         metadata_path = output / 'metadata' / (source.stem + '.json')
         if (api.valid_image(native) and metadata_path.exists() and not revision
                 and json.loads(metadata_path.read_text()).get('status') == 'received'
+                and json.loads(metadata_path.read_text()).get('referenceCoverage') == 'complete-original'
                 and complete_reference(output, source)):
             print(f'{source.name}: existing result', flush=True)
             continue
@@ -179,8 +180,10 @@ def reuse_completed(model, source, workspace, input_path):
         other_metadata = other / 'metadata' / (Path(filename).stem + '.json')
         if not api.valid_image(other_native) or not other_metadata.exists():
             continue
-        shutil.copy2(other_native, output / 'native' / source.name)
         metadata = json.loads(other_metadata.read_text())
+        if metadata.get('referenceCoverage') != 'complete-original' or metadata.get('status') != 'received':
+            continue
+        shutil.copy2(other_native, output / 'native' / source.name)
         metadata.update(filename=source.name, object=model, reference=str(source), input=str(input_path),
                         reusedFrom=candidate, corrections=[])
         item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
