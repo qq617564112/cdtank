@@ -319,6 +319,9 @@ def finish(model, workspace, selected):
         final_size = tuple(round(maximum * value / max(original.size)) for value in original.size)
         final = Image.fromarray(pixels).resize(final_size, Image.Resampling.LANCZOS).convert('RGBA')
         final.putalpha(original.getchannel('A').resize(final_size, Image.Resampling.LANCZOS))
+        final_pixels = np.array(final)
+        final_pixels[final_pixels[:, :, 3] == 0, :3] = 0
+        final = Image.fromarray(final_pixels)
         if original.getchannel('A').getextrema() == (255, 255):
             final = final.convert('RGB')
         final.save(public / source.name)
