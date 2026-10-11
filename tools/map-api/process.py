@@ -226,6 +226,14 @@ def finish(model, workspace, selected):
         mx, my = prep['margin']
         width, height = prep['atlasSize']
         native = native.crop((round(mx * sx), round(my * sy), round((mx + width) * sx), round((my + height) * sy)))
+        # Keep the outer canvas guide out of filtering at repeated texture edges.
+        cropped = np.array(native)
+        border = max(1, round(max(native.size) / 2048))
+        cropped[:border] = cropped[border:border + 1]
+        cropped[-border:] = cropped[-border - 1:-border]
+        cropped[:, :border] = cropped[:, border:border + 1]
+        cropped[:, -border:] = cropped[:, -border - 1:-border]
+        native = Image.fromarray(cropped)
         reference = original.resize(native.size, Image.Resampling.BILINEAR)
         mask = uv_mask(model, source.name, native.size)
         alpha = np.array(reference.getchannel('A'))
