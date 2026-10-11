@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 
-from assets import ROOT, object_entry, texture_files, uv_triangles
+from assets import ROOT, complete_reference, object_entry, texture_files, uv_triangles
 
 spec = importlib.util.spec_from_file_location('tank_image_api', ROOT / 'tools/tank-api/process.py')
 api = importlib.util.module_from_spec(spec)
@@ -137,22 +137,6 @@ def generate(model, workspace, selected, revision):
         metadata['originalSource'] = item.get('originalSource', str(source.relative_to(ROOT)))
         with one_request(workspace):
             api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
-
-
-def complete_reference(output, source):
-    prepared = output / 'inputs' / source.name
-    specification = prepared.with_suffix('.json')
-    if not prepared.exists() or not specification.exists():
-        return False
-    preparation = json.loads(specification.read_text())
-    original = Image.open(source).convert('RGBA').resize(
-        tuple(preparation['atlasSize']), Image.Resampling.NEAREST)
-    pixels = np.array(original)
-    x, y = preparation['margin']
-    with Image.open(prepared) as image:
-        actual = np.array(image.convert('RGB').crop((x, y, x + original.width, y + original.height)))
-    visible = pixels[:, :, 3] > 0
-    return np.array_equal(actual[visible], pixels[:, :, :3][visible])
 
 
 def reuse_completed(model, source, workspace, input_path):

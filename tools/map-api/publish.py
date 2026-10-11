@@ -7,7 +7,7 @@ import posixpath
 import shutil
 import struct
 
-from assets import ROOT, texture_name
+from assets import ROOT, complete_reference, texture_name
 
 
 def model_bytes(raw, entry, images, relative, variant=None, group=None):
@@ -47,6 +47,13 @@ def reviewed(entry, evidence, independent):
     for path in (own_path, independent_path):
         row = json.loads(path.read_text())
         if row.get('status') != 'passed' or row.get('confirmedIssueCount') != 0 or row.get('unresolvedCount') != 0:
+            return False
+    for texture in entry['textures']:
+        source = ROOT / texture['reference']
+        if not complete_reference(evidence, source):
+            return False
+        metadata = json.loads((evidence / 'metadata' / (source.stem + '.json')).read_text())
+        if metadata.get('status') != 'received':
             return False
     return True
 
