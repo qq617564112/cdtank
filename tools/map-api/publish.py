@@ -143,7 +143,8 @@ def install(entry, generated_images, public):
         metadata = json.loads((ROOT / 'output/imagegen/map-api4k' / entry['model'] /
                                'metadata' / (Path(source).stem + '.json')).read_text())
         replacements[source] = {**old.get(source, {}), 'source': source,
-            'png': 'art/hd/' + source, 'original': texture.get('originalSource', texture['reference']),
+            'png': 'art/hd/' + source, 'original': texture['reference'],
+            'originalSource': texture.get('originalSource', texture['reference']),
             'size': texture['sourceSize'], 'outputSize': metadata['finalSize']}
         replacements[source].setdefault('groups', ['map-' + mid for mid in entry['maps']])
     manifest['textures'] = [replacements.pop(row['source'], row) for row in manifest['textures']] + list(replacements.values())
