@@ -232,13 +232,15 @@ def finish(model, workspace, selected):
         mask[alpha == 0] = 0
         pixels, registration = registered(np.array(reference.convert('RGB')), np.array(native), mask)
         # Remove neutral guide contamination only at the known UV/cutout edge.
-        edge = (mask > 0) & (cv2.erode(mask, np.ones((9, 9), np.uint8)) == 0)
+        source_scale = native.width / original.width
+        edge_width = max(4, round(source_scale * 1.5))
+        edge = (mask > 0) & (cv2.erode(mask, np.ones((edge_width * 2 + 1,) * 2, np.uint8)) == 0)
         neutral = pixels.max(axis=2).astype(np.int16) - pixels.min(axis=2) < 10
         intensity = pixels.mean(axis=2)
         difference = np.linalg.norm(pixels.astype(float) - np.array(reference.convert('RGB')), axis=2)
-        guides = np.uint8(edge & neutral & ((intensity > 232) | (abs(intensity - 190) < 8)) & (difference > 55)) * 255
+        guides = np.uint8(edge & neutral & ((intensity > 220) | (abs(intensity - 190) < 12)) & (difference > 55)) * 255
         if guides.any():
-            pixels = cv2.inpaint(pixels, guides, 3, cv2.INPAINT_TELEA)
+            pixels = cv2.inpaint(pixels, guides, max(3, round(source_scale / 3)), cv2.INPAINT_TELEA)
         valid = mask > 0
         if valid.any() and (~valid).any():
             _, nearest = cv2.distanceTransformWithLabels(np.uint8(~valid), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
