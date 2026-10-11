@@ -285,6 +285,11 @@ def finish(model, workspace, selected):
             cutout_edge = cv2.dilate(np.uint8(alpha < 255),
                 np.ones((edge_width * 2 + 1,) * 2, np.uint8))
             edge |= (mask > 0) & (cutout_edge > 0)
+        if metadata.get('helperBackground') == [255, 0, 255]:
+            magenta = np.minimum(pixels[:, :, 0], pixels[:, :, 2]).astype(np.float32) - pixels[:, :, 1]
+            original_rgb = np.array(reference.convert('RGB')).astype(np.float32)
+            original_magenta = np.minimum(original_rgb[:, :, 0], original_rgb[:, :, 2]) - original_rgb[:, :, 1]
+            edge |= (mask > 0) & (magenta > 45) & (magenta - original_magenta > 55)
         edge_pixels = pixels[edge].astype(np.float32)
         neutral = edge_pixels.max(axis=1) - edge_pixels.min(axis=1) < 10
         intensity = edge_pixels.mean(axis=1)
@@ -298,6 +303,10 @@ def finish(model, workspace, selected):
             amount = (delta * direction).sum(axis=1) / np.maximum((direction * direction).sum(axis=1), 1)
             remainder = np.linalg.norm(delta - amount[:, None] * direction, axis=1)
             contamination |= (amount > .12) & (amount < 1.05) & (remainder < 15)
+        if metadata.get('helperBackground') == [255, 0, 255]:
+            magenta = np.minimum(edge_pixels[:, 0], edge_pixels[:, 2]) - edge_pixels[:, 1]
+            original_magenta = np.minimum(reference_rgb[:, 0], reference_rgb[:, 2]) - reference_rgb[:, 1]
+            contamination |= (magenta > 45) & (magenta - original_magenta > 55)
         guides = np.zeros_like(mask)
         guides[edge] = np.uint8(contamination & (difference > 55)) * 255
         valid = mask > 0
