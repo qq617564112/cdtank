@@ -272,8 +272,13 @@ def finish(model, workspace, selected):
         pixels, registration = registered(np.array(registration_reference.convert('RGB')),
             np.array(native), mask, original.size)
         if metadata.get('alphaComposited'):
-            coverage = alpha.astype(np.float32)[:, :, None] / 255
-            pixels = np.uint8(np.clip((pixels.astype(np.float32) -
+            foreground_direction = np.array(reference.convert('RGB')).astype(np.float32) - background
+            composited_pixels = pixels.astype(np.float32)
+            estimated_coverage = ((composited_pixels - background) * foreground_direction).sum(axis=2) / np.maximum(
+                (foreground_direction * foreground_direction).sum(axis=2), 1)
+            coverage = np.maximum(alpha.astype(np.float32) / 255,
+                                  np.clip(estimated_coverage, 0, 1))[:, :, None]
+            pixels = np.uint8(np.clip((composited_pixels -
                 (1 - coverage) * background) / np.maximum(coverage, 1 / 255), 0, 255))
         # Remove helper background and guide contamination at UV and alpha edges.
         source_scale = native.width / original.width
