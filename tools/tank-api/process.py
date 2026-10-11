@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import time
@@ -24,6 +25,13 @@ sys.path.insert(0, str(ROOT / 'tools/tank-hd'))
 from process import read_uv, uv_groups
 
 cv2.setNumThreads(2)
+
+
+class HttpError(RuntimeError):
+    def __init__(self, status, body, retry_after=None):
+        super().__init__(f'HTTP {status}: {body}')
+        self.status = status
+        self.retry_after = retry_after
 
 
 def acquire_slot(handles):
@@ -60,6 +68,43 @@ def image_slot(workspace):
 
 def save_json(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
+
+
+def valid_prompt(path):
+    try:
+        return path.is_file() and path.stat().st_size > 0
+    except OSError:
+        return False
+
+
+def valid_image(path):
+    try:
+        if not path.is_file() or path.stat().st_size == 0:
+            return False
+        with Image.open(path) as image:
+            image.verify()
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def retryable_error(error):
+    if isinstance(error, (requests.ConnectionError, requests.Timeout)):
+        return True
+    if isinstance(error, HttpError):
+        return error.status in {429, 500, 502, 503, 504}
+    match = re.search(r'HTTP (\d{3})', str(error))
+    return bool(match and match.group(1) in {'429', '500', '502', '503', '504'})
+
+
+def retry_delay(error, attempt):
+    if isinstance(error, HttpError) and error.status == 429:
+        try:
+            delay = int(float(error.retry_after))
+        except (TypeError, ValueError):
+            delay = 65
+        return min(300, max(65, delay))
+    return 15 * (attempt + 1)
 
 
 def paths(workspace, tank):
@@ -103,11 +148,9 @@ def prepare(tank, workspace):
         requested = (4096, round(4096 * original.height / original.width))
         rows.append({'filename': source.name, 'sourceSize': list(original.size),
                      'inputSize': list(size), 'requestedSize': list(requested)})
-        if all(path.exists() for path in (
-            output / 'inputs' / source.name,
-            output / 'inputs' / f'{source.stem}-uv.png',
-            output / 'prompts' / f'{source.stem}.txt',
-        )):
+        if (valid_image(output / 'inputs' / source.name)
+                and valid_image(output / 'inputs' / f'{source.stem}-uv.png')
+                and valid_prompt(output / 'prompts' / f'{source.stem}.txt')):
             continue
         reference = np.array(original.resize(size, Image.Resampling.NEAREST))
         core, micro = masks(tank, source.name[3], size)
@@ -141,9 +184,12 @@ def generate_one(tank, workspace, filename, revision):
     output, _ = paths(workspace, tank)
     native = output / 'native' / filename
     metadata_path = output / 'metadata' / f'{Path(filename).stem}.json'
-    if native.exists() and metadata_path.exists() and not revision:
+    if valid_image(native) and metadata_path.exists() and not revision:
         print(f'{filename}: existing native result', flush=True)
         return
+    input_path = output / 'inputs' / filename
+    if not valid_image(input_path):
+        raise RuntimeError(f'input missing or invalid PNG: {input_path}')
     config = json.loads((PRIVATE / 'image-config.json').read_text())
     capabilities = PRIVATE / 'capabilities.json'
     if capabilities.exists():
@@ -165,7 +211,7 @@ def generate_one(tank, workspace, filename, revision):
     print(f'{filename}: submitted {config["model"]} {request_size}', flush=True)
     for attempt in range(3):
         try:
-            with image_slot(workspace), (output / 'inputs' / filename).open('rb') as image:
+            with image_slot(workspace), input_path.open('rb') as image:
                 response = requests.post(metadata['endpoint'],
                     headers={'Authorization': 'Bearer ' + key},
                     files={'image': (filename, image, 'image/png')},
@@ -173,7 +219,8 @@ def generate_one(tank, workspace, filename, revision):
                           'quality': 'high', 'background': 'opaque', 'n': '1',
                           'response_format': 'b64_json'}, timeout=1300)
             if not response.ok:
-                raise RuntimeError(f'HTTP {response.status_code}: ' + response.text[:500])
+                raise HttpError(response.status_code, response.text[:500],
+                                response.headers.get('Retry-After'))
             payload = response.json()
             item = payload['data'][0]
             if item.get('b64_json'):
@@ -198,9 +245,9 @@ def generate_one(tank, workspace, filename, revision):
             metadata.update(status='failed', error=message)
             save_json(metadata_path, metadata)
             print(f'{filename}: {message}', flush=True)
-            if attempt == 2 or 'HTTP 400' in message or 'HTTP 401' in message or 'HTTP 403' in message:
+            if attempt == 2 or not retryable_error(error):
                 raise RuntimeError(message) from None
-            time.sleep(10 * (attempt + 1))
+            time.sleep(retry_delay(error, attempt))
 
 
 def registered(source, native, tank, part):
