@@ -245,8 +245,16 @@ def finish(model, workspace, selected):
         edge = (mask > 0) & (cv2.erode(mask, np.ones((edge_width * 2 + 1,) * 2, np.uint8)) == 0)
         neutral = pixels.max(axis=2).astype(np.int16) - pixels.min(axis=2) < 10
         intensity = pixels.mean(axis=2)
-        difference = np.linalg.norm(pixels.astype(float) - np.array(reference.convert('RGB')), axis=2)
-        guides = np.uint8(edge & neutral & ((intensity > 220) | (abs(intensity - 190) < 12)) & (difference > 55)) * 255
+        reference_rgb = np.array(reference.convert('RGB'), dtype=np.float32)
+        delta = pixels.astype(np.float32) - reference_rgb
+        difference = np.linalg.norm(delta, axis=2)
+        contamination = neutral & ((intensity > 220) | (abs(intensity - 190) < 12))
+        for guide_color in (190, 245):
+            direction = guide_color - reference_rgb
+            amount = (delta * direction).sum(axis=2) / np.maximum((direction * direction).sum(axis=2), 1)
+            remainder = np.linalg.norm(delta - amount[:, :, None] * direction, axis=2)
+            contamination |= (amount > .12) & (amount < 1.05) & (remainder < 15)
+        guides = np.uint8(edge & contamination & (difference > 55)) * 255
         valid = mask > 0
         artwork = valid & (guides == 0)
         padding = (~valid) | (guides > 0)
