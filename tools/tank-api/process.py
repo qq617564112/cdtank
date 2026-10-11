@@ -136,7 +136,7 @@ def prepare(tank, workspace, selected=None, input_rotation=0):
     rows = []
     for source in source_files(tank):
         original = Image.open(source).convert('RGB')
-        width = 2048
+        width = 4096
         size = (width, round(width * original.height / original.width))
         requested = (4096, round(4096 * original.height / original.width))
         input_size = size
