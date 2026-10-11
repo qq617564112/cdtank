@@ -66,9 +66,8 @@ def prepare(model, workspace, selected=None):
         factor = 2048 / max(original.size)
         size = tuple(round(value * factor) for value in original.size)
         image = original.resize(size, Image.Resampling.NEAREST)
-        uv = uv_mask(model, source.name, size)
         alpha = np.array(image.getchannel('A'))
-        core = np.uint8((uv > 0) & (alpha > 0)) * 255
+        core = np.uint8(alpha > 0) * 255
         gutter = max(2, round(factor))
         grown = cv2.dilate(core, np.ones((gutter * 2 + 1,) * 2, np.uint8))
         ring = (cv2.dilate(grown, np.ones((5, 5), np.uint8)) > 0) & (grown == 0)
