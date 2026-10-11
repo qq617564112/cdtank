@@ -68,7 +68,7 @@ def prepare(model, workspace, selected=None):
         reference = original.transpose(Image.Transpose.ROTATE_180) if rotation == 180 else original
         factor = 2048 / max(original.size)
         size = tuple(round(value * factor) for value in original.size)
-        image = reference.resize(size, Image.Resampling.NEAREST)
+        image = reference.resize(size, Image.Resampling.BILINEAR)
         alpha = np.array(image.getchannel('A'))
         background = (255, 0, 255) if alpha.min() < 255 else (190,) * 3
         background_name = '高饱和紫色（#FF00FF）' if alpha.min() < 255 else '灰色'
@@ -99,6 +99,7 @@ def prepare(model, workspace, selected=None):
         api.save_json(output / 'inputs' / (source.stem + '.json'), {
             'atlasSize': list(size), 'margin': list(margin), 'canvasSize': list(canvas.size),
             'sourceSize': list(original.size), 'inputRotation': rotation,
+            'inputResampling': 'bilinear',
             'helperBackground': list(background), 'alphaComposited': True})
         print(f'{source.name}: opaque complete atlas prepared, background={background_name}', flush=True)
 
@@ -148,6 +149,7 @@ def generate(model, workspace, selected, revision):
         metadata['inputRotation'] = item.get('inputRotation', 0)
         metadata['helperBackground'] = prepared['helperBackground']
         metadata['alphaComposited'] = prepared['alphaComposited']
+        metadata['inputResampling'] = prepared['inputResampling']
         with one_request(workspace):
             api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
 
