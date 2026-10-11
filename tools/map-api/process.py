@@ -318,24 +318,41 @@ def finish(model, workspace, selected):
         reference_rgb = np.array(reference.convert('RGB'))[edge].astype(np.float32)
         delta = edge_pixels - reference_rgb
         difference = np.linalg.norm(delta, axis=1)
-        contamination = neutral & (intensity > 220)
-        for guide_color in (background, np.float32([245, 245, 245])):
-            contamination |= np.linalg.norm(edge_pixels - guide_color, axis=1) < 22
+        canvas_edge = np.zeros_like(mask, dtype=bool)
+        canvas_edge[:edge_width] = canvas_edge[-edge_width:] = True
+        canvas_edge[:, :edge_width] = canvas_edge[:, -edge_width:] = True
+        white_region = canvas_edge[edge] if metadata.get('helperGuides') == 'canvas-frame' else np.ones_like(neutral)
+        contamination = neutral & (intensity > 220) & white_region
+        for index, guide_color in enumerate((background, np.float32([245, 245, 245]))):
+            guide_pixels = np.linalg.norm(edge_pixels - guide_color, axis=1) < 22
             direction = guide_color - reference_rgb
             amount = (delta * direction).sum(axis=1) / np.maximum((direction * direction).sum(axis=1), 1)
             remainder = np.linalg.norm(delta - amount[:, None] * direction, axis=1)
-            contamination |= (amount > .12) & (amount < 1.05) & (remainder < 15)
+            guide_pixels |= (amount > .12) & (amount < 1.05) & (remainder < 15)
+            if index == 1:
+                guide_pixels &= white_region
+            contamination |= guide_pixels
         if metadata.get('helperBackground') == [255, 0, 255]:
             magenta = np.minimum(edge_pixels[:, 0], edge_pixels[:, 2]) - edge_pixels[:, 1]
             original_magenta = np.minimum(reference_rgb[:, 0], reference_rgb[:, 2]) - reference_rgb[:, 1]
             contamination |= (magenta > 45) & (magenta - original_magenta > 55)
-            green = edge_pixels[:, 1] - np.maximum(edge_pixels[:, 0], edge_pixels[:, 2])
-            original_green = reference_rgb[:, 1] - np.maximum(reference_rgb[:, 0], reference_rgb[:, 2])
             native_edge = composited_pixels[edge]
-            native_green = native_edge[:, 1] - np.maximum(native_edge[:, 0], native_edge[:, 2])
-            contamination |= (green > 45) & (green - original_green > 55) & (green - native_green > 55)
+            weak_cutout_edge = (alpha[edge] <= 96) & (cv2.dilate(np.uint8(alpha == 0),
+                np.ones((edge_width * 2 + 1,) * 2, np.uint8))[edge] > 0)
+            minor_contamination = np.zeros(len(edge_pixels), dtype=bool)
+            for channel in range(3):
+                others = [(channel + 1) % 3, (channel + 2) % 3]
+                dominant = edge_pixels[:, channel] - edge_pixels[:, others].max(axis=1)
+                original_dominant = reference_rgb[:, channel] - reference_rgb[:, others].max(axis=1)
+                native_dominant = native_edge[:, channel] - native_edge[:, others].max(axis=1)
+                contamination |= (dominant > 45) & (dominant - original_dominant > 55) & (dominant - native_dominant > 55)
+                minor_contamination |= (weak_cutout_edge & (original_dominant <= 0) &
+                    (dominant > 12) & (dominant - original_dominant > 20) & (dominant - native_dominant > 12))
         guides = np.zeros_like(mask)
-        guides[edge] = np.uint8(contamination & (difference > 55)) * 255
+        guide_pixels = contamination & (difference > 55)
+        if metadata.get('helperBackground') == [255, 0, 255]:
+            guide_pixels |= minor_contamination
+        guides[edge] = np.uint8(guide_pixels) * 255
         valid = mask > 0
         reliable_artwork = valid & (guides == 0) & (alpha >= 128)
         artwork = reliable_artwork if reliable_artwork.any() else valid & (guides == 0)
