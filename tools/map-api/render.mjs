@@ -16,6 +16,7 @@ const originalOnly = process.argv.includes('--original-only');
 const geometry = object.models;
 const variants = object.textures.map(row => row.filename);
 const views = ['left', 'center', 'right', 'top', 'front', 'rear'];
+let origin;
 
 function patchGlb(raw, mode, variant) {
   const length = raw.readUInt32LE(12);
@@ -31,7 +32,7 @@ function patchGlb(raw, mode, variant) {
   // One-texture animation and alternate skins use the same complete UV layout.
   for (const [index, filename] of textureNames) {
     const selected = new Set(textureNames.values()).size === 1 && variants.length > 1 ? variant : filename;
-    document.images[index] = {uri: `/__texture/${mode}/${model}/${selected}`, mimeType: 'image/png'};
+    document.images[index] = {uri: `${origin}/__texture/${mode}/${model}/${selected}`, mimeType: 'image/png'};
   }
   const encoded = Buffer.from(JSON.stringify(document));
   const padded = Buffer.alloc(Math.ceil(encoded.length / 4) * 4, 32);
@@ -141,14 +142,14 @@ try {
             res.end(patchGlb(await readFile(`${workspace}/art/original/${parts.join('/')}`), mode, decodeURIComponent(variant)));
             return;
           }
-        } catch (error) {res.statusCode = 500; res.end(String(error)); return;}
+        } catch (error) {console.error(path, String(error)); res.statusCode = 500; res.end(String(error)); return;}
         next();
       });
     }, resolveId(id) {if (id === '/__object-module.js') return '\0object-module';},
     load(id) {if (id === '\0object-module') return moduleSource;}}],
   });
   await vite.listen();
-  const origin = 'http://127.0.0.1:' + vite.httpServer.address().port;
+  origin = 'http://127.0.0.1:' + vite.httpServer.address().port;
   chrome = spawn('/home/node/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome',
     ['--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader',
       '--enable-unsafe-swiftshader', '--remote-debugging-port=0', '--user-data-dir=' + temp + '/chrome', 'about:blank'],
