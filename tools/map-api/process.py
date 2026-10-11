@@ -191,7 +191,7 @@ def reuse_completed(model, source, workspace, input_path):
     return False
 
 
-def registered(reference, pixels, mask, source_size):
+def registered(reference, pixels, mask, source_size, boundary):
     count, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
     result = pixels.copy()
     records = []
@@ -223,6 +223,14 @@ def registered(reference, pixels, mask, source_size):
             pass
         aligned = cv2.warpAffine(pixels[y0:y1, x0:x1], warp, (x1 - x0, y1 - y0),
             flags=cv2.INTER_LINEAR | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
+        sampled_edge = region & boundary[y0:y1, x0:x1]
+        if sampled_edge.any():
+            expected = reference[y0:y1, x0:x1][sampled_edge].astype(np.float32)
+            before_error = np.mean(np.abs(pixels[y0:y1, x0:x1][sampled_edge].astype(np.float32) - expected))
+            after_error = np.mean(np.abs(aligned[sampled_edge].astype(np.float32) - expected))
+            if after_error > before_error:
+                warp = np.eye(2, 3, dtype=np.float32)
+                aligned = pixels[y0:y1, x0:x1]
         result[y0:y1, x0:x1][region] = aligned[region]
         records.append({'bounds': [int(x), int(y), int(width), int(height)],
                         'correlation': None if correlation is None else float(correlation),
@@ -269,8 +277,10 @@ def finish(model, workspace, selected):
         if metadata.get('alphaComposited'):
             matte = Image.new('RGBA', native.size, (*map(int, background), 255))
             registration_reference = Image.alpha_composite(matte, reference)
+        boundary = (mask > 0) & ((alpha < 255) |
+            (cv2.erode(mask, np.ones((9, 9), np.uint8), borderType=cv2.BORDER_CONSTANT, borderValue=0) == 0))
         pixels, registration = registered(np.array(registration_reference.convert('RGB')),
-            np.array(native), mask, original.size)
+            np.array(native), mask, original.size, boundary)
         if metadata.get('alphaComposited'):
             foreground_direction = np.array(reference.convert('RGB')).astype(np.float32) - background
             composited_pixels = pixels.astype(np.float32)
