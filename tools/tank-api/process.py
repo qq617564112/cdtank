@@ -255,8 +255,8 @@ def submit_edit(input_path, native, metadata_path, metadata, config, workspace, 
                 raw = download.content
             image = Image.open(io.BytesIO(raw))
             image.load()
-            receiving = native.with_name(native.stem + '.receiving.png')
-            image.save(receiving)
+            receiving = native.with_suffix('.receiving')
+            image.save(receiving, format='PNG')
             receiving.replace(native)
             metadata.update(status='received', nativeSize=list(image.size),
                             usage=payload.get('usage'), revisedPrompt=item.get('revised_prompt'))
