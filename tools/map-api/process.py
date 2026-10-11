@@ -198,11 +198,15 @@ def registered(reference, pixels, boundary):
     shape = (round(width * scale), round(height * scale))
     old = cv2.resize(cv2.cvtColor(reference, cv2.COLOR_RGB2GRAY), shape)
     new = cv2.resize(cv2.cvtColor(pixels, cv2.COLOR_RGB2GRAY), shape)
+    padding = 64
+    old = cv2.copyMakeBorder(old, padding, padding, padding, padding, cv2.BORDER_WRAP)
+    new = cv2.copyMakeBorder(new, padding, padding, padding, padding, cv2.BORDER_WRAP)
     flow = cv2.calcOpticalFlowFarneback(old, new, None, .5, 5, 31, 5, 7, 1.5, 0)
+    flow = flow[padding:-padding, padding:-padding]
     flow = cv2.resize(flow, (width, height)) / scale
     yy, xx = np.indices((height, width), dtype=np.float32)
     aligned = cv2.remap(pixels, xx + flow[:, :, 0], yy + flow[:, :, 1],
-        cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+        cv2.INTER_LINEAR, borderMode=cv2.BORDER_WRAP)
     applied = True
     if boundary.any():
         expected = reference[boundary].astype(np.float32)
