@@ -140,8 +140,10 @@ def generate(model, workspace, selected, revision):
         prepared = json.loads((output / 'inputs' / (source.stem + '.json')).read_text())
         if prepared['helperBackground'] == [255, 0, 255]:
             prompt += ('\n本次辅助背景统一为高饱和紫色（#FF00FF），以输入图为准。'
-                       '紫底仅用于透明区域，半透明边缘已合成到紫底上；'
-                       '不要把紫底或白色辅助边画成树干、树叶、枝条、图案或高光。')
+                       '上传参考已经合成为完全不透明的RGB平面图。纯紫色空白保持RGB(255,0,255)，'
+                       '图块内部及边缘的紫色混合像素也按上传图逐处复制，保持实际合成RGB和柔和渐变。'
+                       '不自行抠图、去紫底、恢复前景色或提高图块的不透明度；去底由后续处理完成。'
+                       '只清晰化已有轮廓，不将内部柔和渐变改成高光、齿纹或新色块。外围白框保持原位。')
         (output / 'prompts' / (source.stem + '-request.txt')).write_text(prompt + '\n')
         metadata = {'filename': source.name, 'object': model, 'model': config['model'],
             'endpoint': config['base'].rstrip('/') + '/images/edits',
