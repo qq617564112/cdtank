@@ -5,6 +5,7 @@ import base64
 from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor
 import fcntl
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -25,26 +26,35 @@ from process import read_uv, uv_groups
 cv2.setNumThreads(2)
 
 
+def acquire_slot(handles):
+    while True:
+        for handle in handles:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return handle
+            except BlockingIOError:
+                pass
+        time.sleep(1)
+
+
 @contextmanager
-def image_slot():
-    handles = [(PRIVATE / f'image-slot-{index}.lock').open('a') for index in range(5)]
-    acquired = None
+def image_slot(workspace):
+    workspace_key = hashlib.sha256(str(Path(workspace).resolve()).encode()).hexdigest()[:16]
+    job_handles = [(PRIVATE / f'image-job-{workspace_key}-{index}.lock').open('a')
+                   for index in range(2)]
+    global_handles = [(PRIVATE / f'image-slot-{index}.lock').open('a') for index in range(5)]
+    job_slot = None
+    global_slot = None
     try:
-        while acquired is None:
-            for handle in handles:
-                try:
-                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    acquired = handle
-                    break
-                except BlockingIOError:
-                    pass
-            if acquired is None:
-                time.sleep(1)
+        job_slot = acquire_slot(job_handles)
+        global_slot = acquire_slot(global_handles)
         yield
     finally:
-        if acquired:
-            fcntl.flock(acquired, fcntl.LOCK_UN)
-        for handle in handles:
+        if global_slot:
+            fcntl.flock(global_slot, fcntl.LOCK_UN)
+        if job_slot:
+            fcntl.flock(job_slot, fcntl.LOCK_UN)
+        for handle in job_handles + global_handles:
             handle.close()
 
 
@@ -155,7 +165,7 @@ def generate_one(tank, workspace, filename, revision):
     print(f'{filename}: submitted {config["model"]} {request_size}', flush=True)
     for attempt in range(3):
         try:
-            with image_slot(), (output / 'inputs' / filename).open('rb') as image:
+            with image_slot(workspace), (output / 'inputs' / filename).open('rb') as image:
                 response = requests.post(metadata['endpoint'],
                     headers={'Authorization': 'Bearer ' + key},
                     files={'image': (filename, image, 'image/png')},
@@ -323,7 +333,10 @@ def main():
         prepare(args.tank, args.workspace)
     elif args.command == 'generate':
         files = [p.name for p in source_files(args.tank) if not args.only or p.name in args.only]
-        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        workers = min(args.workers, 2)
+        if workers != args.workers:
+            print(f'capping generation workers from {args.workers} to {workers}', flush=True)
+        with ThreadPoolExecutor(max_workers=workers) as pool:
             list(pool.map(lambda name: generate_one(args.tank, args.workspace, name, args.revision), files))
     else:
         finish(args.tank, args.workspace, args.only)
