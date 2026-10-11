@@ -129,7 +129,7 @@ def masks(tank, part, size):
     return np.array(main), np.array(micro)
 
 
-def prepare(tank, workspace, selected=None):
+def prepare(tank, workspace, selected=None, input_rotation=0):
     output, _ = paths(workspace, tank)
     for folder in ('inputs', 'native', 'prompts', 'metadata'):
         (output / folder).mkdir(exist_ok=True)
@@ -153,8 +153,13 @@ def prepare(tank, workspace, selected=None):
         pixels[grown > 0] = reference[grown > 0]
         pixels[micro > 0] = reference[micro > 0]
         pixels[ring] = 245
-        Image.fromarray(pixels).save(output / 'inputs' / source.name)
-        Image.fromarray(core).save(output / 'inputs' / f'{source.stem}-uv.png')
+        prepared = Image.fromarray(pixels)
+        uv_mask = Image.fromarray(core)
+        if input_rotation == 180:
+            prepared = prepared.transpose(Image.Transpose.ROTATE_180)
+            uv_mask = uv_mask.transpose(Image.Transpose.ROTATE_180)
+        prepared.save(output / 'inputs' / source.name)
+        uv_mask.save(output / 'inputs' / f'{source.stem}-uv.png')
         part = '车身' if source.name[3] == 'M' else '炮塔'
         prompt = (
             f'将这张坦克{part}二维UV贴图高清重绘，输出{requested[0]}x{requested[1]}，'
@@ -171,14 +176,14 @@ def prepare(tank, workspace, selected=None):
     print(f'Prepared {tank}: {len(rows)} bounded inputs', flush=True)
 
 
-def generate_one(tank, workspace, filename, revision):
+def generate_one(tank, workspace, filename, revision, input_rotation=0):
     output, _ = paths(workspace, tank)
     native = output / 'native' / filename
     metadata_path = output / 'metadata' / f'{Path(filename).stem}.json'
     if valid_image(native) and metadata_path.exists() and not revision:
         print(f'{filename}: existing native result', flush=True)
         return
-    prepare(tank, workspace, [filename])
+    prepare(tank, workspace, [filename], input_rotation)
     input_path = output / 'inputs' / filename
     if not valid_image(input_path):
         raise RuntimeError(f'input missing or invalid PNG: {input_path}')
@@ -192,6 +197,8 @@ def generate_one(tank, workspace, filename, revision):
     request_width = config.get('requestWidth', 4096)
     request_size = f'{request_width}x{round(request_width * original.height / original.width)}'
     prompt = (output / 'prompts' / f'{source.stem}.txt').read_text().strip()
+    if input_rotation == 180:
+        prompt += '\n输入是原始完整图集整体旋转180度后的图像。严格保持当前输入的整图方向和全部图块位置输出，不要自行旋转或重排。'
     if revision:
         prompt += '\n修正要求：' + revision
         (output / 'prompts' / f'{source.stem}-revision.txt').write_text(prompt + '\n')
@@ -200,6 +207,7 @@ def generate_one(tank, workspace, filename, revision):
                 'requestedSize': request_size, 'quality': 'high',
                 'inputsPerRequest': 1, 'background': 'opaque', 'status': 'submitted',
                 'generationScope': 'whole-atlas',
+                'inputRotation': input_rotation,
                 'reference': str(source), 'input': str(input_path),
                 'inputPreparation': 'original atlas with opaque background and UV guides'}
     save_json(metadata_path, metadata)
@@ -309,6 +317,10 @@ def finish(tank, workspace, selected):
         if not native_path.exists():
             continue
         original, native = Image.open(source).convert('RGB'), Image.open(native_path).convert('RGB')
+        path = output / 'metadata' / f'{source.stem}.json'
+        metadata = json.loads(path.read_text())
+        if metadata.get('inputRotation', 0) == 180:
+            native = native.transpose(Image.Transpose.ROTATE_180)
         final_size = (4096, round(4096 * original.height / original.width))
         if abs(native.width / native.height - original.width / original.height) > .02:
             raise ValueError(f'{source.name}: API aspect ratio {native.size} differs from source {original.size}')
@@ -324,8 +336,6 @@ def finish(tank, workspace, selected):
             pixels[wanted & ~valid] = pixels[valid][nearest[wanted & ~valid] - 1]
         final = Image.fromarray(pixels).resize(final_size, Image.Resampling.LANCZOS)
         final.save(public / source.name)
-        path = output / 'metadata' / f'{source.stem}.json'
-        metadata = json.loads(path.read_text())
         if metadata.get('status') == 'received':
             metadata.pop('error', None)
         metadata.update(finalSize=list(final_size), resampledTo4k=native.size != final_size,
@@ -352,6 +362,7 @@ def main():
     parser.add_argument('--workers', type=int, default=1)
     parser.add_argument('--only', nargs='*')
     parser.add_argument('--revision', default='')
+    parser.add_argument('--input-rotation', type=int, choices=[0, 180], default=0)
     parser.add_argument('--detach', action='store_true')
     args = parser.parse_args()
     if args.detach:
@@ -363,6 +374,8 @@ def main():
             command += ['--only', *args.only]
         if args.revision:
             command += ['--revision', args.revision]
+        if args.input_rotation:
+            command += ['--input-rotation', str(args.input_rotation)]
         with log.open('a') as handle:
             child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=handle,
                                      stderr=subprocess.STDOUT, start_new_session=True)
@@ -370,14 +383,15 @@ def main():
         print(f'Independent generation job {child.pid}: {log}', flush=True)
         return
     if args.command == 'prepare':
-        prepare(args.tank, args.workspace, args.only)
+        prepare(args.tank, args.workspace, args.only, args.input_rotation)
     elif args.command == 'generate':
         files = [p.name for p in source_files(args.tank) if not args.only or p.name in args.only]
         workers = min(args.workers, 2)
         if workers != args.workers:
             print(f'capping generation workers from {args.workers} to {workers}', flush=True)
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            list(pool.map(lambda name: generate_one(args.tank, args.workspace, name, args.revision), files))
+            list(pool.map(lambda name: generate_one(args.tank, args.workspace, name, args.revision,
+                                                   args.input_rotation), files))
     else:
         finish(args.tank, args.workspace, args.only)
 
