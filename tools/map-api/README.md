@@ -14,6 +14,8 @@ Identical complete originals can reuse a self-reviewed native atlas from the wor
 
 `flock /tmp/cdtank-api4k/map-render.lock node render.mjs OBJECT WORKTREE` renders original GLB geometry under uniform ambient illumination from six directions. Breakable states, castle actions and texture variants are included. Static objects use representative complete mesh groups covering every selected material. `contact.py OBJECT WORKTREE` produces original/API comparison sheets for visual inspection.
 
+After the complete initial render, `render.mjs OBJECT WORKTREE --group NAME` refreshes one static mesh group's six-view comparisons and retains the other groups in `renders/scope.json`. Render each group affected by a changed texture; accepted groups keep their existing evidence.
+
 Production evidence is stored in `output/imagegen/map-api4k/OBJECT/`. Runtime textures are stored in `apps/web/public/map-audit/api4k/` under their original `Data/scnobj/` or `Data/map/` paths. Each completed object records inspected models and evidence in `review.json`.
 
 Visual review covers artwork sampled by the original model UVs. Content outside those UVs does not affect acceptance or trigger a redraw. Self-reviewed passed groups remain accepted, and received native atlases are retained for model review.

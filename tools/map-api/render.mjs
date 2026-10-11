@@ -6,7 +6,7 @@ import WebSocket from '/workspace/cdtank/node_modules/ws/index.js';
 
 const workspace = '/workspace/cdtank';
 const model = process.argv[2], target = process.argv[3];
-if (!model || !target) throw new Error('Usage: render.mjs OBJECT WORKSPACE [--original-only]');
+if (!model || !target) throw new Error('Usage: render.mjs OBJECT WORKSPACE [--original-only] [--group NAME]');
 const output = `${target}/output/imagegen/map-api4k/${model}/renders`;
 const temp = `/tmp/cdtank-api4k/map-render-${model}-${process.pid}`;
 const inventory = JSON.parse(await readFile(`${workspace}/tools/map-api/inventory.json`, 'utf8'));
@@ -18,6 +18,11 @@ const variants = object.textures.map(row => row.filename);
 const views = ['left', 'center', 'right', 'top', 'front', 'rear'];
 const staticObjects = object.kind === 'static-map-objects';
 const runtimeFolder = object.runtimeFolder || object.sourceFolder || `Data/scnobj/${model}`;
+var groupIndex = process.argv.indexOf('--group');
+var selectedGroup = groupIndex < 0 ? undefined : process.argv[groupIndex + 1];
+if (groupIndex >= 0 && (!staticObjects || !object.reviewGroups.some(row => row.name === selectedGroup))) {
+  throw new Error(`Unknown static object group ${selectedGroup}`);
+}
 
 function patchGlb(raw, mode, variant, group) {
   const length = raw.readUInt32LE(12);
@@ -197,8 +202,9 @@ try {
     await new Promise(resolve => setTimeout(resolve, 300));
     if (attempt === 399) throw new Error('Object renderer did not load');
   }
-  const scope = [];
-  const jobs = staticObjects ? object.reviewGroups.map(group => ({path: geometry[0], group: group.name}))
+  const scope = selectedGroup ? JSON.parse(await readFile(`${output}/scope.json`, 'utf8')).models : [];
+  const jobs = staticObjects ? object.reviewGroups.filter(group => !selectedGroup || group.name === selectedGroup)
+    .map(group => ({path: geometry[0], group: group.name}))
     : geometry.map(path => ({path}));
   for (const job of jobs) {
     const path = job.path;
@@ -219,7 +225,10 @@ try {
         }
         console.log(`Rendered ${model} ${action} ${variant} ${mode}`);
       }
-      scope.push({asset: path, action, variant, views});
+      var item = {asset: path, action, variant, views};
+      var existing = scope.findIndex(row => row.asset === path && row.action === action && row.variant === variant);
+      if (existing < 0) scope.push(item);
+      else scope[existing] = item;
     }
   }
   await writeFile(`${output}/scope.json`, JSON.stringify({object: model, ambientLight: true,
