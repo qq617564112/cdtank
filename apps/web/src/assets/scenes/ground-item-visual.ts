@@ -1,4 +1,4 @@
-import {AbstractMesh, AnimationGroup, AssetContainer, Constants, LoadAssetContainerAsync, Matrix,
+import {AbstractMesh, AnimationGroup, AssetContainer, Constants, LoadAssetContainerAsync, Matrix, Mesh,
   Observer, PBRMaterial, Scene, Texture, TransformNode, Vector3} from '@babylonjs/core';
 import type {IGLTFLoaderData} from '@babylonjs/loaders/glTF/glTFFileLoader';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
@@ -79,6 +79,9 @@ export class GroundItemVisual {
       this.texture = texture;
       let applied = false;
       for (const mesh of asset.meshes) {
+        // Drop vertex frames are identical; only the CVD node transform animates.
+        // Removing empty morph channels enables shared hard-edge outline normals.
+        if (mesh instanceof Mesh) mesh.morphTargetManager = null;
         if (mesh.material instanceof PBRMaterial) {
           mesh.material.albedoTexture = texture;
           applied = true;
