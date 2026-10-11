@@ -192,51 +192,27 @@ def reuse_completed(model, source, workspace, input_path):
     return False
 
 
-def registered(reference, pixels, mask, source_size, boundary):
-    count, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
-    result = pixels.copy()
-    records = []
-    for label in range(1, count):
-        x, y, width, height, _ = stats[label]
-        margin = max(4, round(max(pixels.shape[:2]) / 256 * 3))
-        x0, y0 = max(0, x - margin), max(0, y - margin)
-        x1, y1 = min(pixels.shape[1], x + width + margin), min(pixels.shape[0], y + height + margin)
-        region = labels[y0:y1, x0:x1] == label
-        old = cv2.cvtColor(reference[y0:y1, x0:x1], cv2.COLOR_RGB2GRAY)
-        new = cv2.cvtColor(pixels[y0:y1, x0:x1], cv2.COLOR_RGB2GRAY)
-        scale = min(1, 600 / max(old.shape))
-        shape = tuple(max(8, round(value * scale)) for value in (old.shape[1], old.shape[0]))
-        old_small, new_small = [cv2.resize(value, shape).astype(np.float32) / 255 for value in (old, new)]
-        valid = cv2.erode(cv2.resize(np.uint8(region), shape, interpolation=cv2.INTER_NEAREST), np.ones((3, 3), np.uint8))
-        warp = np.eye(2, 3, dtype=np.float32)
-        correlation = None
-        try:
-            correlation, fitted = cv2.findTransformECC(old_small, new_small, warp.copy(),
-                cv2.MOTION_AFFINE, (cv2.TERM_CRITERIA_COUNT | cv2.TERM_CRITERIA_EPS, 60, .0001), valid, 5)
-            if correlation >= .5:
-                center = np.float32([shape[0] / 2, shape[1] / 2])
-                displacement = fitted[:, :2] @ center + fitted[:, 2] - center
-                source_pixel = np.array([pixels.shape[1], pixels.shape[0]]) / np.array(source_size)
-                limit = np.minimum(source_pixel * .5, np.array([width, height]) * .01) * scale
-                warp[:, :2] = np.diag(np.clip(np.diag(fitted[:, :2]), .9975, 1.0025))
-                warp[:, 2] = (center + np.clip(displacement, -limit, limit) - warp[:, :2] @ center) / scale
-        except cv2.error:
-            pass
-        aligned = cv2.warpAffine(pixels[y0:y1, x0:x1], warp, (x1 - x0, y1 - y0),
-            flags=cv2.INTER_LINEAR | cv2.WARP_INVERSE_MAP, borderMode=cv2.BORDER_REPLICATE)
-        sampled_edge = region & boundary[y0:y1, x0:x1]
-        if sampled_edge.any():
-            expected = reference[y0:y1, x0:x1][sampled_edge].astype(np.float32)
-            before_error = np.mean(np.abs(pixels[y0:y1, x0:x1][sampled_edge].astype(np.float32) - expected))
-            after_error = np.mean(np.abs(aligned[sampled_edge].astype(np.float32) - expected))
-            if after_error > before_error:
-                warp = np.eye(2, 3, dtype=np.float32)
-                aligned = pixels[y0:y1, x0:x1]
-        result[y0:y1, x0:x1][region] = aligned[region]
-        records.append({'bounds': [int(x), int(y), int(width), int(height)],
-                        'correlation': None if correlation is None else float(correlation),
-                        'transform': warp.tolist()})
-    return result, records
+def registered(reference, pixels, boundary):
+    height, width = pixels.shape[:2]
+    scale = min(1, 1024 / max(height, width))
+    shape = (round(width * scale), round(height * scale))
+    old = cv2.resize(cv2.cvtColor(reference, cv2.COLOR_RGB2GRAY), shape)
+    new = cv2.resize(cv2.cvtColor(pixels, cv2.COLOR_RGB2GRAY), shape)
+    flow = cv2.calcOpticalFlowFarneback(old, new, None, .5, 5, 31, 5, 7, 1.5, 0)
+    flow = cv2.resize(flow, (width, height)) / scale
+    yy, xx = np.indices((height, width), dtype=np.float32)
+    aligned = cv2.remap(pixels, xx + flow[:, :, 0], yy + flow[:, :, 1],
+        cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    applied = True
+    if boundary.any():
+        expected = reference[boundary].astype(np.float32)
+        before_error = np.mean(np.abs(pixels[boundary].astype(np.float32) - expected))
+        after_error = np.mean(np.abs(aligned[boundary].astype(np.float32) - expected))
+        if after_error > before_error:
+            aligned = pixels
+            applied = False
+    return aligned, [{'method': 'whole-atlas-optical-registration',
+        'bounds': [0, 0, width, height], 'scale': scale, 'applied': applied}]
 
 
 def finish(model, workspace, selected):
@@ -276,12 +252,15 @@ def finish(model, workspace, selected):
         background = np.float32(metadata.get('helperBackground', [190, 190, 190]))
         registration_reference = reference
         if metadata.get('alphaComposited'):
-            matte = Image.new('RGBA', native.size, (*map(int, background), 255))
-            registration_reference = Image.alpha_composite(matte, reference)
+            prepared_rgb = Image.open(output / 'inputs' / source.name).convert('RGB')
+            if metadata.get('inputRotation', 0) == 180:
+                prepared_rgb = prepared_rgb.transpose(Image.Transpose.ROTATE_180)
+            registration_reference = prepared_rgb.crop((mx, my, mx + width, my + height)).resize(
+                native.size, Image.Resampling.BILINEAR)
         boundary = (mask > 0) & ((alpha < 255) |
             (cv2.erode(mask, np.ones((9, 9), np.uint8), borderType=cv2.BORDER_CONSTANT, borderValue=0) == 0))
         pixels, registration = registered(np.array(registration_reference.convert('RGB')),
-            np.array(native), mask, original.size, boundary)
+            np.array(native), boundary)
         if metadata.get('alphaComposited'):
             foreground_direction = np.array(reference.convert('RGB')).astype(np.float32) - background
             composited_pixels = pixels.astype(np.float32)
