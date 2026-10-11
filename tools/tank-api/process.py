@@ -147,7 +147,7 @@ def prepare(tank, workspace, selected=None, input_rotation=0):
                      'inputSize': list(input_size), 'requestedSize': list(requested)})
         if selected and source.name not in selected:
             continue
-        reference = np.array(original.resize(size, Image.Resampling.NEAREST))
+        reference = np.array(original.resize(size, Image.Resampling.BICUBIC))
         core, micro = masks(tank, source.name[3], size)
         pixels_per_source = width / original.width
         gutter = max(1, round(pixels_per_source * .75))
