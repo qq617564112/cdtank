@@ -308,7 +308,7 @@ def registered(source, native, tank, part):
     neutral = result.max(axis=2).astype(np.int16) - result.min(axis=2) < 10
     intensity = result.mean(axis=2)
     ref_distance = np.linalg.norm(result.astype(np.float32) - reference, axis=2)
-    guide = edge & neutral & (((intensity > 235) | (np.abs(intensity - 190) < 12))) & (ref_distance > 55)
+    guide = edge & neutral & (((intensity > 220) | (np.abs(intensity - 190) < 12))) & (ref_distance > 55)
     result[guide] = reference[guide]
     result[micro > 0] = reference[micro > 0]
     return Image.fromarray(result), core | micro, records
