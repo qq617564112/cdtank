@@ -282,6 +282,11 @@ def finish(model, workspace, selected):
                 (foreground_direction * foreground_direction).sum(axis=2), 1)
             coverage = np.maximum(alpha.astype(np.float32) / 255,
                                   np.clip(estimated_coverage, 0, 1))[:, :, None]
+            if metadata.get('helperBackground') == [255, 0, 255]:
+                reference_rgb = np.array(reference.convert('RGB')).astype(np.float32)
+                expected_cast = np.minimum(reference_rgb[:, :, 0], reference_rgb[:, :, 2]) - reference_rgb[:, :, 1]
+                returned_cast = np.minimum(composited_pixels[:, :, 0], composited_pixels[:, :, 2]) - composited_pixels[:, :, 1]
+                coverage[returned_cast <= expected_cast + 15] = 1
             pixels = np.uint8(np.clip((composited_pixels -
                 (1 - coverage) * background) / np.maximum(coverage, 1 / 255), 0, 255))
         # Remove helper background and guide contamination at UV and alpha edges.
@@ -316,6 +321,11 @@ def finish(model, workspace, selected):
             magenta = np.minimum(edge_pixels[:, 0], edge_pixels[:, 2]) - edge_pixels[:, 1]
             original_magenta = np.minimum(reference_rgb[:, 0], reference_rgb[:, 2]) - reference_rgb[:, 1]
             contamination |= (magenta > 45) & (magenta - original_magenta > 55)
+            green = edge_pixels[:, 1] - np.maximum(edge_pixels[:, 0], edge_pixels[:, 2])
+            original_green = reference_rgb[:, 1] - np.maximum(reference_rgb[:, 0], reference_rgb[:, 2])
+            native_edge = composited_pixels[edge]
+            native_green = native_edge[:, 1] - np.maximum(native_edge[:, 0], native_edge[:, 2])
+            contamination |= (green > 45) & (green - original_green > 55) & (green - native_green > 55)
         guides = np.zeros_like(mask)
         guides[edge] = np.uint8(contamination & (difference > 55)) * 255
         valid = mask > 0
