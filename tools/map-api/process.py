@@ -239,12 +239,12 @@ def finish(model, workspace, selected):
         intensity = pixels.mean(axis=2)
         difference = np.linalg.norm(pixels.astype(float) - np.array(reference.convert('RGB')), axis=2)
         guides = np.uint8(edge & neutral & ((intensity > 220) | (abs(intensity - 190) < 12)) & (difference > 55)) * 255
-        if guides.any():
-            pixels = cv2.inpaint(pixels, guides, max(3, round(source_scale / 3)), cv2.INPAINT_TELEA)
         valid = mask > 0
-        if valid.any() and (~valid).any():
-            _, nearest = cv2.distanceTransformWithLabels(np.uint8(~valid), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
-            pixels[~valid] = pixels[valid][nearest[~valid] - 1]
+        artwork = valid & (guides == 0)
+        padding = (~valid) | (guides > 0)
+        if artwork.any() and padding.any():
+            _, nearest = cv2.distanceTransformWithLabels(np.uint8(~artwork), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+            pixels[padding] = pixels[artwork][nearest[padding] - 1]
         maximum = 4096
         final_size = tuple(round(maximum * value / max(original.size)) for value in original.size)
         final = Image.fromarray(pixels).resize(final_size, Image.Resampling.LANCZOS).convert('RGBA')
