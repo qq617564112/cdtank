@@ -328,7 +328,7 @@ def finish(model, workspace, selected):
         valid = mask > 0
         reliable_artwork = valid & (guides == 0) & (alpha >= 128)
         artwork = reliable_artwork if reliable_artwork.any() else valid & (guides == 0)
-        padding = (~valid) | (guides > 0) | ((alpha < 128) & reliable_artwork.any())
+        padding = (~valid) | (guides > 0)
         if artwork.any() and padding.any():
             _, nearest = cv2.distanceTransformWithLabels(np.uint8(~artwork), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
             pixels[padding] = pixels[artwork][nearest[padding] - 1]
