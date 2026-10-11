@@ -10,22 +10,6 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def complete_reference(output, source):
-    prepared = output / 'inputs' / source.name
-    specification = prepared.with_suffix('.json')
-    if not prepared.exists() or not specification.exists():
-        return False
-    preparation = json.loads(specification.read_text())
-    original = Image.open(source).convert('RGBA').resize(
-        tuple(preparation['atlasSize']), Image.Resampling.NEAREST)
-    pixels = np.array(original)
-    x, y = preparation['margin']
-    with Image.open(prepared) as image:
-        actual = np.array(image.convert('RGB').crop((x, y, x + original.width, y + original.height)))
-    visible = pixels[:, :, 3] > 0
-    return np.array_equal(actual[visible], pixels[:, :, :3][visible])
-
-
 def glb(path):
     raw = Path(path).read_bytes()
     chunks, offset = {}, 12

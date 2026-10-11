@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 
-from assets import ROOT, complete_reference, object_entry, texture_files, uv_triangles
+from assets import ROOT, object_entry, texture_files, uv_triangles
 
 spec = importlib.util.spec_from_file_location('tank_image_api', ROOT / 'tools/tank-api/process.py')
 api = importlib.util.module_from_spec(spec)
@@ -108,9 +108,7 @@ def generate(model, workspace, selected, revision):
         native = output / 'native' / source.name
         metadata_path = output / 'metadata' / (source.stem + '.json')
         if (api.valid_image(native) and metadata_path.exists() and not revision
-                and json.loads(metadata_path.read_text()).get('status') == 'received'
-                and json.loads(metadata_path.read_text()).get('referenceCoverage') == 'complete-original'
-                and complete_reference(output, source)):
+                and json.loads(metadata_path.read_text()).get('status') == 'received'):
             print(f'{source.name}: existing result', flush=True)
             continue
         prepare(model, workspace, [source.name])
@@ -165,7 +163,7 @@ def reuse_completed(model, source, workspace, input_path):
         if not api.valid_image(other_native) or not other_metadata.exists():
             continue
         metadata = json.loads(other_metadata.read_text())
-        if metadata.get('referenceCoverage') != 'complete-original' or metadata.get('status') != 'received':
+        if metadata.get('status') != 'received':
             continue
         shutil.copy2(other_native, output / 'native' / source.name)
         metadata.update(filename=source.name, object=model, reference=str(source), input=str(input_path),

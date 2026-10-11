@@ -50,7 +50,7 @@ def image_slot(workspace):
     workspace_key = hashlib.sha256(str(Path(workspace).resolve()).encode()).hexdigest()[:16]
     job_handles = [(PRIVATE / f'image-job-{workspace_key}-{index}.lock').open('a')
                    for index in range(2)]
-    global_handles = [(PRIVATE / f'image-slot-{index}.lock').open('a') for index in range(5)]
+    global_handles = [(PRIVATE / f'image-slot-{index}.lock').open('a') for index in range(7)]
     job_slot = None
     global_slot = None
     try:
