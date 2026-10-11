@@ -2,6 +2,8 @@
 
 The inventory covers placed scene objects, breakable objects and their fragments, castle actions, and structures embedded in map geometry. Static mesh selections retain buildings, walls, fences, vegetation and decoration. Ground surfaces, roads, terrain, sky, sound and standalone effects are excluded.
 
+Map 1002 uses the original geometry and artwork sources of map 0002. Its higher resolution exports are not generation references. Map 1001's brick and steel objects use their own original geometry and UVs, with the original brick and metal artwork identified by `textureAliases`. The steel artwork is processed only for the object; its use on map 0018's ground remains unchanged.
+
 References come from `art/original/`. An image present only inside an original GLB is decoded without modification; `originalSource` identifies that GLB image. Each API request redraws one complete original atlas with an opaque gray background and fixed white UV and canvas guides. Requests preserve the cartoon artwork, colors, shapes, counts, lettering, orientation and UV layout.
 
 `process.py prepare OBJECT --workspace WORKTREE` prepares the complete reference. `generate` submits it through the shared image API channel and saves the native result. Each worktree has one request slot; all worktrees and tank jobs share five global slots. Service errors have at most three attempts. `--revision` submits the original complete atlas again with revised instructions.

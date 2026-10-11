@@ -22,7 +22,8 @@ cv2.setNumThreads(2)
 
 def paths(workspace, model):
     output = Path(workspace) / 'output/imagegen/map-api4k' / model
-    relative = object_entry(model).get('sourceFolder', 'Data/scnobj/' + model)
+    entry = object_entry(model)
+    relative = entry.get('runtimeFolder', entry.get('sourceFolder', 'Data/scnobj/' + model))
     public = Path(workspace) / 'apps/web/public/map-audit/api4k' / relative
     output.mkdir(parents=True, exist_ok=True)
     public.mkdir(parents=True, exist_ok=True)

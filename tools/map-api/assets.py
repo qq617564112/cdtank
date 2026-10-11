@@ -47,10 +47,8 @@ def model_folder(model):
 
 
 def texture_files(model):
-    if model.startswith('map-'):
-        row = object_entry(model)
-        return [ROOT / item['reference'] for item in row['textures']]
-    return sorted(model_folder(model).glob('*.png'))
+    row = object_entry(model)
+    return [ROOT / item['reference'] for item in row['textures']]
 
 
 def object_entry(model):
@@ -69,7 +67,8 @@ def uv_triangles(model, filename):
                 continue
             for primitive in mesh['primitives']:
                 material = document.get('materials', [])[primitive.get('material', 0)]
-                if texture_name(material).lower() != filename.lower():
+                name = entry.get('textureAliases', {}).get(material.get('name'), texture_name(material))
+                if name.lower() != filename.lower():
                     continue
                 if primitive.get('mode', 4) != 4 or 'TEXCOORD_0' not in primitive['attributes']:
                     continue
@@ -109,12 +108,27 @@ def inventory():
         row['models'] = [str(p.relative_to(ROOT / 'art/original'))
                          for p in sorted(model_folder(model).glob('*.glb'))]
         row['textures'] = []
-        for path in texture_files(model):
+        for path in sorted(model_folder(model).glob('*.png')):
             with Image.open(path) as image:
                 row['textures'].append({'filename': path.name,
                     'reference': str(path.relative_to(ROOT)), 'sourceSize': list(image.size),
                     'alphaRange': list(image.convert('RGBA').getchannel('A').getextrema())})
         rows.append(row)
+    for kind, source in [('brick', 'Data/scnobj/obj05443/obj05443.png'),
+                         ('steel', 'Data/map/0018/dimian01.png')]:
+        path = ROOT / 'art/original' / source
+        with Image.open(path) as image:
+            texture = {'filename': path.name, 'reference': str(path.relative_to(ROOT)),
+                       'originalSource': str(path.relative_to(ROOT)),
+                       'sourceSize': list(image.size),
+                       'alphaRange': list(image.convert('RGBA').getchannel('A').getextrema())}
+        relative = 'custom-maps/1001/' + kind + '.glb'
+        rows.append({'model': 'test-map-' + kind, 'kind': 'placed-custom-object',
+                     'sourceFolder': 'custom-maps/1001',
+                     'runtimeFolder': 'custom-maps/1001/' + kind,
+                     'maps': ['1001'], 'classes': ['SYcScnObj'],
+                     'publishedAssets': [relative], 'models': [relative],
+                     'textureAliases': {kind: path.name}, 'textures': [texture]})
     return {'mapCount': len(entries), 'objectCount': len(rows),
             'textureCount': sum(len(row['textures']) for row in rows), 'objects': rows}
 

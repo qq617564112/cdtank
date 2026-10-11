@@ -17,6 +17,7 @@ const geometry = object.models;
 const variants = object.textures.map(row => row.filename);
 const views = ['left', 'center', 'right', 'top', 'front', 'rear'];
 const staticObjects = object.kind === 'static-map-objects';
+const runtimeFolder = object.runtimeFolder || object.sourceFolder || `Data/scnobj/${model}`;
 
 function patchGlb(raw, mode, variant, group) {
   const length = raw.readUInt32LE(12);
@@ -32,7 +33,8 @@ function patchGlb(raw, mode, variant, group) {
     const texture = material.pbrMetallicRoughness?.baseColorTexture;
     if (!texture) continue;
     const original = material.extras?.originalMV3?.textures?.[0] || material.name;
-    const filename = original.replaceAll('\\', '/').split('/').at(-1).replace(/\.[^.]+$/, '.png');
+    const filename = object.textureAliases?.[material.name]
+      || original.replaceAll('\\', '/').split('/').at(-1).replace(/\.[^.]+$/, '.png');
     textureNames.set(document.textures[texture.index].source, filename);
   }
   // One-texture animation and alternate skins use the same complete UV layout.
@@ -140,9 +142,13 @@ try {
           if (path.startsWith('/__model/')) {
             const [, , mode, variant, ...parts] = path.split('/');
             if (path.endsWith('.png')) {
-              const root = mode === 'original' ? `${workspace}/art/original` : `${target}/apps/web/public/map-audit/api4k`;
+              const filename = decodeURIComponent(parts.at(-1));
+              const reference = object.textures.find(row => row.filename === filename)?.reference;
+              const root = mode === 'original' ? workspace : `${target}/apps/web/public/map-audit/api4k`;
+              const relative = mode === 'original' ? reference : `${runtimeFolder}/${filename}`;
+              if (!relative) throw new Error(`Unknown texture ${filename}`);
               res.setHeader('Content-Type', 'image/png');
-              res.end(await readFile(`${root}/${parts.join('/')}`));
+              res.end(await readFile(`${root}/${relative}`));
               return;
             }
             res.setHeader('Content-Type', 'model/gltf-binary');

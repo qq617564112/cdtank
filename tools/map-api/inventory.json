@@ -1,7 +1,7 @@
 {
   "mapCount": 27,
-  "objectCount": 73,
-  "textureCount": 377,
+  "objectCount": 75,
+  "textureCount": 379,
   "objects": [
     {
       "model": "obj05015",
@@ -1676,6 +1676,78 @@
         {
           "filename": "obj05469A.png",
           "reference": "art/original/Data/scnobj/obj05469/obj05469A.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "test-map-brick",
+      "kind": "placed-custom-object",
+      "sourceFolder": "custom-maps/1001",
+      "runtimeFolder": "custom-maps/1001/brick",
+      "maps": [
+        "1001"
+      ],
+      "classes": [
+        "SYcScnObj"
+      ],
+      "publishedAssets": [
+        "custom-maps/1001/brick.glb"
+      ],
+      "models": [
+        "custom-maps/1001/brick.glb"
+      ],
+      "textureAliases": {
+        "brick": "obj05443.png"
+      },
+      "textures": [
+        {
+          "filename": "obj05443.png",
+          "reference": "art/original/Data/scnobj/obj05443/obj05443.png",
+          "originalSource": "art/original/Data/scnobj/obj05443/obj05443.png",
+          "sourceSize": [
+            256,
+            256
+          ],
+          "alphaRange": [
+            255,
+            255
+          ]
+        }
+      ]
+    },
+    {
+      "model": "test-map-steel",
+      "kind": "placed-custom-object",
+      "sourceFolder": "custom-maps/1001",
+      "runtimeFolder": "custom-maps/1001/steel",
+      "maps": [
+        "1001"
+      ],
+      "classes": [
+        "SYcScnObj"
+      ],
+      "publishedAssets": [
+        "custom-maps/1001/steel.glb"
+      ],
+      "models": [
+        "custom-maps/1001/steel.glb"
+      ],
+      "textureAliases": {
+        "steel": "dimian01.png"
+      },
+      "textures": [
+        {
+          "filename": "dimian01.png",
+          "reference": "art/original/Data/map/0018/dimian01.png",
+          "originalSource": "art/original/Data/map/0018/dimian01.png",
           "sourceSize": [
             256,
             256
