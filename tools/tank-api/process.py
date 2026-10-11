@@ -70,13 +70,6 @@ def save_json(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
 
 
-def valid_prompt(path):
-    try:
-        return path.is_file() and path.stat().st_size > 0
-    except OSError:
-        return False
-
-
 def valid_image(path):
     try:
         if not path.is_file() or path.stat().st_size == 0:
@@ -136,7 +129,7 @@ def masks(tank, part, size):
     return np.array(main), np.array(micro)
 
 
-def prepare(tank, workspace):
+def prepare(tank, workspace, selected=None):
     output, _ = paths(workspace, tank)
     for folder in ('inputs', 'native', 'prompts', 'metadata'):
         (output / folder).mkdir(exist_ok=True)
@@ -148,9 +141,7 @@ def prepare(tank, workspace):
         requested = (4096, round(4096 * original.height / original.width))
         rows.append({'filename': source.name, 'sourceSize': list(original.size),
                      'inputSize': list(size), 'requestedSize': list(requested)})
-        if (valid_image(output / 'inputs' / source.name)
-                and valid_image(output / 'inputs' / f'{source.stem}-uv.png')
-                and valid_prompt(output / 'prompts' / f'{source.stem}.txt')):
+        if selected and source.name not in selected:
             continue
         reference = np.array(original.resize(size, Image.Resampling.NEAREST))
         core, micro = masks(tank, source.name[3], size)
@@ -187,6 +178,7 @@ def generate_one(tank, workspace, filename, revision):
     if valid_image(native) and metadata_path.exists() and not revision:
         print(f'{filename}: existing native result', flush=True)
         return
+    prepare(tank, workspace, [filename])
     input_path = output / 'inputs' / filename
     if not valid_image(input_path):
         raise RuntimeError(f'input missing or invalid PNG: {input_path}')
@@ -206,7 +198,10 @@ def generate_one(tank, workspace, filename, revision):
     metadata = {'filename': filename, 'model': config['model'],
                 'endpoint': config['base'].rstrip('/') + '/images/edits',
                 'requestedSize': request_size, 'quality': 'high',
-                'inputsPerRequest': 1, 'background': 'opaque', 'status': 'submitted'}
+                'inputsPerRequest': 1, 'background': 'opaque', 'status': 'submitted',
+                'generationScope': 'whole-atlas',
+                'reference': str(source), 'input': str(input_path),
+                'inputPreparation': 'original atlas with opaque background and UV guides'}
     save_json(metadata_path, metadata)
     print(f'{filename}: submitted {config["model"]} {request_size}', flush=True)
     for attempt in range(3):
@@ -318,11 +313,7 @@ def finish(tank, workspace, selected):
         if abs(native.width / native.height - original.width / original.height) > .02:
             raise ValueError(f'{source.name}: API aspect ratio {native.size} differs from source {original.size}')
         aligned, mask, registrations = registered(original, native, tank, source.name[3])
-        for correction in corrections.get(source.name, []):
-            box = tuple(round(v * (native.width if i % 2 == 0 else native.height) / 256)
-                        for i, v in enumerate(correction['box']))
-            if correction['source'] == 'original':
-                aligned.paste(original.resize(native.size, Image.Resampling.LANCZOS).crop(box), box[:2])
+        corrections.pop(source.name, None)
         radius = max(2, round(native.width / original.width * 2))
         wanted = cv2.dilate(mask, np.ones((radius * 2 + 1,) * 2, np.uint8)) > 0
         pixels = np.array(aligned)
@@ -339,10 +330,12 @@ def finish(tank, workspace, selected):
             metadata.pop('error', None)
         metadata.update(finalSize=list(final_size), resampledTo4k=native.size != final_size,
                         runtimeMode='RGB',
-                        registration=registrations, corrections=corrections.get(source.name, []),
+                        registration=registrations, corrections=[],
                         runtime=f'apps/web/public/tank-audit/api4k/{tank}/{source.name}')
         save_json(path, metadata)
         print(f'{source.name}: UV registered, saved {final_size}', flush=True)
+    if corrections_path.exists():
+        save_json(corrections_path, corrections)
     received = []
     for source in source_files(tank):
         metadata = output / 'metadata' / f'{source.stem}.json'
@@ -377,7 +370,7 @@ def main():
         print(f'Independent generation job {child.pid}: {log}', flush=True)
         return
     if args.command == 'prepare':
-        prepare(args.tank, args.workspace)
+        prepare(args.tank, args.workspace, args.only)
     elif args.command == 'generate':
         files = [p.name for p in source_files(args.tank) if not args.only or p.name in args.only]
         workers = min(args.workers, 2)
