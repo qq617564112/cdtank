@@ -6,12 +6,13 @@ import fcntl
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 
-from assets import ROOT, texture_files, uv_triangles
+from assets import ROOT, object_entry, texture_files, uv_triangles
 
 spec = importlib.util.spec_from_file_location('tank_image_api', ROOT / 'tools/tank-api/process.py')
 api = importlib.util.module_from_spec(spec)
@@ -21,7 +22,8 @@ cv2.setNumThreads(2)
 
 def paths(workspace, model):
     output = Path(workspace) / 'output/imagegen/map-api4k' / model
-    public = Path(workspace) / 'apps/web/public/map-audit/api4k/Data/scnobj' / model
+    relative = object_entry(model).get('sourceFolder', 'Data/scnobj/' + model)
+    public = Path(workspace) / 'apps/web/public/map-audit/api4k' / relative
     output.mkdir(parents=True, exist_ok=True)
     public.mkdir(parents=True, exist_ok=True)
     return output, public
@@ -112,6 +114,8 @@ def generate(model, workspace, selected, revision):
         input_path = output / 'inputs' / source.name
         if not api.valid_image(input_path):
             raise RuntimeError(f'Missing reference: {input_path}')
+        if not revision and reuse_completed(model, source, workspace, input_path):
+            continue
         original = Image.open(source)
         maximum = config.get('requestWidth', 4096)
         size = tuple(round(maximum * value / max(original.size)) for value in original.size)
@@ -125,8 +129,46 @@ def generate(model, workspace, selected, revision):
             'inputsPerRequest': 1, 'background': 'opaque', 'status': 'submitted',
             'generationScope': 'whole-atlas', 'reference': str(source),
             'input': str(input_path), 'corrections': []}
+        item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
+        metadata['originalSource'] = item.get('originalSource', str(source.relative_to(ROOT)))
         with one_request(workspace):
             api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
+
+
+def reuse_completed(model, source, workspace, input_path):
+    candidates = json.loads((ROOT / 'tools/map-api/reuse.json').read_text()) if (ROOT / 'tools/map-api/reuse.json').exists() else {}
+    key = model + '/' + source.name
+    output, public = paths(workspace, model)
+    for candidate in candidates.get(key, []):
+        other_model, filename = candidate.split('/', 1)
+        other = Path(workspace) / 'output/imagegen/map-api4k' / other_model
+        review_path = other / 'review.json'
+        if not review_path.exists():
+            continue
+        review = json.loads(review_path.read_text())
+        if review.get('status') != 'passed' or review.get('confirmedIssueCount') != 0 or review.get('unresolvedCount') != 0:
+            continue
+        prepared = other / 'inputs' / filename
+        if not prepared.exists():
+            continue
+        with Image.open(input_path) as current, Image.open(prepared) as previous:
+            if current.size != previous.size or current.convert('RGB').tobytes() != previous.convert('RGB').tobytes():
+                continue
+        other_native = other / 'native' / filename
+        other_metadata = other / 'metadata' / (Path(filename).stem + '.json')
+        if not api.valid_image(other_native) or not other_metadata.exists():
+            continue
+        shutil.copy2(other_native, output / 'native' / source.name)
+        metadata = json.loads(other_metadata.read_text())
+        metadata.update(filename=source.name, object=model, reference=str(source), input=str(input_path),
+                        reusedFrom=candidate, corrections=[])
+        item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
+        metadata['originalSource'] = item.get('originalSource', str(source.relative_to(ROOT)))
+        metadata.pop('runtime', None)
+        api.save_json(output / 'metadata' / (source.stem + '.json'), metadata)
+        print(f'{source.name}: reused complete atlas from {candidate}; no API request', flush=True)
+        return True
+    return False
 
 
 def registered(reference, pixels, mask):

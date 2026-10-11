@@ -16,10 +16,17 @@ const originalOnly = process.argv.includes('--original-only');
 const geometry = object.models;
 const variants = object.textures.map(row => row.filename);
 const views = ['left', 'center', 'right', 'top', 'front', 'rear'];
+const staticObjects = object.kind === 'static-map-objects';
 
-function patchGlb(raw, mode, variant) {
+function patchGlb(raw, mode, variant, group) {
   const length = raw.readUInt32LE(12);
   const document = JSON.parse(raw.subarray(20, 20 + length).toString());
+  if (staticObjects) {
+    const selected = new Set(object.reviewGroups.find(row => row.name === group).meshes);
+    for (const node of document.nodes || []) {
+      if (node.mesh !== undefined && !selected.has(document.meshes[node.mesh].name)) delete node.mesh;
+    }
+  }
   const textureNames = new Map();
   for (const material of document.materials || []) {
     const texture = material.pbrMetallicRoughness?.baseColorTexture;
@@ -30,7 +37,9 @@ function patchGlb(raw, mode, variant) {
   }
   // One-texture animation and alternate skins use the same complete UV layout.
   for (const [index, filename] of textureNames) {
-    const selected = new Set(textureNames.values()).size === 1 && variants.length > 1 ? variant : filename;
+    if (staticObjects && mode === 'original') continue;
+    if (staticObjects && !variants.includes(filename)) continue;
+    const selected = !staticObjects && new Set(textureNames.values()).size === 1 && variants.length > 1 ? variant : filename;
     document.images[index] = {uri: selected, mimeType: 'image/png'};
   }
   const encoded = Buffer.from(JSON.stringify(document));
@@ -137,7 +146,8 @@ try {
               return;
             }
             res.setHeader('Content-Type', 'model/gltf-binary');
-            res.end(patchGlb(await readFile(`${workspace}/art/original/${parts.join('/')}`), mode, decodeURIComponent(variant)));
+            res.end(patchGlb(await readFile(`${workspace}/art/original/${parts.join('/')}`), mode,
+              decodeURIComponent(variant), decodeURIComponent(variant)));
             return;
           }
         } catch (error) {console.error(path, String(error)); res.statusCode = 500; res.end(String(error)); return;}
@@ -182,13 +192,16 @@ try {
     if (attempt === 399) throw new Error('Object renderer did not load');
   }
   const scope = [];
-  for (const path of geometry) {
+  const jobs = staticObjects ? object.reviewGroups.map(group => ({path: geometry[0], group: group.name}))
+    : geometry.map(path => ({path}));
+  for (const job of jobs) {
+    const path = job.path;
     const raw = await readFile(`${workspace}/art/original/${path}`);
     const document = JSON.parse(raw.subarray(20, 20 + raw.readUInt32LE(12)).toString());
     const materialNames = new Set((document.materials || []).map(row => row.name));
-    const selectedVariants = materialNames.size === 1 ? variants : [variants[0]];
+    const selectedVariants = staticObjects ? [job.group] : materialNames.size === 1 ? variants : [variants[0]];
     for (const variant of selectedVariants) {
-      const action = path.split('/').at(-1).replace(/\.glb$/, '');
+      const action = job.group || path.split('/').at(-1).replace(/\.glb$/, '');
       const folder = `${output}/${action}/${variant.replace(/\.png$/, '')}`;
       await mkdir(folder, {recursive: true});
       for (const mode of originalOnly ? ['original'] : ['original', 'api4k']) {

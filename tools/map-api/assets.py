@@ -41,18 +41,32 @@ def texture_name(material):
 
 
 def model_folder(model):
+    if model.startswith('map-'):
+        return ROOT / 'art/original/Data/map' / model[4:]
     return ROOT / 'art/original/Data/scnobj' / model
 
 
 def texture_files(model):
+    if model.startswith('map-'):
+        row = object_entry(model)
+        return [ROOT / item['reference'] for item in row['textures']]
     return sorted(model_folder(model).glob('*.png'))
+
+
+def object_entry(model):
+    value = json.loads((ROOT / 'tools/map-api/inventory.json').read_text())
+    return next(row for row in value['objects'] if row['model'] == model)
 
 
 def uv_triangles(model, filename):
     rows = []
-    for path in sorted(model_folder(model).glob('*.glb')):
+    entry = object_entry(model)
+    for relative in entry['models']:
+        path = ROOT / 'art/original' / relative
         document, binary = glb(path)
         for mesh in document.get('meshes', []):
+            if entry.get('meshNames') is not None and mesh['name'] not in entry['meshNames']:
+                continue
             for primitive in mesh['primitives']:
                 material = document.get('materials', [])[primitive.get('material', 0)]
                 if texture_name(material).lower() != filename.lower():
