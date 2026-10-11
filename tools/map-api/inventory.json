@@ -138,7 +138,18 @@
             255
           ]
         }
-      ]
+      ],
+      "modelTextures": {
+        "Data/scnobj/obj05023/obj05023.glb": [
+          "obj05023.png"
+        ],
+        "Data/scnobj/obj05023/scr.glb": [
+          "001.png",
+          "002.png",
+          "003.png",
+          "004.png"
+        ]
+      }
     },
     {
       "model": "obj05025",

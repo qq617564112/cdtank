@@ -205,7 +205,8 @@ try {
     const raw = await readFile(`${workspace}/art/original/${path}`);
     const document = JSON.parse(raw.subarray(20, 20 + raw.readUInt32LE(12)).toString());
     const materialNames = new Set((document.materials || []).map(row => row.name));
-    const selectedVariants = staticObjects ? [job.group] : materialNames.size === 1 ? variants : [variants[0]];
+    const selectedVariants = staticObjects ? [job.group]
+      : object.modelTextures?.[path] || (materialNames.size === 1 ? variants : [variants[0]]);
     for (const variant of selectedVariants) {
       const action = job.group || path.split('/').at(-1).replace(/\.glb$/, '');
       const folder = `${output}/${action}/${variant.replace(/\.png$/, '')}`;

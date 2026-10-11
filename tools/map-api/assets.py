@@ -120,6 +120,10 @@ def inventory():
                     'alphaRange': list(image.convert('RGBA').getchannel('A').getextrema())})
                 if model == sequence['model'] and path.name in frames and path.name != screen_texture:
                     row['textures'][-1]['uvReference'] = screen_texture
+        if model == sequence['model']:
+            row['modelTextures'] = {
+                sequence['base']['asset']: [Path(sequence['base']['texture']).name],
+                sequence['screen']['asset']: [Path(frame['asset']).name for frame in sequence['frames']]}
         rows.append(row)
     for kind, source in [('brick', 'Data/scnobj/obj05443/obj05443.png'),
                          ('steel', 'Data/map/0018/dimian01.png')]:
