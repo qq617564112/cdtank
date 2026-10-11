@@ -10,7 +10,7 @@ References come from `art/original/`. An image present only inside an original G
 
 `finish` removes the canvas frame, registers generated artwork to the original UV geometry, removes guide contamination, extends generated edge colors for texture filtering, and restores the original alpha. Runtime textures retain the source aspect ratio with a 4096-pixel longest edge. Metadata records both native and final dimensions.
 
-Identical complete originals can reuse a self-reviewed native atlas. Reuse requires matching original pixels and prepared reference pixels, and each destination model is reviewed separately. `reuse.json` records the matching original references.
+Identical complete originals can reuse a self-reviewed native atlas from the worktree or integrated resources. Reuse requires matching original pixels and prepared reference pixels, and each destination model is reviewed separately. `reuse.json` records the matching original references.
 
 `flock /tmp/cdtank-api4k/map-render.lock node render.mjs OBJECT WORKTREE` renders original GLB geometry under uniform ambient illumination from six directions. Breakable states, castle actions and texture variants are included. Static objects use representative complete mesh groups covering every selected material. `contact.py OBJECT WORKTREE` produces original/API comparison sheets for visual inspection.
 

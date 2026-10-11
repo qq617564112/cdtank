@@ -143,6 +143,8 @@ def reuse_completed(model, source, workspace, input_path):
     for candidate in candidates.get(key, []):
         other_model, filename = candidate.split('/', 1)
         other = Path(workspace) / 'output/imagegen/map-api4k' / other_model
+        if not (other / 'review.json').exists():
+            other = ROOT / 'output/imagegen/map-api4k' / other_model
         review_path = other / 'review.json'
         if not review_path.exists():
             continue
