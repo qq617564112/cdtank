@@ -291,7 +291,7 @@ def registered(source, native, tank, part):
             if correlation >= .5:
                 center = np.float32([shape[0] / 2, shape[1] / 2])
                 displacement = fitted[:, :2] @ center + fitted[:, 2] - center
-                limit = margin * scale
+                limit = np.minimum(margin, np.array([width, height]) * .1) * scale
                 warp[:, :2] = np.diag(np.clip(np.diag(fitted[:, :2]), .97, 1.03))
                 warp[:, 2] = (center + np.clip(displacement, -limit, limit) - warp[:, :2] @ center) / scale
         except cv2.error:
