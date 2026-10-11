@@ -230,7 +230,8 @@ def finish(model, workspace, selected):
         native = native.crop((round(mx * sx), round(my * sy), round((mx + width) * sx), round((my + height) * sy)))
         # Keep the outer canvas guide out of filtering at repeated texture edges.
         cropped = np.array(native)
-        border = max(1, round(max(native.size) / 2048))
+        border = max(1, round(min(native.width / original.width,
+                                  native.height / original.height) * .5))
         cropped[:border] = cropped[border:border + 1]
         cropped[-border:] = cropped[-border - 1:-border]
         cropped[:, :border] = cropped[:, border:border + 1]
