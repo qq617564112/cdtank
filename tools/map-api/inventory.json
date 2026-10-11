@@ -8904,7 +8904,9 @@
           "alphaRange": [
             0,
             255
-          ]
+          ],
+          "inputRotation": 180,
+          "promptSubject": "卡通树木（树冠在上、树干在下，多个树木图块横向排列）"
         },
         {
           "filename": "w.png",
