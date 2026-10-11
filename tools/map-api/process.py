@@ -63,9 +63,12 @@ def prepare(model, workspace, selected=None):
         if selected and source.name not in selected:
             continue
         original = Image.open(source).convert('RGBA')
+        item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
+        rotation = item.get('inputRotation', 0)
+        reference = original.transpose(Image.Transpose.ROTATE_180) if rotation == 180 else original
         factor = 2048 / max(original.size)
         size = tuple(round(value * factor) for value in original.size)
-        image = original.resize(size, Image.Resampling.NEAREST)
+        image = reference.resize(size, Image.Resampling.NEAREST)
         alpha = np.array(image.getchannel('A'))
         core = np.uint8(alpha > 0) * 255
         gutter = max(2, round(factor))
@@ -81,7 +84,8 @@ def prepare(model, workspace, selected=None):
         ImageDraw.Draw(canvas).rectangle((margin[0] - 3, margin[1] - 3,
             margin[0] + size[0] + 2, margin[1] + size[1] + 2), outline=(245,) * 3, width=2)
         canvas.save(output / 'inputs' / source.name)
-        prompt = ('将这一张地图物体的完整二维UV贴图忠实高清化，输出4K。'
+        subject = item.get('promptSubject', '地图物体')
+        prompt = (f'这是一张{subject}的完整二维UV贴图。将这张贴图忠实高清化，输出4K。'
             '保持原来的卡通风格、全部图案、配色、明暗关系和细节数量，线条清晰锐利。'
             '灰色是不透明辅助背景，白色细边是固定边界。保留整个画布和外框，'
             '边界内图块的位置、大小、方向、形状与输入完全一致，不移动、旋转、变形或重新排版。'
@@ -92,7 +96,7 @@ def prepare(model, workspace, selected=None):
         (output / 'prompts' / (source.stem + '.txt')).write_text(prompt + '\n')
         api.save_json(output / 'inputs' / (source.stem + '.json'), {
             'atlasSize': list(size), 'margin': list(margin), 'canvasSize': list(canvas.size),
-            'sourceSize': list(original.size)})
+            'sourceSize': list(original.size), 'inputRotation': rotation})
         print(f'{source.name}: opaque complete atlas prepared', flush=True)
 
 
@@ -133,6 +137,7 @@ def generate(model, workspace, selected, revision):
             'input': str(input_path), 'corrections': []}
         item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
         metadata['originalSource'] = item.get('originalSource', str(source.relative_to(ROOT)))
+        metadata['inputRotation'] = item.get('inputRotation', 0)
         with one_request(workspace):
             api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
 
@@ -226,6 +231,10 @@ def finish(model, workspace, selected):
             continue
         original = Image.open(source).convert('RGBA')
         native = Image.open(native_path).convert('RGB')
+        metadata_path = output / 'metadata' / (source.stem + '.json')
+        metadata = json.loads(metadata_path.read_text())
+        if metadata.get('inputRotation', 0) == 180:
+            native = native.transpose(Image.Transpose.ROTATE_180)
         prep = json.loads((output / 'inputs' / (source.stem + '.json')).read_text())
         if abs(native.width / native.height - original.width / original.height) > .02:
             raise ValueError(f'{source.name}: unexpected API aspect ratio {native.size}')
@@ -280,8 +289,6 @@ def finish(model, workspace, selected):
         if original.getchannel('A').getextrema() == (255, 255):
             final = final.convert('RGB')
         final.save(public / source.name)
-        metadata_path = output / 'metadata' / (source.stem + '.json')
-        metadata = json.loads(metadata_path.read_text())
         metadata.update(finalSize=list(final_size), registration=registration, corrections=[],
                         runtimeMode=final.mode, alphaSource=str(source),
                         runtime=str((public / source.name).relative_to(Path(workspace))))
