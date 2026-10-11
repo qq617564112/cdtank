@@ -70,16 +70,17 @@ def prepare(model, workspace, selected=None):
         size = tuple(round(value * factor) for value in original.size)
         image = reference.resize(size, Image.Resampling.NEAREST)
         alpha = np.array(image.getchannel('A'))
+        background = (255, 0, 255) if alpha.min() < 255 else (190,) * 3
+        background_name = '高饱和紫色（#FF00FF）' if alpha.min() < 255 else '灰色'
         core = np.uint8(alpha > 0) * 255
         gutter = max(2, round(factor))
         grown = cv2.dilate(core, np.ones((gutter * 2 + 1,) * 2, np.uint8))
         ring = (cv2.dilate(grown, np.ones((5, 5), np.uint8)) > 0) & (grown == 0)
-        pixels = np.full((size[1], size[0], 3), 190, np.uint8)
-        rgb = np.array(image.convert('RGB'))
-        pixels[grown > 0] = rgb[grown > 0]
+        opaque = Image.new('RGBA', size, (*background, 255))
+        pixels = np.array(Image.alpha_composite(opaque, image).convert('RGB'))
         pixels[ring] = 245
         margin = tuple(max(8, round(value / 64)) for value in size)
-        canvas = Image.new('RGB', (size[0] + margin[0] * 2, size[1] + margin[1] * 2), (190,) * 3)
+        canvas = Image.new('RGB', (size[0] + margin[0] * 2, size[1] + margin[1] * 2), background)
         canvas.paste(Image.fromarray(pixels), margin)
         ImageDraw.Draw(canvas).rectangle((margin[0] - 3, margin[1] - 3,
             margin[0] + size[0] + 2, margin[1] + size[1] + 2), outline=(245,) * 3, width=2)
@@ -87,17 +88,18 @@ def prepare(model, workspace, selected=None):
         subject = item.get('promptSubject', '地图物体')
         prompt = (f'这是一张{subject}的完整二维UV贴图。将这张贴图忠实高清化，输出4K。'
             '保持原来的卡通风格、全部图案、配色、明暗关系和细节数量，线条清晰锐利。'
-            '灰色是不透明辅助背景，白色细边是固定边界。保留整个画布和外框，'
+            f'{background_name}是不透明辅助背景，白色细边是固定边界。保留整个画布和外框，'
             '边界内图块的位置、大小、方向、形状与输入完全一致，不移动、旋转、变形或重新排版。'
-            '树叶、孔洞和缺口的轮廓保持原样，灰底保持灰色，白色引导边保持白色。'
+            f'树叶、孔洞和缺口的轮廓保持原样，辅助底色保持{background_name}，白色引导边保持白色。'
             '文字和符号逐笔忠实描摹，保留原始方向；直线平直，圆形规则。'
             '只高清化已有内容，不添加木纹、裂缝、铆钉、光泽或其它新细节。'
             '输出相同布局的平面二维贴图，无透视、无3D模型、无水印。')
         (output / 'prompts' / (source.stem + '.txt')).write_text(prompt + '\n')
         api.save_json(output / 'inputs' / (source.stem + '.json'), {
             'atlasSize': list(size), 'margin': list(margin), 'canvasSize': list(canvas.size),
-            'sourceSize': list(original.size), 'inputRotation': rotation})
-        print(f'{source.name}: opaque complete atlas prepared', flush=True)
+            'sourceSize': list(original.size), 'inputRotation': rotation,
+            'helperBackground': list(background), 'alphaComposited': True})
+        print(f'{source.name}: opaque complete atlas prepared, background={background_name}', flush=True)
 
 
 def generate(model, workspace, selected, revision):
@@ -127,6 +129,11 @@ def generate(model, workspace, selected, revision):
         prompt = (output / 'prompts' / (source.stem + '.txt')).read_text().strip()
         if revision:
             prompt += '\n完整原图描摹要求：' + revision
+        prepared = json.loads((output / 'inputs' / (source.stem + '.json')).read_text())
+        if prepared['helperBackground'] == [255, 0, 255]:
+            prompt += ('\n本次辅助背景统一为高饱和紫色（#FF00FF），以输入图为准。'
+                       '紫底仅用于透明区域，半透明边缘已合成到紫底上；'
+                       '不要把紫底或白色辅助边画成树干、树叶、枝条、图案或高光。')
         (output / 'prompts' / (source.stem + '-request.txt')).write_text(prompt + '\n')
         metadata = {'filename': source.name, 'object': model, 'model': config['model'],
             'endpoint': config['base'].rstrip('/') + '/images/edits',
@@ -138,6 +145,8 @@ def generate(model, workspace, selected, revision):
         item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
         metadata['originalSource'] = item.get('originalSource', str(source.relative_to(ROOT)))
         metadata['inputRotation'] = item.get('inputRotation', 0)
+        metadata['helperBackground'] = prepared['helperBackground']
+        metadata['alphaComposited'] = prepared['alphaComposited']
         with one_request(workspace):
             api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
 
@@ -255,21 +264,36 @@ def finish(model, workspace, selected):
         mask = uv_mask(model, source.name, native.size)
         alpha = np.array(reference.getchannel('A'))
         mask[alpha == 0] = 0
-        pixels, registration = registered(np.array(reference.convert('RGB')), np.array(native), mask, original.size)
-        # Remove neutral guide contamination only at the known UV/cutout edge.
+        background = np.float32(metadata.get('helperBackground', [190, 190, 190]))
+        registration_reference = reference
+        if metadata.get('alphaComposited'):
+            matte = Image.new('RGBA', native.size, (*map(int, background), 255))
+            registration_reference = Image.alpha_composite(matte, reference)
+        pixels, registration = registered(np.array(registration_reference.convert('RGB')),
+            np.array(native), mask, original.size)
+        if metadata.get('alphaComposited'):
+            coverage = alpha.astype(np.float32)[:, :, None] / 255
+            pixels = np.uint8(np.clip((pixels.astype(np.float32) -
+                (1 - coverage) * background) / np.maximum(coverage, 1 / 255), 0, 255))
+        # Remove helper background and guide contamination at UV and alpha edges.
         source_scale = native.width / original.width
         edge_width = max(4, round(source_scale * 1.5))
         interior = cv2.erode(mask, np.ones((edge_width * 2 + 1,) * 2, np.uint8),
                              borderType=cv2.BORDER_CONSTANT, borderValue=0)
         edge = (mask > 0) & (interior == 0)
+        if metadata.get('alphaComposited'):
+            cutout_edge = cv2.dilate(np.uint8(alpha < 255),
+                np.ones((edge_width * 2 + 1,) * 2, np.uint8))
+            edge |= (mask > 0) & (cutout_edge > 0)
         edge_pixels = pixels[edge].astype(np.float32)
         neutral = edge_pixels.max(axis=1) - edge_pixels.min(axis=1) < 10
         intensity = edge_pixels.mean(axis=1)
         reference_rgb = np.array(reference.convert('RGB'))[edge].astype(np.float32)
         delta = edge_pixels - reference_rgb
         difference = np.linalg.norm(delta, axis=1)
-        contamination = neutral & ((intensity > 220) | (abs(intensity - 190) < 12))
-        for guide_color in (190, 245):
+        contamination = neutral & (intensity > 220)
+        for guide_color in (background, np.float32([245, 245, 245])):
+            contamination |= np.linalg.norm(edge_pixels - guide_color, axis=1) < 22
             direction = guide_color - reference_rgb
             amount = (delta * direction).sum(axis=1) / np.maximum((direction * direction).sum(axis=1), 1)
             remainder = np.linalg.norm(delta - amount[:, None] * direction, axis=1)
