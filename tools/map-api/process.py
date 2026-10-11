@@ -243,18 +243,20 @@ def finish(model, workspace, selected):
         source_scale = native.width / original.width
         edge_width = max(4, round(source_scale * 1.5))
         edge = (mask > 0) & (cv2.erode(mask, np.ones((edge_width * 2 + 1,) * 2, np.uint8)) == 0)
-        neutral = pixels.max(axis=2).astype(np.int16) - pixels.min(axis=2) < 10
-        intensity = pixels.mean(axis=2)
-        reference_rgb = np.array(reference.convert('RGB'), dtype=np.float32)
-        delta = pixels.astype(np.float32) - reference_rgb
-        difference = np.linalg.norm(delta, axis=2)
+        edge_pixels = pixels[edge].astype(np.float32)
+        neutral = edge_pixels.max(axis=1) - edge_pixels.min(axis=1) < 10
+        intensity = edge_pixels.mean(axis=1)
+        reference_rgb = np.array(reference.convert('RGB'))[edge].astype(np.float32)
+        delta = edge_pixels - reference_rgb
+        difference = np.linalg.norm(delta, axis=1)
         contamination = neutral & ((intensity > 220) | (abs(intensity - 190) < 12))
         for guide_color in (190, 245):
             direction = guide_color - reference_rgb
-            amount = (delta * direction).sum(axis=2) / np.maximum((direction * direction).sum(axis=2), 1)
-            remainder = np.linalg.norm(delta - amount[:, :, None] * direction, axis=2)
+            amount = (delta * direction).sum(axis=1) / np.maximum((direction * direction).sum(axis=1), 1)
+            remainder = np.linalg.norm(delta - amount[:, None] * direction, axis=1)
             contamination |= (amount > .12) & (amount < 1.05) & (remainder < 15)
-        guides = np.uint8(edge & contamination & (difference > 55)) * 255
+        guides = np.zeros_like(mask)
+        guides[edge] = np.uint8(contamination & (difference > 55)) * 255
         valid = mask > 0
         artwork = valid & (guides == 0)
         padding = (~valid) | (guides > 0)
