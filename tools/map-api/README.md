@@ -15,3 +15,7 @@ Identical complete originals can reuse a self-reviewed native atlas. Reuse requi
 `flock /tmp/cdtank-api4k/map-render.lock node render.mjs OBJECT WORKTREE` renders original GLB geometry under uniform ambient illumination from six directions. Breakable states, castle actions and texture variants are included. Static objects use representative complete mesh groups covering every selected material. `contact.py OBJECT WORKTREE` produces original/API comparison sheets for visual inspection.
 
 Production evidence is stored in `output/imagegen/map-api4k/OBJECT/`. Runtime textures are stored in `apps/web/public/map-audit/api4k/` under their original `Data/scnobj/` or `Data/map/` paths. Each completed object records inspected models and evidence in `review.json`.
+
+`publish.py --independent-review REVIEW_FOLDER --require-complete` packages only groups with passed self and independent visual reviews. It publishes the catalog and original/API model states for `tools/asset-viewer/map-api.html`. The viewer filters by map, object, model state and texture variant, and switches between original and 4K textures while retaining the camera position. Static models show the complete selected object groups; ground meshes are excluded.
+
+`--install-runtime` also installs the approved textures into `art/hd/` and the runtime models, retaining each existing model's geometry and all unselected ground, water and sky textures. Map 1002 receives the same reviewed textures as its standard originals. The original source files remain in `art/original/`.

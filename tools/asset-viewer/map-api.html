@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CDTank 地图物件查看器</title>
+  </head>
+  <body>
+    <main class="audit">
+      <aside class="panel">
+        <p class="eyebrow">CDTANK · MAP OBJECTS</p>
+        <h1>地图物件查看器</h1>
+        <p class="muted" id="coverage">载入物件目录…</p>
+        <fieldset disabled>
+          <legend>物件</legend>
+          <label for="map">地图</label>
+          <select id="map"></select>
+          <label for="object">物件</label>
+          <select id="object"></select>
+          <div class="pair">
+            <button id="previous" type="button">上一个</button>
+            <button id="next" type="button">下一个</button>
+          </div>
+          <label for="state">模型状态 / 贴图变体</label>
+          <select id="state"></select>
+          <label for="quality">贴图</label>
+          <select id="quality">
+            <option value="api4k">4K</option>
+            <option value="original">原版</option>
+          </select>
+        </fieldset>
+        <fieldset disabled>
+          <legend>视角</legend>
+          <div class="views">
+            <button type="button" data-view="center">全景</button>
+            <button type="button" data-view="top">俯视</button>
+            <button type="button" data-view="front">正面</button>
+            <button type="button" data-view="rear">背面</button>
+            <button type="button" data-view="left">左侧</button>
+            <button type="button" data-view="right">右侧</button>
+          </div>
+        </fieldset>
+        <output id="status" aria-live="polite">载入物件…</output>
+        <button id="retry" type="button" hidden>重新载入</button>
+        <p class="muted">均匀环境光 · 建筑、植物与可破坏物件</p>
+      </aside>
+      <section class="viewport" aria-label="地图物件三维预览">
+        <canvas id="world" tabindex="0" aria-label="可旋转和缩放的三维模型"></canvas>
+        <div class="viewport-title">
+          <strong id="object-title">地图物件</strong>
+          <span id="object-detail">载入模型…</span>
+        </div>
+        <p class="viewport-hint">左键旋转 · 滚轮缩放 · 右键平移</p>
+      </section>
+    </main>
+    <script type="module" src="/map-api-audit.ts"></script>
+  </body>
+</html>
