@@ -171,7 +171,7 @@ def reuse_completed(model, source, workspace, input_path):
     return False
 
 
-def registered(reference, pixels, mask):
+def registered(reference, pixels, mask, source_size):
     count, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
     result = pixels.copy()
     records = []
@@ -195,8 +195,9 @@ def registered(reference, pixels, mask):
             if correlation >= .5:
                 center = np.float32([shape[0] / 2, shape[1] / 2])
                 displacement = fitted[:, :2] @ center + fitted[:, 2] - center
-                limit = np.minimum(margin, np.array([width, height]) * .08) * scale
-                warp[:, :2] = np.diag(np.clip(np.diag(fitted[:, :2]), .98, 1.02))
+                source_pixel = np.array([pixels.shape[1], pixels.shape[0]]) / np.array(source_size)
+                limit = np.minimum(source_pixel * .5, np.array([width, height]) * .01) * scale
+                warp[:, :2] = np.diag(np.clip(np.diag(fitted[:, :2]), .9975, 1.0025))
                 warp[:, 2] = (center + np.clip(displacement, -limit, limit) - warp[:, :2] @ center) / scale
         except cv2.error:
             pass
@@ -238,7 +239,7 @@ def finish(model, workspace, selected):
         mask = uv_mask(model, source.name, native.size)
         alpha = np.array(reference.getchannel('A'))
         mask[alpha == 0] = 0
-        pixels, registration = registered(np.array(reference.convert('RGB')), np.array(native), mask)
+        pixels, registration = registered(np.array(reference.convert('RGB')), np.array(native), mask, original.size)
         # Remove neutral guide contamination only at the known UV/cutout edge.
         source_scale = native.width / original.width
         edge_width = max(4, round(source_scale * 1.5))
