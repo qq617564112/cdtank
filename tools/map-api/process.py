@@ -107,7 +107,9 @@ def generate(model, workspace, selected, revision):
             continue
         native = output / 'native' / source.name
         metadata_path = output / 'metadata' / (source.stem + '.json')
-        if api.valid_image(native) and metadata_path.exists() and not revision:
+        if (api.valid_image(native) and metadata_path.exists() and not revision
+                and json.loads(metadata_path.read_text()).get('status') == 'received'
+                and complete_reference(output, source)):
             print(f'{source.name}: existing result', flush=True)
             continue
         prepare(model, workspace, [source.name])
@@ -128,11 +130,28 @@ def generate(model, workspace, selected, revision):
             'requestedSize': f'{size[0]}x{size[1]}', 'quality': 'high',
             'inputsPerRequest': 1, 'background': 'opaque', 'status': 'submitted',
             'generationScope': 'whole-atlas', 'reference': str(source),
+            'referenceCoverage': 'complete-original',
             'input': str(input_path), 'corrections': []}
         item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
         metadata['originalSource'] = item.get('originalSource', str(source.relative_to(ROOT)))
         with one_request(workspace):
             api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
+
+
+def complete_reference(output, source):
+    prepared = output / 'inputs' / source.name
+    specification = prepared.with_suffix('.json')
+    if not prepared.exists() or not specification.exists():
+        return False
+    preparation = json.loads(specification.read_text())
+    original = Image.open(source).convert('RGBA').resize(
+        tuple(preparation['atlasSize']), Image.Resampling.NEAREST)
+    pixels = np.array(original)
+    x, y = preparation['margin']
+    with Image.open(prepared) as image:
+        actual = np.array(image.convert('RGB').crop((x, y, x + original.width, y + original.height)))
+    visible = pixels[:, :, 3] > 0
+    return np.array_equal(actual[visible], pixels[:, :, :3][visible])
 
 
 def reuse_completed(model, source, workspace, input_path):
