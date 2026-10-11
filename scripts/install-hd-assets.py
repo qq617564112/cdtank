@@ -13,9 +13,11 @@ import struct
 JSON_CHUNK = 0x4E4F534A
 BIN_CHUNK = 0x004E4942
 TEST_MAP_TEXTURES = {
-    'custom-maps/1001/brick.glb': 'Data/scnobj/obj05443/obj05443.png',
-    'custom-maps/1001/ground.glb': 'Data/map/0014/tiandi.png',
-    'custom-maps/1001/steel.glb': 'Data/map/0018/dimian01.png',
+    'custom-maps/1001/brick.glb': (
+        'custom-maps/1001/brick/obj05443.png', 'Data/scnobj/obj05443/obj05443.png'),
+    'custom-maps/1001/ground.glb': ('Data/map/0014/tiandi.png',),
+    'custom-maps/1001/steel.glb': (
+        'custom-maps/1001/steel/dimian01.png', 'Data/map/0018/dimian01.png'),
 }
 
 
@@ -80,8 +82,9 @@ def image_matches(model, source, textures):
             if 'source' in texture:
                 matches[texture['source']] = entry
     # The test map embeds these existing textures under its own material names.
-    asset = TEST_MAP_TEXTURES.get(source)
-    if asset and asset.lower() in textures and 0 not in matches:
+    asset = next((name for name in TEST_MAP_TEXTURES.get(source, ())
+                  if name.lower() in textures), None)
+    if asset and 0 not in matches:
         matches[0] = textures[asset.lower()]
     return matches
 
