@@ -6996,7 +6996,9 @@
           "alphaRange": [
             0,
             255
-          ]
+          ],
+          "inputRotation": 180,
+          "promptSubject": "三幢卡通房屋与相连围栏（屋顶在上、房屋底部在下，保持原条带和整张画布空白）"
         },
         {
           "filename": "shuye.png",
