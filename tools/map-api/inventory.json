@@ -6365,7 +6365,9 @@
           "alphaRange": [
             0,
             255
-          ]
+          ],
+          "inputRotation": 180,
+          "promptSubject": "卡通针叶树（树冠尖端在上、三层枝叶向下展开、树干在下）"
         },
         {
           "filename": "shugan.png",
