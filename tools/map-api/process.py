@@ -315,9 +315,9 @@ def finish(model, workspace, selected):
         guides = np.zeros_like(mask)
         guides[edge] = np.uint8(contamination & (difference > 55)) * 255
         valid = mask > 0
-        opaque_artwork = valid & (guides == 0) & (alpha == 255)
-        artwork = opaque_artwork if opaque_artwork.any() else valid & (guides == 0)
-        padding = (~valid) | (guides > 0) | ((alpha < 255) & opaque_artwork.any())
+        reliable_artwork = valid & (guides == 0) & (alpha >= 128)
+        artwork = reliable_artwork if reliable_artwork.any() else valid & (guides == 0)
+        padding = (~valid) | (guides > 0) | ((alpha < 128) & reliable_artwork.any())
         if artwork.any() and padding.any():
             _, nearest = cv2.distanceTransformWithLabels(np.uint8(~artwork), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
             pixels[padding] = pixels[artwork][nearest[padding] - 1]
