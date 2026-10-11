@@ -1465,7 +1465,11 @@
             255,
             255
           ],
-          "promptSubject": "卡通蓝色破损汽车的车身、车底、破窗、格栅、保险杠、轮胎和轮圈图块"
+          "promptSubject": "卡通蓝色破损汽车的车身、车底、破窗、格栅、保险杠、轮胎和轮圈图块",
+          "canvasLabel": {
+            "text": "DARK BLUE SHADOW",
+            "xFraction": 0.87
+          }
         },
         {
           "filename": "che2.png",
@@ -1478,7 +1482,11 @@
             255,
             255
           ],
-          "promptSubject": "卡通橙色破损汽车的车身、车底、破窗、格栅、保险杠、轮胎和轮圈图块"
+          "promptSubject": "卡通橙色破损汽车的车身、车底、破窗、格栅、保险杠、轮胎和轮圈图块",
+          "canvasLabel": {
+            "text": "DARK BROWN SHADOW",
+            "xFraction": 0.87
+          }
         }
       ]
     },

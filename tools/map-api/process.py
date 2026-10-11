@@ -10,7 +10,7 @@ import shutil
 
 import cv2
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 from assets import ROOT, object_entry, texture_files, uv_triangles
 
@@ -79,6 +79,11 @@ def prepare(model, workspace, selected=None):
         canvas.paste(Image.fromarray(pixels), margin)
         ImageDraw.Draw(canvas).rectangle((margin[0] - 3, margin[1] - 3,
             margin[0] + size[0] + 2, margin[1] + size[1] + 2), outline=(245,) * 3, width=2)
+        label = item.get('canvasLabel')
+        if label:
+            font = ImageFont.load_default(size=14)
+            ImageDraw.Draw(canvas).text((round(canvas.width * label['xFraction']), margin[1] / 2),
+                label['text'], font=font, fill=(245,) * 3, anchor='mm')
         canvas.save(output / 'inputs' / source.name)
         subject = item.get('promptSubject', '地图物体')
         prompt = (f'这是一张{subject}的完整二维UV贴图。将这张贴图忠实高清化，输出4K。'
@@ -90,12 +95,17 @@ def prepare(model, workspace, selected=None):
             '直线和圆形按原始轮廓描摹，保留不规则手绘笔触和像素边缘，不自动规整。'
             '只高清化已有内容，不添加木纹、裂缝、铆钉、光泽或其它新细节。'
             '输出相同布局的平面二维贴图，无透视、无3D模型、无水印。')
+        if label:
+            prompt += (f"画布外框上方的{label['text']}是位置提示，不是原图文字。"
+                '该提示下方、右上圆形油箱盖面板的顶部窄条是深暗柔和阴影；'
+                '忠实保留输入的暗色渐变，不将它改画成车身色块或锈斑。提示保留在外框之外。')
         (output / 'prompts' / (source.stem + '.txt')).write_text(prompt + '\n')
         api.save_json(output / 'inputs' / (source.stem + '.json'), {
             'atlasSize': list(size), 'margin': list(margin), 'canvasSize': list(canvas.size),
             'sourceSize': list(original.size), 'inputRotation': rotation,
             'inputResampling': 'bilinear',
             'helperGuides': 'canvas-frame',
+            'canvasLabel': label,
             'helperBackground': list(background), 'alphaComposited': True})
         print(f'{source.name}: opaque complete atlas prepared, background={background_name}', flush=True)
 
@@ -147,6 +157,7 @@ def generate(model, workspace, selected, revision):
         metadata['alphaComposited'] = prepared['alphaComposited']
         metadata['inputResampling'] = prepared['inputResampling']
         metadata['helperGuides'] = prepared['helperGuides']
+        metadata['canvasLabel'] = prepared['canvasLabel']
         with one_request(workspace):
             api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
 
