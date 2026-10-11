@@ -68,7 +68,7 @@ try{
  vite=await createServer({
   configFile:false,root:workspace,publicDir:workspace+'/apps/web/public',cacheDir:temp+'/vite',
   optimizeDeps:{noDiscovery:true,include:['@babylonjs/core','@babylonjs/loaders/glTF','@babylonjs/core/Rendering/outlineRenderer','@babylonjs/core/Materials/clipPlaneMaterialHelper','@babylonjs/core/Materials/materialHelper.functions','@babylonjs/core/Shaders/outline.vertex','@babylonjs/core/Shaders/outline.fragment','@babylonjs/core/ShadersWGSL/outline.vertex','@babylonjs/core/ShadersWGSL/outline.fragment'],entries:[]},
-  server:{host:'127.0.0.1',port:0,hmr:false},
+  server:{host:'127.0.0.1',port:0,hmr:false,watch:null},
   plugins:[{name:'tank-api-render',configureServer(s){s.middlewares.use(async(req,res,next)=>{
    const path=(req.url||'').split('?')[0];
    try{
