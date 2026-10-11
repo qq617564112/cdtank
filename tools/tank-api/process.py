@@ -238,7 +238,7 @@ def submit_edit(input_path, native, metadata_path, metadata, config, workspace, 
                     headers={'Authorization': 'Bearer ' + key},
                     files={'image': (filename, image, 'image/png')},
                     data={'model': config['model'], 'prompt': prompt, 'size': request_size,
-                          'quality': 'high', 'background': 'opaque', 'n': '1',
+                          'quality': metadata['quality'], 'background': 'opaque', 'n': '1',
                           'response_format': 'b64_json'}, timeout=1300)
             if not response.ok:
                 raise HttpError(response.status_code, response.text[:500],

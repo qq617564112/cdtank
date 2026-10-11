@@ -138,7 +138,7 @@ def generate(model, workspace, selected, revision):
         (output / 'prompts' / (source.stem + '-request.txt')).write_text(prompt + '\n')
         metadata = {'filename': source.name, 'object': model, 'model': config['model'],
             'endpoint': config['base'].rstrip('/') + '/images/edits',
-            'requestedSize': f'{size[0]}x{size[1]}', 'quality': 'high',
+            'requestedSize': f'{size[0]}x{size[1]}', 'quality': 'max',
             'inputsPerRequest': 1, 'background': 'opaque', 'status': 'submitted',
             'generationScope': 'whole-atlas', 'reference': str(source),
             'referenceCoverage': 'complete-original',
