@@ -303,7 +303,7 @@ def registered(source, native, tank, part):
                         'correlation': None if correlation is None else float(correlation),
                         'transform': warp.tolist()})
     # Restrict guide cleanup to the UV perimeter and known neutral guide colors.
-    edge_width = max(3, round(size[0] / source.width * 1.5))
+    edge_width = max(3, round(size[0] / source.width * 2))
     edge = (core > 0) & (cv2.erode(core, np.ones((edge_width * 2 + 1,) * 2, np.uint8)) == 0)
     neutral = result.max(axis=2).astype(np.int16) - result.min(axis=2) < 10
     intensity = result.mean(axis=2)
