@@ -286,6 +286,12 @@ def finish(model, workspace, selected):
                 reference_rgb = np.array(reference.convert('RGB')).astype(np.float32)
                 expected_cast = np.minimum(reference_rgb[:, :, 0], reference_rgb[:, :, 2]) - reference_rgb[:, :, 1]
                 returned_cast = np.minimum(composited_pixels[:, :, 0], composited_pixels[:, :, 2]) - composited_pixels[:, :, 1]
+                # A purple cast above the original colour is residual matte; its
+                # excess estimates how much of the returned pixel is background.
+                matte_coverage = np.clip((255 - returned_cast) /
+                    np.maximum(255 - expected_cast, 1), 0, 1)
+                matte_pixels = returned_cast > expected_cast + 15
+                coverage[matte_pixels] = matte_coverage[matte_pixels, None]
                 coverage[returned_cast <= expected_cast + 15] = 1
             pixels = np.uint8(np.clip((composited_pixels -
                 (1 - coverage) * background) / np.maximum(coverage, 1 / 255), 0, 255))
