@@ -139,8 +139,12 @@ def prepare(tank, workspace, selected=None, input_rotation=0):
         width = 2048
         size = (width, round(width * original.height / original.width))
         requested = (4096, round(4096 * original.height / original.width))
+        input_size = size
+        if input_rotation in {90, 270}:
+            input_size = (size[1], size[0])
+            requested = (requested[1], requested[0])
         rows.append({'filename': source.name, 'sourceSize': list(original.size),
-                     'inputSize': list(size), 'requestedSize': list(requested)})
+                     'inputSize': list(input_size), 'requestedSize': list(requested)})
         if selected and source.name not in selected:
             continue
         reference = np.array(original.resize(size, Image.Resampling.NEAREST))
@@ -155,9 +159,10 @@ def prepare(tank, workspace, selected=None, input_rotation=0):
         pixels[ring] = 245
         prepared = Image.fromarray(pixels)
         uv_mask = Image.fromarray(core)
-        if input_rotation == 180:
-            prepared = prepared.transpose(Image.Transpose.ROTATE_180)
-            uv_mask = uv_mask.transpose(Image.Transpose.ROTATE_180)
+        if input_rotation:
+            rotation = getattr(Image.Transpose, f'ROTATE_{input_rotation}')
+            prepared = prepared.transpose(rotation)
+            uv_mask = uv_mask.transpose(rotation)
         prepared.save(output / 'inputs' / source.name)
         uv_mask.save(output / 'inputs' / f'{source.stem}-uv.png')
         part = '车身' if source.name[3] == 'M' else '炮塔'
@@ -195,10 +200,13 @@ def generate_one(tank, workspace, filename, revision, input_rotation=0):
     source = ROOT / 'art/original/tank-textures/role' / tank / filename
     original = Image.open(source)
     request_width = config.get('requestWidth', 4096)
-    request_size = f'{request_width}x{round(request_width * original.height / original.width)}'
+    request_height = round(request_width * original.height / original.width)
+    if input_rotation in {90, 270}:
+        request_width, request_height = request_height, request_width
+    request_size = f'{request_width}x{request_height}'
     prompt = (output / 'prompts' / f'{source.stem}.txt').read_text().strip()
-    if input_rotation == 180:
-        prompt += '\n输入是原始完整图集整体旋转180度后的图像。严格保持当前输入的整图方向和全部图块位置输出，不要自行旋转或重排。'
+    if input_rotation:
+        prompt += f'\n输入是原始完整图集整体逆时针旋转{input_rotation}度后的图像。严格保持当前输入的整图方向和全部图块位置输出，不要自行旋转或重排。'
     if revision:
         prompt += '\n修正要求：' + revision
         (output / 'prompts' / f'{source.stem}-revision.txt').write_text(prompt + '\n')
@@ -319,8 +327,9 @@ def finish(tank, workspace, selected):
         original, native = Image.open(source).convert('RGB'), Image.open(native_path).convert('RGB')
         path = output / 'metadata' / f'{source.stem}.json'
         metadata = json.loads(path.read_text())
-        if metadata.get('inputRotation', 0) == 180:
-            native = native.transpose(Image.Transpose.ROTATE_180)
+        input_rotation = metadata.get('inputRotation', 0)
+        if input_rotation:
+            native = native.transpose(getattr(Image.Transpose, f'ROTATE_{360 - input_rotation}'))
         final_size = (4096, round(4096 * original.height / original.width))
         if abs(native.width / native.height - original.width / original.height) > .02:
             raise ValueError(f'{source.name}: API aspect ratio {native.size} differs from source {original.size}')
@@ -362,7 +371,7 @@ def main():
     parser.add_argument('--workers', type=int, default=1)
     parser.add_argument('--only', nargs='*')
     parser.add_argument('--revision', default='')
-    parser.add_argument('--input-rotation', type=int, choices=[0, 180], default=0)
+    parser.add_argument('--input-rotation', type=int, choices=[0, 90, 180, 270], default=0)
     parser.add_argument('--detach', action='store_true')
     args = parser.parse_args()
     if args.detach:
