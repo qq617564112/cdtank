@@ -23,6 +23,7 @@ GROUND_GROUPS = {
 EXCLUDED_MESHES = {
     '0007': {'object02/0'},
     '0011': {'btree06/1'},
+    '0021': {'object02/0'},
 }
 
 

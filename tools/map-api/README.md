@@ -16,6 +16,8 @@ The API preserves the uploaded RGB colors, including purple blends inside partia
 
 Identical complete originals can reuse a self-reviewed native atlas from the worktree or integrated resources. Reuse requires matching original pixels and prepared reference pixels, and each destination model is reviewed separately. `reuse.json` records the matching original references.
 
+Degenerate UVs and triangles narrower than an original texture pixel retain their sampled edge colors. Opaque padding selects matching colors from reliable generated artwork when the nearest spatial color belongs to another region; original RGB guides the selection without being copied into the output.
+
 `flock /tmp/cdtank-api4k/map-render.lock node render.mjs OBJECT WORKTREE` renders original GLB geometry under uniform ambient illumination from six directions. Breakable states, castle actions and texture variants are included. Static objects use representative complete mesh groups covering every selected material. `contact.py OBJECT WORKTREE` produces original/API comparison sheets for visual inspection.
 
 After the complete initial render, `render.mjs OBJECT WORKTREE --group NAME` refreshes one static mesh group's six-view comparisons and retains the other groups in `renders/scope.json`. Render each group affected by a changed texture; accepted groups keep their existing evidence.

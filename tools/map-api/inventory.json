@@ -1,7 +1,7 @@
 {
   "mapCount": 27,
   "objectCount": 75,
-  "textureCount": 377,
+  "textureCount": 376,
   "objects": [
     {
       "model": "obj05015",
@@ -8601,7 +8601,6 @@
         "line587/0",
         "line587/1",
         "object01/0",
-        "object02/0",
         "object03/0",
         "object04/0",
         "object06/0",
@@ -8726,15 +8725,6 @@
           ],
           "textures": [
             "lubian.png"
-          ]
-        },
-        {
-          "name": "object02",
-          "meshes": [
-            "object02/0"
-          ],
-          "textures": [
-            "w.png"
           ]
         },
         {
@@ -8912,19 +8902,6 @@
           "promptSubject": "卡通树木（树冠在上、树干在下，多个树木图块横向排列）"
         },
         {
-          "filename": "w.png",
-          "reference": "art/original/Data/map/0021/w.png",
-          "originalSource": "art/original/Data/map/0021/w.png",
-          "sourceSize": [
-            256,
-            256
-          ],
-          "alphaRange": [
-            221,
-            221
-          ]
-        },
-        {
           "filename": "wan01.png",
           "reference": "art/original/Data/map/0021/wan01.png",
           "originalSource": "art/original/Data/map/0021/wan01.png",
@@ -8989,6 +8966,9 @@
             255
           ]
         }
+      ],
+      "excludedMeshes": [
+        "object02/0"
       ]
     },
     {

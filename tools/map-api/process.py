@@ -303,6 +303,22 @@ def finish(model, workspace, selected):
         interior = cv2.erode(mask, np.ones((edge_width * 2 + 1,) * 2, np.uint8),
                              borderType=cv2.BORDER_CONSTANT, borderValue=0)
         edge = (mask > 0) & (interior == 0)
+        triangles = uv_triangles(model, source.name)
+        sides = triangles[:, 1:] - triangles[:, :1]
+        area = np.abs(sides[:, 0, 0] * sides[:, 1, 1] - sides[:, 0, 1] * sides[:, 1, 0])
+        source_span = np.ptp(triangles, axis=1) * np.array(original.size)
+        sampled_lines = Image.new('L', native.size)
+        draw = ImageDraw.Draw(sampled_lines)
+        for triangle in triangles[(area < 1e-8) | (source_span.min(axis=1) < 1)]:
+            low = np.floor(triangle.min(axis=0)).astype(int)
+            high = np.floor(triangle.max(axis=0)).astype(int)
+            for x in range(low[0], high[0] + 1):
+                for y in range(low[1], high[1] + 1):
+                    points = (triangle - [x, y]) * np.array(native.size)
+                    draw.polygon([tuple(point) for point in points], fill=255)
+        sampled_lines = cv2.dilate(np.array(sampled_lines),
+            np.ones((edge_width * 2 + 1,) * 2, np.uint8))
+        edge |= (mask > 0) & (sampled_lines > 0)
         if metadata.get('alphaComposited'):
             cutout_edge = cv2.dilate(np.uint8(alpha < 255),
                 np.ones((edge_width * 2 + 1,) * 2, np.uint8))
@@ -323,6 +339,9 @@ def finish(model, workspace, selected):
         canvas_edge[:, :edge_width] = canvas_edge[:, -edge_width:] = True
         white_region = canvas_edge[edge] if metadata.get('helperGuides') == 'canvas-frame' else np.ones_like(neutral)
         contamination = neutral & (intensity > 220) & white_region
+        if metadata.get('helperGuides') != 'canvas-frame' and alpha.min() == 255:
+            contamination |= ((reference_rgb.mean(axis=1) < 64) &
+                (intensity - reference_rgb.mean(axis=1) > 55))
         for index, guide_color in enumerate((background, np.float32([245, 245, 245]))):
             guide_pixels = np.linalg.norm(edge_pixels - guide_color, axis=1) < 22
             direction = guide_color - reference_rgb
@@ -360,6 +379,32 @@ def finish(model, workspace, selected):
         if artwork.any() and padding.any():
             _, nearest = cv2.distanceTransformWithLabels(np.uint8(~artwork), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
             pixels[padding] = pixels[artwork][nearest[padding] - 1]
+            if alpha.min() == 255:
+                # Repeated and degenerate UVs also sample the padded boundary.
+                # Choose generated artwork with the corresponding source colour
+                # when a spatial neighbour belongs to a different colour region.
+                shape = (min(256, pixels.shape[1]), min(256, pixels.shape[0]))
+                source_rgb = np.array(reference.convert('RGB')).astype(np.float32)
+                source_small = cv2.resize(source_rgb, shape, interpolation=cv2.INTER_AREA)
+                generated_small = cv2.resize(pixels, shape, interpolation=cv2.INTER_AREA)
+                trusted = cv2.resize(np.uint8(artwork & (interior > 0)),
+                    shape, interpolation=cv2.INTER_NEAREST) > 0
+                if trusted.any():
+                    palette = np.ascontiguousarray(generated_small[trusted].astype(np.float32))
+                    index = cv2.flann_Index(palette, {'algorithm': 1, 'trees': 4})
+                    choices, distances = index.knnSearch(
+                        np.ascontiguousarray(source_small.reshape(-1, 3)), 1, params={'checks': 64})
+                    generated_choices = generated_small[trusted][choices[:, 0]].reshape(
+                        shape[1], shape[0], 3)
+                    colour_error = cv2.resize(distances.reshape(shape[1], shape[0]),
+                        (pixels.shape[1], pixels.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    neighbour_error = ((source_rgb[padding] - pixels[padding]) ** 2).sum(axis=1)
+                    matching = np.zeros_like(padding)
+                    matching[padding] = ((colour_error[padding] < 55 ** 2) &
+                        (neighbour_error > colour_error[padding] + 55 ** 2))
+                    generated_choices = cv2.resize(generated_choices,
+                        (pixels.shape[1], pixels.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    pixels[matching] = generated_choices[matching]
         maximum = 4096
         final_size = tuple(round(maximum * value / max(original.size)) for value in original.size)
         final = Image.fromarray(pixels).resize(final_size, Image.Resampling.LANCZOS).convert('RGBA')
