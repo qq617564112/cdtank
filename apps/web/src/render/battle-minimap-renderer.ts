@@ -107,7 +107,7 @@ export class BattleMinimapRenderer {
         document.fonts.load(`12px ${FONT}`, 'VIP'),
       ]);
       if (this.disposed) return;
-      const context = this.icons.getContext();
+      const context = this.icons.getContext() as CanvasRenderingContext2D;
       context.clearRect(0, 0, ATLAS_WIDTH, ATLAS_HEIGHT);
       MARKERS.forEach((marker, index) => {
         drawImageRegion(context, images[index], marker.x * ATLAS_DENSITY, 0,
