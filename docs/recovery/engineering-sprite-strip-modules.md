@@ -13,7 +13,7 @@ EffectRuntime的Type1历史到四边形计算提取到sprite-draw，Type7段到�
 
 ## 验收入口
 
-`npm run test:effects:draw`直接调用提取的生产函数和EffectRuntime实际网格提交链。原矩阵/几何/颜色/相机样本与NullEngine中的真实Babylon网格用于检查四边形、position/UV/color/index缓冲、父矩阵和清理；此命令也进入test:acceptance:render。
+`npm run test:effects:draw`直接调用提取的生产函数和EffectRuntime实际网格提交链。原矩阵/几何/颜色/相机样本与NullEngine中的真实Babylon网格用于检查四边形、position/UV/color/index缓冲、父矩阵和清理。
 
 原规则使用对应原指令结果，通过`npx tsx tests/<名称>.cts`执行：effect-sprite-{state,reset,space,lifecycles,path-lifecycle}，effect-trail，effect-strip-{state,geometry,uv,lifecycles}，effect-render-transform、effect-color、effect-camera、effect-sprite-mesh、effect-manager-order、effect-online{004,006}-tree。`npm run test:combat:effect-runtime`检查真实技能通知到生产树/挂点和清理。
 

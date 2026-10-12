@@ -25,12 +25,13 @@ interface GlyphDraw {resource: GlyphResource; vector: BattleScreenVector;}
 export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
   private readonly resources = new Map<number, GlyphResource>();
   private readonly draws = new Map<number, GlyphDraw[]>();
+  private zeroValueResource?: GlyphResource;
   private sequence = 0;
   private disposed = false;
 
   constructor(private readonly scene: Scene, private readonly font: CastleDamageTextFont,
               fontName: 'Damage' | 'Benefit' | 'Critical' | 'Combo' = 'Damage',
-              private readonly alphaIndex = 0) {
+              private readonly alphaIndex = 0, private readonly zeroValueImage?: BattleVectorShape) {
     if (font.name !== fontName || font.attributes.Type !== 'Static') {
       throw new Error(`原${fontName}字体定义缺失`);
     }
@@ -40,13 +41,17 @@ export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
   async load(): Promise<void> {
     if (this.disposed) throw new Error('Castle文字资源已释放');
     try {
-      const {BATTLE_TEXT_VECTORS} = await import('./battle-text-vector-geometry');
       for (const glyph of this.font.glyphs) {
-        const shape = BATTLE_TEXT_VECTORS[glyph.asset];
-        if (!shape) throw new Error(`原战斗文字图片资源缺失：${glyph.asset}`);
+        const shape: BattleVectorShape = {asset: glyph.asset, width: glyph.width, height: glyph.height};
         this.resources.set(glyph.codepoint, {glyph, shape});
       }
-      await battleUiLayer(this.scene).prepare([...this.resources.values()].map(resource => resource.shape));
+      const shapes = [...this.resources.values()].map(resource => resource.shape);
+      if (this.zeroValueImage) {
+        const glyph = {codepoint: 48, ...this.zeroValueImage};
+        this.zeroValueResource = {glyph, shape: this.zeroValueImage};
+        shapes.push(this.zeroValueImage);
+      }
+      await battleUiLayer(this.scene).prepare(shapes);
       if (this.disposed) throw new Error('Castle文字资源已释放');
     } catch (error) {
       this.dispose();
@@ -55,7 +60,8 @@ export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
   }
 
   create(text: string): number {
-    const glyphs = [...text].map(character => this.resources.get(character.codePointAt(0)!));
+    const glyphs = text === '0' && this.zeroValueResource ? [this.zeroValueResource]
+      : [...text].map(character => this.resources.get(character.codePointAt(0)!));
     const draws: GlyphDraw[] = [];
     for (const resource of glyphs) {
       // Original static numeric fonts have only ten digits. Unmapped signs stay blank.
@@ -98,5 +104,6 @@ export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
     this.disposed = true;
     for (const handle of this.draws.keys()) this.release(handle);
     this.resources.clear();
+    this.zeroValueResource = undefined;
   }
 }

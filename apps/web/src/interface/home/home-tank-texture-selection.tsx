@@ -1,6 +1,6 @@
 import {GameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
-import {loadTankTextureCatalog} from '../../content';
+import {loadTankTextureCatalog, preparedTankTextureCatalog} from '../../content';
 import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
 import {loadStaticJson} from '../../assets/static-resources';
 import {readOwnedTankTextures, type OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
@@ -9,7 +9,7 @@ import type {ResRoleProfile} from '../../../../shared/protocols/PtlRoleProfile';
 import type {Battle} from '../../match/battle';
 import type {HomeSourceControl, HomeSourceUi} from './home-source-layout';
 import {HomeEquipmentPreview} from './home-equipment-preview';
-import {tankCatalog} from '../../assets/tanks/tank-view';
+import {preparedTankCatalog, tankCatalog, type TankEntry} from '../../assets/tanks/tank-view';
 import './home.css';
 import './home-tank-texture-selection.css';
 
@@ -29,6 +29,11 @@ const COMPONENTS = [
   {part: 'M', control: 'Body', label: '车身'},
   {part: 'XY', control: 'Tread', label: '履带'},
 ] as const;
+function activeTextureParts(tank: TankEntry | undefined): Set<'U' | 'M' | 'XY'> {
+  const parts = tank?.components.filter(component => component.actions.length > 0).map(component => component.part) ?? [];
+  return new Set(COMPONENTS.filter(component => component.part === 'XY'
+    ? parts.includes('X') || parts.includes('Y') : parts.includes(component.part)).map(component => component.part));
+}
 export interface HomeTankTextureSelectionViewProps {
   battle: Battle;
   record: OwnedRoleRecordData;
@@ -64,16 +69,19 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
   const session = useRef({active: false, pending: false});
   const saveButton = useRef<HTMLButtonElement>(null);
   const focusAfterSave = useRef(false);
+  const fields = new Map(record.fields), tankId = fields.get(0x24)! >>> 0, instanceId = fields.get(0x1c)! >>> 0;
   const [current, setCurrent] = useState(() => readOwnedTankTextures({name: record.name, fields: new Map(record.fields)}));
   const [selected, setSelected] = useState(current);
   const [confirmedProfile, setConfirmedProfile] = useState(profile);
-  const [rows, setRows] = useState<TextureRow[]>([]);
-  const [active, setActive] = useState<Set<'U' | 'M' | 'XY'>>(new Set());
-  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState<TextureRow[]>(() =>
+    preparedTankTextureCatalog()?.rows.filter(row => row.tankId === tankId) ?? []);
+  const [active, setActive] = useState<Set<'U' | 'M' | 'XY'>>(() =>
+    activeTextureParts(preparedTankCatalog()?.find(tank => tank.id === tankId)));
+  const [loading, setLoading] = useState(() =>
+    !current || !preparedTankTextureCatalog() || !preparedTankCatalog()?.some(tank => tank.id === tankId));
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
-  const fields = new Map(record.fields), tankId = fields.get(0x24)! >>> 0, instanceId = fields.get(0x1c)! >>> 0;
 
   useEffect(() => {
     const element = dialog.current!, previousFocus = document.activeElement;
@@ -95,9 +103,7 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
       if (!currentSession.active) return;
       const tank = tanks.find(value => value.id === tankId);
       if (!tank) throw new Error('缺少战车组件定义');
-      const parts = tank.components.filter(component => component.actions.length > 0).map(component => component.part);
-      setActive(new Set(COMPONENTS.filter(component => component.part === 'XY'
-        ? parts.includes('X') || parts.includes('Y') : parts.includes(component.part)).map(component => component.part)));
+      setActive(activeTextureParts(tank));
       setRows(catalog.rows.filter(row => row.tankId === tankId));
       setLoading(false); setStatus('');
     })().catch(error => {

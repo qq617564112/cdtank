@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import {WebGPUEngine} from '@babylonjs/core';
+import {getDisplayPreferences} from '../interface/settings/display-preferences';
 import glslangScript from '@babylonjs/core/assets/glslang/glslang.js?url';
 import glslangWasm from '@babylonjs/core/assets/glslang/glslang.wasm?url';
 import twgslScript from '@babylonjs/core/assets/twgsl/twgsl.js?url';
@@ -11,7 +12,7 @@ export async function createWebGpuEngine(canvas: HTMLCanvasElement, transparent 
     throw new Error('当前浏览器无法使用 WebGPU，请使用支持 WebGPU 的浏览器，并通过 HTTPS 或 localhost 打开游戏。');
   }
   const engine = new WebGPUEngine(canvas, {
-    antialias: false, stencil: true, adaptToDeviceRatio: true,
+    antialias: getDisplayPreferences().msaa4x, stencil: true, adaptToDeviceRatio: true,
     premultipliedAlpha: transparent, powerPreference: 'high-performance',
     deviceDescriptor: {requiredFeatures: ['timestamp-query']},
     glslangOptions: {jsPath: glslangScript, wasmPath: glslangWasm},

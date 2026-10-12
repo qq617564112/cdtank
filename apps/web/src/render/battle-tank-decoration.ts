@@ -1,9 +1,11 @@
-import {AssetContainer, Constants, LoadAssetContainerAsync, Matrix, PBRMaterial, Scene,
+import {loadPreparedModel} from '../assets/model-resources';
+import {AssetContainer, Constants, Matrix, PBRMaterial, Scene,
   Texture, TransformNode} from '@babylonjs/core';
 import type {ItemDefinition} from '../../../shared/content/types';
 import {TANK_DECORATION_TAGS, TankView, type TankDecorationTag} from '../assets/tanks/tank-view';
 import {applyCartoonOutlines} from './materials/cartoon-outline';
 import {invalidateMaterialDrawBundles} from './webgpu-draw-cache';
+import {battleArtworkUrl} from '../assets/battle-artwork';
 
 /** Original accessory attached to a battle actor's cosmetic attachment track. */
 export class BattleTankDecoration {
@@ -60,7 +62,7 @@ export class BattleTankDecoration {
   /** Registers each resource before the next await so a mid-load dispose leaves nothing behind. */
   async load(): Promise<boolean> {
     try {
-      const assets = await LoadAssetContainerAsync(this.model, this.scene);
+      const assets = await loadPreparedModel(battleArtworkUrl(this.model, this.scene), this.scene);
       if (this.disposed) {assets.dispose(); return false;}
       this.assets = assets;
       for (const material of assets.materials) {
@@ -72,7 +74,7 @@ export class BattleTankDecoration {
       const texturePath = this.texturePath;
       if (texturePath) {
         const texture = await new Promise<Texture>((resolve, reject) => {
-          const created = new Texture(texturePath, this.scene, false, false,
+          const created = new Texture(battleArtworkUrl(texturePath, this.scene), this.scene, false, false,
             Constants.TEXTURE_LINEAR_LINEAR, () => resolve(created),
             (_message, error) => {created.dispose(); reject(error ?? new Error('饰品贴图载入失败'));});
           // Hand the in-flight texture to the owner before the load settles so a dispose can release it.

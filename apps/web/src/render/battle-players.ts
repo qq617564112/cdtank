@@ -80,7 +80,8 @@ export class BattlePlayers {
   get resourcesReady(): boolean {
     return this.snapshot !== undefined && !this.error
       && this.snapshot.every(player => this.players.has(player.id))
-      && [...this.decorations.values()].every(decoration => decoration.ready);
+      && [...this.decorations.values()].every(decoration => decoration.ready)
+      && this.disguises.resourcesReady;
   }
 
   get loadingError(): string {return this.disguises.loadingError || this.error;}
@@ -192,7 +193,7 @@ export class BattlePlayers {
 
   private async loadDamageText(generation: number): Promise<void> {
     this.damageTextLoading ??= (async () => {
-      const fonts = await loadStaticJson<{fonts: TankDamageTextFont[]}>('/ui-fonts.json');
+      const fonts = await loadStaticJson<{fonts: TankDamageTextFont[]}>('/manifests/ui-fonts.json');
       if (generation !== this.generation) return;
       const font = fonts.fonts.find(value => value.name === 'Damage' && value.attributes.Type === 'Static');
       if (!font?.glyphs?.length) throw new Error('原Damage字体定义缺失');
@@ -209,7 +210,7 @@ export class BattlePlayers {
       const criticalFont = fonts.fonts.find(value => value.name === 'Critical' && value.attributes.Type === 'Static');
       if (!criticalFont?.glyphs?.length) throw new Error('原Critical字体定义缺失');
       const ui = await loadStaticJson<{imagesets: {path: string; attributes: Record<string, string>;
-        images: (Omit<CriticalTextImage, 'attributes'> & {Name: string})[]}[]}>('/ui.json');
+        images: (Omit<CriticalTextImage, 'attributes'> & {Name: string})[]}[]}>('/manifests/ui.json');
       if (generation !== this.generation) return;
       const imageset = ui.imagesets.find(value => value.path === 'ui/imagesets/zhandou0_0.imageset');
       const image = imageset?.images.find(value => value.Name === 'data\\ui\\zhandou\\1_baojishuziditu.tga');

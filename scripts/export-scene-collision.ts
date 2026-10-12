@@ -1,4 +1,4 @@
-import {copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {CollisionMesh, type SerializedCollisionMesh} from '../apps/shared/movement/collision-mesh';
@@ -44,15 +44,23 @@ const serverAssets = resolve(process.env.SERVER_ASSETS ?? resolve(workspace, 'ap
 const output = resolve(process.env.SCENE_COLLISION_ASSETS ??
   resolve(serverAssets, 'scene-collision'));
 mkdirSync(serverAssets, {recursive: true});
-for (const filename of ['scene-placements.json', 'battlefields.json']) {
-  copyFileSync(webAssetPath(filename), serverAssetPath(filename));
+const sourceExport = existsSync(webAssetPath('scene-placements.json'));
+const placementsFile = sourceExport ? 'scene-placements.json' : 'data/maps/shared/placements.json';
+const battlefieldsFile = sourceExport ? 'battlefields.json' : 'data/maps/battlefields.json';
+for (const [source, filename] of [
+  [placementsFile, 'scene-placements.json'],
+  [battlefieldsFile, 'battlefields.json'],
+]) {
+  copyFileSync(webAssetPath(source), serverAssetPath(filename));
 }
-const scenes = JSON.parse(readFileSync(webAssetPath('scene-placements.json'), 'utf8')) as SourceScene[];
-const fields = new Map((JSON.parse(readFileSync(webAssetPath('battlefields.json'), 'utf8')) as SourceField[])
+const scenes = JSON.parse(readFileSync(webAssetPath(placementsFile), 'utf8')) as SourceScene[];
+const fields = new Map((JSON.parse(readFileSync(webAssetPath(battlefieldsFile), 'utf8')) as SourceField[])
   .map(field => [Number(field.id), field] as const));
 
 function castleResources(scene: SourceScene): CastleResource[] {
-  return JSON.parse(readFileSync(webAssetPath(castleResourceFile(Number(scene.id))), 'utf8')).castles;
+  const published = castleResourceFile(Number(scene.id));
+  const filename = sourceExport ? `scene-castle-${published.split('/')[2]}.json` : published;
+  return JSON.parse(readFileSync(webAssetPath(filename), 'utf8')).castles;
 }
 
 function collisionFor(scene: SourceScene, source: SourcePlacement, resources: CastleResource[],

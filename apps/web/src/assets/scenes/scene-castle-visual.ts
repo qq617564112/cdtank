@@ -1,4 +1,6 @@
-import {AssetContainer, LoadAssetContainerAsync, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
+import {loadPreparedModel} from '../model-resources';
+import {battleArtworkUrl} from '../battle-artwork';
+import {AssetContainer, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import {applyMv3Materials} from '../../render/materials/mv3-material';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {EffectActorActionClock} from '../tanks/effect-actor-clock';
@@ -48,7 +50,7 @@ export class SceneCastleVisual {
     try {
       for (const resource of this.resource.actions) {
         if (!resource.available) throw new Error(`缺少原城堡动作：${resource.name}`);
-        const container = await LoadAssetContainerAsync(`/${resource.asset}`, this.scene, {
+        const container = await loadPreparedModel(battleArtworkUrl(`/${resource.asset}`, this.scene), this.scene, {
           pluginOptions: {gltf: {useSRGBBuffers: false}},
         });
         if (this.disposed || this.scene.isDisposed) {container.dispose(); return;}

@@ -5,15 +5,19 @@ import {applyDisplayPreferences, readDisplayPreferences} from './display-prefere
 import {readQuickChatPreferences} from './quick-chat-preferences';
 import {applyBrightness, readBrightness} from './brightness-preferences';
 import {applySaturation, readSaturation} from './saturation-preferences';
+import {applyContrast, readContrast} from './contrast-preferences';
+import {readBattleArtworkQuality} from './battle-artwork-preferences';
 
 export const KEY_BINDINGS_STORAGE_KEY = 'cdtank.key-bindings.v1';
 
 /** Restore consumers before React can expose room entry or playback controls. */
-export function initializeSettings(battle: Pick<Battle, 'setKeyBindings' | 'setQuickChats' | 'setMusicVolume' | 'setSoundVolume'>) {
+export function initializeSettings(battle: Pick<Battle, 'setKeyBindings' | 'setQuickChats' | 'setMusicVolume' | 'setSoundVolume'>,
+  display = readDisplayPreferences({getItem: key => window.localStorage.getItem(key)})) {
   const storage = {getItem: (key: string) => window.localStorage.getItem(key)};
   applyBrightness(readBrightness(storage));
   applySaturation(readSaturation(storage));
-  const display = readDisplayPreferences(storage);
+  applyContrast(readContrast(storage));
+  const artwork = readBattleArtworkQuality(storage);
   applyDisplayPreferences(display.preferences);
   const audio = readAudioPreferences(storage, {music: 0.5, sound: 0.5});
   const quickChat = readQuickChatPreferences(storage);
@@ -33,7 +37,7 @@ export function initializeSettings(battle: Pick<Battle, 'setKeyBindings' | 'setQ
   battle.setQuickChats(quickChat.preferences);
   battle.setMusicVolume(audio.preferences.music);
   battle.setSoundVolume(audio.preferences.sound);
-  return {keys: {bindings, loadMessage}, quickChat, audio, display};
+  return {keys: {bindings, loadMessage}, quickChat, audio, display, artwork};
 }
 
 export type InitialSettings = ReturnType<typeof initializeSettings>;

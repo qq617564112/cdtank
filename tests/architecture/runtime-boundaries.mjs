@@ -183,14 +183,11 @@ for (const file of ['kitbag-configuration-wire.ts', 'kitbag-configuration-native
 }
 assert(!existsSync('apps/web/effect-model-render-check.html'));
 assert(!existsSync('apps/web/src/effect-model-render-check.ts'));
-assert(existsSync('tests/render/effect-model/index.html'));
 assert(!existsSync('apps/web/effect-bolt-render-check.html'));
 assert(!existsSync('apps/web/src/effect-bolt-render-check.ts'));
-assert(existsSync('tests/render/effect-bolt/index.html'));
 for (const name of ['effect', 'effect-particle', 'effect-overlay', 'skill-effect', 'effect-camera-shake']) {
   assert(!existsSync(`apps/web/${name}-render-check.html`));
   assert(!existsSync(`apps/web/src/${name}-render-check.ts`));
-  assert(existsSync(`tests/render/${name}/index.html`));
 }
 assert(existsSync('tests/evidence/tank-textures/role-texture-transfer-sol-native.py'));
 assert(!existsSync('apps/shared/combat/home-preview-orbit.ts'));
@@ -200,7 +197,6 @@ assert(existsSync('tests/evidence/home-preview/home-preview-projection-native.py
 assert(!existsSync('tests/home-preview-orbit-native.py'));
 assert(!existsSync('tests/home-preview-projection-native.py'));
 assert(!existsSync('apps/web/src/assets/asset-viewer.ts'));
-assert(existsSync('tools/asset-viewer/index.html'));
 assert(!readFileSync(resolve('apps/web/index.html'), 'utf8').includes('id="viewer"'));
 
 for (const view of ['battle-hud', 'portrait-state', 'battle-match', 'battle-chat']) {

@@ -1,3 +1,5 @@
+import {battleArtworkUrl} from '../battle-artwork';
+import {loadStaticJson} from '../static-resources';
 import {Scene, Texture} from '@babylonjs/core';
 import {EffectModelRenderer, EffectModelLibrary} from '../../render/effects/models/effect-model-renderer';
 import {effectModelEngineDelta} from '../../render/effects/models/effect-model-animation';
@@ -15,15 +17,13 @@ export class SceneCvdAnimation {
               private readonly matrix: EffectNativeMatrix) {}
 
   async load(path: string, reference: string): Promise<void> {
-    const response = await fetch(`/${path}`);
-    if (!response.ok) throw new Error('原场景动画资源载入失败');
-    const library = await response.json() as EffectModelLibrary;
+    const library = await loadStaticJson<EffectModelLibrary>(`/${path}`);
     if (this.disposed || this.scene.isDisposed) return;
     const resource = library.resources.find(value => value.reference === reference);
     if (!resource) throw new Error(`缺少原场景动画：${reference}`);
     const paths = [...new Set(resource.nodes.flatMap(node => node.parts.flatMap(part => part.asset ? [part.asset] : [])))];
     await Promise.all(paths.map(asset => new Promise<void>((resolve, reject) => {
-      const texture = new Texture(`/${asset}`, this.scene, true, false,
+      const texture = new Texture(battleArtworkUrl(`/${asset}`, this.scene), this.scene, true, false,
         Texture.BILINEAR_SAMPLINGMODE, resolve, message => reject(new Error(message)));
       texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE;
       texture.anisotropicFilteringLevel = 1;

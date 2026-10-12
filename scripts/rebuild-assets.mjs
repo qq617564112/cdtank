@@ -21,7 +21,7 @@ for (let index = 0; index < arguments_.length; index++) {
 
 const python = resolve(workspace, 'recovery/.venv/bin/python');
 const verified = resolve(workspace, 'recovery/output/verified');
-const fontOutput = resolve(workspace, 'apps/web/public/ui/fonts/xiangjiao-brush.ttf');
+const fontOutput = resolve(workspace, 'apps/web/public/assets/ui/fonts/xiangjiao-brush.ttf');
 if (!existsSync(python)) throw new Error('Create recovery/.venv and install tools/recovery/requirements.txt first.');
 if (!existsSync(fontInput)) {
   throw new Error(`Missing XiangJiaoKuanMaoShuaLingGanTi-2.ttf: ${fontInput}`);
@@ -50,11 +50,8 @@ run('npm', ['run', 'assets']);
 mkdirSync(dirname(fontOutput), {recursive: true});
 if (fontInput !== fontOutput) copyFileSync(fontInput, fontOutput);
 copyFileSync(resolve(workspace, 'deployment/assets/ui/fonts/Silkscreen-Regular.ttf'),
-  resolve(workspace, 'apps/web/public/ui/fonts/Silkscreen-Regular.ttf'));
-copyFileSync(resolve(workspace, 'deployment/assets/ui/fonts/fusion-pixel-hud.ttf'),
-  resolve(workspace, 'apps/web/public/ui/fonts/fusion-pixel-hud.ttf'));
-copyFileSync(resolve(workspace, 'deployment/assets/ui/fonts/fusion-pixel-OFL.txt'),
-  resolve(workspace, 'apps/web/public/ui/fonts/fusion-pixel-OFL.txt'));
-run(python, ['scripts/install-hd-assets.py']);
+  resolve(workspace, 'apps/web/public/assets/ui/fonts/Silkscreen-Regular.ttf'));
 run('npm', ['run', 'assets:usage']);
+run(python, ['scripts/install-hd-assets.py']);
+run('npm', ['run', 'assets:publish']);
 console.log('Assets published: apps/web/public');

@@ -1,5 +1,9 @@
-import {AbstractMesh, AnimationGroup, AssetContainer, Constants, LoadAssetContainerAsync, Matrix, Mesh,
+import {battleArtworkUrl} from '../battle-artwork';
+import {AbstractMesh, AnimationGroup, AssetContainer, Constants, Matrix, Mesh,
   Observer, PBRMaterial, Scene, Texture, TransformNode, Vector3} from '@babylonjs/core';
+import {loadPreparedModel} from '../model-resources';
+import {decodeImageRegion} from '../image-resources';
+import {imageResourceUrl} from '../image-cache';
 import type {IGLTFLoaderData} from '@babylonjs/loaders/glTF/glTFFileLoader';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {EffectModelAnimation, effectModelEngineDelta,
@@ -16,9 +20,9 @@ interface GroundItemAnimation {
 }
 
 /**
- * Explicit (modelId, texture) → original PNG basename. dropitem only pairs the B
+ * Explicit (modelId, texture) → texture basename. dropitem only pairs the B
  * variant with obj05006/obj05007/obj05008, and obj05008's A variant is the
- * differently-numbered obj05014A.png living beside the model, never a
+ * differently-numbered obj05014A.webp living beside the model, never a
  * same-named default. Models without an explicit entry map A to `${modelId}A`.
  */
 const SOURCE_TEXTURES: Readonly<Partial<Record<string, Readonly<Partial<Record<'A' | 'B', string>>>>>> = {
@@ -59,9 +63,10 @@ export class GroundItemVisual {
 
   private async loadTexture(): Promise<Texture> {
     const basename = groundItemTexture(this.modelId, this.variant);
-    const asset = `Data/scnobj/${this.modelId}/${basename}.png`;
+    const asset = `Data/scnobj/${this.modelId}/${basename}.webp`;
+    await decodeImageRegion(battleArtworkUrl(`/${asset}`, this.scene));
     return new Promise<Texture>((resolve, reject) => {
-      const texture = new Texture(`/${asset}`, this.scene, true, false, Constants.TEXTURE_LINEAR_LINEAR,
+      const texture = new Texture(imageResourceUrl(battleArtworkUrl(`/${asset}`, this.scene)), this.scene, true, false, Constants.TEXTURE_LINEAR_LINEAR,
         () => {texture.wrapU = texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE; resolve(texture);},
         (_message, error) => {texture.dispose(); reject(error ?? new Error(`原地面物件贴图载入失败 ${asset}`));});
     });
@@ -70,7 +75,7 @@ export class GroundItemVisual {
   async load(): Promise<void> {
     if (this.disposed || this.scene.isDisposed) return;
     let tracks: GroundItemTrack[] = [];
-    const asset = await LoadAssetContainerAsync(`/Data/scnobj/${this.modelId}/${this.modelId}.glb`, this.scene, {
+    const asset = await loadPreparedModel(`/Data/scnobj/${this.modelId}/${this.modelId}.glb`, this.scene, {
       pluginOptions: {gltf: {onParsed: (data: IGLTFLoaderData) => {
         const source = data.json as {extras?: {attachmentTracks?: GroundItemTrack[]}};
         tracks = source.extras?.attachmentTracks ?? [];

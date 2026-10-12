@@ -2,10 +2,11 @@ import {Constants, Scene, Texture} from '@babylonjs/core';
 import {prepareGameContent} from '../../content';
 import {loadStaticJson} from '../static-resources';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
+import {battleArtworkUrl} from '../battle-artwork';
 
 function loadTexture(scene: Scene, asset: string): Promise<Texture> {
   return new Promise<Texture>((resolve, reject) => {
-    const value = new Texture(`/${asset}`, scene, false, false,
+    const value = new Texture(battleArtworkUrl(`/${asset}`, scene), scene, false, false,
       Constants.TEXTURE_LINEAR_LINEAR, () => resolve(value),
       (_message, error) => {value.dispose(); reject(error ?? new Error(`贴图载入失败 ${asset}`));});
   });
@@ -47,7 +48,7 @@ export async function loadTankTrackTextures(scene: Scene, ids: OwnedTankTextures
     parts: readonly string[], tankId: number): Promise<TankTrackTextures | undefined> {
   if (!parts.some(part => part === 'X' || part === 'Y')) return undefined;
   const definition = (await prepareGameContent()).tanks.get(tankId)!;
-  const animations = await loadStaticJson<Record<string, TrackAnimationDefinition>>('/tank-track-animations.json');
+  const animations = await loadStaticJson<Record<string, TrackAnimationDefinition>>('/data/tanks/tank-track-animations.json');
   const animation = animations[String(tankId)];
   const id = ids?.XY ?? 0;
   const row = definition.resources.textureVariants.find(value => value.recordId === id && value.part === 'XY');

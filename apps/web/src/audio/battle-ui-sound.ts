@@ -1,3 +1,6 @@
+import {loadStaticJson} from '../assets/static-resources';
+import {loadAudioBuffer} from './audio-resources';
+
 interface BattleUiSoundCatalog {
   defaultSoundVolume: number;
   soundIds: {id: number; asset: string}[];
@@ -33,9 +36,7 @@ export class BattleUiSound {
   async load(): Promise<void> {
     this.stop();
     const generation = this.generation;
-    const response = await fetch('/audio.json');
-    if (!response.ok) throw new Error('原战斗提示音目录载入失败');
-    const catalog = await response.json() as BattleUiSoundCatalog;
+    const catalog = await loadStaticJson<BattleUiSoundCatalog>('/manifests/audio.json');
     if (generation !== this.generation) return;
     this.defaultVolume = catalog.defaultSoundVolume;
     this.context ??= new AudioContext();
@@ -51,9 +52,7 @@ export class BattleUiSound {
       if (cached) return [id, cached] as const;
       const entry = catalog.soundIds.find(sound => sound.id === id);
       if (!entry) throw new Error(`缺少原战斗提示音：${id}`);
-      const response = await fetch(`/${entry.asset}`);
-      if (!response.ok) throw new Error(`原战斗提示音载入失败：${id}`);
-      return [id, await this.context!.decodeAudioData(await response.arrayBuffer())] as const;
+      return [id, await loadAudioBuffer(`/${entry.asset}`, this.context!)] as const;
     }));
     if (generation !== this.generation) return;
     decoded.forEach(([id, buffer]) => this.buffers.set(id, buffer));

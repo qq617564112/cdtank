@@ -1,4 +1,5 @@
 import type {EffectSoundBackend, EffectSoundStore} from '../render/effects/runtime/effect-sound-node';
+import {loadAudioBuffer} from './audio-resources';
 
 interface SoundCatalog {
   sounds: {name: string; asset: string}[];
@@ -30,9 +31,7 @@ export class EffectSound implements EffectSoundBackend<number> {
       const name = sound.name.toLowerCase();
       const cached = this.sounds.get(name);
       if (cached) return [name, cached] as const;
-      const response = await fetch(`/${sound.asset}`);
-      if (!response.ok) throw new Error(`特效声音载入失败：${sound.name}`);
-      const buffer = await context.decodeAudioData(await response.arrayBuffer());
+      const buffer = await loadAudioBuffer(`/${sound.asset}`, context);
       return [name, buffer] as const;
     }));
     if (generation !== this.generation || this.context !== context) return;

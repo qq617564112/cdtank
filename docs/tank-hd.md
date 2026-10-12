@@ -23,9 +23,11 @@ M/U 图集共 518 张：502 张为 4096 × 4096，16 张为 4096 × 2048。长�
 
 ## 文件与发布
 
-`art/hd/` 按运行相对路径保存最终贴图，`manifest.json` 包含原图与高清图对应关系，`tank-track-animations.json` 保存帧路径、帧间隔及全部颜色记录的 RGB 滤镜。`apps/web/public/` 使用同一批图片与配置，模型默认 Data 路径和可选皮肤路径同步。原版输入保存在 `art/original/`。
+`art/hd/` 按运行相对路径保存高清源图，`manifest.json` 包含原图与高清图对应关系，`tank-track-animations.json` 保存帧路径、帧间隔及全部颜色记录的 RGB 滤镜。原版输入保存在 `art/original/`。
 
-按[运行美术资源](original-assets.md)的发布方式安装。图片发布同时复制高清目录中的履带动画配置；动画帧由该配置引用。美术资源由 Git 忽略，发布资源包时包含最终图片与配置。
+上述 4K 尺寸属于源图。当前运行贴图经[压缩配方](asset-compression.md)一次缩放到长边 1600 并编码为 WebP，再发布到 public；模型默认 Data 路径、可选皮肤和履带配置同步。`assets:battle-artwork` 同时发布原尺寸怀旧版和压缩 HD 版，UI 与模型预览继续使用各自的当前素材。
+
+按[运行美术资源](original-assets.md)准备基础资源和履带配置，再生成压缩成品及两套战斗资源。动画帧由履带配置引用。美术资源由 Git 忽略，发布资源包时包含最终图片、模型与配置。
 
 ## 素材预览
 

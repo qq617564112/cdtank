@@ -52,7 +52,7 @@ export class SceneActorToon {
   constructor(private readonly scene: Scene, private readonly mapId: string) {}
 
   async load(): Promise<void> {
-    const resource = await loadStaticJson<SceneActorToonResource>('/scene-actor-toon.json');
+    const resource = await loadStaticJson<SceneActorToonResource>('/data/maps/shared/actor-toon.json');
     if (this.disposed) return;
     const map = resource.maps?.find(entry => entry.id === originalSceneId(this.mapId));
     if (resource.resolution !== 'original' || !resource.texture || !map

@@ -1,5 +1,4 @@
 import {TEST_MAP} from '../../../../shared/maps/test-map';
-import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
 
 export interface HudMinimapBounds {
   minX: number;
@@ -42,8 +41,6 @@ const testMapSpan = Math.max(TEST_MAP.rows[0].length, TEST_MAP.rows.length) * TE
 const HUD_MINIMAP_BOUNDS: Readonly<Record<number, HudMinimapBounds>> = {
   1: {minX: -1506.6226806640625, maxX: 1560.65625, minZ: -1501.20703125, maxZ: 1566.0718994140625},
   2: {minX: -2626.316650390625, maxX: 1016.7206420898438, minZ: -1994.4244079589844, maxZ: 1648.6128845214844},
-  [FIELD_ROAD_HD.id]: {minX: -2626.316650390625, maxX: 1016.7206420898438,
-    minZ: -1994.4244079589844, maxZ: 1648.6128845214844},
   3: {minX: -1972.9508056640625, maxX: 1926.144287109375, minZ: -1812.6487426757812, maxZ: 2086.4463500976562},
   4: {minX: -1118.7362060546875, maxX: 1197.143310546875, minZ: -1153.3997192382812, maxZ: 1162.4797973632812},
   5: {minX: -1725.7015380859375, maxX: 1779.0223388671875, minZ: -1708.949462890625, maxZ: 1795.7744140625},

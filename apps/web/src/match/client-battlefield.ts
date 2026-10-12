@@ -1,6 +1,7 @@
 import {NavigationGrid} from '../../../shared/movement/navigation';
 import type {SourceMovementField} from '../../../shared/movement/movement-field';
 import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
+import {loadStaticJson} from '../assets/static-resources';
 
 /** Client movement samples the original NAV with precomputed scene occupancy. */
 export class ClientBattlefield {
@@ -12,9 +13,7 @@ export class ClientBattlefield {
   async load(mapId: number): Promise<void> {
     this.clear();
     const revision = this.revision;
-    const response = await fetch(`/movement/${String(mapId).padStart(4, '0')}.json`);
-    if (!response.ok) throw new Error('地图运动数据载入失败');
-    const field = await response.json() as SourceMovementField;
+    const field = await loadStaticJson<SourceMovementField>(`/data/maps/${String(mapId).padStart(4, '0')}/movement.json`);
     if (revision !== this.revision) return;
     if (Number(field.id) !== mapId) throw new Error('地图运动数据缺失');
     const navigation = new NavigationGrid(field.navigation);

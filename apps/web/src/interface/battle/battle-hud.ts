@@ -121,7 +121,7 @@ export class BattleHud {
     const generation = ++this.loadGeneration;
     void loadUiFont().catch(() => {});
     const operation = (async () => {
-      const data = await loadStaticJson<SourceUi>('/ui.json');
+      const data = await loadStaticJson<SourceUi>('/manifests/ui.json');
       if (generation !== this.loadGeneration) return;
       this.publish({...this.state, data});
     })().catch(error => {if (generation === this.loadGeneration) throw error;}).finally(() => {

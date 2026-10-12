@@ -24,8 +24,6 @@ E-03已按真实运行职责和业务回归验收，保留完整复刻范围。�
 | 正式音频资源 | audio音乐/战斗声/空间技能声，EffectSound拥有真实Type4资源/实例/音量/完成和共享描述符 | engineering-audio-modules.md：原时序、真实音频输出/自然结束/拒绝/停播/清场，空间声与自然两局/账户重启 |
 | 已有对局界面 | interface/battle原HUD/头像状态、准备与结算面板、房间聊天及各自CSS；interface/resources为HUD与我的家共用字体 | engineering-battle-interface.md：原HUD高清/头像计时字形/十二人名单，四网页聊天IME/准备换队/输入隔离/清理，字体与装备高清及重启两局 |
 | 正式首页与已有我的家 | interface/lobby房间/账户控件；interface/home库存、装备、战车宠物、迷彩及原布局/预览 | engineering-client-lobby.md、engineering-home-interface.md：真实账户操作/拒绝/隔离/刷新重启、1080p/4K布局预览与关闭 |
-| 资源查看工具 | tools/asset-viewer独立HTML/源码/CSS/Vite，dist/tools/asset-viewer | engineering-asset-tool.md：正式首页无工具控件/目录请求，实际原地图矩阵、时钟/释放及工具构建 |
-| 渲染诊断 | tests/render的七个独立入口，dist/validation；正式依赖不能引用tests/tools/evidence | engineering-render-entries.md、模型/闪电专题：独立构建及各实际像素/生命周期夹具；运行依赖门禁 |
 
 ## 职责验收结论
 

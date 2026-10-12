@@ -1,11 +1,18 @@
+export const RENDER_RESOLUTION_SCALES = [.25, .5, 1, 1.5, 2] as const;
+export type RenderResolutionScale = typeof RENDER_RESOLUTION_SCALES[number];
+
 export interface DisplayPreferences {
-  highPrecision: boolean;
+  renderScale: RenderResolutionScale;
   silhouette: boolean;
+  msaa4x: boolean;
+  showFps: boolean;
 }
 
 export const DEFAULT_DISPLAY_PREFERENCES: Readonly<DisplayPreferences> = Object.freeze({
-  highPrecision: true,
+  renderScale: 1,
   silhouette: true,
+  msaa4x: false,
+  showFps: false,
 });
 
 export const DISPLAY_PREFERENCES_STORAGE_KEY = 'cdtank.display-settings.v1';
@@ -16,8 +23,13 @@ let active: Readonly<DisplayPreferences> = DEFAULT_DISPLAY_PREFERENCES;
 export function validateDisplayPreferences(value: unknown): DisplayPreferences | undefined {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const fields = value as Record<string, unknown>;
-  if (typeof fields.highPrecision !== 'boolean' || typeof fields.silhouette !== 'boolean') return undefined;
-  return {highPrecision: fields.highPrecision, silhouette: fields.silhouette};
+  if (typeof fields.silhouette !== 'boolean') return undefined;
+  const renderScale = fields.renderScale === undefined ? (fields.highPrecision === false ? .5 : 1) : fields.renderScale;
+  const msaa4x = fields.msaa4x === undefined ? false : fields.msaa4x;
+  const showFps = fields.showFps === undefined ? false : fields.showFps;
+  if (!RENDER_RESOLUTION_SCALES.some(scale => scale === renderScale)
+    || typeof msaa4x !== 'boolean' || typeof showFps !== 'boolean') return undefined;
+  return {renderScale: renderScale as RenderResolutionScale, silhouette: fields.silhouette, msaa4x, showFps};
 }
 
 export function readDisplayPreferences(storage: Pick<Storage, 'getItem'>):

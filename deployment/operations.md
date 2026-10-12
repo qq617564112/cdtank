@@ -4,9 +4,25 @@
 
 在仓库中完成两端构建后，运行 `PORT=40171 npm run start:server`，本机通过 `http://localhost:40171/` 访问。客户端要求 WebGPU；局域网及远程访问使用 HTTPS 反向代理，以满足浏览器安全上下文要求。服务监听所有网络接口，默认网页目录为 `dist/web`，账户库沿用 `state/accounts.sqlite`。
 
-转换后的运行资源、字体和内容表通过 GitHub Releases 提供。克隆或下载后执行 `npm ci` 和 `npm run assets:install` 下载解压，即可使用这些资源构建与打包，无需原客户端、Python 或外部字体。
+构建与打包使用配套的 `apps/web/public/` 和 `apps/server/resources/`，不需要原客户端。源码工作区执行 `npm ci` 和 `npm run assets:install`，从同版本程序／资产附件安装现成 UI 图集、双画质战斗素材、字体、内容表与碰撞数据。已有配套运行目录或 Docker 资源镜像可直接使用；素材编辑见[美术发布流程](https://github.com/qq617564112/cdtank/blob/main/docs/original-assets.md)。
 
-## 独立发行目录
+## GitHub 程序包
+
+1.0.1 及以后 Release 分别提供 `cdtank-<版本>.tar.gz` 程序包和 `cdtank-assets-<版本>.tar.gz` 资产包。下载并解压程序包后，在其目录运行：
+
+```sh
+node install.mjs
+```
+
+安装器按 `release.json` 下载同版本资产、安装运行依赖、启动服务器并打开浏览器；后续启动复用已安装内容。无桌面部署使用 `node install.mjs --no-browser`，已安装后可直接用 `node start.mjs` 接入进程管理器。安装参数和本地资源入口见[GitHub 发布与安装](https://github.com/qq617564112/cdtank/blob/main/docs/github-publication.md)。
+
+## Docker 部署
+
+Docker 使用完整资源镜像和源码构建应用，以 `start.mjs` 启动，Compose 将容器 3001 端口映射到宿主机 61002。账户卷 `cdtank-accounts` 挂载到 `/app/state`，更新与重启保留存档；玩家远程入口由 HTTPS 反向代理提供，并转发 `/game`。
+
+资源导入、镜像构建、Compose 启动、HTTPS 示例及卷内账户备份恢复见[Docker 部署](https://github.com/qq617564112/cdtank/blob/main/docs/docker-deployment.md)。
+
+## 本地组装完整发行目录
 
 完成两端构建后，将已构建的 Web、编译服务端、运行依赖锁文件和内容表打包到新目录：
 
@@ -41,7 +57,9 @@ node /srv/cdtank/start.mjs
 
 账户身份、昵称、拥有记录、已确认库存和配置、交易确认记录及已完成战绩保存在 SQLite。服务重启后，用原浏览器凭据重新认证即可读取这些数据。
 
-临时房间、Ready 状态和正在进行的比赛只保存在服务内存中。服务中断后浏览器清理旧对局画面、聊天与名单；重启不恢复原房间，也不把未完成比赛写成战绩。玩家刷新正式页面后回大厅，再正常创建或加入新房间。重新入场读取保存的角色、装备和库存。
+每个房间在独立 Node 子进程中执行权威模拟，主进程管理连接和账户事务；无需额外监听端口。临时房间、Ready 状态和正在进行的比赛只保存在服务内存中。服务中断后浏览器清理旧对局画面、聊天与名单；重启不恢复原房间，也不把未完成比赛写成战绩。玩家刷新正式页面后回大厅，再正常创建或加入新房间。重新入场读取保存的角色、装备和库存。
+
+服务持续运行时，刷新可在既有 30 秒断线窗口内恢复原房间。超过窗口或房间关闭后重新入场，流程见[路由与会话恢复](https://github.com/qq617564112/cdtank/blob/main/docs/navigation.md)。
 
 ## 备份
 
@@ -70,6 +88,8 @@ npm run accounts:restore -- /srv/cdtank/backups/accounts-2026-10-04.sqlite /srv/
 数据库备份不包含 `dist/web`、编译服务端、`WEB_ROOT`、`WEB_ASSETS`、`CONTENT_TABLES` 或浏览器本地设置。发布版本时同时保留对应代码、锁文件、构建产物和资源目录；恢复存档使用同一发布版本的程序与内容。本命令不转换数据库格式。
 
 ## 验证范围
+
+1.0.1 发布与安装脚本本次仅完成静态核对，未执行新流程的构建、安装、浏览器验收或实际上传；以下证据属于已有完整发行目录与账户存档流程。
 
 `npm run test:release:network` 组装临时完整发行目录、安装包内固定依赖，再从仓库外启动两次服务。两个普通空账户通过认证、地图目录、建房、加入、双端玩家同步、退出及冷重启身份/昵称恢复。测试静态 HTTP 服务检查正式 HTML、入口 JS 与目录资源；浏览器与实际 nginx 反代范围见下段。
 

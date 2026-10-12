@@ -2,7 +2,7 @@ import {Camera} from '@babylonjs/core';
 import {setCameraSpatialListener} from './spatial-listener';
 import type {EffectVec3} from '../render/effects/common/types';
 import type {SkillSoundCatalog} from './effect-skill-sound';
-import {FIELD_ROAD_HD} from '../../../shared/maps/field-road-hd';
+import {loadStaticJson, prepareStaticResourceUrl, staticResourceUrl} from '../assets/static-resources';
 
 interface EnvironmentSoundPlacement {
   id: string;
@@ -51,20 +51,23 @@ export class MapEnvironmentSound {
 
   async load(mapId: number): Promise<void> {
     this.clear();
-    if (!Number.isInteger(mapId) || mapId < 1 || (mapId > 25 && mapId !== FIELD_ROAD_HD.id)) return;
+    if (!Number.isInteger(mapId) || mapId < 1 || mapId > 25) return;
     const revision = this.revision;
     const [map, catalog] = await Promise.all([
-      this.json<EnvironmentSoundMap>(`/scene-environment-sound-${String(mapId).padStart(4, '0')}.json`),
-      this.json<SkillSoundCatalog>('/audio.json'),
+      loadStaticJson<EnvironmentSoundMap>(`/data/maps/${String(mapId).padStart(4, '0')}/environment-sound.json`),
+      loadStaticJson<SkillSoundCatalog>('/manifests/audio.json'),
     ]);
     if (revision !== this.revision) return;
     const assets = new Map<string, string>();
     for (const placement of map.sounds) {
       if (!placement.enabled) continue;
       const asset = catalog.sounds.find(sound => sound.name === placement.name)?.asset;
-      if (asset) assets.set(placement.id, asset);
+      if (!asset) throw new Error(`地图环境声音资源缺失：${placement.name}`);
+      assets.set(placement.id, asset);
     }
     if (!assets.size) return;
+    await Promise.all([...new Set(assets.values())].map(asset => prepareStaticResourceUrl(`/${asset}`)));
+    if (revision !== this.revision) return;
     this.map = map;
     this.master = this.context.createGain();
     this.master.gain.value = this.volume ?? catalog.defaultSoundVolume;
@@ -72,7 +75,7 @@ export class MapEnvironmentSound {
     for (const placement of map.sounds) {
       const asset = assets.get(placement.id);
       if (!asset) continue;
-      const audio = new Audio(`/${asset}`);
+      const audio = new Audio(staticResourceUrl(`/${asset}`));
       audio.loop = placement.selector === -1;
       const source = this.context.createMediaElementSource(audio);
       const panner = this.context.createPanner();
@@ -103,12 +106,6 @@ export class MapEnvironmentSound {
         this.stop(voice.placement.id);
       }
     });
-  }
-
-  private async json<T>(path: string): Promise<T> {
-    const response = await fetch(path);
-    if (!response.ok) throw new Error(`Unable to load ${path}: ${response.status}`);
-    return response.json() as Promise<T>;
   }
 
   update(): void {

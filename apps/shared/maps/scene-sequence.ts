@@ -24,7 +24,7 @@ export interface SceneSequenceLibrary {
   base: {
     reference: 'Data/scnobj/obj05023/obj05023.POL';
     asset: 'Data/scnobj/obj05023/obj05023.glb';
-    texture: 'Data/scnobj/obj05023/obj05023.png';
+    texture: 'Data/scnobj/obj05023/obj05023.webp';
   };
   screen: {
     reference: 'Data/scnobj/obj05023/scr.POL';

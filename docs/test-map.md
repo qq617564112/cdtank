@@ -21,6 +21,6 @@
 npm run assets:custom-maps
 ```
 
-生成器将场景、导航、运动数据、音乐映射及地图选择缩略图写入已安装的运行资源目录。`assets:install` 和完整 `assets` 导出也会生成地图；下载资源包和原版数据表保持原内容。
+生成器将场景、导航、运动数据、音乐映射及地图选择缩略图写入已安装的运行资源目录。完整 `assets` 导出也会生成地图；`assets:install` 直接安装 Release 中的现成地图资源。原版数据表保持原内容。
 
-生成的地形、墙块模型与缩略图位于 `apps/web/public/custom-maps/1001/`。服务端在启动时读取地图目录，生成后需重启已有服务端；已打开的客户端重新载入即可取得更新的资源目录。
+生成的地形与墙块模型位于 `apps/web/public/assets/models/hd/maps/custom/1001/`，地图预览位于 `assets/ui/images/maps/1001/preview.svg`，配置位于 `data/maps/1001/`。服务端在启动时读取地图目录，生成后需重启已有服务端；已打开的客户端重新载入即可取得更新的资源目录。

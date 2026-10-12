@@ -54,7 +54,6 @@
 
 .settings-source-button:focus-visible,
 .settings-key-field:focus-within,
-.settings-chat-field:focus-within,
 .settings-volume:focus-visible,
 .settings-option:focus-visible {
   outline: 1.5px solid #fff7b7;
@@ -92,19 +91,9 @@
   pointer-events: none;
 }
 
-.settings-chat-label {
-  display: block;
-  padding-left: 14px;
-  color: #7b0800;
-  font-size: 14px;
-  line-height: 17px;
-  -webkit-text-stroke: 2px #fffad9;
-  text-shadow: none;
-}
-
 .settings-key-headings {
   left: 151px;
-  top: 143px;
+  top: 89px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 3px;
@@ -119,9 +108,9 @@
 
 .settings-key-list {
   left: 66px;
-  top: 162px;
+  top: 108px;
   display: grid;
-  gap: 8px;
+  gap: 12px;
   width: 299px;
 }
 
@@ -138,15 +127,13 @@
   cursor: pointer;
 }
 
-.settings-key-field,
-.settings-chat-field {
+.settings-key-field {
   isolation: isolate;
   border: 0;
   background: transparent;
 }
 
-.settings-key-field::before,
-.settings-chat-field::before {
+.settings-key-field::before {
   position: absolute;
   inset: 0;
   z-index: -1;
@@ -194,29 +181,13 @@
   outline-offset: 1px;
 }
 
-.settings-quick-chat {
-  position: absolute;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 12px;
-  line-height: 14px;
-  caret-color: #fff;
-  -webkit-text-stroke: .5px #160b07;
-  paint-order: stroke fill;
-}
-
 .settings-adjustments {
-  left: 70px;
-  top: 85px;
+  left: 403px;
+  top: 215px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  width: 666px;
-  height: 56px;
+  grid-template-rows: repeat(6, 48px);
+  gap: 6px;
+  width: 319px;
 }
 
 .settings-adjustment {
@@ -228,7 +199,7 @@
 .settings-adjustment-icon {
   position: absolute;
   left: 0;
-  top: 9px;
+  top: 5px;
   width: 48px;
   height: 39px;
   object-fit: contain;
@@ -236,12 +207,17 @@
   user-select: none;
 }
 
-.settings-adjustment-max {
+.settings-adjustment:nth-child(n + 3) .settings-adjustment-icon {
+  transform: scale(1.3);
+}
+
+.settings-adjustment-value {
   position: absolute;
-  right: 4px;
-  top: 20px;
-  width: 30px;
-  font-size: 14px;
+  right: 0;
+  top: 19px;
+  justify-content: flex-end;
+  width: 45px;
+  font-size: 13px;
   line-height: 12px;
   transform: scaleY(.8);
   transform-origin: center;
@@ -249,9 +225,9 @@
 
 .settings-volume {
   position: absolute;
-  left: 51px;
-  top: 18px;
-  width: calc(100% - 91px);
+  left: 62px;
+  top: 17px;
+  width: calc(100% - 117px);
   height: 18px;
   appearance: none;
   margin: 0;
@@ -259,19 +235,6 @@
   border: 0;
   background: transparent;
   cursor: pointer;
-}
-
-.settings-adjustment-icon-label {
-  position: absolute;
-  left: 17px;
-  top: 36px;
-  color: #eff600;
-  font-size: 10px;
-  line-height: 11px;
-  white-space: nowrap;
-  -webkit-text-stroke: 3px #382008;
-  paint-order: stroke fill;
-  pointer-events: none;
 }
 
 .settings-volume::-webkit-slider-runnable-track {
@@ -340,13 +303,14 @@
 .settings-option-mark {
   position: absolute;
   left: 0;
-  top: 3px;
+  top: 50%;
   box-sizing: border-box;
   width: 15px;
   height: 15px;
   border: 1.5px solid #5a0c08;
   border-radius: 50%;
   background: radial-gradient(#8c0408 45%, #750808 72%, #500d09);
+  transform: translateY(-50%);
 }
 
 .settings-option-radio[data-settings-marked='true'] .settings-option-mark {
@@ -355,7 +319,6 @@
 }
 
 .settings-option-checkbox .settings-option-mark {
-  top: 6px;
   width: 24px;
   height: 14px;
   border: 0;
@@ -384,11 +347,12 @@
 .settings-option-label {
   position: absolute;
   left: 16px;
-  top: 0;
+  top: 50%;
   color: #fff794;
   font-size: 16px;
   line-height: 18px;
   white-space: nowrap;
+  transform: translateY(-50%);
   -webkit-text-stroke: 2px #7b0800;
   paint-order: stroke fill;
   text-shadow: 1px 1px #7b0800;
@@ -396,7 +360,6 @@
 
 .settings-option-checkbox .settings-option-label {
   left: 27px;
-  top: 1px;
   line-height: 20px;
 }
 
@@ -408,4 +371,18 @@
 .settings-loading-close {
   left: 740px;
   top: 10px;
+}
+
+.settings-battle-artwork {
+  display: grid;
+  grid-template-columns: 78px 78px;
+  height: 20px;
+}
+
+.settings-battle-artwork .settings-option {
+  position: relative;
+}
+
+.settings-battle-artwork .settings-option-label {
+  font-size: 14px;
 }

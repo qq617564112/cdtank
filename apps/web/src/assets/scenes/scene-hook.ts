@@ -1,4 +1,6 @@
-import {AssetContainer, LoadAssetContainerAsync, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
+import {loadPreparedModel} from '../model-resources';
+import {battleArtworkUrl} from '../battle-artwork';
+import {AssetContainer, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import type {AbstractMesh} from '@babylonjs/core';
 import {loadStaticJson} from '../static-resources';
 import {applyMv3Materials} from '../../render/materials/mv3-material';
@@ -43,7 +45,7 @@ export class SceneHook {
         throw new Error('Hook放置与资源身份不符');
       }
       this.library = library;
-      const container = await LoadAssetContainerAsync(`/${library.asset}`, this.scene, {
+      const container = await loadPreparedModel(battleArtworkUrl(`/${library.asset}`, this.scene), this.scene, {
         pluginOptions: {gltf: {useSRGBBuffers: false}},
       });
       if (this.disposed || this.scene.isDisposed) {container.dispose(); return;}

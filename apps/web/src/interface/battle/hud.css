@@ -1,14 +1,6 @@
 @import '../resources/happy-zcool.css';
 @import '../resources/silkscreen.css';
 
-@font-face {
-  font-family: 'CDTank-HUD-Pixel';
-  src: url('/ui/fonts/fusion-pixel-hud.ttf') format('truetype');
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-}
-
 #original-battle-hud {
   position: absolute;
   transform-origin: top left;
@@ -131,7 +123,6 @@
 }
 
 #original-battle-hud .hud-mode-score .hud-score-timer-label {
-  font-family: 'CDTank-HUD-Pixel', sans-serif !important;
   font-size: 18px;
   font-weight: 400;
   font-synthesis: none;

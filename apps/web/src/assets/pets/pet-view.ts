@@ -1,4 +1,6 @@
 import {prepareGameContent} from '../../content';
+import {battleArtworkUrl} from '../battle-artwork';
+import {loadStaticBinary} from '../static-resources';
 import type {PetDefinition} from '../../../../shared/content/types';
 import {AssetContainer, Constants, LoadAssetContainerAsync, Scene, Texture, TransformNode} from '@babylonjs/core';
 import {applyMv3Materials} from '../../render/materials/mv3-material';
@@ -32,14 +34,13 @@ export class PetView {
   static async load(scene: Scene, petId: number): Promise<PetView> {
     const definition = (await prepareGameContent()).pets.get(petId);
     if (!definition) throw new Error('宠物模型定义缺失');
-    const response = await fetch(`/${definition.resources.model}`);
-    if (!response.ok) throw new Error('宠物模型资源载入失败');
-    const bytes = await response.arrayBuffer();
+    const modelUrl = new URL(battleArtworkUrl(`/${definition.resources.model}`, scene), location.href);
+    const bytes = await loadStaticBinary(modelUrl.href);
     const length = new DataView(bytes).getUint32(12, true);
     const document = JSON.parse(new TextDecoder().decode(new Uint8Array(bytes, 20, length)));
     const duration: number = document.extras.mv3Duration;
     if (!Number.isFinite(duration) || duration <= 0) throw new Error('宠物动作时长缺失');
-    const rootUrl = response.url.slice(0, response.url.lastIndexOf('/') + 1);
+    const rootUrl = new URL('.', modelUrl).href;
     const assets = await LoadAssetContainerAsync(new Uint8Array(bytes), scene, {rootUrl, pluginExtension: '.glb'});
     if (scene.isDisposed) {assets.dispose(); throw new Error('宠物预览已关闭');}
     const root = new TransformNode(`pet-preview-${petId}`, scene);
@@ -48,7 +49,7 @@ export class PetView {
       const texturePath = definition.resources.textures[0];
       if (texturePath) {
         texture = await new Promise<Texture>((resolve, reject) => {
-          const value = new Texture(`/${texturePath}`, scene, true, false, Constants.TEXTURE_LINEAR_LINEAR,
+          const value = new Texture(battleArtworkUrl(`/${texturePath}`, scene), scene, true, false, Constants.TEXTURE_LINEAR_LINEAR,
             () => resolve(value), (_message, error) => {value.dispose(); reject(error ?? new Error('宠物贴图载入失败'));});
         });
       }

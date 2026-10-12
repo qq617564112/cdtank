@@ -1,6 +1,7 @@
 import {showGameMessage} from '../interface/resources/game-message-store';
 import {itemHitHandler, gameContent} from '../../../shared/content/catalog';
 import {loadCombatCatalog} from '../content';
+import {prepareBattleDynamicResources} from './battle-resource-preload';
 import type {ReqStackItemSale, ResStackItemSale} from '../../../shared/protocols/PtlStackItemSale';
 import type {ReqValuableItemSale, ResValuableItemSale} from '../../../shared/protocols/PtlValuableItemSale';
 import {loadStaticJson} from '../assets/static-resources';
@@ -39,6 +40,7 @@ import {BattleMusic} from '../audio/battle-music';
 import {PageMusic} from './page-music';
 import {BattleSound} from '../audio/battle-sound';
 import {BattleUiSound} from '../audio/battle-ui-sound';
+import {prepareBattleSummarySounds} from '../audio/battle-summary-sound';
 import {MapEnvironmentSound} from '../audio/map-environment-sound';
 import {BattleMatch} from '../interface/battle/battle-match';
 import {BattleTargets} from '../render/battle-targets';
@@ -87,7 +89,6 @@ export class Battle {
   private pageMusic?: PageMusic;
   private readonly sound = new BattleSound();
   private readonly battleUiSound = new BattleUiSound(() => this.soundVolume);
-  private battleUiSoundError?: string;
   private battleUiSoundContext?: string;
   private battleUiSoundResync = false;
   private lastDeathCountdown?: number;
@@ -723,25 +724,34 @@ export class Battle {
             ...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? []),
           ], snapshot.match?.round ?? 0, snapshot.serverTime);
         }
-        this.mapLoaded = true;
-        this.battleUiSoundError = undefined;
         await Promise.all([
           this.sound.start(),
-          this.battleUiSound.load().catch(error => {
-            if (!current()) return;
-            this.battleUiSoundError = error instanceof Error ? error.message : String(error);
-            this.hud.value = this.battleUiSoundError;
-          }),
+          this.battleUiSound.load(),
+          this.music.prepare(this.roomFeed.snapshot!.mode, this.mapId!),
+          prepareBattleSummarySounds(this.effects.audioContext()!),
         ]);
         if (!current()) return;
+        this.mapLoaded = true;
       }
+      progress(0.7, '正在载入道具、陷阱和掉落物…');
+      await prepareBattleDynamicResources(this.roomFeed.snapshot!, fraction =>
+        progress(0.7 + fraction * 0.1, '正在载入道具、陷阱和掉落物…'));
+      if (!current()) return;
       progress(0.8, '正在载入各玩家战车…');
       if (this.roomFeed.snapshot) this.players.reconcile(this.roomFeed.snapshot.players, this.playerId, this.roomFeed.snapshot.mode);
-      // A loading acknowledgement covers the map, tank actions and live scene resources.
+      // A loading acknowledgement includes actors restored when joining a live round.
       const deadline = performance.now() + 60000;
-      while (!this.roomFeed.snapshot || !this.players.resourcesReady) {
+      while (true) {
+        if (!current()) return;
+        const snapshot = this.roomFeed.snapshot!;
+        const scope = `${snapshot.roomId}:${round}`;
+        await Promise.all([
+          this.groundTraps.reconcile(snapshot.phase === 'PLAYING' ? snapshot.match?.groundTraps ?? [] : [], scope),
+          this.groundItems.reconcile(snapshot.match?.groundItems ?? [], scope, snapshot.phase === 'PLAYING'),
+        ]);
         if (!current()) return;
         if (this.players.loadingError) throw new Error(this.players.loadingError);
+        if (this.players.resourcesReady) break;
         if (performance.now() > deadline) throw new Error('等待战车资源超时，请重试');
         await new Promise(resolve => setTimeout(resolve, 50));
       }
@@ -751,7 +761,8 @@ export class Battle {
       if (!this.minimapRenderer.hasMap(this.mapId!)) {
         const imageUrl = mapMinimaps[this.mapId!];
         if (!imageUrl) throw new Error(`地图 ${this.mapId} 小地图资源缺失`);
-        this.minimapRenderer.setMap(this.mapId!, imageUrl);
+        await this.minimapRenderer.setMap(this.mapId!, imageUrl);
+        if (!current()) return;
       }
       await this.scene.whenReadyAsync();
       if (!current()) return;
@@ -799,7 +810,6 @@ export class Battle {
     this.ammoBurnPresentation = undefined;
     this.sound.stop();
     this.battleUiSound.stop();
-    this.battleUiSoundError = undefined;
     this.environmentSound?.clear();
     this.sceneEffects.clear();
     this.skillEffects?.clear();
@@ -954,7 +964,6 @@ export class Battle {
     else this.music.stop();
     this.sound.stop();
     this.battleUiSound.stop();
-    this.battleUiSoundError = undefined;
     this.environmentSound?.clear();
     this.sceneEffects.clear();
     this.skillEffects?.clear();
@@ -1358,8 +1367,7 @@ export class Battle {
       battleStartsAt: snapshot.match?.battleStartsAt ?? now, objects: snapshot.match?.sceneObjects ?? []});
     this.battlefield.updateObjects([...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? [])], snapshot.match?.round ?? 0,
       snapshot.serverTime, this.scene.getEngine().getDeltaTime() / 1000);
-    const resourceError = this.groundTrapError || this.groundItemError || this.players.loadingError
-      || this.battleUiSoundError || '';
+    const resourceError = this.groundTrapError || this.groundItemError || this.players.loadingError || '';
     if (resourceError && resourceError !== this.hud.value) showGameMessage(resourceError, 'error');
     this.hud.value = resourceError;
     // DOM world state supports HUD accessibility and browser integration verification.

@@ -1,5 +1,7 @@
+import {loadPreparedModel} from '../model-resources';
+import {battleArtworkUrl} from '../battle-artwork';
 import {
-  AbstractMesh, AssetContainer, BaseTexture, InstantiatedEntries, LoadAssetContainerAsync, Material, Matrix,
+  AbstractMesh, AssetContainer, BaseTexture, InstantiatedEntries, Material, Matrix,
   MultiMaterial, PBRMaterial, Quaternion, Scene, ShaderMaterial, StandardMaterial, Texture, TransformNode, Vector3,
 } from '@babylonjs/core';
 import {loadStaticJson} from '../static-resources';
@@ -38,7 +40,7 @@ export class SceneSequence {
   constructor(private readonly scene: Scene) {}
 
   async load(mapId: SceneSequenceMapId, placements: readonly SourceSequencePlacement[]): Promise<void> {
-    const library = await loadStaticJson<SceneSequenceLibrary>('/scene-sequence05023.json');
+    const library = await loadStaticJson<SceneSequenceLibrary>('/data/maps/shared/sequence05023.json');
     if (this.disposed || this.scene.isDisposed) return;
     if (library.schemaVersion !== 1 || library.className !== 'SYcScnObjSequence' ||
       library.model !== 'obj05023' || library.frames.length !== 4) {
@@ -59,13 +61,13 @@ export class SceneSequence {
         if (this.disposed || this.scene.isDisposed) {texture.dispose(); return;}
         this.frames.push(texture);
       }
-      const base = await LoadAssetContainerAsync(`/${library.base.asset}`, this.scene, {
+      const base = await loadPreparedModel(battleArtworkUrl(`/${library.base.asset}`, this.scene), this.scene, {
         pluginOptions: {gltf: {useSRGBBuffers: false}},
       });
       if (this.disposed || this.scene.isDisposed) {base.dispose(); return;}
       this.base = base;
       this.baseMaterial.register(base, 'obj05023');
-      const screen = await LoadAssetContainerAsync(`/${library.screen.asset}`, this.scene, {
+      const screen = await loadPreparedModel(battleArtworkUrl(`/${library.screen.asset}`, this.scene), this.scene, {
         pluginOptions: {gltf: {useSRGBBuffers: false}},
       });
       if (this.disposed || this.scene.isDisposed) {screen.dispose(); return;}
@@ -119,7 +121,7 @@ export class SceneSequence {
 
   private async loadFrame(asset: string): Promise<Texture> {
     return new Promise<Texture>((resolve, reject) => {
-      const texture = new Texture(`/${asset}`, this.scene, true, false,
+      const texture = new Texture(battleArtworkUrl(`/${asset}`, this.scene), this.scene, true, false,
         Texture.BILINEAR_SAMPLINGMODE,
         () => {
           texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE;

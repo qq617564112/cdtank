@@ -1,7 +1,7 @@
 import {GameMessage} from '../resources/game-message';
 import {GameSelectionHighlight} from '../resources/game-selection-highlight';
-import {loadTankTextureCatalog} from '../../content';
-import {loadCombatCatalog} from '../../content';
+import {loadTankTextureCatalog, preparedTankTextureCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import {HomeOwnedTankRowContent} from '../home/home-owned-tank-row-content';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
@@ -18,7 +18,7 @@ import {TankProductPreview} from '../resources/tank-product-preview';
 import {TankShopSourceRegions} from './tank-shop-source-regions';
 import {TankShopTextureSourceRegions} from './tank-shop-texture-source-regions';
 import {RoleShopListScrollbar} from './role-shop-list-scrollbar';
-import {tankCatalog} from '../../assets/tanks/tank-view';
+import {preparedTankCatalog, tankCatalog, type TankEntry} from '../../assets/tanks/tank-view';
 import {loadStaticJson} from '../../assets/static-resources';
 import {ShopTankAttributes, ShopTankParameters} from './shop-tank-stat-row';
 
@@ -32,6 +32,13 @@ const COMPONENTS = [
   {part: 'M', control: 'Body', label: '车身'},
   {part: 'XY', control: 'Tread', label: '履带'},
 ] as const;
+function activeTextureParts(tanks: TankEntry[]): Map<number, Set<'U' | 'M' | 'XY'>> {
+  return new Map(tanks.map(tank => {
+    const parts = tank.components.filter(component => component.actions.length > 0).map(component => component.part);
+    return [tank.id, new Set(COMPONENTS.filter(component => component.part === 'XY'
+      ? parts.includes('X') || parts.includes('Y') : parts.includes(component.part)).map(component => component.part))];
+  }));
+}
 export interface TankTextureOwner {
   selected?: number;
   inFlight?: Promise<ResTankTextures>;
@@ -46,11 +53,11 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
   const layout = new HomeSourceLayout(ui, 'shop_tankpage.xml');
   const textureLayout = new HomeSourceLayout(ui, 'shop_tankpage_texture.xml');
   const session = useRef({active: false, query: false, identity: {}});
-  const [tankTypes, setTankTypes] = useState<CombatCatalog['tankTypes']>([]);
+  const [tankTypes, setTankTypes] = useState<CombatCatalog['tankTypes']>(() => preparedCombatCatalog()?.tankTypes ?? []);
   const [owned, setOwned] = useState<ResOwnedRoles>();
   const [profile, setProfile] = useState<ResRoleProfile['profile']>();
-  const [rows, setRows] = useState<TextureRow[]>([]);
-  const [active, setActive] = useState<Map<number, Set<'U' | 'M' | 'XY'>>>(new Map());
+  const [rows, setRows] = useState<TextureRow[]>(() => preparedTankTextureCatalog()?.rows ?? []);
+  const [active, setActive] = useState<Map<number, Set<'U' | 'M' | 'XY'>>>(() => activeTextureParts(preparedTankCatalog() ?? []));
   const [instance, setInstance] = useState(owner.selected);
   const [draft, setDraft] = useState<OwnedTankTextures>();
   const [busy, setBusy] = useState(true);
@@ -82,11 +89,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
         ]);
         if (!currentSession.active) return;
         setTankTypes(metadata.tankTypes); setOwned(roles); setProfile(role.profile); setRows(catalog.rows);
-        setActive(new Map(tanks.map(tank => {
-          const parts = tank.components.filter(component => component.actions.length > 0).map(component => component.part);
-          return [tank.id, new Set(COMPONENTS.filter(component => component.part === 'XY'
-            ? parts.includes('X') || parts.includes('Y') : parts.includes(component.part)).map(component => component.part))];
-        })));
+        setActive(activeTextureParts(tanks));
         setInstance(value => {
           const id = roles.equipment.some(value2 => new Map(value2.fields).get(0x1c) === value)
             ? value : roles.equipment[0] && new Map(roles.equipment[0].fields).get(0x1c);

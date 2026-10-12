@@ -1,6 +1,7 @@
 import {battleSkillSources} from '../battle/projection';
 import {selectRoleSkills} from '../battle/roles/skills';
 import {combatSkills, combatItemSkills} from '../battle/catalog';
+import {groundItemResources} from '../battle/items/drop-item-catalog';
 import type {OwnedRoleBaseRecord} from '../../../shared/contracts/owned-base';
 import {queuedPartSkillIds} from '../battle/passive-part-effects';
 import {equipmentTarget, isAppearanceEffectItem} from '../../../shared/combat/equipment-target';
@@ -145,6 +146,7 @@ export function roomSnapshot(room: SnapshotRoom, now: number, timeLimit: number,
     phase: room.phase, players, bullets: room.bullets.map(bullet => ({...bullet})),
     teamScores: [...room.teamScores], winnerTeam: room.winnerTeam,
     match: {round: room.round, battleStartsAt: room.startedAt,
+      groundItemResources: room.phase === 'WAITING' ? undefined : groundItemResources,
       readyPlayerIds: [...room.ready], loadedPlayerIds: [...room.loaded], rematchPlayerIds: [...room.rematch],
       cpuManagerId: [...room.players.values()].find(player => player.clientId === room.creatorClientId)?.id,
       minPlayers, maxPlayers: roomMaxPlayers(room), friendlyFire: room.friendlyFire ?? false, targetScore: room.targetScore, teamLives: [...room.teamLives],

@@ -1,7 +1,7 @@
 import {GameMessage, showGameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {useNavigationChoice, useNavigationNumber} from '../../navigation/route';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import {petSkillLearningOwner} from './pet-skill-learning-owner';
 import {HomeResourceFeedback} from './home-resource-feedback';
 import './home.css';
@@ -15,7 +15,7 @@ import {HomeSourceRoot} from './home-source-root';
 import {HomeTankSourcePage} from './home-tank-source-page';
 import {HomePetSourcePage} from './home-pet-source-page';
 import {loadUiFont} from '../resources/source-ui-fonts';
-import {loadSourceUi} from '../resources/source-ui-resources';
+import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
 import type {HomeSourceControl, HomeSourceUi} from './home-source-layout';
 import {HomeEquipmentPreview} from './home-equipment-preview';
 import {PetModelPreview} from '../resources/pet-model-preview';
@@ -70,9 +70,10 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const escapePending = useRef(false);
   const session = useRef({active: false, pending: false});
   const focusAfterCommit = useRef<HTMLButtonElement | null>(null);
-  const [ui, setUi] = useState<HomeSourceUi>();
+  const [ui, setUi] = useState<HomeSourceUi | undefined>(() =>
+    cachedSourceUi(['myhome_panzerpage.xml', 'myhome_petpage.xml', 'myhome.xml']));
   const [owned, setOwned] = useState<ResOwnedRoles>();
-  const [roleCatalog, setRoleCatalog] = useState<CombatCatalog>();
+  const [roleCatalog, setRoleCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const [profile, setProfile] = useState<ResRoleProfile['profile']>();
   const [playerSummary, setPlayerSummary] = useState<ResRoleProfile['playerSummary']>();
   const [growth, setGrowth] = useState<ResRoleProfile['growth']>();
@@ -112,7 +113,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   useEffect(() => {
     const current = {active: true, pending: false}; session.current = current;
     setResourceError(undefined);
-    setUi(undefined); setOwned(undefined); setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined);
+    setOwned(undefined); setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined);
     setRolesLoaded(false);
     setBusy(true); setStatus('载入战车与宠物…');
     void (async () => {

@@ -3,6 +3,7 @@ import type {ContentIndex, ItemDefinition, PetDefinition, SkillDefinition, TankD
 import {loadStaticJson} from './assets/static-resources';
 
 let loading: Promise<GameContent> | undefined;
+let prepared: GameContent | undefined;
 export function prepareGameContent(): Promise<GameContent> {
   return loading ??= (async () => {
     const index = await loadStaticJson<ContentIndex>('/content/index.json');
@@ -13,12 +14,18 @@ export function prepareGameContent(): Promise<GameContent> {
     ]);
     const content = new GameContent(index, pets, tanks, items, skills);
     installGameContent(content);
+    prepared = content;
     return content;
   })().catch(error => {loading = undefined; throw error;});
 }
 
 export async function loadCombatCatalog() {return (await prepareGameContent()).combatCatalog;}
+export function preparedGameContent(): GameContent | undefined {return prepared;}
+export function preparedCombatCatalog(): GameContent['combatCatalog'] | undefined {return prepared?.combatCatalog;}
+export function preparedTankTextureCatalog(): {rows: TankDefinition['resources']['textureVariants']} | undefined {
+  return prepared ? {rows: [...prepared.tanks.values()].flatMap(tank => tank.resources.textureVariants)} : undefined;
+}
 export async function loadTankTextureCatalog() {
-  const content = await prepareGameContent();
-  return {rows: [...content.tanks.values()].flatMap(tank => tank.resources.textureVariants)};
+  await prepareGameContent();
+  return preparedTankTextureCatalog()!;
 }

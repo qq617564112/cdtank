@@ -1,9 +1,29 @@
+import {loadStaticJson} from '../assets/static-resources';
+import {loadAudioBuffer} from './audio-resources';
+
 interface SummarySoundCatalog {
   defaultSoundVolume: number;
   soundIds: {id: number; asset: string}[];
 }
 
 const SOUND_IDS = [29, 30, 31, 35, 36, 37, 38, 39, 40];
+
+/** Prepare result cues during round loading and reuse them on the result page. */
+export async function prepareBattleSummarySounds(context: AudioContext): Promise<void> {
+  await summaryBuffers(context);
+}
+
+async function summaryBuffers(context: AudioContext): Promise<{
+  volume: number; buffers: readonly (readonly [number, AudioBuffer])[];
+}> {
+  const catalog = await loadStaticJson<SummarySoundCatalog>('/manifests/audio.json');
+  const buffers = await Promise.all(SOUND_IDS.map(async id => {
+    const entry = catalog.soundIds.find(sound => sound.id === id);
+    if (!entry) throw new Error(`缺少结算音效：${id}`);
+    return [id, await loadAudioBuffer(`/${entry.asset}`, context)] as const;
+  }));
+  return {volume: catalog.defaultSoundVolume, buffers};
+}
 
 /** Source result sounds use global sound IDs, without the skill sound offset. */
 export class BattleSummarySound {
@@ -32,17 +52,10 @@ export class BattleSummarySound {
   }
 
   async load(signal: AbortSignal): Promise<void> {
-    const response = await fetch('/audio.json', {signal});
-    if (!response.ok) throw new Error('结算音效载入失败');
-    const catalog = await response.json() as SummarySoundCatalog;
-    this.defaultVolume = catalog.defaultSoundVolume;
-    const buffers = await Promise.all(SOUND_IDS.map(async id => {
-      const entry = catalog.soundIds.find(sound => sound.id === id);
-      if (!entry) throw new Error(`缺少结算音效：${id}`);
-      const response = await fetch(`/${entry.asset}`, {signal});
-      if (!response.ok) throw new Error('结算音效载入失败');
-      return [id, await this.context.decodeAudioData(await response.arrayBuffer())] as const;
-    }));
+    signal.throwIfAborted();
+    const {volume, buffers} = await summaryBuffers(this.context);
+    signal.throwIfAborted();
+    this.defaultVolume = volume;
     if (!this.disposed) buffers.forEach(([id, buffer]) => this.buffers.set(id, buffer));
   }
 

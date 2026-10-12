@@ -4,6 +4,7 @@ import type {AwardCounts} from '../../../../shared/protocols/PtlRoleProfile';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {HomeStaticText as SourceFeedbackStaticText} from './home-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
+import {sourceProps} from '../resources/source-ui-props';
 
 const SUFFIX = 'myhome_playerpage_awardsummary.xml';
 const COUNTERS: Record<string, keyof AwardCounts> = {
@@ -26,9 +27,12 @@ export function HomeAwardSummarySourcePage({ui, awards, style}: {
       {controls.filter(control => control.type === 'WindowsLook/StaticText').map(control => {
         const field = COUNTERS[control.name];
         const value = field ? awards?.[field] : undefined;
+        const picture = sourceProps(ui, layout, SUFFIX, control.parent!);
         return (
         <SourceFeedbackStaticText key={control.name} ui={ui} layout={layout} suffix={SUFFIX}
           name={control.name} text={value === undefined ? '' : String(value)}
+          className="home-award-counter"
+          style={{...picture.style, justifyContent: 'flex-end', alignItems: 'flex-end'}}
           data-home-award-counter={control.name} data-home-award-field={field}
           data-home-award-value={value}
           data-home-award-unbound={value === undefined ? '' : undefined} />);

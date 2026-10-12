@@ -3,7 +3,6 @@ import '@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobalDeclarati
 import '@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexDeclaration';
 import '@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobal';
 import '@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertex';
-import {getDisplayPreferences} from '../../interface/settings/display-preferences';
 import {
   bindSceneEnvironmentIfPresent,
   SCENE_ENVIRONMENT_FRAGMENT_APPLY, SCENE_ENVIRONMENT_FRAGMENT_DECLARATION,
@@ -11,6 +10,9 @@ import {
 } from '../scene-environment';
 import type {SceneActorToonBinding} from './actor-toon';
 import {invalidateMaterialDrawBundles} from '../webgpu-draw-cache';
+import {bindSceneShadowMaterial, sceneShadowLight, SCENE_SHADOW_VERTEX_DECLARATION, SCENE_SHADOW_VERTEX_APPLY,
+  SCENE_SHADOW_FRAGMENT_DECLARATION, SCENE_SHADOW_FRAGMENT_BEGIN,
+  SCENE_SHADOW_FRAGMENT_APPLY} from '../scene-shadow-light';
 
 /** Original 1001b6f0 parameter4, ordinary MV3 with no selected lights/fog. */
 export function mv3Ambient(properties: readonly number[], opacity = 1,
@@ -31,16 +33,19 @@ export function mv3Ambient(properties: readonly number[], opacity = 1,
 export function createMv3Material(scene: Scene, properties: readonly number[], texture?: BaseTexture,
   opacity = 1, actorToon?: SceneActorToonBinding): ShaderMaterial {
   const transparent = properties[3] < 1 || opacity < 1;
-  const actorToonVertex = actorToon ? `
+  const sceneShadows = Boolean(sceneShadowLight(scene));
+  const originalToon = sceneShadows ? undefined : actorToon;
+  const actorToonVertex = originalToon ? `
 uniform float actorToonEnabled;
 uniform vec3 actorToonLightDirection;
 varying float actorToonLight;` : '';
-  const actorToonFragment = actorToon ? `
+  const actorToonFragment = originalToon ? `
 uniform sampler2D actorToonTexture;
 uniform float actorToonEnabled;
 varying float actorToonLight;` : '';
   const material = new ShaderMaterial('original-mv3-material', scene, {
     vertexSource: `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
+${sceneShadows ? SCENE_SHADOW_VERTEX_DECLARATION : ''}
 ${actorToonVertex}
 attribute vec3 position;
 attribute vec3 normal;
@@ -57,11 +62,13 @@ void main(){vec3 positionUpdated=position;vec3 normalUpdated=normal;
 vec4 worldPosition=world*vec4(positionUpdated,1.0);
 vec3 rawNormal=(world*vec4(normalUpdated,0.0)).xyz;
 vec3 worldNormal=dot(rawNormal,rawNormal)>0.0?normalize(rawNormal):vec3(0.0,1.0,0.0);
+${sceneShadows ? SCENE_SHADOW_VERTEX_APPLY : ''}
 sceneLitColor=clamp(sceneLight(sourceAmbient.rgb,worldPosition.xyz,worldNormal),0.0,1.0);
 sceneFogFactor=sceneFog(worldPosition.xyz);
-${actorToon ? 'actorToonLight=actorToonEnabled>0.5?max(dot(worldNormal,actorToonLightDirection),0.0):0.0;' : ''}
+${originalToon ? 'actorToonLight=actorToonEnabled>0.5?max(dot(worldNormal,actorToonLightDirection),0.0):0.0;' : ''}
 gl_Position=worldViewProjection*vec4(positionUpdated,1.0);vUV=uv;}`,
     fragmentSource: `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
+${sceneShadows ? SCENE_SHADOW_FRAGMENT_DECLARATION : ''}
 ${actorToonFragment}
 varying vec2 vUV;
 varying vec3 sceneLitColor;
@@ -70,10 +77,11 @@ uniform float actorOpacity;
 uniform vec3 sourceColorFilter;
 ${texture ? 'uniform sampler2D sourceTexture;' : ''}
 void main(){
+${sceneShadows ? SCENE_SHADOW_FRAGMENT_BEGIN : ''}
 vec4 base=${texture ? 'texture2D(sourceTexture,vUV)' : 'vec4(1.0)'};
 base.rgb=clamp(base.rgb*sourceColorFilter,0.0,1.0);
 vec4 color;
-${actorToon ? `if(actorToonEnabled>0.5){
+${originalToon ? `if(actorToonEnabled>0.5){
 vec3 toon=texture2D(actorToonTexture,vec2(actorToonLight,1.0)).rgb;
 color=base*vec4(sourceAmbient.rgb*toon,sourceAmbient.a);
 }else{
@@ -84,13 +92,16 @@ color.a=base.a*sourceAmbient.a;`}
 ${transparent ? 'if(floor(color.a*255.0+0.5)<=100.0)discard;' : ''}
 color.a*=actorOpacity;
 gl_FragColor=color;
+${sceneShadows ? SCENE_SHADOW_FRAGMENT_APPLY : ''}
 ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
 }`,
   }, {attributes: ['position', 'normal', 'uv'], defines: ['NORMAL'],
     uniforms: ['world', 'worldViewProjection', 'sourceAmbient', 'actorOpacity', 'sourceColorFilter',
-      ...(actorToon ? ['actorToonEnabled', 'actorToonLightDirection'] : []),
+      ...(sceneShadows ? ['sceneShadowReceiver'] : []),
+      ...(originalToon ? ['actorToonEnabled', 'actorToonLightDirection'] : []),
       ...SCENE_ENVIRONMENT_UNIFORMS],
-    samplers: [...(texture ? ['sourceTexture'] : []), ...(actorToon ? ['actorToonTexture'] : [])],
+    samplers: [...(texture ? ['sourceTexture'] : []), ...(originalToon ? ['actorToonTexture'] : []),
+      ...(sceneShadows ? ['sceneShadowTexture'] : [])],
     needAlphaBlending: transparent});
   const ambientColor = new Vector4();
   let red = NaN, green = NaN, blue = NaN;
@@ -116,12 +127,12 @@ ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
     texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE;
     material.setTexture('sourceTexture', texture);
   }
-  if (actorToon) {
-    material.setTexture('actorToonTexture', actorToon.texture);
+  if (originalToon) {
+    material.setTexture('actorToonTexture', originalToon.texture);
     const toonLight = new Vector3();
     const updateActorToon = (): void => {
-      const enabled = actorToon.active() && getDisplayPreferences().silhouette;
-      const direction = enabled ? actorToon.lightDirection() : undefined;
+      const enabled = originalToon.active();
+      const direction = enabled ? originalToon.lightDirection() : undefined;
       const light = direction ? toonLight.set(direction[0], direction[1], direction[2]) : undefined;
       material.setFloat('actorToonEnabled', enabled ? 1 : 0);
       if (light) material.setVector3('actorToonLightDirection', light);
@@ -138,6 +149,8 @@ ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
   // Battle scene registers its environment before actors load; tools that do
   // not register one keep the original ambient-only color (light count 0).
   bindSceneEnvironmentIfPresent(material, scene);
+  if (texture) material.getAlphaTestTexture = () => texture;
+  if (sceneShadows) bindSceneShadowMaterial(material, texture);
   material.backFaceCulling = true;
   material.depthFunction = Constants.LESS;
   // newgeom/geom_t inherit ZWriteEnable=TRUE from default.gbf.
@@ -145,9 +158,10 @@ ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
   material.transparencyMode = transparent ? ShaderMaterial.MATERIAL_ALPHABLEND : ShaderMaterial.MATERIAL_OPAQUE;
   material.alphaMode = transparent ? Constants.ALPHA_COMBINE : Constants.ALPHA_DISABLE;
   material.metadata = {originalMV3: {properties: [...properties], opacity, script: transparent ? 'geom_t' : 'newgeom',
-    ambient: scene.ambientColor.asArray(), scope: actorToon
-      ? 'Source material with the registered scene actor toon light and texture'
-      : 'Source material formula with scene ambient; original actor lighting and fog remain incomplete'}};
+    ambient: scene.ambientColor.asArray(), scope: sceneShadows
+      ? 'Source material colour with shared scene lighting and shadows'
+      : originalToon ? 'Source material with the registered scene actor toon light and texture'
+        : 'Source material formula with scene ambient'}};
   return material;
 }
 

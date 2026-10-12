@@ -25,15 +25,17 @@ export class TankDamageText {
   /** Original422877/467209/466d09: signed damage is negated; local screenY is shifted once. */
   show(screenX: number, screenY: number, damage: number, isLocal: boolean, critical = false): void {
     const value = -damage | 0;
-    if (critical && !this.criticalQueue) throw new Error('原Critical文字资源尚未加载');
-    (critical ? this.criticalQueue! : this.queue).show(screenX, isLocal ? Math.fround(screenY - 100) : screenY, value);
+    const useCritical = critical && value !== 0;
+    if (useCritical && !this.criticalQueue) throw new Error('原Critical文字资源尚未加载');
+    (useCritical ? this.criticalQueue! : this.queue).show(screenX, isLocal ? Math.fround(screenY - 100) : screenY, value);
   }
 
   /** Ordinary and critical damage remain at their initial world location. */
   showWorld(origin: CastleDamageTextOrigin, damage: number, isLocal: boolean, critical = false): void {
     const value = -damage | 0;
-    if (critical && !this.criticalQueue) throw new Error('原Critical文字资源尚未加载');
-    (critical ? this.criticalQueue! : this.queue).showWorld(origin, value, isLocal ? -100 : 0);
+    const useCritical = critical && value !== 0;
+    if (useCritical && !this.criticalQueue) throw new Error('原Critical文字资源尚未加载');
+    (useCritical ? this.criticalQueue! : this.queue).showWorld(origin, value, isLocal ? -100 : 0);
   }
 
   advance(actorDeltaSeconds: number, viewZ: number): void {

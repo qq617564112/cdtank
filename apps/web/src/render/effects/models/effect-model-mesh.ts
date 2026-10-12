@@ -1,4 +1,7 @@
-import {Constants, Material, Matrix, Mesh, Scene, ShaderMaterial, Texture, Vector4} from '@babylonjs/core';
+import {Constants, Material, Matrix, Mesh, Scene, ShaderMaterial, ShadowDepthWrapper, Texture, Vector4} from '@babylonjs/core';
+import '@babylonjs/core/Shaders/shadowMap.vertex';
+import '@babylonjs/core/Shaders/shadowMap.fragment';
+import '@babylonjs/core/Shaders/ShadersInclude/shadowMapFragmentSoftTransparentShadow';
 import type {EffectNativeMatrix} from '../common/effect-native-space';
 import {orderSceneModels} from '../../scene-model-order';
 import {
@@ -6,6 +9,9 @@ import {
   SCENE_ENVIRONMENT_UNIFORMS, SCENE_ENVIRONMENT_VERTEX_DECLARATION,
 } from '../../scene-environment';
 import {EffectModelVertices} from './effect-model-vertices';
+import {bindSceneShadowMaterial, sceneShadowLight, SCENE_SHADOW_VERTEX_DECLARATION,
+  SCENE_SHADOW_FRAGMENT_DECLARATION, SCENE_SHADOW_FRAGMENT_BEGIN,
+  SCENE_SHADOW_FRAGMENT_APPLY} from '../../scene-shadow-light';
 
 export interface EffectModelDeviceState {
   cull: 'CW' | 'CCW' | 'NONE';
@@ -22,10 +28,12 @@ export class EffectModelMesh {
   private readonly matrix = Matrix.Identity();
   private readonly reflectedMatrix = new Float32Array(16);
   private readonly ambient = new Vector4();
+  private readonly shadowMaterial?: ShaderMaterial;
   constructor(scene: Scene, texture: Texture, state: EffectModelDeviceState,
     vertices: EffectModelVertices, indices: readonly number[]) {
-    this.material = new ShaderMaterial('original-effect-model', scene, {
-      vertexSource: `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
+    const sceneShadows = Boolean(sceneShadowLight(scene));
+    const vertexSource = `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
+${sceneShadows ? SCENE_SHADOW_VERTEX_DECLARATION : ''}
 attribute vec3 position;
 attribute vec2 uv;
 ${vertices.colors ? 'attribute vec4 color;' : 'uniform vec4 sourceAmbient;'}
@@ -50,25 +58,32 @@ ${vertices.animated ? `  float first = (sourceFrameSample.x + sourceVertexId) * 
   vUV = sourceFrameSample.w * modelTexel(first + 1.0).xy
     + sourceFrameSample.z * modelTexel(second + 1.0).xy;` : '  vec3 localPosition = position; vUV = uv;'}
   vec4 worldPosition=world*vec4(localPosition,1.0);
+${sceneShadows ? '  sceneShadowWorldPosition=worldPosition.xyz; sceneShadowWorldNormal=vec3(0.0);' : ''}
   gl_Position=worldViewProjection*vec4(localPosition,1.0);
   vColor=clamp(${vertices.colors ? 'color' : 'sourceAmbient'},0.0,1.0);
   sceneFogFactor=sceneFog(worldPosition.xyz);
-}`,
+}`;
+    const attributes = ['position', 'uv', ...(vertices.colors ? ['color'] : []),
+      ...(vertices.animated ? ['sourceVertexId'] : [])];
+    const uniforms = ['world', 'worldViewProjection', 'sourceAmbient',
+      ...(vertices.animated ? ['sourceFrameSize', 'sourceFrameSample'] : []), ...SCENE_ENVIRONMENT_UNIFORMS];
+    const samplers = ['modelTexture', ...(vertices.animated ? ['sourceFrames'] : [])];
+    this.material = new ShaderMaterial('original-effect-model', scene, {vertexSource,
       fragmentSource: `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
+${sceneShadows ? SCENE_SHADOW_FRAGMENT_DECLARATION : ''}
 varying vec2 vUV;
 varying vec4 vColor;
 uniform sampler2D modelTexture;
 void main(){
+${sceneShadows ? SCENE_SHADOW_FRAGMENT_BEGIN : ''}
   vec4 color=texture2D(modelTexture,vUV)*vColor;
 ${state.alphaTest ? 'if(color.a<=100.0/255.0)discard;' : ''}
-  if(sceneFogEnabled>0.5)color.rgb=mix(sceneFogColor,color.rgb,sceneFogFactor);
   gl_FragColor=color;
+${sceneShadows ? SCENE_SHADOW_FRAGMENT_APPLY : ''}
+  if(sceneFogEnabled>0.5)gl_FragColor.rgb=mix(sceneFogColor,gl_FragColor.rgb,sceneFogFactor);
 }`,
-    }, {attributes: ['position', 'uv', ...(vertices.colors ? ['color'] : []),
-      ...(vertices.animated ? ['sourceVertexId'] : [])],
-      uniforms: ['world', 'worldViewProjection', 'sourceAmbient',
-        ...(vertices.animated ? ['sourceFrameSize', 'sourceFrameSample'] : []), ...SCENE_ENVIRONMENT_UNIFORMS],
-      samplers: ['modelTexture', ...(vertices.animated ? ['sourceFrames'] : [])], needAlphaBlending: state.blend});
+    }, {attributes, uniforms: [...uniforms, ...(sceneShadows ? ['sceneShadowReceiver'] : [])],
+      samplers: [...samplers, ...(sceneShadows ? ['sceneShadowTexture'] : [])], needAlphaBlending: state.blend});
     this.material.setTexture('modelTexture', texture);
     this.material.backFaceCulling = state.cull !== 'NONE';
     // GBF names the culled winding; Babylon names the retained front face.
@@ -80,6 +95,26 @@ ${state.alphaTest ? 'if(color.a<=100.0/255.0)discard;' : ''}
     this.material.alphaMode = state.blend ? Constants.ALPHA_COMBINE : Constants.ALPHA_DISABLE;
     this.mesh = new Mesh('original-effect-model', scene);
     bindSceneEnvironmentIfPresent(this.material, scene);
+    if (sceneShadows) {
+      bindSceneShadowMaterial(this.material, texture);
+      // Keep the dedicated depth effect separate from colour-pass submeshes.
+      this.shadowMaterial = new ShaderMaterial('scene-model-shadow-depth', scene, {vertexSource,
+        fragmentSource: `precision highp float;
+varying vec2 vUV;
+varying vec4 vColor;
+uniform sampler2D modelTexture;
+void main(){
+  vec4 colour=texture2D(modelTexture,vUV)*vColor;
+${state.alphaTest ? '  if(colour.a<=100.0/255.0)discard;' : ''}
+#define SHADOWDEPTH_SOFTTRANSPARENTSHADOW
+  gl_FragColor=colour;
+}`}, {attributes, uniforms: [...uniforms], samplers: [...samplers]}, false);
+      this.shadowMaterial.setTexture('modelTexture', texture);
+      bindSceneEnvironmentIfPresent(this.shadowMaterial, scene);
+      vertices.bind(this.shadowMaterial);
+      this.material.shadowDepthWrapper = new ShadowDepthWrapper(this.shadowMaterial, scene,
+        {standalone: true, remappedVariables: ['worldPos', 'worldPosition', 'alpha', 'colour.a']});
+    }
     this.mesh.material = this.material;
     this.mesh.isPickable = false;
     vertices.geometry(indices).applyToMesh(this.mesh);
@@ -98,7 +133,13 @@ ${state.alphaTest ? 'if(color.a<=100.0/255.0)discard;' : ''}
     this.mesh.freezeWorldMatrix(this.matrix);
     Vector4.FromArrayToRef(ambient, 0, this.ambient);
     this.material.setVector4('sourceAmbient', this.ambient);
+    this.shadowMaterial?.setVector4('sourceAmbient', this.ambient);
   }
 
-  dispose(): void {this.mesh.dispose(); this.material.dispose(false, false);}
+  dispose(): void {
+    this.mesh.dispose();
+    this.material.shadowDepthWrapper?.dispose();
+    this.shadowMaterial?.dispose(false, false);
+    this.material.dispose(false, false);
+  }
 }

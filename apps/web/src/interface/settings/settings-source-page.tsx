@@ -16,9 +16,9 @@ export function SettingsSourcePage({ui, topbar, footbar}: {ui: HomeSourceUi; top
   const place = (name: string) => sourceProps(ui, layout, SETTINGS_LAYOUT, name);
   const topbarBounds = place('zuishanghoutiao');
   const panelBounds = place('zuidaditu');
-  const labels = [
-    ...Array.from({length: 8}, (_, index) => [`f${index + 5}tu`, `F${index + 5}`]),
-  ];
+  const keysBounds = place('zuobianditu');
+  const adjustmentsBounds = place('youxiaditu');
+  const displayBounds = place('youshangditu');
   return <>
     <GameDialogTopbar {...topbarBounds}>
       {topbar}
@@ -27,16 +27,15 @@ export function SettingsSourcePage({ui, topbar, footbar}: {ui: HomeSourceUi; top
     <GameDialogPanel {...panelBounds} style={{...panelBounds.style,
       left: topbarBounds.style.left, width: topbarBounds.style.width}} aria-hidden="true"/>
     <GameDialogFootbar {...place('zuixiahoutiao')}>{footbar}</GameDialogFootbar>
-    <GameCard {...place('changtiaoditu')} shape="strip" className="settings-source-panel" aria-hidden="true"/>
-    <GameCard {...place('zuobianditu')} shape="panel" className="settings-source-panel" aria-hidden="true"/>
-    <GameCard {...place('youxiaditu')} shape="chat" className="settings-source-panel" aria-hidden="true"/>
-    <GameCard {...place('youshangditu')} shape="display" className="settings-source-panel" aria-hidden="true">
+    <GameCard {...keysBounds} style={{...keysBounds.style, top: 85, height: 468}}
+      shape="panel" className="settings-source-panel" aria-hidden="true"/>
+    <GameCard {...adjustmentsBounds} style={{...adjustmentsBounds.style, top: 204, height: 349}}
+      shape="chat" className="settings-source-panel" aria-hidden="true"/>
+    <GameCard {...displayBounds} style={{...displayBounds.style, top: 85}}
+      shape="display" className="settings-source-panel" aria-hidden="true">
       <GameInsetCard shape="options" className="settings-display-options"/>
       <GameInsetCard shape="modes" className="settings-display-modes"/>
     </GameCard>
-    {labels.map(([name, label]) => <span key={name} {...place(name)}
-      className={`settings-art-label${name.startsWith('f') && name.endsWith('tu') ? ' settings-chat-label' : ''}`}
-      aria-hidden="true">{label}</span>)}
   </>;
 }
 

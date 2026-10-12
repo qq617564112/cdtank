@@ -44,7 +44,7 @@
 
 ## 俯视底图与标记
 
-0001–0025与测试地图1001共26张底图由 `scripts/render-map-minimaps.mjs` 从真实三维场景离线生成，使用1024×1024正交渲染目标。`ScenePreview.load(id, effects)` 提供正式战斗的地形、建筑、植物、水面、原CVD首帧和城堡n1动作，渲染列表为已启用的 `ScenePreview.minimapMeshes`。室内0009、0015、0018排除整场天花板，保留下方真实地面和物件；不烘焙玩家、弹丸、伤害文字和运行时技能粒子。资源、生成命令及全部图像总览见 [map-minimaps.md](map-minimaps.md)。
+0001–0025与测试地图1001共26张底图由真实三维场景离线生成，使用1024×1024正交渲染目标。`ScenePreview.load(id, effects)` 提供正式战斗的地形、建筑、植物、水面、原CVD首帧和城堡n1动作，渲染列表为已启用的 `ScenePreview.minimapMeshes`。室内0009、0015、0018排除整场天花板，保留下方真实地面和物件；不烘焙玩家、弹丸、伤害文字和运行时技能粒子。资源、生成命令及全部图像总览见 [map-minimaps.md](map-minimaps.md)。
 
 相机中心为 `(-(minX+maxX)/2, height, (minZ+maxZ)/2)`，向负Y俯视，以正Z为图像上方；正交左右/上下范围同为长轴跨度的一半。GPU读取转换为PNG时翻转行，并反射图像X，恢复Babylon glTF反射前的原世界坐标。最终原+X向右、原+Z向上。底图与标记共用同一份每图lookup：
 

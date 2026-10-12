@@ -1,3 +1,4 @@
+import {battleArtworkUrl} from '../../../assets/battle-artwork';
 import {roleAmmoActionEffectName} from '../../../assets/tanks/role-ammo-visual';
 import {isSkillStatusAsset} from '../../../assets/skill-status-artwork';
 import {Camera, Frustum, Observer, Scene, Texture, Vector3} from '@babylonjs/core';
@@ -26,6 +27,7 @@ import {effectModelDraw} from '../models/effect-model-draw';
 import {effectModelEngineDelta} from '../models/effect-model-animation';
 import {EffectSkillSound, SkillSoundCatalog} from '../../../audio/effect-skill-sound';
 import {LegacyScreenEffectBackend} from './legacy-screen-effect';
+import {loadStaticJson} from '../../../assets/static-resources';
 
 interface LinkRecord {field04String: string; field148String: EffectPrimaryTag; bindingMode: number;}
 interface Links {
@@ -62,6 +64,8 @@ export class EffectRuntime {
   private deltaSeconds = 0;
   private links?: Links;
   private readonly textures = new Map<string, Texture>();
+  private readonly textureLoading = new Map<string, Promise<void>>();
+  private loading?: Promise<void>;
   private readonly sound = new EffectSound();
   private readonly statePool = new EffectRuntimeStatePool();
   private readonly instances: Instance[] = [];
@@ -95,6 +99,7 @@ export class EffectRuntime {
       this.sound.dispose();
       this.skillSound.dispose();
       this.textures.clear();
+      this.textureLoading.clear();
       this.screenBackend.dispose();
       this.shotImpact?.dispose();
     });
@@ -105,16 +110,21 @@ export class EffectRuntime {
     return (this.randomSeed >>> 16) & 32767;
   }
 
-  async load(): Promise<void> {
-    if (this.library || this.scene.isDisposed) return;
+  load(): Promise<void> {
+    if (this.library || this.scene.isDisposed) return Promise.resolve();
+    this.loading ??= this.loadResources().finally(() => {this.loading = undefined;});
+    return this.loading;
+  }
+
+  private async loadResources(): Promise<void> {
     const [library, links, audio, models] = await Promise.all([
-      this.json<Library>('/effect-library.json'), this.json<Links>('/effect-links.json'),
-      this.json<SkillSoundCatalog>('/audio.json'),
-      this.json<EffectModelLibrary>('/effect-models.json'),
+      loadStaticJson<Library>('/data/effects/library.json'), loadStaticJson<Links>('/data/effects/links.json'),
+      loadStaticJson<SkillSoundCatalog>('/manifests/audio.json'),
+      loadStaticJson<EffectModelLibrary>('/data/effects/models.json'),
     ]);
     if (this.scene.isDisposed) return;
-    this.skillSound.configure(audio);
-    await this.sound.configure(audio, this.skillSound.audioContext()!);
+    const skillSoundReady = this.skillSound.configure(audio);
+    await Promise.all([skillSoundReady, this.sound.configure(audio, this.skillSound.audioContext()!)]);
     if (this.scene.isDisposed) return;
     const indices = new Set<number>();
     const collect = (node: EffectRuntimeLibrary['nodes'][number]): void => {
@@ -171,14 +181,19 @@ export class EffectRuntime {
     }
   }
 
-  private async loadTexture(asset: string, model = false): Promise<void> {
-    if (this.scene.isDisposed || this.textures.has(asset)) return;
-    await new Promise<void>((resolve, reject) => {
-      const texture = new Texture(`/${asset}`, this.scene, true, false,
-        model ? Texture.BILINEAR_SAMPLINGMODE : Texture.NEAREST_SAMPLINGMODE, () => resolve(), message => reject(new Error(message)));
+  private loadTexture(asset: string, model = false): Promise<void> {
+    if (this.scene.isDisposed) return Promise.resolve();
+    const cached = this.textureLoading.get(asset);
+    if (cached) return cached;
+    const loading = new Promise<void>((resolve, reject) => {
+      const texture = new Texture(battleArtworkUrl(`/${asset}`, this.scene), this.scene, true, false,
+        model ? Texture.BILINEAR_SAMPLINGMODE : Texture.NEAREST_SAMPLINGMODE, () => resolve(),
+        message => {texture.dispose(); reject(new Error(message));});
       if (model) {texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE; texture.anisotropicFilteringLevel = 1;}
       this.textures.set(asset, texture);
-    });
+    }).catch(error => {this.textureLoading.delete(asset); this.textures.delete(asset); throw error;});
+    this.textureLoading.set(asset, loading);
+    return loading;
   }
 
   /** Original source-name lookup followed by world-position start. */
@@ -385,12 +400,6 @@ export class EffectRuntime {
     return handle;
   }
 
-  private async json<T>(path: string): Promise<T> {
-    const response = await fetch(path);
-    if (!response.ok) throw new Error(`原特效资源载入失败：${path}`);
-    return response.json() as Promise<T>;
-  }
-
   attach(view: TankView): void {
     if (this.subscriptions.has(view)) return;
     this.subscriptions.set(view, view.actionMessages.add(message => this.message(view, message)));
@@ -478,7 +487,7 @@ export class EffectRuntime {
     const billboard = spriteControl ? (parseInt(spriteControl.remainingFieldAc.slice(0, 2), 16) & 1) !== 0 : false;
     // Keep orbiting crow artwork upright and facing the camera.
     const rendering: DrawRendering = {controller, grid, sourcePass, boltControl, overlayControl,
-      billboard: !billboard && grid.asset === 'Data/effect/xf/WUYA.png' ? 'y' : billboard};
+      billboard: !billboard && grid.asset === 'assets/textures/hd/effects/xf/WUYA.webp' ? 'y' : billboard};
     controllers.set(controller, rendering);
     return rendering;
   }

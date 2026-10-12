@@ -3,8 +3,8 @@ import {packEffectColor} from '../common/effect-color';
 import {EffectRenderPass, EffectSpriteMesh} from '../common/effect-sprite-mesh';
 import type {EffectVec3} from '../common/types';
 
-export const SHOT_IMPACT_SMOKE = 'Data/effect/effect/yan1.png?shot-impact';
-export const SHOT_IMPACT_FLASH = 'Data/effect/effect/gongji1.png?shot-impact';
+export const SHOT_IMPACT_SMOKE = 'Data/effect/effect/yan1.webp?shot-impact';
+export const SHOT_IMPACT_FLASH = 'Data/effect/effect/gongji1.webp?shot-impact';
 
 interface ImpactBurst {
   origin: EffectVec3;

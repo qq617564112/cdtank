@@ -50,14 +50,14 @@
     "texture": "B",
     "iconId": 5,
     "textures": [
-      "Data/scnobj/00004/00004A.png",
-      "Data/scnobj/00004/00004B.png",
-      "Data/scnobj/00004/00004C.png",
-      "Data/scnobj/00004/00004D.png"
+      "Data/scnobj/00004/00004A.webp",
+      "Data/scnobj/00004/00004B.webp",
+      "Data/scnobj/00004/00004C.webp",
+      "Data/scnobj/00004/00004D.webp"
     ],
     "sourceModel": "Data/scnobj/00004/00004.POL",
     "modelStatus": "resolved",
-    "texturePath": "Data/scnobj/00004/00004B.png"
+    "texturePath": "Data/scnobj/00004/00004B.webp"
   },
   "runtime": {
     "values": {

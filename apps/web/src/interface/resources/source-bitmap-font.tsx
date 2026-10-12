@@ -37,7 +37,7 @@ function notify(): void {
 
 /** Decode every published source-font glyph before controls consume it. */
 export function loadSourceBitmapFonts(): Promise<void> {
-  loading ??= loadStaticJson<SourceUiFontLibrary>('/ui-fonts.json').then(async library => {
+  loading ??= loadStaticJson<SourceUiFontLibrary>('/manifests/ui-fonts.json').then(async library => {
     const faces = library.fonts.filter(font => font.glyphs?.length);
     await Promise.all([...new Set(faces.flatMap(font => font.glyphs!.map(glyph => glyph.asset)))]
       .map(asset => decodeImageRegion(`/${asset}`)));

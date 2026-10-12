@@ -6,6 +6,7 @@ from pathlib import Path
 import struct
 import subprocess
 from urllib.parse import unquote
+from asset_compression.public_layout import public_path
 
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif', '.bmp', '.ico'}
 
@@ -19,6 +20,9 @@ def image_usage(root, runtime, names):
 
     def add(path, reason):
         path = unquote(path).lstrip('/')
+        published = public_path(path)
+        if path not in names and published in names:
+            path = published
         if Path(path).suffix.lower() not in IMAGE_EXTENSIONS:
             return
         reasons[path].add(reason)
@@ -44,6 +48,8 @@ def image_usage(root, runtime, names):
                     add(name, 'module')
 
     ui_path = runtime / 'ui.json'
+    if not ui_path.is_file():
+        ui_path = runtime / 'manifests/ui.json'
     ui = json.loads(ui_path.read_text())
     removed_layouts = [layout['path'] for layout in ui['layouts'] if layout['path'].endswith('keyboard.xml')]
     ui['layouts'] = [layout for layout in ui['layouts'] if layout['path'] not in removed_layouts]

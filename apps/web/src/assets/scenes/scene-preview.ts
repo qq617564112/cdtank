@@ -1,4 +1,6 @@
-import {AnimationGroup, ArcRotateCamera, AssetContainer, LoadAssetContainerAsync, Matrix, Observable, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
+import {loadPreparedModel} from '../model-resources';
+import {battleArtworkUrl} from '../battle-artwork';
+import {AnimationGroup, ArcRotateCamera, AssetContainer, Matrix, Observable, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import {loadStaticJson} from '../static-resources';
 import type {ObjectiveSnapshot, SceneObjectSnapshot} from '../../../../shared/protocols';
 import {SceneCvdAnimation} from './scene-cvd-animation';
@@ -33,8 +35,8 @@ import {sceneEnvironmentFor} from '../../../../shared/maps/scene-environment';
 import {applySceneEnvironment, resetSceneShaderEnvironment} from '../../render/scene-environment';
 import {orderSceneModels} from '../../render/scene-model-order';
 import {castleResourceFile} from '../../../../shared/maps/castle-resources';
-import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
 import type {AbstractMesh} from '@babylonjs/core';
+import {sceneShadowLight} from '../../render/scene-shadow-light';
 
 interface Placement {
   id: string;
@@ -112,6 +114,7 @@ export class ScenePreview {
 
   clear(): void {
     this.revision++;
+    sceneShadowLight(this.scene)?.clear();
     resetSceneShaderEnvironment(this.scene);
     this.minimapGeometry.length = 0;
     this.water?.dispose();
@@ -166,7 +169,7 @@ export class ScenePreview {
     }
     const revision = this.revision;
     if (this.scene.isDisposed) return '';
-    if (hasSceneActorToon(id)) {
+    if (hasSceneActorToon(id) && !sceneShadowLight(this.scene)) {
       const owner = new SceneActorToon(this.scene, id);
       this.actorToon = owner;
       registerSceneActorToon(owner);
@@ -178,8 +181,7 @@ export class ScenePreview {
       }
       if (revision !== this.revision) return '';
     }
-    const response = await fetch('/scene-placements.json');
-    const entries: SceneEntry[] = await response.json();
+    const entries = await loadStaticJson<SceneEntry[]>('/data/maps/shared/placements.json');
     if (revision !== this.revision) {
       return '';
     }
@@ -190,7 +192,7 @@ export class ScenePreview {
     // Environment binds before any asset/shaders load so actors, castle and
     // effects capture the current map's ambient, fog and light registers.
     applySceneEnvironment(this.scene, sceneEnvironmentFor(id));
-    const terrain = await LoadAssetContainerAsync(`/${entry.terrain}`, this.scene, {
+    const terrain = await loadPreparedModel(battleArtworkUrl(`/${entry.terrain}`, this.scene), this.scene, {
       pluginOptions: {gltf: {useSRGBBuffers: false}},
     });
     if (revision !== this.revision) {
@@ -213,7 +215,7 @@ export class ScenePreview {
       if (revision !== this.revision) {owner.dispose(); return '';}
     }
     if (['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
-      '0021', '0023', '0024', '0025', FIELD_ROAD_HD.sceneId].includes(id)) {
+      '0021', '0023', '0024', '0025'].includes(id)) {
       this.plants = new ScenePlantSway();
       await this.plants.load(id);
       if (revision !== this.revision) return '';
@@ -221,9 +223,7 @@ export class ScenePreview {
     const cache = new Map<string, AssetContainer>();
     let castleResources: CastleModelResource[] = [];
     if (entry.castles.length > 0 && runtime) {
-      const response = await fetch(`/${castleResourceFile(Number(id))}`);
-      if (!response.ok) throw new Error('原城堡资源载入失败');
-      const models = (await response.json() as {castles: CastleModelResource[]}).castles;
+      const models = (await loadStaticJson<{castles: CastleModelResource[]}>(`/${castleResourceFile(Number(id))}`)).castles;
       castleResources = entry.castles.map(placement => {
         const model = models.find(value => value.model === placement.model);
         if (!model) throw new Error(`原城堡模型载入失败：${placement.model}`);
@@ -241,7 +241,7 @@ export class ScenePreview {
       await Promise.all(Array.from({length: Math.min(4, paths.length)}, async () => {
         while (next < paths.length && revision === this.revision) {
           const path = paths[next++];
-          const asset = await LoadAssetContainerAsync(`/${path}`, this.scene, {
+          const asset = await loadPreparedModel(battleArtworkUrl(`/${path}`, this.scene), this.scene, {
             pluginOptions: {gltf: {useSRGBBuffers: false}},
           });
           if (revision !== this.revision) {asset.dispose(); return;}
@@ -258,7 +258,7 @@ export class ScenePreview {
     let damageRenderer: SceneCastleDamageTextRenderer | undefined;
     if (castleResources.length > 0 || placements.some(value => value.className === 'SYcScnObjBreach')) {
       const fonts = await loadStaticJson<{fonts: {name: string; attributes: Record<string, string>;
-        glyphs?: {codepoint: number; asset: string; width: number; height: number}[]}[]}>('/ui-fonts.json');
+        glyphs?: {codepoint: number; asset: string; width: number; height: number}[]}[]}>('/manifests/ui-fonts.json');
       if (revision !== this.revision) return '';
       const damageFont = fonts.fonts.find(font => font.name === 'Damage' && font.attributes.Type === 'Static');
       if (!damageFont?.glyphs?.length) throw new Error('原Damage字体定义缺失');
@@ -465,7 +465,29 @@ export class ScenePreview {
       return root.getChildMeshes().map(mesh => ({mesh, priority: 0}));
     }));
     terrain.rootNodes.forEach(node => {node.setEnabled(true);});
-    if (['0002', '0003', '0016', FIELD_ROAD_HD.sceneId].includes(id)) {
+    const shadows = sceneShadowLight(this.scene);
+    if (shadows) {
+      shadows.setTerrain(id, terrain.meshes);
+      for (const placement of placements) {
+        if (placement.className === 'SYcScnObjPlant') continue;
+        const root = this.scene.getTransformNodeByName(`placement-${placement.id}`);
+        if (root) {
+          this.disposals.push(shadows.addRoot(root));
+        } else if (placement.animation) {
+          const anchor = new TransformNode(`scene-shadow-${placement.id}`, this.scene);
+          anchor.position.set(-placement.position[0], placement.position[1], placement.position[2]);
+          anchor.setEnabled(Boolean(placement.enabled));
+          const meshes = this.scene.meshes.filter(mesh => mesh.metadata?.sourcePlacementId === placement.id);
+          this.disposals.push(shadows.addRoot(anchor, {meshes: () => meshes}), () => anchor.dispose());
+        }
+      }
+      for (const [placementId] of this.castles) {
+        for (const root of this.scene.transformNodes.filter(node => node.name.startsWith(`castle-${placementId}/`))) {
+          this.disposals.push(shadows.addRoot(root));
+        }
+      }
+    }
+    if (['0002', '0003', '0016'].includes(id)) {
       const water = new SceneWater(this.scene);
       this.water = water;
       try {await water.load(id);} catch (error) {

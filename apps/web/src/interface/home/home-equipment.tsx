@@ -1,6 +1,6 @@
 import {showGameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import './home.css';
 import {HomeResourceFeedback} from './home-resource-feedback';
 import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties} from 'react';
@@ -13,7 +13,7 @@ import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {ResOwnedRoles} from '../../../../shared/protocols/PtlOwnedRoles';
 import {equipmentTarget} from '../../../../shared/combat/equipment-target';
 import {loadUiFont} from '../resources/source-ui-fonts';
-import {loadSourceUi} from '../resources/source-ui-resources';
+import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
 import type {HomeSourceControl, HomeSourceUi} from './home-source-layout';
 import {HomeEquipmentPreview} from './home-equipment-preview';
 import {HomeEquipmentSourceList} from './home-equipment-source-list';
@@ -80,7 +80,12 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
   const session = useRef<SessionOwner>({active: false, pending: false});
   const revision = useRef(0);
   const focusAfterCommit = useRef<HTMLButtonElement | null>(null);
-  const [resources, setResources] = useState<Resources>();
+  const [resources, setResources] = useState<Resources | undefined>(() => {
+    const ui = cachedSourceUi(['myhome_panzerpage.xml']);
+    const catalog = preparedCombatCatalog();
+    const controls = ui?.layouts.find(layout => layout.path.endsWith('myhome_panzerpage.xml'))?.windows;
+    return ui && catalog && controls ? {ui, catalog, controls} : undefined;
+  });
   const [inventory, setInventory] = useState<ResInventory>();
   const [equipment, setEquipment] = useState<ResEquipment>();
   const [owned, setOwned] = useState<ResOwnedRoles>();
@@ -116,7 +121,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
     const current = {active: true, pending: false}; session.current = current;
     revision.current++;
     setResourceError(undefined);
-    setResources(undefined); setInventory(undefined); setEquipment(undefined); setOwned(undefined);
+    setInventory(undefined); setEquipment(undefined); setOwned(undefined);
     setCurrentTankInstanceId(undefined); setCurrentPetInstanceId(undefined); setOriginality(undefined); setMoney(undefined);
     setUpgrade(undefined);
     setPage('PART'); setCandidate(undefined); setDescription(undefined); setBusy(true); setQueryFailed(false); setStatus('载入部件…');

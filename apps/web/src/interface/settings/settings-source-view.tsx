@@ -6,27 +6,30 @@ import {cloneKeyBindings, DEFAULT_KEY_BINDINGS, INPUT_ACTIONS, isSupportedKeyCod
   keyLabel, validateKeyBindings, type InputAction, type KeyBindings} from '../../match/input-bindings';
 import {readAudioPreferences, writeAudioPreferences, type AudioPreferences} from './audio-preferences';
 import {applyDisplayPreferences, DEFAULT_DISPLAY_PREFERENCES, getDisplayPreferences,
-  validateDisplayPreferences, writeDisplayPreferences, type DisplayPreferences} from './display-preferences';
-import {DEFAULT_QUICK_CHAT_PREFERENCES, QUICK_CHAT_KEYS, readQuickChatPreferences,
-  validateQuickChatPreferences, writeQuickChatPreferences, type QuickChatPreferences} from './quick-chat-preferences';
+  RENDER_RESOLUTION_SCALES, validateDisplayPreferences, writeDisplayPreferences,
+  type DisplayPreferences, type RenderResolutionScale} from './display-preferences';
 import {KEY_BINDINGS_STORAGE_KEY, type InitialSettings} from './settings-startup';
 import {SettingsSourceButton, SettingsSourcePage, SETTINGS_LAYOUT} from './settings-source-page';
-import {SettingsAdjustment, SettingsChatField, SettingsChoice, SettingsKeyField} from './settings-controls';
+import {SettingsAdjustment, SettingsChoice, SettingsKeyField} from './settings-controls';
 import {applyBrightness, DEFAULT_BRIGHTNESS, getBrightness, MIN_BRIGHTNESS, MAX_BRIGHTNESS,
   writeBrightness} from './brightness-preferences';
 import {applySaturation, DEFAULT_SATURATION, getSaturation, MIN_SATURATION, MAX_SATURATION,
   writeSaturation} from './saturation-preferences';
+import {applyContrast, DEFAULT_CONTRAST, getContrast, MIN_CONTRAST, MAX_CONTRAST,
+  writeContrast} from './contrast-preferences';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {SourceImageScale} from '../resources/source-static-image';
-import {loadSourceUi} from '../resources/source-ui-resources';
+import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
 import {SettingsResourceFeedback} from './settings-resource-feedback';
 import {GameDialog} from '../resources/game-dialog';
+import {DEFAULT_BATTLE_ARTWORK_QUALITY, getBattleArtworkQuality, writeBattleArtworkQuality,
+  type BattleArtworkQuality} from './battle-artwork-preferences';
 
 export interface SettingsSourceViewProps {
   open: boolean;
   close: () => void;
-  battle: Pick<Battle, 'getKeyBindings' | 'setKeyBindings' | 'setQuickChats' | 'setMusicVolume' | 'setSoundVolume'>;
+  battle: Pick<Battle, 'getKeyBindings' | 'setKeyBindings' | 'setMusicVolume' | 'setSoundVolume'>;
   initial: InitialSettings;
   onKeysSaved: (bindings: KeyBindings) => void;
 }
@@ -38,10 +41,6 @@ const KEY_ROWS = [
   ['prevWeapon', '前一个炮弹'], ['nextWeapon', '后一个炮弹'],
   ['prevItem', '前一个道具'], ['nextItem', '后一个道具'],
 ] as const satisfies readonly (readonly [InputAction, string])[];
-const UNSUPPORTED_OPTIONS = [
-  ['rdo16ColorDepth', '16位色'], ['rdo32ColorDepth', '32位色'], ['chkWaitVSync', '垂直同步'],
-  ['chkSoftwareCursor', '软件光标'], ['zhandoubiaoqing', '战斗表情'],
-] as const;
 type Capture = {action: InputAction; secondary: boolean};
 const optionalPrimary = (action: InputAction): boolean => action === 'useItem' || action === 'prevWeapon'
   || action === 'nextWeapon' || action === 'prevItem' || action === 'nextItem';
@@ -52,22 +51,24 @@ export function SettingsSourceView({open, ...props}: SettingsSourceViewProps) {
 
 function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSourceViewProps, 'open'>) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [ui, setUi] = useState<HomeSourceUi>();
+  const [ui, setUi] = useState<HomeSourceUi | undefined>(() => cachedSourceUi([SETTINGS_LAYOUT]));
   const [resourceError, setResourceError] = useState<string>();
   const [resourceAttempt, setResourceAttempt] = useState(0);
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
   const [bindings, setBindings] = useState(() => cloneKeyBindings(battle.getKeyBindings()));
-  const [quickChats, setQuickChats] = useState<QuickChatPreferences>(() => readQuickChatPreferences(localStorage).preferences);
   const [audio, setAudio] = useState<AudioPreferences>(() => readAudioPreferences(localStorage, initial.audio.preferences).preferences);
   const [brightness, setBrightness] = useState(getBrightness);
   const [saturation, setSaturation] = useState(getSaturation);
+  const [contrast, setContrast] = useState(getContrast);
   const [display, setDisplay] = useState<DisplayPreferences>(() => ({...getDisplayPreferences()}));
+  const initialMsaa4x = useRef(display.msaa4x);
+  const [artworkQuality, setArtworkQuality] = useState<BattleArtworkQuality>(getBattleArtworkQuality);
   const [capture, setCapture] = useState<Capture>();
   const composing = useRef(false), escapePending = useRef(false);
   const [fullscreen, setFullscreen] = useState(() => !!document.fullscreenElement);
   const [displayPending, setDisplayPending] = useState(false);
   const [status, setStatus] = useState(() =>
-    [initial.keys.loadMessage, initial.display.loadMessage].filter(Boolean).join(' '));
+    [initial.keys.loadMessage, initial.display.loadMessage, initial.artwork.loadMessage].filter(Boolean).join(' '));
   const current = useRef({bindings, capture});
   current.current = {bindings, capture};
 
@@ -96,22 +97,16 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
     return () => {live = false;};
   }, [resourceAttempt]);
 
-  useEffect(() => {
-    const changed = () => setFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', changed);
-    changed();
-    return () => document.removeEventListener('fullscreenchange', changed);
-  }, []);
-
-  async function changeDisplayMode(nextFullscreen: boolean, origin: HTMLButtonElement) {
-    if (displayPending || nextFullscreen === !!document.fullscreenElement) return;
+  async function applyDisplayMode(origin: HTMLButtonElement): Promise<boolean> {
+    if (fullscreen === !!document.fullscreenElement) return true;
     setDisplayPending(true);
     try {
-      if (nextFullscreen) await document.documentElement.requestFullscreen();
+      if (fullscreen) await document.documentElement.requestFullscreen();
       else await document.exitFullscreen();
-      setFullscreen(!!document.fullscreenElement);
+      return true;
     } catch {
-      setStatus(nextFullscreen ? '无法进入全屏，请检查浏览器权限。' : '无法退出全屏，请使用浏览器退出全屏。');
+      setStatus(fullscreen ? '无法进入全屏，请检查浏览器权限。' : '无法退出全屏，请使用浏览器退出全屏。');
+      return false;
     } finally {
       setDisplayPending(false);
       const active = document.activeElement;
@@ -121,23 +116,28 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
   }
 
   function changeAudio(name: keyof AudioPreferences, value: number) {
-    const next = {...audio, [name]: value};
-    setAudio(next);
-    if (name === 'music') battle.setMusicVolume(value);
-    else battle.setSoundVolume(value);
-    setStatus(writeAudioPreferences(localStorage, next) ? '音量设置已保存。' : '无法保存音量设置，刷新后将恢复默认值。');
+    setAudio(previous => ({...previous, [name]: value}));
+    setStatus('');
   }
 
   function changeBrightness(value: number) {
     setBrightness(value);
-    applyBrightness(value);
-    setStatus(writeBrightness(localStorage, value) ? '亮度设置已保存。' : '无法保存亮度设置，刷新后将恢复默认值。');
+    setStatus('');
   }
 
   function changeSaturation(value: number) {
     setSaturation(value);
-    applySaturation(value);
-    setStatus(writeSaturation(localStorage, value) ? '饱和度设置已保存。' : '无法保存饱和度设置，刷新后将恢复默认值。');
+    setStatus('');
+  }
+
+  function changeContrast(value: number) {
+    setContrast(value);
+    setStatus('');
+  }
+
+  function changeRenderScale(renderScale: RenderResolutionScale) {
+    setDisplay(value => ({...value, renderScale}));
+    setStatus('');
   }
 
   function beginCapture(action: InputAction, secondary: boolean) {
@@ -151,36 +151,57 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
     const next = cloneKeyBindings(DEFAULT_KEY_BINDINGS);
     current.current = {bindings: next, capture: undefined};
     setBindings(next);
-    setQuickChats({...DEFAULT_QUICK_CHAT_PREFERENCES});
+    setAudio({music: .5, sound: .5});
     setDisplay({...DEFAULT_DISPLAY_PREFERENCES});
+    setFullscreen(false);
+    setArtworkQuality(DEFAULT_BATTLE_ARTWORK_QUALITY);
     setCapture(undefined);
     setBrightness(DEFAULT_BRIGHTNESS);
-    applyBrightness(DEFAULT_BRIGHTNESS);
     setSaturation(DEFAULT_SATURATION);
-    applySaturation(DEFAULT_SATURATION);
-    const brightnessSaved = writeBrightness(localStorage, DEFAULT_BRIGHTNESS);
-    const saturationSaved = writeSaturation(localStorage, DEFAULT_SATURATION);
-    setStatus(brightnessSaved && saturationSaved
-      ? '已恢复默认草稿，确认后生效；亮度与饱和度已恢复100%。'
-      : '已恢复默认草稿；亮度与饱和度已恢复100%，部分调节无法保存。');
+    setContrast(DEFAULT_CONTRAST);
+    setStatus('已恢复默认草稿，点击确定保存。');
   }
 
-  function save() {
-    const keys = validateKeyBindings(bindings), chats = validateQuickChatPreferences(quickChats);
+  async function save(origin: HTMLButtonElement) {
+    if (displayPending) return;
+    const keys = validateKeyBindings(bindings);
     const displayPreferences = validateDisplayPreferences(display);
-    if (!keys || !chats) {setStatus('键位无效或快捷聊天超过72字符。'); return;}
+    if (!keys) {setStatus('键位无效。'); return;}
     if (!displayPreferences) {setStatus('显示设置草稿无效，当前显示设置保持不变。'); return;}
+    if (!await applyDisplayMode(origin)) return;
     try {localStorage.setItem(KEY_BINDINGS_STORAGE_KEY, JSON.stringify(keys));}
     catch {setStatus('无法保存键位，当前键位保持不变。'); return;}
     battle.setKeyBindings(keys); onKeysSaved(keys);
-    if (!writeQuickChatPreferences(localStorage, chats)) {
-      setStatus('键位已保存；快捷聊天未保存，原内容保持不变。'); return;
+    if (!writeAudioPreferences(localStorage, audio)) {
+      setStatus('音量设置未保存，请重试。'); return;
     }
-    battle.setQuickChats(chats);
+    battle.setMusicVolume(audio.music);
+    battle.setSoundVolume(audio.sound);
+    if (!writeBrightness(localStorage, brightness)) {
+      setStatus('亮度设置未保存，请重试。'); return;
+    }
+    applyBrightness(brightness);
+    if (!writeSaturation(localStorage, saturation)) {
+      setStatus('饱和度设置未保存，请重试。'); return;
+    }
+    applySaturation(saturation);
+    if (!writeContrast(localStorage, contrast)) {
+      setStatus('对比度设置未保存，请重试。'); return;
+    }
+    applyContrast(contrast);
     if (!writeDisplayPreferences(localStorage, displayPreferences)) {
-      setStatus('键位和快捷聊天已保存；显示设置未保存，草稿保留且仍使用当前显示设置。'); return;
+      setStatus('显示设置未保存，请重试。'); return;
     }
     applyDisplayPreferences(displayPreferences);
+    const antialiasChanged = displayPreferences.msaa4x !== initialMsaa4x.current;
+    const artworkSaved = writeBattleArtworkQuality(localStorage, artworkQuality);
+    if (antialiasChanged || (artworkSaved && artworkQuality !== getBattleArtworkQuality())) {
+      window.location.reload();
+      return;
+    }
+    if (!artworkSaved) {
+      setStatus('显示设置已保存，战斗素材设置未保存，请重试。'); return;
+    }
     close();
   }
 
@@ -214,32 +235,34 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
   }
 
   const layout = ui ? new HomeSourceLayout(ui, SETTINGS_LAYOUT) : undefined;
-  const props = (name: string) => sourceProps(ui!, layout!, SETTINGS_LAYOUT, name);
+  const props = (name: string, offsetY = -54) => sourceProps(ui!, layout!, SETTINGS_LAYOUT, name,
+    undefined, 0, offsetY);
   return <GameDialog ref={dialog} id="source-settings" width={800} height={599} stageClassName="settings-source-stage"
     aria-label="系统设置" aria-busy={!ui && !resourceError} data-settings-source-page="" uiScale={scale}
     onCompositionStart={() => {composing.current = true;}}
     onCompositionEnd={() => {composing.current = false;}}
-    onCancel={event => {event.preventDefault(); if (!composing.current) close();}}
+    onCancel={event => {event.preventDefault(); if (!composing.current && !displayPending) close();}}
     onKeyDown={keydown} onKeyUp={event => {
       event.stopPropagation();
       if (event.code === 'Escape' && escapePending.current) {
         escapePending.current = false;
-        if (!composing.current && !event.nativeEvent.isComposing) close();
+        if (!composing.current && !event.nativeEvent.isComposing && !displayPending) close();
       }
     }}>
     <SourceImageScale value={scale}>
       {ui && <>
         <SettingsSourcePage ui={ui}
           topbar={<SettingsSourceButton ui={ui} source="btnClose" offsetX={-41} offsetY={-5}
-            aria-label="关闭设置" data-settings-close="" onClick={close} />}
+            aria-label="关闭设置" data-settings-close="" disabled={displayPending} onClick={close} />}
           footbar={<>
             <SettingsSourceButton ui={ui} source="btnDefault" offsetX={-76} offsetY={-548}
               aria-label="恢复默认草稿" data-settings-default=""
-              onClick={restoreDefaults} />
+              disabled={displayPending} onClick={restoreDefaults} />
             <SettingsSourceButton ui={ui} source="btnOK" offsetX={-76} offsetY={-548}
-              aria-label="确认设置" data-settings-confirm="" onClick={save} />
+              aria-label="确认设置" data-settings-confirm="" disabled={displayPending}
+              onClick={event => {void save(event.currentTarget);}} />
             <SettingsSourceButton ui={ui} source="btnCancel" offsetX={-76} offsetY={-548}
-              aria-label="取消设置" data-settings-cancel="" onClick={close} />
+              aria-label="取消设置" data-settings-cancel="" disabled={displayPending} onClick={close} />
           </>} />
         <div className="settings-key-headings" aria-hidden="true"><span>主键</span><span>备用键</span></div>
         <div className="settings-key-list" role="group" aria-label="键位设置">
@@ -250,6 +273,7 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
               const code = secondary ? bindings.secondary?.[action] : bindings[action];
               const unsetOptionalPrimary = !secondary && optionalPrimary(action) && !code;
               return <SettingsKeyField key={String(secondary)} active={active}
+                disabled={displayPending}
                 id={`settings-key-${action}${secondary ? '-secondary' : ''}`}
                 data-settings-key={action} data-settings-secondary={String(secondary)}
                 data-settings-unset={unsetOptionalPrimary ? '' : undefined}
@@ -278,41 +302,64 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
             })}
           </div>)}
         </div>
-        {QUICK_CHAT_KEYS.map((key, index) => <SettingsChatField key={key} {...props('edt' + key)}
-          frameStyle={props('dikuang' + (13 + index)).style}
-          aria-label={key + '快捷聊天'} data-settings-quick-chat={key} value={quickChats[key]} maxLength={72}
-          autoComplete="off" onChange={event => setQuickChats({...quickChats, [key]: event.currentTarget.value})} />)}
-        <div className="settings-adjustments" role="group" aria-label="音量、亮度与饱和度调节">
+        <div className="settings-adjustments" role="group" aria-label="音量与画面调节">
           <SettingsAdjustment icon="/ui/settings/music-cat.png" label="音乐音量" data-settings-volume="music"
+            disabled={displayPending}
             value={audio.music} onValueChange={value => changeAudio('music', value)}/>
           <SettingsAdjustment icon="/ui/settings/sound-dog.png" label="音效音量" data-settings-volume="sound"
+            disabled={displayPending}
             value={audio.sound} onValueChange={value => changeAudio('sound', value)}/>
-          <SettingsAdjustment icon="/ui/settings/brightness-shiba.png" label="亮度" data-settings-brightness=""
+          <SettingsAdjustment icon="/ui/settings/brightness-shiba-label.webp" label="亮度" data-settings-brightness=""
+            disabled={displayPending}
             min={MIN_BRIGHTNESS} max={MAX_BRIGHTNESS} value={brightness} onValueChange={changeBrightness}/>
-          <SettingsAdjustment icon="/ui/settings/saturation-pug.svg" label="饱和度" iconLabel="饱和度"
+          <SettingsAdjustment icon="/ui/settings/saturation-husky.webp" label="饱和度"
+            disabled={displayPending}
             data-settings-saturation="" min={MIN_SATURATION} max={MAX_SATURATION}
             value={saturation} onValueChange={changeSaturation}/>
+          <SettingsAdjustment icon="/ui/settings/contrast-cat.webp" label="对比度" data-settings-contrast=""
+            disabled={displayPending}
+            min={MIN_CONTRAST} max={MAX_CONTRAST} value={contrast} onValueChange={changeContrast}/>
+          <SettingsAdjustment icon="/ui/settings/resolution-cat.webp" label="渲染分辨率"
+            disabled={displayPending}
+            data-settings-render-scale="" min={0} max={4} step={1} title="调整战斗场景的3D渲染分辨率"
+            value={RENDER_RESOLUTION_SCALES.indexOf(display.renderScale)}
+            valueText={`${display.renderScale}×`}
+            onValueChange={index => changeRenderScale(RENDER_RESOLUTION_SCALES[index])}/>
         </div>
         {([['window', 'rdoWindowMode', '窗口模式'], ['fullscreen', 'rdoFullscreenMode', '全屏模式']] as const)
           .map(([mode, source, label]) => <SettingsChoice key={source} {...props(source)} kind="radio"
             data-settings-display-mode={mode} data-settings-display-binding="web-browser-fullscreen"
             aria-label={label} checked={mode === 'fullscreen' ? fullscreen : !fullscreen}
             aria-busy={displayPending}
-            disabled={mode === 'fullscreen' && !document.fullscreenEnabled}
-            onClick={event => {void changeDisplayMode(mode === 'fullscreen', event.currentTarget);}}>
+            disabled={displayPending || (mode === 'fullscreen' && !document.fullscreenEnabled)}
+            onClick={() => {setFullscreen(mode === 'fullscreen'); setStatus('');}}>
             {mode === 'fullscreen' ? '全屏' : '窗口'}
           </SettingsChoice>)}
-        {([['low', 'rdoLow', '低画质', false], ['high', 'rdoHigh', '高画质', true]] as const)
-          .map(([quality, source, label, highPrecision]) => <SettingsChoice key={source} {...props(source)} kind="radio"
-            data-settings-display-quality={quality} aria-label={label} checked={display.highPrecision === highPrecision}
-            onClick={() => setDisplay(value => ({...value, highPrecision}))}>{label}</SettingsChoice>)}
-        <SettingsChoice {...props('chkSilhouette')} kind="checkbox"
-          data-settings-display-setting="silhouette" aria-label="卡通渲染" checked={display.silhouette}
-          onClick={() => setDisplay(value => ({...value, silhouette: !value.silhouette}))}>卡通渲染</SettingsChoice>
-        {UNSUPPORTED_OPTIONS.map(([source, label]) => <SettingsChoice key={source} {...props(source)}
-          kind={source.startsWith('rdo') ? 'radio' : 'checkbox'} disabled aria-label={label} title="尚未接入">
-          {label}
-        </SettingsChoice>)}
+        <SettingsChoice {...props('chkSilhouette', -74)} kind="checkbox"
+          disabled={displayPending}
+          data-settings-display-setting="showFps" aria-label="FPS显示" checked={display.showFps}
+          onClick={() => setDisplay(value => ({...value, showFps: !value.showFps}))}>FPS显示</SettingsChoice>
+        <SettingsChoice {...props('chkSilhouette', -49)} kind="checkbox"
+          disabled={displayPending}
+          data-settings-display-setting="silhouette" aria-label="卡通描边" checked={display.silhouette}
+          onClick={() => setDisplay(value => ({...value, silhouette: !value.silhouette}))}>卡通描边</SettingsChoice>
+        <SettingsChoice {...props('chkSilhouette', -24)} kind="checkbox"
+          disabled={displayPending}
+          data-settings-display-setting="msaa4x" aria-label="抗锯齿" checked={display.msaa4x}
+          title="4× MSAA，点击确定后重新载入客户端"
+          onClick={() => setDisplay(value => ({...value, msaa4x: !value.msaa4x}))}>抗锯齿</SettingsChoice>
+        <div className="settings-battle-artwork" role="group" aria-label="战斗素材画质"
+          style={{left: props('rdoFullscreenMode').style.left,
+            top: Number(props('rdoFullscreenMode').style.top) + 25}}>
+          {([['original', '怀旧画质'], ['hd', 'HD画质']] as const).map(([quality, label]) =>
+            <SettingsChoice key={quality} kind="radio" data-settings-battle-artwork={quality}
+              disabled={displayPending}
+              aria-label={label} checked={artworkQuality === quality}
+              onClick={() => {
+                setArtworkQuality(quality);
+                setStatus(`${label}只切换战斗模型与特效贴图，确认后重新载入客户端。`);
+              }}>{label}</SettingsChoice>)}
+        </div>
       </>}
       {ui && <GameMessage data-settings-status="" text={status}/>}
       {!ui && <SettingsResourceFeedback error={resourceError} close={close}

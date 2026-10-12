@@ -53,7 +53,7 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
                 className="lobby-room-panel" aria-hidden="true"/>
             </div>}
             {!room && <div className="lobby-game-banner" data-lobby-banner="">
-              <ImageArtwork asset={lobbyBannerUrl} role="img" aria-label="阿猫阿狗大作战，游戏免费"/>
+              <ImageArtwork asset={lobbyBannerUrl} role="img" aria-label="欢迎回来"/>
             </div>}
             {!room && headerContent && <div className="lobby-source-header" data-lobby-header="">{headerContent}</div>}
             <div className="lobby-source-sidebar">

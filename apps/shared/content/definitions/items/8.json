@@ -50,11 +50,11 @@
     "texture": "A",
     "iconId": 8,
     "textures": [
-      "Data/scnobj/00008/00008A.png"
+      "Data/scnobj/00008/00008A.webp"
     ],
     "sourceModel": "Data/scnobj/00008/00008.POL",
     "modelStatus": "resolved",
-    "texturePath": "Data/scnobj/00008/00008A.png"
+    "texturePath": "Data/scnobj/00008/00008A.webp"
   },
   "runtime": {
     "values": {

@@ -42,6 +42,7 @@ const SUMMARY_IMAGES = [
   ...[1, 2, 3, 4, 5, 101, 102, 103, 104, 105].flatMap(pet =>
     ['die', 'yeah_1', 'yeah_2'].map(pose => `pet-${pet}-${pose}.png`)),
 ];
+let preparedSummaryUi: HomeSourceUi | undefined;
 
 /** Source result icons come from jiejitubiao; every level beyond the catalog stays blank. */
 function levelReference(ui: HomeSourceUi, level: number): string | undefined {
@@ -76,7 +77,7 @@ function SummaryGrowth({ui, layout, award, elapsed}: {
 export function BattleSummaryPage(props: BattleSummaryPageProps) {
   const stage = useRef<HTMLDivElement>(null);
   const audio = useSummaryAudio(props.soundVolume);
-  const [resources, setUi] = useState<HomeSourceUi>();
+  const [resources, setUi] = useState<HomeSourceUi | undefined>(() => preparedSummaryUi);
   const ui = audio.ready ? resources : undefined;
   const [error, setError] = useState('');
   const [page, setPage] = useState(0);
@@ -99,6 +100,7 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
       document.fonts.load("16px 'Silkscreen'"),
     ]).then(([resources]) => {
       if (!resources.layouts.some(page => page.path.endsWith(SUFFIX))) throw new Error('原结算布局缺失');
+      preparedSummaryUi = resources;
       if (live) setUi(resources);
     }).catch(reason => {if (live) setError(String(reason));});
     return () => {live = false; window.removeEventListener('resize', resize);};

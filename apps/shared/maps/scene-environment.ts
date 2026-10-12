@@ -1,5 +1,3 @@
-import {FIELD_ROAD_HD} from './field-road-hd';
-
 export type SceneFogMode = 0 | 1 | 2 | 3;
 
 export interface SceneEnvironmentLight {
@@ -25,9 +23,8 @@ export interface SceneEnvironment {
 export const ORIGINAL_SCENE_AMBIENT: readonly [number, number, number] = [1, 1, 1];
 export const ORIGINAL_SCENE_EMISSIVE = 0;
 
-/** Original scene identity also used by the Field Road artwork variant. */
+/** Original scene identity for the 25 primary maps. */
 export function originalSceneId(mapId: string): string | undefined {
-  if (mapId === FIELD_ROAD_HD.sceneId) return FIELD_ROAD_HD.sourceSceneId;
   return /^(000[1-9]|001[0-9]|002[0-5])$/.test(mapId) ? mapId : undefined;
 }
 

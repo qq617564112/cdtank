@@ -54,6 +54,9 @@ export function LoadingPage({background, progress, status, error, details, artwo
         </div>
       </div>
     </div>
+    <div className="loading-progress-track" aria-hidden="true">
+      <div className="loading-progress-fill" style={{width: `${fraction * 100}%`}}/>
+    </div>
     {error && <LoadingErrorDialog message={error} details={details} actions={actions}/>}
   </section>;
 }

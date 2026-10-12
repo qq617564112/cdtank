@@ -1,8 +1,8 @@
 # 从原客户端重建资源
 
-本页用于可选的资源重新提取与转换。单图资源包包含运行资源、字体和解码数据表。安装方式见 [README](../../README.md#本地运行)。
+本页用于可选的资源重新提取与转换。配套运行资源包包含模型、贴图、字体和解码数据表。安装方式见 [README](../../README.md#本地运行)。
 
-重新提取使用 Python 3 和 Node.js 24.16 或更高版本。仓库根目录放置原 `CDTank/` 客户端，保留其 EXE、`Data/data.cpk`、`Data/music/music.cpk`、`Data/table`、loose 文件和 download 补丁目录。动态文字从原客户端的 `MINGLIU.TTC` 导出 SIMSUN 字体；原始美术位于 `art/original/`，高清模型贴图与 minimap 位于 `art/hd/`。
+重新提取使用 Python 3 和 Node.js 24.16 或更高版本。仓库根目录放置原 `CDTank/` 客户端，保留其 EXE、`Data/data.cpk`、`Data/music/music.cpk`、`Data/table`、loose 文件和 download 补丁目录。导出器保留原字库和字体来源；运行入口另补入仓库中的中文笔刷字体及 Silkscreen。原始美术位于 `art/original/`，高清源图与资源快照位于 `art/hd/`。
 
 提取器只写新的 `recovery/output/verified`。资源包发布的 `apps/server/resources/tables/` 仅含数据表，并非完整提取结果。重新提取时先将现有 `recovery/output/verified/` 移到仓库外保留，再准备依赖并执行：
 
@@ -13,7 +13,7 @@ npm ci
 npm run assets:rebuild
 ```
 
-`assets:rebuild` 从脚本位置确定仓库目录，依序调用 `inspect_assets.py` 解包与解码表、`assets:catalog` 记录来源、`assets` 发布资源、安装模型高清贴图与原版 UI，最后运行 `assets:usage` 发布来源引用索引。任一子命令失败即停止并返回非零状态。脚本不修改原客户端或账户库。
+`assets:rebuild` 从脚本位置确定仓库目录，依序调用 `inspect_assets.py` 解包与解码表、`assets:catalog` 记录来源、`assets` 导出资源、`assets:usage` 记录来源引用，安装模型高清贴图与原版 UI，最后用 `assets:publish` 归入当前 public 目录。任一子命令失败即停止并返回非零状态。脚本不修改原客户端或账户库。
 
 `assets` 包括 MV3/POL/CVD 转换、整图物件/破坏模型/植物/环境动画与声音、导航和出生数据、战车、UI 与原字库/密码字体/表情序列、音乐音效、效果与动作/挂点/路径、技能道具目录及拥有战车纹理。战斗伤害、治疗和暴击数字仍使用原数字图片。
 
@@ -23,9 +23,11 @@ npm run assets:rebuild
 npm run assets:rebuild -- --reuse-verified
 ```
 
-重建使用原版界面图片与字体，保留模型高清贴图和本地涂鸦小地图。复用仅跳过解包与表解码，重建时原客户端仍须保留，后续导出器会读取原表和 EXE。现有 Web 资产会由对应导出器重写；不要以旧提取结果配合不同版本客户端。
+重建导出原来源界面与字库，再安装本地 HD 素材和仓库字体，保留涂鸦小地图。复用仅跳过解包与表解码，重建时原客户端仍须保留，后续导出器会读取原表和 EXE。现有 Web 资产会由对应导出器重写；不要以旧提取结果配合不同版本客户端。
 
-两端构建和打包可以直接使用安装脚本解压的单图资源，无需先重建：
+当前 UI 合图和怀旧／HD 战斗素材另由[压缩与发布入口](../asset-compression.md)生成。重建后，在完整 `art/hd/` 和 `art/original/` 基础上生成 compressed，再发布独立资源、UI 精灵图和两套战斗资源；原客户端导出不包含手绘新素材的创作源图。
+
+两端构建和打包使用配套的最终运行目录，无需先执行原客户端重建：
 
 ```sh
 npm run protocol:generate

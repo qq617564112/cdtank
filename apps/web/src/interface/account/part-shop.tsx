@@ -1,5 +1,5 @@
 import {GameMessage, showGameMessage} from '../resources/game-message';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import type {ReqPartSale, ResPartSale} from '../../../../shared/protocols/PtlPartSale';
 import {createRequestId} from '../../network/request-id';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
@@ -61,7 +61,7 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
   const [buyConfirm, setBuyConfirm] = useState(false);
   const [description, setDescription] = useState<{id: number; left: number; top: number}>();
   const generation = useRef(0);
-  const [catalog, setCatalog] = useState<CombatCatalog>();
+  const [catalog, setCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const initialSelected = owner.pending?.itemTableId ?? owner.selected;
   const [selected, setSelected] = useState(initialSelected);
   const [ownedSelected, setOwnedSelected] = useState<number>();
@@ -115,7 +115,7 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
           && inCategory(item.itemTableId, nextCategory)) ? value
           : shop.items.find(item => inCategory(item.itemTableId, nextCategory))?.itemTableId;
         owner.selected = id; return id;});
-        setStatus(owner.pending && !owner.inFlight ? '购买未确认，可重试原请求。' : '');
+        setStatus(value => value || (owner.pending && !owner.inFlight ? '购买未确认，可重试原请求。' : ''));
       } catch (error) {if (current.active) showGameMessage(error instanceof Error ? error.message : '部件资料载入失败');}
       finally {current.query = false; if (current.active) {setBusy(Boolean(owner.inFlight || owner.saleInFlight)); if (queued) {queued = false; void refresh();}}}
     }
@@ -167,7 +167,9 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
       }
     } catch (error) {if (current.active) {
       const message = error instanceof Error ? error.message : '购买未确认，请重试';
-      if (owner.pending) setStatus(message); else showGameMessage(`购买已完成，库存载入失败：${message}`);
+      if (owner.pending) {setStatus(message); showGameMessage(message, 'error');}
+      else showGameMessage(`购买已完成，库存载入失败：${message}`);
+      owner.session?.refresh();
     }}
     finally {owner.inFlight = undefined; if (current.active) setBusy(current.query); else owner.session?.refresh();}
   }

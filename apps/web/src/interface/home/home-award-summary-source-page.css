@@ -1,3 +1,5 @@
+@import '../resources/silkscreen.css';
+
 .home-award-summary-source {
   position: absolute;
   left: 219px;
@@ -10,6 +12,26 @@
 .home-award-summary-source > .source-static-image,
 .home-award-summary-source > .source-static-text {
   position: absolute;
+}
+
+.home-award-summary-source .home-award-counter {
+  z-index: 1;
+  box-sizing: border-box;
+  overflow: visible;
+  padding: 0 4px 2px;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  text-shadow: 1px 2px 0 #111, 2px 3px 0 #111;
+}
+
+:is(#home-inventory, [data-player-info-summary]) .home-award-counter,
+:is(#home-inventory, [data-player-info-summary]) .home-award-counter > [data-source-text-content] {
+  font-family: 'Silkscreen', sans-serif !important;
+  font-weight: 700;
+  font-synthesis: weight;
+  -webkit-text-stroke: 2px #111;
+  paint-order: stroke fill;
 }
 
 #home-inventory [data-home-summary-battle-slot] > .home-battle-summary-source {

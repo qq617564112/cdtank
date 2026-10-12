@@ -4,17 +4,9 @@
 
 图片位于 `apps/web/src/assets/maps/minimaps/`，索引 `index.ts` 使用 `new URL(..., import.meta.url)` 随前端发布。启动图片预加载器通过现有源码图片glob下载并解码这些资源。资源安装不会覆盖源码中的PNG。
 
-## 批量生成
+## 发布
 
-准备项目依赖和 `apps/web/public/` 后，在仓库根目录执行：
-
-```sh
-node scripts/render-map-minimaps.mjs
-```
-
-脚本读取 `scene-placements.json` 的全部地图，自行启动独立Vite渲染页面和无头Chromium，不需要游戏服务器或账户。浏览器可用 `CDTANK_CHROME` 指定；资源目录可用 `CDTANK_WEB_ASSETS` 指定。结束后关闭本次渲染器并清理临时目录。
-
-每次更新全部PNG及源码索引；总览输出为 `recovery/output/map-minimaps-overview.png`。
+当前小地图采用涂鸦素材，按运行相对路径保存在 `art/hd/`，经逐图配方生成压缩成品后发布。更新方法见[高清资产压缩与精灵图](../asset-compression.md)；当前风格见[涂鸦小地图](../minimap-cartoon-style.md)。
 
 ## 渲染与坐标
 

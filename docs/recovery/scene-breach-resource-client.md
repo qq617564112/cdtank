@@ -8,6 +8,8 @@
 
 每个破损owner在`load()`的await前登记到`breakables`，沿现revision/clear释放。原放置旋转、scale和geometry origin、破损淡出、快照与新局状态、声音和伤害数字没有新增规则。
 
+`SceneBreachVisual.load()`提前创建并隐藏全部破损网格，登记源放置标记，预编译显示材质和每个`ShadowDepthWrapper`的阴影effect。深度材质独立保存effect；击毁时复用已创建的网格与动画，不在首次投影时编译各碎块的shader。统一场景光照的受光名单按成员变化同步。
+
 ## 未完成范围
 
 共享库和98个真实放置绑定已导出发布。新增地图中的实际材质、CVD播放和释放尚无浏览器或表现验收；未运行测试、构建、类型检查或浏览器。

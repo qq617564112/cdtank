@@ -2,6 +2,8 @@ import {gameContent} from '../../../shared/content/catalog';
 import type {MsgRoomEvent} from '../../../shared/protocols/MsgRoomEvent';
 import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 import {setSpatialListener} from './spatial-listener';
+import {loadStaticJson} from '../assets/static-resources';
+import {loadAudioBuffer} from './audio-resources';
 
 interface Position {x: number; y: number; z: number}
 interface Voice {
@@ -49,9 +51,7 @@ export class BattleSound {
   async start(): Promise<void> {
     this.stop();
     const generation = this.generation;
-    const response = await fetch('/audio.json');
-    if (!response.ok) throw new Error('原战斗音效目录载入失败');
-    const catalog = await response.json() as SoundCatalog;
+    const catalog = await loadStaticJson<SoundCatalog>('/manifests/audio.json');
     if (generation !== this.generation) return;
     const context = this.context ??= new AudioContext();
     if (!this.gain) {
@@ -60,13 +60,12 @@ export class BattleSound {
     }
     const definitions = [...gameContent().items.values()].flatMap(item => item.resources.fireSound ? [item.resources.fireSound] : [])
       .concat([...gameContent().tanks.values()].map(tank => tank.resources.destroySound));
-    const sounds = new Map(definitions.map(sound => [sound.id, sound]));
-    const decoded = await Promise.all([...sounds.values()].map(async entry => {
+    const soundIds = new Set(definitions.map(sound => sound.id));
+    const sounds = catalog.soundIds.filter(sound => soundIds.has(sound.id));
+    const decoded = await Promise.all(sounds.map(async entry => {
       const cached = this.buffers.get(entry.id);
       if (cached) return [entry.id, cached] as const;
-      const response = await fetch(`/${entry.asset}`);
-      if (!response.ok) throw new Error(`战斗声音载入失败：${entry.id}`);
-      return [entry.id, await context.decodeAudioData(await response.arrayBuffer())] as const;
+      return [entry.id, await loadAudioBuffer(`/${entry.asset}`, context)] as const;
     }));
     if (generation !== this.generation) return;
     decoded.forEach(([id, buffer]) => this.buffers.set(id, buffer));

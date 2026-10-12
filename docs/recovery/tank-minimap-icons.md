@@ -2,15 +2,9 @@
 
 全部21种坦克使用真实三维模型重新生成64×64俯视PNG，每种提供本人白色、敌方红色、友方蓝色三种3像素外轮廓，共63张。小地图以玩家当前加载模型的 `tankId` 取图；模型尚未载入时使用权威快照的 `tankId`。本人使用白色，团队模式同队使用蓝色，其它玩家使用红色。
 
-## 生成
+## 发布
 
-准备项目依赖、Python3及Pillow、`apps/web/public/` 和 `apps/server/resources/tables/tankshop.json`，在仓库根目录执行：
-
-```sh
-node scripts/render-tank-minimap-icons.mjs
-```
-
-脚本自行启动独立Vite渲染页面及无头Chromium，从 `tanks.json` 读取全部坦克，通过 `TankView.loadPreview` 装配真实模型与原 `tankshop` 默认U/M/XY贴图。浏览器路径可用 `CDTANK_CHROME` 指定，资源目录可用 `CDTANK_WEB_ASSETS` 指定。结束后关闭本次渲染器，清理临时目录。
+图标源图按运行相对路径保存在 `art/hd/`，经逐图配方生成压缩成品后发布。尺寸与编码方式见[高清资产压缩与精灵图](../asset-compression.md)。
 
 渲染规则：
 

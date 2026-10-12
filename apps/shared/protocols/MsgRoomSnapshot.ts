@@ -329,6 +329,8 @@ export interface MatchSnapshot {
   animatedBlockers?: {id: string; cells: number[]}[];
   groundTraps?: GroundTrapSnapshot[];
   groundItems?: GroundItemSnapshot[];
+  /** Source drop-table visuals which may appear through destruction or discard. */
+  groundItemResources?: Pick<GroundItemSnapshot, 'modelId' | 'texture'>[];
   result?: MatchResult;
   cpuManagerId?: string;
 }

@@ -11,7 +11,7 @@ DEFAULT_SOURCE_ROOT = ROOT / 'recovery/output/verified/assets/data/Data'
 DEFAULT_OUTPUT_ROOT = ROOT / 'apps/web/public'
 MAP_IDS = tuple(f'{map_id:04d}' for map_id in range(1, 26))
 TEXTURE_SOURCE = 'Data/image/toon/0.bmp'
-TEXTURE = 'scene/actor-toon/0.png'
+TEXTURE = 'scene/actor-toon/0.webp'
 
 
 def candidate_count(path):
@@ -35,7 +35,7 @@ def publish(source_root, output_root):
     texture_path = output_root / TEXTURE
     texture_path.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(source_root / TEXTURE_SOURCE.removeprefix('Data/')) as image:
-        image.convert('RGB').save(texture_path, format='PNG')
+        image.convert('RGB').save(texture_path, format='WEBP', lossless=True)
 
     document = dict(
         source=TEXTURE_SOURCE,

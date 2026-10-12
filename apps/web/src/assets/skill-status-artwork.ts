@@ -28,7 +28,7 @@ const definitions = [
 ];
 
 export const SKILL_STATUS_ARTWORK: ReadonlyMap<number, SkillStatusArtwork> = new Map(definitions
-  .map(status => [status.effectId, {...status, asset: `Data/effect/xy/${status.effectId}.png`}]));
+  .map(status => [status.effectId, {...status, asset: `Data/effect/xy/${status.effectId}.webp`}]));
 
 const statusAssets = new Set([...SKILL_STATUS_ARTWORK.values()].map(status => status.asset));
 

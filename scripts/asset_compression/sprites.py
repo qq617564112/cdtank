@@ -11,6 +11,7 @@ import tempfile
 from PIL import Image
 
 from .encoding import WebpEncoder
+from .public_layout import organize_public, public_path, prune_empty_directories
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -200,6 +201,8 @@ def generate(source, output, recipe_path, page_size, cwebp, workers):
             if '/' + row['replacement'] in images:
                 for name in (row['texture'], row['output_relative']):
                     aliases['/' + name] = '/' + row['replacement']
+        for asset in [*images, *aliases]:
+            aliases['/' + public_path('sprites/standalone/' + asset.lstrip('/'))] = aliases.get(asset, asset)
         summary = {'images': len(images), 'packed_images': len(images) - len(standalone),
             'atlas_pages': len(atlases), 'standalone_images': len(standalone),
             'packed_source_bytes': sum(row['bytes'] for _, page in jobs for row, _ in page.items),
@@ -209,9 +212,17 @@ def generate(source, output, recipe_path, page_size, cwebp, workers):
             'encoder_version': encoder.version, 'atlases': sorted(atlases, key=lambda item: item['url']),
             'images': dict(sorted(images.items())), 'aliases': dict(sorted(aliases.items())), 'summary': summary}
         temporary_manifest = work / 'sprite-images.json'
-        temporary_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
-        previous_path = output / 'sprite-images.json'
+        previous_path = output / 'manifests/sprite-images.json'
+        previous_path.parent.mkdir(parents=True, exist_ok=True)
         previous = json.loads(previous_path.read_text()) if previous_path.exists() else {}
+        for asset, entry in previous.get('images', {}).items():
+            if not asset.startswith('/sprites/') and asset not in images and asset not in aliases and 'url' in entry \
+                and (output / entry['url'].lstrip('/')).is_file():
+                manifest['images'][asset] = entry
+        for alias, asset in previous.get('aliases', {}).items():
+            if asset in manifest['images']:
+                manifest['aliases'].setdefault(alias, asset)
+        temporary_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
         for path in sorted(staged.rglob('*')):
             if path.is_file():
                 target = output / 'sprites' / path.relative_to(staged)
@@ -221,10 +232,21 @@ def generate(source, output, recipe_path, page_size, cwebp, workers):
         previous_files = {item['url'] for item in previous.get('atlases', [])}
         previous_files.update(item['url'] for item in previous.get('images', {}).values() if 'url' in item)
         current_files = {item['url'] for item in atlases}
-        current_files.update(item['url'] for item in images.values() if 'url' in item)
+        current_files.update(item['url'] for item in manifest['images'].values() if 'url' in item)
         for url in previous_files - current_files:
-            if url.startswith('/sprites/'):
+            if url.startswith(('/sprites/', '/assets/ui/')):
                 (output / url.lstrip('/')).unlink(missing_ok=True)
+    organize_public(output)
+    manifest = json.loads(previous_path.read_text())
+    for asset in [*manifest['images'], *manifest['aliases']]:
+        entry = manifest['images'].get(manifest['aliases'].get(asset, asset))
+        if not entry:
+            continue
+        published = asset if asset.startswith('/assets/') \
+            else '/' + public_path('sprites/standalone/' + asset.lstrip('/'))
+        if published != entry.get('url') and Path(published).suffix in ('.png', '.webp', '.svg', '.ico'):
+            (output / published.lstrip('/')).unlink(missing_ok=True)
+    prune_empty_directories(output)
     print(json.dumps(summary, ensure_ascii=False, indent=2), flush=True)
     return summary
 

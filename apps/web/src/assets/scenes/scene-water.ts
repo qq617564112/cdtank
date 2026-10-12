@@ -1,5 +1,7 @@
-import {AssetContainer, LoadAssetContainerAsync, PBRMaterial, Scene, Texture} from '@babylonjs/core';
-import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
+import {loadPreparedModel} from '../model-resources';
+import {loadStaticJson} from '../static-resources';
+import {battleArtworkUrl} from '../battle-artwork';
+import {AssetContainer, PBRMaterial, Scene, Texture} from '@babylonjs/core';
 
 interface WaterResource {
   mapId: number;
@@ -21,15 +23,13 @@ export class SceneWater {
   constructor(private readonly scene: Scene) {}
 
   async load(mapId: string): Promise<void> {
-    if (!['0002', '0003', '0016', FIELD_ROAD_HD.sceneId].includes(mapId)) return;
-    const response = await fetch(`/scene-water-${mapId}.json`);
-    if (!response.ok) throw new Error('原水面资源载入失败');
-    const resource = await response.json() as WaterResource;
+    if (!['0002', '0003', '0016'].includes(mapId)) return;
+    const resource = await loadStaticJson<WaterResource>(`/data/maps/${mapId}/water.json`);
     if (this.disposed) return;
     if (resource.mapId !== Number(mapId)) throw new Error('原水面地图身份不符');
     try {
       for (const entry of resource.geometry) {
-        const container = await LoadAssetContainerAsync(`/${entry.asset}`, this.scene);
+        const container = await loadPreparedModel(battleArtworkUrl(`/${entry.asset}`, this.scene), this.scene);
         if (this.disposed) {container.dispose(); return;}
         this.containers.push(container);
         container.materials.forEach(material => {
@@ -55,7 +55,7 @@ export class SceneWater {
       }
       for (const entry of resource.textures) {
         await new Promise<void>((resolve, reject) => {
-          const texture = new Texture(`/${entry.asset}`, this.scene, true, false,
+          const texture = new Texture(battleArtworkUrl(`/${entry.asset}`, this.scene), this.scene, true, false,
             Texture.BILINEAR_SAMPLINGMODE, resolve, message => reject(new Error(message)));
           texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE;
           texture.anisotropicFilteringLevel = 1;

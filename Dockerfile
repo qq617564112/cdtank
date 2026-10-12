@@ -10,10 +10,8 @@ COPY scripts/build-server.mjs scripts/package-release.mjs scripts/account-snapsh
 COPY deployment/ deployment/
 COPY --from=assets /apps/web/public/ apps/web/public/
 COPY --from=assets /apps/server/resources/ apps/server/resources/
-COPY deployment/assets/ui/fonts/xiangjiao-brush.ttf apps/web/public/ui/fonts/xiangjiao-brush.ttf
-COPY deployment/assets/ui/fonts/Silkscreen-Regular.ttf apps/web/public/ui/fonts/Silkscreen-Regular.ttf
-COPY deployment/assets/ui/fonts/fusion-pixel-hud.ttf apps/web/public/ui/fonts/fusion-pixel-hud.ttf
-COPY deployment/assets/ui/fonts/fusion-pixel-OFL.txt apps/web/public/ui/fonts/fusion-pixel-OFL.txt
+COPY deployment/assets/ui/fonts/xiangjiao-brush.ttf apps/web/public/assets/ui/fonts/xiangjiao-brush.ttf
+COPY deployment/assets/ui/fonts/Silkscreen-Regular.ttf apps/web/public/assets/ui/fonts/Silkscreen-Regular.ttf
 RUN npm run assets:collision \
     && npm exec -- vite build --config apps/web/vite.config.ts \
     && npm run build:server \

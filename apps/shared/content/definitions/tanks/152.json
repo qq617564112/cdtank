@@ -33669,9 +33669,9 @@
     ],
     "animationSpeed": 4.8,
     "textures": {
-      "152M_001.TGA": "tank-textures/role/152/152M_001.png",
-      "152XY_001_A.TGA": "tank-textures/role/152/152XY_001_A.png",
-      "152XY_001_B.tga": "tank-textures/role/152/152XY_001_B.png"
+      "152M_001.TGA": "tank-textures/role/152/152M_001.webp",
+      "152XY_001_A.TGA": "tank-textures/role/152/152XY_001_A.webp",
+      "152XY_001_B.tga": "tank-textures/role/152/152XY_001_B.webp"
     },
     "textureVariants": [
       {
@@ -33688,7 +33688,7 @@
           "A": {
             "request": "role/152/152M_001.tga",
             "source": "role/152/152m_001.dds",
-            "asset": "tank-textures/role/152/152M_001.png",
+            "asset": "tank-textures/role/152/152M_001.webp",
             "status": "resolved"
           },
           "B": null
@@ -33708,7 +33708,7 @@
           "A": {
             "request": "role/152/152M_002.tga",
             "source": "role/152/152m_002.dds",
-            "asset": "tank-textures/role/152/152M_002.png",
+            "asset": "tank-textures/role/152/152M_002.webp",
             "status": "resolved"
           },
           "B": null
@@ -33728,7 +33728,7 @@
           "A": {
             "request": "role/152/152M_003.tga",
             "source": "role/152/152m_003.dds",
-            "asset": "tank-textures/role/152/152M_003.png",
+            "asset": "tank-textures/role/152/152M_003.webp",
             "status": "resolved"
           },
           "B": null
@@ -33748,7 +33748,7 @@
           "A": {
             "request": "role/152/152M_004.tga",
             "source": "role/152/152m_004.dds",
-            "asset": "tank-textures/role/152/152M_004.png",
+            "asset": "tank-textures/role/152/152M_004.webp",
             "status": "resolved"
           },
           "B": null
@@ -33768,7 +33768,7 @@
           "A": {
             "request": "role/152/152M_021.tga",
             "source": "role/152/152m_021.dds",
-            "asset": "tank-textures/role/152/152M_021.png",
+            "asset": "tank-textures/role/152/152M_021.webp",
             "status": "resolved"
           },
           "B": null
@@ -33788,7 +33788,7 @@
           "A": {
             "request": "role/152/152M_022.tga",
             "source": "role/152/152m_022.dds",
-            "asset": "tank-textures/role/152/152M_022.png",
+            "asset": "tank-textures/role/152/152M_022.webp",
             "status": "resolved"
           },
           "B": null
@@ -33808,7 +33808,7 @@
           "A": {
             "request": "role/152/152M_023.tga",
             "source": "role/152/152m_023.dds",
-            "asset": "tank-textures/role/152/152M_023.png",
+            "asset": "tank-textures/role/152/152M_023.webp",
             "status": "resolved"
           },
           "B": null
@@ -33828,7 +33828,7 @@
           "A": {
             "request": "role/152/152M_024.tga",
             "source": "role/152/152m_024.dds",
-            "asset": "tank-textures/role/152/152M_024.png",
+            "asset": "tank-textures/role/152/152M_024.webp",
             "status": "resolved"
           },
           "B": null
@@ -33848,7 +33848,7 @@
           "A": {
             "request": "role/152/152M_101.tga",
             "source": "role/152/152m_101.dds",
-            "asset": "tank-textures/role/152/152M_101.png",
+            "asset": "tank-textures/role/152/152M_101.webp",
             "status": "resolved"
           },
           "B": null
@@ -33868,7 +33868,7 @@
           "A": {
             "request": "role/152/152M_102.tga",
             "source": "role/152/152m_102.dds",
-            "asset": "tank-textures/role/152/152M_102.png",
+            "asset": "tank-textures/role/152/152M_102.webp",
             "status": "resolved"
           },
           "B": null
@@ -33888,7 +33888,7 @@
           "A": {
             "request": "role/152/152M_151.tga",
             "source": "role/152/152m_151.dds",
-            "asset": "tank-textures/role/152/152M_151.png",
+            "asset": "tank-textures/role/152/152M_151.webp",
             "status": "resolved"
           },
           "B": null
@@ -33908,7 +33908,7 @@
           "A": {
             "request": "role/152/152M_152.tga",
             "source": "role/152/152m_152.dds",
-            "asset": "tank-textures/role/152/152M_152.png",
+            "asset": "tank-textures/role/152/152M_152.webp",
             "status": "resolved"
           },
           "B": null
@@ -33928,7 +33928,7 @@
           "A": {
             "request": "role/152/152M_153.tga",
             "source": "role/152/152m_153.dds",
-            "asset": "tank-textures/role/152/152M_153.png",
+            "asset": "tank-textures/role/152/152M_153.webp",
             "status": "resolved"
           },
           "B": null
@@ -33948,7 +33948,7 @@
           "A": {
             "request": "role/152/152M_154.tga",
             "source": "role/152/152m_154.dds",
-            "asset": "tank-textures/role/152/152M_154.png",
+            "asset": "tank-textures/role/152/152M_154.webp",
             "status": "resolved"
           },
           "B": null
@@ -33968,7 +33968,7 @@
           "A": {
             "request": "role/152/152M_187.tga",
             "source": "role/152/152m_187.dds",
-            "asset": "tank-textures/role/152/152M_187.png",
+            "asset": "tank-textures/role/152/152M_187.webp",
             "status": "resolved"
           },
           "B": null
@@ -33988,7 +33988,7 @@
           "A": {
             "request": "role/152/152M_190.tga",
             "source": "role/152/152m_190.dds",
-            "asset": "tank-textures/role/152/152M_190.png",
+            "asset": "tank-textures/role/152/152M_190.webp",
             "status": "resolved"
           },
           "B": null
@@ -34288,13 +34288,13 @@
           "A": {
             "request": "role/152/152XY_001_A.tga",
             "source": "role/152/152xy_001_a.dds",
-            "asset": "tank-textures/role/152/152XY_001_A.png",
+            "asset": "tank-textures/role/152/152XY_001_A.webp",
             "status": "resolved"
           },
           "B": {
             "request": "role/152/152XY_001_B.tga",
             "source": "role/152/152xy_001_b.dds",
-            "asset": "tank-textures/role/152/152XY_001_B.png",
+            "asset": "tank-textures/role/152/152XY_001_B.webp",
             "status": "resolved"
           }
         }
@@ -34313,13 +34313,13 @@
           "A": {
             "request": "role/152/152XY_002_A.tga",
             "source": "role/152/152xy_002_a.dds",
-            "asset": "tank-textures/role/152/152XY_002_A.png",
+            "asset": "tank-textures/role/152/152XY_002_A.webp",
             "status": "resolved"
           },
           "B": {
             "request": "role/152/152XY_002_B.tga",
             "source": "role/152/152xy_002_b.dds",
-            "asset": "tank-textures/role/152/152XY_002_B.png",
+            "asset": "tank-textures/role/152/152XY_002_B.webp",
             "status": "resolved"
           }
         }
@@ -34338,13 +34338,13 @@
           "A": {
             "request": "role/152/152XY_003_A.tga",
             "source": "role/152/152xy_003_a.dds",
-            "asset": "tank-textures/role/152/152XY_003_A.png",
+            "asset": "tank-textures/role/152/152XY_003_A.webp",
             "status": "resolved"
           },
           "B": {
             "request": "role/152/152XY_003_B.tga",
             "source": "role/152/152xy_003_b.dds",
-            "asset": "tank-textures/role/152/152XY_003_B.png",
+            "asset": "tank-textures/role/152/152XY_003_B.webp",
             "status": "resolved"
           }
         }
@@ -34363,13 +34363,13 @@
           "A": {
             "request": "role/152/152XY_004_A.tga",
             "source": "role/152/152xy_004_a.dds",
-            "asset": "tank-textures/role/152/152XY_004_A.png",
+            "asset": "tank-textures/role/152/152XY_004_A.webp",
             "status": "resolved"
           },
           "B": {
             "request": "role/152/152XY_004_B.tga",
             "source": "role/152/152xy_004_b.dds",
-            "asset": "tank-textures/role/152/152XY_004_B.png",
+            "asset": "tank-textures/role/152/152XY_004_B.webp",
             "status": "resolved"
           }
         }

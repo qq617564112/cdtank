@@ -1,6 +1,6 @@
 import {HomeSymbolMeter} from '../home/home-symbol-meter';
 import {rankedPetSkillId} from '../../../../shared/content/catalog';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
 import {loadStaticJson} from '../../assets/static-resources';
 import {useEffect, useState} from 'react';
@@ -28,7 +28,7 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
   ui: HomeSourceUi; petId: number; mode?: 'directory' | 'owned'; ownedRecord?: OwnedRoleRecordData;
   profile?: {bytes: number[]}; currentTank?: OwnedRoleRecordData;
 }) {
-  const [catalog, setCatalog] = useState<CombatCatalog>();
+  const [catalog, setCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const [opened, setOpened] = useState<{skill: CombatSkillDefinition; level: number}>();
   useEffect(() => {
     let active = true;

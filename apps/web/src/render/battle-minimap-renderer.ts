@@ -103,7 +103,7 @@ export class BattleMinimapRenderer {
         })),
         Promise.all(Object.entries(tankMinimapIcons).flatMap(([tankId, variants]) =>
           TANK_SIDES.map(async side => ({key: `${tankId}:${side}`, image: await decodeImageRegion(variants[side])})))),
-        loadBattleOverlayImage('ui/battle/minimap-frame.png'),
+        loadBattleOverlayImage('ui/battle/minimap-frame.webp'),
         document.fonts.load(`12px ${FONT}`, 'VIP'),
       ]);
       if (this.disposed) return;
@@ -156,12 +156,16 @@ export class BattleMinimapRenderer {
 
   hasMap(mapId: number): boolean {return this.mapId === mapId && this.image !== undefined;}
 
-  setMap(mapId: number, imageUrl: string): void {
+  async setMap(mapId: number, imageUrl: string): Promise<void> {
     this.image?.dispose();
     this.mapId = mapId;
-    this.image = new Texture(imageUrl, this.layer.utilityLayerScene, false, false, Texture.BILINEAR_SAMPLINGMODE);
-    this.image.wrapU = this.image.wrapV = Texture.CLAMP_ADDRESSMODE;
-    this.terrain.material.setTexture('image', this.image);
+    await new Promise<void>((resolve, reject) => {
+      const image = new Texture(imageUrl, this.layer.utilityLayerScene, false, false, Texture.BILINEAR_SAMPLINGMODE,
+        () => resolve(), (_message, error) => {image.dispose(); reject(error ?? new Error('小地图图片载入失败'));});
+      this.image = image;
+      image.wrapU = image.wrapV = Texture.CLAMP_ADDRESSMODE;
+      this.terrain.material.setTexture('image', image);
+    });
   }
 
   render(snapshot: MsgRoomSnapshot, playerId: string): void {

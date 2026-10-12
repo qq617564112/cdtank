@@ -23,7 +23,8 @@ function portFromEnvironment(name: string, fallback: number): number {
 export default defineConfig({
   root: webRoot,
   publicDir,
-  plugins: [contentPlugin(resolve(workspaceRoot, 'apps/shared/content/definitions')), imageAssetsPlugin(publicDir)],
+  plugins: [contentPlugin(resolve(workspaceRoot, 'apps/shared/content/definitions')),
+    imageAssetsPlugin(publicDir, resolve(workspaceRoot, 'apps/shared/content/definitions'))],
   server: {
     allowedHosts: ['tank.cloyd.fun'],
     fs: {allow: [workspaceRoot]},

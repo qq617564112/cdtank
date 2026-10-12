@@ -116,11 +116,11 @@
   user-select: none;
 }
 
-/* The banner occupies the top 80 rows of its 128-row texture. */
 .lobby-game-banner [data-image-artwork] {
   display: block;
   width: 100%;
-  height: 160%;
+  height: 100%;
+  image-rendering: pixelated;
 }
 
 .lobby-source-header {

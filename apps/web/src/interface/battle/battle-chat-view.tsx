@@ -1,4 +1,4 @@
-import {GameMessage} from '../resources/game-message';
+import {GameMessage, showGameMessage} from '../resources/game-message';
 import './chat.css';
 import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {BattleChat} from './battle-chat';
@@ -7,7 +7,8 @@ import {normalizeEmoteInput} from './chat-emote-text';
 import {QUICK_CHAT_KEYS} from '../settings/quick-chat-preferences';
 import type {QuickChatKey} from '../settings/quick-chat-preferences';
 import {loadUiFont} from '../resources/source-ui-fonts';
-import {loadSourceUi} from '../resources/source-ui-resources';
+import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
+import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {ChatSourceLayout} from './source-chat-layout';
 import {SourceBattleChat, type SourceChatResources} from './source-battle-chat';
 import {WaitingChatSourceView} from './waiting-chat-source-view';
@@ -16,6 +17,11 @@ import {sourceProps} from '../resources/source-ui-props';
 import {WaitingChatHistoryScrollbar} from './waiting-chat-history-scrollbar';
 import {RoomChatSourceCaret} from './room-chat-source-caret';
 import {LobbyChatInputPreview} from '../lobby/lobby-chat-input-preview';
+
+function sourceChatResources(ui: HomeSourceUi): SourceChatResources {
+  return {layout: new ChatSourceLayout(ui, 'game_main_chat_shrinked.xml'),
+    channels: new ChatSourceLayout(ui, 'game_main_channellist.xml'), emotes: new ChatSourceLayout(ui, 'game_main_emotelist.xml')};
+}
 
 export function BattleChatView({chat, formal = false}: {chat: BattleChat; formal?: boolean}) {
   const snapshot = useSyncExternalStore(chat.subscribe, chat.getSnapshot);
@@ -28,33 +34,43 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   const root = useRef<HTMLElement>(null), input = useRef<HTMLInputElement>(null), log = useRef<HTMLOListElement>(null);
   const targetInput = useRef<HTMLInputElement>(null);
   const composing = useRef(false), caret = useRef<number | undefined>(undefined);
-  const [resources, setResources] = useState<SourceChatResources>();
+  const [resources, setResources] = useState<SourceChatResources | undefined>(() => {
+    const ui = cachedSourceUi(['game_main_chat_shrinked.xml', 'game_main_channellist.xml', 'game_main_emotelist.xml']);
+    return ui ? sourceChatResources(ui) : undefined;
+  });
   const [renderer] = useState(() => new ChatEmotes());
   const [size, setSize] = useState(() => ({width: innerWidth, height: innerHeight}));
   const active = state.sourceActive && !!resources;
-  const waiting = formal && !state.sourceActive && !!resources;
+  const waiting = formal && state.phase === 'WAITING' && !!resources;
   // Validation keeps the reconstructed always-on panel; the formal page engages the
   // source editor only on Enter/send, otherwise the PLAYING/FINISHED frame is idle.
   const interactive = active && (state.editing || !formal);
   const notice = active && !interactive && state.noticePhase !== 'hidden';
-  const present = !formal || !state.sourceActive || interactive || notice;
+  const present = !formal || waiting || interactive || notice;
   const presentationKind = notice ? 'notice' : interactive ? 'editor' : waiting ? 'waiting' : 'legacy';
   const editorVisible = presentationKind !== 'notice';
   const source = active || waiting;
   // Leaving the session must stop any pending incoming-message timers.
   useEffect(() => () => chat.cancelNoticeTimer(), [chat]);
   useEffect(() => {
-    let alive = true;
     void loadUiFont().catch(() => {});
+    if (resources) return;
+    let alive = true;
     void (async () => {
       const ui = await loadSourceUi();
       if (!alive) return;
-      renderer.load(ui);
-      setResources({layout: new ChatSourceLayout(ui, 'game_main_chat_shrinked.xml'),
-        channels: new ChatSourceLayout(ui, 'game_main_channellist.xml'), emotes: new ChatSourceLayout(ui, 'game_main_emotelist.xml')});
-    })().catch(error => {if (alive) chat.setStatus(String(error));});
-    return () => {alive = false; renderer.clear();};
-  }, [chat, renderer]);
+      setResources(sourceChatResources(ui));
+    })().catch(error => {
+      if (!alive) return;
+      chat.setStatus(String(error));
+      if (formal) showGameMessage(String(error), 'error');
+    });
+    return () => {alive = false;};
+  }, [chat, formal, resources]);
+  useLayoutEffect(() => {
+    if (resources) renderer.load(resources.layout.ui);
+    return () => renderer.clear();
+  }, [resources, renderer]);
   // The log element only exists while the frame is present; skip layout while idle/hidden
   // and re-apply when the frame returns so rich text and scroll metrics stay correct.
   useLayoutEffect(() => {if (log.current) renderer.setSourceLayout(source, log.current);}, [source, renderer, present]);
@@ -63,6 +79,7 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
     const keydown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || composing.current || event.keyCode === 229
         || document.querySelector('dialog:modal') || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+      if (formal && (!resources || (state.phase !== 'WAITING' && !state.sourceActive))) return;
       if (event.target instanceof HTMLElement && (event.target.closest('input, select, button, textarea, [role="scrollbar"]') || event.target.isContentEditable)) return;
       if (QUICK_CHAT_KEYS.includes(event.code as QuickChatKey)) {
         event.preventDefault(); if (!event.repeat) chat.sendQuickChat(event.code as QuickChatKey);
@@ -81,7 +98,7 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
     };
     window.addEventListener('keydown', keydown); window.addEventListener('resize', resize);
     return () => {window.removeEventListener('keydown', keydown); window.removeEventListener('resize', resize);};
-  }, [chat, formal, state.sourceActive, state.editing]);
+  }, [chat, formal, resources, state.phase, state.sourceActive, state.editing]);
   useLayoutEffect(() => {
     if (caret.current !== undefined && input.current) {
       input.current.setSelectionRange(caret.current, caret.current); caret.current = undefined;

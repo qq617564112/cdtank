@@ -1,6 +1,6 @@
 import {InstancedMesh, Mesh, TransformNode} from '@babylonjs/core';
+import {loadStaticJson} from '../static-resources';
 import {PlantMaterialModel, ScenePlant05413MaterialOwner} from './scene-plant-material-owner';
-import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
 
 interface PlantResource {
   sourcePlacementId: string;
@@ -25,15 +25,11 @@ export class ScenePlantSway {
 
   async load(mapId: string): Promise<void> {
     if (!['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
-      '0021', '0023', '0024', '0025', FIELD_ROAD_HD.sceneId].includes(mapId)) return;
-    const response = await fetch(`/scene-plant-${mapId}.json`);
-    if (!response.ok) throw new Error('原植物摆动资源载入失败');
-    const resource = await response.json() as {mapId: number; plants: PlantResource[]};
+      '0021', '0023', '0024', '0025'].includes(mapId)) return;
+    const resource = await loadStaticJson<{mapId: number; plants: PlantResource[]}>(`/data/maps/${mapId}/plant.json`);
     if (this.disposed) return;
     if (resource.mapId !== Number(mapId)) throw new Error('原植物地图身份不符');
-    const materialResponse = await fetch('/scene-plant-material-05413.json');
-    if (!materialResponse.ok) throw new Error('原Plant材质资源载入失败');
-    const material = await materialResponse.json() as {models: PlantMaterialResource[]};
+    const material = await loadStaticJson<{models: PlantMaterialResource[]}>('/data/maps/shared/plant-material-05413.json');
     if (this.disposed) return;
     for (const value of material.models) this.materials.set(value.model, value);
     const primary = this.materials.get('obj05413');

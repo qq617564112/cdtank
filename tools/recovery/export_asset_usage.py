@@ -5,16 +5,19 @@ import json
 from pathlib import Path
 import re
 import struct
+import sys
 from pol import read_pol
 from mv3 import read_mv3
 from cvd import read_cvd
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'scripts'))
+from asset_compression.public_layout import public_path
+
 WEB = ROOT / 'apps/web/public'
 SOURCE_FIELDS = {'source', 'path', 'ini', 'reference', 'sourceReference', 'tableSource', 'Imagefile', 'Filename', 'imageset', 'remoteImageset'}
 DERIVED_FIELDS = {'asset', 'output', 'terrain', 'remoteAsset'}
 ACTOR_TOON_METADATA = 'scene-actor-toon.json'
-FIELD_ROAD_HD_FILE = 'apps/shared/maps/field-road-hd.ts'
 
 def normalize(value):
     value = value.replace('\\', '/').lower()
@@ -48,32 +51,30 @@ def consumers(documents):
             continue
         for number, line in enumerate(path.read_text().splitlines(), 1):
             for filename in result:
-                if filename in line:
+                if filename in line or public_path(filename) in line:
                     result[filename].append(dict(file=path.relative_to(ROOT).as_posix(), line=number,
                                                  entry='metadata-reference', code=line.strip()))
     # The scene owners construct these exact filenames from the original map ID.
     for prefix, file, token in [
         ('scene-effects-', 'apps/web/src/assets/scenes/map-scene-effects.ts',
-         'fetch(`/scene-effects-'),
+         'loadStaticJson<SceneEffectMap>'),
         ('scene-environment-sound-', 'apps/web/src/audio/map-environment-sound.ts',
-         'this.json<EnvironmentSoundMap>(`/scene-environment-sound-'),
+         'loadStaticJson<EnvironmentSoundMap>'),
     ]:
         evidence = code_evidence(file, token)
         for filename, entries in result.items():
             match = re.fullmatch(re.escape(prefix) + r'(\d{4})\.json', filename)
             if match and 1 <= int(match[1]) <= 25:
                 entries.append(dict(**evidence, entry='map-id-metadata-reference'))
-    field_road_scene_id, field_road_evidence = field_road_scene_evidence()
     terrain_scope, terrain_ids = terrain_map_scope()
     plant_scope, plant_ids = plant_map_scope()
     for prefix, file, token, scope, map_ids in [
         ('scene-terrain-material-', 'apps/web/src/assets/scenes/scene-terrain-material.ts',
-         'fetch(`/scene-terrain-material-', terrain_scope, terrain_ids | {field_road_scene_id}),
+         '/terrain-material.json', terrain_scope, terrain_ids),
         ('scene-plant-', 'apps/web/src/assets/scenes/scene-plant-sway.ts',
-         'fetch(`/scene-plant-', plant_scope, plant_ids | {field_road_scene_id}),
+         '/plant.json', plant_scope, plant_ids),
     ]:
         evidence = code_evidence(file, token)
-        scope = dict(scope, fieldRoad=dict(sceneId=field_road_scene_id, **field_road_evidence))
         for filename, entries in result.items():
             match = re.fullmatch(re.escape(prefix) + r'(\d{4})\.json', filename)
             if match and match[1] in map_ids:
@@ -84,9 +85,9 @@ def consumers(documents):
     placements = documents.get('scene-placements.json', [])
     scene_entries = result.get('scene-placements.json', [])
     animation_loader = code_evidence('apps/web/src/assets/scenes/scene-cvd-animation.ts',
-                                    'fetch(`/${path}`)')
+                                    'loadStaticJson<EffectModelLibrary>')
     destruction_loader = code_evidence('apps/web/src/assets/scenes/scene-breach-visual.ts',
-                                      'fetch(this.libraryAsset)')
+                                      'loadStaticJson<EffectModelLibrary>')
     breach_selector = 'apps/web/src/assets/scenes/scene-breach-resources.ts'
     model_libraries = (ROOT / breach_selector).read_text().split('const modelLibraries:', 1)[1].split('};', 1)[0]
     published_breach_models = set(re.findall(r'\b(obj\d+):', model_libraries))
@@ -136,18 +137,6 @@ def code_evidence(file, token):
     code = (ROOT / file).read_text().splitlines()
     number = next(i for i, line in enumerate(code, 1) if token in line)
     return dict(file=file, line=number, code=code[number - 1].strip())
-
-def field_road_scene_evidence():
-    code = (ROOT / FIELD_ROAD_HD_FILE).read_text().splitlines()
-    definition_line = next(i for i, line in enumerate(code, 1)
-                           if 'export const FIELD_ROAD_HD ' in line)
-    scene_line = next(i for i in range(definition_line, len(code) + 1)
-                      if re.search(r'\bsceneId\s*:', code[i - 1]))
-    match = re.search(r"\bsceneId\s*:\s*'([^']+)'", code[scene_line - 1])
-    assert match
-    return match[1], dict(
-        file=FIELD_ROAD_HD_FILE, line=scene_line, code=code[scene_line - 1].strip(),
-        definitionLine=definition_line, definition=code[definition_line - 1].strip())
 
 def terrain_map_scope():
     file = 'apps/web/src/assets/scenes/scene-terrain-material.ts'
@@ -365,7 +354,7 @@ def build():
                     materialIndex=material_index, imageIndex=image_index, png=png_relative,
                     glb=model['output'], imagePointer=f'/images/{image_index}/bufferView',
                     resolution='unique-converter-local-map', embeddedPngBytes=len(image_bytes),
-                    codeEvidence=[code_evidence('recovery/' + name.replace('-conversion.json', '').replace('pol', 'convert_pol').replace('mv3', 'convert_mv3').replace('cvd', 'convert_cvd') + '.py', 'stem.lower()'),
+                    codeEvidence=[code_evidence('tools/recovery/' + name.replace('-conversion.json', '').replace('pol', 'convert_pol').replace('mv3', 'convert_mv3').replace('cvd', 'convert_cvd') + '.py', 'stem.lower()'),
                                   code_evidence('tools/recovery/convert_mv3.py', "texture = material['textures'][0]"),
                                   code_evidence('tools/recovery/convert_mv3.py', "image_bytes = image_path.read_bytes()")])
                 embedded_images += 1

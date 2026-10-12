@@ -1,8 +1,8 @@
-html:is([data-game-brightness], [data-game-saturation]) {
-  filter: brightness(var(--game-brightness, 1)) saturate(var(--game-saturation, 1));
+html:is([data-game-brightness], [data-game-saturation], [data-game-contrast]) {
+  filter: brightness(var(--game-brightness, 1)) saturate(var(--game-saturation, 1)) contrast(var(--game-contrast, 1));
 }
 
 /* Modal dialogs paint in the top layer, outside their ancestors' filters. */
-html:is([data-game-brightness], [data-game-saturation]) dialog:modal {
-  filter: brightness(var(--game-brightness, 1)) saturate(var(--game-saturation, 1));
+html:is([data-game-brightness], [data-game-saturation], [data-game-contrast]) dialog:modal {
+  filter: brightness(var(--game-brightness, 1)) saturate(var(--game-saturation, 1)) contrast(var(--game-contrast, 1));
 }

@@ -122,23 +122,10 @@ def install(entry, generated_images, public):
         images[filename] = relative
     sources = list(entry['models'])
     installed = dict(images)
-    if '1002' in entry['maps']:
-        sources.extend('custom-maps/1002/' + source for source in entry['models']
-                       if (public / 'custom-maps/1002' / source).is_file())
     for source in sources:
         target = public / source
         raw = target.read_bytes()
         mapped = images
-        if source.startswith('custom-maps/1002/'):
-            mapped = {}
-            for filename, image in images.items():
-                relative = 'custom-maps/1002/' + image
-                for root in (public, ROOT / 'art/hd'):
-                    destination = root / relative
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(public / image, destination)
-                mapped[filename] = relative
-                installed[relative] = relative
         target.write_bytes(model_bytes(raw, entry, mapped, source))
     manifest_path = ROOT / 'art/hd/manifest.json'
     manifest = json.loads(manifest_path.read_text())

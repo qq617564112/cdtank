@@ -22,11 +22,11 @@ export const TEST_MAP = {
   ],
   assets: {
     box: 'Data/scnobj/obj05424/obj05424.glb',
-    metal: 'Data/map/0018/dimian01.png',
-    brick: 'Data/scnobj/obj05443/obj05443.png',
-    ground: 'Data/map/0014/tiandi.png',
+    metal: 'Data/map/0018/dimian01.webp',
+    brick: 'Data/scnobj/obj05443/obj05443.webp',
+    ground: 'Data/map/0014/tiandi.webp',
     plant: 'Data/scnobj/obj05413/obj05413.glb',
-    plantTexture: 'Data/scnobj/obj05413/obj05413.png',
+    plantTexture: 'Data/scnobj/obj05413/obj05413.webp',
   },
   /** Four slots per team, with headings toward the center. */
   spawns: [

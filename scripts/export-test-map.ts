@@ -1,4 +1,4 @@
-import {mkdirSync, readFileSync, writeFileSync} from 'node:fs';
+import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {TEST_MAP} from '../apps/shared/maps/test-map';
 import {webAssetPath} from '../apps/server/src/runtime/content-paths';
 import {loadGlbTriangles, placedCollisionMesh} from '../apps/server/src/render-collision-assets';
@@ -18,7 +18,9 @@ interface GltfModel {
   nodes: {name: string; mesh: number}[];
   materials: {name: string; pbrMetallicRoughness: {baseColorTexture: {index: number}; metallicFactor: number; roughnessFactor: number}; doubleSided?: boolean}[];
   images: {bufferView: number; mimeType: string}[];
-  textures: {source: number}[];
+  textures: {source?: number; extensions?: {EXT_texture_webp: {source: number}}}[];
+  extensionsUsed?: string[];
+  extensionsRequired?: string[];
 }
 interface Placement {
   id: string; model: string; className: string; asset: string;
@@ -27,7 +29,26 @@ interface Placement {
 interface MapEntry {id: string; [key: string]: unknown;}
 
 const id = String(TEST_MAP.id).padStart(4, '0');
-const directory = `custom-maps/${id}`;
+const sourceExport = existsSync(webAssetPath('scene-placements.json'));
+const directory = sourceExport ? `custom-maps/${id}` : `assets/models/hd/maps/custom/${id}`;
+const artworkPath = webAssetPath('manifests/battle-artwork.json');
+const artwork = existsSync(artworkPath)
+  ? JSON.parse(readFileSync(artworkPath, 'utf8')).variants.hd as Record<string, string> : {};
+function sourceAsset(name: string): string {
+  const original = sourceExport ? name.replace(/\.webp$/, '.png') : name;
+  return existsSync(webAssetPath(original)) ? original : (artwork[`/${name}`] ?? name).replace(/^\//, '');
+}
+const assets = Object.fromEntries(Object.entries(TEST_MAP.assets).map(([key, name]) =>
+  [key, sourceAsset(name)])) as Record<keyof typeof TEST_MAP.assets, string>;
+const woodTexture = sourceAsset('Data/scnobj/obj05424/obj05424.webp');
+const files = sourceExport ? {
+  placements: 'scene-placements.json', battlefields: 'battlefields.json',
+  movement: `movement/${id}.json`, audio: 'audio.json', ui: 'ui.json', preview: `${directory}/preview.svg`,
+} : {
+  placements: 'data/maps/shared/placements.json', battlefields: 'data/maps/battlefields.json',
+  movement: `data/maps/${id}/movement.json`, audio: 'manifests/audio.json', ui: 'manifests/ui.json',
+  preview: `assets/ui/images/maps/${id}/preview.svg`,
+};
 mkdirSync(webAssetPath(directory), {recursive: true});
 const width = TEST_MAP.rows[0].length * TEST_MAP.tileSize;
 const depth = TEST_MAP.rows.length * TEST_MAP.tileSize;
@@ -66,7 +87,7 @@ function writeGlb(name: string, gltf: unknown, binary: Buffer): void {
 
 /** Reuse the original box faces, with the existing metal and red tile textures. */
 function wallAsset(kind: 'steel' | 'brick'): string {
-  const source = readFileSync(webAssetPath(TEST_MAP.assets.box));
+  const source = readFileSync(webAssetPath(assets.box));
   const length = source.readUInt32LE(12);
   const gltf = JSON.parse(source.subarray(20, 20 + length).toString()) as GltfModel;
   const binary = Buffer.from(source.subarray(28 + length));
@@ -94,11 +115,17 @@ function wallAsset(kind: 'steel' | 'brick'): string {
   }
   positions.min = [-target[0] / 2, 0, -target[2] / 2];
   positions.max = [target[0] / 2, target[1], target[2] / 2];
-  const texture = readFileSync(webAssetPath(TEST_MAP.assets[kind === 'brick' ? 'brick' : 'metal']));
+  const texturePath = assets[kind === 'brick' ? 'brick' : 'metal'];
+  const texture = readFileSync(webAssetPath(texturePath));
   const start = Math.ceil(binary.length / 4) * 4;
   gltf.bufferViews.push({buffer: 0, byteOffset: start, byteLength: texture.length});
-  gltf.images = [{bufferView: gltf.bufferViews.length - 1, mimeType: 'image/png'}];
-  gltf.textures = [{source: 0}];
+  gltf.images = [{bufferView: gltf.bufferViews.length - 1,
+    mimeType: texturePath.endsWith('.webp') ? 'image/webp' : 'image/png'}];
+  gltf.textures = [texturePath.endsWith('.webp') ? {extensions: {EXT_texture_webp: {source: 0}}} : {source: 0}];
+  if (texturePath.endsWith('.webp')) {
+    gltf.extensionsUsed = [...new Set([...(gltf.extensionsUsed ?? []), 'EXT_texture_webp'])];
+    gltf.extensionsRequired = [...new Set([...(gltf.extensionsRequired ?? []), 'EXT_texture_webp'])];
+  }
   gltf.materials = [{name: kind, pbrMetallicRoughness: {
     baseColorTexture: {index: 0}, metallicFactor: 0, roughnessFactor: 1}, doubleSided: true}];
   const name = kind === 'brick' ? 'object568041500/0' : 'test-map-steel';
@@ -120,7 +147,7 @@ function groundAsset(): string {
   const uvs = [0, 0, 0, 10, 13, 10, 0, 0, 13, 10, 13, 0];
   const geometry = Buffer.alloc((positions.length + normals.length + uvs.length) * 4);
   [...positions, ...normals, ...uvs].forEach((value, index) => geometry.writeFloatLE(value, index * 4));
-  const texture = readFileSync(webAssetPath(TEST_MAP.assets.ground));
+  const texture = readFileSync(webAssetPath(assets.ground));
   const gltf = {
     asset: {version: '2.0'}, buffers: [{byteLength: geometry.length + texture.length}],
     bufferViews: [{buffer: 0, byteOffset: 0, byteLength: 72},
@@ -134,7 +161,11 @@ function groundAsset(): string {
     nodes: [{name: 'test-map-ground', mesh: 0}], scenes: [{nodes: [0]}], scene: 0,
     materials: [{name: 'tiandi.TGA', pbrMetallicRoughness: {
       baseColorTexture: {index: 0}, metallicFactor: 0, roughnessFactor: 1}, doubleSided: true}],
-    images: [{bufferView: 3, mimeType: 'image/png'}], textures: [{source: 0, sampler: 0}],
+    images: [{bufferView: 3, mimeType: assets.ground.endsWith('.webp') ? 'image/webp' : 'image/png'}],
+    textures: [assets.ground.endsWith('.webp')
+      ? {extensions: {EXT_texture_webp: {source: 0}}, sampler: 0} : {source: 0, sampler: 0}],
+    extensionsUsed: assets.ground.endsWith('.webp') ? ['EXT_texture_webp'] : undefined,
+    extensionsRequired: assets.ground.endsWith('.webp') ? ['EXT_texture_webp'] : undefined,
     samplers: [{wrapS: 10497, wrapT: 10497}],
   };
   const asset = `${directory}/ground.glb`;
@@ -165,18 +196,18 @@ TEST_MAP.rows.forEach((line, row) => [...line].forEach((tile, column) => {
   if (tile === 'S' || tile === 'C') place(column, row, 'test-map-steel', steel,
     [96, tile === 'C' ? 40 : 48, 96], 'SYcScnObjGeneral');
   if (tile === 'B') place(column, row, 'obj05443', brick, [96, 48, 96], 'SYcScnObjBreach');
-  if (tile === 'W') place(column, row, 'obj05424', TEST_MAP.assets.box, [84, 50, 84], 'SYcScnObjBreach');
+  if (tile === 'W') place(column, row, 'obj05424', assets.box, [84, 50, 84], 'SYcScnObjBreach');
   if (tile === 'G') {
     for (const offsetX of [-.28, 0, .28]) for (const offsetZ of [-.28, 0, .28]) {
-      place(column + offsetX, row + offsetZ, 'obj05413', TEST_MAP.assets.plant,
+      place(column + offsetX, row + offsetZ, 'obj05413', assets.plant,
         [34, 28, 0], 'SYcScnObjPlant');
-      place(column + offsetX, row + offsetZ, 'obj05413', TEST_MAP.assets.plant,
+      place(column + offsetX, row + offsetZ, 'obj05413', assets.plant,
         [34, 28, 0], 'SYcScnObjPlant', 90);
     }
   }
 }));
 
-publish('scene-placements.json', upsert(json<MapEntry[]>('scene-placements.json'),
+publish(files.placements, upsert(json<MapEntry[]>(files.placements),
   {id, terrain, records, castles: [], resolved: records.length}, entry => entry.id === id));
 const columns = width / 12, rows = depth / 12;
 const cells = Buffer.alloc(columns * rows * 8);
@@ -188,7 +219,7 @@ const navigation = {minimum: [-width / 2, 0, -depth / 2], maximum: [width / 2, 0
   width: columns, height: rows, cells: cells.toString('base64')};
 const respawns = TEST_MAP.spawns.map((spawn, slot) => ({slot, heading: spawn.heading, team: spawn.team,
   position: [width / 2 - (spawn.column + .5) * 96, 0, (spawn.row + .5) * 96 - depth / 2]}));
-publish('battlefields.json', upsert(json<MapEntry[]>('battlefields.json'),
+publish(files.battlefields, upsert(json<MapEntry[]>(files.battlefields),
   {id, terrainTriangles: loadGlbTriangles(terrain), collisionBoxes: [],
     respawnGroups: [respawns, respawns], navigationLayers: [navigation]}, entry => entry.id === id));
 const grid = new NavigationGrid(navigation);
@@ -196,34 +227,35 @@ const surfaces = records.filter(placement => placement.className !== 'SYcScnObjP
   id: placement.id, enabled: true, cells: [...navigationOccupancy(
     placedCollisionMesh(loadGlbTriangles(placement.asset), placement.matrix, placement.position), grid)].sort((a, b) => a - b),
 }));
-publish(`movement/${id}.json`, {id, navigation, surfaces: [{id: 'terrain', enabled: true, cells: []}, ...surfaces]});
+publish(files.movement, {id, navigation, surfaces: [{id: 'terrain', enabled: true, cells: []}, ...surfaces]});
 
-const audio = json<{maps: {mode: number; mapId: number; musicId: number; asset: string}[]}>('audio.json');
+const audio = json<{maps: {mode: number; mapId: number; musicId: number; asset: string}[]}>(files.audio);
 const music = audio.maps.find(entry => entry.mode === 1 && entry.mapId === 2)!;
 audio.maps = upsert(audio.maps, {mode: TEST_MAP.mode, mapId: TEST_MAP.id,
   musicId: music.musicId, asset: music.asset}, entry => entry.mapId === TEST_MAP.id);
-publish('audio.json', audio);
+publish(files.audio, audio);
 
 /** The selector thumbnail uses the same grid and installed texture bytes. */
-const image = (path: string): string => `data:image/png;base64,${readFileSync(webAssetPath(path)).toString('base64')}`;
+const image = (path: string): string => `data:image/${path.endsWith('.webp') ? 'webp' : 'png'};base64,${readFileSync(webAssetPath(path)).toString('base64')}`;
 const pictures: string[] = [];
 TEST_MAP.rows.forEach((line, row) => [...line].forEach((tile, column) => {
   const x = column * 96, y = row * 96;
   if ('SCBW'.includes(tile)) pictures.push(`<rect x="${x + 2}" y="${y + 2}" width="92" height="92" rx="3" fill="url(#${tile === 'B' ? 'brick' : tile === 'W' ? 'wood' : 'steel'})" stroke="#28333b" stroke-width="3"/>`);
   if (tile === 'G') pictures.push(`<rect x="${x}" y="${y}" width="96" height="96" fill="#3c792b"/>`,
-    `<image x="${x}" y="${y}" width="96" height="96" href="${image(TEST_MAP.assets.plantTexture)}"/>`);
+    `<image x="${x}" y="${y}" width="96" height="96" href="${image(assets.plantTexture)}"/>`);
 }));
-writeFileSync(webAssetPath(`${directory}/preview.svg`), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${depth}"><defs>
-<pattern id="ground" width="192" height="192" patternUnits="userSpaceOnUse"><image width="192" height="192" href="${image(TEST_MAP.assets.ground)}"/></pattern>
-<pattern id="steel" width="96" height="96" patternUnits="userSpaceOnUse"><image width="96" height="96" href="${image(TEST_MAP.assets.metal)}"/></pattern>
-<pattern id="wood" width="96" height="96" patternUnits="userSpaceOnUse"><image width="96" height="96" href="${image('Data/scnobj/obj05424/obj05424.png')}"/></pattern>
-<pattern id="brick" width="96" height="96" patternUnits="userSpaceOnUse"><svg width="96" height="96" viewBox="0 143 256 113" preserveAspectRatio="none"><image width="256" height="256" href="${image(TEST_MAP.assets.brick)}"/></svg></pattern>
+mkdirSync(webAssetPath(files.preview.substring(0, files.preview.lastIndexOf('/'))), {recursive: true});
+writeFileSync(webAssetPath(files.preview), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${depth}"><defs>
+<pattern id="ground" width="192" height="192" patternUnits="userSpaceOnUse"><image width="192" height="192" href="${image(assets.ground)}"/></pattern>
+<pattern id="steel" width="96" height="96" patternUnits="userSpaceOnUse"><image width="96" height="96" href="${image(assets.metal)}"/></pattern>
+<pattern id="wood" width="96" height="96" patternUnits="userSpaceOnUse"><image width="96" height="96" href="${image(woodTexture)}"/></pattern>
+<pattern id="brick" width="96" height="96" patternUnits="userSpaceOnUse"><svg width="96" height="96" viewBox="0 143 256 113" preserveAspectRatio="none"><image width="256" height="256" href="${image(assets.brick)}"/></svg></pattern>
 </defs><rect width="${width}" height="${depth}" fill="url(#ground)"/>${pictures.join('')}</svg>`);
-const ui = json<{imagesets: {attributes: {Name: string}; images: {Name: string; Width: string; Height: string; asset: string}[]}[]}>('ui.json');
+const ui = json<{imagesets: {attributes: {Name: string}; images: {Name: string; Width: string; Height: string; asset: string}[]}[]}>(files.ui);
 for (const set of ui.imagesets.filter(set => set.attributes.Name === 'xiaoditu0')) {
   const name = ['data', 'ui', 'xiaoditu', `${id}.tga`].join('\\');
   set.images = upsert(set.images, {Name: name, Width: '106', Height: '86',
-    asset: `${directory}/preview.svg`}, entry => entry.Name === name);
+    asset: files.preview}, entry => entry.Name === name);
 }
-publish('ui.json', ui);
+publish(files.ui, ui);
 console.log(`${TEST_MAP.name} (${id}): ${records.length} placements, ${respawns.length} team spawns`);

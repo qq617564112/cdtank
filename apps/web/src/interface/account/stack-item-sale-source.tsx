@@ -16,8 +16,8 @@ export interface StackSaleOwner {
 }
 
 /** Confirmed inventory and wallet are installed by the page owner. */
-export function StackItemSaleSource({ui, source, instanceId, activation, refreshKey, owner, onConfirmed, onBusy, onError, disabled = false}: {
-  ui: HomeSourceUi; source: ShopSource; instanceId?: number;
+export function StackItemSaleSource({ui, source, money, activation, refreshKey, owner, onConfirmed, onBusy, onError, disabled = false}: {
+  ui: HomeSourceUi; source: ShopSource; money?: number;
   activation?: {instanceId: number; sequence: number}; owner: StackSaleOwner;
   refreshKey?: number;
   onConfirmed: (response: ResStackItemSale) => void; onBusy: (busy: boolean) => void;
@@ -52,7 +52,7 @@ export function StackItemSaleSource({ui, source, instanceId, activation, refresh
       if (generation.current === current) setStatus(error instanceof Error ? error.message : String(error));
     }).finally(() => {if (generation.current === current) setPending(false);});
     return () => {generation.current++; locked.current = false; callbacks.current.onBusy(false);};
-  }, [source, instanceId, refreshKey, owner]);
+  }, [source, refreshKey, owner]);
   useEffect(() => {
     if (!activation || handledActivation.current === activation.sequence || disabled || locked.current) return;
     const quote = response?.quotes.find(value => value.instanceId === activation.instanceId);
@@ -65,8 +65,8 @@ export function StackItemSaleSource({ui, source, instanceId, activation, refresh
   const quote = response?.quotes.find(value => value.instanceId === saleInstance);
   const count = Number(quantity);
   const valid = Boolean(quote?.canSell && Number.isInteger(count) && count > 0
-    && count <= Math.min(quote.ownedQuantity, 0xffffff) && response?.money !== undefined
-    && response.money + quote.unitPrice * count <= 999999999);
+    && count <= Math.min(quote.ownedQuantity, 0xffffff) && money !== undefined
+    && money + quote.unitPrice * count <= 999999999);
   async function sell() {
     if (disabled || locked.current || !valid || !quote || !source.stackItemSale) return;
     const current = generation.current;

@@ -11,7 +11,7 @@ let passwordFont: Promise<void> | undefined;
 
 function loadRoomCreatePasswordFont(): Promise<void> {
   passwordFont ??= (async () => {
-    const face = new FontFace('CDTank-SIMSUN-Password', "url('/ui/fonts/SIMSUN-password.ttf')", {display: 'swap'});
+    const face = new FontFace('CDTank-SIMSUN-Password', "url('/assets/ui/fonts/SIMSUN-password.ttf')", {display: 'swap'});
     document.fonts.add(face);
     try {await withResourceTimeout(face.load(), '密码字体');}
     catch (error) {document.fonts.delete(face); throw error;}

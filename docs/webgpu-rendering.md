@@ -1,6 +1,6 @@
 # WebGPU 客户端渲染
 
-战场、我的家、商城模型预览和资源查看器使用 Babylon.js `WebGPUEngine`。引擎异步初始化完成后创建场景；WebGPU 不可用或初始化失败时显示启动错误，不回退 WebGL。浏览器需要支持 WebGPU，网页通过 HTTPS 或 localhost 访问。
+战场、我的家、商城模型预览使用 Babylon.js `WebGPUEngine`。引擎异步初始化完成后创建场景；WebGPU 不可用或初始化失败时显示启动错误，不回退 WebGL。浏览器需要支持 WebGPU，网页通过 HTTPS 或 localhost 访问。
 
 GLSL 自定义材质由 Babylon 的 glslang/Tint 编译为 WGSL。编译器 JS 和 WASM 使用锁定版本的 `@babylonjs/core` 内置资产，由 Vite 发布到同源地址。材质声明逐行书写，便于 Babylon 分配 WebGPU 属性、varying 和 uniform 布局。屏幕特效使用 WebGPU 的 0–1 深度范围。
 
@@ -18,7 +18,7 @@ CVD/模型特效的几何和索引在创建部件时上传。CVD 的原始顶点
 
 ## WebGPU 提交与动画
 
-引擎使用 `compatibilityMode=false`，由 Babylon 缓存并复用 RenderBundle。动态 HUD、粒子和拖尾修改有效索引数量时，清除对应批次的旧指令；战车隐身和饰品透明模式切换时，清除受影响材质的指令。完整对局继续逐帧执行场景裁剪和动态对象更新。
+当前引擎使用 `compatibilityMode=true`，加载期间模型实例增长时逐帧重新绑定缓冲。动态 HUD、粒子和拖尾修改有效索引数量时，清除对应批次缓存；战车隐身和饰品透明模式切换时，清除受影响材质缓存。完整对局继续逐帧执行场景裁剪和动态对象更新。
 
 植物保留实例及共享几何，每个源网格使用一份植物材质。实例属性保存原放置相位和高度，所有植物共享时钟缓冲，顶点着色器计算原余弦摆动及局部 X 位移。每帧不再逐株改顶点或上传位置缓冲。包围盒预留最大摆幅，实例仍参与裁剪和快照控制的隐藏、恢复；透明实例按距离从远到近排序后提交。
 
@@ -26,18 +26,28 @@ CVD/模型特效的几何和索引在创建部件时上传。CVD 的原始顶点
 
 粒子向 GPU 提交中心、大小、角度、UV 和量化颜色，顶点着色器在相机空间展开四角。粒子、普通图片特效与拖尾使用按容量增长的持久缓冲，只上传有效顶点，保持原四角对角线和顺序。完全透明的特效片元直接丢弃。粒子运动、发射及生命周期仍由原控制器执行；分辨率、MSAA、纹理采样和透明混合规则保持既有配置。
 
+## 场景光照与显示
+
+战斗场景持有统一方向光及 2048×2048 阴影贴图，按地图使用白天、夜景、室内或夕阳配置。坦克和实际三维物件跟随动作、隐藏及破坏状态投射、接收阴影；花草、billboard 特效和天空背景按材质及祖先分类排除。自定义材质在原贴图与材质色之后叠加轻微卡通受光与软阴影，原有绘画明暗保留。来源及材质范围见[场景光照与软阴影](recovery/ground-contact-shadows.md)。
+
+渲染分辨率只调整战场主相机，最后恢复原画布尺寸再绘制 HUD、名牌和小地图。五档比例、4× MSAA、描边与 FPS 均由[显示设置](display-settings.md)控制；素材画质由独立清单选择，不改变模型几何。模型、贴图和声音加载复用[资源缓存](resource-loading.md)。
+
 ## 运行时计数
 
 初始化请求 `timestamp-query`；Babylon 仅向设备申请适配器支持的特性，计时不可用不影响 WebGPU 渲染。支持计时时启用主渲染 pass 的异步 GPU 时间统计，不读取像素。
 
-战场 canvas 每秒更新开发计数属性：`data-frame-ms` 为该秒平均帧间隔，`data-render-cpu-ms` 为同步世界及 HUD 渲染的平均 CPU 时间，`data-draw-calls`、`data-active-triangles` 为当前帧提交计数；`data-gpu-main-pass-ms` 为最近收到的主 pass GPU 时间，`data-gpu-timing` 标识计时支持情况。GPU 数值异步返回，不包含独立离屏或 compute pass。开发工具可直接查看这些属性，不增加游戏界面控件。
+战场 canvas 每秒更新开发计数属性：`data-frame-ms` 为该秒平均帧间隔，`data-render-cpu-ms` 为场景与 HUD 渲染的平均 CPU 时间，`data-draw-calls` 为该秒平均每帧提交次数，`data-active-triangles` 为采样时场景的活动索引数除以 3；`data-gpu-main-pass-ms` 为最近收到的主 pass GPU 时间，`data-gpu-timing` 标识计时支持情况。GPU 数值异步返回，不包含独立离屏或 compute pass。
+
+设置中的“FPS 显示”约每秒更新一次，与上述 CPU/帧间隔统计共用采样。GPU timing 不可用时仍显示帧率，不将其视为 WebGPU 初始化失败。
 
 ## 性能依据与限制
 
-已有真实对局记录为 2560×1313、DPR 1.5、3840×1969 drawing buffer，约 38.3 FPS，10 秒脚本执行累计 6.04 秒，CPU profile 指向 Babylon 网格、动画和场景渲染。降低分辨率后更流畅是另一个客户端观察。
+早期真实对局记录为 2560×1313、DPR 1.5、3840×1969 drawing buffer，约 38.3 FPS，10 秒脚本执行累计 6.04 秒，CPU profile 指向 Babylon 网格、动画和场景渲染。
+
+10 月 9 日 Windows Chrome 154、Intel Iris Xe 的两图记录使用相同视口、DPR 和画布尺寸，1 人＋9 CPU 自动托管、MSAA 为 1、compatibilityMode 开启。田野路平均 59.91 FPS，幽浮地图平均 59.64 FPS；帧间隔、长帧和当时服务端采样见[浏览器性能](browser-performance.md)。该配置通过关闭 4× MSAA 减少开销，边缘平滑程度有所降低。
 
 原 HUD 路径会把整屏 Canvas 更新到 GPU；3840×1969 RGBA 单次图像量为 30,243,840 字节，约 28.8 MiB，尚未计 DOM 样式读取与栅格化。直接绘制取消该整屏更新，成本改为图集首次上传和可见矩形的顶点数据。现有证据没有单独量化 HUD 开销占比。
 
 CVD 帧纹理增加显存占用，换取每帧位置和 UV 缓冲上传的减少。GPU 动画的浮点计算不保证与原 CPU 逐步舍入逐位相同。
 
-本次没有运行测试、浏览器验收、构建或类型检查，也没有新的 FPS 或 GPU 时间数据。真实硬件收益需在相同分辨率、相机和 1 人 + 9 CPU 条件下，分别对约翰的路、幽浮及田野记录帧间隔、主线程时间、draw calls、GPU 时间和快照 Hz；这些指标共同区分客户端渲染与服务端状态节奏。
+上述两图记录早于后续贴图、加载和场景阴影更新，这些更新尚无新的整局 FPS 或 GPU 时间结果。实时阴影增加绘制与采样开销，既有数据不代表当前全部地图和硬件的性能。后续验收范围按[任务清单](recovery/tasklist.md)记录。

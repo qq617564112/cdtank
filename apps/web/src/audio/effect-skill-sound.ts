@@ -1,6 +1,7 @@
 import {Camera} from '@babylonjs/core';
 import {setCameraSpatialListener} from './spatial-listener';
 import type {EffectVec3} from '../render/effects/common/types';
+import {prepareStaticResourceUrl, staticResourceUrl} from '../assets/static-resources';
 
 export interface SkillSoundCatalog {
   sounds: {name: string; asset: string}[];
@@ -25,15 +26,17 @@ export class EffectSkillSound {
   };
   constructor(private readonly camera: Camera) {}
 
-  configure(catalog: SkillSoundCatalog): void {
+  async configure(catalog: SkillSoundCatalog): Promise<void> {
     this.catalog = catalog;
-    if (this.context) return;
-    this.context = new AudioContext();
-    this.master = this.context.createGain();
-    this.master.gain.value = this.volume ?? catalog.defaultSoundVolume;
-    this.master.connect(this.context.destination);
-    window.addEventListener('pointerdown', this.resume);
-    window.addEventListener('keydown', this.resume);
+    if (!this.context) {
+      this.context = new AudioContext();
+      this.master = this.context.createGain();
+      this.master.gain.value = this.volume ?? catalog.defaultSoundVolume;
+      this.master.connect(this.context.destination);
+      window.addEventListener('pointerdown', this.resume);
+      window.addEventListener('keydown', this.resume);
+    }
+    await Promise.all(catalog.sounds.map(sound => prepareStaticResourceUrl(`/${sound.asset}`)));
   }
 
   play(reference: string, selector: 1 | -1, position: EffectVec3): number {
@@ -41,7 +44,7 @@ export class EffectSkillSound {
     if (!asset || !this.context || !this.master) return 0;
     if (selector === 1 && this.context.state !== 'running') return 0;
     const handle = ++this.sequence;
-    const audio = new Audio(`/${asset}`);
+    const audio = new Audio(staticResourceUrl(`/${asset}`));
     audio.loop = selector === -1;
     const source = this.context.createMediaElementSource(audio);
     const panner = this.context.createPanner();

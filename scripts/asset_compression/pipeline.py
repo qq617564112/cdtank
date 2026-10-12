@@ -195,11 +195,41 @@ def generate(source, output, recipe_path, cwebp, workers):
         'output_image_bytes', 'main_asset_bytes', 'verification']}, ensure_ascii=False), flush=True)
 
 
+def generate_selected(source, output, recipe_path, cwebp, workers, selected):
+    recipe = json.loads(recipe_path.read_text())
+    selected = set(selected)
+    rows = [row for row in recipe['images']
+        if row['source_relative'] in selected or row['output_relative'] in selected]
+    matched = {path for row in rows for path in (row['source_relative'], row['output_relative'])}
+    if selected - matched:
+        raise ValueError(f'Images have no approved sizing recipe: {", ".join(sorted(selected - matched))}')
+    for row in rows:
+        if not (source / row['source_relative']).is_file():
+            raise FileNotFoundError(f'Missing HD input: {row["source_relative"]}')
+    output.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='.generate-', dir=output) as work:
+        encoder = WebpEncoder(cwebp, recipe['encoder'], Path(work))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            results = list(pool.map(lambda row: process_image(row, source, output, encoder), rows))
+    for row in rows:
+        if row['source_relative'].endswith('.png'):
+            (output / row['source_relative']).unlink(missing_ok=True)
+    report = {'source': str(source), 'output': str(output), 'encoder_version': encoder.version,
+        'image_files': len(results), 'source_image_bytes': sum(row['source_bytes'] for row in results),
+        'output_image_bytes': sum(row['output_bytes'] for row in results),
+        'files': sorted(results, key=lambda row: row['output_relative'])}
+    reports = output / 'reports'
+    reports.mkdir(exist_ok=True)
+    write_json(reports / 'selected-assets.json', report)
+    print(json.dumps(report, ensure_ascii=False, indent=2), flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Generate compressed assets directly from HD sources and the approved recipe.')
     parser.add_argument('--source', type=Path, default=REPOSITORY / 'art/hd')
     parser.add_argument('--output', type=Path, default=REPOSITORY / 'art/compressed')
     parser.add_argument('--recipe', type=Path, default=RECIPE)
+    parser.add_argument('--image', action='append', help='Only process this recipe source or output path; repeat for multiple images')
     parser.add_argument('--cwebp', default='cwebp')
     parser.add_argument('--workers', type=int, default=6)
     args = parser.parse_args()
@@ -208,4 +238,7 @@ def main():
         parser.error('Source and output must be separate directories')
     if args.workers < 1:
         parser.error('--workers must be at least 1')
-    generate(source, output, args.recipe.resolve(), args.cwebp, args.workers)
+    if args.image:
+        generate_selected(source, output, args.recipe.resolve(), args.cwebp, args.workers, args.image)
+    else:
+        generate(source, output, args.recipe.resolve(), args.cwebp, args.workers)

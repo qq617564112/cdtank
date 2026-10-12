@@ -1,7 +1,7 @@
 import {GameMessage} from '../resources/game-message';
 import {backgroundStyle} from '../../assets/image-artwork';
 import {GameSelectionHighlight} from '../resources/game-selection-highlight';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import './trade-source-page.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
@@ -14,7 +14,7 @@ import {SourceImageScale, SourceStaticImage} from '../resources/source-static-im
 import {SourceStaticText} from '../resources/source-static-text';
 import {sourceProps} from '../resources/source-ui-props';
 import {loadUiFont} from '../resources/source-ui-fonts';
-import {loadSourceUi} from '../resources/source-ui-resources';
+import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
 import {loadStaticJson} from '../../assets/static-resources';
 import {TradeSourceDetail, hasTradeRecordDetail, tradeRecordPresentation} from './trade-source-detail';
 import {TradeCandidateRowContent} from './trade-candidate-row-content';
@@ -72,10 +72,10 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
     return category === 3 ? profileView.getUint32(0x118, true) === instance
       : category === 4 ? profileView.getUint32(0x13c, true) === instance : false;
   };
-  const [ui, setUi] = useState<HomeSourceUi>();
-  const [catalog, setCatalog] = useState<CombatCatalog>();
+  const [ui, setUi] = useState<HomeSourceUi | undefined>(() => cachedSourceUi());
+  const [catalog, setCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const [resourceError, setResourceError] = useState('');
-  const [resourceLoading, setResourceLoading] = useState(true);
+  const [resourceLoading, setResourceLoading] = useState(() => !ui || !catalog);
   const [resourceAttempt, setResourceAttempt] = useState(0);
   const [localError, setLocalError] = useState('');
   const [tab, setTab] = useState<Tab>('item');
@@ -116,7 +116,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
 
   useEffect(() => {
     let active = true;
-    setResourceLoading(true);
+    setResourceLoading(!cachedSourceUi() || !preparedCombatCatalog());
     const sourceUi = loadSourceUi().then(value => {
       if (active) setUi(value);
     });

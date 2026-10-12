@@ -1,8 +1,8 @@
 # 场景灯光／雾与设备状态运行时
 
 本文记录战斗场景环境（ambient／fog／selected lights）、原 D3D 设备状态继承与
-模型绘制顺序的生产接线。原环境字段没有出现在已发布放置导出中，图级环境表按客户端
-`0x1000d570` selector 与 `Data/gfxscript` shader 家族推断为项目采用规则。
+模型绘制顺序的生产接线。原25图使用游戏实际写入的白色环境光、关闭雾及零候选的
+默认角色toon灯。逐图资源与当前偏差见[map-lighting-audit.md](map-lighting-audit.md)。
 
 ## 原来源
 
@@ -20,6 +20,8 @@
   newgeom/geom_t/geom_c1/geom_t_c1。
 - `0x1001b6f0` 参数4为 `globalAmbientRGB * properties[4:7] + emissive *
   properties[12:15]`，alpha 为 `nodeOpacity * properties[7]`。
+- 游戏`0x447c27–0x447c4a`向GfxManager写入RGBA `[1,1,1,1]`，覆盖引擎初始化的
+  ambient 0.2。25图主INI／CTL与实际写入见[scene-client-colour-lighting.md](scene-client-colour-lighting.md)。
 
 ## 环境表
 
@@ -27,16 +29,15 @@
 不加载资源、不持有场景。字段：ambient、emissive、fogEnabled、fogMode、fogColor、
 fogParams、lights、resolution。
 
-已发布放置导出不含 fog／sectionLight，采用规则如下：
+图级参数来自主地图INI、CTL及游戏图形初始化：
 
 - 所有地图沿用设备基线的关闭雾状态：`fogEnabled=false`、`fogMode=0`、
   `fogParams=[0,0,0,0]`、`fogColor=[0,0,0]`。原25图同名INI的fog.enable均0，45a4cb／45a764读取并写入scene+2c；现关闭资格与该原字段一致。完整雾参数／D3D消费仍按各专题开放。
-- 原十三张户外图及 `1002` 田野路高清图、未单列环境配置的室内图沿用
-  `tank-daylight.md` 的 ambient `[1,1,1]`，保留植物材质的白光乘项。
-  十二张扩展图使用各自环境配置。emissive 保持原0。
-- outdoor 图提供一条常衰减远日光源 `position=[400,900,300]`、`atten=[1,0,0]`、
-  `diffuse=[0.6,0.6,0.55]`，使法线参与着色；室内图不提供 selected light。
-- 取得原 fog／sectionLight producer 后，改由该 producer 覆盖本表即可，消费者接口不变。
+- 原0001–0025与 `1002` 田野路高清图使用 ambient `[1,1,1]`、emissive 0。
+  0016保留原density的float32 0.12，其余为0；关闭雾时该密度不参与混色。
+- 全图 `lights=[]`，不按地图主题添加日光或工厂灯。角色toon使用独立默认灯
+  `[0,200,0]`，不作为普通材质的附加光；源POL地形与普通物件保留贴图乘packed顶点色。
+- 1002经 `originalSceneId`继承0002；自制1001的环境资格为custom。
 
 ## 生产接线
 
@@ -68,18 +69,19 @@ fogParams、lights、resolution。
 静态root与动态CVD/破损/Type5共用group0深度及模型priority排序，CVD保留metadata。
 MV3已消费NORMAL morph，插值后的normalUpdated进入selected light计算。
 十二图1814个地形分片已接kind0/1原材质及图级metadata，三图五处采用纹理已内嵌GLB。
-十二张扩展图按原地图主题采用独立环境光与灯光参数：工厂0009/0015使用室内灯，
-其余采用独立户外色调与日光；原13图及1002继续使用既有光照provider。所有地图关闭雾。
+原25图及1002共用已确认的白色环境光与默认toon灯参数，所有地图关闭雾。
+原地形材质覆盖全部3129个分片，空纹理分片直接保留原顶点色。
+共用toon查表纹理保留原128×2像素及两档颜色，逐图结果见
+[map-lighting-audit.md](map-lighting-audit.md)。
 来源、完整参数和当前生产行为见[extended-scene-render-runtime.md](extended-scene-render-runtime.md)，
 集中状态见[battle-remaining-integration.md](battle-remaining-integration.md) P–T。
 
 ## 未实测范围
 
 - 未运行测试、浏览器、构建、类型检查、lint或native EXE；地形材质与采用纹理的定向publisher已实际执行。
-- ambient、光源位置与强度、衰减系数为项目采用规则，
-  原场景 producer 仍未取得。
+- 原地图基础环境参数已有静态来源；空纹理阶段按D3D9纹理为空时停止该阶段的规则处理。
 - 原 D3D 有效 143／AlphaTest 覆盖顺序、D3DX BeginPass 后状态省略、原 framebuffer
   仍未证明；本接线不宣称与原画面逐像素一致。
 - 原 selected light 数量（0/1/2）在真实对局中的分布、原 ctl 候选选择权重仍未执行。
 
-角色显式toon选择与默认灯另由scene-actor-toon-runtime.md记录，原25份零候选ctl和128×2原纹理已发布并由图级owner管理。MV3非角色材质保持现图级selected lights消费者；普通几何s_texToon保持空槽已有随包模块静态来源，见scene-geometry-toon-source.md；全环境／设备等价仍由对应验收追踪。
+角色显式toon选择与默认灯另由scene-actor-toon-runtime.md记录，原25份零候选ctl参数由图级owner管理。当前查表资产为原128×2像素的无损WebP。MV3非角色材质读取图级空selected lights；普通几何s_texToon保持空槽已有随包模块静态来源，见scene-geometry-toon-source.md；全环境／设备等价仍由对应验收追踪。战斗贴地软阴影属于独立视觉增强，见ground-contact-shadows.md。

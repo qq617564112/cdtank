@@ -1,15 +1,18 @@
+import {loadPreparedModel} from '../model-resources';
 import {roleAmmoEffectName} from './role-ammo-visual';
-import {prepareGameContent} from '../../content';
+import {battleArtworkUrl} from '../battle-artwork';
+import {prepareGameContent, preparedGameContent} from '../../content';
 import {applyMv3Materials, setMv3ActorOpacity} from '../../render/materials/mv3-material';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {sceneActorToonBinding} from '../../render/materials/actor-toon';
+import {sceneShadowLight} from '../../render/scene-shadow-light';
 import {loadTankDefaultTextures, loadTankTextures, loadTankTrackTextures, tankComponentTexture} from './tank-textures';
 import type {TankTrackTextures} from './tank-textures';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {ShaderMaterial} from '@babylonjs/core';
 import type {Texture} from '@babylonjs/core';
 import {advanceRoleTrackTexture, createRoleTrackTextureState, roleTrackCommandMoves, roleTrackDirection} from './role-track-texture';
-import {AssetContainer, LoadAssetContainerAsync, Observable, Scene, TransformNode, Vector3} from '@babylonjs/core';
+import {AssetContainer, Observable, Scene, TransformNode, Vector3} from '@babylonjs/core';
 
 import {EffectActorActionClock} from './effect-actor-clock';
 import {effectModelEngineDelta} from '../../render/effects/models/effect-model-animation';
@@ -62,20 +65,28 @@ export interface TankEntry {
   handler: string;
 }
 
-const tankModelLoaders: Readonly<Record<string, typeof LoadAssetContainerAsync>> = {tank: LoadAssetContainerAsync};
+const tankModelLoaders: Readonly<Record<string, typeof loadPreparedModel>> = {tank: loadPreparedModel};
 
 // MV3 GLB conversion stores source ticks as milliseconds. Native gbActor
 // advances 4800 ticks/second at its default timeScale=1.
 
-export function tankCatalog(): Promise<TankEntry[]> {
-  return prepareGameContent().then(content => [...content.tanks.values()].map(tank => ({
+let preparedTanks: TankEntry[] | undefined;
+export function preparedTankCatalog(): TankEntry[] | undefined {
+  const content = preparedGameContent();
+  if (!content) return undefined;
+  return preparedTanks ??= [...content.tanks.values()].map(tank => ({
     id: tank.id, name: tank.name, components: tank.resources.components as TankComponent[],
     animationSpeed: tank.resources.animationSpeed, handler: tank.runtime.handler,
-  })));
+  }));
+}
+
+export function tankCatalog(): Promise<TankEntry[]> {
+  return prepareGameContent().then(() => preparedTankCatalog()!);
 }
 
 /** Source geometry shares one origin; U rotates about its original tag_c X/Z. */
 export class TankView {
+  private sceneShadowRegistration?: () => void;
   private readonly turret: TransformNode;
   private readonly primaryTags: EffectPrimaryTagMatrices;
   private readonly cachedBodyPivot: readonly [number, number];
@@ -150,6 +161,9 @@ export class TankView {
       // Battle single actions must be ready before the player enters the world.
       // Loading their geometry during a hit can outlast the whole action.
       await Promise.all(['02', '03', '05', '06', '07', '08', '09'].map(name => view.action(name)));
+      view.sceneShadowRegistration = sceneShadowLight(scene)?.addRoot(view.root,
+        {dynamic: true, meshes: () => view.current?.components
+          .flatMap(component => component.assets.meshes) ?? []});
       return view;
     } catch (error) {
       view.dispose();
@@ -204,7 +218,7 @@ export class TankView {
         let attachmentTracks: AttachmentTrack[] = [];
         const loadModel = tankModelLoaders[this.tank.handler];
         if (!loadModel) throw new Error(`缺少战车模型处理器 ${this.tank.handler}`);
-        const assets = await loadModel(`/${action.model}`, this.scene, {
+        const assets = await loadModel(battleArtworkUrl(`/${action.model}`, this.scene), this.scene, {
           pluginOptions: {gltf: {useSRGBBuffers: false, onParsed: (data: IGLTFLoaderData) => {
             const source = data.json as {extras?: {attachmentTracks?: AttachmentTrack[]}};
             attachmentTracks = (source.extras?.attachmentTracks ?? [])
@@ -481,6 +495,7 @@ export class TankView {
       return;
     }
     this.disposed = true;
+    this.sceneShadowRegistration?.();
     this.materials.clear();
     this.trackCommandPending = 0;
     this.scene.onBeforeRenderObservable.removeCallback(this.animate);

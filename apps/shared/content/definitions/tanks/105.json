@@ -53517,10 +53517,10 @@
     ],
     "animationSpeed": 4.8,
     "textures": {
-      "105M_001.TGA": "tank-textures/role/105/105M_001.png",
-      "105U_001.TGA": "tank-textures/role/105/105U_001.png",
-      "105XY_001_A.TGA": "tank-textures/role/105/105XY_001_A.png",
-      "105XY_001_B.tga": "tank-textures/role/105/105XY_001_B.png"
+      "105M_001.TGA": "tank-textures/role/105/105M_001.webp",
+      "105U_001.TGA": "tank-textures/role/105/105U_001.webp",
+      "105XY_001_A.TGA": "tank-textures/role/105/105XY_001_A.webp",
+      "105XY_001_B.tga": "tank-textures/role/105/105XY_001_B.webp"
     },
     "textureVariants": [
       {
@@ -53537,7 +53537,7 @@
           "A": {
             "request": "role/105/105M_001.tga",
             "source": "role/105/105m_001.dds",
-            "asset": "tank-textures/role/105/105M_001.png",
+            "asset": "tank-textures/role/105/105M_001.webp",
             "status": "resolved"
           },
           "B": null
@@ -53557,7 +53557,7 @@
           "A": {
             "request": "role/105/105U_001.tga",
             "source": "role/105/105u_001.dds",
-            "asset": "tank-textures/role/105/105U_001.png",
+            "asset": "tank-textures/role/105/105U_001.webp",
             "status": "resolved"
           },
           "B": null
@@ -53577,13 +53577,13 @@
           "A": {
             "request": "role/105/105XY_001_A.tga",
             "source": "role/105/105xy_001_a.dds",
-            "asset": "tank-textures/role/105/105XY_001_A.png",
+            "asset": "tank-textures/role/105/105XY_001_A.webp",
             "status": "resolved"
           },
           "B": {
             "request": "role/105/105XY_001_B.tga",
             "source": "role/105/105xy_001_b.dds",
-            "asset": "tank-textures/role/105/105XY_001_B.png",
+            "asset": "tank-textures/role/105/105XY_001_B.webp",
             "status": "resolved"
           }
         }
@@ -53602,7 +53602,7 @@
           "A": {
             "request": "role/105/105M_025.tga",
             "source": "role/105/105m_025.dds",
-            "asset": "tank-textures/role/105/105M_025.png",
+            "asset": "tank-textures/role/105/105M_025.webp",
             "status": "resolved"
           },
           "B": null
@@ -53622,7 +53622,7 @@
           "A": {
             "request": "role/105/105U_025.tga",
             "source": "role/105/105u_025.dds",
-            "asset": "tank-textures/role/105/105U_025.png",
+            "asset": "tank-textures/role/105/105U_025.webp",
             "status": "resolved"
           },
           "B": null
@@ -53642,7 +53642,7 @@
           "A": {
             "request": "role/105/105M_191.tga",
             "source": "role/105/105m_191.dds",
-            "asset": "tank-textures/role/105/105M_191.png",
+            "asset": "tank-textures/role/105/105M_191.webp",
             "status": "resolved"
           },
           "B": null
@@ -53662,7 +53662,7 @@
           "A": {
             "request": "role/105/105U_191.tga",
             "source": "role/105/105u_191.dds",
-            "asset": "tank-textures/role/105/105U_191.png",
+            "asset": "tank-textures/role/105/105U_191.webp",
             "status": "resolved"
           },
           "B": null

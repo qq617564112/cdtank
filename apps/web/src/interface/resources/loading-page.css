@@ -48,6 +48,22 @@
   transform: translateX(-50%);
 }
 
+.loading-progress-track {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: clamp(4px, 1vh, 12px);
+  overflow: hidden;
+  background: #777;
+  pointer-events: none;
+}
+
+.loading-progress-fill {
+  height: 100%;
+  background: #ffe55e;
+}
+
 .loading-tank {
   right: 110px;
   bottom: 25px;
@@ -62,12 +78,13 @@
   display: flex;
   align-items: baseline;
   gap: 16px;
-  color: #ffe55e;
+  color: #f89800;
   font-size: 39px;
   font-weight: 700;
+  font-synthesis: weight;
   line-height: 1;
   white-space: nowrap;
-  filter: drop-shadow(3px 4px 2px #0008);
+  filter: drop-shadow(0 5px 0 #1337a3);
 }
 
 .loading-label,

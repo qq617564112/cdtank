@@ -4,7 +4,6 @@ import {content} from './content';
 import type {RoleTankBaseDefinition, RolePetBaseDefinition} from '../../shared/contracts/role-base';
 import {BATTLE_RESPAWN_SECONDS} from '../../shared/combat/battle-respawn';
 import {TEST_MAP} from '../../shared/maps/test-map';
-import {FIELD_ROAD_HD} from '../../shared/maps/field-road-hd';
 import {playableMapDirectory} from './config/map-directory';
 
 export interface TankConfig {
@@ -127,10 +126,6 @@ export const MAPS = playableMapDirectory(sourceMaps,
 MAPS.push({...MAPS.find(map => map.mode === TEST_MAP.mode && map.mapId === 2)!,
   mapId: TEST_MAP.id, mode: TEST_MAP.mode, name: TEST_MAP.name, description: TEST_MAP.description,
   timeLimit: TEST_MAP.timeLimit, sourceMinPlayers: TEST_MAP.minPlayers, maxPlayers: TEST_MAP.maxPlayers});
-
-MAPS.push(...MAPS.filter(map => map.mapId === FIELD_ROAD_HD.sourceId).map(map => ({
-  ...map, mapId: FIELD_ROAD_HD.id, name: FIELD_ROAD_HD.name,
-})));
 
 export const TITLE_TABLE = readTable('title');
 

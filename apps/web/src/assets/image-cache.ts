@@ -84,6 +84,30 @@ export async function prepareImageCache(images: readonly ImageAsset[], bundled: 
   for (const image of images) versions.set(imageResourceKey(image.url), image.modifiedAt);
 }
 
+async function storedImage(key: string, version: number | string, signal?: AbortSignal): Promise<{blob: Blob; cached: boolean}> {
+  const database = await openDatabase();
+  const stored = await readImage(database, key);
+  signal?.throwIfAborted();
+  if (stored?.version === version) return {blob: stored.blob, cached: true};
+  const response = await fetch(key, {cache: 'no-cache', signal});
+  if (!response.ok) throw new Error(`图片下载失败：${key}（HTTP ${response.status}）`);
+  const blob = await response.blob();
+  signal?.throwIfAborted();
+  await writeImage(database, {url: key, version, blob}, signal);
+  return {blob, cached: false};
+}
+
+/** A full resource pack keeps unused map and model images on disk without decoding them. */
+export async function cacheImageResource(url: string, signal?: AbortSignal): Promise<void> {
+  signal?.throwIfAborted();
+  const key = imageResourceKey(url);
+  const version = imageVersion(key);
+  if (preparedImages.get(key)?.version === version) return;
+  const existing = loadingImages.get(key);
+  if (existing) {await existing; return;}
+  await storedImage(key, version, signal);
+}
+
 /** Download missing images once, and commit each complete Blob before reporting readiness. */
 export async function loadImageResource(url: string, signal?: AbortSignal): Promise<PreparedImage> {
   signal?.throwIfAborted();
@@ -98,19 +122,7 @@ export async function loadImageResource(url: string, signal?: AbortSignal): Prom
   const existing = loadingImages.get(resourceKey);
   if (existing) return existing;
   const loading = (async () => {
-    const database = await openDatabase();
-    const stored = await readImage(database, key);
-    signal?.throwIfAborted();
-    const cached = stored !== undefined && stored.version === version;
-    let blob: Blob;
-    if (stored && stored.version === version) blob = stored.blob;
-    else {
-      const response = await fetch(key, {cache: 'no-cache', signal});
-      if (!response.ok) throw new Error(`图片下载失败：${url}（HTTP ${response.status}）`);
-      blob = await response.blob();
-      signal?.throwIfAborted();
-      await writeImage(database, {url: key, version, blob});
-    }
+    const {blob, cached} = await storedImage(key, version, signal);
     signal?.throwIfAborted();
     if (prepared) URL.revokeObjectURL(prepared.url);
     const image = {url: URL.createObjectURL(blob), version, cached, blob};

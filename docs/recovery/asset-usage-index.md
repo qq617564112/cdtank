@@ -32,7 +32,7 @@ recovery/.venv/bin/python tests/asset-usage-index.py > recovery/output/asset-usa
 
 ## 地图资格与角色toon
 
-动态地形材质文件从`hasSceneTerrainMaterial`的正则取得0001–0025资格，植物文件从`ScenePlantSway.load`完整跨行名单取得资格；1002读取`FIELD_ROAD_HD.sceneId`定义。每条保存原代码行和实际地图范围。放置动画与真实fallback破损库保留具体mapId/placementId/JSON Pointer及加载入口。
+动态地形材质文件从`hasSceneTerrainMaterial`的正则取得0001–0025资格，植物文件从`ScenePlantSway.load`完整跨行名单取得资格。每条保存原代码行和实际地图范围。放置动画与真实fallback破损库保留具体mapId/placementId/JSON Pointer及加载入口。
 
 `scene-actor-toon.json`保留原`Data/image/toon/0.bmp`及25份ctl的source。BMP的显式派生关系指向`scene/actor-toon/0.png`，原文件与PNG均关联`SceneActorToon`元数据加载入口；引用数为27。来源和代码关系不改变runtimeAcceptance。
 

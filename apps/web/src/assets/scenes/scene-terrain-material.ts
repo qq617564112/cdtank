@@ -1,11 +1,14 @@
 import {AssetContainer, PBRMaterial, ShaderMaterial} from '@babylonjs/core';
-import {FIELD_ROAD_HD} from '../../../../shared/maps/field-road-hd';
+import {loadStaticJson} from '../static-resources';
 import {
   bindSceneEnvironmentIfPresent, SCENE_ENVIRONMENT_FRAGMENT_APPLY,
   SCENE_ENVIRONMENT_FRAGMENT_DECLARATION, SCENE_ENVIRONMENT_UNIFORMS,
   SCENE_ENVIRONMENT_VERTEX_DECLARATION,
 } from '../../render/scene-environment';
 import {applyDeviceState, resolveDeviceState} from '../../render/scene-device-state';
+import {bindSceneShadowMaterial, SCENE_SHADOW_VERTEX_DECLARATION, SCENE_SHADOW_VERTEX_APPLY,
+  SCENE_SHADOW_FRAGMENT_DECLARATION, SCENE_SHADOW_FRAGMENT_BEGIN,
+  SCENE_SHADOW_FRAGMENT_APPLY} from '../../render/scene-shadow-light';
 
 interface TerrainPart {
   mesh: string;
@@ -16,11 +19,13 @@ interface TerrainPart {
 }
 
 export function hasSceneTerrainMaterial(mapId: string): boolean {
-  return /^(000[1-9]|001[0-9]|002[0-5])$/.test(mapId) || mapId === FIELD_ROAD_HD.sceneId;
+  return /^(000[1-9]|001[0-9]|002[0-5])$/.test(mapId);
 }
 
 const VERTEX = `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
+${SCENE_SHADOW_VERTEX_DECLARATION}
 attribute vec3 position;
+attribute vec3 normal;
 attribute vec2 uv;
 attribute vec4 color;
 uniform mat4 worldViewProjection;
@@ -31,14 +36,16 @@ void main() {
   sourceUv = uv;
   sourceDiffuse = color;
   vec4 worldPosition = world * vec4(position, 1.0);
-  // Terrain source GBF is unlit geom_c1; keep texture × packed diffuse and
-  // only add the scene fog term.
+  vec3 worldNormal = normalize(mat3(world) * normal);
+${SCENE_SHADOW_VERTEX_APPLY}
+  // Keep the original texture × packed diffuse before the scene shadow pass.
   sceneLitColor = vec3(1.0);
   sceneFogFactor = sceneFog(worldPosition.xyz);
   gl_Position = worldViewProjection * vec4(position, 1.0);
 }`;
 
 const FRAGMENT = `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
+${SCENE_SHADOW_FRAGMENT_DECLARATION}
 #ifdef SOURCE_TEXTURE
 uniform sampler2D sourceTexture;
 #endif
@@ -46,6 +53,7 @@ uniform float sourceAlphaRef;
 varying vec2 sourceUv;
 varying vec4 sourceDiffuse;
 void main() {
+${SCENE_SHADOW_FRAGMENT_BEGIN}
 #ifdef SOURCE_TEXTURE
   vec4 result = texture2D(sourceTexture, sourceUv) * sourceDiffuse;
 #else
@@ -55,10 +63,11 @@ void main() {
   if (result.a <= sourceAlphaRef) discard;
 #endif
   gl_FragColor = result;
+${SCENE_SHADOW_FRAGMENT_APPLY}
 ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
 }`;
 
-/** Original terrain texture × packed diffuse, independent of scene lighting. */
+/** Original terrain colour with the separate scene shadow light applied afterward. */
 export class SceneTerrainMaterial {
   private readonly replacements: {
     mesh: AssetContainer['meshes'][number];
@@ -69,9 +78,7 @@ export class SceneTerrainMaterial {
 
   async load(mapId: string, terrain: AssetContainer): Promise<void> {
     if (!hasSceneTerrainMaterial(mapId)) return;
-    const response = await fetch(`/scene-terrain-material-${mapId}.json`);
-    if (!response.ok) throw new Error('原地形材质合同载入失败');
-    const resource = await response.json() as {mapId: number; parts: TerrainPart[]};
+    const resource = await loadStaticJson<{mapId: number; parts: TerrainPart[]}>(`/data/maps/${mapId}/terrain-material.json`);
     if (this.disposed) return;
     if (resource.mapId !== Number(mapId)) throw new Error('原地形材质地图身份不符');
     // GLB nodes retain source order, including repeated native mesh names.
@@ -91,23 +98,25 @@ export class SceneTerrainMaterial {
       const transparent = part.kind === 1;
       const material = new ShaderMaterial(`terrain${String(resource.mapId).padStart(2, '0')}/${part.mesh}`, terrain.scene,
         {vertexSource: VERTEX, fragmentSource: FRAGMENT}, {
-          attributes: ['position', 'uv', 'color'],
-          uniforms: ['world', 'worldViewProjection', 'sourceAlphaRef', ...SCENE_ENVIRONMENT_UNIFORMS],
-          samplers: original.albedoTexture ? ['sourceTexture'] : [],
+          attributes: ['position', 'normal', 'uv', 'color'],
+          uniforms: ['world', 'worldViewProjection', 'sourceAlphaRef', 'sceneShadowReceiver', ...SCENE_ENVIRONMENT_UNIFORMS],
+          samplers: [...(original.albedoTexture ? ['sourceTexture'] : []), 'sceneShadowTexture'],
           defines: [...(original.albedoTexture ? ['SOURCE_TEXTURE'] : []),
             ...(transparent ? ['SOURCE_ALPHA_TEST'] : [])],
           needAlphaBlending: transparent, needAlphaTesting: transparent,
         });
       if (original.albedoTexture) material.setTexture('sourceTexture', original.albedoTexture);
-      // Terrain source GBFs are unlit geom_c1; only fog is added here.
+      // Source colour and fog retain their original providers.
       bindSceneEnvironmentIfPresent(material, terrain.scene);
+      bindSceneShadowMaterial(material, original.albedoTexture ?? undefined);
       // default.gbf baseline overlaid with the selected geom_c1/geom_t_c1
       // pass; POL vertex RGBA does not put an opaque kind into the alpha queue.
       applyDeviceState(material, resolveDeviceState({
         cull: original.backFaceCulling ? 'CW' : 'NONE',
         alphaBlend: transparent, alphaTest: transparent, alphaRef: transparent ? 100 : 0,
       }));
-      material.metadata = {sourceTerrainShader: part.shader, sourceTerrainKind: part.kind};
+      material.metadata = {sourceTerrainShader: part.shader, sourceTerrainKind: part.kind,
+        sourceTerrainTexture: original.name};
       mesh.material = material;
       this.replacements.push({mesh, original, material});
     }

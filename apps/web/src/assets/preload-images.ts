@@ -1,11 +1,12 @@
 import {loadUiFont} from '../interface/resources/source-ui-fonts';
-import {bundledImages, bundledImageUrls, decodeImage, decodeImageRegion} from './image-resources';
-import {loadImageResource, prepareImageCache,
+import {bundledImages, bundledImageUrls, decodeImageRegion} from './image-resources';
+import {imageResourceKey, imageResourceUrl, loadImageResource, prepareImageCache,
   type ImageAsset} from './image-cache';
 import {bindButtonBackgrounds, buttonArtwork} from './button-artwork';
-import {imageResourceUrl} from './image-cache';
-import {prepareSpriteImages, publishedImageUrl, type SpriteManifest} from './sprite-images';
+import {prepareSpriteImages, type SpriteManifest} from './sprite-images';
 import {bindImageBackgrounds} from './image-artwork';
+import {prepareStaticResourceCache, type StaticResourceAsset} from './static-resource-cache';
+import {prepareArtworkManifest} from './battle-artwork';
 
 export interface ImageLoadingProgress {
   phase: 'download' | 'decode';
@@ -18,12 +19,12 @@ export interface ImageLoadingProgress {
   totalBytes: number;
 }
 
-interface ImageManifest {images: ImageAsset[]; sprites?: SpriteManifest;}
+interface ImageManifest {images: ImageAsset[]; sprites?: SpriteManifest; resources: StaticResourceAsset[];}
 
-const imageManifestUrl = '/image-assets.json';
+const imageManifestUrl = '/manifests/image-assets.json';
 const needsRaster = (url: string) => !buttonArtwork(url)?.background;
 
-/** Download and decode all published and bundled images before entering the game. */
+/** Download and decode UI images before entering the game. */
 export class ImagePreloader {
   private manifest?: Promise<ImageAsset[]>;
 
@@ -33,11 +34,21 @@ export class ImagePreloader {
     this.manifest ??= (async () => {
       const response = await fetch(imageManifestUrl, {cache: 'no-cache', signal});
       if (!response.ok) throw new Error(`图片目录加载失败（HTTP ${response.status}）`);
-      const {images, sprites} = await response.json() as ImageManifest;
+      const {images, sprites, resources} = await response.json() as ImageManifest;
       if (images.length === 0) throw new Error('图片资源目录为空');
+      prepareStaticResourceCache(resources);
+      await prepareArtworkManifest();
       prepareSpriteImages(sprites, bundledImages);
-      const artwork = images.filter(image => needsRaster(image.url));
-      await prepareImageCache(artwork, bundledImageUrls);
+      const rasterImages = images.filter(image => needsRaster(image.url));
+      await prepareImageCache(rasterImages, bundledImageUrls);
+      const uiUrls = new Set([
+        ...bundledImageUrls.map(imageResourceKey),
+        ...(sprites?.atlases ?? []).map(atlas => imageResourceKey(atlas.url)),
+        ...Object.keys(sprites?.images ?? {}).map(imageResourceKey),
+      ]);
+      const artwork = [...new Map<string, ImageAsset>(rasterImages.filter(image => uiUrls.has(imageResourceKey(image.url))
+        || /^\/assets\/(?:ui|minimaps\/markers)\//.test(image.url))
+        .map(image => [imageResourceKey(image.url), image])).values()];
       const atlases = sprites?.atlases ?? [];
       let nextAtlas = 0;
       await Promise.all(Array.from({length: Math.min(8, atlases.length)}, async () => {
@@ -62,7 +73,7 @@ export class ImagePreloader {
   async load(onProgress: (progress: ImageLoadingProgress) => void, signal: AbortSignal): Promise<void> {
     const images = await this.prepare(signal);
     const decodeUrls = [...new Set([...images.map(image => image.url), ...bundledImageUrls]
-      .map(url => new URL(publishedImageUrl(url), location.href).href))];
+      .map(imageResourceKey))];
     const progress: ImageLoadingProgress = {
       phase: 'download', decoded: 0, decodeTotal: decodeUrls.length,
       completed: 0, cached: 0, total: images.length, loadedBytes: 0,
@@ -103,7 +114,7 @@ export class ImagePreloader {
         signal.throwIfAborted();
         const url = decodeUrls[next++];
         try {
-          await decodeImage(url, signal);
+          await decodeImageRegion(url, signal);
           progress.decoded++;
           const now = performance.now();
           if (progress.decoded === progress.decodeTotal || now - lastProgressUpdate >= 100) {

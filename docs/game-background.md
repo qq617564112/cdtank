@@ -6,11 +6,7 @@
 
 CDTank 以这款坦克对战网游为复刻对象。项目从原 Windows 客户端提取地图、战车、宠物、界面和音频，并结合数据表与程序行为重建 Web 客户端和联机服务端。具体开发范围和状态见[开发指南](development.md)与[任务清单](../docs/recovery/tasklist.md)。
 
-![阿猫阿狗大作战 Online 原作标志](assets/original-cover.jpg)
-
-![阿猫阿狗大作战 Online 原作战斗画面](assets/original-battle.jpg)
-
-原作参考图片的出处、下载地址和权利说明见[素材来源](assets/README.md)。
+原作资料与素材的来源及权利说明见[素材来源](asset-sources.md)。
 
 ## 参考资料
 

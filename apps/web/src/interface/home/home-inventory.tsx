@@ -3,7 +3,7 @@ import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {useNavigationChoice, useNavigationValue} from '../../navigation/route';
 import {isTreasureItem} from '../../../../shared/combat/treasure-items';
 import {defaultAmmoId} from '../../../../shared/content/catalog';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import './home.css';
 import {HomeResourceFeedback} from './home-resource-feedback';
 import {Fragment, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties} from 'react';
@@ -29,7 +29,7 @@ import type {ResValuableItemSale} from '../../../../shared/protocols/PtlValuable
 import {ValuableItemSaleSource, type ValuableItemSaleOwner} from './home-valuable-sale-source';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
 import {loadUiFont} from '../resources/source-ui-fonts';
-import {loadSourceUi} from '../resources/source-ui-resources';
+import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
 import {SourceImageScale} from '../resources/source-static-image';
 import type {HomeSourceUi, HomeSourceControl} from '../resources/source-ui-layout';
 
@@ -87,7 +87,12 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
   const accountGeneration = accountContext.generation;
   const escapePending = useRef(false);
   const session = useRef<{active: boolean; pending: boolean}>({active: false, pending: false});
-  const [resources, setResources] = useState<Resources>();
+  const [resources, setResources] = useState<Resources | undefined>(() => {
+    const ui = cachedSourceUi(['myhome_playerpage.xml', 'myhome.xml']);
+    const catalog = preparedCombatCatalog();
+    const controls = ui?.layouts.find(layout => layout.path.endsWith('myhome_playerpage.xml'))?.windows;
+    return ui && catalog && controls ? {ui, catalog, controls} : undefined;
+  });
   const [inventory, setInventory] = useState<ResInventory>();
   const [profile, setProfile] = useState<ResRoleProfile['profile']>();
   const [profilePending, setProfilePending] = useState(true);
@@ -132,7 +137,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
     const current = {active: true, pending: false};
     session.current = current;
     setResourceError(undefined);
-    setResources(undefined); setInventory(undefined); setSelected(0); setName('');
+    setInventory(undefined); setSelected(0); setName('');
     setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined); setBalanceError('');
     setProfilePending(true); setOwnedRoles(undefined); setOwnedRolesError('');
     setTitles(undefined); setTitlePending(false); setDescription(undefined);
@@ -334,7 +339,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
               iconId: item?.iconId ?? record.itemTableId};
           })} />
         {page === 'valuable' && <ValuableItemSaleSource ui={resources.ui} battle={battle}
-          activation={valuableActivation} owner={valuableOwner} refreshKey={selected}
+          activation={valuableActivation} owner={valuableOwner}
           onError={message => {showGameMessage(message, 'error');}}
           onConfirmed={installValuableSale} onBusy={setBusy} />}
         {page !== 'valuable' && [0, 1, 2, 3].map(index => {

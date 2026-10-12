@@ -4,7 +4,7 @@ import {useCallback, useEffect, useRef, useState, useSyncExternalStore, type Rea
 import {LobbySourcePage} from './lobby-source-page';
 import {RoomPasswordDialog} from './room-password-dialog';
 import type {Battle} from '../../match/battle';
-import {tankCatalog} from '../../assets/tanks/tank-view';
+import {preparedTankCatalog, tankCatalog} from '../../assets/tanks/tank-view';
 import {RoomCards} from './room-cards';
 import {RoomMapSelector} from './room-map-selector';
 import {RoomCreateDialog} from './room-create-dialog';
@@ -27,8 +27,8 @@ const INITIAL_DRAFT: RoomCreateDraft = {mode: 1, mapId: 0, roomName: '一起对�
 export function LobbyView({validation = false, chatContent, playerContent, headerContent, battle, canvas, hud, openInventory, openEquipment, openRoles, openShop, openHistory}: LobbyViewProps) {
   const match = useSyncExternalStore(battle.matchPanel.subscribe, battle.matchPanel.getSnapshot, battle.matchPanel.getSnapshot);
   const waiting = match?.phase === 'WAITING';
-  const [playerName, setPlayerName] = useState('坦克手'), [tankId, setTankId] = useState(0);
-  const [tanks, setTanks] = useState<Awaited<ReturnType<typeof tankCatalog>>>([]);
+  const [playerName, setPlayerName] = useState('坦克手'), [tankId, setTankId] = useState(() => preparedTankCatalog()?.[0]?.id ?? 0);
+  const [tanks, setTanks] = useState<Awaited<ReturnType<typeof tankCatalog>>>(() => preparedTankCatalog() ?? []);
   const [maps, setMaps] = useState<Awaited<ReturnType<Battle['listMaps']>>>([]);
   const [directory, setDirectory] = useState<Awaited<ReturnType<Battle['listRooms']>>>([]);
   const [draft, setDraft] = useRoomDraft(INITIAL_DRAFT, 'create');

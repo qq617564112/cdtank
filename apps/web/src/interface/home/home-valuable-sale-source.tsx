@@ -22,11 +22,11 @@ function explicitNotSold(error: unknown): boolean {
 }
 
 /** Confirmed valuable-sale projection is installed by the Home page owner. */
-export function ValuableItemSaleSource({ui, battle, refreshKey, activation, owner, onConfirmed, onBusy, onError, disabled = false}: {
+export function ValuableItemSaleSource({ui, battle, activation, owner, onConfirmed, onBusy, onError, disabled = false}: {
   ui: HomeSourceUi;
   battle: Pick<Battle, 'accountContext' | 'subscribeAccountContext' | 'valuableItemSale' | 'matchPanel'
     | 'valuableSaleRoomContext' | 'subscribeValuableSaleRoom'>;
-  refreshKey?: number; activation?: {instanceId: number; sequence: number};
+  activation?: {instanceId: number; sequence: number};
   owner: ValuableItemSaleOwner; onConfirmed: (response: ResValuableItemSale) => void;
   onBusy: (busy: boolean) => void; onError(message: string): void; disabled?: boolean;
 }) {
@@ -79,7 +79,7 @@ export function ValuableItemSaleSource({ui, battle, refreshKey, activation, owne
       }
     }).finally(() => {if (generation.current === current && roomContextRef.current === requestRoomContext) setPending(false);});
     return () => {generation.current++; locked.current = false; callbacks.current.onBusy(false);};
-  }, [account, battle, owner, refreshKey, roomContext]);
+  }, [account, battle, owner, roomContext]);
 
   useEffect(() => {
     handledActivation.current = activation?.sequence;

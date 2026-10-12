@@ -1,6 +1,6 @@
 import {imageResourceUrl} from '../../assets/image-cache';
 import {GameMessage} from '../resources/game-message';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import './hud.css';
 import {HudItemSourceView} from './hud-item-source-view';
 import {HudSpectatorView} from './hud-spectator-view';
@@ -85,7 +85,7 @@ function HudItemPanel({data, hud, items, onUseSlot}: {
   const combat = useSyncExternalStore(hud.subscribeCombat, hud.getCombatSnapshot);
   const reload = useSyncExternalStore(hud.subscribeReload, hud.getReloadSnapshot);
   const inventory = useSyncExternalStore(items?.subscribe ?? emptyItemSubscribe, items?.getSnapshot ?? emptyItemSnapshot);
-  const [catalog, setCatalog] = useState<CombatCatalog>();
+  const [catalog, setCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const [error, setError] = useState('');
   useEffect(() => {
     let active = true;

@@ -11,7 +11,7 @@ import {GameRoomActionButton} from '../resources/game-room-action-button';
 import {GameArtworkButton} from '../resources/game-artwork-button';
 import {sourceProps} from '../resources/source-ui-props';
 import {sourceUiImage} from '../resources/source-ui-image';
-import {loadSourceUi} from '../resources/source-ui-resources';
+import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {RoomRuleButton} from './room-rule-button';
@@ -96,7 +96,7 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, q
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(formal);
-  const [ui, setUi] = useState<HomeSourceUi | null>(null);
+  const [ui, setUi] = useState<HomeSourceUi | undefined>(() => cachedSourceUi(['room_main.xml']));
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

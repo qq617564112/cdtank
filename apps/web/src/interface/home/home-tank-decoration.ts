@@ -1,5 +1,7 @@
+import {loadPreparedModel} from '../../assets/model-resources';
+import {battleArtworkUrl} from '../../assets/battle-artwork';
 import {gameContent} from '../../../../shared/content/catalog';
-import {AssetContainer, Constants, LoadAssetContainerAsync, Matrix, PBRMaterial, Scene,
+import {AssetContainer, Constants, Matrix, PBRMaterial, Scene,
   Texture, TransformNode} from '@babylonjs/core';
 import type {CombatItemDefinition} from '../../../../shared/combat/catalog';
 import {TANK_DECORATION_TAGS, TankView, type TankDecorationTag} from '../../assets/tanks/tank-view';
@@ -34,12 +36,12 @@ export class HomeTankDecoration {
     if (!tag || !view.decorationTag(tag)) throw new Error(`缺少饰品挂点 ${item.itemTableId}`);
     const resources = gameContent().items.get(item.itemTableId)?.resources;
     if (!resources?.model) throw new Error(`饰品模型定义缺失：${item.itemTableId}`);
-    const assets = await LoadAssetContainerAsync(`/${resources.model}`, scene);
+    const assets = await loadPreparedModel(`/${resources.model}`, scene);
     const decoration = new HomeTankDecoration(scene, view, tag, assets);
     try {
       if (resources.texturePath) {
         decoration.texture = await new Promise<Texture>((resolve, reject) => {
-          const texture = new Texture(`/${resources.texturePath}`, scene, false, false,
+          const texture = new Texture(battleArtworkUrl(`/${resources.texturePath}`, scene), scene, false, false,
             Constants.TEXTURE_LINEAR_LINEAR, () => resolve(texture),
             (_message, error) => {texture.dispose(); reject(error ?? new Error('饰品贴图载入失败'));});
         });

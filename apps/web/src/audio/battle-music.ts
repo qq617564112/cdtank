@@ -1,3 +1,5 @@
+import {loadStaticJson, prepareStaticResourceUrl} from '../assets/static-resources';
+
 interface MusicCatalog {
   defaultMusicVolume: number;
   music: {name: string; asset: string}[];
@@ -9,7 +11,6 @@ export class BattleMusic {
   private readonly audio = document.createElement('audio');
   private generation = 0;
   private requestGeneration = 0;
-  private catalog?: Promise<MusicCatalog>;
   private desired = false;
   private volume?: number;
   private disposed = false;
@@ -32,6 +33,19 @@ export class BattleMusic {
     window.addEventListener('keydown', this.interaction);
     this.audio.addEventListener('error', this.audioError);
     this.audio.addEventListener('ended', this.audioEnded);
+  }
+
+  /** Download this map's track and both possible result tracks before battle. */
+  async prepare(mode: number, mapId: number): Promise<void> {
+    const catalog = await loadStaticJson<MusicCatalog>('/manifests/audio.json');
+    const map = catalog.maps.find(track => track.mode === mode && track.mapId === mapId);
+    if (!map) throw new Error(`缺少原战场音乐映射：${mode}/${mapId}`);
+    const tracks = [map, ...['UIM08', 'UIM09'].map(name => {
+      const track = catalog.music.find(track => track.name === name);
+      if (!track) throw new Error(`缺少原结算音乐：${name}`);
+      return track;
+    })];
+    await Promise.all(tracks.map(track => prepareStaticResourceUrl(`/${track.asset}`)));
   }
 
   async play(mode: number, mapId: number): Promise<void> {
@@ -68,21 +82,19 @@ export class BattleMusic {
     loop = true): Promise<void> {
     if (this.disposed) return;
     const request = ++this.requestGeneration;
-    this.catalog ??= fetch('/audio.json').then(async response => {
-      if (!response.ok) throw new Error('原战场音乐目录载入失败');
-      return await response.json() as MusicCatalog;
-    }).catch(error => {this.catalog = undefined; throw error;});
-    const catalog = await this.catalog;
+    const catalog = await loadStaticJson<MusicCatalog>('/manifests/audio.json');
     if (request !== this.requestGeneration || this.disposed) return;
     const track = resolve(catalog);
     if (this.audio.dataset.musicId === String(track.musicId) && this.audio.loop === loop) {
       this.resume();
       return;
     }
+    const url = await prepareStaticResourceUrl(`/${track.asset}`);
+    if (request !== this.requestGeneration || this.disposed) return;
     this.stop();
     this.audio.loop = loop;
     this.audio.volume = this.volume ?? catalog.defaultMusicVolume;
-    this.audio.src = `/${track.asset}`;
+    this.audio.src = url;
     this.audio.dataset.musicId = String(track.musicId);
     this.desired = true;
     this.resume();

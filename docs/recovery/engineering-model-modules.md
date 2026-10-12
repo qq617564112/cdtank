@@ -24,7 +24,7 @@ EffectRuntime和EffectRuntimeTree直接使用这些生产模块。TankView仍使
 - `npm run render:skill:dev`后执行`node tests/browser-skill-effect.mjs <CDP>`：生产通知树、原空间音频、队列/到期/零残留；浏览器须允许测试音频播放。
 - `npm run test:tanks:actor-clock:browser -- <CDP>`：正常TankView帧入口、原动作组件时钟、长帧/通知和异步释放，诊断工具使用同一正式模型时间模块。
 - 正常CPU资源失败重试/自动准备/运动/返回；`node --import tsx tests/browser-healing-item.mjs <CDP> --autopilot --reentry --owned-textures`：普通输入的双网页自然两局、再战、原效果与释放、账户重启重进。
-- `npx tsc --noEmit`、`npm run test:architecture`、`npm run build:web`、`npm run render:model:build`、`npm run render:skill:build`、`npm run tools:assets:build`、`npm run test:server:compiled`：受影响的正式/诊断/工具构建与编译服务账户保存、五模式各两局。
+- `npx tsc --noEmit`、`npm run test:architecture`、`npm run build:web`、`npm run test:server:compiled`：受影响的正式/诊断/工具构建与编译服务账户保存、五模式各两局。
 
 ## 原程序与实际渲染证据
 

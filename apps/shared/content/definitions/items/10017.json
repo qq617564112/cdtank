@@ -50,11 +50,11 @@
     "texture": "10017A",
     "iconId": 10017,
     "textures": [
-      "Data/accessory/10017/10017A.png"
+      "Data/accessory/10017/10017A.webp"
     ],
     "sourceModel": "Data/accessory/10017/10017.POL",
     "modelStatus": "resolved",
-    "texturePath": "Data/accessory/10017/10017A.png"
+    "texturePath": "Data/accessory/10017/10017A.webp"
   },
   "runtime": {
     "values": {

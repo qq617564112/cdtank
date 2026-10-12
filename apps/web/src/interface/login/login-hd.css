@@ -1,6 +1,7 @@
 @import '../resources/happy-zcool.css';
 
 .source-entry[data-entry-page='login'] {
+  overflow: hidden;
   background: #073ca7 var(--image-login-background) center / cover no-repeat;
 }
 
@@ -41,12 +42,31 @@
 .login-logo {
   position: absolute;
   left: 149.199px;
-  top: -12.286px;
+  top: -36.286px;
   z-index: 3;
   width: 590.062px;
   height: auto;
   transform: scale(.9);
   transform-origin: center;
+  filter: drop-shadow(0 5px 0 #1337a3);
+  pointer-events: none;
+}
+
+.source-entry[data-entry-page='login'] .login-edition {
+  position: absolute;
+  left: 405px;
+  top: 214px;
+  z-index: 5;
+  color: #f89800;
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-size: 28px;
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: 1;
+  letter-spacing: 4px;
+  white-space: nowrap;
+  -webkit-text-stroke: 12px #fff;
+  paint-order: stroke fill;
   filter: drop-shadow(0 5px 0 #1337a3);
   pointer-events: none;
 }
@@ -92,7 +112,7 @@
   top: 275px;
   z-index: 1;
   width: 38px;
-  height: 325px;
+  height: calc(100vh / var(--source-entry-scale) - 228px);
   pointer-events: none;
 }
 
@@ -108,6 +128,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -140,13 +161,18 @@
   text-shadow: none;
 }
 
-.login-wood-button:active:enabled span {
+.login-wood-button:active:not(:disabled) span {
   color: #00b9e8;
   -webkit-text-stroke: 4px #101000;
 }
 
-.login-wood-button:active:enabled {
+.login-wood-button:active:not(:disabled) {
   transform: translateY(2px);
+}
+
+.login-wood-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .login-wood-button:disabled {
@@ -157,29 +183,28 @@
 .login-wood-home {
   left: calc(65px - var(--login-side-offset));
   top: 299px;
-  width: 115px;
+  width: 161px;
   height: 47px;
-  padding-right: 21px;
+  padding-right: 30px;
 }
 
-.login-wood-currency {
-  display: none;
+.login-wood-resources {
   left: calc(4px - var(--login-side-offset));
   top: 367px;
-  width: 126px;
+  width: 166px;
   height: 48px;
 }
 
 .login-wood-settings {
   left: calc(61px - var(--login-side-offset));
-  top: 367px;
+  top: 460px;
   width: 138px;
   height: 54px;
   padding-right: 10px;
 }
 
 .login-wood-intro {
-  right: calc(0px - var(--login-side-offset));
+  right: calc(-16px - var(--login-side-offset));
   top: 332px;
   width: 117px;
   height: 193px;
@@ -187,16 +212,45 @@
 
 .login-wood-intro span {
   position: absolute;
-  left: 1px;
-  top: 89px;
-  width: 101px;
+  left: 12px;
+  top: 82px;
+  width: 80px;
   font-size: 22px;
   line-height: 1.1;
+  text-align: center;
   transform: rotate(-46deg);
 }
 
 .login-wood-intro small {
   display: block;
-  font-size: 18px;
+  font-size: inherit;
   -webkit-text-stroke: inherit;
+}
+
+.login-copyright {
+  position: absolute;
+  right: 32px;
+  bottom: 12px;
+  left: 32px;
+  z-index: 5;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+  -webkit-text-stroke: 2px #000;
+  paint-order: stroke fill;
+}
+
+.login-copyright p {
+  margin: 0;
+}
+
+.login-copyright a {
+  color: inherit;
+  text-underline-offset: 2px;
+}
+
+.login-copyright a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }

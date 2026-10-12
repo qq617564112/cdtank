@@ -43,6 +43,11 @@ const rows: DropItemRow[] = table.rows.flatMap(row => {
   }];
 });
 
+/** Publish the same model/variant pairs the round's drop selection can produce. */
+export const groundItemResources = [...new Map(rows.map(row => [
+  `${row.modelId}:${row.texture}`, {modelId: row.modelId, texture: row.texture},
+])).values()];
+
 /**
  * Source dropitem rows map item categories and quantity tiers to scene visuals.
  * The first matching row wins, including the overlapping category-2 tier at quantity 5.

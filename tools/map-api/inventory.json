@@ -1,5 +1,5 @@
 {
-  "mapCount": 27,
+  "mapCount": 26,
   "objectCount": 75,
   "textureCount": 376,
   "objects": [
@@ -399,15 +399,13 @@
         "0023",
         "0024",
         "0025",
-        "1001",
-        "1002"
+        "1001"
       ],
       "classes": [
         "SYcScnObjPlant"
       ],
       "publishedAssets": [
-        "Data/scnobj/obj05413/obj05413.glb",
-        "custom-maps/1002/Data/scnobj/obj05413/obj05413.glb"
+        "Data/scnobj/obj05413/obj05413.glb"
       ],
       "models": [
         "Data/scnobj/obj05413/obj05413.glb"
@@ -524,15 +522,13 @@
         "0003",
         "0004",
         "0012",
-        "0021",
-        "1002"
+        "0021"
       ],
       "classes": [
         "SYcScnObjBreach"
       ],
       "publishedAssets": [
-        "Data/scnobj/obj05422/obj05422.glb",
-        "custom-maps/1002/Data/scnobj/obj05422/obj05422.glb"
+        "Data/scnobj/obj05422/obj05422.glb"
       ],
       "models": [
         "Data/scnobj/obj05422/c9.glb",
@@ -630,15 +626,13 @@
         "0005",
         "0010",
         "0012",
-        "0014",
-        "1002"
+        "0014"
       ],
       "classes": [
         "SYcScnObjBreach"
       ],
       "publishedAssets": [
-        "Data/scnobj/obj05425/obj05425.glb",
-        "custom-maps/1002/Data/scnobj/obj05425/obj05425.glb"
+        "Data/scnobj/obj05425/obj05425.glb"
       ],
       "models": [
         "Data/scnobj/obj05425/c9.glb",
@@ -666,15 +660,13 @@
         "0005",
         "0010",
         "0012",
-        "0014",
-        "1002"
+        "0014"
       ],
       "classes": [
         "SYcScnObjBreach"
       ],
       "publishedAssets": [
-        "Data/scnobj/obj05426/obj05426.glb",
-        "custom-maps/1002/Data/scnobj/obj05426/obj05426.glb"
+        "Data/scnobj/obj05426/obj05426.glb"
       ],
       "models": [
         "Data/scnobj/obj05426/c9.glb",
@@ -699,15 +691,13 @@
       "model": "obj05427",
       "maps": [
         "0002",
-        "0010",
-        "1002"
+        "0010"
       ],
       "classes": [
         "SYcScnObjBreach"
       ],
       "publishedAssets": [
-        "Data/scnobj/obj05427/obj05427.glb",
-        "custom-maps/1002/Data/scnobj/obj05427/obj05427.glb"
+        "Data/scnobj/obj05427/obj05427.glb"
       ],
       "models": [
         "Data/scnobj/obj05427/c9.glb",
@@ -735,15 +725,13 @@
         "0010",
         "0012",
         "0014",
-        "0019",
-        "1002"
+        "0019"
       ],
       "classes": [
         "SYcScnObjBreach"
       ],
       "publishedAssets": [
-        "Data/scnobj/obj05428/obj05428.glb",
-        "custom-maps/1002/Data/scnobj/obj05428/obj05428.glb"
+        "Data/scnobj/obj05428/obj05428.glb"
       ],
       "models": [
         "Data/scnobj/obj05428/c9.glb",
@@ -1238,15 +1226,13 @@
         "0010",
         "0011",
         "0012",
-        "0013",
-        "1002"
+        "0013"
       ],
       "classes": [
         "SYcCastle"
       ],
       "publishedAssets": [
-        "Data/scnobj/obj05447/c1.glb",
-        "custom-maps/1002/Data/scnobj/obj05447/c1.glb"
+        "Data/scnobj/obj05447/c1.glb"
       ],
       "models": [
         "Data/scnobj/obj05447/c1.glb",
@@ -1322,15 +1308,13 @@
         "0010",
         "0011",
         "0012",
-        "0013",
-        "1002"
+        "0013"
       ],
       "classes": [
         "SYcCastle"
       ],
       "publishedAssets": [
-        "Data/scnobj/obj05448/c1.glb",
-        "custom-maps/1002/Data/scnobj/obj05448/c1.glb"
+        "Data/scnobj/obj05448/c1.glb"
       ],
       "models": [
         "Data/scnobj/obj05448/c1.glb",
@@ -2215,8 +2199,7 @@
       "kind": "static-map-objects",
       "sourceFolder": "Data/map/0002",
       "maps": [
-        "0002",
-        "1002"
+        "0002"
       ],
       "classes": [
         "StaticMapObject"

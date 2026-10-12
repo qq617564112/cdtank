@@ -50,17 +50,17 @@
     "texture": "A",
     "iconId": 11,
     "textures": [
-      "Data/scnobj/00011/00011A.png"
+      "Data/scnobj/00011/00011A.webp"
     ],
     "sourceModel": "Data/scnobj/00011/00011.POL",
     "modelStatus": "resolved",
-    "texturePath": "Data/scnobj/00011/00011A.png",
+    "texturePath": "Data/scnobj/00011/00011A.webp",
     "disguise": {
       "name": "obj05422",
       "model": "Data/scnobj/obj05422/obj05422.glb",
       "sourceModel": "Data/scnobj/obj05422/obj05422.POL",
       "textures": [
-        "Data/scnobj/obj05422/obj05422.png"
+        "Data/scnobj/obj05422/obj05422.webp"
       ],
       "meshName": "cone78/0",
       "transparent": false

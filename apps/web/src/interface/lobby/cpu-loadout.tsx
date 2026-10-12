@@ -1,7 +1,7 @@
 import {GameMessage} from '../resources/game-message';
 import {gameContent} from '../../../../shared/content/catalog';
 import {isTreasureItem} from '../../../../shared/combat/treasure-items';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import './cpu-loadout.css';
 import {useEffect, useRef, useState} from 'react';
 import type {PlayerSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
@@ -28,7 +28,8 @@ export function CpuLoadoutView(props: CpuLoadoutViewProps) {
 }
 
 function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
-  const [items, setItems] = useState<CombatItemDefinition[]>();
+  const [items, setItems] = useState<CombatItemDefinition[] | undefined>(() =>
+    preparedCombatCatalog()?.items.filter(item => cpuLoadoutItemIds().includes(item.itemTableId)));
   const [draft, setDraft] = useState<SlotDraft[]>(() => SLOTS.map(slot => {
     const item = player.cpuLoadout?.find(value => value.slot === slot);
     return {slot, itemTableId: item?.itemTableId ?? 0, quantity: String(item?.quantity || 1)};

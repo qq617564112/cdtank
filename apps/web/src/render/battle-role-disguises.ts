@@ -7,6 +7,7 @@ interface DisguiseEntry {
   visual: RoleDisguiseVisual;
   key: string;
   error: string;
+  ready: boolean;
 }
 
 /** Owns per-player original4173 props, keyed by the authoritative disguise epoch. */
@@ -29,10 +30,10 @@ export class BattleRoleDisguises {
       if (existing?.key === key) continue;
       existing?.visual.dispose();
       const visual = new RoleDisguiseVisual(this.scene, player.id, disguise.style, disguise);
-      const entry: DisguiseEntry = {visual, key, error: ''};
+      const entry: DisguiseEntry = {visual, key, error: '', ready: false};
       // Register before awaiting so late clears/epoch changes own the eventual asset.
       this.entries.set(player.id, entry);
-      void visual.load().catch(error => {
+      void visual.load().then(() => {entry.ready = true;}).catch(error => {
         if (this.entries.get(player.id) !== entry) {
           visual.dispose();
           return;
@@ -57,6 +58,10 @@ export class BattleRoleDisguises {
       if (entry.error) return entry.error;
     }
     return '';
+  }
+
+  get resourcesReady(): boolean {
+    return [...this.entries.values()].every(entry => entry.ready);
   }
 
   clear(): void {

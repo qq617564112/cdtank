@@ -32,7 +32,7 @@ export class ChatEmoteSequence {
 let library: Promise<Map<number,ChatEmoteSequence>> | undefined;
 /** Manager providers persist by name across message reformatting and chat owners. */
 export function loadChatEmoteSequences(): Promise<Map<number,ChatEmoteSequence>> {
-  return library ??= loadStaticJson<{sequences: ChatEmoteSequenceDefinition[]}>('/chat-emote-sequences.json').then(data=>{
+  return library ??= loadStaticJson<{sequences: ChatEmoteSequenceDefinition[]}>('/manifests/chat-emote-sequences.json').then(data=>{
     if (!Array.isArray(data.sequences) || data.sequences.length !== 30) throw new Error('原表情动画目录不完整');
     const sequences = new Map<number,ChatEmoteSequence>();
     for (const sequence of data.sequences) {

@@ -1,11 +1,12 @@
 import {decodeImageRegion} from '../../assets/image-resources';
+import {loadStaticJson} from '../../assets/static-resources';
 
 export interface SourceFontGlyph {codepoint: number; advance: number; inkX: number; inkY: number; width: number; height: number; x: number; y: number;}
 export interface SourceFontRasterFace {dpi: number; pointSize: number; nativeResolution: [number, number]; lineSpacing: number; baseline: number; atlas: {asset: string; width: number; height: number}; glyphs: SourceFontGlyph[];}
 export interface SourceFontRasterLibrary {status: string; font: string; source: string; faces: SourceFontRasterFace[];}
 let sourceFontRaster: Promise<SourceFontRasterLibrary> | undefined;
 export function loadSourceFontRaster(): Promise<SourceFontRasterLibrary> {
-  sourceFontRaster ??= fetch('/ui-font-raster.json').then(async response => {if (!response.ok) throw new Error('原SIMSUN点阵目录载入失败'); const library = await response.json() as SourceFontRasterLibrary; await Promise.all(library.faces.map(face => decodeImageRegion(`/${face.atlas.asset}`))); return library;});
+  sourceFontRaster ??= loadStaticJson<SourceFontRasterLibrary>('/manifests/ui-font-raster.json').then(async library => {await Promise.all(library.faces.map(face => decodeImageRegion(`/${face.atlas.asset}`))); return library;});
   return sourceFontRaster;
 }
 export function sourceFontFace(library: SourceFontRasterLibrary, scale: number): SourceFontRasterFace {

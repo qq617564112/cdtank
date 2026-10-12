@@ -1,38 +1,52 @@
-# 设置页画质与卡通渲染偏好
+# 设置页显示偏好
 
-M5-12 / UI-50。`settings.xml` 的三个源控件 `rdoLow`、`rdoHigh`、`chkSilhouette` 已接入设置草稿、确认、取消、恢复默认和错误反馈。其余 `rdo16ColorDepth`、`rdo32ColorDepth`、`chkWaitVSync`、`chkSoftwareCursor`、`zhandoubiaoqing` 保持未接入。
+系统设置保留窗口/全屏、FPS显示、卡通描边、抗锯齿，以及独立的怀旧/HD战斗素材选项。FPS显示位于卡通描边上方。右栏提供音乐音量、音效音量、亮度、饱和度、对比度和渲染分辨率六个滑动条。
 
 ## 原字段
 
-`CDTank/Config/SystemSetting.ini` 的 `[Display]` 记录 `HighPrecision = 1`、`Silhouette = 1`。`settings.xml` 中 `rdoLow` 与 `rdoHigh` 是 `GroupID=2` 的 RadioButton，`rdoHigh` 对应 HighPrecision；`chkSilhouette` 是独立 Checkbox。三个控件均保留原 AbsoluteRect、Normal/Hover/Pushed/CheckMark 图和父矩形。
+`CDTank/Config/SystemSetting.ini` 的 `[Display]` 记录 `HighPrecision = 1`、`Silhouette = 1`。`settings.xml` 中 `rdoLow` 与 `rdoHigh` 是 `GroupID=2` 的 RadioButton，`rdoHigh` 对应 HighPrecision；`chkSilhouette` 是独立 Checkbox。
 
-`HighPrecision` 的原完整 D3D producer 未恢复，本批高、低画质采用明确的 Web 后备缓冲比例策略。`chkSilhouette` 控制已登记的 `cartoon-outline` Web入口及原25图角色toon采样。原Silhouette INI→manager布尔→Render效果选择已恢复静态来源，详scene-actor-toon-runtime.md；原Windows完整界面回调、HighPrecision含义与D3D framebuffer仍开放。
+原 `Silhouette` INI→manager布尔→Render效果选择的静态来源见 `scene-actor-toon-runtime.md`。原 Windows 完整界面回调、HighPrecision含义与D3D framebuffer仍开放。Web 的显示参数按当前界面定义，原字段不作为新参数的原生实现证据。
 
 ## Web 合同
 
-`apps/web/src/interface/settings/display-preferences.ts` 的持久类型只有两个布尔值：
+`apps/web/src/interface/settings/display-preferences.ts` 的持久类型为：
 
 ```ts
 export interface DisplayPreferences {
-  highPrecision: boolean;
+  renderScale: .25 | .5 | 1 | 1.5 | 2;
   silhouette: boolean;
+  msaa4x: boolean;
+  showFps: boolean;
 }
 ```
 
-默认值为 `{highPrecision: true, silhouette: true}`，存储键为 `cdtank.display-settings.v1`。读取缺失值、未知值、坏 JSON 或非法布尔时恢复默认，并区分无保存与损坏/不可读；写入只在两个合法布尔值均可保存时返回成功。浏览器偏好属于本机 localStorage，不是账户或服务器字段；不新增迁移、schema、协议或 feature flag。
+默认值为 `{renderScale: 1, silhouette: true, msaa4x: false, showFps: false}`，沿用存储键 `cdtank.display-settings.v1`。既有保存仅有 `highPrecision` 时，false对应0.5档，其余对应1档；缺少MSAA或FPS字段时默认关闭。非法新字段恢复默认显示设置，并保留不可读或损坏存储的反馈。本机浏览器偏好不进入账户、服务器或网络协议。
 
-`initializeSettings` 在 React 首帧前恢复并应用显示偏好，并把读取结果放入 `display` 供 `SettingsSourceView` 显示初始消息。设置页草稿以当前 active 对象为初值，不重新读取损坏存储覆盖 active。确认时键位和快捷聊天保持既有分范围保存流程；显示偏好只有完整写入成功后才应用到 active 并通知运行时，保存失败时显示草稿保留、对话框不关闭且 active 显示属性不变。恢复默认只还原三组草稿，不即时应用；取消、关闭和 Escape 不写显示偏好，也不改变运行时。
+`startGame` 在创建WebGPU引擎前恢复显示偏好，之后由 `initializeSettings` 继续恢复键位、快捷聊天、音量、亮度、饱和度、对比度和战斗素材偏好。设置页每次打开持有独立草稿；所有控件只修改草稿，恢复默认也只还原草稿。点击确认后才应用窗口/全屏并逐项保存、应用其余设置；取消、关闭和Escape丢弃未确认草稿，再次打开读取最后确认值。全屏切换等待期间禁用编辑及关闭按钮；切换失败保留面板并提示重试。显示范围保存成功即应用渲染分辨率、FPS显示、卡通描边及MSAA。点击确认时，已保存MSAA与本会话初始引擎配置不同，或已保存战斗素材画质发生变化，直接执行页面刷新。若素材保存失败而MSAA已经成功保存且改变，仍立即刷新以应用MSAA；其它保存失败保留面板并提示重试，已经成功的范围保持生效。
 
-高、低画质单选互斥，卡通渲染独立。高画质保留当前 Engine 的 `adaptDeviceRatio=true` 真实 DPR 后备缓冲比例；低画质的 3D 后备缓冲宽高为高档一半，CSS 视口与 current DPR 不变。比例使用真实 `window.devicePixelRatio || 1`，DPR 小于 1 时仍保持高一档 `1/DPR`、低一档 `2/DPR`。切换时当前 engine 即时调整并 resize，后续窗口 resize 和 DPR 变化仍按选档比例。实现不写固定 `hardwareScaling1` 覆盖 DPR，也不以低分辨率结果声明高清性能通过。
+FPS显示默认关闭，确认后在页面右上角显示原生帧循环的每秒帧数，每秒更新一次，刷新后恢复已保存的开关值。读数共用现有帧计数采样，不增加计时器或GPU回读，不随3D渲染倍率缩放；运行时释放时移除读数并解绑显示偏好订阅。
 
-Type8 屏幕 `EffectOverlayDrawState` 随实际 engine 后备缓冲更新 `width`、`height`，保留 UV retention、颜色、`f32` 和 native vertices，不沿用构造时旧尺寸，也不另开材质或纹理。
+## 战斗3D分辨率
 
-卡通描边调整已注册合格 Mesh 的 `renderOutline`，保持黑色 RGB、Ink 0.65、原 InstancedMesh source、动画和 morph、alpha 混合与 planar alpha-test 排除规则，地形不描边。已加载模型、已注册 source 的实际克隆、设置后的异步新增模型、动作切换和新 scene 对象读取当前 active 值；不创建新 Mesh/Material、不复制 geometry、不逐帧扫描全部 mesh。`sourceMesh` 只注册一次，已注册 source 通过 `onClonedObservable` 将合格克隆 Mesh 接入同一偏好注册，clone observer 自身也随 Mesh/Scene dispose 解绑并释放引用，scene-runtime dispose 解绑 preference listener。
+渲染分辨率为五档 `.25 / .5 / 1 / 1.5 / 2`，倍率同时作用于3D目标的宽、高。原生DPR画布尺寸、CSS视口和浏览器界面不随倍率改变。
 
-## 源界面
+`scene-runtime.ts` 只为战斗场景相机附加 `PassPostProcess`，其输入目标按倍率分配，世界3D绘制完成后以双线性采样合成回原生帧缓冲。倍率更改时释放旧pass并建立新pass，窗口resize由引擎和pass重新分配目标；scene dispose沿相机释放pass和纹理。主渲染顺序为世界3D、原生尺寸的玩家名字/小地图utility layers、主战斗HUD。utility layers关闭postprocess，设置页、大厅、模型预览和战斗UI保持原有分辨率。独立预览使用自己的引擎和相机，不读取战斗渲染倍率。
 
-`SettingsSourceView` 的 DOM 仍保持当前 800×599 父链、ImageScale 和原 CSS 尺寸。三个控件使用原按钮矩形和原图；RadioButton 通过原 `selected`/`aria-pressed` 语义显示互斥选择，`chkSilhouette` 使用局部 `SourceStaticImage` 叠加真实 CheckMarkImage，checked 层保持 `pointer-events: none`，不改共享 `SourceButton` 逻辑。HUD、字体资产、源 pose、其它按钮键区、20 键、快捷聊天、音量、浏览器全屏、焦点捕获和现有存储键均保持。
+Type8与legacy屏幕特效仍用原生画布尺寸定义顶点和viewport，NDC覆盖范围不随目标倍率改变；作为世界场景特效进入3D目标。玩家HUD与文字走独立utility layer，在合成之后绘制。
 
-本批未运行 tests、browser、build、typecheck、native、高清或保存重启实测，也不把新偏好扩写到既有 0007/战车1 outline 证据或全图证据。M5-14、UI-50、M3-03、M4-07 与 M7 父项保持未完成。
+## 4× MSAA与卡通描边
 
-原25图真实TankView组件在材质bind时读取同一active.silhouette，开启原toon纹理／默认灯方向采样，关闭恢复普通MV3光照；不改变显示草稿或保存合同，详scene-actor-toon-runtime.md。
+抗锯齿默认关闭。选中并确认后，WebGPU引擎以 `antialias: true` 创建4样本主帧缓冲；战斗世界pass的 `samples` 同时设为4，关闭时为1。重新载入后从已保存偏好创建主引擎及模型预览引擎。
+
+卡通描边调整已注册合格Mesh的 `renderOutline`，保持黑色RGB、Ink 0.65、InstancedMesh source、动画、morph、alpha混合与planar alpha-test排除规则，地形不描边。已加载模型、实际克隆及异步新增模型读取当前active值；Mesh/Scene dispose释放注册和clone observer。模型toon光照按图级资格独立应用，卡通描边只控制轮廓。
+
+## 源界面与图标
+
+页面保留800×599根、原顶部与底部按钮，左栏保留键位设置。右上显示选项，右下六个滑动条替代原F5–F12编辑区；原保存快捷聊天仍由启动设置读取。滑动条支持指针、方向键和Home/End，分辨率按整数索引选档。图标内文字表示调节项，轨道旁显示当前数值。
+
+亮度柴犬头、饱和度哈士奇头、对比度猫头和渲染分辨率猫头通过生图API使用现音乐猫作为画风及文字样式参考；图标带黄字粗黑描边中文，不带身体、爪子或道具。发布文件在 `apps/web/public/ui/settings/`。
+
+## 验证范围
+
+本批仅静态走查，未运行tests、browser、build、typecheck、native或高清实测。新布局、FPS显示、五档分辨率、MSAA、对比度及确认刷新表现未纳入既有实测证据。原0007/战车1轮廓、角色toon来源与历史设置页面证据保持各自范围，M5-14、UI-50、M3-03、M4-07与M7父项保持未完成。

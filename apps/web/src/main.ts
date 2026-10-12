@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import './style.css';
 import {ImagePreloader} from './assets/preload-images';
 import {releaseImageResources} from './assets/image-cache';
+import {releaseStaticResources} from './assets/static-resources';
 import {ImageLoadingScreen} from './interface/resources/image-loading-screen';
 import {prepareSourceUi, STARTUP_UI_LAYOUTS} from './interface/resources/source-ui-resources';
 import {prepareSourcePageImages} from './interface/resources/source-page-images';
@@ -18,15 +19,20 @@ canvas.hidden=true;
 const images=new ImagePreloader();
 const controller=new AbortController();
 let loading=false;
+let moduleImportFailed=false;
 let disposeGame: (()=>void) | undefined;
-const screen=new ImageLoadingScreen(root,()=>{void enterGame();});
+const screen=new ImageLoadingScreen(root,()=>{
+  if (moduleImportFailed) window.location.reload();
+  else void enterGame();
+});
 
 async function enterGame(): Promise<void> {
   if (loading || controller.signal.aborted) return;
   loading=true;
+  moduleImportFailed=false;
   screen.begin();
-  // Manifest, loading art, page art, UI, content, module and scene runtime.
-  const totalTasks=7;
+  // Manifest, loading art, page art, image preload, UI, content, module and scene runtime.
+  const totalTasks=8;
   let completedTasks=0;
   let active=true;
   const completeTask=()=>{
@@ -39,6 +45,13 @@ async function enterGame(): Promise<void> {
       screen.prepare(controller.signal).then(completeTask),
       prepareSourcePageImages(controller.signal).then(completeTask),
     ]);
+    await images.load(progress=>{
+      if (!active || controller.signal.aborted) return;
+      const fraction=(progress.completed+progress.decoded)/Math.max(1,progress.total+progress.decodeTotal);
+      screen.update((completedTasks+fraction)/totalTasks,
+        progress.phase==='download'?'正在下载图片…':'正在解码图片…');
+    },controller.signal);
+    completeTask();
     controller.signal.throwIfAborted();
     screen.update(completedTasks/totalTasks,'正在准备游戏内容与界面…');
     await Promise.all([
@@ -51,6 +64,8 @@ async function enterGame(): Promise<void> {
     canvas.hidden=false;
     disposeGame=await startGame(canvas,root,controller.signal,completeTask);
   } catch (error) {
+    moduleImportFailed=error instanceof TypeError
+      && error.message.includes('Failed to fetch dynamically imported module');
     canvas.hidden=true;
     if (!controller.signal.aborted) screen.fail(error);
   } finally {
@@ -67,4 +82,5 @@ window.addEventListener('pagehide',()=>{
   if (disposeGame) disposeGame();
   else root.unmount();
   releaseImageResources();
+  releaseStaticResources();
 },{once:true});

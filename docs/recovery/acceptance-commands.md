@@ -16,7 +16,6 @@ E-06按运行规则、网络确认、浏览器交互、原程序取证和渲染�
 | `npm run test:acceptance:network` | 普通双连接、账户/装备保存并重启、账户CPU接管和道具广播、治疗道具、贴图选择确认 | 自启并关闭临时服务，依次使用3109、3129、3139、3137、3018；结果写入`recovery/output` |
 | `npm run test:acceptance:browser -- '<Chromium CDP WebSocket URL>'` | 账户贴图选择/保存/重启、治疗道具、CPU接管及拥有贴图两局/重进 | 调用方提供Chromium；各测试自启服务和Vite，使用3019/5200、3138/5193；保存浏览器JSON与截图 |
 | `npm run test:acceptance:evidence` | 拥有贴图与请求传递、角色姿态命令、原程序Ready规则、711条贴图目录比对 | 执行原程序取证与对应重建规则；读取原程序和导出资产 |
-| `npm run test:acceptance:render` | 玩家与目标资源生命周期夹具及七个独立渲染入口构建 | `test:render:players`用NullEngine/延迟加载检查跨会话、选择替换与释放；输出到`dist/validation/`的七入口仅验证构建，像素和交互由下表浏览器命令验证 |
 
 这些入口是明确列出的工程回归组。专题里的完整原程序取证、全部地图与性能扫描仍使用各自命令，按改动选择执行。
 
@@ -65,13 +64,6 @@ npm run test:combat:healing:browser -- "$CDTANK_CDP" --effect-only --hd
 
 | 开发入口 | 默认端口 | 浏览器命令 |
 | --- | --- | --- |
-| `npm run render:model:dev` | 5204 | `npm run test:effects:model:browser -- "$CDTANK_CDP"` |
-| `npm run render:bolt:dev` | 5205 | `npm run test:effects:bolt:browser -- "$CDTANK_CDP"` |
-| `npm run render:effect:dev` | 5206 | `npm run test:effects:browser -- "$CDTANK_CDP"` |
-| `npm run render:particle:dev` | 5207 | `npm run test:effects:particles:browser -- "$CDTANK_CDP"` |
-| `npm run render:overlay:dev` | 5208 | `npm run test:effects:overlay:browser -- "$CDTANK_CDP"` |
-| `npm run render:skill:dev` | 5209 | `npm run test:combat:effect-runtime:browser -- "$CDTANK_CDP"` |
-| `npm run render:shake:dev` | 5210 | `npm run test:effects:shake:browser -- "$CDTANK_CDP"` |
 
 浏览器验证结束后关闭开发入口。开发页位于`tests/render/`，发行客户端使用`build:web`，渲染验收产物位于`dist/validation/`。
 
@@ -115,13 +107,9 @@ Owned定义解析native/CTS归evidence/roles，test:combat:health保持原入口
 
 ## 工程化迁移验证记录
 
-运行账户与真实托管网络分组已通过（engineering-acceptance-accounts.log、engineering-acceptance-autopilot-network.log），战斗分组通过（engineering-acceptance-combat.log）。缺失CDP参数在启动服务前退出，使用提示见engineering-acceptance-browser-usage.log。真实浏览器总入口记录在engineering-acceptance-browser.log；各夹具仍保存自己的专题JSON。独立渲染构建及像素结果见engineering-render-entries.md，编译服务/CPU两局见engineering-shot-compiled.log。
+运行账户与真实托管网络分组已通过（engineering-acceptance-accounts.log、engineering-acceptance-autopilot-network.log），战斗分组通过（engineering-acceptance-combat.log）。缺失CDP参数在启动服务前退出，使用提示见engineering-acceptance-browser-usage.log。真实浏览器总入口记录在engineering-acceptance-browser.log；各夹具仍保存自己的专题JSON。编译服务/CPU两局见engineering-shot-compiled.log。
 
 浏览器总入口实际执行通过：迷彩选择费用/保存/拒绝/重启与清理、双网页治疗自然两局及一致结算/再战冻结、拥有迷彩的CPU托管自然两局与服务重启后重新进入。库存/快捷槽保持、原Effect11/GA15与释放检查均通过；记录engineering-acceptance-browser.log及browser-account-autopilot-owned-textures.json。E-06命令组织与这些迁移回归已验收；完整复刻仍按tasklist各项执行。
-
-## 独立资源查看工具
-
-`npm run tools:assets:dev`启动本地5211工具，`npm run tools:assets:build`输出dist/tools/asset-viewer；不进入正式Web部署。`node tests/browser-scenes.mjs <CDP浏览器WebSocket> [工具origin]`默认为5211，需先启动工具，覆盖三地图矩阵/实际顶点与画面记录。`node tests/browser-tank-actor-clock-sol.mjs <CDP>`自启工具5202并清理，需既有原时钟取证JSON。正式对局夹具不再等待模型查看器目录。详见engineering-asset-tool.md。
 
 认证连接时序单项：`npm run test:network:connection`，已并入`test:acceptance:network`。它使用可控运输返回和内存token检查共用认证、关闭等待、重复退出、取消及迟到响应隔离，不声称真实socket验收；真实账户与连续两局仍由网络/浏览器夹具验证。
 

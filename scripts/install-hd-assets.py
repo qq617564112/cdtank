@@ -8,6 +8,7 @@ import os
 from pathlib import Path, PurePosixPath
 import shutil
 import struct
+from asset_compression.public_layout import public_path
 
 
 JSON_CHUNK = 0x4E4F534A
@@ -194,13 +195,14 @@ def main():
     for source in inventory.get('models', []):
         target = runtime / source
         snapshot = root / 'art/original' / source
-        original_path = snapshot if snapshot.exists() else target
+        original_path = snapshot if snapshot.exists() else target if target.exists() else runtime / public_path(source)
         model = read_glb_metadata(original_path)
         matches = image_matches(model, source, replacements)
         if not any(entry['source'].lower() in selected_paths for entry in matches.values()):
             continue
         original = original_path.read_bytes()
         packed = repack(original, source, replacements, root)
+        target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_name(target.name + '.tmp')
         temporary.write_bytes(packed)
         temporary.replace(target)

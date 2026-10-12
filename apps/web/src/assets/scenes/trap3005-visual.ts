@@ -1,5 +1,7 @@
+import {loadPreparedModel} from '../model-resources';
+import {battleArtworkUrl} from '../battle-artwork';
 import {itemForHandler} from '../../../../shared/content/catalog';
-import {AssetContainer, LoadAssetContainerAsync, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
+import {AssetContainer, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 
@@ -23,7 +25,7 @@ export class Trap3005Visual {
   }
 
   private loadAsset(): Promise<AssetContainer> {
-    return LoadAssetContainerAsync(`/${itemForHandler('trap', 'fireRestraint').resources.model}`, this.scene);
+    return loadPreparedModel(battleArtworkUrl(`/${itemForHandler('trap', 'fireRestraint').resources.model}`, this.scene), this.scene);
   }
 
   async load(): Promise<void> {

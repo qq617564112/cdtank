@@ -1,3 +1,4 @@
+import {battleArtworkUrl} from '../battle-artwork';
 import {Scene, ShaderMaterial, Texture} from '@babylonjs/core';
 import type {AbstractMesh} from '@babylonjs/core';
 import {loadStaticJson} from '../static-resources';
@@ -74,7 +75,7 @@ export class SceneWaterFall {
 
   private loadFrame(asset: string): Promise<Texture> {
     return new Promise((resolve, reject) => {
-      const texture = new Texture(`/${asset}`, this.scene, true, false,
+      const texture = new Texture(battleArtworkUrl(`/${asset}`, this.scene), this.scene, true, false,
         Texture.BILINEAR_SAMPLINGMODE, () => {resolve(texture);},
         (message, error) => {texture.dispose(); reject(error ?? new Error(message));});
       texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE;

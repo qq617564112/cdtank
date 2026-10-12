@@ -6,11 +6,12 @@ import {bindButtonBackgrounds, buttonArtwork} from '../../assets/button-artwork'
 import {imageResourceUrl} from '../../assets/image-cache';
 import {loadUiFont} from './source-ui-fonts';
 
-export const lobbyBannerUrl = '/Data/ui/banner/ad102.png';
+export const lobbyBannerUrl = '/ui/lobby/welcome-banner.webp';
 export const STARTUP_UI_LAYOUTS = [
   'login.xml', 'lobby_select.xml', 'default.xml', 'roomlist.xml', 'roomlist_icon.xml',
   'playerlist.xml', 'chat.xml', 'chat_channellist_lobby.xml', 'chat_emotelist.xml',
-  'chat_intimatelist.xml',
+  'chat_intimatelist.xml', 'room_main.xml', 'chat_channellist.xml',
+  'game_main_chat_shrinked.xml', 'game_main_channellist.xml', 'game_main_emotelist.xml',
 ] as const;
 
 let directory: HomeSourceUi | undefined;
@@ -18,7 +19,7 @@ let loadingDirectory: Promise<HomeSourceUi> | undefined;
 const preparedLayouts = new Set<string>();
 
 export function loadSourceUi(): Promise<HomeSourceUi> {
-  loadingDirectory ??= loadStaticJson<HomeSourceUi>('/ui.json').then(ui => {
+  loadingDirectory ??= loadStaticJson<HomeSourceUi>('/manifests/ui.json').then(ui => {
     directory = ui;
     return directory;
   }).catch(error => {
@@ -30,6 +31,12 @@ export function loadSourceUi(): Promise<HomeSourceUi> {
 
 export function preparedSourceUi(suffixes: readonly string[]): HomeSourceUi | undefined {
   return suffixes.every(suffix => preparedLayouts.has(suffix)) ? directory : undefined;
+}
+
+/** Page sessions read an already loaded directory on their first render. */
+export function cachedSourceUi(suffixes: readonly string[] = []): HomeSourceUi | undefined {
+  return suffixes.every(suffix => directory?.layouts.some(layout => layout.path.endsWith(suffix)))
+    ? directory : undefined;
 }
 
 /** Resolve the same atlas regions as the controls, including their interaction states. */
@@ -56,6 +63,7 @@ export async function prepareSourceUi(suffixes: readonly string[]): Promise<Home
     }
   }
   await Promise.all([loadUiFont(), ...[...urls].map(url => decodeImageRegion(url))]);
+  for (const url of urls) imageResourceUrl(url);
   bindButtonBackgrounds(imageResourceUrl);
   for (const suffix of suffixes) preparedLayouts.add(suffix);
   return ui;

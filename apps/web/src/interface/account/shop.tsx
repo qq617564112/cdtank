@@ -1,5 +1,5 @@
 import {GameMessage, showGameMessage} from '../resources/game-message';
-import {loadCombatCatalog} from '../../content';
+import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import {StackItemSaleSource, type StackSaleOwner} from './stack-item-sale-source';
 import {createRequestId} from '../../network/request-id';
 import type {ReqStackItemSale, ResStackItemSale} from '../../../../shared/protocols/PtlStackItemSale';
@@ -18,7 +18,7 @@ import type {ReqShop, ResShop, ShopCurrency, ShopItem} from '../../../../shared/
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceImageScale} from '../resources/source-static-image';
 import {loadUiFont} from '../resources/source-ui-fonts';
-import {loadSourceUi} from '../resources/source-ui-resources';
+import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
 import {ShopSourcePage} from './shop-source-page';
 import {TankShopView, type TankPurchaseOwner} from './tank-shop';
 import {PetShopView, type PetPurchaseOwner} from './pet-shop';
@@ -66,10 +66,10 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
   const [petBusy, setPetBusy] = useState(false);
   const [partBusy, setPartBusy] = useState(false);
   const [mendBusy, setMendBusy] = useState(false);
-  const [ui, setUi] = useState<HomeSourceUi>();
+  const [ui, setUi] = useState<HomeSourceUi | undefined>(() => cachedSourceUi());
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
   const [confirmed, setConfirmed] = useState<ResShop>();
-  const [catalog, setCatalog] = useState<CombatCatalog>();
+  const [catalog, setCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const [inventory, setInventory] = useState<ResInventory>();
   const [ownedCategory, setOwnedCategory] = useState<'Weapon' | 'Item'>('Item');
   const saleActivationSequence = useRef(0);
@@ -230,7 +230,11 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
         showGameMessage(`已购买${purchaseItem.name}×${count}。`, 'success');
       }
     } catch (error) {
-      if (current.active) setStatus(error instanceof Error ? error.message : '购买未确认，请重试');
+      if (current.active) {
+        const message = error instanceof Error ? error.message : '购买未确认，请重试';
+        setStatus(message); showGameMessage(message, 'error');
+        owner.session?.refresh();
+      }
     } finally {
       owner.inFlight = undefined;
       if (current.active) setBusy(current.query);
@@ -256,6 +260,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     <div ref={stage} className="shop-source-stage" data-shop-page="" data-shop-active-page={page}>
     {ui && <ShopSourcePage ui={ui} money={confirmed?.money} tokens={confirmed?.tokens} close={requestClose}
       page={page} tankAvailable={!!source.tankShop} petAvailable={!!source.petShop} mendAvailable={!!source.ownedRoles && !!source.inventory && !!source.roleProfile} partAvailable selectPage={value => {
+        if (value === page && (value !== 'Item' || confirmed)) return;
         owner.page = value; setPage(value); setSaleActivation(undefined); setDescription(undefined);
         if (value === 'Item') owner.session?.refresh();
       }}
@@ -270,6 +275,13 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     {page === 'Part' && ui && <PartShopView ui={ui} source={source} owner={owner.part!} onBusy={setPartBusy} onEquipmentPage={onEquipmentPage}
       onMoney={money => setConfirmed(value => value && {...value, money})}/> }
     {page === 'Mend' && ui && <MendShopSourcePage ui={ui} catalog={catalog} source={source} onBusy={setMendBusy} />}
+    {ui && source.stackItemSale && <StackItemSaleSource ui={ui} source={source} money={confirmed?.money}
+      activation={saleActivation} refreshKey={saleRefresh} owner={owner.stackSale!} disabled={busy || page !== 'Item'} onBusy={setOwnedBusy}
+      onError={message => {showGameMessage(message, 'error');}}
+      onConfirmed={result => {
+        setInventory(result.inventory);
+        if (result.money !== undefined) setConfirmed(value => value && value.money !== result.money ? {...value, money: result.money} : value);
+      }} />}
     {page === 'Item' && ui && <>
     <p className="shop-balance-summary" data-shop-balance="">{confirmed?.money === undefined ? '账户尚无余额资料'
       : `金币：${confirmed.money} · 软星币：${confirmed.tokens}`}</p>
@@ -290,13 +302,6 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
             itemTableId: record.itemTableId, ownedQuantity: record.ownedQuantity, ownedMoneyPrice: definition?.moneyPrice};
         })} />
     </>}
-    {source.stackItemSale && <StackItemSaleSource ui={ui} source={source} instanceId={ownedSelected}
-      activation={saleActivation} refreshKey={saleRefresh} owner={owner.stackSale!} disabled={busy} onBusy={setOwnedBusy}
-      onError={message => {showGameMessage(message, 'error');}}
-      onConfirmed={result => {
-        setInventory(result.inventory);
-        if (result.money !== undefined) setConfirmed(value => value && value.money !== result.money ? {...value, money: result.money} : value);
-      }} />}
     {describedItem && description && <ShopItemDescriptionSource ui={ui} itemTableId={describedItem.itemTableId}
       name={describedItem.name} description={describedItem.info} left={description.left} top={description.top}/>}
     {purchaseItem && <ShopPurchaseSource ui={ui} name={purchaseItem.name}

@@ -291,7 +291,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 123,
+    "version": 124,
     "services": [
         {
             "id": 55,
@@ -3019,6 +3019,22 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "elementType": {
                             "type": "Reference",
                             "target": "MsgRoomSnapshot/GroundItemSnapshot"
+                        }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 19,
+                    "name": "groundItemResources",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Pick",
+                            "target": {
+                                "type": "Reference",
+                                "target": "MsgRoomSnapshot/GroundItemSnapshot"
+                            },
+                            "keys": ["modelId", "texture"]
                         }
                     },
                     "optional": true

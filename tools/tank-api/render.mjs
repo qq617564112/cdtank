@@ -24,7 +24,7 @@ for(const row of definition.resources.textureVariants){
 const only=process.argv.indexOf('--only');
 const selected=[...rows.values()].filter(s=>only<0 || s.suffix===process.argv[only+1]).sort((a,b)=>a.suffix.localeCompare(b.suffix));
 const moduleSource = String.raw`
-import {TankPreview} from '/tools/asset-viewer/tank-preview.ts';
+import {TankPreview} from '/tools/tank-api/tank-preview.ts';
 const canvas=document.querySelector('canvas');
 canvas.style.width='1000px';canvas.style.height='1000px';
 const preview=new TankPreview(canvas);preview.playing=false;

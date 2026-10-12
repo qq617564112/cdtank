@@ -137,7 +137,7 @@ function GamePages({battle,canvas,hud,settings,validation=false}: AppProps) {
       savedAccount={login.savedAccount} hasSavedIdentity={login.hasSavedIdentity}
       saveAccount={login.saveAccount} onSaveAccount={login.setSaveAccount}
       onLogin={login.login} onRegister={login.register} onExit={login.exit}
-      onSettings={()=>setQuickChatOpen(true)} onHistoryIntro={()=>setHistoryIntroOpen(true)}/>}
+      onSettings={()=>setQuickChatOpen(true)}/>}
     {login.phase === 'channel' && <ChannelSourceView busy={login.busy} status={login.status}
       channels={login.channels} ping={login.ping} selectedId={login.selectedId} onSelect={login.setSelectedId}
       onEnter={login.enter} onBack={login.back}/>}
