@@ -40,7 +40,7 @@ const delay = Math.fround(.1), lifetime = Math.fround(.2);
 const elapsed = Math.fround(delay + lifetime);
 assert.equal(effectLifetimeEnded(elapsed, delay, lifetime), elapsed >= delay + lifetime);
 
-const library = JSON.parse(fs.readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(fs.readFileSync('apps/web/public/effect-library.json', 'utf8'));
 assert.equal(library.nodeTimings.length, 3118);
 const explosion = library.nodeTimings.find((r: {node: number}) => r.node === 2431);
 assert.equal(explosion.delay, 0);

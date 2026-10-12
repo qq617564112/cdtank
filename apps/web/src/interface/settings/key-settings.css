@@ -39,12 +39,6 @@
   opacity: 0.5;
 }
 
-#key-settings-status {
-  display: block;
-  min-height: 1.5em;
-  margin-top: 0.75rem;
-}
-
 .key-settings-actions {
   position: sticky;
   bottom: -1rem;

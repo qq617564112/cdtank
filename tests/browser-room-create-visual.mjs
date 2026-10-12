@@ -631,7 +631,7 @@ async function verifyVisual(session, size) {
 
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5300,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3270',ws:true,rewrite:()=> '/',configure:proxy=>{proxy.on('proxyReqWs',(_request,_incoming,socket)=>{const originalWrite=socket.write.bind(socket);socket.write=(...args)=>{if(holdInputResponses){heldInputResponses.push(()=>originalWrite(...args));return true;}return originalWrite(...args);};});}}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5300,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3270',ws:true,rewrite:()=> '/',configure:proxy=>{proxy.on('proxyReqWs',(_request,_incoming,socket)=>{const originalWrite=socket.write.bind(socket);socket.write=(...args)=>{if(holdInputResponses){heldInputResponses.push(()=>originalWrite(...args));return true;}return originalWrite(...args);};});}}}}});
   vite.middlewares.use('/__room-text-fixture', (request,response)=>{
     response.setHeader('Content-Type','text/html; charset=utf-8');response.end(`<div id="fixture"></div><script type="module">
       import React from '/node_modules/.vite/deps/react.js';

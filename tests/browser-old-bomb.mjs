@@ -93,7 +93,7 @@ try {
   const sourceBomb=evidence.sourceInventory.find(r=>r.itemTableId===3001&&r.instanceId===14);assert(sourceBomb);assert.equal(sourceBomb.ownedQuantity,2);
   if(first){const newBomb=evidence.sourceInventory.find(r=>r.instanceId===reusedPurchase.instanceId);assert(newBomb);assert.equal(newBomb.itemTableId,3001);assert.equal(newBomb.ownedQuantity,1);evidence.purchase=reusedPurchase;}
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5693,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3663',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5693,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3663',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9893',

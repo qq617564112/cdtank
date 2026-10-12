@@ -7,14 +7,14 @@ import sys
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_FPCW
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 paths = [ROOT / 'CDTank/gbengine.dll', ROOT / 'CDTank/msvcr71.dll']
 machine, images = map_original_binaries(paths)
 machine.mem_map(0, 4096)
 machine.mem_map(0x2000000, 0x20000)
 INPUT, MATRIX, OUTPUT, STACK, STOP = 0x2010000, 0x2011000, 0x2012000, 0x2008000, 0x201f000
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 vectors = [control['orbit']['axis'] for control in library['spriteControls']]
 vectors += [control['orbit']['axis'] for control in library['particleControls']]
 vectors += [[0, 0, 0], [.005, 0, 0], [.005000001, 0, 0], [.003, .004, 0], [3, 4, 12]]

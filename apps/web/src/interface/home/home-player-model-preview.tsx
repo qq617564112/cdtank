@@ -10,6 +10,7 @@ import {TankView} from '../../assets/tanks/tank-view';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {positionHomePlayerModels} from './home-player-model-scene';
+import {HOME_PLAYER_MODEL_CLIP} from './home-player-preview-contour';
 
 interface PreviewProps {
   ui: HomeSourceUi;
@@ -45,19 +46,21 @@ function selectedModels(profile: ResRoleProfile['profile'], owned?: ResOwnedRole
 
 /** The player description region displays the currently selected owned models. */
 export function HomePlayerModelPreview({ui, profile, owned, loading, error, scale}: PreviewProps) {
+  const bounds = sourceProps(ui, new HomeSourceLayout(ui, 'myhome_playerpage.xml'), 'myhome_playerpage.xml', 'edtPlayerDescription');
   const models = loading || error ? undefined : selectedModels(profile, owned);
   const message = error || (loading ? '载入角色…' : '请先选用坦克和宠物');
   const key = models && [models.tankInstanceId, models.petInstanceId, models.tankId, models.petId,
     models.textures?.U, models.textures?.M, models.textures?.XY].join(':');
   return <div className="home-player-model-preview" data-home-player-model-preview=""
     data-tank-instance-id={models?.tankInstanceId} data-pet-instance-id={models?.petInstanceId}
-    {...sourceProps(ui, new HomeSourceLayout(ui, 'myhome_playerpage.xml'), 'myhome_playerpage.xml', 'edtPlayerDescription')}>
-    {models ? <PlayerModels key={key} {...models} scale={scale} />
+    {...bounds} style={{...bounds.style, clipPath: `path("${HOME_PLAYER_MODEL_CLIP}")`}}>
+    {models ? <HomePlayerModels key={key} {...models} scale={scale} />
       : <span className="home-player-model-message" role="status">{message}</span>}
   </div>;
 }
 
-function PlayerModels({tankId, petId, tankInstanceId, textures, scale}: SelectedModels & {scale: number}) {
+export function HomePlayerModels({tankId, petId, tankInstanceId = tankId, textures, scale}:
+  Pick<SelectedModels, 'tankId' | 'petId' | 'textures'> & {tankInstanceId?: number; scale: number}) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const resizeAfterCommit = useRef<(() => void) | undefined>(undefined);

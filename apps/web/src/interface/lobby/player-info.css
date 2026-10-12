@@ -1,21 +1,112 @@
-[data-player-info] { padding: 0; border: 0; max-width: none; max-height: none; overflow: visible; color: #fff; background: transparent; }
-[data-player-info]::backdrop { background: rgb(0 33 74 / 60%); }
-.player-info-stage { position: relative; width: 800px; height: 405px; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
-.player-info-stage > * { position: absolute; box-sizing: border-box; }
-.player-info-picture { pointer-events: none; }
-.player-info-stage > .source-state-button { margin: 0; padding: 0; border: 0; background: transparent; }
-.player-info-stage > .source-state-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.player-info-stage textarea { resize: none; border: 0; padding: 0; background: transparent; color: #fff; }
-.player-info-stage .player-info-description { overflow: hidden; scrollbar-width: none; font: inherit; line-height: 16px; }
-.player-info-description::-webkit-scrollbar { display: none; }
-.player-info-status { left: 12px; top: 243px; width: 380px; min-height: 32px; margin: 0; font-size: 12px; }
-.player-info-query-status { left: 12px; top: 279px; width: 380px; min-height: 38px; font-size: 12px; }
-.player-info-query-status button { margin-left: 6px; padding: 1px 6px; border: 1px solid #8faac7; background: #203c5c; color: #fff; font: inherit; }
-.player-info-query-status button:focus-visible,
-.player-info-summary-error button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-.player-info-summary { left: 425px; top: 36px; width: 375px; height: 332px; pointer-events: none; }
-.player-info-summary > .source-static-image,
-.player-info-summary > .source-static-text { position: absolute; }
-.player-info-summary-error { position: absolute; left: 40px; top: 140px; width: 295px; min-height: 52px; padding: 6px; box-sizing: border-box; background: rgb(24 38 57 / 92%); color: #fff; pointer-events: auto; }
-.player-info-summary-error button { margin-top: 5px; padding: 1px 7px; border: 1px solid #8faac7; background: #203c5c; color: #fff; font: inherit; }
-.player-info-summary-level { position: absolute; left: 12px; top: 340px; width: 351px; color: #fff; }
+@import '../resources/happy-zcool.css';
+
+.game-dialog .player-info-shell {
+  display: block;
+}
+
+.player-info-stage {
+  position: relative;
+  width: 405px;
+  height: 416px;
+  color: #fff;
+  font: 12px/1.2 'HappyZcool-2016', sans-serif;
+  font-synthesis: none;
+}
+
+.player-info-stage > * {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.player-info-stage .player-info-profile {
+  height: 160px;
+}
+
+.player-info-stage > .game-dialog-button {
+  z-index: 1;
+}
+
+.player-info-model-preview {
+  left: 225px;
+  top: 81px;
+  width: 150px;
+  height: 100px;
+}
+
+.player-info-model-preview .home-player-model-message {
+  -webkit-text-stroke: 1px #35392b;
+  paint-order: stroke fill;
+}
+
+.player-info-action:disabled .game-dialog-button-art {
+  filter: grayscale(1);
+}
+
+.player-info-action:disabled .game-dialog-button-label-ink {
+  color: #dbdfe0;
+  -webkit-text-stroke-color: #535b5d;
+  text-shadow: none;
+}
+
+.player-info-action:disabled .game-dialog-button-label-rim {
+  -webkit-text-stroke-color: #929899;
+}
+
+.player-info-level {
+  left: 274px;
+  top: 50px;
+  width: 100px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+  -webkit-text-stroke: 1px #35392b;
+  paint-order: stroke fill;
+}
+
+.player-info-statistics-panel {
+  left: 14px;
+  top: 239px;
+  width: 375px;
+  height: 165px;
+}
+
+.player-info-summary {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 137px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.player-info-summary-empty {
+  display: grid;
+  place-items: center;
+  height: 137px;
+  margin: 0;
+  color: #fffde0;
+  -webkit-text-stroke: 1px #35392b;
+  paint-order: stroke fill;
+}
+
+.player-info-summary .home-battle-statistics-grid {
+  grid-template-rows: 72px 1fr;
+}
+
+.player-info-summary .home-summary-sheet {
+  height: 137px;
+}
+
+.player-info-statistics-panel > .home-summary-tab {
+  position: absolute;
+  z-index: 1;
+}
+
+.player-info-query-actions {
+  left: 14px;
+  top: 248px;
+  width: 375px;
+  padding: 8px 12px;
+}

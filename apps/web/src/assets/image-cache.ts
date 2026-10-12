@@ -1,9 +1,6 @@
-import {loadStaticJson} from './static-resources';
+import {publishedImageUrl, spriteAtlas, spriteRegion, type SpriteRegion} from './sprite-images';
 
 export interface ImageAsset {url: string; bytes: number; modifiedAt: number;}
-
-export interface SpriteImage {atlas: string; x: number; y: number; width: number; height: number; filter?: string;}
-interface SpriteDirectory {images: Record<string, SpriteImage>;}
 
 interface CachedImage {url: string; version: number | string; blob: Blob;}
 interface PreparedImage {url: string; version: number | string; cached: boolean; blob?: Blob;}
@@ -14,80 +11,19 @@ const STORE_NAME = 'images';
 const versions = new Map<string, number | string>();
 const preparedImages = new Map<string, PreparedImage>();
 const loadingImages = new Map<string, Promise<PreparedImage>>();
+const decodedAtlases = new Map<string, HTMLImageElement>();
+const croppedSprites = new Map<SpriteRegion, string>();
 let database: Promise<IDBDatabase> | undefined;
-let sprites: Promise<SpriteDirectory> | undefined;
-const spriteImages = new Map<string, SpriteImage>();
-const atlasImages = new Map<string, Promise<ImageBitmap>>();
-const atlasCrops = new Map<string, number>();
 
 const imageKey = (url: string) => new URL(url, location.href).href;
 
-export function spriteImage(url: string): SpriteImage | undefined {
-  return spriteImages.get(imageKey(url));
-}
-
-/** Identical atlas cells share one prepared URL and decoded image. */
+/** Regions in the same atlas share one download, stored Blob and decoded image. */
 export function imageResourceKey(url: string): string {
-  const key = imageKey(url);
-  const sprite = spriteImages.get(key);
-  return sprite ? `${imageKey(sprite.atlas)}#${sprite.x},${sprite.y},${sprite.width},${sprite.height}${sprite.filter ? `:${sprite.filter}` : ''}` : key;
-}
-
-export function prepareSpriteImages(): Promise<SpriteDirectory> {
-  sprites ??= loadStaticJson<SpriteDirectory>('/sprite-images.json').then(directory => {
-    for (const [path, sprite] of Object.entries(directory.images)) spriteImages.set(imageKey(path), sprite);
-    return directory;
-  }).catch(error => {sprites = undefined; throw error;});
-  return sprites;
+  return imageKey(publishedImageUrl(url)).split('#')[0];
 }
 
 function imageVersion(key: string): number | string {
-  const sprite = spriteImages.get(key);
-  return versions.get(sprite ? imageKey(sprite.atlas) : key) ?? key;
-}
-
-async function spriteBody(sprite: SpriteImage, source: PreparedImage): Promise<Blob> {
-  atlasCrops.set(source.url, (atlasCrops.get(source.url) ?? 0) + 1);
-  try {
-    let atlas = atlasImages.get(source.url);
-    if (!atlas) {
-      atlas = createImageBitmap(source.blob!).catch(error => {atlasImages.delete(source.url); throw error;});
-      atlasImages.set(source.url, atlas);
-    }
-    const image = await atlas;
-    const canvas = document.createElement('canvas');
-    canvas.width = sprite.width; canvas.height = sprite.height;
-    const context = canvas.getContext('2d')!;
-    context.imageSmoothingEnabled = false;
-    context.filter = sprite.filter ?? 'none';
-    context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height,
-      0, 0, sprite.width, sprite.height);
-    return await new Promise<Blob>((resolve, reject) => canvas.toBlob(blob => {
-      canvas.width = 0; canvas.height = 0;
-      if (blob) resolve(blob);
-      else reject(new Error('精灵图裁切失败，请重试'));
-    }, 'image/png'));
-  } finally {
-    const remaining = atlasCrops.get(source.url)! - 1;
-    if (remaining) atlasCrops.set(source.url, remaining);
-    else {atlasCrops.delete(source.url); releaseAtlasBitmap(source.url);}
-  }
-}
-
-function releaseAtlasBitmap(key: string): void {
-  const atlas = atlasImages.get(key);
-  if (atlas) void atlas.then(image => image.close(), () => {});
-  atlasImages.delete(key);
-}
-
-/** Release the temporary full sheet after its original-size images are ready. */
-export function releaseSpriteAtlas(url: string): void {
-  const source = preparedImages.get(imageKey(url));
-  if (source) releaseAtlasBitmap(source.url);
-}
-
-export function releaseSpriteAtlases(): void {
-  for (const key of atlasImages.keys()) releaseAtlasBitmap(key);
+  return versions.get(key) ?? key;
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -143,17 +79,15 @@ function writeImage(database: IDBDatabase, image: CachedImage, signal?: AbortSig
 
 /** Published images use manifest versions; bundled images have build-versioned URLs. */
 export async function prepareImageCache(images: readonly ImageAsset[], bundled: readonly string[]): Promise<void> {
-  await Promise.all([openDatabase(), prepareSpriteImages()]);
-  for (const url of bundled) versions.set(imageKey(url), imageKey(url));
-  for (const image of images) versions.set(imageKey(image.url), image.modifiedAt);
+  await openDatabase();
+  for (const url of bundled) versions.set(imageResourceKey(url), imageResourceKey(url));
+  for (const image of images) versions.set(imageResourceKey(image.url), image.modifiedAt);
 }
 
 /** Download missing images once, and commit each complete Blob before reporting readiness. */
 export async function loadImageResource(url: string, signal?: AbortSignal): Promise<PreparedImage> {
   signal?.throwIfAborted();
-  await prepareSpriteImages();
-  signal?.throwIfAborted();
-  const key = imageKey(url);
+  const key = imageResourceKey(url);
   if (key.startsWith('data:') || key.startsWith('blob:')) {
     return Promise.resolve({url: key, version: key, cached: true});
   }
@@ -164,16 +98,6 @@ export async function loadImageResource(url: string, signal?: AbortSignal): Prom
   const existing = loadingImages.get(resourceKey);
   if (existing) return existing;
   const loading = (async () => {
-    const sprite = spriteImages.get(key);
-    if (sprite) {
-      const atlas = await loadImageResource(sprite.atlas, signal);
-      const blob = await spriteBody(sprite, atlas);
-      signal?.throwIfAborted();
-      if (prepared) URL.revokeObjectURL(prepared.url);
-      const image = {url: URL.createObjectURL(blob), version, cached: atlas.cached, blob};
-      preparedImages.set(resourceKey, image);
-      return image;
-    }
     const database = await openDatabase();
     const stored = await readImage(database, key);
     signal?.throwIfAborted();
@@ -199,20 +123,8 @@ export async function loadImageResource(url: string, signal?: AbortSignal): Prom
 
 /** Fetch a current network body for one image without touching the prepared owner. */
 export async function loadFreshImage(url: string, signal?: AbortSignal): Promise<FreshImage> {
-  await prepareSpriteImages();
-  const key = imageKey(url);
+  const key = imageResourceKey(url);
   const version = imageVersion(key);
-  const sprite = spriteImages.get(key);
-  if (sprite) {
-    const freshAtlas = await loadFreshImage(sprite.atlas, signal);
-    const atlasUrl = URL.createObjectURL(freshAtlas.blob);
-    let blob: Blob;
-    try {
-      blob = await spriteBody(sprite, {...freshAtlas, url: atlasUrl, cached: false});
-      await commitFreshImage(freshAtlas, signal);
-    } finally {releaseAtlasBitmap(atlasUrl); URL.revokeObjectURL(atlasUrl);}
-    return {url: key, version, blob};
-  }
   const response = await fetch(key, {cache: 'no-cache', signal});
   if (!response.ok) throw new Error(`图片下载失败：${url}（HTTP ${response.status}）`);
   const blob = await response.blob();
@@ -223,23 +135,51 @@ export async function loadFreshImage(url: string, signal?: AbortSignal): Promise
 /** Replace one URL's stored Blob and prepared Blob URL under its existing version. */
 export async function commitFreshImage(fresh: FreshImage, signal?: AbortSignal): Promise<void> {
   signal?.throwIfAborted();
-  if (!spriteImages.has(fresh.url)) {
-    const database = await openDatabase();
-    signal?.throwIfAborted();
-    await writeImage(database, {url: fresh.url, version: fresh.version, blob: fresh.blob}, signal);
-  }
+  const database = await openDatabase();
+  signal?.throwIfAborted();
+  await writeImage(database, {url: fresh.url, version: fresh.version, blob: fresh.blob}, signal);
   signal?.throwIfAborted();
   const key = imageResourceKey(fresh.url);
   const prepared = preparedImages.get(key);
-  if (prepared) {releaseAtlasBitmap(prepared.url); URL.revokeObjectURL(prepared.url);}
+  if (prepared) URL.revokeObjectURL(prepared.url);
   preparedImages.set(key, {
     url: URL.createObjectURL(fresh.blob), version: fresh.version, cached: false, blob: fresh.blob,
   });
 }
 
-/** UI and engine consumers reuse the Blob URLs prepared before game startup. */
+/** Retain atlas pixels for HTML consumers that need a complete image URL. */
+export function rememberDecodedAtlas(url: string, image: HTMLImageElement): void {
+  if (spriteAtlas(new URL(url, location.href).pathname)) decodedAtlases.set(imageResourceKey(url), image);
+}
+
+export function forgetDecodedAtlas(url: string): void {
+  const key = imageResourceKey(url);
+  decodedAtlases.delete(key);
+  for (const sprite of croppedSprites.keys()) {
+    if (imageResourceKey(sprite.atlas) === key) croppedSprites.delete(sprite);
+  }
+}
+
+/** Crop only when an img, cursor or repeating background needs a complete image. */
 export function imageResourceUrl(url: string): string {
-  return preparedImages.get(imageResourceKey(url))?.url ?? url;
+  const region = spriteRegion(url);
+  if (region) {
+    const ready = croppedSprites.get(region);
+    if (ready) return ready;
+    const atlas = decodedAtlases.get(imageResourceKey(region.atlas));
+    if (!atlas) throw new Error(`精灵图尚未解码：${region.atlas}`);
+    const canvas = document.createElement('canvas');
+    canvas.width = region.width;
+    canvas.height = region.height;
+    canvas.getContext('2d')!.drawImage(atlas, region.x, region.y, region.width, region.height,
+      0, 0, region.width, region.height);
+    const image = canvas.toDataURL('image/png');
+    croppedSprites.set(region, image);
+    return image;
+  }
+  const published = publishedImageUrl(url);
+  const prepared = preparedImages.get(imageResourceKey(url));
+  return prepared ? prepared.url + new URL(published, location.href).hash : published;
 }
 
 export function imageResourceBackground(url: string): string {
@@ -250,5 +190,6 @@ export function imageResourceBackground(url: string): string {
 export function releaseImageResources(): void {
   for (const image of preparedImages.values()) URL.revokeObjectURL(image.url);
   preparedImages.clear();
-  releaseSpriteAtlases();
+  decodedAtlases.clear();
+  croppedSprites.clear();
 }

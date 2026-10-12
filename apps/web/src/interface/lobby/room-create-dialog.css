@@ -1,206 +1,273 @@
-[data-room-create-dialog] {
-  padding: 0;
-  max-width: 100vw;
-  max-height: 100vh;
-  overflow: visible;
-  color: #fff;
-  background: transparent;
-  border: 0;
-  font-family: 'CDTank-SIMSUN', serif;
+.room-create-stage {
+  --room-create-font-size: 17px;
+  grid-template-rows: 43px minmax(0, 1fr) 48px;
 }
 
-.room-create-viewport {
+.room-create-topbar .game-dialog-title {
+  top: 7px;
+  left: 22px;
+  height: 30px;
+  color: #fff9d3;
+  font-size: 25px;
+  line-height: 30px;
+  -webkit-text-stroke: 2px #152948;
+}
+
+.room-create-topbar .game-dialog-button {
+  position: absolute;
+  right: 10px;
+  top: 0;
+}
+
+.room-create-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 8px;
+}
+
+.room-create-card {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+.room-create-card-metadata {
+  width: 282px;
+  height: 106px;
+}
+
+.room-create-card-rules {
+  width: 282px;
+  height: 177px;
+}
+
+.room-create-card-strip {
+  width: 272px;
+  height: 33px;
+}
+
+.room-create-card-art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.room-create-map-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 10px;
+}
+
+.room-create-mode {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid #a57026;
+  border-radius: 5px 7px 4px 6px;
+  background: #f9b532;
+  color: #fffbd5;
+  font-size: var(--room-create-font-size);
+  line-height: 20px;
+  -webkit-text-stroke: 1.5px #2a2c10;
+  paint-order: stroke fill;
+}
+
+.room-create-map-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #566109;
+  font-size: var(--room-create-font-size);
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-create-map-name,
+.room-create-field > label,
+.room-create-field-label,
+.room-edit-password-action,
+.room-player-value,
+.room-time-value,
+.room-player-range {
+  -webkit-text-stroke: 1.5px #fffde1;
+  paint-order: stroke fill;
+}
+
+.room-create-map-change {
+  --cartoon-label-size: var(--room-create-font-size);
+  --cartoon-label-outline: 1.5px;
+  --cartoon-label-fill: #fffbd5;
+  --cartoon-label-stroke: #2a2c10;
+  --cartoon-label-shadow: none;
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.room-create-map-change > .cartoon-control-label {
+  margin-bottom: 0;
+}
+
+.room-create-field,
+.room-create-step-row {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: center;
+  margin: 0 5px;
+  padding: 0 5px;
+}
+
+.room-create-field > label,
+.room-create-field-label {
+  padding-left: 5px;
+  color: #536004;
+  font-size: var(--room-create-font-size);
+  line-height: 25px;
+  letter-spacing: 15px;
+  white-space: nowrap;
+}
+
+.room-create-step-row {
+  height: 29px;
+}
+
+.room-create-field .room-create-input {
   position: relative;
 }
 
-.room-create-stage {
-  position: absolute;
-  width: 310px;
-  height: 328px;
-  transform-origin: top left;
+.room-create-input .cartoon-input-value {
+  left: 12px;
+  top: 5px;
+  width: calc(100% - 24px);
+  height: 21px;
+  font-size: var(--room-create-font-size);
+  line-height: 21px;
 }
 
-.room-create-stage button, .room-create-stage span, .room-create-stage input {
-  position: absolute;
-  box-sizing: border-box;
+.room-create-input .cartoon-input-value:disabled {
+  opacity: .7;
+}
+
+.room-create-input .cartoon-input-value::placeholder {
+  color: #fff7d5;
+  opacity: .8;
+}
+
+.room-edit-password-action {
+  width: 76px;
+  height: 25px;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 3px;
+  background: #f0dda5;
+  color: #536004;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.room-create-rules-title {
+  height: 28px;
   margin: 0;
   padding: 0;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  border: 0;
-  color: #fff;
-  font-family: 'CDTank-SIMSUN', serif;
-  font-size: 12px;
-  line-height: 16px;
+  color: #536004;
+  font-size: var(--room-create-font-size);
+  font-weight: 400;
+  line-height: 28px;
   text-align: center;
+  -webkit-text-stroke: 2px #fffde1;
+  paint-order: stroke fill;
 }
 
-.room-create-stage span {
-  pointer-events: none;
+.room-player-bounds {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.room-player-bound {
+  display: grid;
+  grid-template-columns: 26px 25px 26px;
+  align-items: center;
+  width: 77px;
+}
+
+.room-player-bound .room-adjustment-button:first-child,
+.room-time-adjustment .room-adjustment-button:first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.room-player-bound .room-adjustment-button:nth-child(2),
+.room-time-adjustment .room-adjustment-button:nth-child(2) {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.room-player-value,
+.room-time-value {
+  grid-column: 2;
+  grid-row: 1;
+  color: #536004;
+  font-size: var(--room-create-font-size);
+  line-height: 25px;
+  text-align: center;
   white-space: nowrap;
 }
 
-.room-create-stage button {
-  background-color: transparent;
-  cursor: pointer;
+.room-player-range {
+  color: #747840;
+  font-size: var(--room-create-font-size);
 }
 
-.room-create-stage input {
-  background: transparent;
-  text-align: left;
+.room-create-field-label.room-time-label {
+  padding-left: 0;
+  letter-spacing: 0;
 }
 
-.room-create-stage input:disabled {
-  opacity: 1;
-  -webkit-text-fill-color: currentColor;
+.room-time-adjustment {
+  display: grid;
+  grid-template-columns: 26px 82px 26px;
+  align-items: center;
+  justify-content: center;
 }
 
-.room-create-stage input::selection {
-  color: #fff;
-  background: #607fff;
+.room-create-rule-grid {
+  display: grid;
+  grid-template-columns: 98px 98px;
+  justify-content: space-between;
+  gap: 4px 0;
+  padding: 4px 16px 0;
 }
 
-.room-create-stage input:not(:focus)::selection {
-  background: #808080;
+.room-create-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 35px;
 }
 
-.room-create-stage input.room-create-password-selected {
-  -webkit-text-fill-color: transparent;
+.room-create-body .room-rule-label,
+.room-create-footer .game-dialog-button-label {
+  font-size: var(--room-create-font-size);
 }
 
-.room-create-stage input.room-create-name-selected {
-  -webkit-text-fill-color: transparent;
+.room-create-footer > .game-dialog-frame {
+  filter: var(--image-room-warm-footer);
 }
 
-.room-create-stage input.room-create-name-selected::selection {
-  color: transparent;
-  background: transparent;
-}
-
-.room-create-stage .room-create-name-selection {
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.room-create-name-selection i {
-  position: absolute;
-  top: 0;
-  height: 100%;
-}
-
-.room-create-name-selection [data-room-name-selection-text] {
-  top: 0;
-  text-align: left;
-}
-
-.room-create-stage input.room-create-source-caret-input {
-  caret-color: transparent;
-}
-
-.room-create-stage .room-create-source-caret {
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.room-create-source-caret i {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-}
-
-
-
-.room-create-stage input.room-create-password-selected::selection {
-  color: transparent;
-  background: transparent;
-}
-
-.room-create-stage .room-create-password-selection {
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.room-create-password-selection i {
-  position: absolute;
-  top: 0;
-  height: 100%;
-}
-
-.room-create-password-selection [data-room-password-selection-text] {
-  top: 0;
-  font-family: 'CDTank-SIMSUN-Password', serif;
-  text-align: left;
-}
-
-.room-create-stage button:disabled {
-  opacity: 1;
-  cursor: default;
-}
-
-.room-create-stage button:focus-visible, .room-create-stage input:focus-visible {
-  outline: 2px solid #fff;
-}
-
-
-[data-room-create-status] {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  display: block;
-  padding: 0.5rem;
-  color: #fff;
-  font-size: 12px;
-  background: #263b49;
-}
-
-[data-room-create-status]:empty {
-  display: none;
-}
-
-[data-room-create-dialog]::backdrop {
-  background: rgb(0 33 74 / 60%);
-}
-
-.room-create-stage .room-create-source-text {
-  overflow: hidden;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.room-create-stage .room-edit-password-action {
-  position: absolute;
-  left: 20px;
-  top: 109px;
-  width: 84px;
-  height: 20px;
-  box-sizing: border-box;
-  padding: 0 4px;
-  border: 0;
-  background-color: #eed49d;
-  background-size: 100% 100%;
-  color: #fff;
-  font: 12px 'CDTank-SIMSUN', serif;
-  cursor: pointer;
-}
-
-.room-edit-password-action option {
-  color: #fff;
-  background: #b67946;
-}
-
+.room-create-map-change:focus-visible,
 .room-edit-password-action:focus-visible {
-  outline: 2px solid #fff;
-}
-
-.room-edit-map-button:hover > span {
-  color: #ffe985;
-}
-
-.room-create-stage .room-edit-map-button > .source-feedback-text {
-  position: relative;
-  width: 100%;
-  text-align: center;
+  outline: 2px solid #82671c;
+  outline-offset: 1px;
 }

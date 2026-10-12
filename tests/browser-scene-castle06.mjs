@@ -59,7 +59,7 @@ try {
   for(var stream of [server.stdout,server.stderr])stream.on('data',d=>{log+=String(d);});
   var deadline=Date.now()+15000;while(!log.includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));
   assert(log.includes('Server started'),log);
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5358,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3328',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5358,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3328',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--remote-debugging-port=9558',
@@ -143,7 +143,7 @@ ws.on('message', raw => {
   evidence.initial=await Promise.all(pages.map(p=>evaluate(p.sessionId,`JSON.parse(document.querySelector('#battle-status').dataset.world)`)));
   assert(evidence.initial.every(w=>w.mode===1&&w.mapId===6&&w.players.length===4));
   var snapshot=()=>Promise.all(pages.map(p=>evaluate(p.sessionId,'window.sceneState()')));
-  var source=JSON.parse(await readFile('recovery/output/web-assets/scene-castle-0006.json','utf8'));
+  var source=JSON.parse(await readFile('apps/web/public/scene-castle-0006.json','utf8'));
   evidence.loaded=await snapshot();
   assert(evidence.loaded.every(s=>s.instances.length===2&&s.roots.filter(r=>r.enabled).length===2));
   evidence.routeInputs=[];

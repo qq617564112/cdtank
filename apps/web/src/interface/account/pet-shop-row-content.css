@@ -25,8 +25,7 @@
 }
 
 .pet-shop-row-name,
-.pet-shop-row-secondary,
-.pet-shop-row-tertiary {
+.pet-shop-row-secondary {
   left: 44px;
   max-width: 117px;
   overflow: hidden;
@@ -34,4 +33,3 @@
 
 .pet-shop-row-name {top: 4px;}
 .pet-shop-row-secondary {top: 18px;}
-.pet-shop-row-tertiary {top: 32px;}

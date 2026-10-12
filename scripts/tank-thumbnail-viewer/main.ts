@@ -1,4 +1,4 @@
-import {ArcRotateCamera, Camera, Color3, Color4, Engine, HemisphericLight, Matrix,
+import {ArcRotateCamera, Camera, Color3, Color4, Engine, HemisphericLight,
   Scene, Vector3, VertexBuffer} from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import {TankView} from '../../apps/web/src/assets/tanks/tank-view';
@@ -11,8 +11,13 @@ interface ThumbnailTank {
 }
 
 interface ThumbnailViewer {
-  render(tank: ThumbnailTank, size: number): Promise<string>;
+  render(tank: ThumbnailTank, size: number, angles: CameraAngles): Promise<string>;
   overview(): Promise<string>;
+}
+
+interface CameraAngles {
+  azimuth: number;
+  elevation: number;
 }
 
 declare global {
@@ -27,44 +32,69 @@ const engine = new Engine(canvas, true, {alpha: true, preserveDrawingBuffer: tru
 engine.setHardwareScalingLevel(1);
 const rendered = new Map<number, {name: string; png: string}>();
 
-/** Fit the projected geometry at a fixed front-quarter view, without perspective distortion. */
-function frameTank(scene: Scene, camera: ArcRotateCamera, view: TankView): void {
+/** Render the complete model from the shared camera angle before cropping. */
+function frameTank(scene: Scene, camera: ArcRotateCamera, view: TankView, angles: CameraAngles): void {
   const meshes = view.root.getChildMeshes().filter(mesh => mesh.isEnabled() && mesh.getTotalVertices() > 0);
   if (!meshes.length) throw new Error(`战车 ${view.tankId} 没有可显示的网格`);
   let minimum = new Vector3(Infinity, Infinity, Infinity);
   let maximum = new Vector3(-Infinity, -Infinity, -Infinity);
   for (const mesh of meshes) {
     mesh.computeWorldMatrix(true);
-    const box = mesh.getBoundingInfo().boundingBox;
-    minimum = Vector3.Minimize(minimum, box.minimumWorld);
-    maximum = Vector3.Maximize(maximum, box.maximumWorld);
-  }
-  camera.target = minimum.add(maximum).scale(0.5);
-  camera.radius = maximum.subtract(minimum).length() * 3;
-  camera.minZ = 0.1;
-  camera.maxZ = camera.radius * 4;
-  const viewMatrix = camera.getViewMatrix(true);
-  let left = Infinity, right = -Infinity, bottom = Infinity, top = -Infinity;
-  for (const mesh of meshes) {
     const positions = mesh.getVerticesData(VertexBuffer.PositionKind)!;
-    const worldView = mesh.getWorldMatrix().multiply(viewMatrix);
     for (let offset = 0; offset < positions.length; offset += 3) {
-      const point = Vector3.TransformCoordinates(Vector3.FromArray(positions, offset), worldView);
-      left = Math.min(left, point.x); right = Math.max(right, point.x);
-      bottom = Math.min(bottom, point.y); top = Math.max(top, point.y);
+      const point = Vector3.TransformCoordinates(Vector3.FromArray(positions, offset), mesh.getWorldMatrix());
+      minimum = Vector3.Minimize(minimum, point);
+      maximum = Vector3.Maximize(maximum, point);
     }
   }
-  const center = Vector3.TransformNormal(new Vector3((left + right) / 2, (bottom + top) / 2, 0),
-    Matrix.Invert(viewMatrix));
-  camera.target.addInPlace(center);
-  const halfSize = Math.max(right - left, top - bottom) * 0.56;
+  const extent = maximum.subtract(minimum);
+  camera.target = minimum.add(maximum).scale(0.5);
+  camera.alpha = angles.azimuth * Math.PI / 180;
+  camera.beta = (90 - angles.elevation) * Math.PI / 180;
+  camera.radius = extent.length() * 3;
+  camera.minZ = 0.1;
+  camera.maxZ = camera.radius * 4;
+  const halfSize = extent.length() * 0.6;
   camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
   camera.orthoLeft = -halfSize; camera.orthoRight = halfSize;
   camera.orthoBottom = -halfSize; camera.orthoTop = halfSize;
   scene.activeCamera = camera;
 }
 
-async function render(tank: ThumbnailTank, size: number): Promise<string> {
+/** Trim the transparent background, then fit and center the full silhouette. */
+function centeredIcon(size: number): HTMLCanvasElement {
+  const source = document.createElement('canvas');
+  source.width = canvas.width; source.height = canvas.height;
+  const sourceContext = source.getContext('2d')!;
+  sourceContext.drawImage(canvas, 0, 0);
+  const pixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
+  let left = source.width, right = -1, top = source.height, bottom = -1;
+  for (let y = 0; y < source.height; y++) {
+    for (let x = 0; x < source.width; x++) {
+      if (pixels[(y * source.width + x) * 4 + 3] === 0) continue;
+      left = Math.min(left, x); right = Math.max(right, x);
+      top = Math.min(top, y); bottom = Math.max(bottom, y);
+    }
+  }
+  if (right < left) throw new Error('坦克渲染图为空');
+  const width = right - left + 1, height = bottom - top + 1;
+  const scale = size * 7 / 8 / Math.max(width, height);
+  const output = document.createElement('canvas');
+  output.width = size; output.height = size;
+  const context = output.getContext('2d')!;
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.fillStyle = '#bd8abd';
+  context.fillRect(0, 0, size, size);
+  context.drawImage(source, left, top, width, height,
+    (size - width * scale) / 2, (size - height * scale) / 2, width * scale, height * scale);
+  context.strokeStyle = '#000';
+  context.lineWidth = size / 32;
+  context.strokeRect(size / 64, size / 64, size * 31 / 32, size * 31 / 32);
+  return output;
+}
+
+async function render(tank: ThumbnailTank, size: number, angles: CameraAngles): Promise<string> {
   // Render at twice the output size for clean transparent silhouette edges.
   engine.setSize(size * 2, size * 2);
   const scene = new Scene(engine);
@@ -80,17 +110,11 @@ async function render(tank: ThumbnailTank, size: number): Promise<string> {
     scene.onBeforeRenderObservable.clear();
     scene.animationsEnabled = false;
     view.advanceAnimations(0);
-    frameTank(scene, camera, view);
+    frameTank(scene, camera, view, angles);
     scene.render();
     await scene.whenReadyAsync();
     scene.render();
-    const output = document.createElement('canvas');
-    output.width = size; output.height = size;
-    const context = output.getContext('2d')!;
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = 'high';
-    context.drawImage(canvas, 0, 0, size, size);
-    const png = output.toDataURL('image/png');
+    const png = centeredIcon(size).toDataURL('image/png');
     rendered.set(tank.id, {name: tank.name, png});
     return png;
   } finally {
@@ -109,7 +133,7 @@ async function overview(): Promise<string> {
   const context = output.getContext('2d')!;
   context.fillStyle = '#f2eadb'; context.fillRect(0, 0, output.width, output.height);
   context.fillStyle = '#302b24'; context.font = '24px thumbnail-label';
-  context.fillText('战车高清缩略图 · 45° 俯视 · 512 × 512', 24, 36);
+  context.fillText('坦克高清图标 · 3D 模型渲染 · 1024 × 1024', 24, 36);
   let index = 0;
   for (const [id, thumbnail] of rendered) {
     const x = index % columns * cellWidth, y = header + Math.floor(index / columns) * cellHeight;

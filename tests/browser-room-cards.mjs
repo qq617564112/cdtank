@@ -191,7 +191,7 @@ async function geometry(session,width,height) {
 }
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5224,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3189',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5224,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3189',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();
   const owners=new Map();
   const literal='<b>卡片名</b>';

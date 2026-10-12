@@ -59,7 +59,7 @@ try {
   const reused=process.argv.includes('--preview-only')?JSON.parse(await readFile('recovery/output/home-tank-active-marker-browser-fixture.json','utf8')):undefined;
   if(reused)await copyFile(reused.database,database);
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5436,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3386',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5436,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3386',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9636',

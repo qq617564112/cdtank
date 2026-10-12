@@ -1,8 +1,8 @@
-import {SourceStaticImage} from '../resources/source-static-image';
+import {ShopOwnedPanel, ShopSourceBackground as SourceStaticImage} from './shop-source-background';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 
 /** Original product regions around the pet model, attributes and balances. */
-export function PetShopSourceRegions({ui}: {ui: HomeSourceUi}) {
+export function PetShopSourceRegions({ui, tab}: {ui: HomeSourceUi; tab: 'rdoBuy' | 'rdoSell'}) {
   const suffix = 'shop_petpage.xml';
   const layout = new HomeSourceLayout(ui, suffix);
   const pictures = [
@@ -12,6 +12,6 @@ export function PetShopSourceRegions({ui}: {ui: HomeSourceUi}) {
     'changtiao', 'changtiao2', 'jinqiantubiao', 'jinqian', 'chuangyidiantubiao2',
     'xingbi',
   ];
-  return <>{pictures.map(name => <SourceStaticImage key={name} ui={ui} layout={layout}
+  return <><ShopOwnedPanel ui={ui} suffix={suffix} tab={tab}/>{pictures.map(name => <SourceStaticImage key={name} ui={ui} layout={layout}
     suffix={suffix} name={name} className="pet-shop-source-picture" aria-hidden="true" />)}</>;
 }

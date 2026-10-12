@@ -3,11 +3,12 @@ import {prepareGameContent} from '../../content';
 import {applyMv3Materials, setMv3ActorOpacity} from '../../render/materials/mv3-material';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {sceneActorToonBinding} from '../../render/materials/actor-toon';
-import {loadTankDefaultTextures, loadTankTextures, tankComponentTexture} from './tank-textures';
+import {loadTankDefaultTextures, loadTankTextures, loadTankTrackTextures, tankComponentTexture} from './tank-textures';
+import type {TankTrackTextures} from './tank-textures';
 import type {OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {ShaderMaterial} from '@babylonjs/core';
 import type {Texture} from '@babylonjs/core';
-import {advanceRoleTrackTexture, createRoleTrackTextureState, roleTrackCommandMoves} from './role-track-texture';
+import {advanceRoleTrackTexture, createRoleTrackTextureState, roleTrackCommandMoves, roleTrackDirection} from './role-track-texture';
 import {AssetContainer, LoadAssetContainerAsync, Observable, Scene, TransformNode, Vector3} from '@babylonjs/core';
 
 import {EffectActorActionClock} from './effect-actor-clock';
@@ -21,6 +22,7 @@ import type {EffectNativeMatrix} from '../../render/effects/common/effect-native
 import type {EffectActionEvent} from './effect-action-events';
 import type {IGLTFLoaderData} from '@babylonjs/loaders/glTF';
 import {composeEffectWorldTag} from './effect-tag-world';
+import {createMv3AnimationSampler} from './mv3-animation-sampler';
 
 export const TANK_DECORATION_TAGS = ['tag_iteye', 'tag_itwing', 'tag_ithat', 'tag_itside'] as const;
 export type TankDecorationTag = typeof TANK_DECORATION_TAGS[number];
@@ -50,7 +52,7 @@ interface ActionView {
   root: TransformNode;
   assets: AssetContainer[];
   components: Array<{part: string; action: TankAction; assets: AssetContainer;
-    attachmentTracks: AttachmentTrack[]; clock?: EffectActorActionClock}>;
+    attachmentTracks: AttachmentTrack[]; sampleAnimation: (milliseconds: number) => void; clock?: EffectActorActionClock}>;
 }
 export interface TankEntry {
   id: number;
@@ -82,8 +84,9 @@ export class TankView {
   private opticalCamouflage = false;
   private textures = new Map<string, Texture>();
   private defaultTextures = new Map<string, Texture>();
-  private trackPhase = createRoleTrackTextureState();
-  private trackMovementPending = false;
+  private trackTextures?: TankTrackTextures;
+  private trackPhases = {X: createRoleTrackTextureState(), Y: createRoleTrackTextureState()};
+  private trackCommandPending = 0;
   private current?: ActionView;
   private desired = '01';
   private base = '01';
@@ -164,6 +167,8 @@ export class TankView {
     try {
       view.defaultTextures = await loadTankDefaultTextures(scene, tankId);
       view.textures = await loadTankTextures(scene, view.tankTextures, tank.components.filter(component => component.actions.length > 0).map(component => component.part), tankId);
+      view.trackTextures = await loadTankTrackTextures(scene, view.tankTextures,
+        tank.components.filter(component => component.actions.length > 0).map(component => component.part), tankId);
       await view.activate('01', true);
       return view;
     } catch (error) {
@@ -212,15 +217,21 @@ export class TankView {
         }
         view.assets.push(assets);
         const actorToon = sceneActorToonBinding(this.scene, this.root);
+        const isTrack = component.part === 'X' || component.part === 'Y';
         const materials = applyMv3Materials(this.scene, assets.meshes,
-          tankComponentTexture(this.textures, component.part), this.defaultTextures, actorToon);
+          isTrack ? this.trackTextures?.frames[0] : tankComponentTexture(this.textures, component.part),
+          this.defaultTextures, actorToon);
         assets.materials.push(...materials);
         for (const material of materials) {
           this.materials.add(material);
           setMv3ActorOpacity(material, this.opacity);
+          if (isTrack && this.trackTextures) {
+            material.setVector3('sourceColorFilter', Vector3.FromArray(this.trackTextures.filter));
+          }
         }
         applyCartoonOutlines(assets.meshes);
-        view.components.push({part: component.part, action, assets, attachmentTracks});
+        view.components.push({part: component.part, action, assets, attachmentTracks,
+          sampleAnimation: createMv3AnimationSampler(assets)});
         assets.addAllToScene();
         const part = new TransformNode(`${this.root.name}-part-${component.part}`, this.scene);
         part.parent = root;
@@ -334,16 +345,23 @@ export class TankView {
   advanceAnimations(deltaSeconds: number): TankActionMessage[] {
     const view = this.current;
     if (this.disposed || !view) return [];
-    const trackMovementPending = this.trackMovementPending;
-    this.trackMovementPending = false;
+    const trackCommand = this.trackCommandPending;
+    this.trackCommandPending = 0;
     let emitMovementDust = false;
-    if (this.alive && trackMovementPending) {
-      const previous = this.trackPhase.index;
-      this.trackPhase = advanceRoleTrackTexture(this.trackPhase, deltaSeconds);
-      if (previous !== this.trackPhase.index) {
-        this.applyTrackTexture();
-        emitMovementDust = true;
+    if (this.alive && trackCommand !== 0 && this.trackTextures) {
+      let changed = false;
+      let advanced = false;
+      for (const part of ['X', 'Y'] as const) {
+        const previous = this.trackPhases[part];
+        const direction = roleTrackDirection(trackCommand, part);
+        const next = advanceRoleTrackTexture(previous, deltaSeconds, this.trackTextures.frames.length,
+          this.trackTextures.frameDuration, direction);
+        this.trackPhases[part] = next;
+        changed ||= previous.index !== next.index;
+        advanced ||= direction !== 0 && previous.elapsed + deltaSeconds >= this.trackTextures.frameDuration;
       }
+      if (changed) this.applyTrackTexture();
+      emitMovementDust = advanced && roleTrackCommandMoves(trackCommand);
     }
     const messages: TankActionMessage[] = [];
     for (const component of view.components) {
@@ -351,10 +369,7 @@ export class TankView {
       if (!clock) continue;
       const identifiers = clock.advance(deltaSeconds);
       const sampleTime = clock.time % clock.duration;
-      for (const group of component.assets.animationGroups) {
-        const fps = group.targetedAnimations[0]?.animation.framePerSecond;
-        if (fps !== undefined) group.goToFrame(sampleTime / 1000 * fps);
-      }
+      component.sampleAnimation(sampleTime);
       for (const identifier of identifiers) {
         messages.push({part: component.part, action: this.activeAction, time: clock.time, identifier});
       }
@@ -380,18 +395,17 @@ export class TankView {
     return messages;
   }
 
-  /** The accepted movement command is the only source of track A/B advancement.
-   * Straight 1/2 and arced 5-8 translate; stop 0 and in-place turns 3/4 freeze.
-   */
+  /** Accepted commands drive tracks; rejected or stopped motion keeps the current phase. */
   trackMovementCommand(command: number): void {
-    this.trackMovementPending = !this.disposed && this.alive && roleTrackCommandMoves(command);
+    this.trackCommandPending = !this.disposed && this.alive ? command : 0;
   }
 
   private applyTrackTexture(): void {
-    const texture = this.textures.get(this.trackPhase.index === 0 ? 'XY' : 'XY-B');
-    if (!texture) return;
+    const tracks = this.trackTextures;
+    if (!tracks) return;
     for (const component of this.current?.components ?? []) {
       if (component.part !== 'X' && component.part !== 'Y') continue;
+      const texture = tracks.frames[this.trackPhases[component.part].index];
       for (const mesh of component.assets.meshes) {
         const material = mesh.material;
         if (material instanceof ShaderMaterial && material.metadata?.originalMV3) {
@@ -457,7 +471,7 @@ export class TankView {
   }
 
   position(x: number, y: number, z: number): void {
-    this.trackMovementPending = false;
+    this.trackCommandPending = 0;
     this.root.position.copyFrom(new Vector3(-x, y, z));
     this.updatePrimaryTags();
   }
@@ -468,7 +482,7 @@ export class TankView {
     }
     this.disposed = true;
     this.materials.clear();
-    this.trackMovementPending = false;
+    this.trackCommandPending = 0;
     this.scene.onBeforeRenderObservable.removeCallback(this.animate);
     this.actionMessages.clear();
     this.movementDustPositions.clear();
@@ -479,6 +493,8 @@ export class TankView {
     void Promise.all(cleanup).then(() => {
       this.textures.forEach(texture => texture.dispose());
       this.textures.clear();
+      this.trackTextures?.dispose();
+      this.trackTextures = undefined;
       this.defaultTextures.forEach(texture => texture.dispose());
       this.defaultTextures.clear();
     });

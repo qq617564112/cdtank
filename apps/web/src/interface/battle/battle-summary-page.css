@@ -1,44 +1,73 @@
-.battle-summary-viewport { position: fixed; inset: 0; display: grid; place-items: center; z-index: 10; background: #142032; }
-.battle-summary-stage { position: relative; width: 800px; height: 600px; color: #fff; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
-.battle-summary-stage > *, .battle-summary-row > * { position: absolute; box-sizing: border-box; }
-.battle-summary-part { inset: 0; pointer-events: none; }
-.battle-summary-part > * { position: absolute; box-sizing: border-box; }
-.battle-summary-part-left { animation: summary-left-entry .7s linear both; }
-.battle-summary-part-right { animation: summary-right-entry .7s linear both; }
-.battle-summary-part-bottom { animation: summary-bottom-entry .7s linear both; }
+@import '../resources/happy-zcool.css';
+
+.battle-summary-viewport { position: fixed; inset: 0; display: grid; place-items: center; z-index: 10; overflow: hidden; background: #142032; }
+.battle-summary-stage { font-family: 'HappyZcool-2016', sans-serif; }
+.battle-summary-stage .battle-score-sheet-part-left { animation: summary-left-entry .7s linear both; }
+.battle-summary-stage .battle-score-sheet-part-right { animation: summary-right-entry .7s linear both; }
+.battle-summary-stage .battle-score-sheet-part-bottom { animation: summary-bottom-entry .7s linear both; }
 .battle-summary-row-left { animation: summary-left-entry .7s linear both; }
 .battle-summary-row-right { animation: summary-right-entry .7s linear both; }
 .battle-summary-outcome-entry { z-index: 1; transform-origin: center; animation: summary-outcome-entry .7s linear both; }
 .battle-summary-reward-layer { inset: 0; z-index: 3; pointer-events: none; }
 .battle-summary-reward-fade { animation: summary-reward-fade 1s linear both; }
 .battle-summary-picture { pointer-events: none; }
-.battle-summary-row { color: #fff; }
-.battle-summary-name { min-height: 24px; max-width: 80px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-  font-size: 18px; line-height: 24px; transform: translate(28px, -4px); }
-.battle-summary-number { min-height: 24px; text-align: center; font-size: 18px; line-height: 24px; transform: translateY(-4px); }
 .battle-summary-stats,
 .battle-summary-accessible { width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .battle-summary-title { left: 185px; top: 24px; width: 430px; margin: 0; text-align: center; font-size: 21px; }
 .battle-summary-objective { left: 182px; top: 61px; width: 436px; margin: 0; text-align: center; line-height: 17px; }
-.battle-summary-status { left: 64px; top: 504px; width: 711px; overflow: hidden; white-space: nowrap;
-  font-size: 16px; line-height: 22px; }
-.battle-summary-exp-percent { text-align: center; }
-.battle-summary-level { pointer-events: none; }
-.battle-summary-level-change { pointer-events: none; }
+.battle-summary-exp-percent { color: #c32127; text-align: center; font-size: 27px; line-height: 30px;
+  -webkit-text-stroke: 4px #fff8e8; paint-order: stroke fill; transform: rotate(-4deg); }
+.battle-summary-level { image-rendering: auto; pointer-events: none; }
+.battle-summary-level-change { color: #ff2525; font-size: 40px; line-height: 53px; text-align: center;
+  -webkit-text-stroke: 4px #fff; paint-order: stroke fill; transform: rotate(-4deg); pointer-events: none; }
+.battle-summary-level-change::before { content: ''; position: absolute; inset: 62% 8% 12%; z-index: -1;
+  background: #ffdf36; clip-path: polygon(0 10%, 98% 0, 100% 85%, 2% 100%); }
+.battle-summary-level-change[data-summary-level-change='-1'] { color: #4aff00; }
 .battle-summary-row-award { pointer-events: none; }
+.battle-summary-row-award > img { position: absolute; left: 16px; top: 0; width: 50px; height: 54px; object-fit: contain; }
+.battle-summary-row-award > span { position: absolute; left: 2px; top: 8px; writing-mode: vertical-rl;
+  color: #ffe976; background: #050400; font-size: 12px; line-height: 14px; padding: 2px 1px; }
 .battle-summary-stage button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 .battle-summary-loading-continue { left: 310px; top: 556px; }
 .battle-summary-individual { left: 28px; top: 55px; font-size: 18px; }
 .battle-summary-pagination { left: 545px; top: 556px; display: flex; gap: 8px; align-items: center; }
 .battle-summary-pagination button { background: #203c5c; color: #fff; border: 1px solid #8faac7; font: inherit; }
+.battle-summary-continue { --summary-button-face: #52dfff; --summary-button-light: #f8fcff; --summary-button-shade: #079bc1;
+  margin: 0; padding: 0; border: 0; background: transparent; color: #161463; cursor: pointer; touch-action: manipulation;
+  font: 24px/35px 'HappyZcool-2016', sans-serif; letter-spacing: 8px; }
+.battle-summary-continue > svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.battle-summary-continue > span { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 8px;
+  -webkit-text-stroke: 3px #fffdf2; paint-order: stroke fill; pointer-events: none; }
+.battle-summary-continue[data-source-button-state='Hover'] { --summary-button-face: #fffa47; --summary-button-shade: #bdb71d;
+  color: #ffef47; }
+.battle-summary-continue[data-source-button-state='Hover'] > span { -webkit-text-stroke-color: #080800; }
+.battle-summary-continue[data-source-button-state='Pushed'] { --summary-button-face: #285be1; --summary-button-light: #123fa4;
+  --summary-button-shade: #1540a4; color: #080c4b; }
+.battle-summary-continue[data-source-button-state='Pushed'] > svg,
+.battle-summary-continue[data-source-button-state='Pushed'] > span { transform: translate(5px, 2px) scale(.9, .88); }
+.battle-summary-continue[data-source-button-state='Pushed'] > span { -webkit-text-stroke-color: #7ce9ff; }
+.battle-summary-continue:disabled { --summary-button-face: #a2abb3; --summary-button-light: #e5e7e6;
+  --summary-button-shade: #727d89; color: #4e5261; cursor: default; }
 .battle-summary-ceremony { inset: 0; z-index: 2; pointer-events: none; }
 .battle-summary-ceremony > * { position: absolute; }
+.battle-summary-award-art > img { display: block; width: 100%; height: 100%; }
+.battle-summary-award-art-label { position: absolute; right: 12%; bottom: 6%; writing-mode: vertical-rl;
+  color: #ffe679; font-size: 27px; line-height: 30px; -webkit-text-stroke: 7px #080601; paint-order: stroke fill; }
+.battle-summary-prize-intro,
+.battle-summary-prize-name { white-space: nowrap; font-size: 38px; line-height: 46px; paint-order: stroke fill; }
+.battle-summary-prize-intro { color: #fff200; -webkit-text-stroke: 5px #0c1300; }
+.battle-summary-prize-name { color: #dc1715; -webkit-text-stroke: 4px #fffbf2; }
+.battle-summary-draw { color: #10c8ee; font-size: 82px; line-height: 86px; text-align: center;
+  -webkit-text-stroke: 4px #fffdf0; paint-order: stroke fill; filter: drop-shadow(-3px 3px #0b0b26); }
 .battle-summary-recipients { left: 210px; top: 415px; width: 380px; text-align: center; text-shadow: 1px 1px #000; }
 .battle-summary-title-notice { position: fixed; inset: 0; z-index: 4; margin: auto; padding: 0; border: 0;
   max-width: none; max-height: none; background: transparent; color: #fff; pointer-events: none; }
-.battle-summary-title-stage { position: relative; width: 800px; height: 600px; font-family: 'CDTank-SIMSUN', serif;
+.battle-summary-title-stage { position: relative; width: 800px; height: 600px; font-family: 'HappyZcool-2016', sans-serif;
   animation: summary-title-slide 3.4s linear both; }
 .battle-summary-title-stage [data-source-control] { position: absolute; }
+.battle-summary-title-message { display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+  font-size: 16px; line-height: 22px; color: #fff; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+.battle-summary-title-message strong { color: #ff3333; font-weight: normal; -webkit-text-stroke: inherit; }
 .battle-summary-title-notice::backdrop { background: transparent; }
 .battle-summary-award-animation { transform-origin: center; animation: summary-award-image .9s linear both; }
 .battle-summary-award-pulse { transform-origin: center; animation: summary-award-pulse .4s linear both; }

@@ -3,8 +3,8 @@ import {existsSync, readFileSync, writeFileSync} from 'node:fs';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
 import {SkillEffectNotifications} from '../apps/web/src/match/skills/skill-effect-notifications';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
-const source = JSON.parse(readFileSync('recovery/output/verified/tables/skill.json', 'utf8')) as {
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
+const source = JSON.parse(readFileSync('apps/server/resources/tables/skill.json', 'utf8')) as {
   rows: {values: Record<string, string>}[];
 };
 for (const skillId of [10, 11]) {
@@ -13,7 +13,7 @@ for (const skillId of [10, 11]) {
   assert.deepEqual(catalog.skills.find(skill => skill.skillId === skillId)!.effects[0],
     {effectId: 3, sound: 'GA16', tag: 0, method: 3});
 }
-assert.ok(existsSync('recovery/output/web-assets/audio/sound/GA16.wav'));
+assert.ok(existsSync('apps/web/public/audio/sound/GA16.wav'));
 const native = JSON.parse(readFileSync('recovery/output/effect-tree-create-native.json', 'utf8')) as {
   rows: {node: number; retain: boolean; created: {node: number; retain: boolean}[]}[];
 };

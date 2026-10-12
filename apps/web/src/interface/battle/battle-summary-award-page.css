@@ -16,7 +16,9 @@
   animation: summary-currency-entry .2s linear both;
 }
 
-.battle-summary-award-stage [data-source-control] {
+.battle-summary-award-stage [data-source-control],
+.battle-summary-award-line > *,
+.battle-summary-receipt-art {
   position: absolute;
   box-sizing: border-box;
   margin: 0;
@@ -30,12 +32,23 @@
 
 .battle-summary-award-label {
   color: #fff;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 16px;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
 }
 
 .battle-summary-award-number {
-  justify-content: flex-end;
   color: #fff;
+  text-align: right;
+  font-size: 14px;
+  line-height: 18px;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
 }
+
+.battle-summary-award-symbol > svg { display: block; width: 100%; height: 100%; }
 
 @keyframes summary-currency-entry {
   from { transform: translateX(-500px); }

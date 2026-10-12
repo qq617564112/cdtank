@@ -1,3 +1,5 @@
+import {DialogButton} from '../resources/dialog-button';
+import {GameMessage} from '../resources/game-message';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {SourceImageScale} from '../resources/source-static-image';
 import {loadUiFont} from '../resources/source-ui-fonts';
@@ -55,8 +57,8 @@ function HistoryIntroSession({close}: {close: () => void}) {
       <SourceImageScale value={scale}>
         {ui ? <HistoryIntroSourcePage ui={ui} close={close} scale={scale} /> :
           <section className="history-intro-resource-feedback" aria-label="介绍界面资源" aria-busy={!error}>
-            <p role="status">{error ? '介绍界面资源未能载入，请返回后重新打开。' : '正在载入介绍界面…'}</p>
-            <button type="button" data-history-intro-close="" onClick={close}>返回</button>
+            <GameMessage text={error ? '介绍界面资源未能载入，请返回后重新打开。' : ''} tone="error"/>
+            <DialogButton type="button" data-history-intro-close="" onClick={close}>返回</DialogButton>
           </section>}
       </SourceImageScale>
     </div>

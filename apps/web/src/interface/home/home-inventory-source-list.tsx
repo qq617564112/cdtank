@@ -1,4 +1,4 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import {useRef} from 'react';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
@@ -23,7 +23,6 @@ export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, 
   const layout = new HomeSourceLayout(ui, 'myhome_playerpage.xml');
   const controlName = valuableRows ? 'lstPlayerValuable' : 'lstPlayerItem';
   const control = layout.control(controlName);
-  const selection = sourceProps(ui, layout, 'myhome_playerpage.xml', controlName, control.properties.SelectionImage);
   return <div {...sourceProps(ui, layout, 'myhome_playerpage.xml', controlName)}
     className="home-inventory-list-scroll-shell">
     <div ref={list} className="home-inventory-source-list" role="listbox" aria-label={valuableRows ? '拥有贵重品' : '拥有物品'}
@@ -37,8 +36,6 @@ export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, 
           data-home-source-valuable-row={valuableRows ? '' : undefined}
           aria-pressed={selected === entry.instanceId}
           aria-describedby={described === entry.instanceId ? 'home-item-description' : undefined}
-          style={selected === entry.instanceId ? {...backgroundStyle(selection.style)} : undefined}
-          data-source-selection-asset={selected === entry.instanceId ? selection['data-source-asset'] : undefined}
           onMouseEnter={event => describe?.(entry, event.currentTarget)}
           onFocus={event => describe?.(entry, event.currentTarget)}
           onClick={() => select(entry.instanceId)} onDoubleClick={activate ? () => activate(entry.instanceId) : undefined}
@@ -60,6 +57,7 @@ export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, 
           }} onKeyUp={event => {
             if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
           }}>
+          {selected === entry.instanceId && <GameSelectionHighlight/>}
           <HomeItemRowContent ui={ui} {...entry} />
         </button>;
       })}

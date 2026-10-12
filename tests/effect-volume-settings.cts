@@ -35,7 +35,7 @@ Object.defineProperty(globalThis, 'Audio', {value: AudioBoundary, configurable: 
 Object.defineProperty(globalThis, 'AudioContext', {value: AudioContextBoundary, configurable: true});
 Object.defineProperty(globalThis, 'window', {value: {addEventListener: () => {}, removeEventListener: () => {}}, configurable: true});
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8')) as SkillSoundCatalog;
+const catalog = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8')) as SkillSoundCatalog;
 assert.ok(catalog.sounds.some(sound => sound.name === 'GA15'));
 const engine = new NullEngine();
 const scene = new Scene(engine);

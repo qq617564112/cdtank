@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {LoadAssetContainerAsync, NullEngine, PBRMaterial, Scene, ShaderMaterial} from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
-import {ScenePlant05413MaterialOwner} from '../recovery/prepared/scene-plant05413-material-owner';
+import {ScenePlant05413MaterialOwner} from '../tools/recovery/prepared/scene-plant05413-material-owner';
 
 const source = JSON.parse(readFileSync('recovery/output/scene-plant02-material-source.json', 'utf8'));
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const asset = await LoadAssetContainerAsync(new Uint8Array(readFileSync(
-  'recovery/output/web-assets/Data/scnobj/obj05413/obj05413.glb')), scene,
+  'apps/web/public/Data/scnobj/obj05413/obj05413.glb')), scene,
   {pluginExtension: '.glb'});
 const template = asset.meshes.find(mesh => mesh.name === 'plane507/0')!;
 const original = template.material as PBRMaterial;

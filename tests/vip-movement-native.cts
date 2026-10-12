@@ -26,7 +26,7 @@ interface NativeRow {
 }
 const native: {status: string; groups: number; scales: {move: number; turn: number}; rows: NativeRow[]} =
   JSON.parse(readFileSync('recovery/output/vip-movement-native.json', 'utf8'));
-const catalog: CombatCatalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const catalog: CombatCatalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
 const skills = new Map(catalog.skills.map(skill => [skill.skillId, skill]));
 const items = new Map(catalog.items.map(item => [item.itemTableId, {itemId: item.itemTableId, skillIds: item.skillIds}]));
 const limits = readRoleDataScaleLimits(catalog.dataScales);

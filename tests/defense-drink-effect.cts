@@ -10,8 +10,8 @@ import {EFFECT_IDENTITY} from '../apps/web/src/render/effects/common/effect-rend
 import {EffectRuntime} from '../apps/web/src/render/effects/runtime/effect-runtime';
 import type {EffectRuntimeLibrary, EffectRuntimeTree} from '../apps/web/src/render/effects/runtime/effect-runtime-tree';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 const native = JSON.parse(readFileSync('recovery/output/effect-tree-create-native.json', 'utf8')) as {
   rows: {node: number; retain: boolean; created: {node: number; retain: boolean}[]}[];
 };
@@ -22,7 +22,7 @@ assert.deepEqual(catalog.skills.find(skill => skill.skillId === 5)!.effects[1],
   {effectId: 10, sound: 'SE02', tag: 0, method: 3});
 
 const sourceTable = (name: string): Record<string, string>[] =>
-  (JSON.parse(readFileSync(`recovery/output/verified/tables/${name}.json`, 'utf8')) as {
+  (JSON.parse(readFileSync(`apps/server/resources/tables/${name}.json`, 'utf8')) as {
     rows: {values: Record<string, string>}[];
   }).rows.map(row => row.values);
 const sourceItem = sourceTable('item').find(row => row.ItemTableID === '5')!;
@@ -81,13 +81,13 @@ assert.equal(stripControls.length, 3);
 assert.deepEqual(stripControls.map(control => control.color), Array.from({length: 3}, () => [0.5, 1, 1, 0.800000011920929]));
 assert.equal(library.spriteControls.filter(control => control.node === 3106).length, 8);
 assert.ok(grids.every(grid => grid.resolution === 'published' && grid.asset));
-for (const grid of grids) assert.ok(existsSync(`recovery/output/web-assets/${grid.asset}`), grid.asset);
-const audio = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8')) as {
+for (const grid of grids) assert.ok(existsSync(`apps/web/public/${grid.asset}`), grid.asset);
+const audio = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8')) as {
   sounds: {name: string; asset: string}[];
 };
 const soundAsset = audio.sounds.find(sound => sound.name === 'SE40')!.asset;
 assert.equal(soundAsset, 'audio/sound/SE40.wav');
-assert.ok(existsSync(`recovery/output/web-assets/${soundAsset}`));
+assert.ok(existsSync(`apps/web/public/${soundAsset}`));
 
 const embeddedSoundAsset = audio.sounds.find(sound =>
   sound.name.toLowerCase() === embeddedSound.reference.toLowerCase())?.asset;

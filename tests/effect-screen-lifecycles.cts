@@ -10,7 +10,7 @@ interface Row {
   steps: {delta: number; phase: number; elapsed: number; controller: number; events: object[]}[];
 }
 const native = JSON.parse(readFileSync('recovery/output/effect-screen-lifecycles-native.json', 'utf8')) as {rows: Row[]};
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 for (const row of native.rows) {
   let events: object[] = [];
   const backend: EffectScreenBackend = {

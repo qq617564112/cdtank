@@ -36,7 +36,7 @@ const id = run.targetId.replace(/^ENV:/, '');
 const placement = proof.placements.find(row => row.id === id)!;
 assert(placement && placement.model === 'obj05424');
 const matrix = [...placement.matrix]; matrix.splice(12, 3, ...placement.position);
-const resource = JSON.parse(readFileSync('recovery/output/web-assets/scene-breach-0018.json', 'utf8')).resources[0] as EffectModelResource;
+const resource = JSON.parse(readFileSync('apps/web/public/scene-breach-0018.json', 'utf8')).resources[0] as EffectModelResource;
 const geometry = resource.nodes.map((node, index) => node.parts.length ? index : -1).filter(index => index >= 0);
 assert.deepEqual(geometry, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 const events = [];

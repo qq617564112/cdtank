@@ -1,0 +1,197 @@
+@import './happy-zcool.css';
+
+.game-dialog-button,
+.game-dialog-button * {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+}
+
+.game-dialog-button {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 81px;
+  height: 43px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.game-dialog-button[data-dialog-button='close'] {
+  width: 37px;
+  height: 37px;
+}
+
+.game-dialog-button[data-dialog-button='back'] {
+  width: 187px;
+  height: 41px;
+}
+
+.game-dialog-button-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.game-dialog-button .game-dialog-action-hover,
+.game-dialog-button .game-dialog-action-pushed,
+.game-dialog-button .game-dialog-close-hover,
+.game-dialog-button .game-dialog-close-pushed {
+  visibility: hidden;
+}
+
+.game-dialog-button[data-source-button-state='Hover'] .game-dialog-action-normal,
+.game-dialog-button[data-source-button-state='Pushed'] .game-dialog-action-normal,
+.game-dialog-button[data-source-button-state='Hover'] .game-dialog-close-normal,
+.game-dialog-button[data-source-button-state='Pushed'] .game-dialog-close-normal {
+  visibility: hidden;
+}
+
+.game-dialog-button[data-source-button-state='Hover'] .game-dialog-action-hover,
+.game-dialog-button[data-source-button-state='Pushed'] .game-dialog-action-pushed,
+.game-dialog-button[data-source-button-state='Hover'] .game-dialog-close-hover,
+.game-dialog-button[data-source-button-state='Pushed'] .game-dialog-close-pushed {
+  visibility: visible;
+}
+
+.game-dialog-button .game-dialog-button-label {
+  position: absolute;
+  inset: 6px 8px 14px;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 21px;
+  letter-spacing: 0;
+  white-space: nowrap;
+  -webkit-text-stroke: 0;
+  paint-order: stroke fill;
+  text-shadow: none;
+  pointer-events: none;
+}
+
+.game-dialog-button .game-dialog-button-label-rim,
+.game-dialog-button .game-dialog-button-label-ink {
+  position: relative;
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: 0;
+  white-space: nowrap;
+  paint-order: stroke fill;
+}
+
+.game-dialog-button .game-dialog-button-label-rim {
+  color: transparent;
+  -webkit-text-stroke: 3px #4e7e7d;
+  text-shadow: none;
+}
+
+.game-dialog-button .game-dialog-button-label-ink {
+  color: #fff;
+  -webkit-text-stroke: 1.3px #223232;
+  text-shadow: 1px 1px #14272b;
+}
+
+.game-dialog-button .game-dialog-button-letter {
+  position: static;
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+  -webkit-text-stroke: inherit;
+  text-shadow: inherit;
+}
+
+.game-dialog-button .game-dialog-button-label[data-dialog-label-spaced] > span {
+  gap: 14px;
+}
+
+.game-dialog-button[data-source-button-state='Hover'] .game-dialog-button-label-rim {
+  -webkit-text-stroke-color: #8c7934;
+}
+
+.game-dialog-button[data-source-button-state='Hover'] .game-dialog-button-label-ink {
+  -webkit-text-stroke-color: #312b18;
+  text-shadow: 1px 1px #261e08;
+}
+
+.game-dialog-button[data-source-button-state='Pushed'] .game-dialog-button-label-rim {
+  -webkit-text-stroke-color: #9e542e;
+}
+
+.game-dialog-button[data-source-button-state='Pushed'] .game-dialog-button-label-ink {
+  -webkit-text-stroke-color: #312018;
+  text-shadow: 1px 1px #26150e;
+}
+
+.game-dialog-button[data-source-button-state='Pushed'] .game-dialog-button-label {
+  transform: translate(.5px, 0) scale(.93);
+  transform-origin: center;
+}
+
+.game-dialog-button[data-dialog-button='back'] .game-dialog-button-label {
+  inset: 3px 12px 7px;
+  font-size: 24px;
+  line-height: 29px;
+  letter-spacing: 5px;
+}
+
+.game-dialog-button[data-dialog-button='back'] .game-dialog-button-label-rim {
+  -webkit-text-stroke: 3px #fff;
+}
+
+.game-dialog-button[data-dialog-button='back'] .game-dialog-button-label-ink {
+  color: transparent;
+  background: linear-gradient(to bottom, #1800e7 12%, #1000ad 36%, #08006b 52%, #000016 80%, #000 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+
+.game-dialog-button[data-dialog-button='back'][data-source-button-state='Hover'] .game-dialog-button-label-rim {
+  -webkit-text-stroke: 4px #000;
+}
+
+.game-dialog-button[data-dialog-button='back'][data-source-button-state='Hover'] .game-dialog-button-label-ink {
+  background-image: linear-gradient(to bottom, #bdbeb5 10%, #fff7de 30%, #ffe784 55%, #ffd729 80%, #ffcf21 100%);
+}
+
+.game-dialog-button[data-dialog-button='back'][data-source-button-state='Pushed'] .game-dialog-button-label-rim {
+  -webkit-text-stroke-color: #84ffff;
+}
+
+.game-dialog-button[data-dialog-button='back'][data-source-button-state='Pushed'] .game-dialog-button-label-ink {
+  background-image: linear-gradient(to bottom, #3c57ef 12%, #1808c6 32%, #10048c 50%, #000016 80%, #000 100%);
+}
+
+.game-dialog-button[data-dialog-button='back'][data-source-button-state='Pushed'] .game-dialog-button-label {
+  transform: translate(2px, 2px) scale(.93);
+}
+
+.game-dialog-button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.game-dialog-button:focus-visible {
+  outline: 1px solid #fff;
+  outline-offset: 1px;
+}

@@ -3,11 +3,11 @@ import json
 from pathlib import Path
 import struct
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'recovery'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/recovery'))
 from cvd import read_cvd
 
 root = Path('recovery/output/verified/assets/data')
-out = Path('recovery/output/web-assets')
+out = Path('apps/web/public')
 catalog = json.loads((out / 'cvd-conversion.json').read_text())
 triangles, frames = 0, 0
 for entry in catalog:

@@ -1,0 +1,12 @@
+.game-currency-board {
+  position: absolute;
+  width: 200px;
+  height: 63px;
+  pointer-events: none;
+}
+
+.game-currency-board > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

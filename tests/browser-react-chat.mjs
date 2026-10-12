@@ -350,7 +350,7 @@ async function emoteSend(a,b,text,ids,channel=0,quick=false) {
 }
 
 try {
-  await launchServer();vite=await createServer({configFile:false,root:'apps/web',cacheDir:join(directory,'vite-cache'),publicDir:'../../recovery/output/web-assets',plugins:[{name:'source-chat-readiness',transform(source,id){if(!id.endsWith('/src/match/battle.ts'))return;return source+`\nconst setQuickChats=Battle.prototype.setQuickChats;Battle.prototype.setQuickChats=function(value){window.teamChatBattle=this;return setQuickChats.call(this,value);};\n`;}}],server:{port:5302,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3272',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();
+  await launchServer();vite=await createServer({configFile:false,root:'apps/web',cacheDir:join(directory,'vite-cache'),publicDir:'../../apps/web/public',plugins:[{name:'source-chat-readiness',transform(source,id){if(!id.endsWith('/src/match/battle.ts'))return;return source+`\nconst setQuickChats=Battle.prototype.setQuickChats;Battle.prototype.setQuickChats=function(value){window.teamChatBattle=this;return setQuickChats.call(this,value);};\n`;}}],server:{port:5302,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3272',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();
   const sessions=[];for(const name of ['原聊天甲','原聊天乙']){const {browserContextId}=await command('Target.createBrowserContext');contexts.push(browserContextId);const session=await newPage(browserContextId);sessions.push(session);await input(session,'#player-name',name);}
   const [a,b]=sessions;
   if(finishedOnly){

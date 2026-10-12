@@ -1,9 +1,9 @@
-import {backgroundStyle} from '../../assets/image-artwork';
 import {gameContent, rankedPetSkillId} from '../../../../shared/content/catalog';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
+import {HomeSymbolMeter} from './home-symbol-meter';
 
 /** Original PetTable +7c..+88 mastery order; the four bars use the same slot order. */
 const MASTERY_ATTRIBUTES = ['STankMastery', 'MTankMastery', 'LTankMastery', 'StugMastery'] as const;
@@ -95,9 +95,7 @@ export function HomePetOwnedMastery({ui, selectedBase, currentTank, currentPetIn
   const suffix = 'myhome_petpage.xml', layout = new HomeSourceLayout(ui, suffix);
   return <>
     {HOME_PET_MASTERY_CONTROLS.map(({name, label}, index) => {
-      const control = layout.control(name);
-      const bounds = sourceProps(ui, layout, suffix, name, control.properties.BackgroundImage);
-      const fill = sourceProps(ui, layout, suffix, name, control.properties.ProgressImage);
+      const bounds = sourceProps(ui, layout, suffix, name);
       const value = values.mastery[index]!, fraction = Math.max(0, Math.min(1, values.progress[index]!));
       const width = Number(bounds.style.width), height = Number(bounds.style.height);
       const extent = Math.floor(width * fraction + .5);
@@ -105,8 +103,7 @@ export function HomePetOwnedMastery({ui, selectedBase, currentTank, currentPetIn
         className="home-pet-mastery-progress" data-home-pet-mastery-progress={name}
         data-mastery-value={value} data-mastery-fraction={values.progress[index]}
         role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={Math.max(5, value)} aria-valuenow={value}>
-        <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, width, height,
-          clipPath: `inset(0 ${width - extent}px 0 0)`, ...backgroundStyle(fill.style)}} />
+        <HomeSymbolMeter kind="stars" width={width} height={height} extent={extent}/>
       </div>;
     })}
   </>;

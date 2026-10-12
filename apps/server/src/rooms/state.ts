@@ -41,6 +41,7 @@ export interface RoomState {
   minPlayers?: number;
   maxPlayers?: number;
   friendlyFire?: boolean;
+  timeLimitSeconds?: number;
   battlefield: Battlefield;
   players: Map<string, PlayerState>;
   bullets: BulletState[];

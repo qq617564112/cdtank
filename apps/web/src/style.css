@@ -8,15 +8,29 @@ html, body {
   color: #fff8da;
   font-family: 'Microsoft YaHei', sans-serif;
   background: #405b6f;
+}
+
+*,
+*::before,
+*::after {
   -webkit-user-select: none;
   user-select: none;
 }
 
 input,
 textarea,
-[contenteditable]:not([contenteditable='false']) {
+[contenteditable]:not([contenteditable='false']),
+[contenteditable]:not([contenteditable='false']) *,
+[data-chat-log] li,
+[data-lobby-chat-log] li,
+[data-chat-log] [data-chat-rich-kind='text'],
+[data-lobby-chat-log] [data-chat-rich-kind='text'] {
   -webkit-user-select: text;
   user-select: text;
+}
+
+:is(:focus, :focus-within):not(input, textarea, [contenteditable]:not([contenteditable='false'])) {
+  outline: none !important;
 }
 
 img {

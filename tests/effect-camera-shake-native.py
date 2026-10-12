@@ -7,7 +7,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP, UC_X86_REG_FPCW
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 machine, _ = map_original_binaries([ROOT / 'CDTank' / name for name in ['CDTank.exe', 'gbengine.dll', 'msvcr71.dll']])
 machine.mem_map(0x2000000, 0x100000)
@@ -42,7 +42,7 @@ def hook(uc, address, size, data):
         finish(pop=4)
 
 machine.hook_add(UC_HOOK_CODE, hook)
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 rows = []
 for config in library['screenControls']:
     if config['type'] != 11:
@@ -86,5 +86,5 @@ for config in library['screenControls']:
         rows.append(dict(node=config['node'], config=config, duration=duration, started=started, steps=steps,
                          browser=basis['right'] == [-1, 0, 0]))
 (ROOT / 'recovery/output/effect-camera-shake-native.json').write_text(json.dumps(dict(rows=rows)) + '\n')
-(ROOT / 'recovery/output/web-assets/effect-camera-shake-browser-native.json').write_text(json.dumps(dict(rows=[row for row in rows if row['browser'] and row['node'] in [384, 385, 671]])) + '\n')
+(ROOT / 'apps/web/public/effect-camera-shake-browser-native.json').write_text(json.dumps(dict(rows=[row for row in rows if row['browser'] and row['node'] in [384, 385, 671]])) + '\n')
 print(f'PASS: {len(rows)} original source camera shake activations / {len(rows) * 6} complete camera updates / actual CRT random stream')

@@ -47,13 +47,13 @@ try {
   const runtime = new EffectRuntime(scene, camera);
   const loaded = runtime as unknown as {library: EffectRuntimeLibrary; textures: Map<string, RawTexture>;
     instances: {handle: number}[]; skillSound: {configure(catalog: SkillSoundCatalog): void; voices: Map<number, unknown>}};
-  loaded.library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+  loaded.library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
   const drawNodes = [2664, 2665, 2667, 2830, 2834];
   for (const grid of loaded.library.textureGrids.filter(grid => drawNodes.includes(grid.node))) {
     if (!loaded.textures.has(grid.asset)) loaded.textures.set(grid.asset,
       RawTexture.CreateRGBATexture(new Uint8Array([255, 255, 255, 255]), 1, 1, scene));
   }
-  loaded.skillSound.configure(JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8')) as SkillSoundCatalog);
+  loaded.skillSound.configure(JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8')) as SkillSoundCatalog);
   const root = new TransformNode('actor', scene);
   const life: boolean[] = [];
   const view = {root, tankId: 1, turretYaw: 0, trackMovementTarget: () => {},
@@ -62,7 +62,7 @@ try {
     primaryTag: (name: string) => name === 'tag_efcenter' ? EFFECT_IDENTITY : undefined,
     life: async (alive: boolean) => {life.push(alive);}, motion: async () => {}, aim: () => {},
     dispose: () => root.dispose()} as unknown as TankView;
-  const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+  const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
   let revivalCalls = 0;
   const players = new BattlePlayers(scene, camera, {
     queuedParts: () => false,

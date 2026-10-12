@@ -21,7 +21,7 @@ const source = JSON.parse(readFileSync('recovery/output/scene-animation-0018-sou
   status: string;
   placements: {id:string;position:number[];matrix:number[]}[];geometryNodes:number[];emptyParentNode:number;nodeCount:number;
 };
-const resource = JSON.parse(readFileSync('recovery/output/web-assets/scene-animation-0018.json', 'utf8')).resources[0] as EffectModelResource;
+const resource = JSON.parse(readFileSync('apps/web/public/scene-animation-0018.json', 'utf8')).resources[0] as EffectModelResource;
 assert(['PASS','FAIL'].includes(run.status)); assert.equal(source.status, 'PASS');
 const lifecycle=JSON.parse(readFileSync(lifecycleInput,'utf8')) as typeof run & {lifecycleOnly: boolean};
 assert.equal(lifecycle.status,'PASS'); assert.equal(lifecycle.lifecycleOnly,true);

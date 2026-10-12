@@ -1,0 +1,70 @@
+.cartoon-button.game-button {
+  --cartoon-label-size: 18px;
+  --cartoon-label-outline: 3px;
+}
+
+.game-button {
+  position: relative;
+}
+
+.cartoon-button.game-button .cartoon-button-shadow {
+  transform: translate(1px, 1px);
+  opacity: .22;
+}
+
+.cartoon-button.game-button[data-cartoon-button-shape='next'] .cartoon-button-shadow {
+  transform: translate(-1px, 1px);
+}
+
+.cartoon-button.game-tab-button {
+  --cartoon-label-size: 21px;
+}
+
+.cartoon-button.game-tab-button > .cartoon-control-label {
+  margin-bottom: 5px;
+}
+
+.cartoon-button.game-tab-button[aria-pressed='true'] {
+  --cartoon-label-fill: #fff600;
+  --cartoon-label-stroke: #101000;
+  --cartoon-label-shadow: 1px 1px #963507;
+}
+
+.game-tab-selected-art {
+  position: absolute;
+  left: calc(50% - 27px);
+  top: calc(50% - 29.5px);
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.game-tab-button[aria-pressed='true'][data-source-button-state='Hover'] .game-tab-selected-art {
+  filter: brightness(1.08);
+}
+
+.game-tab-button[aria-pressed='true'][data-source-button-state='Pushed'] .game-tab-selected-art {
+  transform: translateY(2px) scale(.96);
+}
+
+.cartoon-button.game-button:disabled:where(:not([aria-busy='true'])) {
+  --cartoon-button-face: #9ba0a8;
+  --cartoon-button-rim: #555b65;
+  --cartoon-button-highlight: #d4d7dc;
+  --cartoon-button-bevel: #777e89;
+  --cartoon-button-shadow: #48515f;
+  --cartoon-label-fill: #d8dbe1;
+  --cartoon-label-stroke: #515863;
+  --cartoon-label-shadow: none;
+  cursor: default;
+}
+
+.cartoon-button.game-button:disabled:where(:not([aria-busy='true'])) .cartoon-button-shadow {
+  opacity: .12;
+}
+
+.game-tab-button:disabled .game-tab-selected-art {
+  filter: grayscale(1);
+  opacity: .6;
+}

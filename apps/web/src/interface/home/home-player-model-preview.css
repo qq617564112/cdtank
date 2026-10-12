@@ -1,29 +1,5 @@
 .home-player-model-preview {
   overflow: visible;
-  /* ditu4.tga display contour relative to edtPlayerDescription at (216, 37). */
-  clip-path: polygon(
-    -75% -75%,
-    155.5px -75%,
-    155.5px 7.5px,
-    154.5px 15.5px,
-    153.5px 16.5px,
-    153.5px 80.5px,
-    154.5px 90.5px,
-    155.5px 97.5px,
-    154.5px 99.5px,
-    152.5px 102.5px,
-    150.5px 105.5px,
-    143.5px 106.5px,
-    120px 106.5px,
-    119px 105.5px,
-    87px 105.5px,
-    86px 104.5px,
-    35px 104.5px,
-    34px 105.5px,
-    12px 105.5px,
-    11px 106.5px,
-    -75% 106.5px
-  );
   pointer-events: none;
 }
 
@@ -32,6 +8,8 @@
   inset: -75%;
   width: 250%;
   height: 250%;
+  transform: translateY(5px) scale(1.02);
+  transform-origin: center;
 }
 
 .home-player-model-canvas canvas {

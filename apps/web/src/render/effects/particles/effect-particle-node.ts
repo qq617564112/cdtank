@@ -21,6 +21,11 @@ export class EffectParticleNodeState {
   readonly pool: EffectParticlePool<EffectParticleState>;
   controller = 0;
   origin: EffectVec3 = [0, 0, 0];
+  private readonly particleConfigs: EffectParticleUpdateConfig[];
+  private readonly randomFrame = (count: number): number => this.random() % count;
+  private target?: EffectVec3;
+  private readonly advanceParticle = (state: EffectParticleState, delta: number): EffectParticleState =>
+    advanceEffectParticle(state, this.particleConfigs[this.controller], delta, this.randomFrame, this.target);
 
   constructor(readonly controls: readonly EffectParticleController[],
     readonly spaces: EffectEmitterSpace[], readonly paths: readonly (EffectPathClock | undefined)[],
@@ -28,7 +33,10 @@ export class EffectParticleNodeState {
     readonly globalRotation: EffectNativeMatrix, readonly parentMatrix?: EffectNativeMatrix) {
     this.emitter = new EffectEmitterClock((minimum, maximum) =>
       minimum + random() % (maximum - minimum + 1));
-    this.pool = new EffectParticlePool(capacity, state => structuredClone(state));
+    this.pool = new EffectParticlePool(capacity);
+    this.particleConfigs = controls.map(control => ({
+      motion: control.particleMotion, frame: control.particleFrame, alphaMode: control.alphaMode,
+    }));
   }
 
   start(origin: EffectVec3): void {
@@ -65,9 +73,8 @@ export class EffectParticleNodeState {
     this.pool.emit(this.emitter.advance(deltaSeconds, control.emitter), () =>
       initialEffectParticle(control.spawn, control.particleFrame.frameCount,
         space.position, space.orbitOffset, this.globalRotation, this.random, this.parentMatrix));
-    this.pool.update(deltaSeconds, (state, delta) => advanceEffectParticle(state,
-      {motion: control.particleMotion, frame: control.particleFrame, alphaMode: control.alphaMode},
-      delta, count => this.random() % count, target));
+    this.target = target;
+    this.pool.update(deltaSeconds, this.advanceParticle);
   }
 
   /** Original vtable+0x2c clears particles and prevents another burst. */

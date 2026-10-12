@@ -8,6 +8,7 @@ const child = spawn(process.execPath, [resolve(release, 'server/server/src/index
   stdio: 'inherit',
   env: {...process.env,
     CONTENT_TABLES: process.env.CONTENT_TABLES ?? resolve(release, 'content/tables'),
+    SERVER_ASSETS: process.env.SERVER_ASSETS ?? resolve(release, 'content/assets'),
     WEB_ASSETS: process.env.WEB_ASSETS ?? resolve(release, 'web'),
     WEB_ROOT: process.env.WEB_ROOT ?? resolve(release, 'web'),
     ACCOUNT_DB_PATH: process.env.ACCOUNT_DB_PATH ?? resolve(release, 'state/accounts.sqlite')},

@@ -1,26 +1,10 @@
 .player-info-resource-feedback {
+  position: absolute;
   left: 12px;
-  top: 24px;
+  top: 54px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
   width: 380px;
-  padding: 24px;
-  border: 1px solid #d9bd80;
-  background: #13244d;
-  color: #fff;
-}
-
-.player-info-resource-feedback p {
-  margin: 0 0 16px;
-}
-
-.player-info-resource-feedback button {
-  padding: 10px 20px;
-  border: 1px solid #d9bd80;
-  background: #243e73;
-  color: #fff;
-  cursor: pointer;
-}
-
-.player-info-resource-feedback button:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 3px;
 }

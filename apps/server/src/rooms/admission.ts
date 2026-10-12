@@ -4,6 +4,7 @@ import {selectPlayerLimits, roomMaxPlayers} from './player-limits';
 import {modeName} from './create';
 import type {RoomState, JoinResult} from './state';
 import {ROOM_NAME_MAX_CODEPOINTS, ROOM_PASSWORD_MAX_CODEPOINTS, validateRoomInputLength} from '../../../shared/room-input';
+import {validateRoomTimeLimit} from '../../../shared/room-time-limit';
 
 interface CreationRequest {
   clientId: string;
@@ -16,14 +17,17 @@ interface CreationRequest {
   minPlayers?: number;
   maxPlayers?: number;
   friendlyFire?: boolean;
+  timeLimitSeconds?: number;
 }
 
 /** Creation retry and rollback use the same authoritative registry as joins. */
 export function createAndJoinRoom(rooms: Map<string, RoomState>, request: CreationRequest,
-  create: (limits: {minPlayers: number; maxPlayers: number; friendlyFire: boolean}) => RoomState, join: (room: RoomState) => JoinResult): JoinResult {
+  create: (limits: {minPlayers: number; maxPlayers: number; friendlyFire: boolean; timeLimitSeconds?: number}) => RoomState,
+  join: (room: RoomState) => JoinResult): JoinResult {
   const {clientId, mode, mapId, roomName, name, tankId, password} = request;
   validateRoomInputLength(roomName, ROOM_NAME_MAX_CODEPOINTS, '房间名称');
   validatePassword(password);
+  validateRoomTimeLimit(request.timeLimitSeconds);
   const map = MAPS.find(value => value.mode === mode && value.mapId === mapId);
   if (!Number.isInteger(mode) || !Number.isInteger(mapId) || !map) {
     throw new Error('该模式没有这张地图');
@@ -33,10 +37,12 @@ export function createAndJoinRoom(rooms: Map<string, RoomState>, request: Creati
   }
   const friendlyFire = request.friendlyFire ?? false;
   if (friendlyFire && mode >= 4) throw new Error('该模式不支持友军伤害');
-  const limits = {...selectPlayerLimits(map, request.minPlayers, request.maxPlayers), friendlyFire};
+  const limits = {...selectPlayerLimits(map, request.minPlayers, request.maxPlayers), friendlyFire,
+    timeLimitSeconds: request.timeLimitSeconds};
   if (!TANKS.some(tank => tank.id === tankId)) throw new Error('战车不存在');
   const sanitizedRoomName = roomName.replace(/[<>&\u0000-\u001f]/g, '').trim();
-  const creationKey = JSON.stringify([mode, mapId, sanitizedRoomName, name, tankId, limits.minPlayers, limits.maxPlayers, friendlyFire]);
+  const creationKey = JSON.stringify([mode, mapId, sanitizedRoomName, name, tankId,
+    limits.minPlayers, limits.maxPlayers, friendlyFire, limits.timeLimitSeconds]);
   for (const previous of rooms.values()) {
     const existing = [...previous.players.values()].find(player => player.clientId === clientId);
     if (!existing) continue;

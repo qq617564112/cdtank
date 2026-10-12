@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {needsRoleInitialization, needsBattleRoleInitialization} from '../recovery/evidence/combat/role-initialization';
+import {needsRoleInitialization, needsBattleRoleInitialization} from '../tests/evidence/combat/role-initialization';
 const evidence: {rows: {present: boolean[]; needsInitialization: boolean}[];
   battleRows: {present: boolean[]; needsInitialization: boolean; ownerInitializationCalled: boolean}[]} =
   JSON.parse(readFileSync('recovery/output/role-initialization-native.json', 'utf8'));

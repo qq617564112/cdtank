@@ -176,7 +176,7 @@ async function install(page){await evaluate(page,`window.reloadRows=[];window.re
 async function joinRoom(page,roomId) {await click(page,'#refresh-rooms');await waitUntil(page,`[...document.querySelector('#room').options].some(o=>o.value===${JSON.stringify(roomId)})&&!document.querySelector('#refresh-rooms').disabled`);await select(page,'#room',roomId);await click(page,'#join');await waitUntil(page,`(${worldExpression})?.mapLoaded&&(${worldExpression}).phase==='WAITING'`);}
 async function fire(page){await click(page,'#world');await key(page,' ','Space');await pause(80);await key(page,' ','Space','keyUp');}
 try {
-  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5317,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3287',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();const sessions=[];
+  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5317,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3287',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();const sessions=[];
   for(const name of ['消息面板甲','消息面板乙']){const {browserContextId}=await command('Target.createBrowserContext');const page=await newPage(browserContextId);sessions.push(page);await input(page,'#player-name',name);}
   const [a,b]=sessions;
   const store=new AccountStore(join(directory,'accounts.sqlite'));

@@ -59,7 +59,7 @@ try {
   for(var stream of [server.stdout,server.stderr])stream.on('data',d=>{log+=String(d);});
   var deadline=Date.now()+15000;while(!log.includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));
   assert(log.includes('Server started'),log);
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5432,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3382',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5432,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3382',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--remote-debugging-port=9632',

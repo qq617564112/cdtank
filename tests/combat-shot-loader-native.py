@@ -7,7 +7,7 @@ from capstone import Cs,CS_ARCH_X86,CS_MODE_32
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX,UC_X86_REG_ECX,UC_X86_REG_EIP,UC_X86_REG_ESP
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 uc,_=map_original_binaries([ROOT/'CDTank/CDTank.exe'])
 uc.mem_map(0x2000000,0x20000)
@@ -38,7 +38,7 @@ def hook(machine,address,size,data):
 for address in [0x4391c4,0x401609]:uc.hook_add(UC_HOOK_CODE,hook,begin=address,end=address)
 loaders=[]
 for name,identifier,entry,dest in [('item',2001,0x439b55,ITEM),('skill',2001,0x43abfd,SKILL+0x400),('skill',4020,0x43abfd,SKILL)]:
- table=json.loads((ROOT/f'recovery/output/verified/tables/{name}.json').read_text());row=next(r for r in table['rows']if r['recordId']==identifier)
+ table=json.loads((ROOT/f'apps/server/resources/tables/{name}.json').read_text());row=next(r for r in table['rows']if r['recordId']==identifier)
  columns.clear();assignments.clear();uc.mem_write(dest,bytes(0x300));put(STACK,STOP,0x12345678);uc.reg_write(UC_X86_REG_ECX,dest);uc.reg_write(UC_X86_REG_ESP,STACK)
  uc.emu_start(entry,STOP,count=10000);assert uc.reg_read(UC_X86_REG_EIP)==STOP and uc.reg_read(UC_X86_REG_ESP)==STACK+8
  assert get(dest+0xc)==identifier

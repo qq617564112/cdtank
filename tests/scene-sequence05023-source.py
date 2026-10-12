@@ -5,7 +5,7 @@ import struct
 import sys
 import capstone
 import pefile
-sys.path.insert(0, str(Path('recovery').resolve()))
+sys.path.insert(0, str(Path('tools/recovery').resolve()))
 from scene import read_scene
 
 pe = pefile.PE('CDTank/CDTank.exe')

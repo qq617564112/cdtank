@@ -1,0 +1,42 @@
+.chat-emote-button {
+  position: relative;
+  width: 27px;
+  height: 27px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.chat-emote-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.chat-emote-button[data-source-button-state='Normal'] .chat-emote-art-normal,
+.chat-emote-button[data-source-button-state='Disabled'] .chat-emote-art-normal,
+.chat-emote-button[data-source-button-state='Hover'] .chat-emote-art-hover,
+.chat-emote-button[data-source-button-state='Pushed'] .chat-emote-art-pressed {
+  opacity: 1;
+}
+
+.chat-emote-button:focus-visible {
+  outline: 1.5px solid #e0ffff;
+  outline-offset: 1px;
+  border-radius: 50%;
+}
+
+.chat-emote-button:disabled {
+  cursor: default;
+  filter: grayscale(.7);
+  opacity: .6;
+}

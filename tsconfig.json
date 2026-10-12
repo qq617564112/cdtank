@@ -21,8 +21,11 @@
     "apps/**/*.tsx",
     "vite.config.ts",
     "tests/**/*.cts",
-    "recovery/evidence/**/*.cts",
     "tests/render/**/*.ts",
     "tools/**/*.ts"
+  ],
+  "exclude": [
+    "tools/recovery/prepared/**",
+    "tools/recovery/implementation/**"
   ]
 }

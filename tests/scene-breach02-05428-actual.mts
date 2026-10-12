@@ -17,7 +17,7 @@ for (const events of run.acceptedTransactions) {
   assert.equal(events.filter(e => e.type === 'sceneObjectDestroyed').length, 1);
   assert.equal(events.filter(e => e.type === 'sceneObjectHit').reduce((sum,e) => sum+e.value,0), 200);
 }
-const scene = JSON.parse(readFileSync('recovery/output/web-assets/scene-placements.json','utf8')).find(s => s.id === '0002');
+const scene = JSON.parse(readFileSync('apps/web/public/scene-placements.json','utf8')).find(s => s.id === '0002');
 for (const world of run.initial) {
   for (const source of scene.castles) {
     const castle = world.match.sceneObjects.find(o => o.id === `CASTLE:${source.id}`);
@@ -31,7 +31,7 @@ for (const world of run.initial) {
 }
 const placement = scene.records.find(p => p.id === '214');
 assert.equal(placement.model, 'obj05428');
-const library = JSON.parse(readFileSync('recovery/output/web-assets/scene-breach-0014.json','utf8'));
+const library = JSON.parse(readFileSync('apps/web/public/scene-breach-0014.json','utf8'));
 const resource = library.resources.find(r => r.reference === 'Data/scnobj/obj05428/c9.CVD');
 const matrix = [...placement.matrix];matrix.splice(12,3,...placement.position);
 const page = run.observed[0], capture = page.captures['214'];

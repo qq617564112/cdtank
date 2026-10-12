@@ -8,7 +8,7 @@ from unicorn import Uc, UC_ARCH_X86, UC_MODE_32, UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EBX, UC_X86_REG_EBP, UC_X86_REG_ESP
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from inspect_assets import read_table
 pe = pefile.PE(str(ROOT / 'CDTank/CDTank.exe'))
 base = pe.OPTIONAL_HEADER.ImageBase

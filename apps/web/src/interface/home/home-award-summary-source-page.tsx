@@ -1,7 +1,8 @@
 import './home-award-summary-source-page.css';
+import type {CSSProperties} from 'react';
 import type {AwardCounts} from '../../../../shared/protocols/PtlRoleProfile';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {SourceFeedbackStaticText} from '../resources/source-feedback-text';
+import {HomeStaticText as SourceFeedbackStaticText} from './home-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 
 const SUFFIX = 'myhome_playerpage_awardsummary.xml';
@@ -11,11 +12,14 @@ const COUNTERS: Record<string, keyof AwardCounts> = {
 };
 
 /** Source artwork stays fixed; the nine counters bind to authoritative profile award counts. */
-export function HomeAwardSummarySourcePage({ui, awards}: {ui: HomeSourceUi; awards?: AwardCounts}) {
+export function HomeAwardSummarySourcePage({ui, awards, style}: {
+  ui: HomeSourceUi; awards?: AwardCounts; style?: CSSProperties;
+}) {
   const layout = new HomeSourceLayout(ui, SUFFIX);
   const controls = ui.layouts.find(value => value.path.endsWith(SUFFIX))!.windows;
-  return <section className="home-award-summary-source" data-home-award-summary="" aria-label="奖章">
-    {controls.filter(control => control.type === 'WindowsLook/StaticImage').map(control =>
+  return <section className="home-award-summary-source" style={style} data-home-award-summary="" aria-label="奖章">
+    <div className="home-summary-sheet" style={{top: 198}} aria-hidden="true"/>
+    {controls.filter(control => control.type === 'WindowsLook/StaticImage' && !['SheetWindow', 'xiamiandeditu'].includes(control.name)).map(control =>
       <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={SUFFIX}
         name={control.name} aria-hidden="true" />)}
     <SourceImageScale value={1}>

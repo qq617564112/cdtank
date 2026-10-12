@@ -3,12 +3,12 @@ import json
 from pathlib import Path
 import struct
 import sys
-sys.path.insert(0, str(Path('recovery').resolve()))
+sys.path.insert(0, str(Path('tools/recovery').resolve()))
 from effect_sav import Reader
 from effect_controls import node_timings, particle_controls, sprite_controls
 
-library = json.loads(Path('recovery/output/web-assets/effect-library.json').read_text())
-catalog = json.loads(Path('recovery/output/web-assets/combat-catalog.json').read_text())
+library = json.loads(Path('apps/web/public/effect-library.json').read_text())
+catalog = json.loads(Path('apps/web/public/combat-catalog.json').read_text())
 raw = Path('recovery/output/verified/assets/data/Data/effect/effect.sav').read_bytes()
 by_id = {node['id']: node for node in library['nodes']}
 root = next(node for node in library['nodes'] if node['name'] == '_root\\online\\112')

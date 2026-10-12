@@ -6,5 +6,3 @@
 .home-name-source-input { border: 0; background: transparent; color: #fff; padding: 0; margin: 0; font: inherit; }
 .home-name-source-stage button { padding: 0; margin: 0; border: 0; background: transparent; }
 .home-name-source-stage button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-.home-name-source-status { left: 0; top: 124px; width: 307px; min-height: 16px; padding: 2px; background: #142032; color: #fff; }
-.home-name-source-status:empty { display: none; }

@@ -19,7 +19,7 @@ interface UiImage {Name: string; Width: string; Height: string; asset: string;}
 interface Ui {imagesets: {attributes: {Name: string}; images: UiImage[]}[];}
 
 const workspace = fileURLToPath(new URL('../', import.meta.url));
-const inventory = JSON.parse(readFileSync(resolve(workspace, 'art/field-road-hd/inventory.json'), 'utf8')) as Inventory;
+const inventory = JSON.parse(readFileSync(resolve(workspace, 'art/hd/field-road.json'), 'utf8')) as Inventory;
 const texturePaths = new Map(inventory.textures.map(entry => [entry.source.toLowerCase(), entry]));
 const modelPaths = new Set(inventory.models);
 const runtimePath = (source: string): string => `${FIELD_ROAD_HD.assetRoot}/${source}`;
@@ -158,8 +158,8 @@ const music = [1, 2, 3, 4, 5].map(mode => ({
 audio.maps = [...audio.maps.filter(entry => entry.mapId !== FIELD_ROAD_HD.id), ...music];
 publish('audio.json', audio);
 
-const preview = `${FIELD_ROAD_HD.assetRoot}/preview.png`;
-write(preview, readFileSync(resolve(workspace, 'art/field-road-hd/map-preview.png')));
+const preview = `cartoon-minimaps/${FIELD_ROAD_HD.sceneId}.webp`;
+write(preview, readFileSync(resolve(workspace, 'art/hd', preview)));
 const ui = json<Ui>('ui.json');
 for (const set of ui.imagesets.filter(set => set.attributes.Name === 'xiaoditu0')) {
   const name = ['data', 'ui', 'xiaoditu', `${FIELD_ROAD_HD.sceneId}.tga`].join('\\');

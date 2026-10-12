@@ -6,7 +6,7 @@ import {Trap3004Visual} from '../apps/web/src/assets/scenes/trap3004-visual';
 
 const engine = new NullEngine();
 const scene = new Scene(engine);
-const bytes = new Uint8Array(readFileSync('recovery/output/web-assets/Data/scnobj/03004/03004.glb'));
+const bytes = new Uint8Array(readFileSync('apps/web/public/Data/scnobj/03004/03004.glb'));
 const matrix = [1,0,0,0,0,1,0,0,0,0,1,0,12.5,2,-40,1];
 const visual = new Trap3004Visual(scene, 'GROUND:3004:1', matrix);
 const asset = await LoadAssetContainerAsync(bytes, scene, {pluginExtension: '.glb'});

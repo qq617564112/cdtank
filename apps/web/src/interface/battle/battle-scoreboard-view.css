@@ -1,3 +1,14 @@
+@import '../resources/happy-zcool.css';
+
+.battle-scoreboard-stage,
+.battle-scoreboard-stage * {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-weight: 400;
+  font-synthesis: none;
+  -webkit-text-stroke: .8px #2f3c26;
+  paint-order: stroke fill;
+}
+
 .battle-scoreboard-viewport {
   position: fixed;
   inset: 0;
@@ -8,17 +19,9 @@
 }
 
 .battle-scoreboard-stage {
-  position: relative;
-  width: 800px;
-  height: 600px;
-  color: #fff;
-  font-size: 12px;
-}
-
-.battle-scoreboard-stage > *,
-.battle-scoreboard-row > * {
-  position: absolute;
-  box-sizing: border-box;
+  --score-sheet-heading-size: 14px;
+  --score-sheet-heading-spacing: -1.5px;
+  --score-sheet-name-stroke: .8px #2f3c26;
 }
 
 .battle-scoreboard-title {
@@ -36,31 +39,6 @@
   width: 430px;
   margin: 0;
   text-align: center;
-}
-
-.battle-scoreboard-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 16px;
-}
-
-.battle-scoreboard-number,
-.battle-scoreboard-deaths,
-.battle-scoreboard-death-heading {
-  text-align: center;
-  line-height: 16px;
-}
-
-.battle-scoreboard-deaths {
-  left: 311px;
-  top: 21px;
-  width: 48px;
-}
-
-.battle-scoreboard-death-heading {
-  top: 100px;
-  width: 48px;
 }
 
 .battle-scoreboard-row[data-scoreboard-alive='false'] {

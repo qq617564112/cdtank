@@ -4,7 +4,7 @@ import {AUDIO_PREFERENCES_KEY, readAudioPreferences, writeAudioPreferences} from
   '../apps/web/src/interface/settings/audio-preferences';
 
 const defaults = {music: 0.5, sound: 0.5};
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8'));
+const catalog = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8'));
 assert.equal(catalog.defaultMusicVolume, defaults.music);
 assert.equal(catalog.defaultSoundVolume, defaults.sound);
 let stored: string | null = null;

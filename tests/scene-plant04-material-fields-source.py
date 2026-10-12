@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from pol import read_pol
 
 baseline = json.loads((ROOT / 'recovery/output/scene-plant04-source.json').read_text())

@@ -4,8 +4,8 @@ import {Mesh, NullEngine, Scene, TransformNode, VertexBuffer} from '@babylonjs/c
 import {ScenePlantSway} from '../apps/web/src/assets/scenes/scene-plant-sway';
 
 const native = JSON.parse(readFileSync('recovery/output/scene-plant02-sway-native.json', 'utf8'));
-const resource = JSON.parse(readFileSync('recovery/output/web-assets/scene-plant-0002.json', 'utf8'));
-const glb = readFileSync('recovery/output/web-assets/Data/scnobj/obj05413/obj05413.glb');
+const resource = JSON.parse(readFileSync('apps/web/public/scene-plant-0002.json', 'utf8'));
+const glb = readFileSync('apps/web/public/Data/scnobj/obj05413/obj05413.glb');
 const jsonSize = glb.readUInt32LE(12);
 const model = JSON.parse(glb.subarray(20, 20+jsonSize).toString());
 const binaryStart = 28+jsonSize;

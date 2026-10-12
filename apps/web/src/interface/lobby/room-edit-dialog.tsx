@@ -7,6 +7,8 @@ import {RoomCreateDialog} from './room-create-dialog';
 import type {RoomPasswordAction} from './room-create-dialog';
 import type {RoomCreateDraft} from './room-create-draft';
 import {waitingRoomCustomName} from './waiting-room-state';
+import {useNavigationChoice} from '../../navigation/route';
+import {useRoomDraft} from './use-room-draft';
 
 export interface RoomEditor {
   listMaps(): Promise<MapOption[]>;
@@ -22,14 +24,17 @@ interface RoomEditDialogProps {
 
 /** Keep the room's current settings while reusing the original selection and input sheets. */
 export function RoomEditDialog({snapshot, maps, editor, close}: RoomEditDialogProps) {
-  const [selecting, setSelecting] = useState(true);
+  const [step, setStep] = useNavigationChoice('roomEditStep', ['map', 'settings'], 'map');
+  const selecting = step === 'map';
+  const setSelecting = (value: boolean): void => setStep(value ? 'map' : 'settings');
   const [passwordAction, setPasswordAction] = useState<RoomPasswordAction>('KEEP');
-  const [draft, setDraft] = useState<RoomCreateDraft>(() => ({
+  const [draft, setDraft] = useRoomDraft({
     mode: snapshot.mode, mapId: snapshot.roomInfo!.mapId,
     roomName: waitingRoomCustomName(snapshot), password: '',
     minPlayers: snapshot.match!.minPlayers, maxPlayers: snapshot.match!.maxPlayers!,
     friendlyFire: !!snapshot.match!.friendlyFire,
-  }));
+    timeLimitSeconds: snapshot.roomInfo!.timeLimitSeconds,
+  }, 'edit');
   const map = maps.find(value => value.mode === draft.mode && value.mapId === draft.mapId);
   return selecting ? <RoomMapSelector open maps={maps} busy={false} close={close} closeOnConfirm={false}
     initialMode={draft.mode} initialMapId={draft.mapId} confirm={(mode, mapId) => {

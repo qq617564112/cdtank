@@ -1,13 +1,13 @@
 import './hud-item-source.css';
-import type {CSSProperties} from 'react';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
-import type {HudCombatSnapshot, SourceUi, SourceWindow} from './battle-hud';
+import type {HudCombatSnapshot, SourceUi} from './battle-hud';
 import {hudItemSlots} from './hud-item-slots';
 import {absoluteRect, sourceAsset} from './hud-source-controls';
-import {SourceNumericText} from '../resources/source-bitmap-font';
+import {ImageArtwork} from '../resources/image-artwork';
+import {BattleItemSocket} from './battle-hud-artwork';
 
-/** Original shortcut interaction and vector-font layer over the source artwork. */
+/** CSS/SVG sockets and HTML counters share the authoritative shortcut bindings. */
 export function HudItemSourceView({data, combat, catalog, inventory, selectedItemSlot, reloadFraction, onUseSlot}: {
   data: SourceUi; combat: HudCombatSnapshot; catalog: CombatCatalog; inventory?: ResInventory;
   selectedWeaponSlot?: number; selectedItemSlot?: number; reloadFraction: number;
@@ -17,69 +17,48 @@ export function HudItemSourceView({data, combat, catalog, inventory, selectedIte
   const bar = layout?.windows.find(value => value.name === 'daojulan');
   if (!layout || !bar) return null;
   const slots = hudItemSlots(combat, catalog, inventory, selectedItemSlot, reloadFraction);
-  function style(control: SourceWindow): CSSProperties {
-    return {...absoluteRect(control), backgroundImage: 'none'};
-  }
-  function glyphs(value: string, fontName: string) {
-    return <SourceNumericText text={value} font={fontName}/>;
-  }
-  function controls(parent: string): React.ReactNode {
-    return layout!.windows.filter(value => value.parent === parent).map(control => {
-      const name = control.name, slotFrame = /^picItem[0-7]$/.test(name);
-      const count = name.startsWith('txtItemCount'), cooldown = name.startsWith('lengque'), daoju = /^daoju[1-8]$/.test(name);
-      const slot = count ? Number(name.slice(12)) + 1 : slotFrame || name.startsWith('lblItem')
-        ? Number(/\d+$/.exec(name)?.[0]) + 1 : daoju || cooldown ? Number(/\d+$/.exec(name)?.[0]) : 0;
-      const binding = slots[slot - 1];
-      const reference = daoju ? binding?.item?.iconId === undefined ? undefined
-        : `set:daoju0 image:data\\ui\\daoju\\${String(binding.item.iconId).padStart(5, '0')}.tga` : control.properties.Image ?? control.properties.ProgressImage;
-      const asset = sourceAsset(data, reference);
-      const label = name.startsWith('lblItem') ? control.properties.Text ?? '' : undefined;
-      const infinite = count && binding?.infinite, quantity = count ? binding?.quantity : undefined;
-      const cooldownFraction = cooldown ? binding?.cooldownFraction : undefined;
-      const cooldownBinding = cooldown ? binding?.cooldownBinding : undefined;
-      const remainingSeconds = cooldown ? binding?.remainingSeconds : undefined;
-      const remainingLabel = `${cooldownBinding === 'effect-expiry' ? '效果剩余' : '装填剩余'} ${Math.ceil(remainingSeconds ?? 0)} 秒`;
-      return <div key={name} className="hud-item-source-control" data-source-control={name}
-        data-source-layout={layout!.path} data-source-asset={cooldown ? undefined : asset} data-item-instance={daoju ? binding?.instanceId : undefined}
-        data-item-count-binding={count ? infinite ? 'default-infinite-supply'
-          : quantity === undefined ? 'unbound' : 'web-confirmed-battle-quantity' : undefined}
-        data-item-quantity={quantity} data-item-infinite={infinite ? '' : undefined}
-        data-item-cooldown-binding={cooldown ? cooldownBinding ?? 'unbound' : undefined}
-        data-item-cooldown-fraction={cooldownFraction}
-        data-item-selected={slotFrame && binding?.ammoSelected ? '' : undefined}
-        data-item-cursor={slotFrame && binding?.itemCursor ? '' : undefined}
-        data-item-selection-binding={slotFrame && slot <= 4 ? 'ammo-authority' : undefined}
-        data-item-cursor-binding={slotFrame && slot >= 5 ? 'local-item-cursor' : undefined}
-        data-item-remaining-seconds={remainingSeconds}
-        hidden={cooldown && cooldownFraction === undefined}
-        title={remainingSeconds === undefined ? binding?.item?.name : remainingLabel}
-        aria-label={remainingSeconds !== undefined ? remainingLabel
-          : quantity === undefined ? infinite ? '无限弹药' : label ?? binding?.item?.name : `本局可用 ${quantity}`}
-        style={{...style(control), textAlign: count ? 'right' : undefined}}>
-        {cooldownFraction !== undefined && <i data-source-asset={asset} aria-hidden="true"
-          style={{position: 'absolute', inset: 0,
-            clipPath: `inset(${(1 - cooldownFraction) * 100}% 0 0 0)`}}/>}
-        {label === undefined ? null : glyphs(label, control.properties.Font)}
-        {quantity === undefined ? null : glyphs(String(quantity), control.properties.Font)}
-        {remainingSeconds !== undefined && <span className="hud-item-remaining" aria-hidden="true">{Math.ceil(remainingSeconds)}</span>}
-        {controls(name)}
-        {slotFrame && <button type="button" className="hud-item-action" data-item-slot={slot}
-          aria-label={`${slot <= 4 ? '选择弹药' : '立即使用'} ${binding?.item?.name ?? `槽位${slot}`}`}
-          disabled={!combat.canUseShortcuts || binding?.itemTableId === undefined}
-          onPointerDown={event => {event.stopPropagation(); event.preventDefault();}}
-          onKeyDown={event => {event.stopPropagation();}}
-          onKeyUp={event => {event.stopPropagation();}}
-          onClick={event => {
-            event.stopPropagation();
-            onUseSlot(slot);
-            if (event.detail > 0) event.currentTarget.blur();
-          }} />}
-      </div>;
-    });
-  }
   return <div className="hud-item-source-bar" data-source-control="daojulan" data-source-layout={layout.path}
-    hidden={!combat.visible} data-hud-renderer="source-image"
-    data-source-asset={sourceAsset(data, bar.properties.Image)} style={style(bar)}>
-    {controls(bar.name)}
+    hidden={!combat.visible} data-hud-renderer="html" style={absoluteRect(bar)}>
+    <svg className="hud-item-bar-frame" viewBox="0 0 300 47" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path d="M1 2L298 1 299 45 1 46Z" fill="#386a3c" fillOpacity=".78" stroke="#112717" strokeWidth="2"/>
+      <path d="M3 43L3 4 296 3" fill="none" stroke="#cff0a0" strokeWidth="1.5"/>
+      <path d="M3 43L296 43 296 4" fill="none" stroke="#173521" strokeWidth="2"/>
+    </svg>
+    {slots.map(binding => {
+      const slot = binding.slot;
+      const control = layout.windows.find(value => value.name === `picItem${slot - 1}`)!;
+      const asset = binding.item?.iconId === undefined ? undefined : sourceAsset(data,
+        `set:daoju0 image:data\\ui\\daoju\\${String(binding.item.iconId).padStart(5, '0')}.tga`);
+      const selected = binding.ammoSelected || binding.itemCursor;
+      const remainingLabel = binding.remainingSeconds === undefined ? undefined
+        : `${binding.cooldownBinding === 'effect-expiry' ? '效果剩余' : '装填剩余'} ${Math.ceil(binding.remainingSeconds)} 秒`;
+      return <button key={slot} type="button" className="hud-item-action" style={absoluteRect(control)}
+        data-source-control={control.name} data-item-slot={slot}
+        data-item-selected={binding.ammoSelected ? '' : undefined} data-item-cursor={binding.itemCursor ? '' : undefined}
+        data-item-instance={binding.instanceId} data-item-quantity={binding.quantity}
+        data-item-selection-binding={slot <= 4 ? 'ammo-authority' : undefined}
+        data-item-cursor-binding={slot >= 5 ? 'local-item-cursor' : undefined}
+        aria-label={`${slot <= 4 ? '选择弹药' : '立即使用'} ${binding.item?.name ?? `槽位${slot}`}`}
+        aria-pressed={selected} title={remainingLabel ?? binding.item?.name}
+        disabled={!combat.canUseShortcuts || binding.itemTableId === undefined}
+        onPointerDown={event => {event.stopPropagation(); event.preventDefault();}}
+        onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}
+        onClick={event => {
+          event.stopPropagation(); onUseSlot(slot);
+          if (event.detail > 0) event.currentTarget.blur();
+        }}>
+        <BattleItemSocket selected={selected}/>
+        {asset && <ImageArtwork asset={`/${asset}`} className="hud-item-icon" fit="contain" aria-hidden="true"/>}
+        <span className="hud-item-key" data-source-control={`lblItem${slot - 1}`}>{slot}</span>
+        {binding.cooldownFraction !== undefined && <span className="hud-item-cooldown"
+          data-source-control={`lengque${slot}`} data-item-cooldown-binding={binding.cooldownBinding}
+          data-item-cooldown-fraction={binding.cooldownFraction} data-item-remaining-seconds={binding.remainingSeconds}
+          style={{clipPath: `inset(${(1 - binding.cooldownFraction) * 100}% 0 0 0)`}} aria-hidden="true"/>}
+        {binding.remainingSeconds !== undefined && <span className="hud-item-remaining" aria-hidden="true">{Math.ceil(binding.remainingSeconds)}</span>}
+        {(binding.infinite || binding.quantity !== undefined) && <span className="hud-item-count"
+          data-source-control={`txtItemCount${slot - 1}`} data-item-count-binding={binding.infinite
+            ? 'default-infinite-supply' : 'web-confirmed-battle-quantity'}>{binding.infinite ? '∞' : binding.quantity}</span>}
+      </button>;
+    })}
   </div>;
 }

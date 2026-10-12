@@ -9,19 +9,19 @@ import {EffectRuntime} from '../apps/web/src/render/effects/runtime/effect-runti
 import type {EffectRuntimeLibrary, EffectRuntimeTree} from '../apps/web/src/render/effects/runtime/effect-runtime-tree';
 
 const source = JSON.parse(readFileSync('recovery/output/combat-shot-player-result-2017-source.json', 'utf8'));
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
 const engine = new NullEngine(), scene = new Scene(engine);
 const camera = new FreeCamera('camera', new Vector3(0, 0, -100), scene);
 camera.setTarget(Vector3.Zero()); camera.getViewMatrix(true); camera.getProjectionMatrix(true);
 const runtime = new EffectRuntime(scene, camera);
 const state = runtime as unknown as {library: EffectRuntimeLibrary; textures: Map<string, RawTexture>;
   instances: {handle: number; tree: EffectRuntimeTree; owner: TankView; draws: unknown[]}[]};
-state.library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+state.library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
 for (const grid of source.textures) {
   if (state.textures.has(grid.asset)) continue;
   const pixels = execFileSync('recovery/.venv/bin/python', ['-c',
     'from PIL import Image; import sys; sys.stdout.buffer.write(Image.open(sys.argv[1]).convert("RGBA").tobytes())',
-    'recovery/output/web-assets/' + grid.asset]);
+    'apps/web/public/' + grid.asset]);
   state.textures.set(grid.asset, RawTexture.CreateRGBATexture(new Uint8Array(pixels), grid.size[0], grid.size[1], scene));
 }
 const parent = [...EFFECT_IDENTITY], root = new TransformNode('victim', scene);

@@ -30,7 +30,7 @@ async function main(): Promise<void> {
     const result = await client.callApi('PetShop', {operation: 'QUERY'});
     assert(result.isSucc);
     const table: {rows: {values: Record<string, string>}[]} = JSON.parse(
-      readFileSync('recovery/output/verified/tables/pet.json', 'utf8'));
+      readFileSync('apps/server/resources/tables/pet.json', 'utf8'));
     const expected = table.rows.map(row => row.values).filter(row => Number(row.PetMoney) > 0);
     assert.equal(result.res.pets.length, expected.length);
     for (const source of expected) {

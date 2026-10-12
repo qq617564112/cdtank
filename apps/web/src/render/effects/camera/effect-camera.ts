@@ -13,7 +13,18 @@ export function effectCameraUv(uv: readonly [number, number, number, number]): [
  * This adapts the Web camera; it does not recreate the old camera controller.
  */
 export function effectCameraCorners(camera: Camera, nativeCenter: EffectVec3,
-  halfSize: EffectVec3, angleDegrees: number): [EffectVec3, EffectVec3, EffectVec3, EffectVec3] {
+  halfSize: EffectVec3, angleDegrees: number, upright = false): [EffectVec3, EffectVec3, EffectVec3, EffectVec3] {
+  if (upright) {
+    const eye = camera.globalPosition;
+    // Native +Z faces away from the eye to retain the reflected quad winding.
+    const yaw = Math.atan2(nativeCenter[0] + eye.x, nativeCenter[2] - eye.z);
+    const cosine = Math.cos(yaw), sine = Math.sin(yaw);
+    return effectBillboardCorners([0, 0, 0], halfSize, angleDegrees).map(([x, y]) => [
+      Math.fround(nativeCenter[0] + x * cosine),
+      Math.fround(nativeCenter[1] + y),
+      Math.fround(nativeCenter[2] - x * sine),
+    ]) as [EffectVec3, EffectVec3, EffectVec3, EffectVec3];
+  }
   const view = camera.getViewMatrix();
   const inverse = Matrix.Invert(view);
   const webCenter = new Vector3(-nativeCenter[0], nativeCenter[1], nativeCenter[2]);

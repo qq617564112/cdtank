@@ -10,7 +10,7 @@ if (!Array.isArray(input.bytes) || input.bytes.length !== 0x170 ||
     input.strings.some(value => typeof value !== 'string')) {
   throw new Error('原角色资料必须包含368个字节值及两个字符串');
 }
-const store = new AccountStore(process.env.ACCOUNT_DB_PATH ?? 'recovery/output/accounts.sqlite');
+const store = new AccountStore(process.env.ACCOUNT_DB_PATH ?? 'state/accounts.sqlite');
 try {
   store.replaceRoleProfile(accountId, {bytes: new Uint8Array(input.bytes), strings: input.strings});
   console.log(`Imported recovered role profile for ${accountId}.`);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {bindRoleSourceTables, type RoleTableBinding} from '../recovery/evidence/combat/role-table-binding';
+import {bindRoleSourceTables, type RoleTableBinding} from '../tests/evidence/combat/role-table-binding';
 import {TANKS, PET_BASES} from '../apps/server/src/config';
 const evidence: {rows: {field68: number; field78: number; before: {pet: number; tank: number};
   result: {pet: number; tank: number}; lookups: {kind: string; id: number}[]}[]} =

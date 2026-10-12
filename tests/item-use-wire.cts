@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {decodeItemUse, encodeItemUse, type ItemUsePacket} from '../recovery/evidence/combat/item-use-wire';
+import {decodeItemUse, encodeItemUse, type ItemUsePacket} from '../tests/evidence/combat/item-use-wire';
 
 const oracle = JSON.parse(readFileSync('recovery/output/item-use-wire-native.json', 'utf8')) as {
   rows: {packet: ItemUsePacket; bitOffset: number; payload: string}[];

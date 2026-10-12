@@ -28,11 +28,11 @@
 
 | 安装后的目录或文件 | 内容与来源 |
 | --- | --- |
-| `recovery/output/web-assets/` | 从原 Windows 客户端提取并转换的模型、贴图、音乐、音效、界面、字库与资源目录 |
-| `recovery/output/verified/tables/` | 从原客户端解码的数据表，保存为 JSON 和 CSV |
-| `recovery/output/web-assets/sprites/`、`sprite-images.json` | 原版 UI、模型高清贴图及原图片路径映射 |
-| `recovery/output/web-assets/ui/fonts/SIMSUN.ttf`、`SIMSUN-password.ttf` | 原客户端界面字体及密码字体 |
-| `recovery/output/web-assets/ui/fonts/xiangjiao-brush.ttf` | 项目维护者提供的 `XiangJiaoKuanMaoShuaLingGanTi-2.ttf`，用于界面动态文字 |
+| `apps/web/public/` | 从原 Windows 客户端提取并转换的模型、贴图、音乐、音效、界面、字库与资源目录 |
+| `apps/server/resources/tables/` | 从原客户端解码的数据表，保存为 JSON 和 CSV |
+| `apps/web/public/sprites/`、`sprite-images.json` | 原版 UI、模型高清贴图及原图片路径映射 |
+| `apps/web/public/ui/fonts/SIMSUN.ttf`、`SIMSUN-password.ttf` | 原客户端界面字体及密码字体 |
+| `apps/web/public/ui/fonts/xiangjiao-brush.ttf` | 项目维护者提供的 `XiangJiaoKuanMaoShuaLingGanTi-2.ttf`，用于界面动态文字 |
 
 ## 权利说明
 

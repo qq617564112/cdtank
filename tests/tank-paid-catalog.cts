@@ -7,9 +7,9 @@ import {AccountStore} from '../apps/server/src/account-store';
 import {AccountTankShop} from '../apps/server/src/accounts/tank-shop';
 
 interface Table {rows: {values: Record<string, string>}[];}
-const shops = (JSON.parse(readFileSync('recovery/output/verified/tables/tankshop.json', 'utf8')) as Table).rows
+const shops = (JSON.parse(readFileSync('apps/server/resources/tables/tankshop.json', 'utf8')) as Table).rows
   .map(row => row.values).filter(shop => Number(shop['坦克金钱价']) > 0);
-const tanks = new Map((JSON.parse(readFileSync('recovery/output/verified/tables/tank.json', 'utf8')) as Table).rows
+const tanks = new Map((JSON.parse(readFileSync('apps/server/resources/tables/tank.json', 'utf8')) as Table).rows
   .map(row => [Number(row.values.ID), row.values]));
 const dir = mkdtempSync(join(tmpdir(), 'cdtank-tank-paid-catalog-'));
 const path = join(dir, 'accounts.sqlite');

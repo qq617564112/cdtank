@@ -2,6 +2,7 @@ import './gm-support.css';
 import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {GmSupportInbox, GmSupportInboxState} from '../../network/gm-support';
 import type {GmSupportReply} from '../../../../shared/protocols/PtlGmSupport';
+import {useRouteDialog} from '../../navigation/route';
 
 function timeText(value: number): string {
   const date = new Date(value);
@@ -16,7 +17,7 @@ function dateTime(value: number): string | undefined {
 /** The player-facing GM reply entry stays independent from room chat presentation. */
 export function GmSupportView({inbox}: {inbox: GmSupportInbox}) {
   const state = useSyncExternalStore(inbox.subscribe, inbox.getSnapshot, inbox.getSnapshot);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useRouteDialog('gm-support');
   const origin = useRef<HTMLButtonElement | null>(null);
   const openGeneration = useRef(state.contextGeneration);
 

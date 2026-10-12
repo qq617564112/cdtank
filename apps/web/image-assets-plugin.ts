@@ -1,6 +1,7 @@
-import {readdirSync, statSync} from 'node:fs';
+import {existsSync, readFileSync, readdirSync, statSync} from 'node:fs';
 import {join, extname} from 'node:path';
 import type {Plugin} from 'vite';
+import type {SpriteManifest} from './src/assets/sprite-images';
 
 const imageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif', '.bmp', '.ico']);
 
@@ -8,12 +9,18 @@ const imageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg
 export function imageAssetsPlugin(publicDir: string): Plugin {
   function manifest(sourceRoot?: string, importedFiles: Iterable<string> = []): string {
     const images: {url: string; bytes: number; modifiedAt: number}[] = [];
+    const spritePath = join(publicDir, 'sprite-images.json');
+    const sprites = existsSync(spritePath)
+      ? JSON.parse(readFileSync(spritePath, 'utf8')) as SpriteManifest : undefined;
+    const replacedImages = new Set([...Object.keys(sprites?.images ?? {}), ...Object.keys(sprites?.aliases ?? {})]);
     function visit(directory: string, prefix: string): void {
       for (const entry of readdirSync(directory, {withFileTypes: true})) {
         const file = join(directory, entry.name);
         const path = `${prefix}/${encodeURIComponent(entry.name)}`;
         if (entry.isDirectory()) visit(file, path);
         else if (imageExtensions.has(extname(entry.name).toLowerCase())) {
+          const asset = decodeURIComponent(path).replace(/^\/src\/assets\//, '/bundled-ui/');
+          if (replacedImages.has(asset)) continue;
           const stat = statSync(file);
           images.push({url: path, bytes: stat.size, modifiedAt: stat.mtimeMs});
         }
@@ -31,7 +38,7 @@ export function imageAssetsPlugin(publicDir: string): Plugin {
       }
     }
     images.sort((left, right) => left.url.localeCompare(right.url));
-    return JSON.stringify({images});
+    return JSON.stringify({images, sprites});
   }
   return {
     name: 'cdtank-image-assets',

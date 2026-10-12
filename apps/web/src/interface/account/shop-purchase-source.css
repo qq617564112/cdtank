@@ -22,22 +22,47 @@
   border: 0;
 }
 
-.shop-purchase-stage .source-static-image {
-  pointer-events: none;
-}
-
 .shop-purchase-stage [data-source-control='txtMessage'] {
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
   overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   text-align: center;
   font-size: 12px;
   line-height: 14px;
+  -webkit-text-stroke: 1px #232332;
 }
 
-.shop-purchase-stage input,
-.shop-purchase-stage select {
+.shop-purchase-stage .shop-purchase-field {
+  border: 1px solid #9cbedc;
+  background: #172e50;
+  box-shadow: 0 0 0 2px #153049, inset 0 1px 1px #091d39;
+}
+
+.shop-purchase-stage .shop-purchase-field > :is(input, select) {
+  appearance: none;
+  padding: 0 20px 0 6px;
   color: #fff;
   background: transparent;
-  font: 12px 'CDTank-Xiangjiao', sans-serif;
+  font-size: 12px;
+  line-height: 20px;
+  -webkit-text-stroke: .6px #162139;
+}
+
+.shop-purchase-stage input:disabled,
+.shop-purchase-stage select:disabled {
+  opacity: .6;
+}
+
+.shop-purchase-select-arrow {
+  position: absolute;
+  right: 5px;
+  top: 6px;
+  width: 12px;
+  height: 8px;
+  pointer-events: none;
 }
 
 .shop-purchase-stage option {
@@ -45,7 +70,8 @@
   background: #142142;
 }
 
-.shop-purchase-stage .source-state-button {
+.shop-purchase-stage .game-dialog-button {
+  position: absolute;
   background: transparent;
 }
 

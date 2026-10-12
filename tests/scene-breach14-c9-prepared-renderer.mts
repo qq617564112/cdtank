@@ -4,7 +4,7 @@ import {NullEngine, RawTexture, Scene, Texture} from '@babylonjs/core';
 import {EffectModelRenderer, type EffectModelLibrary} from '../apps/web/src/render/effects/models/effect-model-renderer';
 import {EFFECT_IDENTITY} from '../apps/web/src/render/effects/common/effect-render-transform';
 
-const library = JSON.parse(readFileSync('recovery/prepared/scene-breach14-assets/scene-breach-0014.json','utf8')) as EffectModelLibrary;
+const library = JSON.parse(readFileSync('tools/recovery/prepared/scene-breach14-assets/scene-breach-0014.json','utf8')) as EffectModelLibrary;
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const textures = new Map<string, Texture>();

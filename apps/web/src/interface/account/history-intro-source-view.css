@@ -14,10 +14,8 @@
 .history-intro-resource-feedback {
   position: absolute;
   inset: 200px 200px;
-  box-sizing: border-box;
-  padding: 20px;
-  background: #203c5c;
-  color: white;
+  display: grid;
+  place-items: center;
 }
 
 :root:has([data-history-intro-dialog][open]) {

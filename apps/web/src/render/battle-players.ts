@@ -8,6 +8,8 @@ import {TankBenefitText} from '../assets/tanks/tank-benefit-text';
 import {TankBenefitTextRenderer} from './tank-benefit-text-renderer';
 import {TankCriticalTextRenderer, type CriticalTextImage} from './tank-critical-text-renderer';
 import {TankDamageTextRenderer, type TankDamageTextFont} from './tank-damage-text-renderer';
+import {createBattleWorldTextProjector} from './battle-world-text-projection';
+import type {CastleDamageTextProjector} from '../assets/scenes/scene-castle-damage-text';
 import {effectModelEngineDelta} from './effects/models/effect-model-animation';
 import type {PlayerSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 import type {ClientTankPose} from '../../../shared/protocols/MsgPlayerInput';
@@ -57,11 +59,13 @@ export class BattlePlayers {
   private ammoCatalog?: CombatCatalog;
   private readonly disguises: BattleRoleDisguises;
   private readonly labels: BattlePlayerLabels;
+  private readonly projectDamageText: CastleDamageTextProjector;
 
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
               private readonly effects: PlayerEffects) {
     this.disguises = new BattleRoleDisguises(scene);
     this.labels = new BattlePlayerLabels(scene, camera, id => this.disguises.hidesActor(id));
+    this.projectDamageText = createBattleWorldTextProjector(camera);
     this.scene.onDisposeObservable.addOnce(() => {this.clear(); this.labels.dispose();});
   }
 
@@ -232,10 +236,8 @@ export class BattlePlayers {
     const view = this.players.get(id);
     const queue = this.damageTexts.get(id);
     if (!view || !queue || view.hiddenFromObserver) return;
-    const engine = this.scene.getEngine();
-    const point = Vector3.Project(view.root.position, Matrix.Identity(),
-      this.camera.getTransformationMatrix(), new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
-    queue.show(Math.trunc(point.x), Math.trunc(point.y), value, isLocal, critical);
+    const position = view.root.position;
+    queue.showWorld([position.x, position.y, position.z], value, isLocal, critical);
   }
 
   /** Original destroy notification suppresses Combo while the local role is dead. */
@@ -477,7 +479,7 @@ export class BattlePlayers {
       if (!view) continue;
       const viewZ = Vector3.TransformCoordinates(view.root.position, this.camera.getViewMatrix()).z;
       queue.advance(delta, viewZ);
-      if (!view.hiddenFromObserver) queue.draw(viewport);
+      if (!view.hiddenFromObserver) queue.draw(viewport, this.projectDamageText);
     }
   }
 

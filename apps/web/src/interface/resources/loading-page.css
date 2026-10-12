@@ -1,9 +1,12 @@
+@import './happy-zcool.css';
+
 .loading-page {
   position: fixed;
   inset: 0;
   z-index: 8;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background: #000;
 }
 
@@ -27,11 +30,13 @@
 
 .loading-background {
   position: absolute;
-  overflow: hidden;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
 }
 
 .loading-content {
@@ -52,57 +57,73 @@
 
 .loading-word {
   position: absolute;
-}
-
-.loading-word [data-image-artwork] {
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.loading-status {
-  position: absolute;
-  left: 18px;
-  bottom: 100px;
-  box-sizing: border-box;
-  max-width: 380px;
-  margin: 0;
-  padding: 8px;
-  background: #000b;
-  color: #fff;
-  font-size: 16px;
-  overflow-wrap: anywhere;
-}
-
-.image-loading-screen[aria-busy='true'] .loading-status,
-.battle-loading-page[aria-busy='true'] .loading-status {
-  display: none;
-}
-
-.loading-details {
-  display: block;
-  color: #d6d6d6;
-  font-size: 14px;
-}
-
-.loading-actions {
-  position: absolute;
-  left: 18px;
-  bottom: 40px;
+  right: 33px;
+  bottom: 24px;
   display: flex;
-  gap: 8px;
+  align-items: baseline;
+  gap: 16px;
+  color: #ffe55e;
+  font-size: 39px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  filter: drop-shadow(3px 4px 2px #0008);
 }
 
-.loading-actions button {
-  margin: 0;
-  padding: 6px 12px;
-  color: #fff;
-  background: #263b49;
-  border: 1px solid #fff8da;
-  cursor: pointer;
+.loading-label,
+.loading-percent {
+  display: inline-flex;
+  gap: 4px;
 }
 
-.loading-actions button:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 3px;
+.loading-word .loading-character {
+  display: inline-block;
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  -webkit-text-stroke: 4px #fff;
+  paint-order: stroke fill;
+  animation: loading-letter-hop 1.6s ease-in-out infinite;
+}
+
+.loading-page[data-loading-background='2'] .loading-word {
+  right: auto;
+  bottom: 28px;
+  left: 24px;
+}
+
+.loading-page[data-loading-background='3'] .loading-word {
+  right: auto;
+  bottom: 38px;
+  left: 8px;
+}
+
+.loading-page[data-loading-background='4'] .loading-word {
+  right: 19px;
+  bottom: 31px;
+}
+
+.loading-page[data-loading-background='5'] .loading-word {
+  right: auto;
+  bottom: 10px;
+  left: 11px;
+  font-size: 36px;
+}
+
+@keyframes loading-letter-hop {
+  0%, 24%, 100% {
+    transform: translateY(0);
+  }
+
+  12% {
+    transform: translateY(-7px);
+  }
+}
+
+.loading-page[aria-busy='false'] .loading-character {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-word .loading-character {
+    animation: none;
+  }
 }

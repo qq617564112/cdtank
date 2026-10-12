@@ -204,7 +204,7 @@ try {
     assert.equal(s.players.find(p=>p.id===victim.id).deaths,1);
     assert.equal(s.players.find(p=>p.id===attacker.id).kills,1);
   }
-  const field=JSON.parse(await readFile('recovery/output/web-assets/battlefields.json','utf8')).find(f=>f.id==='0002');
+  const field=JSON.parse(await readFile('apps/web/public/battlefields.json','utf8')).find(f=>f.id==='0002');
   const spawns=field.respawnGroups.flat().map(p=>p.position);
   const target=revived[1].players.find(p=>p.id===victim.id);
   // Match a recovered respawn slot in the original map export.

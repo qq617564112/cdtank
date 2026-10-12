@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {setRoleHp} from '../apps/server/src/battle/roles/health';
-import {applyRoleDeathFollowup} from '../recovery/evidence/combat/role-death-followup';
+import {applyRoleDeathFollowup} from '../tests/evidence/combat/role-death-followup';
 
 const original = JSON.parse(readFileSync('recovery/output/respawn-followup-sol-native.json', 'utf8'));
 for (const row of original.rows) {

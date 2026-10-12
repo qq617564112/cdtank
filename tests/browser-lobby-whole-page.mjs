@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawn, execFileSync} from 'node:child_process';
 import {createServer} from 'vite';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources.ts';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources.ts';
 import {AccountStore} from '../apps/server/src/account-store.ts';
 import {serviceProto} from '../apps/shared/protocols/serviceProto.ts';
 
@@ -150,7 +150,7 @@ async function launchBrowser() {
 
 
 try {
- await launchServer();vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5366,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3340',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();const page=await newPage();
+ await launchServer();vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5366,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3340',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();const page=await newPage();
  for(const [width,height] of [[800,600],[1920,1080],[3840,2160]]) {
   await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},page);const scale=Math.min(width/800,height/600);
   await waitUntil(page,`Math.abs(document.querySelector('[data-lobby-stage]').getBoundingClientRect().width-800*${scale})<.2&&document.querySelector('[data-source-control="picPlayerTabSelect"]')`);await evaluate(page,`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);

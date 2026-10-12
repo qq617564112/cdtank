@@ -45,7 +45,7 @@ def hook(uc, address, size, data):
 
 
 machine.hook_add(UC_HOOK_CODE, hook)
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 rows = []
 initializations = []
 for precision in [0x27f, 0x37f]:

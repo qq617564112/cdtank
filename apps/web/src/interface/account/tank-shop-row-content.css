@@ -25,8 +25,7 @@
 }
 
 .tank-shop-row-name,
-.tank-shop-row-secondary,
-.tank-shop-row-fourth {
+.tank-shop-row-secondary {
   left: 44px;
   max-width: 117px;
   overflow: hidden;
@@ -38,11 +37,23 @@
   overflow: hidden;
 }
 
-.tank-shop-row-name {top: 4px;}
-.tank-shop-row-secondary,
-.tank-shop-row-tertiary {top: 18px;}
-.tank-shop-row-fourth {top: 32px;}
+.tank-shop-row-name {
+  top: 8px;
+}
 
-.tank-shop-row-fourth[data-source-binding='tankshop-purchase-prices'] > .source-feedback-text {
-  font-size: 10px;
+.tank-shop-row-secondary,
+.tank-shop-row-tertiary {
+  top: 24px;
+}
+
+.tank-shop-row-name > .source-feedback-text,
+.tank-shop-row-secondary > .source-feedback-text,
+.tank-shop-row-tertiary > .source-feedback-text {
+  display: block;
+  line-height: 16px;
+}
+
+.tank-shop-row-name > .source-feedback-text,
+.tank-shop-row-secondary > .source-feedback-text {
+  font-size: 14px;
 }

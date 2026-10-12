@@ -6,7 +6,7 @@ import {join,resolve} from 'node:path';
 import {WsClient} from 'tsrpc';
 import {serviceProto} from '../apps/shared/protocols/serviceProto';
 import {AccountStore} from '../apps/server/src/account-store';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources';
 import type {MsgRoomSnapshot,MsgRoomEvent} from '../apps/shared/protocols';
 async function main(){
  const dir=mkdtempSync(join(tmpdir(),'cdtank-preparation-health-')),port=3216,database=join(dir,'accounts.sqlite');let log='';

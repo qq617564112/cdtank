@@ -1,11 +1,14 @@
+import {imageResourceUrl} from '../../assets/image-cache';
+import {GameMessage} from '../resources/game-message';
 import './lobby-source-page.css';
 import {useLayoutEffect, useRef, type ReactNode} from 'react';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-feedback-text';
+import {SourceImageScale} from '../resources/source-static-image';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceScale, useSourceUi} from './source-react';
 import {lobbyBannerUrl} from '../resources/source-ui-resources';
 import {ImageArtwork} from '../resources/image-artwork';
+import {GameSurfacePanel} from '../resources/game-surface-panel';
+import {LOBBY_CHAT_INPUT_BOUNDS, LOBBY_MAIN_BOUNDS} from './lobby-source-geometry';
 
 interface LobbySourcePageProps {
   visible: boolean;
@@ -18,7 +21,7 @@ interface LobbySourcePageProps {
   roomName?: string;
 }
 
-/** Both lobby layouts share the same header, skyline and panel artwork. */
+/** The directory composes shared textured panels around the live room and chat controls. */
 export function LobbySourcePage({visible, children, chatContent, playerContent, headerContent, status, room = false, roomName = ''}: LobbySourcePageProps) {
   const {ui, error, retry: retryResources} = useSourceUi(visible, ['default.xml', 'roomlist.xml', 'playerlist.xml', 'chat.xml']);
   const retry = useRef<HTMLButtonElement>(null);
@@ -26,15 +29,16 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
   useLayoutEffect(() => {
     if (visible && error && document.activeElement === document.body) retry.current?.focus();
   }, [visible, error]);
-  const defaults = ui ? new HomeSourceLayout(ui, 'default.xml') : undefined;
   const rooms = ui ? new HomeSourceLayout(ui, 'roomlist.xml') : undefined;
   const players = ui ? new HomeSourceLayout(ui, 'playerlist.xml') : undefined;
   const chat = ui ? new HomeSourceLayout(ui, 'chat.xml') : undefined;
-  return <main data-lobby-page="" hidden={!visible} aria-label="大厅">
+  const mainBounds = {left: LOBBY_MAIN_BOUNDS.left, width: LOBBY_MAIN_BOUNDS.right - LOBBY_MAIN_BOUNDS.left};
+  return <main data-lobby-page="" data-lobby-hd="" data-lobby-room={room ? '' : undefined}
+    hidden={!visible} aria-label={room ? '等待房间' : '大厅'}>
     {!ui && <section className="lobby-resource-feedback" data-lobby-resource-error={error ? '' : undefined}
       data-lobby-resource-state={error ? 'error' : 'loading'} data-feedback-binding="web-source-resource"
       aria-label="大厅资源" aria-busy={!error}>
-      <p role="status" aria-live="polite">{error ? '大厅界面资源未能载入' : '正在载入大厅界面…'}</p>
+      <GameMessage text={visible && error ? '大厅界面资源未能载入' : ''} tone="error"/>
       {error && <>
         <button ref={retry} type="button" data-lobby-resource-retry="" onClick={retryResources}>重试</button>
       </>}
@@ -43,40 +47,46 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
       <div className="lobby-source-stage" data-lobby-stage="" style={scale.stage}>
         <SourceImageScale value={scale.viewport.width / 800}>
           {ui && players && chat && <>
-            <SourceStaticImage ui={ui} layout={defaults!} suffix="default.xml" name="picMainBackground"
-              className="lobby-source-picture" aria-hidden="true"/>
             {!room && <div className="lobby-source-main">
-              <SourceStaticImage ui={ui} layout={rooms!} suffix="roomlist.xml" name="ditu"
-                className="lobby-source-picture" aria-hidden="true"/>
+              <GameSurfacePanel {...sourceProps(ui, rooms!, 'roomlist.xml', 'ditu')} shape="rooms"
+                style={{...sourceProps(ui, rooms!, 'roomlist.xml', 'ditu').style, height: 277}}
+                className="lobby-room-panel" aria-hidden="true"/>
             </div>}
             {!room && <div className="lobby-game-banner" data-lobby-banner="">
               <ImageArtwork asset={lobbyBannerUrl} role="img" aria-label="阿猫阿狗大作战，游戏免费"/>
             </div>}
             {!room && headerContent && <div className="lobby-source-header" data-lobby-header="">{headerContent}</div>}
             <div className="lobby-source-sidebar">
-              <SourceStaticImage ui={ui} layout={players} suffix="playerlist.xml" name="haoyou"
-                className="lobby-source-picture" aria-hidden="true"/>
               {room ? ['房间', roomName].map((text, index) => {
-                const plaque = sourceProps(ui, players, 'playerlist.xml', 'datingmingchengditu',
-                  players.control('datingmingchengditu').properties.Image);
-                return <span key={index} {...plaque} className="lobby-room-plaque" data-room-plaque={index === 0 ? 'label' : 'name'}
+                const plaque = sourceProps(ui, players, 'playerlist.xml', 'datingmingchengditu');
+                return <div key={index} {...plaque} className="lobby-sidebar-title" data-room-plaque={index === 0 ? 'label' : 'name'}
                   style={{...plaque.style, top: index * 49, height: 48}} title={text}>
-                  <SourceImageScale value={1}><SourceStaticText ui={ui} layout={players} suffix="playerlist.xml" name="datingmingcheng"
-                    style={{left: 10, top: 0, width: 166, height: 48}} text={text}/></SourceImageScale>
-                </span>;
+                  <img src={imageResourceUrl(index === 0 ? '/ui/lobby/hall-plaque.png' : '/ui/lobby/room-name-plaque.png')}
+                    alt="" aria-hidden="true" draggable={false}/>
+                  {index === 0 ? <h1>{text}</h1> : <h2>{text}</h2>}
+                </div>;
               }) : <>
-                <SourceStaticImage ui={ui} layout={players} suffix="playerlist.xml" name="datingmingchengditu"
-                  className="lobby-source-picture"/>
-                <SourceImageScale value={1}><SourceStaticText ui={ui} layout={players} suffix="playerlist.xml" name="datingmingcheng"
-                  className="lobby-source-title" style={{top: 60, height: 30}} text="大厅"/></SourceImageScale>
+                <div {...sourceProps(ui, players, 'playerlist.xml', 'datingmingchengditu')}
+                  className="lobby-sidebar-title">
+                  <img src={imageResourceUrl('/ui/lobby/hall-plaque.png')} alt="" aria-hidden="true" draggable={false}/>
+                  <h1>游戏大厅</h1>
+                </div>
               </>}
+              <GameSurfacePanel shape="social" className="lobby-player-panel"
+                style={{left: 610, top: 97}} aria-hidden="true"/>
             </div>
             <div className="lobby-source-main">
-              {['lt', 'liaotiankuangditu', 'paomadengditu'].map(name =>
-                <SourceStaticImage key={name} ui={ui} layout={chat} suffix="chat.xml" name={name}
-                  className="lobby-source-picture"/>) }
-              <output {...sourceProps(ui, chat, 'chat.xml', 'Advertisement')} data-lobby-status=""
-                className="lobby-source-status" aria-live="polite">{status}</output>
+              {!room && <>
+                <div {...sourceProps(ui, chat, 'chat.xml', 'paomadengditu')}
+                  className="lobby-announcement" aria-hidden="true"/>
+                <div {...sourceProps(ui, chat, 'chat.xml', 'lt')}
+                  style={{...sourceProps(ui, chat, 'chat.xml', 'lt').style, ...mainBounds}}
+                  className="lobby-chat-surface" aria-hidden="true"/>
+                <GameSurfacePanel {...sourceProps(ui, chat, 'chat.xml', 'liaotiankuangditu')}
+                  style={LOBBY_CHAT_INPUT_BOUNDS}
+                  shape="chat-input" className="lobby-chat-input-panel" aria-hidden="true"/>
+                <GameMessage data-lobby-status="" text={visible && !room ? status : ''}/>
+              </>}
             </div>
           </>}
           <div className="lobby-source-main">{chatContent}{children}</div>

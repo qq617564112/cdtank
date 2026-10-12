@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import {useEffect, useState, type ComponentPropsWithoutRef} from 'react';
 import {decodeImageRegion} from '../../assets/image-resources';
 import {ImageArtwork} from '../resources/image-artwork';
@@ -27,6 +28,6 @@ export function BattleNoticeArtwork({name, style, ...props}: {
     style={{display: 'block', ...style}}>
     {shape && <ImageArtwork asset={`/${shape.asset}`} aria-hidden="true"
       style={{display: 'block', width: '100%', height: '100%', pointerEvents: 'none'}} />}
-    {error && <output role="status">{error}</output>}
+    <GameMessage text={error} tone="error"/>
   </span>;
 }

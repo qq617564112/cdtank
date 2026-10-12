@@ -66,7 +66,7 @@ async function main(): Promise<void> {
     for (const [index, client] of clients.slice(1).entries()) {
       assert((await client.callApi('Join', {roomId, name: `普通同伴${index + 1}`, tankId: 1, clientId: ''})).isSucc);
     }
-    const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+    const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
     const loadout = [2007, 2, 4, 6, 8].map((itemTableId, index) => {
       const item = catalog.items.find(value => value.itemTableId === itemTableId); assert(item);
       return {slot: index ? index + 4 : 2, itemTableId, quantity: Math.min(2, item.battleUseMax)};

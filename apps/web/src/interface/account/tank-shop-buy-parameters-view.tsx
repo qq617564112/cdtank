@@ -1,31 +1,24 @@
-import {backgroundStyle} from '../../assets/image-artwork';
-import {SourceFeedbackStaticText} from '../resources/source-feedback-text';
+import {HomeSymbolMeter} from '../home/home-symbol-meter';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {TANK_SHOP_BUY_PARAMETERS} from './tank-shop-buy-parameters';
+import {TANK_SHOP_SOURCE_ATTRIBUTES} from './tank-shop-source-attributes';
+import {ShopTankParameters} from './shop-tank-stat-row';
 
 /** Selected sale product uses the original buy-page parameter projection. */
-export function TankShopBuyParametersView({ui, tankId}: {ui: HomeSourceUi; tankId: number}) {
-  const values = TANK_SHOP_BUY_PARAMETERS[tankId];
-  if (!values) return null;
+export function TankShopBuyParametersView({ui, tankId}: {ui: HomeSourceUi; tankId?: number}) {
+  const values = TANK_SHOP_BUY_PARAMETERS[tankId!];
   const suffix = 'shop_tankpage.xml', layout = new HomeSourceLayout(ui, suffix);
-  const control = layout.control('prgLoadingTime');
-  const background = sourceProps(ui, layout, suffix, 'prgLoadingTime', control.properties.BackgroundImage);
-  const fill = sourceProps(ui, layout, suffix, 'prgLoadingTime', control.properties.ProgressImage);
+  const background = sourceProps(ui, layout, suffix, 'prgLoadingTime');
   const width = Number(background.style.width), height = Number(background.style.height);
-  const extent = Math.floor(width * values.progress + .5);
+  const extent = Math.floor(width * (values?.progress ?? 0) + .5);
   return <div className="tank-shop-buy-parameters" data-tank-buy-parameters="" data-tank-id={tankId}
     data-parameter-binding="original-shop-buy-tank-table">
-    {(['txtAttackLevel', 'txtPanzerLevel', 'txtMoveSpeed', 'txtRotateSpeed', 'txtShootInterval'] as const)
-      .map(name => <SourceFeedbackStaticText key={name} ui={ui} layout={layout} suffix={suffix} name={name}
-        text={String(values[name])} className="tank-shop-source-attribute"
-        data-tank-buy-field={name} data-tank-buy-value={values[name]}
-        title={name === 'txtShootInterval' ? '商品目录的发射间隔修正，实战间隔还由炮弹和装备合成。' : undefined} />)}
+    <ShopTankParameters ui={ui} values={{...TANK_SHOP_SOURCE_ATTRIBUTES[tankId!], ...values}}/>
     <div {...background} className="tank-shop-buy-capacity" data-tank-buy-capacity=""
-      data-capacity={values.capacity} data-progress={values.progress}
-      role="meter" aria-label="商品炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values.capacity}>
-      <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, clipPath: `inset(0 ${width - extent}px 0 0)`,
-        width, height, ...backgroundStyle(fill.style)}} />
+      data-capacity={values?.capacity} data-progress={values?.progress}
+      role="meter" aria-label="商品炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values?.capacity}>
+      <HomeSymbolMeter kind="shells" width={width} height={height} extent={extent}/>
     </div>
   </div>;
 }

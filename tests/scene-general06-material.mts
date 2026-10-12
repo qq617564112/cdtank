@@ -7,7 +7,7 @@ import {SceneGeneralMaterial} from '../apps/web/src/assets/scenes/scene-general-
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const asset = await LoadAssetContainerAsync(new Uint8Array(readFileSync(
-  'recovery/output/web-assets/Data/scnobj/obj05424/obj05424.glb')), scene, {pluginExtension: '.glb'});
+  'apps/web/public/Data/scnobj/obj05424/obj05424.glb')), scene, {pluginExtension: '.glb'});
 const mesh = asset.meshes.find(value => value.name === 'box01/0')!;
 const original = mesh.material as PBRMaterial;
 const texture = original.albedoTexture!;
@@ -49,7 +49,7 @@ assert.equal(scene.materials.length, before);
 assert.equal(disposedTextures, 0);
 asset.dispose();
 const existingAsset = await LoadAssetContainerAsync(new Uint8Array(readFileSync(
-  'recovery/output/web-assets/Data/scnobj/obj05431/obj05431.glb')), scene, {pluginExtension: '.glb'});
+  'apps/web/public/Data/scnobj/obj05431/obj05431.glb')), scene, {pluginExtension: '.glb'});
 const existingMesh = existingAsset.meshes.find(value => value.name === 'anangua04/0')!;
 const existingMaterial = existingMesh.material;
 const existingOwner = new SceneGeneralMaterial();

@@ -7,7 +7,7 @@ import capstone
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_EBX, UC_X86_REG_ECX, UC_X86_REG_EDI, UC_X86_REG_ESI, UC_X86_REG_ESP
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 from pol import read_pol
 from cvd import read_cvd
@@ -45,7 +45,7 @@ assert machine.reg_read(UC_X86_REG_ESP) == STACK
 bindings = {row['flags']: Path(row['path'].replace('\\', '/')).stem for row in registrations}
 assert all(flag in bindings for flag in (1, 0x81, 0x801, 0x881))
 
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-models.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-models.json').read_text())
 draws = json.loads((ROOT / 'recovery/output/effect-model-draw-native.json').read_text())
 blend_states = sorted({(row['blend'], row['alpha']) for row in draws['rows']})
 put(0x10055d14, GFX)

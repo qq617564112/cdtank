@@ -4,7 +4,7 @@ import {NavigationGrid, SourceNavigationLayer} from '../apps/server/src/navigati
 import {getBattlefield} from '../apps/server/src/battlefield';
 
 const fields: {id: string; navigationLayers: SourceNavigationLayer[]}[] = JSON.parse(
-  readFileSync('recovery/output/web-assets/battlefields.json', 'utf8'));
+  readFileSync('apps/web/public/battlefields.json', 'utf8'));
 let cells = 0;
 let valid = 0;
 for (const field of fields) {

@@ -1,7 +1,7 @@
 import {spawn} from 'node:child_process';
 import {access, mkdir, mkdtemp, readFile, readdir, rm, writeFile} from 'node:fs/promises';
 import {homedir, tmpdir} from 'node:os';
-import {join, resolve} from 'node:path';
+import {join, resolve, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createServer} from 'vite';
 import WebSocket from 'ws';
@@ -9,7 +9,8 @@ import WebSocket from 'ws';
 var workspace = fileURLToPath(new URL('../', import.meta.url));
 var output = resolve(workspace, 'apps/web/src/assets/tanks/thumbnails');
 var overviewOutput = resolve(workspace, 'recovery/output/tank-thumbnails-overview.png');
-var assets = resolve(workspace, process.env.CDTANK_WEB_ASSETS ?? 'recovery/output/web-assets');
+var assets = resolve(workspace, process.env.CDTANK_WEB_ASSETS ?? 'apps/web/public');
+var content = resolve(workspace, 'apps/shared/content/definitions');
 
 async function chromiumPath() {
   if (process.env.CDTANK_CHROME) {
@@ -56,18 +57,26 @@ async function stopChrome(chrome) {
 }
 
 async function main() {
-  if (process.argv.length > 2) throw new Error('Usage: node scripts/render-tank-thumbnails.mjs');
+  var renderArgs = process.argv.slice(2);
+  if (renderArgs.length && (renderArgs[0] !== '--tank' || renderArgs.length !== 2)) {
+    throw new Error('Usage: node scripts/render-tank-thumbnails.mjs [--tank ID]');
+  }
+  var selectedId = renderArgs.length ? Number(renderArgs[1]) : undefined;
+  var framing = JSON.parse(await readFile(join(workspace, 'scripts/tank-thumbnail-viewer/icons.json'), 'utf8'));
   var executable = await chromiumPath();
   var catalog = JSON.parse(await readFile(join(assets, 'tanks.json'), 'utf8'));
-  var shop = JSON.parse(await readFile(join(workspace, 'recovery/output/verified/tables/tankshop.json'), 'utf8'));
-  var tanks = catalog.map(tank => {
+  var shop = JSON.parse(await readFile(join(workspace, 'apps/server/resources/tables/tankshop.json'), 'utf8'));
+  var entries = catalog.map(tank => {
     var values = shop.rows.find(row => Number(row.values['坦克ID']) === tank.id)?.values;
     return {id: tank.id, name: tank.name, textures: {
       U: Number(values?.['默认贴图(炮塔)'] ?? 0),
       M: Number(values?.['默认贴图(车身)'] ?? 0),
       XY: Number(values?.['默认贴图(履带)'] ?? 0),
+      ...framing.textures[tank.id],
     }};
   });
+  var tanks = selectedId === undefined ? entries : entries.filter(tank => tank.id === selectedId);
+  if (!tanks.length) throw new Error('坦克定义缺失');
   var temporary = await mkdtemp(join(tmpdir(), 'cdtank-thumbnails-'));
   var vite, chrome, socket;
   var sequence = 0, pending = new Map();
@@ -91,6 +100,15 @@ async function main() {
   try {
     vite = await createServer({configFile: false, root: workspace, publicDir: assets,
       cacheDir: join(temporary, 'vite'), optimizeDeps: {entries: ['scripts/tank-thumbnail-viewer/index.html']},
+      plugins: [{name: 'tank-thumbnail-content', configureServer(server) {
+        server.middlewares.use('/content', (request, response, next) => {
+          var filename = resolve(content, `.${new URL(request.url ?? '/', 'http://localhost').pathname}`);
+          if (!filename.startsWith(content + sep) || !filename.endsWith('.json')) return next();
+          void readFile(filename).then(bytes => {
+            response.setHeader('Content-Type', 'application/json; charset=utf-8'); response.end(bytes);
+          }).catch(() => next());
+        });
+      }}],
       server: {host: '127.0.0.1', port: 0, hmr: false}});
     await vite.listen();
     var origin = `http://127.0.0.1:${vite.httpServer.address().port}`;
@@ -118,19 +136,24 @@ async function main() {
     }
     if (!ready) throw new Error('坦克 Viewer 载入超时');
     await mkdir(output, {recursive: true});
-    console.log(`渲染 ${tanks.length} 种战车：45° 俯视，1024 × 1024 采样 → 512 × 512 透明 PNG`);
+    console.log(`渲染 ${tanks.length} 种坦克：固定 ${framing.camera.elevation}° 俯视，裁切后等比缩放并居中 → 1024 × 1024 PNG`);
     for (var tank of tanks) {
-      var png = await evaluate(sessionId, `window.tankThumbnailViewer.render(${JSON.stringify(tank)}, 512)`);
+      var png = await evaluate(sessionId, `window.tankThumbnailViewer.render(${JSON.stringify(tank)}, 1024, ${JSON.stringify(framing.camera)})`);
       var filename = `${String(tank.id).padStart(3, '0')}.png`;
       await writeFile(join(output, filename), pngBytes(png));
       console.log(`${filename} ${tank.name}`);
     }
-    var entries = tanks.map(tank => {
+    if (selectedId !== undefined) return;
+    var imports = tanks.map(tank => {
       var id = String(tank.id).padStart(3, '0');
-      return `  '${id}': new URL('./${id}.png', import.meta.url).href,`;
+      return `import tank${id} from './${id}.png';`;
+    });
+    var thumbnailEntries = tanks.map(tank => {
+      var id = String(tank.id).padStart(3, '0');
+      return `  '${id}': tank${id},`;
     });
     await writeFile(join(output, 'index.ts'),
-      `export const tankThumbnails: Readonly<Record<string, string>> = {\n${entries.join('\n')}\n};\n`);
+      `${imports.join('\n')}\n\nexport const tankThumbnails: Readonly<Record<string, string>> = {\n${thumbnailEntries.join('\n')}\n};\n`);
     await mkdir(resolve(overviewOutput, '..'), {recursive: true});
     await writeFile(overviewOutput, pngBytes(await evaluate(sessionId, 'window.tankThumbnailViewer.overview()')));
     console.log(`缩略图：${output}\n总览：${overviewOutput}`);

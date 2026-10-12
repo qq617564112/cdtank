@@ -5,7 +5,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'recovery/output/verified/assets/data'
-WEB = ROOT / 'recovery/output/web-assets'
+WEB = ROOT / 'apps/web/public'
 resource = json.loads((WEB / 'scene-water-0002.json').read_text())
 assert resource['mapId'] == 2
 assert [g['name'] for g in resource['geometry']] == ['water', 'waves']

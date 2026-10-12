@@ -108,12 +108,12 @@ async function installMonitor(session) {
   })()`);
 }
 try {
-  const catalog = JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+  const catalog = JSON.parse(await readFile('apps/web/public/combat-catalog.json', 'utf8'));
   evidence.skillDefinition = catalog.skills.find(row => row.skillId === 6);
   assert.equal(evidence.skillDefinition.attributes.ItemMove, 6); assert.deepEqual(evidence.skillDefinition.functions[0], {type: 1, t: 10, x: 0, y: 0, z: 0});
   assert.deepEqual(evidence.skillDefinition.effects[0], {effectId: 110, sound: 'SE42', tag: 0, method: 3});
   await startServer();
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets', server: {port: 5198, strictPort: true, host: '127.0.0.1', hmr: false, proxy: {'/game': {target: 'ws://127.0.0.1:3147', ws: true, rewrite: () => '/'}}}});
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public', server: {port: 5198, strictPort: true, host: '127.0.0.1', hmr: false, proxy: {'/game': {target: 'ws://127.0.0.1:3147', ws: true, rewrite: () => '/'}}}});
   await vite.listen();
   chrome = spawn(process.env.CDTANK_CHROME ?? '/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome', ['--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--remote-debugging-port=9265', `--user-data-dir=${join(directory, 'chrome')}`, 'about:blank'], {stdio: 'ignore'});
   let endpoint;

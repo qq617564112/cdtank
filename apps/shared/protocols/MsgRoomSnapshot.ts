@@ -14,6 +14,8 @@ export interface RoleDisguiseSnapshot {
 
 export interface PlayerSnapshot {
   id: string;
+  /** Account identity for public player-profile queries. */
+  accountId?: string;
   name: string;
   tankId: number;
   /** Selected owned pet definition; the original HUD indexes PetTable, not TankTable. */

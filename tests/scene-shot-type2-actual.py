@@ -12,7 +12,7 @@ assert all(r['feedback']==0 for r in local)
 assert not a['effects'] and not a['sounds'] and not a.get('gaSounds')
 shared=[r['event']for r in remote if any(l['event']==r['event']for l in local)]
 assert shared and all(e['shotItemResult']['itemId']==2001 for e in shared)
-field=json.loads(Path('recovery/output/web-assets/battlefields.json').read_text())
+field=json.loads(Path('apps/web/public/battlefields.json').read_text())
 source=next(row for row in field if row['id']=='0007')
 box_ids={str(box['id']) for box in source['collisionBoxes']}
 assert all(e['targetId'] in box_ids for e in shared)

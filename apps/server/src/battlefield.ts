@@ -1,6 +1,6 @@
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
-import {webAssetPath} from './runtime/content-paths';
+import {serverAssetPath} from './runtime/content-paths';
 import {NavigationGrid, SourceNavigationLayer} from './navigation';
 import {CollisionMesh, type Triangle} from './collision-mesh';
 import {navigationOccupancy} from '../../shared/movement/navigation-collision';
@@ -53,7 +53,7 @@ export interface SurfaceHit {
 
 const CELL_SIZE = 128;
 const sources: SourceField[] = JSON.parse(readFileSync(resolve(
-  process.env.BATTLEFIELDS ?? webAssetPath('battlefields.json')), 'utf8'));
+  process.env.BATTLEFIELDS ?? serverAssetPath('battlefields.json')), 'utf8'));
 const fields = new Map<number, Battlefield>();
 /** Original coordinates in source units; rendering reflects X at the client. */
 export class Battlefield {

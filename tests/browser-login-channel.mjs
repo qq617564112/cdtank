@@ -150,7 +150,7 @@ try {
   const until = Date.now() + 15000;
   while (!serverLog.includes('Server started') && Date.now() < until && server.exitCode === null) await new Promise(resolve => setTimeout(resolve, 20));
   assert(serverLog.includes('Server started'), serverLog);
-  vite = await createServer({configFile: false, cacheDir: join(directory, 'vite-cache'), root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, cacheDir: join(directory, 'vite-cache'), root: 'apps/web', publicDir: '../../apps/web/public',
     server: {port: 5668, strictPort: true, host: '127.0.0.1', hmr: false, proxy: {'/game': {target: 'ws://127.0.0.1:3638', ws: true, rewrite: () => '/'}}}});
   await vite.listen();
   chrome = spawn(process.env.CDTANK_CHROME ?? '/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome', [

@@ -182,7 +182,7 @@ async function capture(session,label,width,height){
  captures.push({file:output+'-'+label+'.png',baseline:output+'-'+label+'-baseline.png',label,state,images});return state;
 }
 try{
- await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5343,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3319',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+ await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5343,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3319',ws:true,rewrite:()=> '/'}}}});await vite.listen();
  for(let id=6;id<=17;id++){const owner=await fixtureClient();const created=await owner.callApi('CreateRoom',{mode:1,mapId:7,minPlayers:2,maxPlayers:6,roomName:'背景房'+id,name:'房主'+id,tankId:1});assert(created.isSucc);assert.equal(created.res.room.id,'R'+id);}
  await launchBrowser();const page=await newPage();await input(page,'#player-name','裁剪中文玩家');await click(page,'#refresh-rooms');await waitUntil(page,`[...document.querySelector('#room').options].some(o=>o.value==='R6')`);await click(page,'#open-room-cards');await waitUntil(page,`document.querySelector('[data-room-card-background] [data-source-image]')&&document.querySelector('[data-room-card-page] [data-source-raster-glyph="47"]')&&!document.querySelector('[data-room-card-next]').disabled`);await evaluate(page,`(async()=>{const img=new Image();img.src='/ui/regions/60/0.png';await img.decode()})()`);
  for(const[width,height,label]of [[800,600,'800'],[1920,1080,'1080p'],[3840,2160,'4k']]){

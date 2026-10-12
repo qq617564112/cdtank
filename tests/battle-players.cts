@@ -11,7 +11,7 @@ async function main(): Promise<void> {
   const camera = new ArcRotateCamera('camera', 0, 1, 100, Vector3.Zero(), scene);
   const originalLoad = TankView.load;
   const originalFetch = globalThis.fetch;
-  const catalog = readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8');
+  const catalog = readFileSync('apps/web/public/combat-catalog.json', 'utf8');
   let resolveCatalog!: (response: Response) => void;
   globalThis.fetch = async () => new Promise<Response>(resolve => {resolveCatalog = resolve;});
   const pending: Array<{resolve: (view: TankView) => void; reject: (error: Error) => void}> = [];

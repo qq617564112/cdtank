@@ -17,7 +17,7 @@ const canTraverse = (start: {x: number; y: number; z: number}, end: typeof start
 };
 const policy = {cacheKey: 'prepared-nav-static-full-footprint', canTraverse,
   reachable: original.reachable};
-const water = JSON.parse(readFileSync('recovery/output/web-assets/scene-water-0002.json', 'utf8'));
+const water = JSON.parse(readFileSync('apps/web/public/scene-water-0002.json', 'utf8'));
 const bounds = water.geometry.find((value: {name: string}) => value.name === 'water').bounds[0];
 const target = {x: (bounds[0] + bounds[3]) / 2, y: bounds[1], z: (bounds[2] + bounds[5]) / 2};
 const starts = [field.spawn(0), field.spawn(1)];

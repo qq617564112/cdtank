@@ -1,19 +1,34 @@
 # 运行美术资源
 
-运行界面、按钮整图、静态文字、数字、表情、人物肖像、加载背景、标志与光标使用原始客户端资产。动态正文使用附件字体 `XiangJiaoKuanMaoShuaLingGanTi-2.ttf`；数字字体沿用原图片 glyph。
+界面由 SVG、HTML、CSS 与独立图片共同绘制。保留的图标、文字、数字、表情、人物肖像、加载背景、标志与光标按各自的图片 URL 发布。动态正文使用附件字体，数字字体保留图片 glyph。
 
-3D 模型材质保留现有贴图，包括战车、宠物、地图、场景物件、模型特效、可选皮肤和材质动画帧。小地图底图使用 `cartoon-minimaps` 中的涂鸦手绘资源，保留当前小地图标记。
+高清素材覆盖 3D 模型贴图、minimap 与保留图片的界面元素，包括战车、宠物、地图、场景物件、模型特效、可选皮肤、材质动画帧、小地图底图及小地图标记。模型几何、UV 与动画沿用原资源。
 
-## 来源与安装
+## 美术目录
 
-`art/hd-assets/inventory.json` 的 `original` 字段指向原始 PNG，`recovery/output/verified/assets/data` 保存解包后的客户端资源。UI 区域由原始 imageset 的坐标直接裁切，DDS 按源坐标方向转换。3D 保留范围由实际 GLB 材质、内容定义及场景材质目录解析。
+| 目录 | 内容 |
+| --- | --- |
+| `art/original/` | 高清化之前的原始导出图片与模型，保留原尺寸和文件内容 |
+| `art/hd/` | 清理后的完整运行资源快照，包含最新图片、模型、音频与资源清单 |
+| `art/hd/manifest.json` | 模型贴图的原图、高清图路径及模型清单 |
+| `art/hd/tank-track-animations.json` | 坦克履带动画帧、帧间隔及颜色滤镜 |
+| `art/hd/field-road.json` | 田野路地图模型与贴图清单 |
+
+两份图片按运行资源相对路径保存；原本位于源码目录的图片使用 `local-images/` 前缀。`recovery/output/verified/assets/data` 保存客户端解包来源。
+
+## 发布
 
 ```sh
 npm run assets:original
+npm run assets:hd
 ```
 
-该命令恢复非模型原图、字体和本地标志，保留附件字体，重新导出 UI 与表情目录，清理无引用图片，并重新发布精灵图及其映射。屏幕键盘保持移除。原图和高清交付保留在美术目录。
+`assets:original` 发布原版 UI 单图，并覆盖安装高清模型贴图与 minimap，清理无引用的运行图片。`assets:hd` 同时将高清贴图安装到模型材质，随后执行同一套图片发布流程。`assets:rebuild -- --reuse-verified` 重新导出资源后安装这两份美术资产。
 
-`npm run assets:hd` 仅安装模型高清贴图，并执行同一套原图发布流程。`npm run assets:rebuild -- --reuse-verified` 在导出资源后安装模型高清贴图、原版 UI 和仓库中的附件字体。
+运行图片以独立文件发布到 `apps/web/public/`，本地图片位于其 `local-images/` 子目录。Vite 扫描实际文件生成 `image-assets.json`，界面、Canvas 和模型加载器通过各自的图片 URL 使用同一缓存。
 
-运行图片位于被 Git 忽略的 `recovery/output/web-assets`；源码提交与资源包分别保存。当前恢复前的运行资源快照位于 `backups/pre-original-assets-20261008/web-assets`。恢复统计与模型贴图保留路径位于 `art/hd-assets/original-runtime.json`。
+美术目录和运行资源由 Git 忽略。资源包包含 `apps/web/public/` 与 `apps/server/resources/`（数据表、场景和碰撞数据）；Docker 资源镜像通过 `deployment/import-assets.sh` 从本地运行资源创建。
+
+## 发布限制
+
+GitHub v1.0.0 已发布资源包仍使用精灵图，需要替换为当前单图资源后再用于本版本。安装器在解压前识别该格式并停止，保留现有本地资源。单图资源包可通过 `npm run assets:install -- --archive /path/to/cdtank-assets.tar.xz` 安装。

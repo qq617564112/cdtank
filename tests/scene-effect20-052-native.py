@@ -8,7 +8,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 from scene import read_scene
 
@@ -159,7 +159,7 @@ for row in rows:
 shutdown = list(events)
 assert len([e for e in shutdown if e['kind']=='stop']) == 5
 assert len([e for e in shutdown if e['kind']=='release']) == 5
-library = json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT/'apps/web/public/effect-library.json').read_text())
 nodes = [n for n in library['nodes'] if n['name']=='_root\\online\\052' or n['name'].startswith('_root\\online\\052\\')]
 assert [n['type'] for n in nodes] == [0,1,1]
 timings = [r for r in library['nodeTimings'] if r['node'] in [n['index'] for n in nodes]]

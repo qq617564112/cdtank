@@ -1,3 +1,4 @@
+import {GameMessage, showGameMessage} from '../resources/game-message';
 import {loadCombatCatalog} from '../../content';
 import {StackItemSaleSource, type StackSaleOwner} from './stack-item-sale-source';
 import {createRequestId} from '../../network/request-id';
@@ -12,6 +13,7 @@ import type {ReqTankMaintenance, ResTankMaintenance} from '../../../../shared/pr
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../../shared/protocols/PtlOwnedRoleSale';
 import './shop.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useNavigationChoice, useNavigationNumber, useNavigationValue} from '../../navigation/route';
 import type {ReqShop, ResShop, ShopCurrency, ShopItem} from '../../../../shared/protocols/PtlShop';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceImageScale} from '../resources/source-static-image';
@@ -31,10 +33,8 @@ import {ShopItemSourceList} from './shop-item-source-list';
 import {ShopItemDescriptionSource} from './shop-item-description-source';
 import {MendShopSourcePage} from './mend-shop-source-page';
 import {ShopResourceFeedback} from './shop-resource-feedback';
-import {createPortal} from 'react-dom';
-import {SourceNotice} from '../dialogs/source-notice';
-import {SourceNoticeView} from '../dialogs/source-notice-view';
 import {ShopPurchaseSource} from './shop-purchase-source';
+import {GameDialog} from '../resources/game-dialog';
 
 export interface ShopSource {stackItemSale?(request: ReqStackItemSale): Promise<ResStackItemSale>; partSale?(request: ReqPartSale): Promise<ResPartSale>; partMaintenance?(request: ReqPartMaintenance): Promise<ResPartMaintenance>; ownedRoleSale?(request: ReqOwnedRoleSale): Promise<ResOwnedRoleSale>; tankMaintenance?(request: ReqTankMaintenance): Promise<ResTankMaintenance>; ownedRoles?(): Promise<ResOwnedRoles>; roleProfile?(): Promise<ResRoleProfile>; configureTankTextures?(request: ReqTankTextures): Promise<ResTankTextures>; equipment?(request: ReqEquipment): Promise<ResEquipment>; shop(request: ReqShop): Promise<ResShop>; inventory?(): Promise<ResInventory>; tankShop?(request: ReqTankShop): Promise<ResTankShop>; petShop?(request: ReqPetShop): Promise<ResPetShop>;}
 export interface AccountShopViewProps {open: boolean; close: () => void; source: ShopSource; initialTextureInstance?: number; onEquipmentPage?: () => void;}
@@ -61,7 +61,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
   const escapePending = useRef(false);
   const session = useRef({active: false, query: false, identity: {}});
   const focusAfterCommit = useRef<HTMLElement | null>(null);
-  const [page, setPage] = useState<'Item' | 'Tank' | 'Pet' | 'Part' | 'Mend'>(initialTextureInstance !== undefined ? 'Tank' : owner.page ?? 'Item');
+  const [page, setPage] = useNavigationChoice('shopPage', ['Item', 'Tank', 'Pet', 'Part', 'Mend'], initialTextureInstance !== undefined ? 'Tank' : owner.page ?? 'Item');
   const [tankBusy, setTankBusy] = useState(false);
   const [petBusy, setPetBusy] = useState(false);
   const [partBusy, setPartBusy] = useState(false);
@@ -80,11 +80,12 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
   const [category, setCategory] = useState<'Weapon' | 'Item'>(() =>
     sourceShopItemCategory(owner.pending?.itemTableId ?? 0) ?? 'Item');
   const [selected, setSelected] = useState<number | undefined>(owner.pending?.itemTableId);
-  const [quantity, setQuantity] = useState(String(owner.pending?.quantity ?? 1));
-  const [currency, setCurrency] = useState<ShopCurrency>(owner.pending?.currency ?? 'MONEY');
-  const [purchaseItem, setPurchaseItem] = useState<ShopItem>();
+  const [quantity, setQuantity] = useNavigationValue('purchaseQuantity', String(owner.pending?.quantity ?? 1), true);
+  const [currency, setCurrency] = useNavigationChoice<ShopCurrency>('purchaseCurrency', ['MONEY', 'TOKENS'], owner.pending?.currency ?? 'MONEY');
+  const [purchaseItemId, setPurchaseItemId] = useNavigationNumber('purchaseItem');
+  const purchaseItem = confirmed?.items.find(item => item.itemTableId === purchaseItemId);
+  const setPurchaseItem = (item?: ShopItem): void => setPurchaseItemId(item?.itemTableId);
   const [description, setDescription] = useState<{id: number; left: number; top: number}>();
-  const [notice] = useState(() => new SourceNotice());
   const [busy, setBusy] = useState(true);
   const [status, setStatus] = useState('');
   const [resourceError, setResourceError] = useState<string>();
@@ -102,8 +103,6 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
       setSelected(confirmed?.items.find(product => sourceShopItemCategory(product.itemTableId) === kind)?.itemTableId);
     }
   }
-
-  useEffect(() => () => notice.clear(), [notice]);
 
   useEffect(() => {
     const element = dialog.current!;
@@ -143,7 +142,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
           return available.some(product => product.itemTableId === value) ? value : available[0]?.itemTableId;
         });
       } catch (error) {
-        if (current.active) void notice.show(error instanceof Error ? error.message : '商店载入失败');
+        if (current.active) showGameMessage(error instanceof Error ? error.message : '商店载入失败');
       } finally {
         current.query = false;
         if (current.active) {
@@ -158,7 +157,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
       current.active = false;
       if (owner.session?.identity === current.identity) owner.session = undefined;
     };
-  }, [source, owner, notice]);
+  }, [source, owner]);
 
   useLayoutEffect(() => {
     if (!ui || activePageBusy) return;
@@ -175,11 +174,11 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
       if (active && session.current.active) {setInventory(result); setOwnedBusy(false);}
     }).catch(error => {
       if (active && session.current.active) {
-        setOwnedBusy(false); void notice.show(error instanceof Error ? error.message : '拥有物品载入失败');
+        setOwnedBusy(false); showGameMessage(error instanceof Error ? error.message : '拥有物品载入失败');
       }
     });
     return () => {active = false;};
-  }, [source, confirmed, page, notice]);
+  }, [source, confirmed, page]);
 
   useLayoutEffect(() => {
     if (busy || !focusAfterCommit.current) return;
@@ -220,7 +219,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
         requestId: createRequestId()};
     }
     const request = owner.pending;
-    setBusy(true); setStatus('等待购买确认…');
+    setBusy(true); setStatus('');
     const inFlight = source.shop(request); owner.inFlight = inFlight;
     try {
       const result = await inFlight;
@@ -228,7 +227,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
       if (current.active) {
         setConfirmed(result); setPurchasedInstance(result.purchased?.instanceId); setSaleRefresh(value => value + 1);
         setPurchaseItem(undefined); setStatus('');
-        void notice.show(`已购买${purchaseItem.name}×${count}。`);
+        showGameMessage(`已购买${purchaseItem.name}×${count}。`, 'success');
       }
     } catch (error) {
       if (current.active) setStatus(error instanceof Error ? error.message : '购买未确认，请重试');
@@ -239,7 +238,8 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     }
   }
 
-  return <dialog ref={dialog} id="account-shop" aria-labelledby="account-shop-title" aria-busy={activePageBusy} style={{zoom: scale}}
+  return <GameDialog ref={dialog} id="account-shop" width={625} height={404} uiScale={scale} stageClassName="shop-dialog-stage"
+    aria-labelledby="account-shop-title" aria-busy={activePageBusy}
     data-purchased-instance={purchasedInstance === undefined ? undefined : String(purchasedInstance)}
     onCancel={event => {event.preventDefault(); requestClose();}}
     onKeyDown={event => {
@@ -260,7 +260,6 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
         if (value === 'Item') owner.session?.refresh();
       }}
       category={category} ownedCategory={ownedCategory} ownedBusy={ownedBusy || busy}
-      ownedQuantity={inventory?.records.filter(record => classifyInventoryCategory(record.itemTableId) === (ownedCategory === 'Weapon' ? 2 : 1)).length}
       selectOwnedCategory={selectItemCategory}
       busy={page === 'Tank' ? tankBusy : page === 'Pet' ? petBusy : page === 'Part' ? partBusy : page === 'Mend' ? mendBusy : busy || ownedBusy} selectCategory={selectItemCategory}/>} 
     <h2 id="account-shop-title">{page === 'Tank' ? '战车商店' : page === 'Pet' ? '宠物商店' : page === 'Mend' ? '维修中心' : '道具商店'}</h2>
@@ -293,7 +292,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     </>}
     {source.stackItemSale && <StackItemSaleSource ui={ui} source={source} instanceId={ownedSelected}
       activation={saleActivation} refreshKey={saleRefresh} owner={owner.stackSale!} disabled={busy} onBusy={setOwnedBusy}
-      onError={message => {void notice.show(message);}}
+      onError={message => {showGameMessage(message, 'error');}}
       onConfirmed={result => {
         setInventory(result.inventory);
         if (result.money !== undefined) setConfirmed(value => value && value.money !== result.money ? {...value, money: result.money} : value);
@@ -306,11 +305,11 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
       currency={currency} changeCurrency={value => {setCurrency(value); setStatus('');}}
       pending={busy || ownedBusy} status={status} confirm={() => {void purchase();}}
       cancel={() => {setPurchaseItem(undefined); setStatus('');}}/>}
-    <output hidden data-shop-status="">{status}</output>
+    <GameMessage data-shop-status="" text={status} tone={activePageBusy ? 'pending' : 'info'}/>
     </>}
     {!ui && <ShopResourceFeedback error={resourceError} pending={activePageBusy} close={requestClose}/>}
     </div>
     </SourceImageScale>
-    {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
-  </dialog>;
+
+  </GameDialog>;
 }

@@ -1,4 +1,4 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import {HomeOwnedPetRowContent} from './home-owned-pet-row-content';
 import {HomeOwnedTankRowContent} from './home-owned-tank-row-content';
 import {useRef} from 'react';
@@ -19,15 +19,12 @@ export function HomeOwnedRoleSourceList({ui, kind, entries, selected, current, b
   const source = kind === 'tank' ? 'lstTank' : 'lstPet';
   const layout = new HomeSourceLayout(ui, suffix);
   const control = layout.control(source);
-  const selection = sourceProps(ui, layout, suffix, source, control.properties.SelectionImage);
   return <div {...sourceProps(ui, layout, suffix, source)} className="home-owned-role-list-scroll-shell">
     <div ref={list} className="home-owned-role-source-list" role="listbox"
       aria-label={kind === 'tank' ? '拥有战车' : '拥有宠物'} aria-busy={busy} data-home-owned-role-list={kind}>
       {entries.map((entry, index) => <button key={entry.instanceId} type="button" role="option"
         data-owned-role={entry.instanceId} data-home-owned-tank-row={kind === 'tank' ? entry.instanceId : undefined} data-home-owned-pet-row={kind === 'pet' ? entry.instanceId : undefined} disabled={busy} aria-selected={selected === entry.instanceId}
         aria-pressed={selected === entry.instanceId}
-        style={selected === entry.instanceId ? {...backgroundStyle(selection.style)} : undefined}
-        data-source-selection-asset={selected === entry.instanceId ? selection['data-source-asset'] : undefined}
         onClick={() => select(entry.instanceId)} onKeyDown={event => {
           const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
             : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;
@@ -40,6 +37,7 @@ export function HomeOwnedRoleSourceList({ui, kind, entries, selected, current, b
         }} onKeyUp={event => {
           if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
         }}>
+        {selected === entry.instanceId && <GameSelectionHighlight/>}
         {kind === 'tank' ? <HomeOwnedTankRowContent ui={ui} name={entry.name} tankId={entry.tankId}
           tankType={entry.tankType} durationMinutes={entry.durationMinutes} current={current === entry.instanceId}/> : <HomeOwnedPetRowContent ui={ui} name={entry.name}
           petId={entry.petId} petType={entry.petType} petSize={entry.petSize} current={current === entry.instanceId}/>}

@@ -1,8 +1,11 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {GameMessage} from '../resources/game-message';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import './source-chat-intimate.css';
 import {useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceStaticImage} from '../resources/source-static-image';
+import {GameInsetCard} from '../resources/game-inset-card';
+import {GameScrollbar} from '../resources/game-scrollbar';
 import {sourceProps} from '../resources/source-ui-props';
 import {RoomIntimateScrollbar} from './room-intimate-scrollbar';
 
@@ -21,7 +24,6 @@ export function SourceChatIntimate({ui, waiting, players, selectedName, pending,
   const [candidate, setCandidate] = useState(() => players.find(player => player.name === selectedName)?.id);
   const active = players.some(player => player.id === candidate) ? candidate
     : players.find(player => player.name === selectedName)?.id ?? players[0]?.id;
-  const selection = sourceProps(ui, layout, suffix, 'lstIntimate', layout.control('lstIntimate').properties.SelectionImage);
   useLayoutEffect(() => {
     const button = [...list.current?.querySelectorAll<HTMLButtonElement>('[data-room-intimate-player]') ?? []]
       .find(value => value.dataset.roomIntimatePlayer === active);
@@ -30,8 +32,10 @@ export function SourceChatIntimate({ui, waiting, players, selectedName, pending,
   return <div className={`source-room-intimate-menu ${waiting ? 'source-room-intimate-waiting' : 'source-room-intimate-playing'}`}
     data-room-intimate-menu="" style={{width: root[2] - root[0], height: root[3] - root[1]}}
     onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}>
-    {['all', 'biaoqingfuhaokuang'].map(name => <SourceStaticImage key={name} ui={ui} layout={layout}
-      suffix={suffix} name={name} offsetX={-root[0]} offsetY={-root[1]} aria-hidden="true" />)}
+    {waiting ? <GameInsetCard {...sourceProps(ui, layout, suffix, 'biaoqingfuhaokuang', undefined, -root[0], -root[1])}
+      shape="options" tone="peach" insetShadow aria-hidden="true"/>
+      : ['all', 'biaoqingfuhaokuang'].map(name => <SourceStaticImage key={name} ui={ui} layout={layout}
+        suffix={suffix} name={name} offsetX={-root[0]} offsetY={-root[1]} aria-hidden="true" />)}
     <div {...sourceProps(ui, layout, suffix, 'lstIntimate', undefined, -root[0], -root[1])}
       className="source-room-intimate-scroll-shell">
     <div ref={list} className="source-room-intimate-list" data-room-intimate-list="" data-roster-binding="web-confirmed-room-snapshot"
@@ -39,8 +43,6 @@ export function SourceChatIntimate({ui, waiting, players, selectedName, pending,
       {players.map((player, index) => <button key={player.id} type="button" role="option"
         data-room-intimate-player={player.id} aria-selected={player.id === active}
         tabIndex={player.id === active ? 0 : -1} disabled={pending} title={player.name}
-        data-source-selection-asset={player.id === active ? selection['data-source-asset'] : undefined}
-        style={player.id === active ? {...backgroundStyle(selection.style)} : undefined}
         onFocus={() => setCandidate(player.id)} onClick={() => {
           if (!pending && !composing.current) choose(player.name);
         }} onKeyDown={event => {
@@ -52,10 +54,13 @@ export function SourceChatIntimate({ui, waiting, players, selectedName, pending,
             const button = list.current?.querySelectorAll<HTMLButtonElement>('[data-room-intimate-player]')[next];
             button?.focus(); button?.scrollIntoView({block: 'nearest'});
           }
-        }}>{player.name}</button>)}
-      {!players.length && <output role="status">当前房间名单未取得</output>}
+        }}>
+        {player.id === active && <GameSelectionHighlight/>}
+        {player.name}</button>)}
+      {!players.length && <GameMessage text="当前房间名单未取得"/>}
     </div>
-    <RoomIntimateScrollbar list={list} ui={ui} properties={layout.control('lstIntimate').properties}/>
+    {waiting ? <GameScrollbar list={list} step={18} label="密语对象名单"/>
+      : <RoomIntimateScrollbar list={list} ui={ui} properties={layout.control('lstIntimate').properties}/>}
     </div>
   </div>;
 }

@@ -10,13 +10,13 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from inspect_assets import read_table
 from effect_sav import read_library
 from effect_controls import node_timings, particle_controls, sprite_controls
 
 assets = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 catalog = json.loads((web / 'combat-catalog.json').read_text())
 raw_item = next(row['values'] for row in read_table(ROOT / 'CDTank/Data/table/item.dat')['rows']
                 if int(row['values']['ItemTableID']) == 3005)

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
-import {TankPetDeathPresentation} from '../recovery/prepared/tank-pet-death-presentation/apps/web/src/assets/tanks/tank-pet-death-presentation';
+import {TankPetDeathPresentation} from '../tools/recovery/prepared/tank-pet-death-presentation/apps/web/src/assets/tanks/tank-pet-death-presentation';
 import type {TankView} from '../apps/web/src/assets/tanks/tank-view';
 
 const target = {} as TankView;

@@ -3,7 +3,7 @@ import json, struct, sys
 from pathlib import Path
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_FPCW
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 machine, _ = map_original_binaries([ROOT / 'CDTank/gbengine.dll', ROOT / 'CDTank/msvcr71.dll'])
 machine.mem_map(0,4096); machine.mem_map(0x2000000,0x20000)
@@ -15,7 +15,7 @@ def call(address,args):
  machine.mem_write(STACK,struct.pack('<I',STOP)+args)
  machine.reg_write(UC_X86_REG_ESP,STACK);machine.reg_write(UC_X86_REG_ECX,OBJECT)
  machine.reg_write(UC_X86_REG_FPCW,0x27f);machine.emu_start(address,STOP,count=10000)
-library=json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text());rows=[]
+library=json.loads((ROOT/'apps/web/public/effect-library.json').read_text());rows=[]
 for kind in ['spriteControls','stripControls']:
  for control in library[kind]:
   angles=control['appearance']['angles'] if kind=='spriteControls' else control['angles']

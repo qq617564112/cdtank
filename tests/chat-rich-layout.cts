@@ -11,7 +11,7 @@ interface NativeVector {
   draws: {kind: string; text?: string; name?: string; rect: number[]}[];
 }
 const native = JSON.parse(readFileSync('recovery/output/chat-rich-layout-source.json','utf8')) as {vectors: NativeVector[]};
-const sequences = JSON.parse(readFileSync('recovery/output/web-assets/chat-emote-sequences.json','utf8'));
+const sequences = JSON.parse(readFileSync('apps/web/public/chat-emote-sequences.json','utf8'));
 const measure = (text: string): number => Array.from(text).reduce((sum,glyph) => sum+(glyph==='\n' ? 0 : glyph.charCodeAt(0)>127 ? 14 : 7),0);
 for (const vector of native.vectors) {
   const tokens: ChatRichToken[] = vector.chunks.map(([kind,text]) => {

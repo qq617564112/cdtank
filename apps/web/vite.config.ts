@@ -6,7 +6,7 @@ import {imageAssetsPlugin} from './image-assets-plugin';
 
 const webRoot = fileURLToPath(new URL('.', import.meta.url));
 const workspaceRoot = resolve(webRoot, '../..');
-const publicDir = resolve(workspaceRoot, process.env.CDTANK_WEB_ASSETS ?? 'recovery/output/web-assets');
+const publicDir = resolve(workspaceRoot, process.env.CDTANK_WEB_ASSETS ?? 'apps/web/public');
 
 function portFromEnvironment(name: string, fallback: number): number {
   const value = process.env[name];
@@ -25,6 +25,7 @@ export default defineConfig({
   publicDir,
   plugins: [contentPlugin(resolve(workspaceRoot, 'apps/shared/content/definitions')), imageAssetsPlugin(publicDir)],
   server: {
+    allowedHosts: ['tank.cloyd.fun'],
     fs: {allow: [workspaceRoot]},
     port: portFromEnvironment('CDTANK_WEB_PORT', 5173),
     proxy: {

@@ -5,7 +5,7 @@ import {Trap3001Visual} from '../apps/web/src/assets/scenes/trap3001-visual';
 import {GroundTrapsPresentation, type GroundTrapPresentationSource} from '../apps/web/src/assets/scenes/ground-traps-presentation';
 
 async function main(): Promise<void> {
-  const bytes = readFileSync('recovery/output/web-assets/Data/scnobj/03001/03001.glb');
+  const bytes = readFileSync('apps/web/public/Data/scnobj/03001/03001.glb');
   const glb = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString());
   assert.equal(glb.meshes[0].name, 'box01/0');
   assert.equal(glb.materials[0].name, '03001A.tga');

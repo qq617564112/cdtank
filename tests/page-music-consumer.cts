@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {BattleMusic} from '../apps/web/src/audio/battle-music';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8'));
+const catalog = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8'));
 const interactions = new Map<string, Set<() => void>>();
 class Media {
   loop = false;

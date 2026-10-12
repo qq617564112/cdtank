@@ -6,7 +6,7 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP, UC_X86_REG_FPCW
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 from pol import read_pol
 from cvd import read_cvd
@@ -33,7 +33,7 @@ put(STACK_A,MATRIX_A,1,0,0);put(STACK_B,MATRIX_B,1,0,0)
 machine.mem_write(MATRIX_A,struct.pack('<16f',*identity));machine.mem_write(MATRIX_B,struct.pack('<16f',*identity))
 put(INFO,NODE);put(INFO+0xc,EFFECT);put(EFFECT,VTABLE);put(VTABLE+0x104,STOP+16)
 root=ROOT/'recovery/output/verified/assets/data'
-library=json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text());references={c['reference'].replace('\\','/').lower() for c in library['modelControls']};parts=[]
+library=json.loads((ROOT/'apps/web/public/effect-library.json').read_text());references={c['reference'].replace('\\','/').lower() for c in library['modelControls']};parts=[]
 for path in root.rglob('*'):
  if path.relative_to(root).as_posix().lower() not in references:continue
  if path.suffix.lower()=='.pol':

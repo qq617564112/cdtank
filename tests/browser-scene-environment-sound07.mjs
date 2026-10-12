@@ -55,7 +55,7 @@ try {
   for(var stream of [server.stdout,server.stderr])stream.on('data',d=>{log+=String(d);});
   var deadline=Date.now()+15000;while(!log.includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));
   assert(log.includes('Server started'),log);
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5353,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3323',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5353,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3323',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--remote-debugging-port=9553',
@@ -121,7 +121,7 @@ ws.on('message', raw => {
   var snapshot=()=>Promise.all(pages.map(p=>evaluate(p.sessionId,'window.environmentState()')));
   for(var page of pages)await waitUntil(page.sessionId,`window.environmentState().count===3&&window.environmentState().voices.every(v=>!v.paused&&v.time>0)&&window.environmentState().context==='running'`);
   evidence.playing=await snapshot();
-  var source=JSON.parse(await readFile('recovery/output/web-assets/scene-environment-sound-0007.json','utf8'));
+  var source=JSON.parse(await readFile('apps/web/public/scene-environment-sound-0007.json','utf8'));
   for(var row of evidence.playing){assert(row.sharedContext);assert.equal(row.count,3);for(var v of row.voices){var placement=source.sounds.find(s=>s.id===v.id);assert.deepEqual(v.position,placement.position);assert(v.loop&&v.src.endsWith('/audio/sound/'+placement.name+'.wav'));}}
   for(var page of pages)await nativeClick(page.sessionId,'[data-autopilot]');
   var soundDeadline=Date.now()+75000;var complete=false;

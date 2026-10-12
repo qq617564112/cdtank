@@ -4,7 +4,7 @@ import {World} from '../apps/server/src/world';
 import {getBattlefield} from '../apps/server/src/battlefield';
 
 const expected = [1, 2, 3, 4, 5].flatMap(mode => {
-  const table = JSON.parse(readFileSync(`recovery/output/verified/tables/m00${mode}.json`, 'utf8')) as {
+  const table = JSON.parse(readFileSync(`apps/server/resources/tables/m00${mode}.json`, 'utf8')) as {
     rows: {values: Record<string, string>}[];
   };
   return table.rows.map(({values}) => ({mode, mapId: Number(values.MapID), name: values.MapName,
@@ -34,7 +34,7 @@ for (const map of expected) {
   assert.equal(snapshot.phase, 'PLAYING');
   assert.equal(snapshot.remaining, map.timeLimit);
   if (map.mode === 5) {
-    const scenes = JSON.parse(readFileSync('recovery/output/web-assets/scene-placements.json', 'utf8')) as
+    const scenes = JSON.parse(readFileSync('apps/web/public/scene-placements.json', 'utf8')) as
       Array<{id: string; records: Array<{id: string; model: string; className: string; matrix: number[]}>}>;
     const records = scenes.find(scene => Number(scene.id) === map.mapId)!.records
       .filter(record => record.className === 'SYcScnObjBreach');

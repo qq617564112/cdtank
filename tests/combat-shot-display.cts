@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {TankShotDisplay} from '../apps/web/src/assets/tanks/shot-display';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
 const recovered = JSON.parse(readFileSync('recovery/output/combat-shot-loader-native.json', 'utf8')) as {
   contract: {itemId: number; skillId: number; effectName: string; sound: string};
 };

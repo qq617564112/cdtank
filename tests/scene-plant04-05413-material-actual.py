@@ -11,7 +11,7 @@ assert all(world['mode'] == 1 and len(world['players']) == 4 for world in raw['i
 assert not raw['browserErrors']
 assert all(state['world'] is None and not state['loadingError'] for state in raw['finalLoadState'])
 source = json.loads((ROOT / 'recovery/output/scene-plant02-material-source.json').read_text())
-scene = next(value for value in json.loads((ROOT / 'recovery/output/web-assets/scene-placements.json').read_text()) if value['id'] == '0004')
+scene = next(value for value in json.loads((ROOT / 'apps/web/public/scene-placements.json').read_text()) if value['id'] == '0004')
 records = {value['id']: value for value in scene['records'] if value['className'] == 'SYcScnObjPlant' and value['model'] == 'obj05413'}
 rows = []
 for side, observed in enumerate(raw['observed'], 1):

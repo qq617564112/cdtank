@@ -1,10 +1,10 @@
 import type {RoleSkillRecord} from '../apps/shared/contracts/role-skills';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {accumulateRoleMaxHp, finishRoleMaxHp} from '../recovery/evidence/roles/role-max-hp';
+import {accumulateRoleMaxHp, finishRoleMaxHp} from '../tests/evidence/roles/role-max-hp';
 import {createRoleCombatState, RoleCombatState} from '../apps/server/src/battle/roles/combat-state';
-import {observeRoleSkillSlots} from '../recovery/evidence/roles/role-skill-observer';
-import {encodeRoleArrayProperty, receiveRoleArrayProperties} from '../recovery/evidence/combat/role-array-property';
+import {observeRoleSkillSlots} from '../tests/evidence/roles/role-skill-observer';
+import {encodeRoleArrayProperty, receiveRoleArrayProperties} from '../tests/evidence/combat/role-array-property';
 import {selectRoleSkills} from '../apps/server/src/battle/roles/skills';
 
 interface Health {hp: number; maxHp: number}

@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
-a=Image.open(ROOT/'recovery/output/web-assets/ui/regions/60/0.png').convert('RGBA');rows=[]
+a=Image.open(ROOT/'apps/web/public/ui/regions/60/0.png').convert('RGBA');rows=[]
 for c in json.load(open(sys.argv[1])):
  s=c['state'];r=s['background']['rect'];shot=Image.open(ROOT/c['file']).convert('RGB');opaque=[];alpha=[]
  excluded=[x['rect']for x in s['cards']+s['controls']]

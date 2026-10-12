@@ -2,7 +2,7 @@
 
 使用 Node.js 24.16 或更高版本。Web 构建为 `npm run build`，服务端构建为 `npm run build:server`。服务端直接托管构建后的网页和资源，与 WebSocket `/game` 共用一个端口；`index.html` 是正式玩家入口，`validation.html` 是独立验证入口。
 
-在仓库中完成两端构建后，运行 `PORT=40171 npm run start:server`，本机通过 `http://localhost:40171/` 访问。客户端要求 WebGPU；局域网及远程访问使用 HTTPS 反向代理，以满足浏览器安全上下文要求。服务监听所有网络接口，默认网页目录为 `dist/web`，账户库沿用 `recovery/output/accounts.sqlite`。
+在仓库中完成两端构建后，运行 `PORT=40171 npm run start:server`，本机通过 `http://localhost:40171/` 访问。客户端要求 WebGPU；局域网及远程访问使用 HTTPS 反向代理，以满足浏览器安全上下文要求。服务监听所有网络接口，默认网页目录为 `dist/web`，账户库沿用 `state/accounts.sqlite`。
 
 转换后的运行资源、字体和内容表通过 GitHub Releases 提供。克隆或下载后执行 `npm ci` 和 `npm run assets:install` 下载解压，即可使用这些资源构建与打包，无需原客户端、Python 或外部字体。
 

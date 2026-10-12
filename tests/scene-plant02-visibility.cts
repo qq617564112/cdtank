@@ -3,7 +3,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {ArcRotateCamera, NullEngine, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import {ScenePreview} from '../apps/web/src/assets/scenes/scene-preview';
 
-const entry = JSON.parse(readFileSync('recovery/output/web-assets/scene-placements.json', 'utf8'))
+const entry = JSON.parse(readFileSync('apps/web/public/scene-placements.json', 'utf8'))
   .find((value: {id: string}) => value.id === '0002');
 const source = entry.records.find((value: {className: string}) => value.className === 'SYcScnObjPlant');
 const engine = new NullEngine();

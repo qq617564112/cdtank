@@ -116,7 +116,7 @@ try {
   const deadline = Date.now() + 15000;
   while (!serverLog.includes('Server started') && Date.now() < deadline && server.exitCode === null) await pause(20);
   assert(serverLog.includes('Server started'), serverLog);
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     plugins:[{name:'readiness-observer',transform(source,id){if(id.endsWith('/src/match/battle.ts'))return source+'\nconst old=Battle.prototype.setQuickChats;Battle.prototype.setQuickChats=function(value){window.roomWhisperBattle=this;return old.call(this,value);};';}}],
     server: {port: 5366, strictPort: true, host: '127.0.0.1', hmr: false,
       proxy: {'/game': {target: 'ws://127.0.0.1:3206', ws: true, rewrite: () => '/'}}}});

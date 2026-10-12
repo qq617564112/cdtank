@@ -93,7 +93,7 @@ async function verifySource(session,width,height) {
 }
 async function createRoom(session,mode,mapId,name,password) {
   await input(session,'#room-name',name);await select(session,'#room-mode',mode);await select(session,'#room-map',mapId);
-  const source=JSON.parse(await readFile(`recovery/output/verified/tables/m00${mode}.json`,'utf8')).rows.find(row=>Number(row.values.MapID)===mapId).values;
+  const source=JSON.parse(await readFile(`apps/server/resources/tables/m00${mode}.json`,'utf8')).rows.find(row=>Number(row.values.MapID)===mapId).values;
   await input(session,'#room-min-players',Math.max(3,Number(source.PlayerMin))); await input(session,'#create-password',password);
   await click(session,'#create-room');await waitUntil(session,`(${worldExpression})?.mapLoaded&&(${worldExpression}).phase==='WAITING'`);
   const snapshot=await world(session);
@@ -112,7 +112,7 @@ async function joinRoom(session,roomId,password,success) {
   evidence.checks.push({name:'Ordinary Join '+(success?'success':'password refusal'),response});
 }
 async function verifyInfo(sessions,mode,mapId,locked) {
-  const table=JSON.parse(await readFile(`recovery/output/verified/tables/m00${mode}.json`,'utf8')).rows.find(row=>Number(row.values.MapID)===mapId).values;
+  const table=JSON.parse(await readFile(`apps/server/resources/tables/m00${mode}.json`,'utf8')).rows.find(row=>Number(row.values.MapID)===mapId).values;
   const states=[];
   for(const session of sessions) {
     const snapshot=await world(session), decoded=network.filter(row=>row.page===session&&row.direction==='received'&&row.name==='RoomSnapshot'&&row.payload.roomId===snapshot.roomId).at(-1), info=decoded?.payload.roomInfo;
@@ -263,7 +263,7 @@ async function launchBrowser() {
 }
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5228,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3193',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5228,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3193',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();await launchBrowser();
   const sessions=[];
   for(const name of ['资料甲','资料乙']) {

@@ -13,8 +13,8 @@ type Library = {
 type Native = {rows: {node: number; retain: boolean; created: {node: number; retain: boolean}[]}[]};
 
 const read = <T,>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
-const catalog = read<Catalog>('recovery/output/web-assets/combat-catalog.json');
-const library = read<Library>('recovery/output/web-assets/effect-library.json');
+const catalog = read<Catalog>('apps/web/public/combat-catalog.json');
+const library = read<Library>('apps/web/public/effect-library.json');
 const native = read<Native>('recovery/output/effect-tree-create-native.json');
 const healing = read<{
   item: number;
@@ -49,7 +49,7 @@ assert.deepEqual(drawnNodes.map(node => library.nodes[node].type), [1, 1, 1, 6, 
 const grids = library.textureGrids.filter(grid => drawnNodes.includes(grid.node));
 assert.equal(grids.length, drawnNodes.length);
 assert.ok(grids.every(grid => grid.resolution === 'published' && grid.asset));
-for (const grid of grids) assert.ok(existsSync(`recovery/output/web-assets/${grid.asset}`), grid.asset);
+for (const grid of grids) assert.ok(existsSync(`apps/web/public/${grid.asset}`), grid.asset);
 assert.equal(healing.item, 1);
 assert.equal(healing.skill, 1);
 assert.equal(healing.effect, 11);
@@ -62,7 +62,7 @@ for (const boundary of ['liveAttachment', 'naturalExpiry', 'explicitStop', 'deta
   assert.equal(healing[boundary], true, boundary);
 }
 
-const ga15 = 'recovery/output/web-assets/audio/sound/GA15.wav';
+const ga15 = 'apps/web/public/audio/sound/GA15.wav';
 assert.ok(existsSync(ga15), ga15);
 const evidence = {
   status: 'PASS',

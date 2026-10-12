@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRoleCombatState} from '../apps/server/src/battle/roles/combat-state';
-import {encodeRoleAmmoChange, receiveRoleAmmoChange} from '../recovery/evidence/roles/role-ammo-change-wire';
+import {encodeRoleAmmoChange, receiveRoleAmmoChange} from '../tests/evidence/roles/role-ammo-change-wire';
 interface State {seconds: number; deadline: number}
 interface Event {kind: string; key?: number; value?: number; bytes?: number[]; state?: State}
 const evidence: {uiFormatBytes: number[]; uiRows: {ui: boolean; hotkeys: boolean; item: boolean;

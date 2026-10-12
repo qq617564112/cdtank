@@ -1,0 +1,12 @@
+{
+  "1": {"azimuth": 15, "elevation": 5, "target": [0.5, 0.72, 0.775], "span": 0.74},
+  "2": {"azimuth": 35, "elevation": 20, "target": [0.5, 0.75, 0.78], "span": 0.78},
+  "3": {"azimuth": 5, "elevation": 5, "target": [0.5, 0.77, 0.815], "span": 0.58},
+  "4": {"azimuth": 40, "elevation": 10, "target": [0.5, 0.83, 0.76], "span": 0.60},
+  "5": {"azimuth": 35, "elevation": 15, "target": [0.5, 0.80, 0.82], "span": 0.55},
+  "101": {"azimuth": 25, "elevation": 5, "target": [0.5, 0.74, 0.755], "span": 0.70},
+  "102": {"azimuth": 15, "elevation": 5, "target": [0.5, 0.76, 0.85], "span": 0.64},
+  "103": {"azimuth": 20, "elevation": 5, "target": [0.5, 0.79, 0.90], "span": 0.60},
+  "104": {"azimuth": 20, "elevation": 5, "target": [0.5, 0.655, 0.84], "span": 0.59},
+  "105": {"azimuth": 15, "elevation": 5, "target": [0.5, 0.635, 0.90], "span": 0.49}
+}

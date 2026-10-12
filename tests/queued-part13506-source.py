@@ -6,12 +6,12 @@ import sys
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from inspect_assets import read_table
 from effect_sav import read_library
 from effect_controls import node_timings, particle_controls, sprite_controls
 
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 assets = ROOT / 'recovery/output/verified/assets/data'
 catalog = json.loads((web / 'combat-catalog.json').read_text())
 item = next(row for row in catalog['items'] if row['itemTableId'] == 17036)

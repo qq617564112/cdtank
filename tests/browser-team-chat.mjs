@@ -225,7 +225,7 @@ async function confirmed(session, text, channel, observers, excluded, quick = fa
 }
 try {
   await launchServer();
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     plugins: [{name: 'team-chat-readiness-observer', transform(source, id) {
       if (!id.endsWith('/src/match/battle.ts')) return;
       return source + `\nconst setQuickChats = Battle.prototype.setQuickChats; Battle.prototype.setQuickChats = function(value) {window.teamChatBattle = this; return setQuickChats.call(this, value);};\n`;

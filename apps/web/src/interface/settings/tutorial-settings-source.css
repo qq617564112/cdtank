@@ -6,7 +6,7 @@
   pointer-events: none;
 }
 
-.tutorial-settings-bar .source-state-button {
+.tutorial-settings-bar > .game-artwork-button {
   position: absolute;
   margin: 0;
   padding: 0;
@@ -16,7 +16,7 @@
   pointer-events: auto;
 }
 
-.tutorial-settings-bar .source-state-button:focus-visible {
+.tutorial-settings-bar > .game-artwork-button:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 1px;
 }
@@ -25,31 +25,5 @@
   position: absolute;
   left: 601px;
   top: 4px;
-  box-sizing: border-box;
-  min-width: 199px;
-  padding: 6px 10px;
-  border: 1px solid #d9bd80;
-  background: #13244d;
-  color: #fff;
   pointer-events: auto;
-}
-
-.tutorial-settings-feedback p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 18px;
-}
-
-.tutorial-settings-feedback button {
-  margin-top: 4px;
-  padding: 4px 12px;
-  border: 1px solid #d9bd80;
-  background: #243e73;
-  color: #fff;
-  cursor: pointer;
-}
-
-.tutorial-settings-feedback button:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
 }

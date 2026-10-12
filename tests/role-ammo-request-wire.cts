@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {decodeRoleAmmoRequest, encodeRoleAmmoRequest, ROLE_AMMO_REQUEST_BODY_BITS,
-  ROLE_AMMO_REQUEST_MESSAGE_TYPE} from '../recovery/evidence/combat/role-ammo-request-wire';
-import {decodeRoleAmmoChange, ROLE_AMMO_CHANGE_MESSAGE_TYPE} from '../recovery/evidence/roles/role-ammo-change-wire';
+  ROLE_AMMO_REQUEST_MESSAGE_TYPE} from '../tests/evidence/combat/role-ammo-request-wire';
+import {decodeRoleAmmoChange, ROLE_AMMO_CHANGE_MESSAGE_TYPE} from '../tests/evidence/roles/role-ammo-change-wire';
 
 interface Request {slot: number; field10: number}
 const evidence: {status: string; rows: {present: boolean; status: number;

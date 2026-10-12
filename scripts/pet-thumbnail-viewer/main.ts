@@ -1,10 +1,16 @@
-import {ArcRotateCamera, Camera, Color3, Color4, Engine, HemisphericLight, Matrix,
+import {ArcRotateCamera, Camera, Color3, Color4, Engine, HemisphericLight,
   Scene, Vector3, VertexBuffer} from '@babylonjs/core';
 import {PetView} from '../../apps/web/src/assets/pets/pet-view';
 
 interface ThumbnailPet {id: number; name: string;}
+interface PortraitFraming {
+  azimuth: number;
+  elevation: number;
+  target: [number, number, number];
+  span: number;
+}
 interface ThumbnailViewer {
-  render(pet: ThumbnailPet, size: number): Promise<string>;
+  render(pet: ThumbnailPet, size: number, framing: PortraitFraming): Promise<string>;
   overview(): Promise<string>;
 }
 
@@ -18,11 +24,10 @@ const engine = new Engine(canvas, true, {alpha: true, preserveDrawingBuffer: tru
 engine.setHardwareScalingLevel(1);
 const rendered = new Map<number, {name: string; png: string}>();
 
-/** Frame the forward upper geometry so small avatars retain a readable face. */
-function framePet(scene: Scene, camera: ArcRotateCamera, view: PetView): void {
+/** Apply the camera and crop selected by visually comparing the original portrait. */
+function framePet(scene: Scene, camera: ArcRotateCamera, view: PetView, framing: PortraitFraming): void {
   const meshes = view.root.getChildMeshes().filter(mesh => mesh.isEnabled() && mesh.getTotalVertices() > 0);
   if (!meshes.length) throw new Error(`宠物 ${view.petId} 没有可显示的网格`);
-  const points: Vector3[] = [];
   let minimum = new Vector3(Infinity, Infinity, Infinity);
   let maximum = new Vector3(-Infinity, -Infinity, -Infinity);
   for (const mesh of meshes) {
@@ -30,38 +35,24 @@ function framePet(scene: Scene, camera: ArcRotateCamera, view: PetView): void {
     const positions = mesh.getVerticesData(VertexBuffer.PositionKind)!;
     for (let offset = 0; offset < positions.length; offset += 3) {
       const point = Vector3.TransformCoordinates(Vector3.FromArray(positions, offset), mesh.getWorldMatrix());
-      points.push(point);
       minimum = Vector3.Minimize(minimum, point); maximum = Vector3.Maximize(maximum, point);
     }
   }
-  const height = maximum.y - minimum.y;
-  const portrait = points.filter(point => point.y >= minimum.y + height * 0.40
-    && point.z >= (minimum.z + maximum.z) / 2);
-  if (!portrait.length) throw new Error(`宠物 ${view.petId} 缺少头像网格`);
-  let portraitMin = portrait[0].clone(), portraitMax = portrait[0].clone();
-  for (const point of portrait) {
-    portraitMin = Vector3.Minimize(portraitMin, point); portraitMax = Vector3.Maximize(portraitMax, point);
-  }
-  camera.target = portraitMin.add(portraitMax).scale(0.5);
-  camera.radius = maximum.subtract(minimum).length() * 3;
+  const extent = maximum.subtract(minimum);
+  camera.target = minimum.add(new Vector3(extent.x * framing.target[0],
+    extent.y * framing.target[1], extent.z * framing.target[2]));
+  camera.alpha = framing.azimuth * Math.PI / 180;
+  camera.beta = (90 - framing.elevation) * Math.PI / 180;
+  camera.radius = extent.length() * 3;
   camera.minZ = 0.1; camera.maxZ = camera.radius * 4;
-  const matrix = camera.getViewMatrix(true);
-  let left = Infinity, right = -Infinity, bottom = Infinity, top = -Infinity;
-  for (const point of portrait) {
-    const projected = Vector3.TransformCoordinates(point, matrix);
-    left = Math.min(left, projected.x); right = Math.max(right, projected.x);
-    bottom = Math.min(bottom, projected.y); top = Math.max(top, projected.y);
-  }
-  camera.target.addInPlace(Vector3.TransformNormal(new Vector3((left + right) / 2, (bottom + top) / 2, 0),
-    Matrix.Invert(matrix)));
-  const halfSize = Math.max(right - left, top - bottom) * 0.56;
+  const halfSize = extent.y * framing.span / 2;
   camera.mode = Camera.ORTHOGRAPHIC_CAMERA;
   camera.orthoLeft = -halfSize; camera.orthoRight = halfSize;
   camera.orthoBottom = -halfSize; camera.orthoTop = halfSize;
   scene.activeCamera = camera;
 }
 
-async function render(pet: ThumbnailPet, size: number): Promise<string> {
+async function render(pet: ThumbnailPet, size: number, framing: PortraitFraming): Promise<string> {
   engine.setSize(size * 2, size * 2);
   const scene = new Scene(engine);
   scene.clearColor = new Color4(0, 0, 0, 0); scene.ambientColor = Color3.White();
@@ -73,12 +64,15 @@ async function render(pet: ThumbnailPet, size: number): Promise<string> {
     view = await PetView.load(scene, pet.id);
     scene.onBeforeRenderObservable.clear(); scene.animationsEnabled = false;
     for (const group of view.assets.animationGroups) group.goToFrame(0);
-    framePet(scene, camera, view);
+    framePet(scene, camera, view, framing);
     scene.render(); await scene.whenReadyAsync(); scene.render();
     const output = document.createElement('canvas'); output.width = size; output.height = size;
     const context = output.getContext('2d')!;
     context.imageSmoothingEnabled = true; context.imageSmoothingQuality = 'high';
+    context.fillStyle = '#2382f5'; context.fillRect(0, 0, size, size);
     context.drawImage(canvas, 0, 0, size, size);
+    context.strokeStyle = '#000'; context.lineWidth = size / 32;
+    context.strokeRect(size / 64, size / 64, size * 31 / 32, size * 31 / 32);
     const png = output.toDataURL('image/png');
     rendered.set(pet.id, {name: pet.name, png});
     return png;
@@ -96,7 +90,7 @@ async function overview(): Promise<string> {
   const context = output.getContext('2d')!;
   context.fillStyle = '#f2eadb'; context.fillRect(0, 0, output.width, output.height);
   context.fillStyle = '#302b24'; context.font = '24px pet-thumbnail-label';
-  context.fillText('宠物高清头像 · 3D 模型渲染 · 512 × 512', 24, 36);
+  context.fillText('宠物高清头像 · 3D 模型渲染 · 1024 × 1024', 24, 36);
   let index = 0;
   for (const [id, thumbnail] of rendered) {
     const x = index % columns * cellWidth, y = header + Math.floor(index / columns) * cellHeight;

@@ -15,44 +15,5 @@
   scrollbar-width: none;
 }
 
-.home-inventory-list-scrollbar {
-  position: absolute;
-  box-sizing: border-box;
-  max-height: 100%;
-  right: 0;
-  top: 0;
-  width: 5%;
-  overflow: hidden;
-  background-repeat: repeat;
-  background-position: left top;
-}
-
-#home-inventory .home-inventory-list-scrollbar div,
-#home-inventory .home-inventory-list-scrollbar span,
-#home-inventory .home-inventory-list-scrollbar button {
-  position: absolute;
-  left: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  box-sizing: border-box;
-  background: transparent center / 100% 100% no-repeat;
-}
-
-#home-inventory .home-inventory-list-scrollbar button {
-  display: block;
-  min-height: 0;
-  gap: 0;
-}
-
-.home-inventory-list-scroll-track {width: 100%;}
-.home-inventory-list-scroll-thumb {width: 28px; overflow: hidden;}
-.home-inventory-list-thumb-top {top: 0; width: 28px; height: 29px;}
-.home-inventory-list-thumb-middle {top: 29px; bottom: 17px; width: 28px;}
-.home-inventory-list-thumb-bottom {bottom: 0; width: 28px; height: 17px;}
-#home-inventory .home-inventory-list-scrollbar .home-inventory-list-scroll-up {top: 0; width: 28px; height: 26px;}
-#home-inventory .home-inventory-list-scrollbar .home-inventory-list-scroll-down {bottom: 0; width: 28px; height: 27px;}
-#home-inventory .home-inventory-list-scrollbar :focus-visible {outline: 1px solid white; outline-offset: -1px;}
-
 #home-inventory .home-inventory-source-list button {display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px; min-height: 38px; color: white; border: 0; background: transparent center / 100% 100% no-repeat; font: inherit; text-align: left;}
 .home-inventory-source-icon {flex: 0 0 32px; width: 32px; height: 32px; background: center / contain no-repeat;}

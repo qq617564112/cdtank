@@ -7,14 +7,14 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_EIP, UC_X86_REG_EAX, UC_X86_REG_FPCW
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 machine,_=map_original_binaries([ROOT/'CDTank'/n for n in ['CDTank.exe','gbengine.dll','msvcr71.dll']])
 machine.mem_map(0,4096);machine.mem_map(0x2000000,0x100000)
 OBJECT,DEFINITION,RESOURCE,SEGMENTS,WORLD=0x2010000,0x2011000,0x2015000,0x2020000,0x2030000
 TARGET_A,TARGET_B,VTABLE,GET_POSITION,PARENT=0x2040000,0x2041000,0x2042000,0x2043000,0x2044000
 STACK,STOP=0x2008000,0x203f000
-library=json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text())
+library=json.loads((ROOT/'apps/web/public/effect-library.json').read_text())
 random_values=[];random_index=0;alloc=0x2050000;position_calls=[]
 def uint(a):return struct.unpack('<I',machine.mem_read(a,4))[0]
 def write(a,v):machine.mem_write(a,struct.pack('<I',v))

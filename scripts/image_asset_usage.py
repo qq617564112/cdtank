@@ -6,7 +6,6 @@ from pathlib import Path
 import struct
 import subprocess
 from urllib.parse import unquote
-from ui_artwork_scope import html_ui_sources
 
 IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif', '.bmp', '.ico'}
 
@@ -15,14 +14,12 @@ def image_usage(root, runtime, names):
     names = set(names)
     scan = json.loads(subprocess.check_output(
         ['node', str(root / 'scripts/image-resource-references.mjs'), str(root)], text=True))
-    html_artwork = html_ui_sources()
-    retired = html_artwork
     reasons = defaultdict(set)
     missing = []
 
     def add(path, reason):
         path = unquote(path).lstrip('/')
-        if Path(path).suffix.lower() not in IMAGE_EXTENSIONS or path in retired:
+        if Path(path).suffix.lower() not in IMAGE_EXTENSIONS:
             return
         reasons[path].add(reason)
 
@@ -66,7 +63,7 @@ def image_usage(root, runtime, names):
     references(ui, 'ui-catalog')
 
     catalog_paths = {path.relative_to(runtime).as_posix(): path for path in runtime.rglob('*.json')
-                     if path.name not in ('sprite-images.json', 'ui.json', 'image-assets.json')}
+                     if path.name not in ('ui.json', 'image-assets.json')}
     pending = [name for name in catalog_paths
                if any(fnmatch.fnmatchcase(name, pattern) for pattern in scan['patterns'])]
     catalogs = set()
@@ -111,6 +108,6 @@ def image_usage(root, runtime, names):
                 missing.append(dict(model=path.relative_to(runtime).as_posix(), image=target))
 
     return dict(images=sorted(reasons), reasons={name: sorted(value) for name, value in sorted(reasons.items())},
-                retired=sorted(retired), chatGlyphImages=[], catalogs=sorted(catalogs), modules=scan['modules'],
+                catalogs=sorted(catalogs), modules=scan['modules'],
                 removedImagesets=removed_sets, removedLayouts=removed_layouts, ui=ui, models=model_count, modelReferences=model_references,
                 missingModelImages=missing)

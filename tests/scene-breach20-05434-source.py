@@ -4,11 +4,11 @@ from pathlib import Path
 import sys
 import wave
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from cvd import read_cvd
 from scene import read_scene
 base = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 reference = 'Data/scnobj/obj05434/c9.CVD'
 original = read_cvd(base / reference)
 resource = next(r for r in json.loads((web / 'scene-breach-0020.json').read_text())['resources'] if r['reference'] == reference)

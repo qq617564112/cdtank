@@ -47,7 +47,7 @@ async function check(): Promise<void> {
   const pending = new Promise<void>(resolve => {release = resolve;});
   Object.defineProperty(globalThis, 'fetch', {configurable: true, value: async (path: string) => {
     await pending;
-    return {ok: true, json: async () => JSON.parse(readFileSync(`recovery/output/web-assets${path}`, 'utf8'))};
+    return {ok: true, json: async () => JSON.parse(readFileSync(`apps/web/public${path}`, 'utf8'))};
   }});
   const state = runtime as unknown as {skillSound: {context?: AudioContextBoundary}; textures: Map<string, unknown>; library?: unknown};
   try {

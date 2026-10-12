@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import {useEffect, useRef, useState} from 'react';
 import type {Battle} from '../../match/battle';
 import './lobby-identity-view.css';
@@ -28,7 +29,7 @@ export function LobbyIdentityView({battle, visible}: {battle: Battle; visible: b
   async function save() {
     if (!visible || pending.current || composing.current) return;
     const current = generation.current;
-    pending.current = true; setBusy(true); setStatus('确认中');
+    pending.current = true; setBusy(true); setStatus('');
     try {
       const name = await battle.displayName(draft);
       if (current !== generation.current) return;
@@ -52,6 +53,6 @@ export function LobbyIdentityView({battle, visible}: {battle: Battle; visible: b
         if (event.key === 'Enter' && (composing.current || event.nativeEvent.isComposing || event.keyCode === 229)) event.preventDefault();
       }} onKeyUp={event => event.stopPropagation()}/>
     <button type="submit" data-lobby-name-save disabled={busy}>确认昵称</button>
-    <output data-lobby-name-status role="status">{status}</output>
+    <GameMessage data-lobby-name-status="" text={status}/>
   </form>;
 }

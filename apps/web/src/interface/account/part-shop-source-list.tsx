@@ -1,4 +1,5 @@
 import {backgroundStyle} from '../../assets/image-artwork';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import {gameContent} from '../../../../shared/content/catalog';
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import type {ShopItem} from '../../../../shared/protocols/PtlShop';
@@ -10,7 +11,7 @@ import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout
 
 export interface ShopSourceListEntry {id: number; name: string; iconId: number; detail: string; itemTableId?: number; ownedQuantity?: number; moneyPrice?: number; product?: ShopItem; installed?: boolean;}
 
-/** Original list bounds and selection image with React-owned candidate and keyboard focus. */
+/** Original list bounds with React-owned selection and keyboard focus. */
 export function PartShopSourceList({ui, source, entries, selected, busy, select, activate, canActivate,
   describe, dismissDescription, described}: {
   ui: HomeSourceUi; source: 'lstShopEquip' | 'lstMyEquip'; entries: ShopSourceListEntry[];
@@ -20,7 +21,6 @@ export function PartShopSourceList({ui, source, entries, selected, busy, select,
 }) {
   const root = useRef<HTMLDivElement>(null);
   const layout = new HomeSourceLayout(ui, 'shop_partpage.xml');
-  const selection = sourceProps(ui, layout, 'shop_partpage.xml', source, layout.control(source).properties.SelectionImage);
   function move(index: number) {
     const entry = entries[Math.max(0, Math.min(entries.length - 1, index))];
     if (!entry) return;
@@ -51,8 +51,6 @@ export function PartShopSourceList({ui, source, entries, selected, busy, select,
         {...(originalOwnedRow ? {'data-part-owned-source-row': entry.id} : originalProductRow ? {'data-part-product-source-row': entry.id} : {})}
         {...(source === 'lstShopEquip' ? {'data-part-product-id': entry.id} : {'data-part-owned-instance': entry.id})}
         tabIndex={entry.id === selected || selected === undefined && index === 0 ? 0 : -1}
-        style={entry.id === selected ? {...backgroundStyle(selection.style)} : undefined}
-        data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
         onMouseEnter={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
         onFocus={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
         onClick={() => select(entry.id)}
@@ -69,6 +67,7 @@ export function PartShopSourceList({ui, source, entries, selected, busy, select,
         }} onKeyUp={event => {
           if (['Enter', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
         }}>
+        {entry.id === selected && <GameSelectionHighlight/>}
         {originalOwnedRow || originalProductRow ? <PartShopRowContent ui={ui} name={entry.name} iconId={entry.iconId}
           itemTableId={entry.itemTableId!} ownedQuantity={entry.ownedQuantity} moneyPrice={entry.moneyPrice}
           installed={originalProductRow ? undefined : entry.installed} product={originalProductRow ? entry.product : undefined}/> : <>

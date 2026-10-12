@@ -23,7 +23,7 @@ async function main() {
   const output = `recovery/output/account-backup-history-restore-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
   const evidence: Record<string, unknown> = {status: 'RUNNING', port: 3431,
     scope: 'Restore existing ordinary two-round history checkpoint without new battle or settlement.',
-    source, reusedOriginalEvidence: 'recovery/docs/account-history.md'};
+    source, reusedOriginalEvidence: 'docs/recovery/account-history.md'};
   let server: ChildProcess | undefined;
   const client = new WsClient(serviceProto, {server: 'ws://127.0.0.1:3431', logger: undefined});
   try {

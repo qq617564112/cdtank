@@ -1,4 +1,6 @@
+import {GameMessage} from '../resources/game-message';
 import {backgroundStyle} from '../../assets/image-artwork';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import {loadCombatCatalog} from '../../content';
 import './trade-source-page.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
@@ -186,10 +188,9 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
     }).map(item => ({kind: 'item', instanceId: item.instanceId, item}));
 
   const layout = ui ? new HomeSourceLayout(ui, suffix) : undefined;
+  // The zkd5 frame's main contour is inset 6px from its right bound.
+  const topbarWidth = ui && layout ? Number(sourceProps(ui, layout, suffix, 'zkb').style.width) - 6 : undefined;
   const businessReady = !!ui && !!catalog && !!layout;
-  const candidateList = tab === 'item' ? 'lstMyItem' : tab === 'equipment' ? 'lstMyEquip' : 'lstMyTankMyPet';
-  const candidateSelection = ui && layout
-    ? sourceProps(ui, layout, suffix, candidateList, layout.control(candidateList).properties.SelectionImage) : undefined;
   const controls = ui?.layouts.find(value => value.path.endsWith(suffix))?.windows ?? [];
   const visible = (name: string): boolean => {
     for (let control = layout?.control(name); control; control = control.parent ? layout?.control(control.parent) : undefined) {
@@ -230,7 +231,8 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
       {ui && layout && <SourceImageScale value={scale}>
         {controls.filter(control => control.type === 'WindowsLook/StaticImage' && visible(control.name)
           && !/^pic(My|Other)Item\d+$/.test(control.name)).map(control =>
-          <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} aria-hidden="true"/>)}
+          <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name}
+            style={control.name === 'lanseditu' ? {width: topbarWidth} : undefined} aria-hidden="true"/>)}
         {controls.filter(control => control.type === 'WindowsLook/StaticText' && visible(control.name)
           && !/^txt(My|Other)ItemCount\d+$/.test(control.name) && !['txtMyMoney', 'txtMyOriginality', 'txtMyTech'].includes(control.name)).map(control =>
           <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name} text={texts[control.name] ?? ''}/>)}
@@ -259,8 +261,6 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
               <button type="button" className="trade-source-candidate-row" role="option" aria-selected={selected}
                 aria-pressed={selected} disabled={!candidateAvailable(record)}
                 {...rowData} aria-label={display.name || undefined}
-                style={selected && candidateSelection ? {...backgroundStyle(candidateSelection.style)} : undefined}
-                data-source-selection-asset={selected ? candidateSelection?.['data-source-asset'] : undefined}
                 onClick={() => toggle(record)} data-trade-record-toggle={keyOf(record)} onKeyDown={event => {
                   const next = event.key === 'ArrowDown' ? candidates.indexOf(record) + 1
                     : event.key === 'ArrowUp' ? candidates.indexOf(record) - 1
@@ -284,6 +284,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
                 }} onKeyUp={event => {
                   if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter', ' '].includes(event.key)) event.stopPropagation();
                 }}>
+                {selected && <GameSelectionHighlight/>}
                 {catalog && rowData && <TradeCandidateRowContent ui={ui} catalog={catalog} record={record}
                   current={recordCurrent} offered={recordOffered}/>}
               </button>
@@ -339,8 +340,9 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
           {resourceLoading ? '重试中' : '重试交易资源'}
         </button>}
         {!ui && <button type="button" data-trade-web-close="" disabled={pending} onClick={close}>关闭交易</button>}
-        <output aria-live="polite" data-trade-status="">{localError || resourceError || status || session?.reason
-          || (session?.phase === 'COMPLETED' ? '交易已完成' : session?.phase === 'CANCELLED' ? '交易已取消' : dirty ? '提供物尚未提交' : '')}</output>
+        <GameMessage data-trade-status="" text={localError || resourceError || status || session?.reason
+          || (session?.phase === 'COMPLETED' ? '交易已完成' : session?.phase === 'CANCELLED' ? '交易已取消' : dirty ? '提供物尚未提交' : '')}
+          tone={localError || resourceError ? 'error' : session?.phase === 'COMPLETED' ? 'success' : 'info'}/>
       </div>
     </div>
     {ui && detail && <TradeSourceDetail ui={ui} catalog={catalog} record={detail} scale={scale} close={() => setDetail(undefined)}/>}

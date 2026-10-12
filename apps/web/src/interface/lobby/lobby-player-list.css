@@ -1,3 +1,19 @@
+.lobby-player-scroll-shell {
+  position: absolute;
+  overflow: hidden;
+}
+
+.lobby-player-scroll-shell .lobby-player-list {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  scrollbar-width: none;
+}
+
+.lobby-player-list::-webkit-scrollbar {
+  display: none;
+}
+
 .lobby-player-list {
   position: absolute;
   box-sizing: border-box;
@@ -12,15 +28,6 @@
 .lobby-player-list li {
   margin: 0;
   padding: 0;
-}
-
-.lobby-player-list [data-lobby-presence-status] {
-  margin: 0;
-  padding: 2px 4px;
-  color: #fff;
-  font: inherit;
-  line-height: 16px;
-  overflow-wrap: anywhere;
 }
 
 .lobby-player-list button {

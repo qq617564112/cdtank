@@ -1,6 +1,8 @@
+import {GameMessage} from '../resources/game-message';
 import './history.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {ResHistory} from '../../../../shared/protocols/PtlHistory';
+import {useNavigationNumber} from '../../navigation/route';
 
 export interface AccountHistorySource {
   history(offset?: number, limit?: number): Promise<ResHistory>;
@@ -28,7 +30,8 @@ function HistorySession({close, source}: Omit<AccountHistoryViewProps, 'open'>) 
   const requestFocus = useRef<HTMLElement | null>(null);
   const [confirmed, setConfirmed] = useState<ResHistory>();
   const [pending, setPending] = useState(true);
-  const [status, setStatus] = useState('载入对局记录…');
+  const [status, setStatus] = useState('');
+  const [routeOffset, setRouteOffset] = useNavigationNumber('historyOffset');
 
   useEffect(() => {
     const element = dialog.current!;
@@ -44,9 +47,9 @@ function HistorySession({close, source}: Omit<AccountHistoryViewProps, 'open'>) 
     const current = {active: true, pending: false, generation: 0};
     session.current = current;
     setConfirmed(undefined);
-    void load(0, current);
+    void load(routeOffset ?? 0, current);
     return () => {current.active = false; current.generation++;};
-  }, [source]);
+  }, [source, routeOffset]);
 
   useLayoutEffect(() => {
     if (pending || !requestFocus.current) return;
@@ -63,12 +66,12 @@ function HistorySession({close, source}: Omit<AccountHistoryViewProps, 'open'>) 
     const generation = ++current.generation;
     current.pending = true;
     setPending(true);
-    setStatus('载入对局记录…');
+    setStatus('');
     try {
       const response = await source.history(offset, PAGE_LIMIT);
       if (!current.active || generation !== current.generation) return;
       setConfirmed(response);
-      setStatus(response.total ? `共 ${response.total} 场已保存比赛` : '还没有已保存的对局记录');
+      setStatus('');
     } catch (error) {
       if (current.active && generation === current.generation) {
         setStatus(`对局记录载入失败：${error instanceof Error ? error.message : String(error)}`);
@@ -96,8 +99,10 @@ function HistorySession({close, source}: Omit<AccountHistoryViewProps, 'open'>) 
     onCancel={event => {event.preventDefault(); requestClose();}}
     onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}>
     <h2 id="account-history-title">我的对局记录</h2>
-    <p className="account-history-description">账户保存的比赛结算</p>
-    <output data-history-status="" role="status" aria-live="polite">{status}</output>
+    <p className="account-history-description">{confirmed
+      ? confirmed.total ? `共 ${confirmed.total} 场已保存比赛` : '还没有已保存的对局记录'
+      : '账户保存的比赛结算'}</p>
+    <GameMessage data-history-status="" text={status} tone="error"/>
     <div className="account-history-scroll">
       <table aria-label="已结束的比赛">
         <thead><tr>{['时间', '模式 / 地图', '胜负 / 排名', '击杀 / 死亡', '目标', '得分', '结束原因'].map(label =>
@@ -118,10 +123,10 @@ function HistorySession({close, source}: Omit<AccountHistoryViewProps, 'open'>) 
     </div>
     <nav aria-label="对局记录分页">
       <button type="button" data-history-previous="" disabled={pending || !confirmed || offset === 0}
-        onClick={() => {void load(Math.max(0, offset - PAGE_LIMIT));}}>上一页</button>
+        onClick={() => setRouteOffset(Math.max(0, offset - PAGE_LIMIT))}>上一页</button>
       <span data-history-page="">{confirmed && `第 ${Math.floor(offset / PAGE_LIMIT) + 1} / ${Math.max(1, Math.ceil(total / PAGE_LIMIT))} 页`}</span>
       <button type="button" data-history-next="" disabled={pending || !confirmed || offset + records.length >= total}
-        onClick={() => {void load(offset + PAGE_LIMIT);}}>下一页</button>
+        onClick={() => setRouteOffset(offset + PAGE_LIMIT)}>下一页</button>
       <button type="button" data-history-refresh="" disabled={pending}
         onClick={() => {void load(offset);}}>刷新 / 重试</button>
     </nav>

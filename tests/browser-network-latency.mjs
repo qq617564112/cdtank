@@ -62,7 +62,7 @@ try {
   await startServer();
   delayProxy=new WebSocket.Server({port:3390,host:'127.0.0.1'});
   delayProxy.on('connection',down=>{const up=new WebSocket('ws://127.0.0.1:3389');proxySockets.add(down);proxySockets.add(up);down._socket.pause();up.once('open',()=>{forward(down,up,'input');forward(up,down,'snapshot');down._socket.resume();});down.on('close',()=>up.close());up.on('close',()=>down.close());});
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5449,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3390',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5449,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3390',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9649',

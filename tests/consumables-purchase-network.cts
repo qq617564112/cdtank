@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {WsClient} from 'tsrpc';
 import {serviceProto} from '../apps/shared/protocols/serviceProto';
 import {AccountStore} from '../apps/server/src/account-store';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
 import type {MsgRoomSnapshot} from '../apps/shared/protocols/MsgRoomSnapshot';
 import type {MsgRoomEvent} from '../apps/shared/protocols/MsgRoomEvent';
@@ -36,7 +36,7 @@ async function main(): Promise<void> {
     seed.replaceRoleProfile(account.accountId, {bytes, strings: [account.accountId, 'Consumables acceptance pet']});
   }
   seed.close();
-  const catalog: CombatCatalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+  const catalog: CombatCatalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
   const expectedItems: ShopItem[] = [1, 2, 3, 4, 5, 6, 7, 8, 2007, 2011].map(id => {
     const item = catalog.items.find(row => row.itemTableId === id)!;
     assert(item && item.iconId !== undefined && item.moneyPrice !== undefined && item.tokenPrice !== undefined);

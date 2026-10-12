@@ -1,5 +1,6 @@
 import type {PlayerTitle} from './MsgRoomSnapshot';
 import type {AccountStatistics, AwardCounts} from './PtlRoleProfile';
+import type {OwnedTankTextures} from '../combat/role-owned-textures';
 
 /** Narrow public target profile query; absent fields remain unknown. */
 export interface ReqPlayerProfile {
@@ -19,5 +20,11 @@ export interface ResPlayerProfile {
   family?: {
     id: string;
     name: string;
+  };
+  /** Selected target models and appearance, resolved from persisted owned roles. */
+  models?: {
+    tankId: number;
+    petId: number;
+    textures?: OwnedTankTextures;
   };
 }

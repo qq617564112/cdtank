@@ -196,7 +196,7 @@ async function checkCard(session,id,expected,label,capture=false){
 }
 async function openCards(session){await click(session,'#open-room-cards');await waitUntil(session,`document.querySelector('${modal}').open&&document.querySelector('${card('R6')} [data-source-raster-glyph]')`);}
 try{
-  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5331,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3310',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5331,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3310',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   for(const [roomName,maxPlayers] of [['中文房间',6],['加入房间',6],['人数满房',2]]){const owner=await fixtureClient();const result=await owner.callApi('CreateRoom',{mode:1,mapId:7,minPlayers:2,maxPlayers,roomName,name:roomName,tankId:1});assert(result.isSucc,JSON.stringify(result));}
   const fullGuest=await fixtureJoin('R8','满员客');
   await launchBrowser();const page=await newPage();await input(page,'#player-name','卡片玩家');await click(page,'#refresh-rooms');await waitUntil(page,`[...document.querySelector('#room').options].some(o=>o.value==='R6')`);await openCards(page);

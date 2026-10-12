@@ -1,35 +1,14 @@
+import {LoadingErrorDialog} from './loading-error-dialog';
 import type {ComponentPropsWithoutRef, ReactNode} from 'react';
+import {imageResourceUrl} from '../../assets/image-cache';
 import {ImageArtwork} from './image-artwork';
 import {useSourceScale} from '../lobby/source-react';
-import './loading-page.css';
-
-/** Embedded letter fills in the original 800×600 background content. */
-const LOADING_WORDS: Record<number, {left: number; top: number; width: number; height: number;
-  empty: string; full: string}> = {
-  1: {left: 425, top: 537, width: 342, height: 39,
-    empty: '/local-images/interface/resources/loading-words/1-empty.png',
-    full: '/local-images/interface/resources/loading-words/1-full.png'},
-  2: {left: 24, top: 533, width: 342, height: 39,
-    empty: '/local-images/interface/resources/loading-words/2-empty.png',
-    full: '/local-images/interface/resources/loading-words/2-full.png'},
-  3: {left: 8, top: 523, width: 342, height: 39,
-    empty: '/local-images/interface/resources/loading-words/3-empty.png',
-    full: '/local-images/interface/resources/loading-words/3-full.png'},
-  4: {left: 439, top: 530, width: 342, height: 39,
-    empty: '/local-images/interface/resources/loading-words/4-empty.png',
-    full: '/local-images/interface/resources/loading-words/4-full.png'},
-  5: {left: 11, top: 554, width: 302, height: 36,
-    empty: '/local-images/interface/resources/loading-words/5-empty.png',
-    full: '/local-images/interface/resources/loading-words/5-full.png'},
-};
+import './loading-page.css?v=20261010-zcool-5';
 
 export function getLoadingArtwork(background: number) {
-  const word = LOADING_WORDS[background];
   return {
     background: `/Data/ui/loading/${background}.png`,
     tank: '/Data/ui/loading/tanke.png',
-    progressEmpty: word.empty,
-    progressFull: word.full,
   };
 }
 
@@ -37,45 +16,44 @@ interface LoadingPageProps extends Omit<ComponentPropsWithoutRef<'section'>, 'ch
   background: number;
   progress?: number;
   status: string;
+  error?: string;
   details?: string;
   artworkReady?: boolean;
   actions?: ReactNode;
 }
 
-/** Shared loading backdrop with centered 800×600 progress and actions. */
-export function LoadingPage({background, progress, status, details, artworkReady = true,
+/** Crop one widescreen master while keeping the original controls in the safe area. */
+export function LoadingPage({background, progress, status, error, details, artworkReady = true,
   actions, className, ...attributes}: LoadingPageProps) {
   const {viewport, stage} = useSourceScale(800, 600, 0, 0, 0.1, Infinity);
   const artwork = getLoadingArtwork(background);
-  const {left, top, width, height} = LOADING_WORDS[background];
   const fraction = Math.max(0, Math.min(1, progress ?? 0));
-  return <section {...attributes} className={`loading-page${className ? ` ${className}` : ''}`}>
+  const percent = Math.floor(fraction * 100);
+  return <section {...attributes} className={`loading-page${className ? ` ${className}` : ''}`}
+    data-loading-background={background}>
+    {artworkReady && <img className="loading-background" src={imageResourceUrl(artwork.background)}
+      width={3840} height={2160} alt="" aria-hidden="true" draggable={false}/>}
     <div className="loading-viewport" style={viewport}>
       <div className="loading-stage" style={stage}>
-        {artworkReady && <div className="loading-background" aria-hidden="true">
-          <ImageArtwork asset={artwork.background}
-            style={{width: `${1024 / 800 * 100}%`, height: `${1024 / 600 * 100}%`}}/>
-        </div>}
         <div className="loading-content">
-          {artworkReady && <>
-            <ImageArtwork className="loading-tank" asset={artwork.tank} aria-hidden="true"/>
-            <div className="loading-word" style={{left, top, width, height}}
-              role="progressbar" aria-label="本机资源加载进度"
-              aria-valuemin={0} aria-valuemax={100}
-              aria-valuenow={progress === undefined ? undefined : Math.round(fraction * 100)}
-              aria-valuetext={status}>
-              <ImageArtwork asset={artwork.progressEmpty} aria-hidden="true"/>
-              <ImageArtwork asset={artwork.progressFull} aria-hidden="true"
-                style={{clipPath: `inset(0 ${(1 - fraction) * 100}% 0 0)`}}/>
-            </div>
-          </>}
-          <output className="loading-status" role="status" aria-live="polite">
-            {status}
-            {details && <span className="loading-details">{details}</span>}
-          </output>
-          {actions && <div className="loading-actions">{actions}</div>}
+          {artworkReady && <ImageArtwork className="loading-tank" asset={artwork.tank} aria-hidden="true"/>}
+          {artworkReady && <div className="loading-word" role="progressbar" aria-label="本机资源加载进度"
+            aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}
+            aria-valuetext={`${status} ${percent}%`}>
+            <span className="loading-label" aria-hidden="true">
+              {Array.from('LOADING...').map((character, index) =>
+                <span className="loading-character" key={index}
+                  style={{animationDelay: `${index * 70}ms`}}>{character}</span>)}
+            </span>
+            <span className="loading-percent" aria-hidden="true">
+              {Array.from(`${String(percent).padStart(3, '\u00a0')}%`).map((character, index) =>
+                <span className="loading-character" key={index}
+                  style={{animationDelay: `${(index + 11) * 70}ms`}}>{character}</span>)}
+            </span>
+          </div>}
         </div>
       </div>
     </div>
+    {error && <LoadingErrorDialog message={error} details={details} actions={actions}/>}
   </section>;
 }

@@ -20,7 +20,7 @@ const source = JSON.parse(readFileSync('recovery/output/scene-animation-0021-sou
   status: string; record: {position: number[]; matrix: number[]};
   constantTracks: {constantSourceValues: boolean}[]; emptyNodes: number;
 };
-const resource = JSON.parse(readFileSync('recovery/output/web-assets/scene-animation-0007.json', 'utf8')).resources[0] as EffectModelResource;
+const resource = JSON.parse(readFileSync('apps/web/public/scene-animation-0007.json', 'utf8')).resources[0] as EffectModelResource;
 assert.equal(run.status, 'PASS'); assert.equal(source.status, 'PASS');
 assert.equal(source.constantTracks.length,9); assert.equal(source.emptyNodes,20);
 assert(source.constantTracks.every(track => track.constantSourceValues));

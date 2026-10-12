@@ -1,0 +1,16 @@
+.game-stat-row {
+  position: absolute;
+  display: grid;
+  align-content: center;
+  box-sizing: border-box;
+  padding: 1px 7px 2px;
+  pointer-events: none;
+}
+
+.game-stat-content {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  white-space: nowrap;
+}

@@ -81,7 +81,7 @@ machine.mem_write(VTABLE, bytes(0x44))
 for offset in [0x10, 0x28, 0x2c, 0x30, 0x38]:
     machine.mem_write(VTABLE + offset, struct.pack('<I', STUBS + offset))
 machine.mem_write(VTABLE + 0x24, struct.pack('<I', 0x47eef0))
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 rows = []
 for timing in library['nodeTimings']:
     for retain in [False, True]:

@@ -5,7 +5,7 @@ import {RoleCombatState} from '../apps/server/src/battle/roles/combat-state';
 import {selectRoleSkills} from '../apps/server/src/battle/roles/skills';
 import {readRoleDataScaleLimits} from '../apps/server/src/battle/roles/data-scale';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
-import {accumulateRoleReload, computeRoleReload} from '../recovery/evidence/roles/reload';
+import {accumulateRoleReload, computeRoleReload} from '../tests/evidence/roles/reload';
 import {roleSkillMultiplier} from '../apps/server/src/battle/roles/reload';
 
 interface StateSnapshot {
@@ -98,7 +98,7 @@ const reload: {skillReloadFields: Array<Omit<ReloadSkill, 'functions'>>} =
   JSON.parse(readFileSync('recovery/output/combat-client-evidence.json', 'utf8'));
 const reloadById = new Map(reload.skillReloadFields.map(skill => [skill.skillId, skill]));
 const catalog = new Map(sources.catalog.map(skill => [skill.skillId, {...skill, ...reloadById.get(skill.skillId)!}]));
-const scaleCatalog: CombatCatalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const scaleCatalog: CombatCatalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
 const reloadLimits = readRoleDataScaleLimits(scaleCatalog.dataScales).get(16)!;
 const skillsWithReload = sources.catalog.filter(skill => reloadById.get(skill.skillId)!.delay !== 0).slice(0, 20);
 const pipeline = fixture(evidence.skillChanges.find(row => row.operation === 'ADD'

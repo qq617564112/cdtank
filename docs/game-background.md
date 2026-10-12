@@ -4,7 +4,7 @@
 
 2006 年 4 月的大宇周年报道已介绍本作及 JoyEZ 平台的测试计划；巴哈姆特作品资料页记录台湾公测日期为 2006 年 8 月 18 日，并将其列为多人、免费含付费项目的 PC 线上射击游戏。[1][2]
 
-CDTank 以这款坦克对战网游为复刻对象。项目从原 Windows 客户端提取地图、战车、宠物、界面和音频，并结合数据表与程序行为重建 Web 客户端和联机服务端。具体开发范围和状态见[开发指南](development.md)与[任务清单](../recovery/docs/tasklist.md)。
+CDTank 以这款坦克对战网游为复刻对象。项目从原 Windows 客户端提取地图、战车、宠物、界面和音频，并结合数据表与程序行为重建 Web 客户端和联机服务端。具体开发范围和状态见[开发指南](development.md)与[任务清单](../docs/recovery/tasklist.md)。
 
 ![阿猫阿狗大作战 Online 原作标志](assets/original-cover.jpg)
 

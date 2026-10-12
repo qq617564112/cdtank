@@ -5,14 +5,14 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_sav import read_library, rebuild_library
 from export_effect_library import export
 
 source = ROOT / 'recovery/output/verified/assets/data/Data/effect/effect.sav'
 raw = source.read_bytes()
 result = export()
-assert result == json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+assert result == json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 assert len(result['nodes']) == 3118
 assert result['sourceSize'] == 3367845
 assert rebuild_library(result) == raw
@@ -72,7 +72,7 @@ for row in grids:
     if row['resolution'] != 'published':
         continue
     source = ROOT / 'recovery/output/verified/assets/data' / row['source']
-    asset = ROOT / 'recovery/output/web-assets' / row['asset']
+    asset = ROOT / 'apps/web/public' / row['asset']
     assert sha256(source.read_bytes()).hexdigest() == row['sourceSha256']
     assert sha256(asset.read_bytes()).hexdigest() == row['assetSha256']
     with Image.open(asset) as image:

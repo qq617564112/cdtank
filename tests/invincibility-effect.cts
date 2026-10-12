@@ -12,8 +12,8 @@ import type {EffectRuntimeLibrary, EffectRuntimeTree} from '../apps/web/src/rend
 
 interface Created {node: number; retain: boolean;}
 interface NativeTree {node: number; retain: boolean; created: Created[];}
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 const native = JSON.parse(readFileSync('recovery/output/effect-tree-create-native.json', 'utf8')) as {rows: NativeTree[]};
 assert.equal(catalog.items.find(item => item.itemTableId === 8)!.skillIds[0], 8);
 const skill = catalog.skills.find(skill => skill.skillId === 8)!;
@@ -34,8 +34,8 @@ assert.ok(sourceNodes.every(node => library.nodes[node].type !== 4), 'Effect100 
 const grids = library.textureGrids.filter(grid => drawnNodes.includes(grid.node));
 assert.equal(grids.length, 4);
 assert.ok(grids.every(grid => grid.resolution === 'published' && grid.asset));
-for (const grid of grids) assert.ok(existsSync(`recovery/output/web-assets/${grid.asset}`), grid.asset);
-const audio = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8')) as {sounds: {name: string}[]};
+for (const grid of grids) assert.ok(existsSync(`apps/web/public/${grid.asset}`), grid.asset);
+const audio = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8')) as {sounds: {name: string}[]};
 assert.ok(!audio.sounds.some(sound => sound.name === '0'));
 
 const engine = new NullEngine();

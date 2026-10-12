@@ -8,5 +8,8 @@
 !scripts/build-server.mjs
 !scripts/package-release.mjs
 !scripts/account-snapshot.mjs
+!scripts/export-scene-collision.ts
 !deployment/
 !deployment/**
+apps/web/public/
+apps/server/resources/

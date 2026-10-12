@@ -98,7 +98,7 @@ try {
   const deadline = Date.now() + 15000;
   while (!serverLog.includes('Server started') && Date.now() < deadline && server.exitCode === null) await pause(20);
   assert(serverLog.includes('Server started'), serverLog);
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     plugins:[{name:'blacklist-readiness-observer',transform(source,id){if(playingOnly&&id.endsWith('/src/match/battle.ts'))return source+'\nconst original=Battle.prototype.setQuickChats;Battle.prototype.setQuickChats=function(value){window.blacklistBattle=this;return original.call(this,value);};';}}],
     server: {port: 5370, strictPort: true, host: '127.0.0.1', hmr: false,
       proxy: {'/game': {target: 'ws://127.0.0.1:3210', ws: true, rewrite: () => '/'}}}});

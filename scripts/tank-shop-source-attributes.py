@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-rows = json.loads((root / 'recovery/output/verified/tables/tank.json').read_text())['rows']
+rows = json.loads((root / 'apps/server/resources/tables/tank.json').read_text())['rows']
 fields = {
     'txtAttack': 'TankAtk', 'txtAttackExtra': 'TankAtkBonus',
     'txtPanzer': 'TankDef', 'txtPanzerExtra': 'TankDefBonus',

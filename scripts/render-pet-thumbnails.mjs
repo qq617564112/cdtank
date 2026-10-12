@@ -9,7 +9,7 @@ import WebSocket from 'ws';
 var workspace = fileURLToPath(new URL('../', import.meta.url));
 var output = resolve(workspace, 'apps/web/src/assets/pets/thumbnails');
 var overviewOutput = resolve(workspace, 'recovery/output/pet-thumbnails-overview.png');
-var assets = resolve(workspace, process.env.CDTANK_WEB_ASSETS ?? 'recovery/output/web-assets');
+var assets = resolve(workspace, process.env.CDTANK_WEB_ASSETS ?? 'apps/web/public');
 var content = resolve(workspace, 'apps/shared/content/definitions');
 
 async function chromiumPath() {
@@ -54,13 +54,21 @@ async function stopChrome(chrome) {
 }
 
 async function main() {
-  if (process.argv.length > 2) throw new Error('Usage: node scripts/render-pet-thumbnails.mjs');
+  var renderArgs = process.argv.slice(2);
+  var views = renderArgs[2] === '--views';
+  if (renderArgs.length && (renderArgs[0] !== '--pet' || (renderArgs.length !== 2 && !(renderArgs.length === 3 && views)))) {
+    throw new Error('Usage: node scripts/render-pet-thumbnails.mjs [--pet ID [--views]]');
+  }
+  var selectedId = renderArgs.length ? Number(renderArgs[1]) : undefined;
+  var framing = JSON.parse(await readFile(join(workspace, 'scripts/pet-thumbnail-viewer/portraits.json'), 'utf8'));
   var executable = await chromiumPath();
   var index = JSON.parse(await readFile(join(content, 'index.json'), 'utf8'));
-  var pets = await Promise.all(index.pets.map(async filename => {
+  var catalog = await Promise.all(index.pets.map(async filename => {
     var definition = JSON.parse(await readFile(join(content, filename), 'utf8'));
     return {id: definition.id, name: definition.name};
   }));
+  var pets = selectedId === undefined ? catalog : catalog.filter(pet => pet.id === selectedId);
+  if (!pets.length) throw new Error('宠物定义缺失');
   var temporary = await mkdtemp(join(tmpdir(), 'cdtank-pet-thumbnails-'));
   var vite, chrome, socket;
   var sequence = 0, pending = new Map();
@@ -117,18 +125,35 @@ async function main() {
     }
     if (!ready) throw new Error('宠物 Viewer 载入超时');
     await mkdir(output, {recursive: true});
-    console.log(`渲染 ${pets.length} 种宠物：头部与上半身，1024 × 1024 采样 → 512 × 512 透明 PNG`);
+    console.log(`渲染 ${pets.length} 种宠物：逐张配置相机，2048 × 2048 采样 → 1024 × 1024 PNG`);
     for (var pet of pets) {
-      var png = await evaluate(sessionId, `window.petThumbnailViewer.render(${JSON.stringify(pet)}, 512)`);
+      if (views) {
+        var directory = join(workspace, 'tmp/pet-portrait-views', String(pet.id));
+        await mkdir(directory, {recursive: true});
+        for (var angle of [0, 90, 180, 270]) {
+          var preview = {azimuth: angle, elevation: 5, target: [0.5, 0.5, 0.5], span: 1.3};
+          var png = await evaluate(sessionId, `window.petThumbnailViewer.render(${JSON.stringify(pet)}, 512, ${JSON.stringify(preview)})`);
+          await writeFile(join(directory, `${angle}.png`), pngBytes(png));
+        }
+        console.log(`参考视角：${directory}`);
+        continue;
+      }
+      if (!framing[pet.id]) throw new Error(`宠物 ${pet.id} 缺少已确认的相机配置`);
+      var png = await evaluate(sessionId, `window.petThumbnailViewer.render(${JSON.stringify(pet)}, 1024, ${JSON.stringify(framing[pet.id])})`);
       var filename = `${String(pet.id).padStart(3, '0')}.png`;
       await writeFile(join(output, filename), pngBytes(png)); console.log(`${filename} ${pet.name}`);
     }
+    if (selectedId !== undefined) return;
+    var imports = pets.map(pet => {
+      var id = String(pet.id).padStart(3, '0');
+      return `import pet${id} from './${id}.png';`;
+    });
     var entries = pets.map(pet => {
       var id = String(pet.id).padStart(3, '0');
-      return `  '${id}': new URL('./${id}.png', import.meta.url).href,`;
+      return `  '${id}': pet${id},`;
     });
     await writeFile(join(output, 'index.ts'),
-      `export const petThumbnails: Readonly<Record<string, string>> = {\n${entries.join('\n')}\n};\n`);
+      `${imports.join('\n')}\n\nexport const petThumbnails: Readonly<Record<string, string>> = {\n${entries.join('\n')}\n};\n`);
     await mkdir(resolve(overviewOutput, '..'), {recursive: true});
     await writeFile(overviewOutput, pngBytes(await evaluate(sessionId, 'window.petThumbnailViewer.overview()')));
     console.log(`头像：${output}\n总览：${overviewOutput}`);

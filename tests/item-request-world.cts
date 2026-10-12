@@ -5,7 +5,7 @@ import type {CombatCatalog} from '../apps/shared/combat/catalog';
 import type {InventoryWireRecord} from '../apps/shared/protocols/PtlInventory';
 import {World} from '../apps/server/src/world';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
 let now = 100000;
 const world = new World(() => now, {timeLimitSeconds: 10});
 const owner = world.createAndJoin('item-owner', 4, 7, 'Requests', 'Owner', 1);

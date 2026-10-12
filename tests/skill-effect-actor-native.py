@@ -6,7 +6,7 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX,UC_X86_REG_ECX,UC_X86_REG_EIP,UC_X86_REG_ESP
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 uc,images=map_original_binaries([ROOT/'CDTank/CDTank.exe'])
 uc.mem_map(0,4096);uc.mem_map(0x2000000,0x40000)
@@ -15,7 +15,7 @@ STACK,STOP,HASH,CLIP,END,START=[0x2020000+0x1000*i for i in range(6)]
 events=[];clipped=0;local=False;present=True
 mode="actor";node_indices={}
 AUDIO_SOURCE,AUDIO_OBJECT,AUDIO_OUTPUT,AUDIO_VECTOR=ROLE+0x500,ROLE+0x600,ROLE+0x700,ROLE+0x800
-library=json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text())
+library=json.loads((ROOT/'apps/web/public/effect-library.json').read_text())
 root=next(n for n in library['nodes'] if n['name']=='_root\\online\\019')
 def put(a,*v):uc.mem_write(a,struct.pack('<'+'I'*len(v),*[x&0xffffffff for x in v]))
 def uint(a):return struct.unpack('<I',uc.mem_read(a,4))[0]

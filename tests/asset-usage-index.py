@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import sys
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from export_asset_usage import normalize, original_material_textures, glb_document
 inventory = json.loads((ROOT / 'recovery/output/catalog/inventory.json').read_text())
 index = json.loads((ROOT / 'recovery/output/asset-usage-index.json').read_text())
@@ -53,7 +53,7 @@ for ref in references:
         if model_key not in texture_cache:
             source = ROOT / expected[model_key]['selected']['source']
             textures = original_material_textures(source)
-            glb, binary = glb_document(ROOT / 'recovery/output/web-assets' / texture['glb'])
+            glb, binary = glb_document(ROOT / 'apps/web/public' / texture['glb'])
             texture_cache[model_key] = textures, glb, binary
         textures, glb, binary = texture_cache[model_key]
         assert textures[texture['materialIndex']] == texture['originalTexture']
@@ -66,7 +66,7 @@ for ref in references:
         assert candidates == [key]
         image = glb['images'][texture['imageIndex']]
         view = glb['bufferViews'][image['bufferView']]
-        png = (ROOT / 'recovery/output/web-assets' / texture['png']).read_bytes()
+        png = (ROOT / 'apps/web/public' / texture['png']).read_bytes()
         assert binary[view.get('byteOffset', 0):view.get('byteOffset', 0) + view['byteLength']] == png
         assert texture['embeddedPngBytes'] == len(png)
         texture_count += 1

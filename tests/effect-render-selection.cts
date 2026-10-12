@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {selectSpriteRenderScript} from '../apps/web/src/render/effects/common/effect-render-selection';
 
-const library = JSON.parse(fs.readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(fs.readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const native = JSON.parse(fs.readFileSync('recovery/output/effect-render-native.json', 'utf8'));
 assert.equal(native.exeSha256, library.exeSha256);
 assert.equal(native.cases.length, 520);

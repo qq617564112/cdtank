@@ -4,7 +4,7 @@ from pathlib import Path
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_ECX,UC_X86_REG_ESP,UC_X86_REG_EAX,UC_X86_REG_EIP
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 machine,_=map_original_binaries([ROOT/'CDTank'/name for name in ['CDTank.exe','gbengine.dll','msvcr71.dll']])
 machine.mem_map(0,4096);machine.mem_map(0x2000000,0x20000)

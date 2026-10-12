@@ -10,10 +10,10 @@ from unicorn import Uc, UC_ARCH_X86, UC_MODE_32
 from unicorn.x86_const import UC_X86_REG_EBP, UC_X86_REG_ESP, UC_X86_REG_ESI
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_rendering import parse_gbf, sprite_selector
 
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 rendering = library['rendering']
 scripts = rendering['scripts']
 names = ['AlphaBlend', 'AlphaAdd', 'AlphaBlend_Z', 'AlphaAdd_Z', 'ScreenBlend',

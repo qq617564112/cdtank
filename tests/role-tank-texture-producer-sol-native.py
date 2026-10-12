@@ -6,12 +6,12 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EDI, UC_X86_REG_EBX, UC_X86_REG_ESI, UC_X86_REG_EBP, UC_X86_REG_EIP, UC_X86_REG_ESP
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 uc, _ = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
 uc.mem_map(0x2000000, 0x50000)
 GAME, RESOURCES, SHOP, TEXTURES, UI, PREVIEW, ACTOR, TANK, SHOPROW, STACK, FRAME = [0x2001000 + i * 0x1000 for i in range(11)]
-TABLES = ROOT / 'recovery/output/verified/tables'
+TABLES = ROOT / 'apps/server/resources/tables'
 shop_rows = json.loads((TABLES / 'tankshop.json').read_text())['rows']
 tanks = {row['recordId']: row['values'] for row in json.loads((TABLES / 'tank.json').read_text())['rows']}
 textures = {row['recordId']: row['values'] for row in json.loads((TABLES / 'tanktexture.json').read_text())['rows']}

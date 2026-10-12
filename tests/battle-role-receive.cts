@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {receiveBattleRole, type BattleRoleBinding, type BattleRoleManager,
-  type BattleRoleRecord} from '../recovery/evidence/combat/battle-role-receive';
+  type BattleRoleRecord} from '../tests/evidence/combat/battle-role-receive';
 import {PET_BASES, TANKS} from '../apps/server/src/config';
 
 interface Role extends BattleRoleBinding<BattleRoleRecord> {

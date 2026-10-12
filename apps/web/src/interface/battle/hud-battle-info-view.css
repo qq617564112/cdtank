@@ -4,7 +4,19 @@
   overflow: auto;
   scrollbar-width: none;
   font: inherit;
-  line-height: 16px;
+  line-height: inherit;
+}
+
+.hud-battle-info-log [data-chat-rich-kind='text'] {
+  -webkit-text-stroke: .7px #49341d;
+  paint-order: stroke fill;
+}
+
+.hud-battle-info-log [data-chat-rich-kind='text']:is(
+  [data-chat-rich-colour='1,0,0,1'],
+  [data-chat-rich-colour='0,0,1,1']
+) {
+  -webkit-text-stroke-color: #fff;
 }
 
 .hud-battle-info-log::-webkit-scrollbar {

@@ -1,5 +1,6 @@
 import {SceneCastleDamageText} from '../scenes/scene-castle-damage-text';
-import type {CastleDamageTextRenderer, CastleDamageTextViewport} from '../scenes/scene-castle-damage-text';
+import type {CastleDamageTextOrigin, CastleDamageTextProjector,
+  CastleDamageTextRenderer, CastleDamageTextViewport} from '../scenes/scene-castle-damage-text';
 
 /** One actor's selector1 queue, using the shared original text record implementation. */
 export class TankDamageText {
@@ -28,16 +29,23 @@ export class TankDamageText {
     (critical ? this.criticalQueue! : this.queue).show(screenX, isLocal ? Math.fround(screenY - 100) : screenY, value);
   }
 
+  /** Ordinary and critical damage remain at their initial world location. */
+  showWorld(origin: CastleDamageTextOrigin, damage: number, isLocal: boolean, critical = false): void {
+    const value = -damage | 0;
+    if (critical && !this.criticalQueue) throw new Error('原Critical文字资源尚未加载');
+    (critical ? this.criticalQueue! : this.queue).showWorld(origin, value, isLocal ? -100 : 0);
+  }
+
   advance(actorDeltaSeconds: number, viewZ: number): void {
     this.queue.advance(actorDeltaSeconds, viewZ);
     this.criticalQueue?.advance(actorDeltaSeconds, viewZ);
     this.comboQueue?.advance(actorDeltaSeconds, viewZ);
   }
 
-  draw(viewport: CastleDamageTextViewport): void {
-    this.queue.draw(viewport);
-    this.criticalQueue?.draw(viewport);
-    this.comboQueue?.draw(viewport);
+  draw(viewport: CastleDamageTextViewport, projectWorld?: CastleDamageTextProjector): void {
+    this.queue.draw(viewport, projectWorld);
+    this.criticalQueue?.draw(viewport, projectWorld);
+    this.comboQueue?.draw(viewport, projectWorld);
   }
 
   clear(): void {

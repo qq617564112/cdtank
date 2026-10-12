@@ -15,18 +15,23 @@ import {BattleScreenQuads, createBattleScreenLayer, loadBattleOverlayImage, type
 
 const MARKERS = [
   {name: 'diaobao', x: 0, width: 13, height: 13},
-  {name: 'viptanke', x: 32, width: 19, height: 8},
 ] as const;
+const VIP_MARKER = {x: 32, width: 26, height: 14};
+const FONT = "'CDTank-Xiangjiao', sans-serif";
 const ATLAS_DENSITY = 4;
 const ATLAS_WIDTH = 1024 * ATLAS_DENSITY;
 const ATLAS_HEIGHT = 512 * ATLAS_DENSITY;
+const FRAME_PADDING = 8;
+const FRAME_SIZE = HUD_MINIMAP_SIZE + FRAME_PADDING * 2;
+const FRAME_TEXTURE_SIZE = FRAME_SIZE * ATLAS_DENSITY;
 const TANK_ICON_SIZE = 64;
 const TANK_ICON_CELL = 72;
 const TANK_ICON_COLUMNS = 14;
 const TANK_SIDES: readonly TankMinimapSide[] = ['self', 'enemy', 'friend'];
 const OBJECTIVE: ScreenUv = [0, 0, 13 * ATLAS_DENSITY / ATLAS_WIDTH, 13 * ATLAS_DENSITY / ATLAS_HEIGHT];
-const VIP: ScreenUv = [32 * ATLAS_DENSITY / ATLAS_WIDTH, 0,
-  51 * ATLAS_DENSITY / ATLAS_WIDTH, 8 * ATLAS_DENSITY / ATLAS_HEIGHT];
+const VIP: ScreenUv = [VIP_MARKER.x * ATLAS_DENSITY / ATLAS_WIDTH, 0,
+  (VIP_MARKER.x + VIP_MARKER.width) * ATLAS_DENSITY / ATLAS_WIDTH,
+  VIP_MARKER.height * ATLAS_DENSITY / ATLAS_HEIGHT];
 const FRIEND: ScreenColour = [.502, .675, .969, 1];
 const ENEMY: ScreenColour = [.961, .494, .471, 1];
 
@@ -41,26 +46,27 @@ uniform float hasMap;
 varying vec2 vUv;
 void main() {
   float distance = length(vUv - 0.5) * 192.0;
-  if (distance >= 96.0) discard;
   vec3 colour = vec3(0.0784, 0.1451, 0.1098);
   vec2 offset = (vUv - 0.5) * worldSize;
   vec2 world = cameraCentre + cameraAxes.xy * offset.x - cameraAxes.zw * offset.y;
   vec2 mapUv = vec2((world.x - mapBounds.x) / (mapBounds.y - mapBounds.x),
     (mapBounds.w - world.y) / (mapBounds.w - mapBounds.z));
+  // Implicit-LOD sampling requires uniform control flow in WebGPU.
+  vec4 terrain = texture2D(image, mapUv);
+  if (distance >= 90.0) discard;
   if (hasMap > 0.5 && mapUv.x >= 0.0 && mapUv.x <= 1.0 && mapUv.y >= 0.0 && mapUv.y <= 1.0) {
-    vec4 terrain = texture2D(image, mapUv);
     colour = mix(colour, terrain.rgb, terrain.a);
   }
-  if (distance >= 90.0) colour = vec3(0.0667);
-  else if (distance >= 89.0) colour = vec3(0.706, 0.710, 0.639);
-  gl_FragColor = vec4(colour, 1.0 - smoothstep(95.5, 96.0, distance));
+  gl_FragColor = vec4(colour, 1.0 - smoothstep(89.5, 90.0, distance));
 }`;
 
-/** Circular radar draws its terrain and all markers in two GPU batches. */
+/** Circular radar draws terrain, its rotating frame, then unobstructed markers. */
 export class BattleMinimapRenderer {
   private readonly layer: UtilityLayerRenderer;
   private readonly icons: DynamicTexture;
   private readonly terrain: BattleScreenQuads;
+  private readonly frameTexture: DynamicTexture;
+  private readonly frame: BattleScreenQuads;
   private readonly markers: BattleScreenQuads;
   private readonly tankUvs = new Map<string, ScreenUv>();
   private image?: Texture;
@@ -74,17 +80,22 @@ export class BattleMinimapRenderer {
     this.layer = createBattleScreenLayer(scene);
     this.icons = new DynamicTexture('minimap-markers', {width: ATLAS_WIDTH, height: ATLAS_HEIGHT}, this.layer.utilityLayerScene, false, Texture.BILINEAR_SAMPLINGMODE);
     this.icons.hasAlpha = true;
-    this.markers = new BattleScreenQuads(this.layer.utilityLayerScene, 'minimap-markers', this.icons, 1);
+    this.markers = new BattleScreenQuads(this.layer.utilityLayerScene, 'minimap-markers', this.icons, 2);
     this.terrain = new BattleScreenQuads(this.layer.utilityLayerScene, 'minimap-terrain', this.icons, 0, TERRAIN_FRAGMENT,
       ['cameraCentre', 'cameraAxes', 'mapBounds', 'worldSize', 'hasMap']);
     this.terrain.material.setFloat('worldSize', HUD_MINIMAP_SIZE / HUD_MINIMAP_SCALE);
+    this.frameTexture = new DynamicTexture('minimap-frame', {width: FRAME_TEXTURE_SIZE, height: FRAME_TEXTURE_SIZE},
+      this.layer.utilityLayerScene, false, Texture.BILINEAR_SAMPLINGMODE);
+    this.frameTexture.hasAlpha = true;
+    this.frameTexture.wrapU = this.frameTexture.wrapV = Texture.CLAMP_ADDRESSMODE;
+    this.frame = new BattleScreenQuads(this.layer.utilityLayerScene, 'minimap-frame', this.frameTexture, 1);
     scene.onDisposeObservable.addOnce(() => {this.dispose();});
   }
 
   load(data: SourceUi): Promise<void> {
     if (this.ready) return Promise.resolve();
     this.loading ??= (async () => {
-      const [images, tanks] = await Promise.all([
+      const [images, tanks, frameImage] = await Promise.all([
         Promise.all(MARKERS.map(marker => {
           const asset = sourceAsset(data, `set:zhandou00 image:data\\ui\\zhandou\\${marker.name}.tga`);
           if (!asset) throw new Error(`小地图标记资源缺失：${marker.name}`);
@@ -92,6 +103,8 @@ export class BattleMinimapRenderer {
         })),
         Promise.all(Object.entries(tankMinimapIcons).flatMap(([tankId, variants]) =>
           TANK_SIDES.map(async side => ({key: `${tankId}:${side}`, image: await decodeImageRegion(variants[side])})))),
+        loadBattleOverlayImage('ui/battle/minimap-frame.png'),
+        document.fonts.load(`12px ${FONT}`, 'VIP'),
       ]);
       if (this.disposed) return;
       const context = this.icons.getContext();
@@ -100,6 +113,20 @@ export class BattleMinimapRenderer {
         drawImageRegion(context, images[index], marker.x * ATLAS_DENSITY, 0,
           marker.width * ATLAS_DENSITY, marker.height * ATLAS_DENSITY);
       });
+      context.save();
+      context.scale(ATLAS_DENSITY, ATLAS_DENSITY);
+      context.font = `12px ${FONT}`;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillStyle = '#ffe17a';
+      context.strokeStyle = '#000';
+      context.lineWidth = 1;
+      context.lineJoin = 'round';
+      const vipX = VIP_MARKER.x + VIP_MARKER.width / 2;
+      const vipY = VIP_MARKER.height / 2;
+      context.strokeText('VIP', vipX, vipY, VIP_MARKER.width - 2);
+      context.fillText('VIP', vipX, vipY, VIP_MARKER.width - 2);
+      context.restore();
       tanks.forEach((tank, index) => {
         const left = (index % TANK_ICON_COLUMNS * TANK_ICON_CELL + 4) * ATLAS_DENSITY;
         const top = (32 + Math.floor(index / TANK_ICON_COLUMNS) * TANK_ICON_CELL + 4) * ATLAS_DENSITY;
@@ -109,6 +136,19 @@ export class BattleMinimapRenderer {
           (left + size) / ATLAS_WIDTH, (top + size) / ATLAS_HEIGHT]);
       });
       this.icons.update(false);
+      const frameCanvas = document.createElement('canvas');
+      frameCanvas.width = frameCanvas.height = HUD_MINIMAP_SIZE * ATLAS_DENSITY;
+      const frameContext = frameCanvas.getContext('2d');
+      if (!frameContext) throw new Error('小地图边框画布创建失败');
+      frameContext.filter = 'grayscale(1) sepia(1) saturate(2) brightness(1.02)';
+      drawImageRegion(frameContext, frameImage, 0, 0, frameCanvas.width, frameCanvas.height);
+      const frameAtlas = this.frameTexture.getContext();
+      frameAtlas.clearRect(0, 0, FRAME_TEXTURE_SIZE, FRAME_TEXTURE_SIZE);
+      frameAtlas.shadowColor = 'rgba(25, 26, 13, 0.45)';
+      frameAtlas.shadowOffsetY = 2 * ATLAS_DENSITY;
+      frameAtlas.shadowBlur = 4 * ATLAS_DENSITY;
+      frameAtlas.drawImage(frameCanvas, FRAME_PADDING * ATLAS_DENSITY, FRAME_PADDING * ATLAS_DENSITY);
+      this.frameTexture.update(false);
       this.ready = true;
     })().finally(() => {this.loading = undefined;});
     return this.loading;
@@ -150,6 +190,11 @@ export class BattleMinimapRenderer {
     this.terrain.material.setFloat('hasMap', this.image?.isReady() ? 1 : 0);
     this.terrain.quad(x, y, HUD_MINIMAP_SIZE * scale, HUD_MINIMAP_SIZE * scale, [0, 0, 1, 1]);
     this.terrain.end();
+    this.frame.begin(width, height);
+    this.frame.quad(x - FRAME_PADDING * scale, y - FRAME_PADDING * scale,
+      FRAME_SIZE * scale, FRAME_SIZE * scale, [0, 0, 1, 1], [1, 1, 1, 1], false,
+      Math.atan2(axes.rightZ, axes.forwardZ));
+    this.frame.end();
     this.markers.begin(width, height);
     const place = (worldX: number, worldZ: number) => {
       const position = hudMinimapLocalPosition(axes, worldX, worldZ);
@@ -183,8 +228,9 @@ export class BattleMinimapRenderer {
         Math.sin(yaw) * axes.forwardX + Math.cos(yaw) * axes.forwardZ);
       this.markers.quad(position.x - iconSize / 2 * scale, position.y - iconSize / 2 * scale,
         iconSize * scale, iconSize * scale, icon, [1, 1, 1, 1], false, angle);
-      if (vip) this.markers.quad(position.x - 9.5 * scale, position.y - (iconSize / 2 + 10) * scale,
-        19 * scale, 8 * scale, VIP);
+      if (vip) this.markers.quad(position.x - VIP_MARKER.width / 2 * scale,
+        position.y - (iconSize / 2 + VIP_MARKER.height + 2) * scale,
+        VIP_MARKER.width * scale, VIP_MARKER.height * scale, VIP);
     }
     this.markers.end();
   }
@@ -192,6 +238,7 @@ export class BattleMinimapRenderer {
   clear(): void {
     this.layer.shouldRender = false;
     this.terrain.clear();
+    this.frame.clear();
     this.markers.clear();
     this.terrain.material.setTexture('image', this.icons);
     this.image?.dispose();
@@ -203,6 +250,8 @@ export class BattleMinimapRenderer {
     this.disposed = true;
     this.clear();
     this.terrain.dispose();
+    this.frame.dispose();
+    this.frameTexture.dispose();
     this.markers.dispose();
     this.icons.dispose();
     this.layer.dispose();

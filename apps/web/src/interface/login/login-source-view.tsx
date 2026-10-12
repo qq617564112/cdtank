@@ -1,10 +1,11 @@
-import {SourceButton} from '../resources/source-button';
+import {imageResourceUrl} from '../../assets/image-cache';
 import {useRef, useState} from 'react';
-import {SourceStaticImage} from '../resources/source-static-image';
+import {CartoonButton, CartoonCheckbox, CartoonInput} from '../resources/cartoon-controls';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceUi} from '../lobby/source-react';
 import {useRoomInputLimit} from '../lobby/room-input-limit';
-import {SourceEntryPictures, SourceEntrySheet} from './source-entry-sheet';
+import {SourceEntrySheet} from './source-entry-sheet';
+import {LoginArtwork} from './login-artwork';
 
 export interface LoginSourceViewProps {
   busy: boolean;
@@ -47,33 +48,46 @@ export function LoginSourceView(props: LoginSourceViewProps) {
           login();
         }
       }}>
-      <SourceEntryPictures ui={ui} layout={layout} suffix="login.xml"/>
-      <input ref={accountInput} {...sourceProps(ui, layout, 'login.xml', 'edtAccount')} {...accountEvents}
-        className="source-entry-input" aria-label="账号" autoComplete="username" value={account}
+      <LoginArtwork/>
+      <CartoonInput ref={accountInput} {...sourceProps(ui, layout, 'login.xml', 'edtAccount')} {...accountEvents}
+        width={197} height={31} style={sourceProps(ui, layout, 'login.xml', 'zhanghaoshurukuangditu').style}
+        inputStyle={sourceProps(ui, layout, 'login.xml', 'edtAccount', undefined, 0, 0, true).style}
+        aria-label="账号" autoComplete="username" value={account}
         disabled={props.busy} spellCheck={false} autoCapitalize="none"/>
-      <input ref={passwordInput} {...sourceProps(ui, layout, 'login.xml', 'edtPassword')} {...passwordEvents}
-        className="source-entry-input" aria-label="密码" type="password" autoComplete="off"
+      <CartoonInput ref={passwordInput} {...sourceProps(ui, layout, 'login.xml', 'edtPassword')} {...passwordEvents}
+        width={189} height={31} shape="password" style={sourceProps(ui, layout, 'login.xml', 'mimashurukuangditu').style}
+        inputStyle={sourceProps(ui, layout, 'login.xml', 'edtPassword', undefined, 0, 0, true).style}
+        aria-label="密码" type="password" autoComplete="off"
         value={password} disabled={props.busy}/>
-      <SourceStaticImage ui={ui} layout={layout} suffix="login.xml" name="chkSaveAccount"
-        reference={layout.control('chkSaveAccount').properties[props.saveAccount ? 'CheckMarkImage' : 'NormalImage']}
-        className="source-entry-picture" aria-hidden="true"/>
-      <input {...sourceProps(ui, layout, 'login.xml', 'chkSaveAccount')} className="source-entry-checkbox"
-        type="checkbox" checked={props.saveAccount} disabled={props.busy} aria-label="保存账号"
-        onChange={event => props.onSaveAccount(event.currentTarget.checked)}/>
-      <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnLogin" aria-label="登录"
-        disabled={!canLogin} onClick={login}/>
-      <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnRegister" aria-label="注册"
+      <CartoonCheckbox {...sourceProps(ui, layout, 'login.xml', 'chkSaveAccount')}
+        checked={props.saveAccount} disabled={props.busy}
+        onChange={event => props.onSaveAccount(event.currentTarget.checked)}>保存账号</CartoonCheckbox>
+      <CartoonButton {...sourceProps(ui, layout, 'login.xml', 'btnLogin')} width={249}
+        type="submit" disabled={!canLogin}>登录</CartoonButton>
+      <CartoonButton {...sourceProps(ui, layout, 'login.xml', 'btnRegister')} width={79}
         disabled={props.busy || !credentials} onClick={() => {
           if (!composing.current) props.onRegister(account, password);
-        }}/>
-      <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnExit" aria-label="退出"
-        disabled={props.busy} onClick={props.onExit}/>
-      <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnSettings" aria-label="系统设置"
-        disabled={props.busy} onClick={props.onSettings}/>
-      <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnHistory" aria-label="游戏介绍"
-        disabled={props.busy} onClick={props.onHistoryIntro}/>
-      <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnPaypal" aria-label="充值" disabled/>
-      <SourceButton ui={ui} layout={layout} suffix="login.xml" source="btnBuyCoinQ" aria-label="购买代币" disabled/>
+        }}>注册</CartoonButton>
+      <CartoonButton {...sourceProps(ui, layout, 'login.xml', 'btnExit')} width={249}
+        disabled={props.busy} onClick={props.onExit}>离开游戏</CartoonButton>
+      <button type="button" className="login-wood-button login-wood-home" disabled>
+        <img src={imageResourceUrl('/ui/login/wood-home.png')} alt="" aria-hidden="true" draggable={false}/>
+        <span>主页</span>
+      </button>
+      <button type="button" className="login-wood-button login-wood-currency" disabled>
+        <img src={imageResourceUrl('/ui/login/wood-currency.png')} alt="" aria-hidden="true" draggable={false}/>
+        <span>取得 Q 点</span>
+      </button>
+      <button type="button" className="login-wood-button login-wood-settings"
+        disabled={props.busy} onClick={props.onSettings}>
+        <img src={imageResourceUrl('/ui/login/wood-settings.png')} alt="" aria-hidden="true" draggable={false}/>
+        <span>系统设定</span>
+      </button>
+      <button type="button" className="login-wood-button login-wood-intro"
+        disabled={props.busy} onClick={props.onHistoryIntro}>
+        <img src={imageResourceUrl('/ui/login/wood-intro.png')} alt="" aria-hidden="true" draggable={false}/>
+        <span>木桶镇<small>介绍</small></span>
+      </button>
     </form>}
   </SourceEntrySheet>;
 }

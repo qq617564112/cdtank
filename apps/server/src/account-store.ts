@@ -1,3 +1,5 @@
+import {mkdirSync} from 'node:fs';
+import {dirname} from 'node:path';
 import {AccountStackItemSale} from './accounts/stack-item-sale';
 import {AccountCredentials} from './accounts/credentials';
 import type {ReqAccount, ResAccount} from '../../shared/protocols/PtlAccount';
@@ -130,6 +132,7 @@ export class AccountStore {
   private readonly gmSupport: GmSupportStore;
   private readonly families: FamilyStore;
   constructor(path: string) {
+    if (path !== ':memory:') mkdirSync(dirname(path), {recursive: true});
     this.database = new DatabaseSync(path);
     // Append commits instead of rewriting the rollback journal during concurrent room settlements.
     this.database.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL;');
@@ -318,6 +321,12 @@ export class AccountStore {
     const title = this.currentTitle(targetAccountId);
     const awards = this.awardCounts(targetAccountId);
     const family = this.family(targetAccountId);
+    const selected = this.selectedRoleSources(targetAccountId);
+    const tankId = selected.equipment?.fields.get(0x24);
+    const petId = selected.base?.fields.get(8);
+    const models = tankId && petId ? {
+      tankId, petId, textures: readOwnedTankTextures(selected.equipment!),
+    } : undefined;
     return {
       accountId: targetAccountId,
       name: this.displayName(targetAccountId),
@@ -328,6 +337,7 @@ export class AccountStore {
       statistics: this.statistics(targetAccountId),
       ...(awards ? {awards} : {}),
       ...(family ? {family} : {}),
+      ...(models ? {models} : {}),
     };
   }
 

@@ -57,7 +57,7 @@ async function startServer(){const start=serverLog.length;const env={...process.
 try {
   await startServer();
   vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',
-    publicDir:'../../recovery/output/web-assets',plugins:[{name:'readonly-music-observation',transform(source,id){
+    publicDir:'../../apps/web/public',plugins:[{name:'readonly-music-observation',transform(source,id){
       if(id.endsWith('/src/match/battle.ts')) return source+'\nconst oldMusicQuick=Battle.prototype.setQuickChats;Battle.prototype.setQuickChats=function(value){window.musicBattle=this;return oldMusicQuick.call(this,value);};';
       if(id.endsWith('/src/audio/battle-music.ts')) return source+'\nconst oldMusicDispose=BattleMusic.prototype.dispose;BattleMusic.prototype.dispose=function(){oldMusicDispose.call(this);console.info("CDTANK_MUSIC_DISPOSE",JSON.stringify({audioCount:document.querySelectorAll(\"audio[data-source-audio=\\\"battle-music\\\"]\").length,paused:this.audio.paused,src:this.audio.getAttribute(\"src\"),state:this.audio.dataset.state}));};';
     }}],server:{port:5450,strictPort:true,host:'127.0.0.1',hmr:false,

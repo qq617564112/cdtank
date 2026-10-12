@@ -1,5 +1,5 @@
 import {spawnSync} from 'node:child_process';
-import {copyFileSync, existsSync, mkdirSync} from 'node:fs';
+import {copyFileSync, cpSync, existsSync, mkdirSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -21,8 +21,8 @@ for (let index = 0; index < arguments_.length; index++) {
 
 const python = resolve(workspace, 'recovery/.venv/bin/python');
 const verified = resolve(workspace, 'recovery/output/verified');
-const fontOutput = resolve(workspace, 'recovery/output/web-assets/ui/fonts/xiangjiao-brush.ttf');
-if (!existsSync(python)) throw new Error('Create recovery/.venv and install recovery/requirements.txt first.');
+const fontOutput = resolve(workspace, 'apps/web/public/ui/fonts/xiangjiao-brush.ttf');
+if (!existsSync(python)) throw new Error('Create recovery/.venv and install tools/recovery/requirements.txt first.');
 if (!existsSync(fontInput)) {
   throw new Error(`Missing XiangJiaoKuanMaoShuaLingGanTi-2.ttf: ${fontInput}`);
 }
@@ -42,12 +42,19 @@ function run(command, arguments_) {
 }
 
 if (!reuseVerified) {
-  run(python, ['recovery/inspect_assets.py', '--out', 'recovery/output/verified']);
+  run(python, ['tools/recovery/inspect_assets.py', '--out', 'recovery/output/verified']);
 }
+cpSync(resolve(verified, 'tables'), resolve(workspace, 'apps/server/resources/tables'), {recursive: true});
 run('npm', ['run', 'assets:catalog']);
 run('npm', ['run', 'assets']);
 mkdirSync(dirname(fontOutput), {recursive: true});
 if (fontInput !== fontOutput) copyFileSync(fontInput, fontOutput);
+copyFileSync(resolve(workspace, 'deployment/assets/ui/fonts/Silkscreen-Regular.ttf'),
+  resolve(workspace, 'apps/web/public/ui/fonts/Silkscreen-Regular.ttf'));
+copyFileSync(resolve(workspace, 'deployment/assets/ui/fonts/fusion-pixel-hud.ttf'),
+  resolve(workspace, 'apps/web/public/ui/fonts/fusion-pixel-hud.ttf'));
+copyFileSync(resolve(workspace, 'deployment/assets/ui/fonts/fusion-pixel-OFL.txt'),
+  resolve(workspace, 'apps/web/public/ui/fonts/fusion-pixel-OFL.txt'));
 run(python, ['scripts/install-hd-assets.py']);
 run('npm', ['run', 'assets:usage']);
-console.log('Assets published: recovery/output/web-assets');
+console.log('Assets published: apps/web/public');

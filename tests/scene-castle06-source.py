@@ -8,12 +8,12 @@ import sys
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from mv3 import read_mv3
 from scene import read_scene
 
 SOURCE = ROOT / 'recovery/output/verified/assets/data'
-WEB = ROOT / 'recovery/output/web-assets'
+WEB = ROOT / 'apps/web/public'
 records = read_scene(SOURCE / 'Data/scn/0006/0006.cas')
 library = json.loads((WEB / 'scene-castle-0006.json').read_text())
 assert library['mapId'] == 6 and len(records) == len(library['castles']) == 2

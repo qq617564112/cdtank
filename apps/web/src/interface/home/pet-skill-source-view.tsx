@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import type {PetLearningQuote} from '../../../../shared/contracts/pet-learning';
 import './pet-skill-source.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
@@ -5,8 +6,9 @@ import {createPortal} from 'react-dom';
 import type {CombatSkillDefinition} from '../../../../shared/combat/catalog';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceButton} from '../resources/source-button';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {SourceStaticText} from '../resources/source-static-text';
+import {SourceImageScale} from '../resources/source-static-image';
+import {HomeSourceSurface as SourceStaticImage} from './home-surface';
+import {HomeStaticText as SourceStaticText} from './home-text';
 import {sourceProps} from '../resources/source-ui-props';
 
 const suffix = 'myhome_petpage_skill.xml';
@@ -77,8 +79,8 @@ export function PetSkillSourceView({ui, skill, level, close, quote, nextSkill, b
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnClose" data-pet-skill-close=""
           aria-label="关闭技能介绍" onClick={close} />
       </SourceImageScale>
-      <output data-pet-skill-status="" aria-live="polite"
-        style={{position: 'absolute', left: 257, top: 386, width: 300, color: 'white', fontSize: 12}}>{status || (quote?.kind === 'rankLimit' ? '技能等级已达上限' : quote?.kind === 'insufficientPoints' ? '技能点不足' : '')}</output>
+      <GameMessage data-pet-skill-status="" text={status || (quote?.kind === 'rankLimit' ? '技能等级已达上限' : quote?.kind === 'insufficientPoints' ? '技能点不足' : '')}
+        tone={busy ? 'pending' : 'info'}/>
     </div>
   </dialog>, document.body);
 }

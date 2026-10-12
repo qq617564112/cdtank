@@ -8,13 +8,14 @@ if (!destination || existsSync(destination)) {
   throw new Error('Usage: npm run release:package -- <new-directory>');
 }
 for (const filename of ['dist/server/server/src/index.js', 'dist/web/index.html',
-  'recovery/output/verified/tables', 'deployment/server-package-lock.json']) {
+  'apps/server/resources/tables', 'apps/server/resources/assets', 'deployment/server-package-lock.json']) {
   if (!existsSync(resolve(workspace, filename))) throw new Error(`Missing release input: ${filename}`);
 }
 mkdirSync(destination, {recursive: true});
 for (const [input, output] of [
   ['dist/server', 'server'], ['dist/web', 'web'],
-  ['recovery/output/verified/tables', 'content/tables'],
+  ['apps/server/resources/tables', 'content/tables'],
+  ['apps/server/resources/assets', 'content/assets'],
   ['deployment/server-package-lock.json', 'server/package-lock.json'],
   ['deployment/start-release.mjs', 'start.mjs'],
   ['scripts/account-snapshot.mjs', 'account-snapshot.mjs'],

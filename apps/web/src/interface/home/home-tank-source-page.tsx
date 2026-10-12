@@ -1,16 +1,17 @@
-import {backgroundStyle} from '../../assets/image-artwork';
 import {sourceProps} from '../resources/source-ui-props';
-import {type MouseEventHandler} from 'react';
-import {SourceButton} from '../resources/source-button';
-import {SourceStaticImage} from '../resources/source-static-image';
-import {SourceStaticText} from '../resources/source-static-text';
+import {type MouseEventHandler, type ReactNode} from 'react';
+import {HomeSourceButton as SourceButton} from './home-source-button';
+import {HomeSourceSurface as SourceStaticImage} from './home-surface';
+import {HomeStaticText as SourceStaticText} from './home-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {sourceOwnedTankDays} from './home-owned-tank-row-display';
 import {sourceTankKind} from '../account/tank-shop-row-display';
 import {HOME_TANK_PARAMETER_BASES, homeTankParameters} from './home-tank-parameters';
-import {HomeTankUpgradeEntries, HomeTankUseControl, homeTankListQuantity} from './home-tank-page-state';
+import {HomeTankUpgradeEntries, HomeTankUseControl} from './home-tank-page-state';
+import {HomeSymbolMeter} from './home-symbol-meter';
+import {GameStatRow} from '../resources/game-stat-row';
 
 interface HomeTankSourcePageProps {
   ui: HomeSourceUi;
@@ -32,17 +33,46 @@ interface HomeTankSourcePageProps {
   equippedItemIds?: readonly number[];
 }
 
+/** Each stat row lays out its label, value and unit on a shared baseline. */
+function HomeTankStatRow({ui, layout, source, endSource, className = '', children}: {
+  ui: HomeSourceUi; layout: HomeSourceLayout; source: string; endSource?: string;
+  className?: string; children: ReactNode;
+}) {
+  const bounds = sourceProps(ui, layout, 'myhome_panzerpage.xml', source);
+  const end = endSource ? sourceProps(ui, layout, 'myhome_panzerpage.xml', endSource).style : undefined;
+  return <GameStatRow {...bounds} className={`home-tank-stat-row ${className}`} contentClassName="home-tank-stat-content" style={{...bounds.style,
+    ...(end ? {width: Number(end.left) + Number(end.width) - Number(bounds.style.left),
+      height: Math.max(Number(bounds.style.height), Number(end.top) + Number(end.height) - Number(bounds.style.top))} : {})}}>
+    {children}
+  </GameStatRow>;
+}
+
+function HomeTankStatNumber({name, text, field, value}: {
+  name: string; text: string; field?: number; value?: number;
+}) {
+  return <span className="home-tank-stat-number home-tank-owned-attribute" data-source-control={name}
+    data-source-layout="ui/layouts/myhome_panzerpage.xml"
+    data-home-tank-owned-field={field} data-owned-value={value}>{text}</span>;
+}
+
+function HomeTankStatLabel({name, text}: {name: string; text: string}) {
+  return <span className="home-tank-stat-label" data-source-control={name}
+    data-source-layout="ui/layouts/myhome_panzerpage.xml">{text}</span>;
+}
+
+function HomeTankStatUnit({name, text}: {name: string; text: string}) {
+  return <span className="home-tank-stat-unit" data-source-control={name}
+    data-source-layout="ui/layouts/myhome_panzerpage.xml">{text}</span>;
+}
+
 /** The owned tank sheet keeps its original attribute, parameter and balance regions. */
 export function HomeTankSourceRegions({ui}: {ui: HomeSourceUi}) {
   const suffix = 'myhome_panzerpage.xml';
   const layout = new HomeSourceLayout(ui, suffix);
   const pictures = [
-    'heseditu', 'ditukuang', 'tankeshengjiqu', 'huangtiao5', 'fuhao2', 'huangtiao4',
-    'lblPanzerSide', 'baifenbi3', 'huangtiao3', 'lblPanzerBack', 'baifenbi4',
-    'tankkemiaoshu', 'hangditu1', 'huangtiao6', 'fuhao1', 'shengyutianshu',
-    'tankecanshuqu', 'hangditu8', 'lblShootInterval', 'sec', 'huangditu7',
-    'lblMoveSpeed', 'km', 'huangditu9', 'lblRotationSpeed', 'xiegangsec',
-    'huangtiao10', 'lblLoadBullet', 'ditu', 'shuliangditu', 'changtiao', 'changtiao2',
+    'heseditu', 'ditukuang', 'tankeshengjiqu', 'huangtiao5', 'huangtiao4', 'huangtiao3',
+    'tankkemiaoshu', 'hangditu1', 'huangtiao6', 'tankecanshuqu', 'hangditu8',
+    'huangditu7', 'huangditu9', 'huangtiao10', 'ditu', 'changtiao', 'changtiao2',
     'jinqiantubiao', 'jinqian', 'chuangyidiantubiao', 'chuangyidiantubiao2',
   ];
   return <>
@@ -56,14 +86,31 @@ export function HomeTankOwnedAttributes({ui, record}: {ui: HomeSourceUi; record?
   const layout = new HomeSourceLayout(ui, suffix);
   const fields = record ? new Map(record.fields) : undefined;
   const tank = HOME_TANK_PARAMETER_BASES[fields?.get(0x24)!];
-  return <>{([['txtAttack', 0x3c], ['txtAttackExtra', 0x40], ['txtPanzer', 0x4c], ['txtPanzerExtra', 0x50]] as const)
-      .map(([name, offset]) => <SourceStaticText key={name} ui={ui} layout={layout} suffix={suffix} name={name}
-        className="home-tank-owned-attribute" text={fields?.has(offset) ? String(fields.get(offset)) : ''}
-        data-home-tank-owned-field={offset} data-owned-value={fields?.get(offset)} />)}
-    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtTankType"
-      className="home-tank-owned-attribute" text={sourceTankKind(tank?.[0])} />
-    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtStability"
-      className="home-tank-owned-attribute" text={sourceOwnedTankDays(fields?.get(0x34))} />
+  return <>
+    {([['huangtiao6', 'txtAttack', 0x3c, 'txtAttackExtra', 0x40, 'fuhao1'],
+      ['huangtiao5', 'txtPanzer', 0x4c, 'txtPanzerExtra', 0x50, 'fuhao2']] as const)
+      .map(([source, name, offset, extraName, extraOffset, unit]) =>
+        <HomeTankStatRow key={source} ui={ui} layout={layout} source={source} className="home-tank-stat-formula">
+          <span className="home-tank-stat-value">
+            <span className="home-tank-stat-value">
+              <HomeTankStatNumber name={name} field={offset} value={fields?.get(offset)}
+                text={fields?.has(offset) ? String(fields.get(offset)) : ''}/>
+              <HomeTankStatUnit name={unit} text="%"/>
+            </span>
+            <span className="home-tank-stat-operator">＋</span>
+            <HomeTankStatNumber name={extraName} field={extraOffset} value={fields?.get(extraOffset)}
+              text={fields?.has(extraOffset) ? String(fields.get(extraOffset)) : ''}/>
+          </span>
+        </HomeTankStatRow>)}
+    <HomeTankStatRow ui={ui} layout={layout} source="hangditu1">
+      <HomeTankStatNumber name="txtTankType" text={sourceTankKind(tank?.[0])}/>
+      <HomeTankStatNumber name="txtTankStatus" text=""/>
+    </HomeTankStatRow>
+    <HomeTankStatRow ui={ui} layout={layout} source="shengyutianshu" endSource="txtStability"
+      className="home-tank-stat-days">
+      <HomeTankStatLabel name="shengyutianshu" text="剩余天数"/>
+      <HomeTankStatNumber name="txtStability" text={sourceOwnedTankDays(fields?.get(0x34))}/>
+    </HomeTankStatRow>
   </>;
 }
 
@@ -71,22 +118,31 @@ export function HomeTankOwnedParameters({ui, record, pet, catalog, equippedItemI
     'ui' | 'record' | 'pet' | 'catalog' | 'equippedItemIds' | 'alreadyUsed'>) {
   const suffix = 'myhome_panzerpage.xml', layout = new HomeSourceLayout(ui, suffix);
   const values = homeTankParameters(record, pet, catalog, equippedItemIds, alreadyUsed);
-  if (!values) return null;
-  const control = layout.control('prgLoadBullet');
-  const background = sourceProps(ui, layout, suffix, 'prgLoadBullet', control.properties.BackgroundImage);
-  const fill = sourceProps(ui, layout, suffix, 'prgLoadBullet', control.properties.ProgressImage);
-  const progress = Math.max(0, Math.min(1, Math.fround(values.capacity * Math.fround(1 / 6))));
+  const background = sourceProps(ui, layout, suffix, 'prgLoadBullet');
+  const progress = values ? Math.max(0, Math.min(1, Math.fround(values.capacity * Math.fround(1 / 6)))) : 0;
   const width = Number(background.style.width), height = Number(background.style.height);
   const extent = Math.floor(width * progress + .5);
   return <>
-    {(['txtPanzerSide', 'txtPanzerBack', 'txtMoveSpeed', 'txtRotationSpeed', 'txtShootInterval'] as const)
-      .map(name => <SourceStaticText key={name} ui={ui} layout={layout} suffix={suffix} name={name}
-        className="home-tank-owned-attribute" text={String(values[name])} />)}
-    <div {...background} className="home-tank-capacity" data-home-tank-capacity=""
-      role="meter" aria-label="炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values.capacity}>
-      <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, width, height,
-        clipPath: `inset(0 ${width - extent}px 0 0)`, ...backgroundStyle(fill.style)}} />
-    </div>
+    {([['huangtiao4', 'lblPanzerSide', '侧面装甲', 'txtPanzerSide', 'baifenbi3', '%'],
+      ['huangtiao3', 'lblPanzerBack', '背面装甲', 'txtPanzerBack', 'baifenbi4', '%'],
+      ['huangditu7', 'lblMoveSpeed', '移动速度', 'txtMoveSpeed', 'km', 'km/h'],
+      ['huangditu9', 'lblRotationSpeed', '回旋速度', 'txtRotationSpeed', 'xiegangsec', '°/sec'],
+      ['hangditu8', 'lblShootInterval', '发射间隔', 'txtShootInterval', 'sec', 'sec']] as const)
+      .map(([source, labelName, label, name, unitName, unit]) =>
+        <HomeTankStatRow key={source} ui={ui} layout={layout} source={source}>
+          <HomeTankStatLabel name={labelName} text={label}/>
+          <span className="home-tank-stat-value">
+            <HomeTankStatNumber name={name} text={values ? String(values[name]) : ''}/>
+            <HomeTankStatUnit name={unitName} text={unit}/>
+          </span>
+        </HomeTankStatRow>)}
+    <HomeTankStatRow ui={ui} layout={layout} source="huangtiao10" className="home-tank-stat-capacity">
+      <HomeTankStatLabel name="lblLoadBullet" text="炮弹容量"/>
+      {values && <div className="home-tank-stat-meter" data-source-control="prgLoadBullet" data-home-tank-capacity=""
+        role="meter" aria-label="炮弹容量" aria-valuemin={0} aria-valuemax={6} aria-valuenow={values.capacity}>
+        <HomeSymbolMeter kind="shells" width={width} height={height} extent={extent}/>
+      </div>}
+    </HomeTankStatRow>
   </>;
 }
 
@@ -99,7 +155,7 @@ export function HomeTankDescription({ui, description}: {ui: HomeSourceUi; descri
     data-presentation-colour="web-readable">{description ?? ''}</div>;
 }
 
-export function HomeTankSourcePage({ui, name, money, quantity, description, alreadyUsed, busy, canUse, use, selectedInstance,
+export function HomeTankSourcePage({ui, name, money, description, alreadyUsed, busy, canUse, use, selectedInstance,
   originality, openUpgrade, openEquipment, record, pet, catalog, equippedItemIds}: HomeTankSourcePageProps) {
   const suffix = 'myhome_panzerpage.xml';
   const layout = new HomeSourceLayout(ui, suffix);
@@ -111,15 +167,13 @@ export function HomeTankSourcePage({ui, name, money, quantity, description, alre
     <HomeTankOwnedParameters ui={ui} record={record} pet={pet} catalog={catalog}
       equippedItemIds={equippedItemIds} alreadyUsed={alreadyUsed} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtMoney" text={money === undefined ? '' : String(money)} />
-    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtListQuantity" text={homeTankListQuantity(quantity)} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtOriginality"
       text={originality === undefined ? '' : String(originality)} />
-    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtTankStatus" text="" />
     <HomeTankDescription ui={ui} description={description} />
     <SourceButton ui={ui} layout={layout} suffix={suffix} source="rdoTank"
-      selected aria-pressed="true" aria-label="拥有战车" disabled={busy} />
+      selected aria-pressed="true" aria-label="拥有战车" disabled={busy} aria-busy={busy} />
     <SourceButton ui={ui} layout={layout} suffix={suffix} source="rdoEquip"
-      aria-pressed="false" aria-label="装备部件" disabled={busy || !openEquipment}
+      aria-pressed="false" aria-label="装备部件" disabled={busy || !openEquipment} aria-busy={busy && !!openEquipment}
       onClick={openEquipment} />
     <HomeTankUseControl ui={ui} alreadyUsed={alreadyUsed} busy={busy} canUse={canUse}
       selectedInstance={selectedInstance} use={use} />

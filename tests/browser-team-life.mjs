@@ -123,14 +123,14 @@ async function installMonitor(session) {
   })()`);
 }
 try {
-  const catalog=JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json','utf8'));
+  const catalog=JSON.parse(await readFile('apps/web/public/combat-catalog.json','utf8'));
   evidence.skillDefinition=catalog.skills.find(row=>row.skillId===501);
   assert.deepEqual(evidence.skillDefinition.functions[0],{type:18,t:0,x:1,y:1,z:0});
   assert.deepEqual(evidence.skillDefinition.effects[0],{effectId:12,sound:'SE13',tag:0,method:3});
   evidence.limitations=['Effect12 includes a source Type4 ww051 audio resource absent from owned files; its existing silent contract is preserved. Recovered independent SE13.wav playing/ended is verified in both pages.'];
-  evidence.source={catalog:'recovery/output/web-assets/combat-catalog.json',parameters:'Skill501 Target1/TriggerType1/FuncType18 x1 y1; Effect12/SE13/Tag0',reconstruction:'Self-use eligibility in mode1, transactional owned stock consumption and authoritative own-team life increment are rebuilt rules.'};
+  evidence.source={catalog:'apps/web/public/combat-catalog.json',parameters:'Skill501 Target1/TriggerType1/FuncType18 x1 y1; Effect12/SE13/Tag0',reconstruction:'Self-use eligibility in mode1, transactional owned stock consumption and authoritative own-team life increment are rebuilt rules.'};
   await startServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5220,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3183',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5220,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3183',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',['--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows','--disable-features=CalculateNativeWinOcclusion','--use-angle=swiftshader','--enable-unsafe-swiftshader','--remote-debugging-port=9290',`--user-data-dir=${join(directory,'chrome')}`,'about:blank'],{stdio:'ignore'});
   let endpoint;

@@ -1,19 +1,19 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {HomeSymbolMeter} from '../home/home-symbol-meter';
 import {rankedPetSkillId} from '../../../../shared/content/catalog';
 import {loadCombatCatalog} from '../../content';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
 import {loadStaticJson} from '../../assets/static-resources';
 import {useEffect, useState} from 'react';
 import type {CombatCatalog, CombatSkillDefinition} from '../../../../shared/combat/catalog';
-import {SourceButton} from '../resources/source-button';
+import {HomeSourceButton as SourceButton} from '../home/home-source-button';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {PetSkillSourceView} from '../home/pet-skill-source-view';
 import {petOwnedMastery, petShopMastery} from './pet-shop-mastery';
 import {sourceProps} from '../resources/source-ui-props';
 import {petShopDirectoryDetails} from './pet-shop-directory-metadata';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-feedback-text';
+import {SourceImageScale} from '../resources/source-static-image';
+import {HomeStaticText as SourceStaticText} from '../home/home-text';
 
 /** Owned mastery progress controls in the original STank/MTank/LTank/Stug order. */
 const OWNED_MASTERY_PROGRESS = [
@@ -80,17 +80,14 @@ export function PetShopDirectoryDetails({ui, petId, mode = 'directory', ownedRec
       </span>)}
     </div>
     {mode === 'owned' && ownedMastery && OWNED_MASTERY_PROGRESS.map(({name, label}, index) => {
-      const control = layout.control(name);
-      const bounds = sourceProps(ui, layout, suffix, name, control.properties.BackgroundImage);
-      const fill = sourceProps(ui, layout, suffix, name, control.properties.ProgressImage);
+      const bounds = sourceProps(ui, layout, suffix, name);
       const value = ownedMastery.mastery[index]!, fraction = Math.max(0, Math.min(1, ownedMastery.progress[index]!));
       const width = Number(bounds.style.width), height = Number(bounds.style.height);
       const extent = Math.floor(width * fraction + .5);
       return <div key={name} {...bounds} className="pet-shop-mastery-progress"
         data-pet-shop-mastery-progress={name} data-mastery-value={value} data-mastery-fraction={ownedMastery.progress[index]}
         role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={Math.max(5, value)} aria-valuenow={value}>
-        <span aria-hidden="true" data-source-asset={fill['data-source-asset']} style={{position: 'absolute', inset: 0, width, height,
-          clipPath: `inset(0 ${width - extent}px 0 0)`, ...backgroundStyle(fill.style)}} />
+        <HomeSymbolMeter kind="stars" width={width} height={height} extent={extent}/>
       </div>;
     })}
     {opened && <PetSkillSourceView ui={ui} skill={opened.skill} level={opened.level}

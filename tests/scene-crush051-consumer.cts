@@ -6,7 +6,7 @@ import {SceneCrushPresentation} from '../apps/web/src/assets/scenes/scene-crush-
 import {EffectRuntime} from '../apps/web/src/render/effects/runtime/effect-runtime';
 import {EffectRuntimeTree} from '../apps/web/src/render/effects/runtime/effect-runtime-tree';
 
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const native = JSON.parse(readFileSync('recovery/output/scene-crush07-state-native.json', 'utf8'));
 const source = JSON.parse(readFileSync('recovery/output/scene-crush051-resource-contract.json', 'utf8'));
 const producer = JSON.parse(readFileSync('recovery/output/scene-crush07-matrix-native.json', 'utf8'));
@@ -23,7 +23,7 @@ state.library = library;
 for (const grid of source.textureGrids) {
   const pixels = execFileSync('recovery/.venv/bin/python', ['-c',
     'from PIL import Image; import sys; sys.stdout.buffer.write(Image.open(sys.argv[1]).convert("RGBA").tobytes())',
-    'recovery/output/web-assets/' + grid.asset]);
+    'apps/web/public/' + grid.asset]);
   assert.equal(pixels.length, grid.width * grid.height * 4);
   state.textures.set(grid.asset, RawTexture.CreateRGBATexture(new Uint8Array(pixels), grid.width, grid.height, scene));
 }

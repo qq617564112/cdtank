@@ -1,30 +1,36 @@
+import {GameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
 import './waiting-room.css';
+import './waiting-room-hd.css';
 import {Fragment, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {ComponentPropsWithoutRef, KeyboardEvent, SyntheticEvent} from 'react';
 import type {MsgRoomSnapshot} from '../../../../shared/protocols';
-import {SourceButton} from '../resources/source-button';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {SourceStaticText} from '../resources/source-static-text';
-import {SourceMultilineReading} from '../resources/source-multiline-reading';
-import {SourceFeedbackText} from '../resources/source-feedback-text';
+import {ImageArtwork} from '../resources/image-artwork';
+import {GameRoomActionButton} from '../resources/game-room-action-button';
+import {GameArtworkButton} from '../resources/game-artwork-button';
 import {sourceProps} from '../resources/source-ui-props';
 import {sourceUiImage} from '../resources/source-ui-image';
-import {loadUiFont} from '../resources/source-ui-fonts';
 import {loadSourceUi} from '../resources/source-ui-resources';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
-import {roomModeIconReference} from './room-mode-icons';
-import {SourceNotice} from '../dialogs/source-notice';
-import {SourceNoticeView} from '../dialogs/source-notice-view';
-import {waitingRoomSlots, waitingTankReference, waitingRoomInfo} from './waiting-room-state';
+import {RoomRuleButton} from './room-rule-button';
+import {WaitingRoomButton, WaitingRoomDescription, WaitingRoomPlayerSurface, WaitingRoomSurfaces,
+  WaitingRoomInfoText, WaitingRoomText} from './waiting-room-source-visual';
+import {waitingRoomSlots, waitingTankReference, waitingPetReference, waitingRoomInfo} from './waiting-room-state';
 import {WaitingRoomResourceFeedback} from './waiting-room-resource-feedback';
 import {roomMapPreviewReference} from './room-map-options';
 import {RoomEditDialog} from './room-edit-dialog';
 import type {RoomEditor} from './room-edit-dialog';
 import type {MapOption} from '../../../../shared/protocols/PtlListMaps';
+import {useRouteDialog, useNavigationValue} from '../../navigation/route';
 import {WaitingRoomSlotActions} from './waiting-room-slot-actions';
-import {PlayerInfoView} from './player-info';
+import {PlayerInfoView, type PlayerInfoViewProps} from './player-info';
+
+const READY_STAMPS = {
+  left: new URL('../../assets/ui/ready-stamps/left.png', import.meta.url).href,
+  right: new URL('../../assets/ui/ready-stamps/right.png', import.meta.url).href,
+} as const;
 
 export interface WaitingRoomActions {
   ready(isReady: boolean): Promise<void>;
@@ -38,6 +44,7 @@ export interface WaitingRoomViewProps {
   addRobot?: (team?: number) => Promise<void>;
   roomEditor?: RoomEditor;
   kickPlayer?: (playerId: string) => Promise<void>;
+  queryPlayerProfile?: PlayerInfoViewProps['query'];
   snapshot: MsgRoomSnapshot;
   playerId: string;
   externalBusy: boolean;
@@ -61,7 +68,7 @@ function SourceImage({ui, name, reference, text, ...props}: SourceImageProps) {
   const layout = new HomeSourceLayout(ui, 'room_main.xml');
   const control = layout.control(name);
   if (control.type === 'WindowsLook/StaticText') {
-    return <SourceStaticText ui={ui} layout={layout} suffix="room_main.xml" name={name} text={text ?? ''} {...props}/>;
+    return <WaitingRoomText ui={ui} layout={layout} suffix="room_main.xml" name={name} text={text ?? ''} {...props}/>;
   }
   if (control.type === 'WindowsLook/StaticImage') {
     return <SourceStaticImage ui={ui} layout={layout} suffix="room_main.xml" name={name} reference={reference} {...props}>{text}</SourceStaticImage>;
@@ -85,7 +92,7 @@ export function WaitingRoomView(props: WaitingRoomViewProps) {
     {...props} />;
 }
 
-function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, snapshot, playerId, externalBusy, readyAvailable = true, actions}: WaitingRoomViewProps) {
+function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, queryPlayerProfile, snapshot, playerId, externalBusy, readyAvailable = true, actions}: WaitingRoomViewProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(formal);
@@ -96,18 +103,37 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
   const [operation, setOperation] = useState('');
   const [inviteUntil, setInviteUntil] = useState(0);
   const [editMaps, setEditMaps] = useState<MapOption[] | undefined>(undefined);
-  const [detailsId, setDetailsId] = useState<string | undefined>(undefined);
+  const [editOpen, setEditOpen] = useRouteDialog('room-edit');
+  const [detailsValue, setDetailsValue] = useNavigationValue('roomPlayer');
+  const detailsId = detailsValue || undefined;
+  const setDetailsId = (value?: string): void => setDetailsValue(value ?? '');
   const [scale, setScale] = useState(() => waitingScale(formal));
   const generation = useRef(0);
   const pending = useRef(false);
   const focusedControl = useRef<string | undefined>(undefined);
-  const [notice] = useState(() => new SourceNotice());
   const match = snapshot.match;
   const available = snapshot.phase === 'WAITING' && !!match;
   const requesting = busy || externalBusy;
   const detailsPlayer = snapshot.players.find(player => player.id === detailsId);
-  const disabled = requesting || !!editMaps || !!detailsPlayer;
+  const disabled = requesting || (editOpen && !!editMaps) || !!detailsPlayer;
   const invited = Date.now() < inviteUntil;
+
+  useEffect(() => {
+    if (!editOpen) {setEditMaps(undefined); return;}
+    if (!roomEditor) return;
+    let active = true;
+    void request(async () => {
+      try {
+        const maps = await roomEditor.listMaps();
+        if (!maps.length) throw new Error('暂无可用地图，请稍后重试');
+        if (active) setEditMaps(maps);
+      } catch (reason) {
+        if (active) setEditOpen(false);
+        throw reason;
+      }
+    }, 'editRoom');
+    return () => {active = false;};
+  }, [editOpen, roomEditor]);
 
   useEffect(() => {
     const resize = () => setScale(waitingScale(formal));
@@ -115,7 +141,6 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
     return () => {
       window.removeEventListener('resize', resize);
       generation.current++;
-      notice.clear();
     };
   }, []);
 
@@ -123,7 +148,6 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
     if (!open || ui) return;
     let active = true;
     setLoadError('');
-    void loadUiFont().catch(() => {});
     void (async () => {
       try {
         const loaded = await loadSourceUi();
@@ -170,7 +194,6 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
       if (current === generation.current) {
         const message = cause instanceof Error ? cause.message : String(cause);
         setError(message);
-        await notice.show(message);
       }
     } finally {
       if (current === generation.current) {pending.current = false; setBusy(false); setOperation('');}
@@ -198,27 +221,23 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
     return empty >= 0 && empty < Math.ceil((match?.maxPlayers ?? 12) / 2) ? start + empty : -1;
   }) : [slots.findIndex(player => !player)];
   const canAddRobot = !!addRobot && snapshot.players.length < (match?.maxPlayers ?? 12);
-  const operationLabel = operation === 'leave' ? '正在退出房间…' : operation === 'ready' ? '正在提交准备状态…'
-    : operation === 'team' ? '正在换队…' : operation === 'invite' ? '正在发送邀请…'
-    : operation === 'addRobot' ? '正在新增机器人…' : operation === 'editRoom' ? '正在载入房间编辑…'
-    : operation === 'kickPlayer' ? '正在踢出成员…' : '';
   const image = (name: string, shown = true, text?: string) => ui &&
     <SourceImage key={name} ui={ui} name={name} hidden={!shown} text={text} />;
   const layout = ui ? new HomeSourceLayout(ui, 'room_main.xml') : undefined;
   const previewAsset = ui && snapshot.roomInfo ? sourceAsset(ui, roomMapPreviewReference(snapshot.roomInfo.mapId)) : undefined;
-  const editButtonAsset = ui ? sourceAsset(ui, new HomeSourceLayout(ui, 'playerlist.xml')
-    .control('datingmingchengditu').properties.Image) : undefined;
-  const modeProps = ui && layout ? sourceProps(ui, layout, 'room_main.xml', 'picGameMode', roomModeIconReference(snapshot.mode)) : undefined;
+  const modeName = ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'][snapshot.mode - 1];
   const controlProps = {disabled, onFocus: (event: SyntheticEvent<HTMLButtonElement>) => {
     focusedControl.current = event.currentTarget.dataset.waitingControl;
   }};
   const statusState = loadError ? 'error' : !ui ? 'loading' : error ? 'error' : requesting ? 'pending'
     : invited ? 'confirmation' : 'normal';
-  const statusText = loadError || (!ui ? '正在载入原等待房间…' : error || (requesting
-    ? operationLabel || '正在提交，请等待服务器确认…' : invited ? '邀请已发送给大厅玩家，30秒后可再次邀请'
+  const statusText = loadError || (!ui ? '' : error || (requesting
+    ? '' : invited ? '邀请已发送给大厅玩家，30秒后可再次邀请'
     : `${snapshot.roomId} · 已准备 ${match?.readyPlayerIds.length ?? 0}/${snapshot.players.length}`));
-  const status = <output role="status" data-waiting-room-status="" data-waiting-room-operation={operation || undefined}
-    data-waiting-room-status-state={statusState} aria-busy={requesting}>{statusText}</output>;
+  const status = <GameMessage text={!open || !available || statusState === 'normal' ? '' : statusText}
+    tone={statusState === 'error' ? 'error' : statusState === 'confirmation' ? 'success' : 'pending'}
+    data-waiting-room-status="" data-waiting-room-operation={operation || undefined}
+    data-waiting-room-status-state={statusState}/>;
   const overflowList = <ul data-waiting-room-overflow="" className="waiting-room-overflow-list" hidden={overflow.length === 0}>
     {overflow.map(player => <li key={player.id}>
       <span>{player.name}</span>
@@ -242,71 +261,86 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
           {!ui && loadError && <WaitingRoomResourceFeedback error={loadError} pending={disabled}
             leave={() => {void request(() => actions.leave(), 'leave');}} />}
           {open && ui && match && available && <SourceImageScale value={scale}>
-            {['ditu', 'maogouditu', 'maogouditu2', 'zhongjianditu', 'fenhongdi1', 'fenhongdi2', 'tiao', 'kuang', 'dituguize', 'renshu', 'daos', 'meijushijian', 'sec'].map(name => image(name))}
+            <WaitingRoomSurfaces ui={ui} layout={layout!}/>
+            {([['dituguize', modeName], ['renshu', '人数'], ['daos', '—'],
+              ['meijushijian', '每局时间'], ['sec', '秒'], ['txtMinPlayer', String(match.minPlayers)],
+              ['txtMaxPlayer', match.maxPlayers === undefined ? '—' : String(match.maxPlayers)],
+              ['txtGameTime', info.time]] as const).map(([name, text]) =>
+              <WaitingRoomInfoText key={name} ui={ui} layout={layout!} name={name} text={text}/>)}
             {snapshot.roomInfo && <span className="waiting-room-map-preview" role="img" aria-label={`${info.mapName}地图预览`}
               data-waiting-map-preview={snapshot.roomInfo.mapId} style={{...(previewAsset ? imageBackgroundStyle(`/${previewAsset}`) : {})}}/>}
-            <button type="button" className="waiting-room-edit" data-waiting-control="editRoom" data-room-edit=""
+            <GameArtworkButton kind="plaque" className="waiting-room-edit" data-waiting-control="editRoom" data-room-edit=""
               aria-label="房间编辑" title={roomEditor ? '编辑房间地图、模式、人数和密码' : '只有房主可以编辑房间'}
               {...controlProps} disabled={disabled || !readyAvailable || !roomEditor || !snapshot.roomInfo || match.maxPlayers === undefined}
-              style={{...(editButtonAsset ? imageBackgroundStyle(`/${editButtonAsset}`) : {})}}
-              onClick={() => {
-                const current = generation.current;
-                void request(async () => {
-                  const maps = await roomEditor!.listMaps();
-                  if (!maps.length) throw new Error('暂无可用地图，请稍后重试');
-                  if (current === generation.current) setEditMaps(maps);
-                }, 'editRoom');
-              }}><SourceFeedbackText text="房间编辑"/></button>
-            {image('txtMinPlayer', true, String(match.minPlayers))}
-            {image('txtMaxPlayer', true, match.maxPlayers === undefined ? '—' : String(match.maxPlayers))}
-            <span className="waiting-room-map-name" title={info.mapName}><SourceFeedbackText text={info.mapName}/></span>
-            {image('txtGameTime', true, info.time)}
+              aria-busy={requesting && !!roomEditor && readyAvailable || undefined}
+              style={{left: 294, top: 25, width: 108, height: 32}}
+              onClick={() => setEditOpen(true)}>房间编辑</GameArtworkButton>
+            <span className="waiting-room-map-name" title={info.mapName}>{info.mapName}</span>
             <SourceStaticImage ui={ui} layout={layout!} suffix="room_main.xml" name="picLocked" hidden={!info.locked}
               offsetX={182} offsetY={29}/>
-            <SourceMultilineReading ui={ui} layout={layout!} suffix="room_main.xml" name="edtMapDesc" text={info.description}/>
-            <span {...modeProps} style={{...modeProps!.style, left: 264, top: 179, width: 79, height: 17}}
-              aria-label={['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'][snapshot.mode - 1]}/>
-            {image('picCatVsDog', snapshot.mode <= 3)}
-            {image('picNonCatVsDog', snapshot.mode > 3)}
-            {image('picFriendlyFireOn', snapshot.mode <= 3 && !!match.friendlyFire)}
-            {image('picFriendlyFireOff', snapshot.mode <= 3 && !match.friendlyFire)}
+            <WaitingRoomDescription ui={ui} layout={layout!} text={info.description}/>
+            <RoomRuleButton rule={snapshot.mode <= 3 ? 'cat-vs-dog' : 'cat-dog-mixed'} selected readOnly
+              className="waiting-room-rule" style={{left: 205, top: 117, width: 96, height: 39}}/>
+            {snapshot.mode <= 3 && <RoomRuleButton rule={match.friendlyFire ? 'friendly-fire' : 'no-friendly-fire'}
+              selected readOnly className="waiting-room-rule" style={{left: 303, top: 117, width: 96, height: 39}}/>}
             {snapshot.mode <= 3 && ['Cat', 'Dog'].map((name, team) => <Fragment key={name}>
-              {image(`pic${name}Team${local?.team === team ? 'Selected' : 'Normal'}`)}
-              <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source={`btn${name}Team`} data-waiting-control={`team${team}`} selected={local?.team === team} aria-label={`加入${team === 0 ? '猫' : '狗'}队`} title={`加入${team === 0 ? '猫' : '狗'}队`}
+              <SourceStaticImage ui={ui} layout={layout!} suffix="room_main.xml"
+                name={`pic${name}Team${local?.team === team ? 'Selected' : 'Normal'}`} offsetY={5}/>
+              <WaitingRoomButton ui={ui} layout={layout!} source={team === 0 ? 'btnCatTeam' : 'btnDogTeam'} data-waiting-control={`team${team}`} aria-label={`加入${team === 0 ? '猫' : '狗'}队`} title={`加入${team === 0 ? '猫' : '狗'}队`}
                 {...controlProps} disabled={disabled || ready || local?.team === team || !local}
+                aria-busy={requesting && !ready && local?.team !== team && !!local || undefined}
                 data-waiting-team={String(team)} aria-pressed={local?.team === team}
                 onClick={() => {void request(() => actions.team(team), 'team');}} />
             </Fragment>)}
-            {slots.map((player, index) => <Fragment key={index}>
-              <SourceImage ui={ui} name={`PlayerPanel${index}`} data-waiting-source-player={player?.id}
-                data-team={player ? String(player.team) : undefined}
-                data-waiting-player-ready={player ? String(match.readyPlayerIds.includes(player.id)) : undefined}
-                aria-label={player ? `${player.name} · ${waitingTeamName(snapshot.mode, player.team)} · ${match.readyPlayerIds.includes(player.id) ? '已准备' : '未准备'}${player.isCpu ? ' · CPU' : player.isAutopilot ? ' · AI托管' : ''}` : undefined} />
-              {player ? <>
-                {image(`txtPlayerName${index}`, true, player.name)}
-                <SourceImage ui={ui} name={`picPlayerTank${index}`} reference={waitingTankReference(player.tankId)}
-                  aria-label={`战车 ${player.tankId}`} text={sourceAsset(ui, waitingTankReference(player.tankId)) ? undefined : String(player.tankId)} />
-                {image(`txtPlayerTitle${index}`, true, player.title?.name ?? '')}
-                <SourceStaticImage ui={ui} layout={layout!} suffix="room_main.xml" name={`picReady${index}`}
-                  className="waiting-room-ready-mark" hidden={!match.readyPlayerIds.includes(player.id)} offsetX={index < 6 ? 17 : -18} />
-                <WaitingRoomSlotActions ui={ui} layout={layout!} index={index} player={player} disabled={disabled}
-                  canKick={!!kickPlayer && player.id !== playerId && readyAvailable} onFocus={controlProps.onFocus}
-                  details={() => setDetailsId(player.id)} kick={() => {void request(() => kickPlayer!(player.id), 'kickPlayer');}}/>
-              </> : canAddRobot && robotSlots.includes(index) ?
-                <button type="button" className="waiting-room-add-robot"
-                  {...sourceProps(ui, layout!, 'room_main.xml', `picNA${index}`,
-                    layout!.control(`picNA${index}`).properties.Image)}
-                  {...controlProps} data-add-cpu="" data-waiting-control={`robot${index < 6 ? 0 : 1}`}
-                  aria-label={snapshot.mode <= 3 ? `在${index < 6 ? '猫' : '狗'}队新增机器人` : '新增机器人'}
-                  onClick={() => {void request(() => addRobot!(snapshot.mode <= 3 ? (index < 6 ? 0 : 1) : undefined), 'addRobot');}}>
-                  <SourceFeedbackText text="新增机器人" />
-                </button> : image(`picNA${index}`)}
-            </Fragment>)}
-            <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source={ready ? 'btnCancel' : 'btnReady'} data-waiting-control="ready" aria-label={ready ? '取消准备' : '准备'} title={ready ? '取消准备' : '准备'}
+            {slots.map((player, index) => {
+              const portrait = sourceProps(ui, layout!, 'room_main.xml', `picPlayerIcon${index}`).style;
+              const tank = sourceProps(ui, layout!, 'room_main.xml', `picPlayerTank${index}`).style;
+              const readyCenterX = (Number(portrait.left) + Number(portrait.width) / 2
+                + Number(tank.left) + Number(tank.width) / 2) / 2;
+              const side = index < 6 ? 'left' : 'right';
+              return <Fragment key={index}>
+                <WaitingRoomPlayerSurface ui={ui} layout={layout!} index={index} occupied={!!player}
+                  hidden={!player && canAddRobot && robotSlots.includes(index)}
+                  data-waiting-source-player={player?.id}
+                  data-team={player ? String(player.team) : undefined}
+                  data-waiting-player-ready={player ? String(match.readyPlayerIds.includes(player.id)) : undefined}
+                  aria-label={player ? `${player.name} · ${waitingTeamName(snapshot.mode, player.team)} · ${match.readyPlayerIds.includes(player.id) ? '已准备' : '未准备'}${player.isCpu ? ' · CPU' : player.isAutopilot ? ' · AI托管' : ''}` : undefined} />
+                {player ? <>
+                  {image(`txtPlayerName${index}`, true, player.name)}
+                  <SourceImage ui={ui} name={`picPlayerTank${index}`} reference={waitingTankReference(player.tankId)}
+                    aria-label={`战车 ${player.tankId}`} text={sourceAsset(ui, waitingTankReference(player.tankId)) ? undefined : String(player.tankId)} />
+                  {player.petId !== undefined && <SourceImage ui={ui} name={`picPlayerIcon${index}`}
+                    reference={waitingPetReference(player.petId)} role="img" aria-label={`${player.name}的猫狗头像`}
+                    style={layout!.control(`picPlayerIcon${index}`).properties.Orientation === 'FlipHorizontal'
+                      ? {transform: 'scaleX(-1)'} : undefined}/>}
+                  {image(`txtPlayerTitle${index}`, true, player.title?.name ?? '')}
+                  {match.readyPlayerIds.includes(player.id) && <ImageArtwork asset={READY_STAMPS[side]}
+                    className="waiting-room-ready-mark" data-source-control={`picReady${index}`}
+                    data-waiting-ready-side={side} role="img" aria-label={`${player.name}已准备`}
+                    style={{left: readyCenterX - 92 / 2,
+                      top: Number(portrait.top) + (Number(portrait.height) - 40) / 2, width: 92, height: 40}}/>}
+                  <WaitingRoomSlotActions ui={ui} layout={layout!} index={index} player={player} disabled={disabled}
+                    pending={requesting}
+                    canKick={!!kickPlayer && player.id !== playerId && readyAvailable} onFocus={controlProps.onFocus}
+                    details={() => setDetailsId(player.id)} kick={() => {void request(() => kickPlayer!(player.id), 'kickPlayer');}}/>
+                </> : canAddRobot && robotSlots.includes(index) ?
+                  <GameRoomActionButton variant="add-robot" className="waiting-room-add-robot"
+                    {...sourceProps(ui, layout!, 'room_main.xml', `picNA${index}`)}
+                    {...controlProps} data-add-cpu="" data-waiting-control={`robot${index < 6 ? 0 : 1}`}
+                    aria-busy={requesting || undefined}
+                    aria-label={snapshot.mode <= 3 ? `在${index < 6 ? '猫' : '狗'}队新增机器人` : '新增机器人'}
+                    onClick={() => {void request(() => addRobot!(snapshot.mode <= 3 ? (index < 6 ? 0 : 1) : undefined), 'addRobot');}}>
+                    新增机器人
+                  </GameRoomActionButton> : null}
+              </Fragment>;
+            })}
+            <WaitingRoomButton ui={ui} layout={layout!} source={ready ? 'btnCancel' : 'btnReady'} data-waiting-control="ready" aria-label={ready ? '取消准备' : '准备'} title={ready ? '取消准备' : '准备'}
               {...controlProps} disabled={disabled || !local || !readyAvailable} data-waiting-ready="" aria-pressed={ready}
+              aria-busy={requesting && !!local && readyAvailable || undefined}
               onClick={() => {void request(() => actions.ready(!ready), 'ready');}} />
-            <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source="btnInvite" data-waiting-control="invite" aria-label="邀请大厅玩家加入房间" title="邀请大厅玩家加入房间"
+            <WaitingRoomButton ui={ui} layout={layout!} source="btnInvite" data-waiting-control="invite" aria-label="邀请大厅玩家加入房间" title="邀请大厅玩家加入房间"
               {...controlProps} disabled={disabled || invited || snapshot.players.length >= (match.maxPlayers ?? 12)}
+              aria-busy={requesting && !invited && snapshot.players.length < (match.maxPlayers ?? 12) || undefined}
               data-waiting-invite="" onClick={() => {
                 const current = generation.current;
                 void request(async () => {
@@ -314,7 +348,7 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
                   if (current === generation.current) setInviteUntil(expiresAt);
                 }, 'invite');
               }} />
-            <SourceButton ui={ui} layout={layout!} suffix="room_main.xml" source="btnClose" data-waiting-control="close" aria-label="退出房间" title="退出房间" {...controlProps}
+            <WaitingRoomButton ui={ui} layout={layout!} source="btnClose" data-waiting-control="close" aria-label="退出房间" title="退出房间" {...controlProps}
               data-waiting-close="" onClick={() => {void request(() => actions.leave(), 'leave');}} />
           </SourceImageScale>}
         </div>
@@ -327,12 +361,11 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, s
       {!formal && status}
       {!formal && overflowList}
     </dialog>
-    {editMaps && roomEditor && snapshot.roomInfo && <RoomEditDialog snapshot={snapshot} maps={editMaps} editor={roomEditor}
-      close={() => setEditMaps(undefined)}/>}
-    {detailsPlayer && <PlayerInfoView open player={{name: detailsPlayer.name, title: detailsPlayer.title?.name, online: true, inRoom: true}}
+    {editOpen && editMaps && roomEditor && snapshot.roomInfo && <RoomEditDialog snapshot={snapshot} maps={editMaps} editor={roomEditor}
+      close={() => {setEditMaps(undefined); setEditOpen(false);}}/>}
+    {detailsPlayer && <PlayerInfoView open player={{accountId: detailsPlayer.accountId,
+      name: detailsPlayer.name, title: detailsPlayer.title?.name, online: true, inRoom: true}}
       pending={false} status="" onClose={() => setDetailsId(undefined)}
-      roomDetails={{roomId: snapshot.roomId, tankId: detailsPlayer.tankId, petId: detailsPlayer.petId,
-        team: waitingTeamName(snapshot.mode, detailsPlayer.team), ready: !!match?.readyPlayerIds.includes(detailsPlayer.id)}}/>}
-    <SourceNoticeView notice={notice} />
+      query={queryPlayerProfile} preview={{tankId: detailsPlayer.tankId, petId: detailsPlayer.petId}}/>}
   </>;
 }

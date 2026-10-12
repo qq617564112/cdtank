@@ -1,2 +1,85 @@
-.home-battle-summary-source { left: 219px; top: 36px; width: 375px; height: 332px; pointer-events: none; }
-.home-battle-summary-source > .source-static-image, .home-battle-summary-source > .source-static-text { position: absolute; }
+.home-battle-summary-source {
+  position: absolute;
+  left: 219px;
+  top: 234px;
+  width: 375px;
+  height: 132px;
+  pointer-events: none;
+}
+
+.home-battle-statistics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr .85fr;
+  grid-template-rows: 72px 51px;
+  gap: 3px;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 3px;
+  background: #d5edbc;
+  clip-path: polygon(.4% 0, 45% .7%, 100% 0, 99.6% 51%, 100% 100%, 30% 99.5%, 0 100%);
+}
+
+.home-stat-card {
+  display: grid;
+  min-width: 0;
+  padding: 2px 5px;
+  background: linear-gradient(130deg, #fcfbcf, #f6f5c0);
+  color: #646615;
+  font: 17px/1.15 'HappyZcool-2016', sans-serif;
+}
+
+.home-stat-card > div:not(.home-stat-fraction),
+.home-stat-fraction > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+}
+
+.home-stat-card span:not(.home-stat-value) {
+  -webkit-text-stroke: 0;
+}
+
+.home-stat-value {
+  color: #fff;
+  font: 12px/1.15 'HappyZcool-2016', sans-serif;
+  -webkit-text-stroke: 1px #4f5138;
+  paint-order: stroke fill;
+  white-space: nowrap;
+}
+
+.home-stat-accuracy {
+  position: relative;
+  grid-template-rows: 45px 22px;
+}
+
+.home-stat-fraction {
+  display: grid;
+  width: 76%;
+}
+
+.home-stat-fraction > div:first-child {
+  border-bottom: 1px solid #777728;
+}
+
+.home-stat-hit-rate {
+  position: absolute;
+  top: 22px;
+  right: 3px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.home-stat-total {
+  align-content: space-between;
+  justify-items: center;
+  padding: 6px 2px;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.home-stat-duration {
+  color: #646615;
+  font-size: 15px;
+}

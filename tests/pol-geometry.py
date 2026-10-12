@@ -3,11 +3,11 @@ import json
 from pathlib import Path
 import struct
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'recovery'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/recovery'))
 from pol import read_pol
 
 root = Path('recovery/output/verified/assets/data')
-output = Path('recovery/output/web-assets')
+output = Path('apps/web/public')
 checked, triangles = 0, 0
 for path in sorted(root.rglob('*')):
     if path.suffix.lower() != '.pol':

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRoleCombatState} from '../apps/server/src/battle/roles/combat-state';
-import {applyRoleAmmoChangeReloadNotification} from '../recovery/evidence/roles/reload';
+import {applyRoleAmmoChangeReloadNotification} from '../tests/evidence/roles/reload';
 import {applyRoleFireReloadNotification} from '../apps/server/src/battle/roles/reload';
 interface State {seconds: number; deadline: number}
 interface Event {kind: string; value?: number; state?: State}

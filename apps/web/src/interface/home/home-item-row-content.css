@@ -4,11 +4,11 @@
   position: relative;
   display: block;
   width: 161px;
-  height: 56px;
+  height: 48px;
   min-height: 0;
   padding: 0;
   background-position: left top;
-  background-size: 161px 51px;
+  background-size: 161px 48px;
 }
 
 [data-home-source-item-row] > span,
@@ -42,5 +42,5 @@
 
 .home-item-row-quantity {
   right: 119px;
-  bottom: 11px;
+  bottom: 3px;
 }

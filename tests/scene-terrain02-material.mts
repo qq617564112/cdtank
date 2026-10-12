@@ -10,10 +10,10 @@ async function main(): Promise<void> {
   const expectedParts = mapId === 4 ? 146 : mapId === 17 ? 120 : mapId === 14 ? 47 : mapId === 6 ? 125 : mapId === 10 ? 112 : mapId === 5 ? 124 : mapId === 22 ? 72 : mapId === 21 ? 103 : mapId === 20 ? 190 : mapId === 7 ? 56 : mapId === 11 ? 118 : mapId === 18 ? 21 : 76;
   const expectedOpaque = mapId === 4 ? 123 : mapId === 17 ? 90 : mapId === 14 ? 38 : mapId === 6 ? 97 : mapId === 10 ? 67 : mapId === 5 ? 82 : mapId === 22 ? 46 : mapId === 21 ? 70 : mapId === 20 ? 139 : mapId === 7 ? 33 : mapId === 11 ? 93 : mapId === 18 ? 21 : 58;
   const expectedTransparent = mapId === 4 ? 23 : mapId === 17 ? 30 : mapId === 14 ? 9 : mapId === 6 ? 28 : mapId === 10 ? 45 : mapId === 5 ? 42 : mapId === 22 ? 26 : mapId === 21 ? 33 : mapId === 20 ? 51 : mapId === 7 ? 23 : mapId === 11 ? 25 : mapId === 18 ? 0 : 18;
-  const resource = JSON.parse(readFileSync(`recovery/output/web-assets/scene-terrain-material-${mapName}.json`, 'utf8'));
+  const resource = JSON.parse(readFileSync(`apps/web/public/scene-terrain-material-${mapName}.json`, 'utf8'));
   const engine = new NullEngine();
   const scene = new Scene(engine);
-  const bytes = readFileSync(`recovery/output/web-assets/Data/map/${mapName}/${mapName}.glb`);
+  const bytes = readFileSync(`apps/web/public/Data/map/${mapName}/${mapName}.glb`);
   const terrain = await LoadAssetContainerAsync(new Uint8Array(bytes), scene, {pluginExtension: '.glb'});
   const before = terrain.meshes.map(mesh => ({mesh, material: mesh.material,
     positions: Array.from(mesh.getVerticesData(VertexBuffer.PositionKind) ?? []),

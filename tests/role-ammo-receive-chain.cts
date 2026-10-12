@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {receiveRoleAmmoChangeEnvelope} from '../recovery/evidence/roles/role-ammo-change-wire';
+import {receiveRoleAmmoChangeEnvelope} from '../tests/evidence/roles/role-ammo-change-wire';
 import {createRoleCombatState} from '../apps/server/src/battle/roles/combat-state';
 
 interface State {seconds: number; deadline: number}

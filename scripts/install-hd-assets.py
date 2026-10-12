@@ -119,10 +119,13 @@ def repack(data, source, textures, root):
     external = {}
     directory = PurePosixPath(source).parent
     for index, entry in matches.items():
-        replacements[model['images'][index]['bufferView']] = entry
+        view = model['images'][index].get('bufferView')
+        if view is not None:
+            replacements[view] = entry
         if PurePosixPath(entry['source']).is_relative_to(directory):
             external[index] = PurePosixPath(entry['source']).relative_to(directory).as_posix()
-    external_views = {model['images'][index]['bufferView'] for index in external}
+    external_views = {model['images'][index]['bufferView'] for index in external
+                      if 'bufferView' in model['images'][index]}
     shared = {}
     for index, view in enumerate(views):
         entry = replacements.get(index)
@@ -167,29 +170,22 @@ def main():
     parser.add_argument('--group', help='Install textures belonging to this inventory group')
     args = parser.parse_args()
     root = args.root.resolve()
-    runtime = Path(os.environ.get('WEB_ASSETS', 'recovery/output/web-assets'))
+    runtime = Path(os.environ.get('CDTANK_WEB_ASSETS', 'apps/web/public'))
     if not runtime.is_absolute():
         runtime = root / runtime
-    inventory = json.loads((root / 'art/hd-assets/inventory.json').read_text())
+    inventory = json.loads((root / 'art/hd/manifest.json').read_text())
     spec = importlib.util.spec_from_file_location('original_assets', root / 'scripts/restore-original-assets.py')
     original_assets = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(original_assets)
-    model_textures = original_assets.model_texture_paths(root, runtime, inventory)
     selected = [entry for entry in inventory['textures']
-                if entry['source'] in model_textures
-                and not entry.get('intermediate') and not entry.get('deferred')
-                and (args.group is None or args.group in entry.get('groups', []))]
+                if args.group is None or args.group in entry.get('groups', [])]
     completed = [entry for entry in selected if (root / entry['png']).is_file()]
     replacements = {entry['source'].lower(): entry for entry in completed}
     # A group install retains artwork installed by earlier groups in shared models.
     if args.group is not None:
         for entry in inventory['textures']:
-            if entry['source'] not in model_textures or entry.get('intermediate') or entry.get('deferred'):
-                continue
             delivered = root / entry['png']
-            installed = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
-            if not installed.is_file():
-                installed = root / 'art/hd-assets/sprite-originals' / installed.relative_to(root)
+            installed = runtime / entry['source']
             if (entry['source'].lower() not in replacements and delivered.is_file()
                     and installed.is_file() and installed.read_bytes() == delivered.read_bytes()):
                 replacements[entry['source'].lower()] = entry
@@ -197,7 +193,7 @@ def main():
     model_count = 0
     for source in inventory.get('models', []):
         target = runtime / source
-        snapshot = root / 'art/hd-assets/original-models' / source
+        snapshot = root / 'art/original' / source
         original_path = snapshot if snapshot.exists() else target
         model = read_glb_metadata(original_path)
         matches = image_matches(model, source, replacements)
@@ -205,15 +201,12 @@ def main():
             continue
         original = original_path.read_bytes()
         packed = repack(original, source, replacements, root)
-        if not snapshot.exists():
-            snapshot.parent.mkdir(parents=True, exist_ok=True)
-            snapshot.write_bytes(original)
         temporary = target.with_name(target.name + '.tmp')
         temporary.write_bytes(packed)
         temporary.replace(target)
         model_count += 1
     for entry in completed:
-        target = root / entry['installPath'] if entry.get('installPath') else runtime / entry['source']
+        target = runtime / entry['source']
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / entry['png'], target)
     print(f'Installed {len(completed)} model PNGs and {model_count} models')

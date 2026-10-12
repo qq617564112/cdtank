@@ -397,7 +397,7 @@ async function verifyNativeImages(sessions) {
 
 try {
   await launchServer();
-  vite = await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',plugins:[{name:'image-chat-ui-render-budget',transform(source,id){if(id.endsWith('/src/main.ts'))return source.replace('const scene = new Scene(engine);','engine.setHardwareScalingLevel(8);\nconst scene = new Scene(engine);');}}],server:{port:5242,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3210',ws:true,rewrite:()=> '/'}}}});
+  vite = await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',plugins:[{name:'image-chat-ui-render-budget',transform(source,id){if(id.endsWith('/src/main.ts'))return source.replace('const scene = new Scene(engine);','engine.setHardwareScalingLevel(8);\nconst scene = new Scene(engine);');}}],server:{port:5242,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3210',ws:true,rewrite:()=> '/'}}}});
   await vite.listen(); await launchBrowser();
   const sessions = [];
   for (const name of ['图像甲', '图像乙']) {

@@ -4,7 +4,7 @@ import {createEffectTree, findEffectDefinition, EffectTreeDefinition} from '../a
 interface Definition extends EffectTreeDefinition {id: number; index: number;}
 interface Created {node: number; retain: boolean;}
 interface Row {node: number; retain: boolean; created: Created[]; attached: {parent: number; child: number}[];}
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as {nodes: Definition[]};
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as {nodes: Definition[]};
 const native = JSON.parse(readFileSync('recovery/output/effect-tree-create-native.json', 'utf8')) as {rows: Row[]};
 
 for (const row of native.rows) {

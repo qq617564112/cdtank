@@ -7,6 +7,7 @@ import type {EffectNativeMatrix} from '../../render/effects/common/effect-native
 import type {EffectVec3} from '../../render/effects/common/types';
 import type {CastleEffectTarget} from './scene-castle-state';
 import {castleAnimationTime} from '../../../../shared/movement/scene-animation-clock';
+import {createMv3AnimationSampler} from '../tanks/mv3-animation-sampler';
 
 interface CastleAction {
   name: string;
@@ -22,7 +23,10 @@ export interface CastleModelResource {
   matrix: number[];
   actions: CastleAction[];
 }
-interface ActionView {resource: CastleAction; container: AssetContainer; root: TransformNode;}
+interface ActionView {
+  resource: CastleAction; container: AssetContainer; root: TransformNode;
+  sampleAnimation: (milliseconds: number) => void;
+}
 
 /** Original Castle MV3 actions and five named live spout matrices. */
 export class SceneCastleVisual {
@@ -65,7 +69,8 @@ export class SceneCastleVisual {
             sourceCastleModel: this.resource.model, sourceCastleAction: resource.name};
         });
         root.setEnabled(false);
-        this.actions.set(resource.name, {resource, container, root});
+        this.actions.set(resource.name, {resource, container, root,
+          sampleAnimation: createMv3AnimationSampler(container)});
       }
       // Castle45dd2d initializes n2 then n1, both with mode0.
       this.action('n1', 0);
@@ -125,10 +130,7 @@ export class SceneCastleVisual {
   private sample(): void {
     if (!this.current || !this.clock) return;
     const time = this.clock.time;
-    for (const group of this.current.container.animationGroups) {
-      const fps = group.targetedAnimations[0]?.animation.framePerSecond;
-      if (fps !== undefined) group.goToFrame(time % this.clock.duration / 1000 * fps);
-    }
+    this.current.sampleAnimation(time % this.clock.duration);
     for (let index = 0; index < 5; index++) {
       const track = this.current.resource.tracks.find(track => track.name === `tag_spout${index + 1}`);
       if (!track) throw new Error(`缺少原城堡挂点：tag_spout${index + 1}`);

@@ -64,7 +64,7 @@ interface SnapshotRoom {
 
 /** Project authoritative state onto the existing wire format without advancing the world. */
 export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSeconds = 0,
-  battleActive = true, now = Date.now()): PlayerSnapshot {
+  battleActive = true, now = Date.now(), accountId?: string): PlayerSnapshot {
   const sources = player.ownedRoles.snapshot();
   const appearanceInstanceId = player.ownedRoles.equipment?.().decorationInstanceId;
   const appearance = player.inventory.find(item => item.instanceId === appearanceInstanceId
@@ -81,7 +81,7 @@ export function playerSnapshot(player: SnapshotPlayer, maxHp: number, currentSec
   const snapshot: PlayerSnapshot & {radarJammed?: boolean} = {trapFireRestraint: player.trapFireRestraint ? {...player.trapFireRestraint,
     firePermissionCount: player.combat.record!.flags![11]} : undefined, trapTurnRestraint: player.trapTurnRestraint ? {...player.trapTurnRestraint,
     turnPermissionCount: player.combat.record!.flags![10]} : undefined, trapRestraint: player.trapRestraint ? {...player.trapRestraint,
-    movePermissionCount: player.combat.record!.flags![9]} : undefined, id: player.id, name: player.name, tankId: player.tank.id,
+    movePermissionCount: player.combat.record!.flags![9]} : undefined, id: player.id, accountId, name: player.name, tankId: player.tank.id,
     petId: player.cpu ? player.cpuPetId : sources.base?.fields.get(8),
     roleSkillSources: skills ? {
       currentSkillIds: [...skills.currentSkillIds ?? []],

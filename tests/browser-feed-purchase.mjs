@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {createServer} from 'vite';
 import {AccountStore} from '../apps/server/src/account-store.ts';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources.ts';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources.ts';
 const require = createRequire(import.meta.url);
 const WebSocket = require('ws');
 let endpoint = process.argv.slice(2).find(value => !value.startsWith('--'));
@@ -14,7 +14,7 @@ let chrome;
 let chromeDirectory, directory, server, vite, ws, store, command;
 const pages=[],contexts=[];
 const itemTableId = 1;
-const catalog = JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const catalog = JSON.parse(await readFile('apps/web/public/combat-catalog.json', 'utf8'));
 const itemDefinition = catalog.items.find(item => item.itemTableId === itemTableId);
 const skillDefinition = catalog.skills.find(skill => skill.skillId === itemDefinition.skillIds[0]);
 assert.equal(skillDefinition.skillId, itemTableId);
@@ -59,7 +59,7 @@ async function stop() {
   if(server?.exitCode===null){const ended=new Promise(resolve=>server.once('exit',resolve));server.kill();await ended;}
 }
 await start();
-vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',
+vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',
   server:{port:5206,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3161',ws:true,rewrite:()=> '/'}}}});
 await vite.listen();
 ws = new WebSocket(endpoint);

@@ -8,7 +8,7 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import *
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 uc, _ = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
 uc.mem_map(0x2000000, 0x20000)

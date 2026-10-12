@@ -1,8 +1,84 @@
-[data-formal-battle-page] {position: fixed; inset: 0; z-index: 5; pointer-events: none;}
-.battle-play-stage {position: absolute; width: 800px; height: 600px; transform-origin: top left; color: #fff; font: 12px 'CDTank-SIMSUN', serif;}
-.battle-play-stage > .source-state-button {position: absolute; margin: 0; padding: 0; border: 0; background: transparent; pointer-events: auto;}
-.battle-play-stage :focus-visible {outline: 2px solid #fff; outline-offset: 2px;}
-.battle-play-loading-exit {position: absolute; left: 747px; top: 0; width: 46px; height: 46px; pointer-events: auto;}
-.battle-play-feedback {position: absolute; left: 309px; top: 316px; width: 287px; pointer-events: none; text-shadow: 1px 1px #000;}
-.battle-play-feedback:empty {display: none;}
-.battle-play-feedback p {margin: 0 0 4px;}
+@import '../resources/happy-zcool.css';
+
+[data-formal-battle-page] {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.battle-play-stage {
+  position: absolute;
+  width: 800px;
+  height: 600px;
+  transform-origin: top left;
+  color: #fff;
+}
+
+.battle-play-stage,
+.battle-play-stage * {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+}
+
+.battle-play-feedback {
+  position: absolute;
+  left: 309px;
+  top: 316px;
+  width: 287px;
+  pointer-events: none;
+  font-size: 12px;
+  text-shadow: 1px 1px #000;
+}
+
+.battle-play-feedback:empty {
+  display: none;
+}
+
+.battle-play-feedback p {
+  margin: 0 0 4px;
+}
+
+.battle-exit-title {
+  position: absolute;
+  left: 28px;
+  top: 7px;
+  margin: 0;
+  color: #fff1b2;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 32px;
+  -webkit-text-stroke: 1.5px #584125;
+  paint-order: stroke fill;
+}
+
+.battle-exit-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px 30px;
+  color: #fff8df;
+  font-size: 18px;
+  line-height: 1.6;
+  -webkit-text-stroke: .8px #684c2f;
+  paint-order: stroke fill;
+}
+
+.battle-exit-content p {
+  margin: 0;
+  -webkit-text-stroke: inherit;
+}
+
+.battle-exit-content output {
+  display: block;
+  margin-top: 8px;
+  color: #ffdb8c;
+  font-size: 13px;
+  -webkit-text-stroke: inherit;
+}
+
+.battle-exit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 45px;
+}

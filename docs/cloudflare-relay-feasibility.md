@@ -187,8 +187,8 @@ TSRPC 既有单向消息，也有带请求编号的 RPC。多个玩家连接复�
 
 | 既有记录 | 场景 | World 单 tick p95 / 峰值 | 最大快照间隔 |
 | --- | --- | --- | --- |
-| [十二账户连接扇出](../recovery/docs/complex-map-human-fanout.md) | map20、破坏模式、12 个真实账户连接、普通 Autopilot、默认弹药，观察 60.249 秒 | 15.06 / 36.04 ms | 服务端 52 ms，接收墙钟 95 ms |
-| [十二参与者复杂地图](../recovery/docs/complex-map-max-players.md) | map20、2 个账户连接 + 10 个 CPU，编译 Node.js 服务，观察 60 秒 | 13.79 / 30.04 ms | 服务端 54 ms，接收墙钟 74 ms |
+| [十二账户连接扇出](../docs/recovery/complex-map-human-fanout.md) | map20、破坏模式、12 个真实账户连接、普通 Autopilot、默认弹药，观察 60.249 秒 | 15.06 / 36.04 ms | 服务端 52 ms，接收墙钟 95 ms |
+| [十二参与者复杂地图](../docs/recovery/complex-map-max-players.md) | map20、2 个账户连接 + 10 个 CPU，编译 Node.js 服务，观察 60 秒 | 13.79 / 30.04 ms | 服务端 54 ms，接收墙钟 74 ms |
 
 这说明当前单房间模拟在已有 Node.js 场景下能落在 50 ms 节拍内，可作为抽离模拟的基础。浏览器房主的硬件、资源内存、渲染竞争和网络是另一个验收范围。
 

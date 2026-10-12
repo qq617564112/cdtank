@@ -33,7 +33,9 @@ export class BattleTankDecoration {
     // Reflect the native matrix about X, as the converted actor coordinates do.
     const matrix = [...native];
     for (const index of [1, 2, 3, 4, 8, 12]) matrix[index] *= -1;
-    this.anchor.freezeWorldMatrix(Matrix.FromArray(matrix).multiply(this.view.root.getWorldMatrix()));
+    // Keep the attachment local; rendering updates it with the actor's current world matrix.
+    this.anchor.setPreTransformMatrix(Matrix.FromArray(matrix));
+    this.anchor.markAsDirty();
   };
 
   private constructor(private readonly scene: Scene, private readonly view: TankView,

@@ -1,6 +1,5 @@
-import {SourceFeedbackText} from '../resources/source-feedback-text';
-import {SourceStaticImage} from '../resources/source-static-image';
-import {SourceStaticText} from '../resources/source-static-text';
+import {GameItemTooltip} from '../resources/game-item-tooltip';
+import {HomeStaticText as SourceStaticText} from './home-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 
@@ -22,18 +21,18 @@ export function homeItemDescriptionPosition(anchor: HTMLButtonElement): {left: n
     top: Math.max(0, Math.min(404 - 103, (row.bottom - sheet.top) / scale + 4))};
 }
 
-/** Inventory and equipment descriptions use the original item-description frame. */
+/** Inventory and equipment share the vector item-description frame. */
 export function HomeItemDescriptionSource({ui, description}: {ui: HomeSourceUi; description: HomeItemDescription}) {
   const suffix = 'shop_itemdesc.xml';
   const layout = new HomeSourceLayout(ui, suffix);
-  return <section id="home-item-description" role="tooltip" className="home-item-description-source"
+  return <GameItemTooltip id="home-item-description" className="home-item-description-source"
     style={{left: description.left, top: description.top}} data-home-item-description=""
     data-instance-id={description.instanceId} data-item-table-id={description.itemTableId}>
-    {['all', 'kuang'].map(name => <SourceStaticImage key={name} ui={ui} layout={layout}
-      suffix={suffix} name={name} aria-hidden="true"/>)}
-    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtType" text={description.name}/>
-    <div {...sourceProps(ui, layout, suffix, 'edtDescription')} className="home-item-description-text">
-      {Array.from(description.info).map((character, index) => <SourceFeedbackText key={index} text={character}/>)}
+    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtType" text={description.name}
+      className="game-item-tooltip-title"/>
+    <div {...sourceProps(ui, layout, suffix, 'edtDescription')}
+      className="game-item-tooltip-description home-item-description-text">
+      {description.info}
     </div>
-  </section>;
+  </GameItemTooltip>;
 }

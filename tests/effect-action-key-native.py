@@ -6,14 +6,14 @@ import struct
 import sys
 from unicorn.x86_const import UC_X86_REG_ESP, UC_X86_REG_EAX
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 from effect_action_keys import action_identifier
 paths = [ROOT / 'CDTank/gbengine.dll', ROOT / 'CDTank/msvcr71.dll']
 machine, _ = map_original_binaries(paths)
 machine.mem_map(0x2000000, 0x20000)
 INPUT, STACK, STOP = 0x2010000, 0x2008000, 0x201f000
-links = json.loads((ROOT / 'recovery/output/web-assets/effect-links.json').read_text())
+links = json.loads((ROOT / 'apps/web/public/effect-links.json').read_text())
 names = {'', '03', '09', 'goto_action', 'attack1', 'attack3', 'effect1'}
 for source in links['files']:
     for group in source['groups']:

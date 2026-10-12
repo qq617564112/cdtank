@@ -76,7 +76,7 @@ try {
   for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{log+=String(d);});
   const deadline=Date.now()+15000;while(!log.includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));
   assert(log.includes('Server started'),log);
-  vite=await createServer({configFile:false,root:'apps/web',cacheDir:join(directory,'vite-cache'),publicDir:'../../recovery/output/web-assets',server:{port:5391,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3361',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,root:'apps/web',cacheDir:join(directory,'vite-cache'),publicDir:'../../apps/web/public',server:{port:5391,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3361',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9591',
@@ -139,7 +139,7 @@ ws.on('message', raw => {
   const target=evidence.initial[0].match.sceneCrushes.find(o=>o.id==='CRUSH:76');
   assert(target,'Authoritative source76 target');
   const route=JSON.parse(await readFile('recovery/output/scene-crush07-route.json','utf8'));
-  const source=JSON.parse(await readFile('recovery/output/web-assets/scene-placements.json','utf8')).find(m=>m.id==='0007').records.find(p=>p.id==='76');
+  const source=JSON.parse(await readFile('apps/web/public/scene-placements.json','utf8')).find(m=>m.id==='0007').records.find(p=>p.id==='76');
   evidence.target=target;evidence.routeEvidence='scene-crush07-route.json';
   evidence.fixture='Original tank1/pet1 owned records before room; four authenticated accounts, two React renderers and two idle normal players.';
   const field=createRoomBattlefield(7),navigation=createOriginalBotNavigation(field);

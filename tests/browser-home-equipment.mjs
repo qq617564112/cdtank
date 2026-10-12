@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {createServer} from 'vite';
 import {AccountStore} from '../apps/server/src/account-store.ts';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources.ts';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources.ts';
 const require = createRequire(import.meta.url), WebSocket = require('ws');
 const endpoint = process.argv[2];
 if (!endpoint) throw new Error('Usage: node --import tsx tests/browser-home-equipment.mjs <CDP WebSocket>');
@@ -28,7 +28,7 @@ async function stop() {
   if(server?.exitCode===null){const ended=new Promise(resolve=>server.once('exit',resolve));server.kill();await ended;}
 }
 await start();
-const vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',
+const vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',
   server:{port:5193,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3134',ws:true,rewrite:()=> '/'}}}});
 await vite.listen();
 const ws=new WebSocket(endpoint);
@@ -163,7 +163,7 @@ try {
     await click(session,item(86));await click(session,cosmetic('DECORATION'));
     await waitUntil(session,`document.querySelector('#home-equipment > output').value.includes('不能装备')`);
     assert.equal(await evaluate(session,`document.querySelector('${cosmetic('DECORATION')}').dataset.instanceId`),'85');
-    const sourceUi=JSON.parse(await readFile('recovery/output/web-assets/ui.json','utf8'));
+    const sourceUi=JSON.parse(await readFile('apps/web/public/ui.json','utf8'));
     const sourceControls=sourceUi.layouts.find(layout=>layout.path.endsWith('myhome_panzerpage.xml')).windows;
     const expectedControls=['heseditu','ditukuang','heseditu2','bgHatIcon','bgMarkIcon',
       'bgInternalPart0','bgInternalPart1','bgExternalPart0','bgExternalPart1','bgExternalPart2',

@@ -2,6 +2,11 @@ import {Scene, Texture} from '@babylonjs/core';
 import {EffectModelRenderer, type EffectModelLibrary} from '../../render/effects/models/effect-model-renderer';
 import type {EffectModelGraphicsState} from '../../render/effects/models/effect-model-material';
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
+import {multiplyEffectMatrices} from '../../render/effects/common/effect-render-transform';
+
+// LoadCVDFile (0x100118b9) rotates the container root by -90° around X.
+// File nodes are Z-up; this root maps [x, y, z] to scene [x, z, -y].
+const CVD_SCENE_ROOT: EffectNativeMatrix = [1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1];
 
 /** Original c9 geometry played once, then held at its final pose during fade. */
 export class SceneBreachVisual {
@@ -11,13 +16,16 @@ export class SceneBreachVisual {
   private disposed = false;
   private duration = 0;
   private elapsed = 0;
+  private readonly matrix: EffectNativeMatrix;
 
   get durationSeconds(): number {return this.duration;}
 
   constructor(private readonly scene: Scene, private readonly placementId: string,
-              private readonly matrix: EffectNativeMatrix, readonly model: string,
+              matrix: EffectNativeMatrix, readonly model: string,
               private readonly libraryAsset: string,
-              private readonly reference?: string) {}
+              private readonly reference?: string) {
+    this.matrix = multiplyEffectMatrices(matrix, CVD_SCENE_ROOT);
+  }
 
   async load(): Promise<void> {
     const response = await fetch(this.libraryAsset);

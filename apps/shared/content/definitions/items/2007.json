@@ -75,7 +75,7 @@
     },
     "hit": "burn",
     "defaultAmmo": false,
-    "query": "projectile",
+    "query": "instant",
     "projectileSpeed": 360,
     "range": 1000,
     "muzzleForward": 30,

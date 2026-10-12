@@ -7,7 +7,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP, UC_X86_REG_FPCW
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 
 machine, _ = map_original_binaries([ROOT / 'CDTank' / name for name in ['CDTank.exe', 'gbengine.dll', 'msvcr71.dll']])
@@ -68,7 +68,7 @@ for address, value in [(0x635830, GFX), (GFX, VTABLE), (GFX + 8, DEVICE),
                        (OBJECT + 0x80, WORLD), (OBJECT + 0x90, GEOMETRY)]:
     write_uint(address, value)
 
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 sources = json.loads((ROOT / 'recovery/output/effect-bolt-segments-native.json').read_text())['rows']
 identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 matrices = [identity, [0, 0, -1, 0, 0, 1.25, 0, 0, .75, 0, 0, 0, 5, -2, 7, 1]]
@@ -125,5 +125,5 @@ for node in library['nodes']:
     assert uint(submitted[0][2]) == 0x87654321
     assert stack_calls == [uint(0x5c0a78), uint(0x5c0aa0), uint(0x5c0a7c)]
 (ROOT / 'recovery/output/effect-bolt-draw-native.json').write_text(json.dumps(dict(rows=rows)) + '\n')
-(ROOT / 'recovery/output/web-assets/effect-bolt-browser-native.json').write_text(json.dumps(dict(rows=[row for row in rows if row['node'] == 131])) + '\n')
+(ROOT / 'apps/web/public/effect-bolt-browser-native.json').write_text(json.dumps(dict(rows=[row for row in rows if row['node'] == 131])) + '\n')
 print(f'PASS: {len(rows)} original type2 camera ribbon / DLL vertex submissions; 101 complete draw-entry script/material dispatches')

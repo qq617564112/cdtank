@@ -6,7 +6,7 @@ import {resolveBattlePartTableIds} from '../apps/server/src/battle/roles/part-de
 import {World} from '../apps/server/src/world';
 import {writeRoleProfileEquipment} from '../apps/server/src/accounts/profile/equipment';
 
-const catalog: CombatCatalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const catalog: CombatCatalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
 const items = new Map(catalog.items.map(item => [item.itemTableId, item]));
 const evidence: {traversals: {sources: {currentSkillIds?: number[]; itemIds?: number[]}; selected: number[]}[]} =
   JSON.parse(readFileSync('recovery/output/combat-role-skills-native.json', 'utf8'));

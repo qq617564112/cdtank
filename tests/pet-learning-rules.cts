@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
-import {quotePetSkillLearning, type PetLearningDefinition, type PetLearningPrice} from '../recovery/prepared/pet-learning';
-const petTable = JSON.parse(readFileSync('recovery/output/verified/tables/pet.json', 'utf8')) as {
+import {quotePetSkillLearning, type PetLearningDefinition, type PetLearningPrice} from '../tools/recovery/prepared/pet-learning';
+const petTable = JSON.parse(readFileSync('apps/server/resources/tables/pet.json', 'utf8')) as {
   rows: {values: Record<string, string>}[]};
-const priceTable = JSON.parse(readFileSync('recovery/output/verified/tables/petskill.json', 'utf8')) as {
+const priceTable = JSON.parse(readFileSync('apps/server/resources/tables/petskill.json', 'utf8')) as {
   rows: {values: Record<string, string>}[]};
 const raw = petTable.rows.find(row => row.values.ID === '2')!.values;
 const definition: PetLearningDefinition = {petId: 2,

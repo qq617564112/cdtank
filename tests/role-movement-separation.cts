@@ -13,7 +13,7 @@ const evidence: {nav: string; rows: {name: string; input_position: number[]; inp
 const bytes = readFileSync(evidence.nav);
 // Reuse exported NAV geometry from the actual battlefield catalog by matching
 // the original oracle's selected source path, not a synthetic clear grid.
-const data = JSON.parse(readFileSync('recovery/output/web-assets/battlefields.json', 'utf8')) as
+const data = JSON.parse(readFileSync('apps/web/public/battlefields.json', 'utf8')) as
   {id: string; navigationLayers: {minimum: number[]; maximum: number[]; width: number; height: number; cells: string}[]}[];
 const field = data.find(field => Number(field.id) === 1)!;
 assert(field);

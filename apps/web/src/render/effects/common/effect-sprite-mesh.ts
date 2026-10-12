@@ -76,8 +76,8 @@ varying vec2 vUV;
 varying vec4 vColor;
 uniform sampler2D effectTexture;
 void main(){
-  if(vColor.a==0.0)discard;
   vec4 texel=texture2D(effectTexture,vUV);
+  if(vColor.a==0.0)discard;
   if(texel.a==0.0)discard;
   gl_FragColor=texel*vColor;
 }`,

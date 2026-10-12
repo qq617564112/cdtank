@@ -3,39 +3,29 @@
   left: 50%;
   bottom: 9px;
   width: 296px;
-  height: 53px;
+  height: 76px;
   transform: translateX(-50%);
-  background-repeat: no-repeat;
 }
 
-.hud-spectator .source-state-button {
+.hud-spectator .battle-arrow-button {
   position: absolute;
-  padding: 0;
-  border: 0;
-  background: none;
-  pointer-events: auto;
-}
-
-.hud-spectator .source-state-button:disabled {
-  opacity: .45;
-}
-
-.hud-spectator .source-state-button:focus-visible {
-  outline: 2px solid #ffe994;
-  outline-offset: 2px;
+  top: 50%;
+  width: 26px;
+  height: 37px;
+  margin-top: -18.5px;
 }
 
 .hud-spectator-name {
   position: absolute;
-  left: 40px;
-  right: 40px;
-  top: 0;
-  line-height: 53px;
-  font-size: 16px;
-  text-align: center;
-  color: #fff;
-  text-shadow: 1px 1px #000;
-  white-space: nowrap;
+  inset: 0 42px;
+  display: grid;
+  align-items: center;
   overflow: hidden;
+  color: #fff7d0;
+  font-size: 15px;
+  text-align: center;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  -webkit-text-stroke: 1px #49311b;
+  paint-order: stroke fill;
 }

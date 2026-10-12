@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {RoleCombatState, createRoleCombatState} from '../apps/server/src/battle/roles/combat-state';
-import {observeRoleAmmoProperty} from '../recovery/evidence/roles/role-ammo-observer';
-import {encodeRoleNumericProperty, receiveRoleNumericProperties} from '../recovery/evidence/roles/role-numeric-property';
+import {observeRoleAmmoProperty} from '../tests/evidence/roles/role-ammo-observer';
+import {encodeRoleNumericProperty, receiveRoleNumericProperties} from '../tests/evidence/roles/role-numeric-property';
 
 interface Event {kind: string; objectId?: number; count?: number; maximum?: number}
 const evidence: {rows: {stage: number; present: boolean; local: boolean; observer: boolean;

@@ -13,7 +13,7 @@ interface SourceVector {
   draws: {kind: string; text?: string; resource?: SourceResource; rect: number[]; colourARGB?: string[]}[];
 }
 const native=JSON.parse(readFileSync('recovery/output/chat-image-source.json','utf8')) as {vectors: SourceVector[]};
-const catalog=new ChatImageCatalog(JSON.parse(readFileSync('recovery/output/web-assets/ui.json','utf8')) as HomeSourceUi);
+const catalog=new ChatImageCatalog(JSON.parse(readFileSync('apps/web/public/ui.json','utf8')) as HomeSourceUi);
 const measure=(text: string): number => Array.from(text).reduce((sum,glyph)=>sum+(glyph==='\n'?0:7),0);
 for (const vector of native.vectors) {
   const parsed=parseChatSourceMarkup(vector.input,(set,name)=>Boolean(catalog.image(set,name)));

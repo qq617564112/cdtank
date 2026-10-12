@@ -4,9 +4,11 @@ import {BattleInfoOpacity} from './battle-info-opacity';
 import {teamInfo} from './team-info';
 import {BattleSpectator} from '../../match/battle-spectator';
 import {BattleScoreboard} from './battle-scoreboard';
+import {HudPlayerStatuses} from './hud-player-status';
 import type {MsgRoomSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import type {MsgRoomEvent} from '../../../../shared/protocols/MsgRoomEvent';
 import {PortraitState} from './portrait-state';
+import {battleRemotePortraitAsset} from './battle-portrait-bounds';
 import {loadUiFont} from '../resources/source-ui-fonts';
 import {loadStaticJson} from '../../assets/static-resources';
 import {combatState, sameCombatState, type HudCombatSnapshot} from './hud-combat-state';
@@ -35,12 +37,13 @@ export interface SourceUi {
 export interface HudPlayer {
   id: string; name: string; tankId: number; petId?: number; alive: boolean; hp: number; maxHp: number;
   expression: string; asset?: string | null; isVIP: boolean; title?: string;
+  statuses: readonly number[];
 }
 export interface HudSnapshot {
   data?: SourceUi; visible: boolean; mode: number;
   roomId?: string; round?: number; phase?: MsgRoomSnapshot['phase'];
   introStage: BattleIntroStage;
-  timers: readonly {text: string; colour?: string}[];
+  timers: readonly {text: string; colour?: string; elapsedMinutes?: number}[];
   slots: readonly (HudPlayer | undefined)[];
   localHealth?: {name: string; hp: number; maxHp: number};
   teamCounts?: {self: string; enemy: string};
@@ -67,6 +70,7 @@ export class BattleHud {
   private localPlayerId = '';
   private readonly portraits = new Map<string, {petId?: number; alive: boolean; state: PortraitState}>();
   private readonly beforeShotPending = new Set<string>();
+  private readonly playerStatuses = new HudPlayerStatuses();
   private lastUpdate?: number;
   private readonly reloadProgress = new ReloadProgress();
   private readonly battleInfoOpacity = new BattleInfoOpacity();
@@ -144,14 +148,18 @@ export class BattleHud {
     if (newRound) {
       this.portraits.clear();
       this.messages.length = 0;
+      this.playerStatuses.clear();
     }
+    this.playerStatuses.update(snapshot, now);
     const mode = snapshot.mode ?? 1;
-    const timers: {text: string; colour?: string}[] = Array.from({length: 5}, (_, index) =>
+    const timers: {text: string; colour?: string; elapsedMinutes?: number}[] = Array.from({length: 5}, (_, index) =>
       !newRound && mode === this.state.mode && index === mode - 1 ? this.state.timers[index] : {text: ''});
     const remaining = Math.max(0, Math.trunc(snapshot.remaining));
+    const battleStartsAt = snapshot.match?.battleStartsAt;
     if (mode >= 1 && mode <= 5) timers[mode - 1] = {
       text: `${Math.trunc(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`,
-      colour: remaining < 30 && remaining % 2 === 1 ? 'ffff0000' : 'ffffffff',
+      colour: remaining < 10 ? 'ffff0000' : remaining < 60 ? 'ffffff00' : 'ffffffff',
+      elapsedMinutes: battleStartsAt === undefined ? undefined : Math.max(0, Math.floor((serverNow - battleStartsAt) / 60000)),
     };
     const local = snapshot.players.find(player => player.id === playerId);
     const lifecycle = `${snapshot.roomId}:${snapshot.phase}:${snapshot.match?.round ?? 0}`;
@@ -186,10 +194,15 @@ export class BattleHud {
       }
       animation.state.advance(seconds);
       const expression = animation.state.image();
-      const asset = expression === 'dead' ? data.portraitDeath[slot === 0 ? 'local' : 'remote']
-        : slot !== 0 ? portrait?.remoteAsset : expression === 'normal' ? portrait?.asset : portrait?.expressions[expression];
+      const asset = slot !== 0 ? battleRemotePortraitAsset(player.petId, expression, slot >= 6)
+        : expression === 'dead' ? data.portraitDeath.local
+        : expression === 'normal' ? portrait?.asset : portrait?.expressions[expression];
+      const currentStatuses = snapshot.phase === 'PLAYING' ? this.playerStatuses.current(player, serverNow) : [];
+      const previous = this.state.slots[slot];
+      const statuses = previous?.id === player.id && previous.statuses.length === currentStatuses.length
+        && previous.statuses.every((status, index) => status === currentStatuses[index]) ? previous.statuses : currentStatuses;
       slots.push({id: player.id, name: player.name, tankId: player.tankId, petId: player.petId, alive: player.alive,
-        hp: player.hp, maxHp: player.maxHp, expression, asset, isVIP: player.isVIP, title: player.title?.name});
+        hp: player.hp, maxHp: player.maxHp, expression, asset, isVIP: player.isVIP, title: player.title?.name, statuses});
     }
     if (round !== this.reloadRound || !local?.alive || snapshot.phase !== 'PLAYING') this.reloadProgress.reset();
     this.reloadRound = round;
@@ -205,6 +218,7 @@ export class BattleHud {
       teamCounts: teamInfo(snapshot, playerId), modeInfo: modeInfo(snapshot, playerId)});
   }
   event(event: MsgRoomEvent): void {
+    if (this.roomSnapshot?.phase === 'PLAYING') this.playerStatuses.event(event, performance.now());
     if (event.type === 'beforeShot') {
       this.beforeShotPending.add(event.playerId);
       this.portraits.get(event.playerId)?.state.set(2);
@@ -224,9 +238,12 @@ export class BattleHud {
     const messages = battleInfoMessages(event, this.roomSnapshot, this.localPlayerId);
     if (!messages.length) return;
     this.battleInfoOpacity.reset();
-    const receivedAt = new Date();
-    const timestamp = [receivedAt.getHours(), receivedAt.getMinutes(), receivedAt.getSeconds()]
-      .map(value => String(value).padStart(2, '0')).join(':');
+    const snapshot = this.roomSnapshot;
+    const battleStartsAt = snapshot?.match?.battleStartsAt;
+    const combatTime = snapshot?.phase === 'FINISHED'
+      ? snapshot.match?.result?.endedAt ?? snapshot.serverTime : snapshot?.serverTime ?? 0;
+    const elapsed = battleStartsAt === undefined ? 0 : Math.max(0, Math.floor((combatTime - battleStartsAt) / 1000));
+    const timestamp = `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}`;
     this.messages.push(...messages.map(message => `[${timestamp}] ${message}`));
     if (this.messages.length > 5) this.messages.splice(0, this.messages.length - 5);
     this.publish({...this.state, messages: this.messages.join('\n')});
@@ -239,6 +256,7 @@ export class BattleHud {
     this.spectator.clear();
     ++this.loadGeneration; this.loading = undefined;
     this.messages.length = 0; this.portraits.clear(); this.beforeShotPending.clear(); this.lastUpdate = undefined;
+    this.playerStatuses.clear();
     this.lifecycle = undefined;
     this.reloadProgress.reset(); this.reloadRound = undefined;
     this.battleInfoOpacity.reset();

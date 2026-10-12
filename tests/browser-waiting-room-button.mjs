@@ -235,7 +235,7 @@ async function launchBrowser() {
 }
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5311,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3281',ws:true,rewrite:()=> '/',configure:proxy=>{proxy.on('proxyReqWs',(_request,_incoming,socket)=>{const originalWrite=socket.write.bind(socket);let frames=Buffer.alloc(0);
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5311,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3281',ws:true,rewrite:()=> '/',configure:proxy=>{proxy.on('proxyReqWs',(_request,_incoming,socket)=>{const originalWrite=socket.write.bind(socket);let frames=Buffer.alloc(0);
       socket.write=(data,...args)=>{
         const chunk=Buffer.isBuffer(data)?data:Buffer.from(data);
         if(chunk.subarray(0,4).toString()==='HTTP')return originalWrite(data,...args);
@@ -267,7 +267,7 @@ try {
   for(const page of sessions)await waitUntil(page,`(${worldExpression})?.mapLoaded&&(${worldExpression}).players.length===2`);
   assert((await world(a)).players.every(player=>!player.isCpu));
   for(const page of sessions)await open(page);
-  const uiSource=JSON.parse(await readFile('recovery/output/web-assets/ui.json','utf8'));function asset(ref){const [setName,imageName]=ref.slice(4).split(' image:');const sets=uiSource.imagesets.filter(s=>s.attributes.Name===setName),set=sets.find(s=>s.path.includes('imagesets_dds/'))??sets[0];return set.images.find(i=>i.Name===imageName).asset;}
+  const uiSource=JSON.parse(await readFile('apps/web/public/ui.json','utf8'));function asset(ref){const [setName,imageName]=ref.slice(4).split(' image:');const sets=uiSource.imagesets.filter(s=>s.attributes.Name===setName),set=sets.find(s=>s.path.includes('imagesets_dds/'))??sets[0];return set.images.find(i=>i.Name===imageName).asset;}
   const native=JSON.parse(await readFile('recovery/output/waiting-room-button-native.json','utf8'));assert.equal(native.status,'PASS');
   for(const [width,height,label] of [[800,600,'800x600'],[1920,1080,'1080p'],[3840,2160,'4k']]) {
     await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},a);await verifySource(a,width,height);const rows=[];

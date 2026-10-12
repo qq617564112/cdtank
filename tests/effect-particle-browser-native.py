@@ -6,14 +6,14 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_EIP, UC_X86_REG_EAX, UC_X86_REG_FPCW
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 machine, _ = map_original_binaries([ROOT / 'CDTank' / name for name in ['CDTank.exe', 'gbengine.dll', 'msvcr71.dll']])
 machine.mem_map(0x2000000, 0x20000)
 OBJECT, DEFINITION, TABLE, CONTROL, RESOURCE, PARTICLES, STACK, STOP = (
     0x2010000, 0x2011000, 0x2012000, 0x2013000, 0x2014000, 0x2015000, 0x2008000, 0x201f000)
 READER_CALL, READER_VTABLE, READER_OBJECT = 0x201f100, 0x201f200, 0x201f300
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 control = next(c for c in library['particleControls'] if c['node'] == 17)
 source = library['nodes'][17]['modifiers'][0]
 base, payload = bytes.fromhex(source['base']), bytes.fromhex(source['payload'])
@@ -75,5 +75,5 @@ for delta in [0, .1, .2, .5, .2, 1, 0]:
 assert [len(s['states']) for s in steps] == [2, 2, 2, 1, 1, 0, 0]
 result = dict(node=17, initial=initial, steps=steps, config=dict(motion=control['particleMotion'],
     frame=control['particleFrame'], alphaMode=control['alphaMode']))
-(ROOT / 'recovery/output/web-assets/effect-particle-browser-native.json').write_text(json.dumps(result) + '\n')
+(ROOT / 'apps/web/public/effect-particle-browser-native.json').write_text(json.dumps(result) + '\n')
 print('PASS: original type-6 node17 loader, complete update and packed-array lifetime over seven steps')

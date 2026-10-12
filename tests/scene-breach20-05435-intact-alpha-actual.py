@@ -11,7 +11,7 @@ assert all(world['mode'] == 5 and len(world['players']) == 4 for world in raw['i
 assert not raw['browserErrors']
 assert all(state['world'] is None and not state['loadingError'] for state in raw['finalLoadState'])
 source = json.loads((ROOT / 'recovery/output/scene-breach20-05435-intact-material-source.json').read_text())
-scene = next(value for value in json.loads((ROOT / 'recovery/output/web-assets/scene-placements.json').read_text()) if value['id'] == '0020')
+scene = next(value for value in json.loads((ROOT / 'apps/web/public/scene-placements.json').read_text()) if value['id'] == '0020')
 records = {value['id']: value for value in scene['records'] if value['className'] == 'SYcScnObjBreach' and value['model'] == 'obj05435'}
 rows = []
 for side, observed in enumerate(raw['observed'], 1):

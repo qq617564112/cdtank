@@ -10,7 +10,7 @@ const directory = mkdtempSync(join(tmpdir(), 'pet-learning-transaction-'));
 const database = join(directory, 'accounts.sqlite');
 const accounts = new AccountStore(database);
 const db = new DatabaseSync(database);
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
 try {
   const owner = accounts.open(), empty = accounts.open();
   assert.deepEqual(accounts.petSkillLearning(empty.accountId, {operation: 'QUERY'}, catalog), {owned: {base: [], equipment: []}, quotes: []});

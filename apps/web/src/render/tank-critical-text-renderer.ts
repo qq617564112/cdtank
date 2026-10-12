@@ -9,7 +9,7 @@ export interface CriticalTextImage {
   attributes: Record<string, string>;
 }
 
-/** Published UI metrics supply Web dimensions; native GPU pixel equivalence remains separate. */
+/** Combo offsets use the attached image's scale alongside the published font metrics. */
 export function criticalTextLayout(record: Readonly<CastleDamageTextRecord>, viewport: CastleDamageTextViewport,
                                    font: CastleDamageTextFont, image: CriticalTextImage) {
   const height = (size: number, attributes: Record<string, string>): number => {
@@ -18,8 +18,14 @@ export function criticalTextLayout(record: Readonly<CastleDamageTextRecord>, vie
   };
   const imageHeight = height(Number(image.Height), image.attributes);
   const lineHeight = height(Math.max(...font.glyphs.map(glyph => glyph.height)), font.attributes);
+  const combo = font.name === 'Combo';
+  const horizontal = image.attributes.AutoScaled === 'true'
+    ? viewport.width / Number(image.attributes.NativeHorzRes) : 1;
+  const offsetX = combo ? Math.fround(Math.round(46 * horizontal) * record.scale) : 0;
+  const offsetY = combo ? height(17, image.attributes) : 0;
   return {imageY: Math.fround(record.y - imageHeight * 0.5),
-    textY: Math.fround(record.y - lineHeight * 0.5)};
+    textX: Math.fround(record.x - offsetX),
+    textY: Math.fround(record.y - lineHeight * 0.5 - offsetY)};
 }
 
 /** Original selectors2/3: vector mark behind the Critical or Combo numeric outlines. */
@@ -59,8 +65,8 @@ export class TankCriticalTextRenderer implements CastleDamageTextRenderer {
     this.imageRenderer.draw({...record, handle: imageHandle, y: layout.imageY}, viewport);
     const combo = this.font.name === 'Combo';
     this.glyphs.draw({...record, x: combo
-      ? record.x - 46 * record.scale - this.scaledTextWidth(record.handle, viewport, record.scale) / 2 : record.x,
-      y: layout.textY - (combo ? 17 * record.scale : 0)}, viewport);
+      ? layout.textX - this.scaledTextWidth(record.handle, viewport, record.scale) / 2 : layout.textX,
+      y: layout.textY}, viewport);
   }
 
   private scaledTextWidth(handle: number, viewport: CastleDamageTextViewport, scale: number): number {

@@ -1,4 +1,6 @@
+import {GameMessage, showGameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
+import {useNavigationChoice, useNavigationNumber} from '../../navigation/route';
 import {loadCombatCatalog} from '../../content';
 import {petSkillLearningOwner} from './pet-skill-learning-owner';
 import {HomeResourceFeedback} from './home-resource-feedback';
@@ -23,9 +25,6 @@ import {HomePetOwnedMastery} from './home-pet-owned-mastery';
 import {sourcePetDescription, sourceTankDescription} from '../resources/role-source-descriptions';
 import {HomeOwnedRoleSourceList} from './home-owned-role-source-list';
 import {HomeTankUpgradeDialog} from './home-tank-upgrade-dialog';
-import {createPortal} from 'react-dom';
-import {SourceNotice} from '../dialogs/source-notice';
-import {SourceNoticeView} from '../dialogs/source-notice-view';
 
 type RoleKind = 'tank' | 'pet';
 type PetMasteryEquipment = {profile: NonNullable<ResRoleProfile['profile']>; battle: Battle; accountGeneration: number; itemIds?: number[]};
@@ -55,8 +54,7 @@ function sourceProps(ui: HomeSourceUi, kind: RoleKind, name: string, picture?: s
 
 /** The root page selects a role tab; each opening queries current ownership and profile. */
 export function HomeRolesView({open, close, battle, initialKind, onPlayerPage, onEquipmentPage, initialSelectedInstance}: HomeRolesViewProps) {
-  const [kind, setKind] = useState<RoleKind>(initialKind ?? 'tank');
-  useEffect(() => {if (open && initialKind) setKind(initialKind);}, [open, initialKind]);
+  const [kind, setKind] = useNavigationChoice<RoleKind>('roleKind', ['tank', 'pet'], initialKind ?? 'tank');
   return open ? <RolesSession initialSelectedInstance={initialSelectedInstance} onPlayerPage={onPlayerPage} onEquipmentPage={onEquipmentPage} close={close} battle={battle} kind={kind} setKind={setKind} /> : null;
 }
 
@@ -80,23 +78,23 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const [growth, setGrowth] = useState<ResRoleProfile['growth']>();
   const [equippedItemIds, setEquippedItemIds] = useState<number[]>();
   const [masteryEquipment, setMasteryEquipment] = useState<PetMasteryEquipment>();
-  const [selected, setSelected] = useState<number>();
+  const [selected, setSelected] = useNavigationNumber('roleInstance');
   const focusInitialSelection = useRef(initialSelectedInstance !== undefined);
   const [busy, setBusy] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
   const owner = petSkillLearningOwner(battle);
   const learning = useSyncExternalStore(owner.subscribe, owner.getSnapshot, owner.getSnapshot);
   const learningBusy = learning.busy;
-  const [upgrade, setUpgrade] = useState<{instanceId: number; action: 1 | 2}>();
+  const [upgradeInstance, setUpgradeInstance] = useNavigationNumber('upgradeTank');
+  const [upgradeAction, setUpgradeAction] = useNavigationChoice('upgradeAction', ['1', '2'], '1');
+  const upgrade = upgradeInstance === undefined ? undefined : {instanceId: upgradeInstance, action: upgradeAction === '2' ? 2 as const : 1 as const};
+  function setUpgrade(value?: {instanceId: number; action: 1 | 2}): void {
+    setUpgradeInstance(value?.instanceId);
+    if (value) setUpgradeAction(String(value.action) as '1' | '2');
+  }
   const [resourceError, setResourceError] = useState<string>();
   const [status, setStatus] = useState('载入战车与宠物…');
-  const [notice] = useState(() => new SourceNotice());
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
-
-  useEffect(() => {
-    notice.clear();
-    return () => notice.clear();
-  }, [notice, accountGeneration]);
 
   useEffect(() => {
     const element = dialog.current!;
@@ -114,7 +112,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   useEffect(() => {
     const current = {active: true, pending: false}; session.current = current;
     setResourceError(undefined);
-    setUi(undefined); setOwned(undefined); setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined); setSelected(undefined);
+    setUi(undefined); setOwned(undefined); setProfile(undefined); setPlayerSummary(undefined); setGrowth(undefined);
     setRolesLoaded(false);
     setBusy(true); setStatus('载入战车与宠物…');
     void (async () => {
@@ -133,19 +131,20 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
       if (!current.active) return;
       setOwned(confirmedOwned); setProfile(confirmedProfile.profile);
       setPlayerSummary(confirmedProfile.playerSummary); setGrowth(confirmedProfile.growth);
-      if (initialSelectedInstance !== undefined && confirmedOwned.equipment.some(record => new Map(record.fields).get(0x1c) === initialSelectedInstance)) {
+      if (selected === undefined && initialSelectedInstance !== undefined
+          && confirmedOwned.equipment.some(record => new Map(record.fields).get(0x1c) === initialSelectedInstance)) {
         setSelected(initialSelectedInstance);
       }
       setStatus('');
     })().catch(error => {
       if (current.active) {
         const message = `角色资料读取失败：${error instanceof Error ? error.message : String(error)}`;
-        setStatus(message); void notice.show(message);
+        setStatus(message); showGameMessage(message);
       }
     })
       .finally(() => {if (current.active) {setBusy(false); setRolesLoaded(true);}});
     return () => {current.active = false;};
-  }, [battle, accountGeneration, notice]);
+  }, [battle, accountGeneration]);
 
   useEffect(() => {
     if (kind !== 'pet' || !rolesLoaded) return;
@@ -158,8 +157,8 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   }, [learning.owned, learning.profile]);
 
   useEffect(() => {
-    if (learning.actionError) void notice.show(learning.actionError);
-  }, [notice, learning.actionError]);
+    if (learning.actionError) showGameMessage(learning.actionError, 'error');
+  }, [learning.actionError]);
 
   function learnPetSkill(instanceId: number, slot: number) {
     const quote = learning.quotes?.find(value => value.instanceId === instanceId && value.slot === slot);
@@ -234,7 +233,9 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
   const currentTankInstance = profile ? new DataView(Uint8Array.from(profile.bytes).buffer).getUint32(0xa8, true) : undefined;
   const currentTank = currentTankInstance === undefined ? undefined
     : owned?.equipment.find(record => new Map(record.fields).get(0x1c) === currentTankInstance);
-  const masteryEquippedItemIds = masteryEquipment?.profile === profile && masteryEquipment.battle === battle
+  const masteryEquippedItemIds = masteryEquipment !== undefined
+    && masteryEquipment.profile === profile
+    && masteryEquipment.battle === battle
     && masteryEquipment.accountGeneration === accountGeneration ? masteryEquipment.itemIds : undefined;
 
   function requestClose() {
@@ -254,7 +255,7 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
     } catch (error) {
       if (current.active) {
         setSelected(currentId); setStatus(String(error));
-        void notice.show(error instanceof Error ? error.message : String(error));
+        showGameMessage(error instanceof Error ? error.message : String(error), 'error');
       }
     } finally {
       if (current.active) {current.pending = false; setBusy(false);}
@@ -337,8 +338,8 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
         </>}
         {learning?.queryError && <button type="button" data-pet-skill-query-retry="" disabled={learningBusy}
           onClick={() => {void owner.query();}}>重试读取技能</button>}
-        <output data-home-pet-learning-status="" aria-live="polite"
-          style={{flexBasis: '100%', minHeight: 16}}>{learning?.actionError || learning?.message || ''}</output>
+        <GameMessage data-home-pet-learning-status="" text={learning?.actionError || learning?.message}
+          tone={learning?.actionError ? 'error' : learningBusy ? 'pending' : 'info'}/>
       </div>}
       <output hidden data-home-role-status="">{status}</output>
       {!ui && <HomeResourceFeedback error={resourceError} close={requestClose} closeAttribute="data-roles-close" />}
@@ -349,10 +350,10 @@ function RolesSession({close, battle, kind, setKind, onPlayerPage, onEquipmentPa
           if (result.profile) setProfile(result.profile);
           if (result.growth) setGrowth(result.growth);
         }}
-        onConfirmed={message => {setStatus(message); void notice.show(message);}} />}
+        onConfirmed={message => {setStatus(message); showGameMessage(message);}} />}
       </div>
       </SourceImageScale>
-      {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
+
     </dialog>
 
   </>;

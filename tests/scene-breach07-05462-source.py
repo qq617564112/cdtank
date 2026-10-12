@@ -3,10 +3,10 @@ import json
 from pathlib import Path
 import sys
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from scene import read_scene
 from scene_breach import decode_breach_tail
-web=ROOT/'recovery/output/web-assets';base=ROOT/'recovery/output/verified/assets/data'
+web=ROOT/'apps/web/public';base=ROOT/'recovery/output/verified/assets/data'
 lib=json.loads((web/'scene-breach-0007.json').read_text());prior=json.loads((web/'scene-breach-0020.json').read_text())
 scene=next(s for s in json.loads((web/'scene-placements.json').read_text()) if s['id']=='0007')
 original=[r for r in read_scene(base/'Data/scn/0007/0007.obj') if r['className']=='SYcScnObjBreach']

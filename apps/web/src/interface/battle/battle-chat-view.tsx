@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import './chat.css';
 import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
 import type {BattleChat} from './battle-chat';
@@ -12,9 +13,9 @@ import {SourceBattleChat, type SourceChatResources} from './source-battle-chat';
 import {WaitingChatSourceView} from './waiting-chat-source-view';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
-import {SourceChatScrollbar} from './source-chat-scrollbar';
 import {WaitingChatHistoryScrollbar} from './waiting-chat-history-scrollbar';
 import {RoomChatSourceCaret} from './room-chat-source-caret';
+import {LobbyChatInputPreview} from '../lobby/lobby-chat-input-preview';
 
 export function BattleChatView({chat, formal = false}: {chat: BattleChat; formal?: boolean}) {
   const snapshot = useSyncExternalStore(chat.subscribe, chat.getSnapshot);
@@ -118,12 +119,14 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   const position = waiting ? waitingPosition(state.channel === 2 ? 'edtIntimateChatInput' : 'edtNormalUserInput')
     : resources?.layout.place(state.channel === 2 ? 'edtIntimateChatInput' : 'edtChat', 0, -435);
   const targetPosition = waiting ? waitingPosition('edtIntimateNameInput') : resources?.layout.place('edtIntimateNameInput', 0, -435);
+  if (active && position) position.style = {...position.style, left: state.channel === 2 ? 158 : 60,
+    top: 135, width: state.channel === 2 ? 96 : 194, height: 18};
+  if (active && targetPosition) targetPosition.style = {...targetPosition.style, left: 68, top: 135, width: 78, height: 18};
   const logPosition = waiting ? waitingPosition('ChatTextBox') : resources?.layout.place('edtDisplayBox', 0, -435);
-  const caretLayout = formal && source && resources
+  const caretLayout = formal && waiting && resources
     ? waitingLayout ?? new HomeSourceLayout(resources.layout.ui, 'game_main_chat_shrinked.xml') : undefined;
-  const latest = state.messages.at(-1)?.id ?? 0;
   const familyStatus = state.channel === 5
-    ? family.loading ? '正在读取家族…' : family.status || (family.membership ? `家族：${family.membership.name}` : '未加入家族')
+    ? family.loading ? '' : family.status || (family.membership ? '' : '未加入家族')
     : '';
   const presentation = {
     channel: state.channel, pending: state.pending, composing, input,
@@ -179,6 +182,8 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
               chat.closeEditor(); input.current?.blur(); document.querySelector<HTMLCanvasElement>('canvas')?.focus();
             }
           }} />
+        {active && resources && <LobbyChatInputPreview input={input} ui={resources.layout.ui} value={state.draft}
+          control={state.channel === 2 ? 'edtIntimateChatInput' : 'edtChat'}/>}
         {caretLayout && resources && <>
           <RoomChatSourceCaret input={input} ui={resources.layout.ui} layout={caretLayout} scale={scale}
             suffix={waiting ? 'chat.xml' : 'game_main_chat_shrinked.xml'} offsetY={waiting ? -402 : -435}
@@ -192,17 +197,15 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   const content = <>
       {history}
       {editorVisible && editor}
-      <p role="status" data-waiting-chat-business-status={waiting || undefined}>{state.status || familyStatus}</p>
-      {active && resources && !notice && <SourceChatScrollbar log={log} layout={resources.layout} messageVersion={latest}
-        releaseKeys={() => chat.releaseInputKeys()} />}
-      {waiting && resources && <WaitingChatHistoryScrollbar list={log} ui={resources.layout.ui}
-        properties={new HomeSourceLayout(resources.layout.ui, 'chat.xml').control('ChatTextBox').properties} scale={scale} />}
+      <GameMessage data-waiting-chat-business-status={waiting || undefined} text={state.status || familyStatus}
+        tone={state.pending || family.loading ? 'pending' : 'info'}/>
+      {waiting && resources && <WaitingChatHistoryScrollbar list={log} ui={resources.layout.ui}/>}
   </>;
   return <section ref={root} data-chat-presentation={presentationKind}
     className={`battle-chat${active ? ' source-battle-chat' : waiting ? ' source-waiting-chat' : ''}`} aria-label="房间聊天"
     hidden={!present} data-chat-notice={notice ? state.noticePhase : undefined}
     style={source ? {left: waiting ? (size.width - 800 * scale) / 2 : 0, top: (size.height - 600 * scale) / 2 + (waiting ? 402 : 435) * scale,
-      width: (waiting ? 612 : 301) * scale, height: (waiting ? 198 : 164) * scale} : undefined}>
+      width: (waiting ? 615 : 301) * scale, height: (waiting ? 198 : 164) * scale} : undefined}>
     {waiting && resources ? <WaitingChatSourceView ui={resources.layout.ui} scale={scale} {...presentation}>{content}</WaitingChatSourceView>
       : <SourceBattleChat resources={resources} active={interactive} {...presentation}>{content}</SourceBattleChat>}
   </section>;

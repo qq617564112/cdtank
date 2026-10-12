@@ -70,7 +70,7 @@ async function screenshot(name) {
 }
 try {
   await startServer();
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets', server: {
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public', server: {
     port: 5205, strictPort: true, host: '127.0.0.1', hmr: false,
     proxy: {'/game': {target: 'ws://127.0.0.1:3158', ws: true, rewrite: () => '/'}}}});
   await vite.listen();

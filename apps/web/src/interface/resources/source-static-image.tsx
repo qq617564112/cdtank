@@ -5,6 +5,7 @@ import type {HomeSourceUi, HomeSourceLayout} from './source-ui-layout';
 import {sourceProps} from './source-ui-props';
 import {sourceTextArtwork, SourceTextArtwork} from './source-text-artwork';
 import {ImageArtwork} from './image-artwork';
+import {TankIconMark} from './tank-icon-mark';
 
 export const SourceImageScale = createContext(1);
 
@@ -68,6 +69,7 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
       return <i key={position} data-source-frame={`${position}FrameImage`} data-source-asset={image!.asset} style={style}/>;
     })}
     {text && <SourceTextArtwork asset={textAsset!} style={{inset: `${top}px ${right}px ${bottom}px ${left}px`}}/>}
+    {props['data-tank-icon-mark'] && <TankIconMark mark={props['data-tank-icon-mark']}/>}
     {children}
   </span>;
 }

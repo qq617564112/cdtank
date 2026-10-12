@@ -7,7 +7,7 @@ import capstone
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP, UC_X86_REG_FPCW
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 machine, images = map_original_binaries([ROOT / 'CDTank/gbengine.dll', ROOT / 'CDTank/msvcr71.dll'])
 machine.mem_map(0, 4096)
@@ -71,7 +71,7 @@ def call(address, *arguments):
     machine.emu_start(address, STOP, count=100000)
     assert machine.reg_read(UC_X86_REG_ESP) == STACK + 4 + 4 * len(arguments)
 
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-models.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-models.json').read_text())
 rows = []
 # Both orderings use the same source model sections without clearing the native cache.
 for resource in library['resources']:

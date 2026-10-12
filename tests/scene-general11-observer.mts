@@ -14,7 +14,7 @@ scene.onNewMeshAddedObservable.add(mesh => {
   if (typeof source._draw === 'function' && typeof source._processRendering === 'function') fixedRegistered.add(source);
 });
 const asset = await LoadAssetContainerAsync(new Uint8Array(readFileSync(
-  'recovery/output/web-assets/Data/scnobj/obj05431/obj05431.glb')), scene, {pluginExtension: '.glb'});
+  'apps/web/public/Data/scnobj/obj05431/obj05431.glb')), scene, {pluginExtension: '.glb'});
 const source = asset.meshes.find(mesh => mesh.name === 'anangua04/0')!;
 assert.ok(source);
 assert.equal(scene.meshes.includes(source), false);

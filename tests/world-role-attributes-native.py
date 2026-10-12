@@ -5,7 +5,7 @@ import runpy
 import struct
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_FPCW, UC_X86_REG_FPSW, UC_X86_REG_FPTAG
 ROOT = Path(__file__).resolve().parents[1]
-g = runpy.run_path(str(ROOT / 'recovery/evidence/attributes/role-recompute-native.py'))
+g = runpy.run_path(str(ROOT / 'tests/evidence/attributes/role-recompute-native.py'))
 uc, write, read = g['uc'], g['write'], g['read']
 ROLE, BASE, EQUIPMENT, TANK, PET, RECORD, STACK, RETURN, VTABLE = [g[k] for k in
     ['ROLE', 'BASE', 'EQUIPMENT', 'TANK', 'PET', 'RECORD', 'STACK', 'RETURN', 'VTABLE']]

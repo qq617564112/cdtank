@@ -3,7 +3,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {resolveItemHotkey} from '../apps/shared/combat/item-hotkeys';
 import {SkillEffectNotifications} from '../apps/web/src/match/skills/skill-effect-notifications';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
 const item = catalog.items.find((row: {itemTableId: number}) => row.itemTableId === 3001);
 const skill = catalog.skills.find((row: {skillId: number}) => row.skillId === 3001);
 assert.deepEqual(item.skillIds, [3001, 0, 0]);

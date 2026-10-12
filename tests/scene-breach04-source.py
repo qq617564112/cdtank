@@ -4,11 +4,11 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from scene import read_scene
 from scene_breach import decode_breach_tail
 
-WEB = ROOT / 'recovery/output/web-assets'
+WEB = ROOT / 'apps/web/public'
 SOURCE = ROOT / 'recovery/output/verified/assets/data'
 accepted = json.loads((ROOT / 'recovery/output/scene-breach07-source.json').read_text())
 assert accepted['status'] == 'PASS'

@@ -26,6 +26,6 @@ Production evidence is stored in `output/imagegen/map-api4k/OBJECT/`. Runtime te
 
 Visual review covers artwork sampled by the original model UVs. Content outside those UVs does not affect acceptance or trigger a redraw. Self-reviewed passed groups remain accepted, and received native atlases are retained for model review.
 
-`publish.py --independent-review REVIEW_FOLDER --require-complete` packages only groups with passed self and independent visual reviews. It publishes the catalog and original/API model states for `tools/asset-viewer/map-api.html`. The viewer filters by map, object, model state and texture variant, and switches between original and 4K textures while retaining the camera position. Static models show the complete selected object groups; ground meshes are excluded.
+`publish.py --independent-review REVIEW_FOLDER --require-complete` packages only groups with passed self and independent visual reviews. It publishes the catalog and original/API model states. Static models contain the complete selected object groups; ground meshes are excluded.
 
 `--install-runtime` also installs the approved textures into `art/hd/` and the runtime models, retaining each existing model's geometry and all unselected ground, water and sky textures. Map 1002 receives the same reviewed textures as its standard originals. The original source files remain in `art/original/`.

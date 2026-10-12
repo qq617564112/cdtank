@@ -9,16 +9,17 @@ import type {EffectVec3} from '../common/types';
 import type {EffectSpriteNodeState} from './effect-sprite-node';
 
 /** Type1 reverse history submission with current color and indexed trail alpha. */
-export function effectSpriteDraw(sprite: EffectSpriteNodeState, billboard: boolean,
+export function effectSpriteDraw(sprite: EffectSpriteNodeState, billboard: boolean | 'y',
   uvFrames: readonly [number, number, number, number][], camera: Camera,
-  parent?: EffectNativeMatrix): EffectQuadData[] {
+  parent?: EffectNativeMatrix, displayScale = 1): EffectQuadData[] {
   return [...sprite.history.entries].reverse().map((state, reverseIndex) => {
     const index = sprite.history.entries.length - 1 - reverseIndex;
     const center = state.position.map((value, axis) => Math.fround(value + state.orbitOffset[axis])) as EffectVec3;
     const uv = uvFrames[state.frame];
+    const scale = displayScale === 1 ? state.scale : state.scale.map(value => Math.fround(value * displayScale)) as EffectVec3;
     return {corners: billboard ? effectCameraCorners(camera,
-      parent ? transformEffectPosition(parent, center) : center, state.scale, state.angles[2]) :
-      effectOrientedCorners(state.position, state.orbitOffset, state.angles, state.scale, parent),
+      parent ? transformEffectPosition(parent, center) : center, scale, state.angles[2], billboard === 'y') :
+      effectOrientedCorners(state.position, state.orbitOffset, state.angles, scale, parent),
     uv: billboard ? effectCameraUv(uv) : uv,
     packedColor: applyEffectTrailAlpha(packEffectColor(sprite.history.entries[0].color), index, sprite.history.entries.length)};
   });

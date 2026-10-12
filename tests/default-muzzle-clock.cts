@@ -4,7 +4,7 @@ import {EffectActorActionClock} from '../apps/web/src/assets/tanks/effect-actor-
 import {effectModelEngineDelta} from '../apps/web/src/render/effects/models/effect-model-animation';
 import {roleAmmoActionEffectName, roleAmmoEffectName} from '../apps/web/src/assets/tanks/role-ammo-visual';
 interface Action {tankId:number;part:string;action:string;duration:number;events:{time:number;name:string;identifier:number}[];}
-const action = (JSON.parse(readFileSync('recovery/output/web-assets/effect-action-events.json','utf8')).actions as Action[])
+const action = (JSON.parse(readFileSync('apps/web/public/effect-action-events.json','utf8')).actions as Action[])
   .find(action => action.tankId === 1 && action.part === 'M' && action.action === '03')!;
 const attack = action.events.find(event => event.name === 'attack1')!;
 assert.equal(effectModelEngineDelta(.3),.3);
@@ -26,7 +26,7 @@ assert.deepEqual(belowThreshold[1].messages,[0x6f766572]);
 assert(!belowThreshold.flatMap(frame=>frame.messages).includes(attack.identifier));
 const capped=sequence([1,1,1,1,1,1]);
 assert.equal(capped.flatMap(frame=>frame.messages).filter(identifier=>identifier===attack.identifier).length,1);
-const links=JSON.parse(readFileSync('recovery/output/web-assets/effect-links.json','utf8'));
+const links=JSON.parse(readFileSync('apps/web/public/effect-links.json','utf8'));
 const actionKey=links.actionKeys.find((key:{name:string})=>key.name==='03').id;
 const records=links.files.find((file:{tankCode:string})=>file.tankCode==='001').groups
   .find((group:{key:number})=>group.key===actionKey).actions.find((event:{name:string})=>event.name==='attack1').records;

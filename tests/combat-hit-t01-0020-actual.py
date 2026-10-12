@@ -5,7 +5,7 @@ import struct
 import sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from mv3 import read_mv3
 source=ROOT/'recovery/output/browser-combat-hit-t01-0020-2026-10-03T23-35-05-094Z.json'
 run=json.loads(source.read_text());metadata=json.loads((ROOT/'recovery/output/combat-hit-t01-0020-source.json').read_text())

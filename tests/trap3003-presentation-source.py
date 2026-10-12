@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from inspect_assets import read_table
 from pol import read_pol
 
@@ -22,10 +22,10 @@ meshes = [dict(name=mesh['name'], bounds=list(mesh['bounds']),
 assert meshes[0]['textureReferences'] == ['03003A.tga']
 texture_path = model_path.parent / '03003A.dds'
 assert texture_path.is_file()
-published = next(row for row in json.loads((ROOT / 'recovery/output/web-assets/pol-conversion.json').read_text())
+published = next(row for row in json.loads((ROOT / 'apps/web/public/pol-conversion.json').read_text())
                  if row['path'] == 'Data/scnobj/03003/03003.POL')
 assert published['missingTextures'] == []
-assert (ROOT / 'recovery/output/web-assets' / published['output']).is_file()
+assert (ROOT / 'apps/web/public' / published['output']).is_file()
 output = dict(status='PASS_ORIGINAL3003_DATA_AND_MODEL_ONLY',
               item={key: item[key] for key in ['ItemTableID', 'ItemName', 'D3', 'ItemType', 'ItemSkill1']},
               skills=[{key: skill[key] for key in ['SkillTableID', 'Effect1', 'Sound1', 'Effect2', 'Sound2',

@@ -15,6 +15,7 @@ export function setDynamicMeshIndexCount(mesh: Mesh, count: number): void {
   const subMesh = mesh.subMeshes[0];
   if (subMesh.indexCount === count) return;
   subMesh.indexCount = count;
+  subMesh.setBoundingInfo(mesh.getBoundingInfo());
   invalidateMeshDrawBundles(mesh);
 }
 

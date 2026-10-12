@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {loadTankTextureCatalog} from '../../content';
 import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
@@ -70,7 +71,7 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
   const [active, setActive] = useState<Set<'U' | 'M' | 'XY'>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState('载入迷彩目录…');
+  const [status, setStatus] = useState('');
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
   const fields = new Map(record.fields), tankId = fields.get(0x24)! >>> 0, instanceId = fields.get(0x1c)! >>> 0;
 
@@ -98,7 +99,7 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
       setActive(new Set(COMPONENTS.filter(component => component.part === 'XY'
         ? parts.includes('X') || parts.includes('Y') : parts.includes(component.part)).map(component => component.part)));
       setRows(catalog.rows.filter(row => row.tankId === tankId));
-      setLoading(false); setStatus('选择组件迷彩后保存');
+      setLoading(false); setStatus('');
     })().catch(error => {
       if (currentSession.active) {setLoading(false); setStatus(String(error));}
     });
@@ -125,7 +126,7 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
     const currentSession = session.current;
     if (!currentSession.active || currentSession.pending || loading || !selected || !current || !changed) return;
     focusAfterSave.current = document.activeElement === saveButton.current;
-    currentSession.pending = true; setSaving(true); setStatus('保存战车迷彩…');
+    currentSession.pending = true; setSaving(true); setStatus('');
     try {
       const result = await battle.configureTankTextures({instanceId, textures: {...selected}});
       if (!currentSession.active) return;
@@ -172,7 +173,7 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
               onClick={() => {
                 if (session.current.pending) return;
                 setSelected({...selected, [part]: ids[(ids.indexOf(selected[part]) + delta + ids.length) % ids.length]});
-                setStatus('预览尚未保存');
+                setStatus('');
               }} />)}
             <span {...sourceProps(ui, 'shop_tankpage_texture.xml', `txtCoin${control}Expense`)}>
               {!active.has(part) ? '' : selected[part] === current[part] ? '已选' : row?.rarity === 1
@@ -187,7 +188,7 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
       </>}
     </div>
     <p>{!loading && selected ? `本次费用：${money} 金钱 / ${tokens} 代币` : ''}</p>
-    <output aria-live="polite">{status}</output>
+    <GameMessage text={status} tone={saving ? 'pending' : 'info'}/>
     <button type="button" disabled={saving} onClick={requestClose}>返回</button>
   </dialog>;
 }

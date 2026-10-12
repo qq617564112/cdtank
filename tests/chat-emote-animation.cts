@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {ChatEmoteSequence} from '../apps/web/src/interface/battle/chat-emote-animation';
 const oracle=JSON.parse(readFileSync('recovery/output/chat-emote-render-source.json','utf8'));
-const assets=JSON.parse(readFileSync('recovery/output/web-assets/chat-emote-sequences.json','utf8'));
+const assets=JSON.parse(readFileSync('apps/web/public/chat-emote-sequences.json','utf8'));
 let comparisons=0;
 for (const source of oracle.sequences) {
   const definition=assets.sequences.find((sequence: {id:number})=>sequence.id===source.id);

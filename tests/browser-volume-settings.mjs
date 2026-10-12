@@ -142,7 +142,7 @@ try {
   const deadline = Date.now() + 15000;
   while (!serverLog.includes('Server started') && Date.now() < deadline && server.exitCode === null) await pause(20);
   assert(serverLog.includes('Server started'), serverLog);
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     plugins: [{name: 'volume-browser-observer', transform(source, id) {
       if (!id.endsWith('/src/match/battle.ts')) return;
       return source + `\nfor(const name of ['setMusicVolume','setSoundVolume']){const original=Battle.prototype[name];Battle.prototype[name]=function(value){window.volumeBattle=this;window.volumeObserved.push({method:name,value});return original.call(this,value);};}\n`;

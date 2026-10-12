@@ -4,7 +4,7 @@ import type {CombatCatalog} from '../apps/shared/combat/catalog';
 import type {TankView} from '../apps/web/src/assets/tanks/tank-view';
 import {TankShotPlayerResult} from '../apps/web/src/assets/tanks/shot-player-result';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
 const victim = {tankId: 3} as TankView;
 const remote = {tankId: 1} as TankView;
 const calls: unknown[][] = [];

@@ -5,10 +5,41 @@
   width: 194px;
   height: 138px;
   z-index: 20;
+  isolation: isolate;
 }
 
-.lobby-emote-menu > span {
+.lobby-emote-menu::before {
+  content: '';
   position: absolute;
-  display: block;
+  inset: 0;
+  box-sizing: border-box;
+  border: 1px solid #59bdcf;
+  border-radius: 10px;
+  background: rgb(13 0 76 / 73%);
+  box-shadow: 0 0 1px 1px rgb(27 146 176 / 65%),
+    inset 0 0 0 1px #d6fff7,
+    inset 0 0 0 2px #3fb4c9,
+    inset 0 0 0 2.8px rgb(58 194 224 / 35%),
+    inset 0 3px 2px -2px #fff,
+    inset 2px 0 2px -1px #b6fff5,
+    inset 0 -2px 2px -1px #a8f8ef;
   pointer-events: none;
+}
+
+.lobby-emote-menu [data-lobby-emote-choice] {
+  border-radius: 3px;
+}
+
+.lobby-emote-menu [data-lobby-emote-choice]:hover:not(:disabled) {
+  outline: 1px solid rgb(166 246 255 / 65%);
+  outline-offset: 2px;
+}
+
+.lobby-emote-menu [data-lobby-emote-choice]:focus-visible {
+  outline: 1px solid #d6fff7;
+  outline-offset: 2px;
+}
+
+.lobby-emote-menu [data-lobby-emote-choice]:active:not(:disabled) {
+  translate: 0 .5px;
 }

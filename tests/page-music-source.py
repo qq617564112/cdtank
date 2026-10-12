@@ -7,7 +7,7 @@ import capstone
 import pefile
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from inspect_assets import read_table
 
 pe = pefile.PE(str(ROOT / 'CDTank/CDTank.exe'))

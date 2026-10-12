@@ -59,7 +59,7 @@ async function nativeClick(session, selector) {
 async function startServer(){const start=serverLog.length;const env={...process.env,PORT:'3581',ACCOUNT_DB_PATH:database,MATCH_TIME_LIMIT_SECONDS:'12'};delete env.MATCH_MIN_PLAYERS;server=spawn(process.execPath,['--import','tsx','apps/server/src/index.ts'],{env,stdio:['ignore','pipe','pipe']});for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{serverLog+=String(d);});const deadline=Date.now()+15000;while(!serverLog.slice(start).includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));assert(serverLog.slice(start).includes('Server started'),serverLog.slice(start));}
 try {
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5611,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3581',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5611,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3581',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9811',
@@ -96,8 +96,8 @@ ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFra
   await waitUntil(s,`document.querySelector('[data-home-equipment-common-row]')?.matches(':enabled')`);
   const inventory=network.filter(n=>n.direction==='received'&&n.name==='Inventory'&&n.success).at(-1)?.response;
   assert(inventory);const record=inventory.records.find(r=>r.itemTableId===14003&&r.ownedQuantity>0);assert(record);
-  const catalog=JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json','utf8')),definition=catalog.items.find(i=>i.itemTableId===record.itemTableId);assert(definition);
-  const ui=JSON.parse(await readFile('recovery/output/web-assets/ui.json','utf8')),sets=ui.imagesets.filter(s=>s.attributes.Name==='daoju0'),set=sets.find(s=>s.path.includes('imagesets_dds/'))??sets[0],reference='data\\ui\\daoju\\'+String(definition.iconId).padStart(5,'0')+'.tga',icon=set.images.find(i=>i.Name===reference);assert(icon?.asset);
+  const catalog=JSON.parse(await readFile('apps/web/public/combat-catalog.json','utf8')),definition=catalog.items.find(i=>i.itemTableId===record.itemTableId);assert(definition);
+  const ui=JSON.parse(await readFile('apps/web/public/ui.json','utf8')),sets=ui.imagesets.filter(s=>s.attributes.Name==='daoju0'),set=sets.find(s=>s.path.includes('imagesets_dds/'))??sets[0],reference='data\\ui\\daoju\\'+String(definition.iconId).padStart(5,'0')+'.tga',icon=set.images.find(i=>i.Name===reference);assert(icon?.asset);
   evidence.record={instanceId:record.instanceId,itemTableId:record.itemTableId,ownedQuantity:record.ownedQuantity};evidence.frames=[];evidence.screenshots=[];
   for(const [width,height] of [[800,600],[1920,1080],[3840,2160]]){
     await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},s);await evaluate(s,`new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))`);

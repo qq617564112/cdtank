@@ -8,7 +8,7 @@ import capstone
 from unicorn.x86_const import UC_X86_REG_ESP, UC_X86_REG_FPCW
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 
 exe = ROOT / 'CDTank/CDTank.exe'

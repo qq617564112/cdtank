@@ -77,7 +77,7 @@ try {
   const started = Date.now() + 15000;
   while (!serverLog.includes('Server started') && Date.now() < started && server.exitCode === null) await pause(20);
   assert(serverLog.includes('Server started'), serverLog);
-  vite = await createServer({configFile: false, root: 'apps/web', cacheDir: join(directory, 'vite-cache'), publicDir: '../../recovery/output/web-assets', server: {port: 5199, strictPort: true, host: '127.0.0.1', hmr: false, proxy: {'/game': {target: 'ws://127.0.0.1:3149', ws: true, rewrite: () => '/'}}}});
+  vite = await createServer({configFile: false, root: 'apps/web', cacheDir: join(directory, 'vite-cache'), publicDir: '../../apps/web/public', server: {port: 5199, strictPort: true, host: '127.0.0.1', hmr: false, proxy: {'/game': {target: 'ws://127.0.0.1:3149', ws: true, rewrite: () => '/'}}}});
   await vite.listen();
   chrome = spawn(process.env.CDTANK_CHROME ?? '/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome', ['--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--remote-debugging-port=9273', `--user-data-dir=${join(directory, 'chrome')}`, 'about:blank'], {stdio: 'ignore'});
   let endpoint;

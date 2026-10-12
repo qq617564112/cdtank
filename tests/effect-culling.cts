@@ -11,7 +11,7 @@ const texture = RawTexture.CreateRGBATexture(new Uint8Array([255, 128, 64, 128])
   1, 1, scene, false, false, Texture.NEAREST_SAMPLINGMODE);
 const camera = new FreeCamera('culling', new Vector3(0, 0, -10), scene);
 camera.setTarget(Vector3.Zero());
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const pass = library.rendering.overlayScripts.find((row: {textured: boolean}) => row.textured)
   .techniques[0].passes[0];
 const area = ([a, b, c]: Vector3[]): number =>

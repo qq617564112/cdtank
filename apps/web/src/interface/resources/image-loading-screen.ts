@@ -1,14 +1,14 @@
 import {createElement} from 'react';
 import type {Root} from 'react-dom/client';
-import type {ImageLoadingProgress} from '../../assets/preload-images';
 import {getLoadingArtwork, LoadingPage} from './loading-page';
 import {decodeImageRegion} from '../../assets/image-resources';
+import {DialogButton} from './dialog-button';
 
 export class ImageLoadingScreen {
   private readonly background = 1 + Math.floor(Math.random() * 5);
   private readonly images = Object.values(getLoadingArtwork(this.background));
   private artworkReady = false;
-  private progress?: number;
+  private progress = 0;
   private status = '正在准备图片资源…';
   private details = '';
   private failed = false;
@@ -19,7 +19,10 @@ export class ImageLoadingScreen {
 
   async prepare(signal: AbortSignal): Promise<void> {
     signal.throwIfAborted();
-    await Promise.all(this.images.map(url => decodeImageRegion(url, signal)));
+    await Promise.all([
+      ...this.images.map(url => decodeImageRegion(url, signal)),
+      document.fonts.load('700 39px "HappyZcool-2016"', 'LOADING... 0123456789%'),
+    ]);
     signal.throwIfAborted();
     this.artworkReady = true;
     this.render();
@@ -27,29 +30,15 @@ export class ImageLoadingScreen {
 
   begin(): void {
     this.status = '正在准备图片资源…';
-    this.progress = undefined;
+    this.progress = 0;
     this.details = '';
     this.failed = false;
     this.render();
   }
 
-  update(progress: ImageLoadingProgress): void {
-    const fraction = Math.min(1, (progress.completed + progress.decoded)
-      / Math.max(1, progress.total + progress.decodeTotal));
-    const percent = Math.floor(fraction * 100);
-    this.progress = fraction;
-    this.status = progress.decoded === progress.decodeTotal ? '正在准备游戏界面…'
-      : progress.phase === 'decode' ? `正在解码图片 · ${percent}%` : `正在下载图片 · ${percent}%`;
-    const mib = (bytes: number) => (bytes / 1024 / 1024).toFixed(1);
-    const cached = progress.cached > 0 ? ` · 本地复用 ${progress.cached.toLocaleString()} 张` : '';
-    this.details = `已下载 ${progress.completed.toLocaleString()} / ${progress.total.toLocaleString()} 张${cached}`
-      + ` · 已解码 ${progress.decoded.toLocaleString()} / ${progress.decodeTotal.toLocaleString()} 张`
-      + ` · 资源大小 ${mib(progress.loadedBytes)} / ${mib(progress.totalBytes)} MB`;
-    this.render();
-  }
-
-  preparingContentAndUi(): void {
-    this.status = '正在准备游戏内容与界面…';
+  update(progress: number, status?: string): void {
+    this.progress = progress;
+    if (status !== undefined) this.status = status;
     this.render();
   }
 
@@ -69,8 +58,9 @@ export class ImageLoadingScreen {
       artworkReady: this.artworkReady,
       progress: this.progress,
       status: this.status,
+      error: this.failed ? this.status : undefined,
       details: this.details,
-      actions: this.failed ? createElement('button', {
+      actions: this.failed ? createElement(DialogButton, {
         type: 'button', autoFocus: true, onClick: this.onRetry,
       }, '重新载入') : undefined,
     }));

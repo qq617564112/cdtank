@@ -17,7 +17,7 @@ machine.mem_map(0x2000000, 0x20000)
 OBJECT, DEFINITION, RESOURCE, CONTROL, CONTROLS, TABLE, STATE, STACK, STOP = (
     0x2010000, 0x2010200, 0x2010400, 0x2010800, 0x2010a00,
     0x2010b00, 0x2010c00, 0x2008000, 0x201f000)
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 rows = []
 origin = [23.5, -42.125, 16.75]
 state = {'position': [-25, 12, 88], 'orbitOffset': [8, 4, 2],

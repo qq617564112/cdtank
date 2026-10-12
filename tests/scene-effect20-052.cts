@@ -5,10 +5,10 @@ import {EffectRuntime} from '../apps/web/src/render/effects/runtime/effect-runti
 import {EffectRuntimeTree} from '../apps/web/src/render/effects/runtime/effect-runtime-tree';
 import {MapSceneEffects} from '../apps/web/src/assets/scenes/map-scene-effects';
 
-const map = JSON.parse(readFileSync('recovery/output/web-assets/scene-effects-0020.json', 'utf8')) as {
+const map = JSON.parse(readFileSync('apps/web/public/scene-effects-0020.json', 'utf8')) as {
   effects: {id: string; name: string; matrix: number[]}[];
 };
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const camera = new FreeCamera('camera', new Vector3(0, 0, -100), scene);

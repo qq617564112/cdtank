@@ -59,7 +59,7 @@ try {
     fixture=undefined;
   }
   result.status='PASS';
-  result.reusedEvidence='recovery/docs/react-match-browser.md: E-R01 two natural CPU rounds and dual-page Effect11/GA15';
+  result.reusedEvidence='docs/recovery/react-match-browser.md: E-R01 two natural CPU rounds and dual-page Effect11/GA15';
   console.log(only==='camouflage'?'PASS: React camouflage real input, source 1080p/4K, payment/pending, account/restart, preview lifecycle and normal WAITING owned textures':only==='roles'?'PASS: React tank/pet real input, source 1080p/4K, pending isolation, account/restart and preview lifecycle':'PASS: React tank/pet and camouflage, real input, source 1080p/4K, pending isolation, account/restart, preview lifecycle and normal WAITING owned textures');
 } catch(error){result.status='FAIL';result.error=String(error);throw error;}
 finally {

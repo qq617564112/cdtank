@@ -7,7 +7,7 @@ import sys
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from unicorn.x86_const import UC_X86_REG_ESI, UC_X86_REG_EBX
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 machine,_=map_original_binaries([ROOT/'CDTank'/n for n in ['CDTank.exe','gbengine.dll','msvcr71.dll']])
 machine.mem_map(0x2000000,4096)
@@ -21,7 +21,7 @@ for vtable in [0x5c8468,0x5c8688,0x5c88c8]:
  getter=struct.unpack('<I',machine.mem_read(vtable+0x1c,4))[0]
  assert getter==0x464836
  getters.append(dict(vtable=hex(vtable),getter=hex(getter),positionOffset='0x180'))
-links=json.loads((ROOT/'recovery/output/web-assets/effect-links.json').read_text())
+links=json.loads((ROOT/'apps/web/public/effect-links.json').read_text())
 records=[r for f in links['files'] for g in f['groups'] for a in g['actions'] for r in a['records']]
 counts=Counter(r['bindingMode'] for r in records)
 assert counts[4]==0

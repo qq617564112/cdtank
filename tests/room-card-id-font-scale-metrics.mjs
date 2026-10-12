@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {mediumHtMetrics} from '../apps/web/src/interface/resources/source-bitmap-font.tsx';
-const library=JSON.parse(readFileSync('recovery/output/web-assets/ui-fonts.json'));
+const library=JSON.parse(readFileSync('apps/web/public/ui-fonts.json'));
 const source=library.fonts.find(font=>font.name==='MediumHT');
 const native=JSON.parse(readFileSync('recovery/output/room-card-id-font-scale-native.json'));
 let rows=0;

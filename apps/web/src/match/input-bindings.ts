@@ -2,6 +2,7 @@ export const INPUT_ACTIONS = [
   'forward', 'backward', 'turnLeft', 'turnRight', 'aimLeft', 'aimRight', 'fire',
   'slot1', 'slot2', 'slot3', 'slot4', 'slot5', 'slot6', 'slot7', 'slot8',
   'useItem', 'prevWeapon', 'nextWeapon', 'prevItem', 'nextItem',
+  'scoreboard',
 ] as const;
 
 export type InputAction = typeof INPUT_ACTIONS[number];
@@ -44,11 +45,12 @@ export const DEFAULT_KEY_BINDINGS: KeyBindings = {
   nextWeapon: 'End',
   prevItem: 'PageUp',
   nextItem: 'PageDown',
+  scoreboard: 'Tab',
 };
 
 export function isSupportedKeyCode(value: unknown): value is string {
   return typeof value === 'string'
-    && /^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|Arrow(Left|Right|Up|Down)|Space|Home|End|PageUp|PageDown|ControlLeft|ControlRight)$/.test(value);
+    && /^(Key[A-Z]|Digit[0-9]|Numpad[0-9]|Arrow(Left|Right|Up|Down)|Space|Tab|Home|End|PageUp|PageDown|ControlLeft|ControlRight)$/.test(value);
 }
 
 export function validateKeyBindings(value: unknown): KeyBindings | undefined {
@@ -59,9 +61,10 @@ export function validateKeyBindings(value: unknown): KeyBindings | undefined {
   for (const action of INPUT_ACTIONS) {
     if (!Object.hasOwn(source, action)) {
       if (OPTIONAL_INPUT_SET.has(action)) continue;
-      return undefined;
+      if (action !== 'scoreboard') return undefined;
     }
-    const code = source[action];
+    const code = action === 'scoreboard' && !Object.hasOwn(source, action)
+      ? DEFAULT_KEY_BINDINGS.scoreboard : source[action];
     if (!isSupportedKeyCode(code) || used.has(code)) return undefined;
     bindings[action] = code;
     used.add(code);
@@ -104,6 +107,7 @@ export function keyLabel(code: string): string {
   if (/^Numpad[0-9]$/.test(code)) return `小键盘 ${code.slice(6)}`;
   switch (code) {
     case 'Space': return '空格';
+    case 'Tab': return 'Tab';
     case 'ArrowLeft': return '←';
     case 'ArrowRight': return '→';
     case 'ArrowUp': return '↑';

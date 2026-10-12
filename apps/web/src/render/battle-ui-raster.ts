@@ -1,5 +1,4 @@
 import {drawImageRegion, type ImageRegion} from '../assets/image-resources';
-import {imageResourceUrl, spriteImage} from '../assets/image-cache';
 
 type Tint = readonly [number, number, number];
 export type BattleUiImage = (url: string, tint?: Tint) => ImageRegion | undefined;
@@ -46,7 +45,7 @@ export class BattleUiRaster {
     const scaleX = element.offsetWidth ? rect.width / element.offsetWidth : 1;
     const scaleY = element.offsetHeight ? rect.height / element.offsetHeight : scaleX;
     this.clip(style, rect, scaleX, scaleY);
-    this.box(style, rect, scaleX, scaleY, nextTint, mirroredX, mirroredY, element.dataset.sourceAsset);
+    this.box(style, rect, scaleX, scaleY, nextTint, mirroredX, mirroredY);
     this.pseudo(element, '::before', rect, scaleX, scaleY, nextTint);
     if (element.hasAttribute('data-image-artwork')) {
       this.artwork(element, rect, mirroredX, mirroredY, nextTint);
@@ -92,19 +91,15 @@ export class BattleUiRaster {
   }
 
   private box(style: CSSStyleDeclaration, rect: DOMRect, scaleX: number, scaleY: number,
-    tint: Tint, flipX = false, flipY = false, asset?: string): void {
+    tint: Tint, flipX = false, flipY = false): void {
     const context = this.context;
     if (!transparent(style.backgroundColor)) {
       context.fillStyle = colour(style.backgroundColor, tint);
       context.fillRect(rect.left, rect.top, rect.width, rect.height);
     }
     const url = /^url\(["']?(.*?)["']?\)$/.exec(style.backgroundImage)?.[1];
-    const sprite = asset ? spriteImage(`/${asset.replace(/^\//, '')}`) : undefined;
-    const colouredCell = sprite && (sprite.filter || tint.some(value => value !== 1))
-      && url === imageResourceUrl(sprite.atlas) ? sprite : undefined;
-    const image = url ? this.image(url, colouredCell ? undefined : tint) : undefined;
-    const painted = colouredCell ? this.image(`/${asset!.replace(/^\//, '')}`, tint) : image;
-    if (image && painted) {
+    const image = url ? this.image(url, tint) : undefined;
+    if (image) {
       const dimensions = style.backgroundSize.split(' ');
       const size = (value: string | undefined, extent: number, scale: number, native: number) =>
         !value || value === 'auto' ? native * scale
@@ -123,11 +118,7 @@ export class BattleUiRaster {
       const repeatY = ['repeat', 'repeat-y'].includes(style.backgroundRepeat);
       for (let top = y; top < rect.height && height > 0; top += height) {
         for (let left = x; left < rect.width && width > 0; left += width) {
-          if (colouredCell) {
-            drawImageRegion(context, painted,
-              left + colouredCell.x / image.width * width, top + colouredCell.y / image.height * height,
-              colouredCell.width / image.width * width, colouredCell.height / image.height * height);
-          } else drawImageRegion(context, painted, left, top, width, height);
+          drawImageRegion(context, image, left, top, width, height);
           if (!repeatX) break;
         }
         if (!repeatY) break;

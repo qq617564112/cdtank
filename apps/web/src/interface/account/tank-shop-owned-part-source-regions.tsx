@@ -1,5 +1,6 @@
-import {SourceStaticImage} from '../resources/source-static-image';
+import {ShopSourceBackground as SourceStaticImage} from './shop-source-background';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
+import {sourceProps} from '../resources/source-ui-props';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {ResEquipment} from '../../../../shared/protocols/PtlEquipment';
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
@@ -27,17 +28,20 @@ export function TankShopOwnedPartSourceRegions({ui, partSlotCount, equipment, in
 }) {
   const suffix = 'shop_tankpage_part.xml';
   const layout = new HomeSourceLayout(ui, suffix);
-  const slots = partSlotCount === undefined ? [] : partSlots.slice(0, partSlotCount);
-  const backgrounds = ['bgHatIcon', 'bgMarkIcon', ...slots.map(slot => slot.background)];
-  const icons = [
-    {name: 'picHatIcon', instanceId: equipment?.decorationInstanceId},
-    {name: 'picMarkIcon', instanceId: equipment?.markInstanceId},
-    ...slots.map((slot, index) => ({name: slot.icon, instanceId: equipment?.slots[index]})),
-  ].map(icon => ({...icon, reference: iconReference(inventory, catalog, icon.instanceId)}));
-  return <>{backgrounds.map(name => <SourceStaticImage key={name} ui={ui} layout={layout}
-    suffix={suffix} name={name} offsetX={0} offsetY={36}
-    className="tank-shop-source-picture" aria-hidden="true" />)}
-    {icons.filter(icon => icon.reference).map(icon => <SourceStaticImage key={icon.name} ui={ui} layout={layout}
-      suffix={suffix} name={icon.name} reference={icon.reference} offsetX={0} offsetY={36}
-      className="tank-shop-source-picture" aria-hidden="true" />)}</>;
+  const preview = sourceProps(ui, new HomeSourceLayout(ui, 'shop_tankpage.xml'), 'shop_tankpage.xml', 'ditukuang');
+  const parts = partSlotCount === undefined ? [] : partSlots.slice(0, partSlotCount);
+  const slots = [
+    {background: 'bgHatIcon', icon: 'picHatIcon', instanceId: equipment?.decorationInstanceId, left: 8, top: 8},
+    {background: 'bgMarkIcon', icon: 'picMarkIcon', instanceId: equipment?.markInstanceId, left: 44, top: 8},
+    ...parts.map((slot, index) => ({...slot, instanceId: equipment?.slots[index],
+      left: 8 + index * 32, top: Number(preview.style.height) - 40})),
+  ].map(slot => ({...slot, reference: iconReference(inventory, catalog, slot.instanceId)}));
+  return <div className="tank-shop-owned-parts" style={preview.style} aria-hidden="true">
+    {slots.map(slot => <SourceStaticImage key={slot.background} ui={ui} layout={layout}
+      suffix={suffix} name={slot.background} style={{left: slot.left, top: slot.top}}
+      className="tank-shop-source-picture" aria-hidden="true" />)}
+    {slots.filter(slot => slot.reference).map(slot => <SourceStaticImage key={slot.icon} ui={ui} layout={layout}
+      suffix={suffix} name={slot.icon} reference={slot.reference} style={{left: slot.left, top: slot.top}}
+      className="tank-shop-source-picture" aria-hidden="true" />)}
+  </div>;
 }

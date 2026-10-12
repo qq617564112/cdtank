@@ -9,7 +9,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_EBP, UC_X86_REG_EBX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESI, UC_X86_REG_ESP
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 
 machine, images = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
@@ -134,11 +134,11 @@ assert fields == {'scale': 1, 'alpha': 1, 'elapsed': 0, 'fadeAfter': .5,
                   'expiresAt': 1, 'screenYRate': -40}
 assert font_calls == [{'font': 'Benefit', 'service': 'CEGUI FontManager.getFont'}]
 assert word(RECORD + 0x34) == FONT and word(RECORD + 0x24) == 0
-font_catalog = json.loads((ROOT / 'recovery/output/web-assets/ui-fonts.json').read_text())
+font_catalog = json.loads((ROOT / 'apps/web/public/ui-fonts.json').read_text())
 font = next(font for font in font_catalog['fonts'] if font['name'] == 'Benefit')
 assert font['attributes']['Type'] == 'Static'
 assert sorted(glyph['codepoint'] for glyph in font['glyphs']) == list(range(48, 58))
-assert all((ROOT / 'recovery/output/web-assets' / glyph['asset']).is_file() for glyph in font['glyphs'])
+assert all((ROOT / 'apps/web/public' / glyph['asset']).is_file() for glyph in font['glyphs'])
 
 pe = images['cdtank.exe']
 decoder = Cs(CS_ARCH_X86, CS_MODE_32)

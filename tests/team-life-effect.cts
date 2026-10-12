@@ -41,12 +41,12 @@ Object.defineProperty(globalThis, 'AudioContext', {value: AudioContextBoundary, 
 Object.defineProperty(globalThis, 'window', {value: {addEventListener: () => {}, removeEventListener: () => {}}, configurable: true});
 
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 const native = JSON.parse(readFileSync('recovery/output/effect-tree-create-native.json', 'utf8')) as {
   rows: {node: number; retain: boolean; created: {node: number; retain: boolean}[]}[];
 };
-const source = (JSON.parse(readFileSync('recovery/output/verified/tables/skill.json', 'utf8')) as {
+const source = (JSON.parse(readFileSync('apps/server/resources/tables/skill.json', 'utf8')) as {
   rows: {values: Record<string, string>}[];
 }).rows.find(row => row.values.SkillTableID === '501')!.values;
 assert.deepEqual([source.Effect1, source.Sound1, source.EffectTag1, source.EffectMethod1], ['12', 'SE13', '0', '3']);
@@ -62,10 +62,10 @@ assert.deepEqual(drawnNodes.map(node => library.nodes[node].type), [1, 1, 1, 7, 
 const grids = library.textureGrids.filter(grid => drawnNodes.includes(grid.node));
 assert.equal(grids.length, 8);
 assert.ok(grids.every(grid => grid.resolution === 'published' && grid.asset));
-for (const grid of grids) assert.ok(existsSync(`recovery/output/web-assets/${grid.asset}`));
-const soundCatalog = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8')) as SkillSoundCatalog;
+for (const grid of grids) assert.ok(existsSync(`apps/web/public/${grid.asset}`));
+const soundCatalog = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8')) as SkillSoundCatalog;
 const se13 = soundCatalog.sounds.find(sound => sound.name === 'SE13')!;
-assert.ok(se13 && existsSync(`recovery/output/web-assets/${se13.asset}`));
+assert.ok(se13 && existsSync(`apps/web/public/${se13.asset}`));
 assert.equal(library.soundControls.find(row => row.node === 2616)!.reference, 'ww051');
 assert.equal(soundCatalog.sounds.some(sound => sound.name.toLowerCase() === 'ww051'), false);
 const missingSound = JSON.parse(readFileSync('recovery/output/ww051-loader-native.json', 'utf8')) as {

@@ -5,9 +5,9 @@ import '@babylonjs/loaders/glTF';
 import {ScenePlantSway} from '../apps/web/src/assets/scenes/scene-plant-sway';
 
 async function main(): Promise<void> {
-  const resource = JSON.parse(readFileSync('recovery/output/web-assets/scene-plant-0004.json', 'utf8'));
+  const resource = JSON.parse(readFileSync('apps/web/public/scene-plant-0004.json', 'utf8'));
   const native = JSON.parse(readFileSync('recovery/output/scene-plant02-sway-native.json', 'utf8'));
-  const sceneRecords = JSON.parse(readFileSync('recovery/output/web-assets/scene-placements.json', 'utf8'))
+  const sceneRecords = JSON.parse(readFileSync('apps/web/public/scene-placements.json', 'utf8'))
     .find((entry: {id: string}) => entry.id === '0004').records;
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify(resource));
@@ -28,7 +28,7 @@ async function main(): Promise<void> {
   for (const model of models) {
     const plant = resource.plants.find((plant: {model: string}) => plant.model === model);
     const placement = sceneRecords.find((record: {id: string}) => record.id === plant.sourcePlacementId);
-    const bytes = readFileSync(`recovery/output/web-assets/Data/scnobj/${model}/${model}.glb`);
+    const bytes = readFileSync(`apps/web/public/Data/scnobj/${model}/${model}.glb`);
     const asset = await LoadAssetContainerAsync(new Uint8Array(bytes), scene, {pluginExtension: '.glb'});
     assets.push(asset);
     for (const mesh of asset.meshes) {

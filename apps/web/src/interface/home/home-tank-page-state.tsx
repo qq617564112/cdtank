@@ -1,7 +1,7 @@
 import {Fragment, type MouseEventHandler} from 'react';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
-import {SourceButton} from '../resources/source-button';
-import {SourceStaticImage} from '../resources/source-static-image';
+import {HomeSourceButton as SourceButton} from './home-source-button';
+import {HomeSourceSurface as SourceStaticImage} from './home-surface';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 
@@ -22,8 +22,8 @@ function HomeTankUpgradeLevel({ui, layout, name, text, offset, value}: {
   const properties = layout.control(name).properties;
   const horizontal = properties.HorzFormatting ?? 'LeftAligned';
   const vertical = properties.VertFormatting ?? 'VertCentred';
-  return <span {...props} className="source-static-text home-tank-upgrade-entry-level"
-    data-source-font="xiangjiao-brush" data-source-font-viewport="800,600" data-source-text-colour="FFFFFFFF"
+  return <span {...props} className="source-static-text home-font-text home-tank-upgrade-entry-level"
+    data-source-font="HappyZcool-2016" data-source-font-viewport="800,600" data-source-text-colour="FFFFFFFF"
     data-source-horz-format={horizontal} data-source-vert-format={vertical} data-source-text-clip="text-area-intersect-window"
     data-home-tank-owned-field={offset} data-owned-value={value}
     style={{...props.style, display: 'flex', overflow: 'hidden', whiteSpace: 'nowrap', fontSize: 12,
@@ -48,12 +48,12 @@ export function HomeTankUpgradeEntries({ui, record, busy, openUpgrade}: {
     const level = action === 1 ? 'txtAttackLevel' : 'txtPanzerLevel';
     const levelOffset = action === 1 ? 0x44 : 0x54;
     return <Fragment key={source}>
-      <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name={source}
-        reference={layout.control(source).properties.NormalImage} className="home-tank-source-picture"
-        aria-hidden="true" />
       <SourceButton ui={ui} layout={layout} suffix={suffix} source={source} disabled={busy || !enabled}
+        className="home-upgrade-button"
         data-home-tank-modify-action={action} aria-label={action === 1 ? '火力改装' : '装甲改装'}
         onClick={() => {if (enabled && instanceId !== undefined) openUpgrade?.(instanceId, action);}}>
+        <span className="home-upgrade-level-caption" aria-hidden="true">[Lv</span>
+        <span className="home-upgrade-level-close" aria-hidden="true">]</span>
         <HomeTankUpgradeLevel ui={ui} layout={layout} name={level} offset={levelOffset}
           value={fields?.get(levelOffset)} text={fields?.has(levelOffset) ? String(fields.get(levelOffset)) : ''} />
       </SourceButton>

@@ -1,9 +1,11 @@
 import {loadUiFont} from '../interface/resources/source-ui-fonts';
-import {bundledImageUrls, decodeImage} from './image-resources';
-import {loadImageResource, prepareImageCache, prepareSpriteImages,
+import {bundledImages, bundledImageUrls, decodeImage, decodeImageRegion} from './image-resources';
+import {loadImageResource, prepareImageCache,
   type ImageAsset} from './image-cache';
 import {bindButtonBackgrounds, buttonArtwork} from './button-artwork';
 import {imageResourceUrl} from './image-cache';
+import {prepareSpriteImages, publishedImageUrl, type SpriteManifest} from './sprite-images';
+import {bindImageBackgrounds} from './image-artwork';
 
 export interface ImageLoadingProgress {
   phase: 'download' | 'decode';
@@ -16,7 +18,7 @@ export interface ImageLoadingProgress {
   totalBytes: number;
 }
 
-interface ImageManifest {images: ImageAsset[];}
+interface ImageManifest {images: ImageAsset[]; sprites?: SpriteManifest;}
 
 const imageManifestUrl = '/image-assets.json';
 const needsRaster = (url: string) => !buttonArtwork(url)?.background;
@@ -31,15 +33,20 @@ export class ImagePreloader {
     this.manifest ??= (async () => {
       const response = await fetch(imageManifestUrl, {cache: 'no-cache', signal});
       if (!response.ok) throw new Error(`图片目录加载失败（HTTP ${response.status}）`);
-      const {images} = await response.json() as ImageManifest;
+      const {images, sprites} = await response.json() as ImageManifest;
       if (images.length === 0) throw new Error('图片资源目录为空');
-      const sprites = await prepareSpriteImages();
-      const unusedAtlases = new Set(Object.values(sprites.images).map(sprite => sprite.atlas));
-      for (const [url, sprite] of Object.entries(sprites.images)) {
-        if (needsRaster(url)) unusedAtlases.delete(sprite.atlas);
-      }
-      const artwork = images.filter(image => needsRaster(image.url) && !unusedAtlases.has(image.url));
+      prepareSpriteImages(sprites, bundledImages);
+      const artwork = images.filter(image => needsRaster(image.url));
       await prepareImageCache(artwork, bundledImageUrls);
+      const atlases = sprites?.atlases ?? [];
+      let nextAtlas = 0;
+      await Promise.all(Array.from({length: Math.min(8, atlases.length)}, async () => {
+        while (nextAtlas < atlases.length) {
+          signal.throwIfAborted();
+          await decodeImageRegion(atlases[nextAtlas++].url, signal);
+        }
+      }));
+      bindImageBackgrounds();
       if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.getRegistration('/');
         const workerUrl = new URL('/image-cache-worker.js', location.href).href;
@@ -55,7 +62,7 @@ export class ImagePreloader {
   async load(onProgress: (progress: ImageLoadingProgress) => void, signal: AbortSignal): Promise<void> {
     const images = await this.prepare(signal);
     const decodeUrls = [...new Set([...images.map(image => image.url), ...bundledImageUrls]
-      .map(url => new URL(url, location.href).href))];
+      .map(url => new URL(publishedImageUrl(url), location.href).href))];
     const progress: ImageLoadingProgress = {
       phase: 'download', decoded: 0, decodeTotal: decodeUrls.length,
       completed: 0, cached: 0, total: images.length, loadedBytes: 0,

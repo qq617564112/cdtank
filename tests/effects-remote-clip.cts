@@ -17,7 +17,7 @@ const scene = new Scene(engine);
 const camera = new FreeCamera('camera', new Vector3(0, 0, -100), scene);
 camera.setTarget(Vector3.Zero()); camera.getViewMatrix(true); camera.getProjectionMatrix(true);
 const runtime = new EffectRuntime(scene, camera);
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 const state = runtime as unknown as {library: EffectRuntimeLibrary; instances: {handle: number}[]};
 state.library = library; runtime.start();
 const root = new TransformNode('remote', scene);

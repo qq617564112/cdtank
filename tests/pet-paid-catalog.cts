@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import {AccountStore} from '../apps/server/src/account-store';
 import {AccountPetShop} from '../apps/server/src/accounts/pet-shop';
 
-const source = JSON.parse(readFileSync('recovery/output/verified/tables/pet.json', 'utf8')) as {
+const source = JSON.parse(readFileSync('apps/server/resources/tables/pet.json', 'utf8')) as {
   rows: {values: Record<string, string>}[];
 };
 const definitions = source.rows.map(row => row.values).filter(pet => Number(pet.PetMoney) > 0);

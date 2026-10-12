@@ -33,7 +33,7 @@ assert.ok(retainedTransparent > 0);
 console.log(`PASS: ${original.rows.length} full original attach sequences / ${submissions} cached source selections; ${retainedOpaque} opaque and ${retainedTransparent} transparent transitions retained`);
 
 // Real renderer instances retain script state while live alpha uniforms change.
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-models.json', 'utf8')) as EffectModelLibrary;
+const library = JSON.parse(readFileSync('apps/web/public/effect-models.json', 'utf8')) as EffectModelLibrary;
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const texture = new Texture(null, scene);

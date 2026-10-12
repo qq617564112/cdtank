@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from PIL import Image
 
-out = Path('recovery/output/web-assets')
+out = Path('apps/web/public')
 data = json.loads((out / 'ui.json').read_text())
 source = json.loads(Path('recovery/output/catalog/layouts.json').read_text())
 assert data['layouts'] == source
@@ -23,7 +23,7 @@ for imageset in data['imagesets']:
 assert count == 4347
 assert len(data['fonts']) == 12
 assert not data['missingImages']
-ids = [int(row['values']['ID']) for row in json.loads(Path('recovery/output/verified/tables/pet.json').read_text())['rows']]
+ids = [int(row['values']['ID']) for row in json.loads(Path('apps/server/resources/tables/pet.json').read_text())['rows']]
 assert [portrait['petId'] for portrait in data['portraits']] == ids
 matched = []
 for portrait in data['portraits']:

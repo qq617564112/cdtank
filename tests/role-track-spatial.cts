@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {blendRoleSpatialPosition, roleSpatialBlendWeight} from '../recovery/evidence/combat/role-track-spatial';
+import {blendRoleSpatialPosition, roleSpatialBlendWeight} from '../tests/evidence/combat/role-track-spatial';
 const original = JSON.parse(readFileSync('recovery/output/role-track-spatial-sol-native.json', 'utf8'));
 for (const row of original.rows) {
   const point = (v: number[]) => ({x: v[0], y: v[1], z: v[2]});

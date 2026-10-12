@@ -3,9 +3,9 @@ import json
 from pathlib import Path
 import sys
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from scene import read_scene
-published = json.loads((ROOT / 'recovery/output/web-assets/scene-placements.json').read_text())
+published = json.loads((ROOT / 'apps/web/public/scene-placements.json').read_text())
 models = ('obj05425', 'obj05426', 'obj05427', 'obj05428')
 rows = []
 for map_id in (5, 10, 14):

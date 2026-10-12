@@ -4,7 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {GmSupportStore} from './gm-support';
 
 const [command, ...args] = process.argv.slice(2);
-const accountPath = resolve(process.env.ACCOUNT_DB_PATH ?? 'recovery/output/accounts.sqlite');
+const accountPath = resolve(process.env.ACCOUNT_DB_PATH ?? 'state/accounts.sqlite');
 
 if (!existsSync(accountPath)) {
   console.error(`账户数据库不存在: ${accountPath}`);

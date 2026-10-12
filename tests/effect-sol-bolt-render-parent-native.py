@@ -7,7 +7,7 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP, UC_X86_REG_FPCW
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 machine,_=map_original_binaries([ROOT/'CDTank'/n for n in ['CDTank.exe','gbengine.dll','msvcr71.dll']])
 machine.mem_map(0,4096);machine.mem_map(0x2000000,0x400000)
@@ -49,7 +49,7 @@ machine.hook_add(UC_HOOK_CODE,hook)
 for a,v in [(0x635830,GFX),(GFX,VTABLE),(GFX+8,DEVICE),(DEVICE+0xd4,MATRIX_STACK),(VTABLE+0x28,GET_CAMERA),(BUFFER,VTABLE),(VTABLE+12,ALLOCATE),(VTABLE+20,SUBMIT),
  (MATRIX_STACK,MATRIX),(MATRIX_STACK+4,8),(MANAGER+4,VECTOR),(MANAGER+8,VECTOR+4),(MANAGER+0x50,SENTINEL),(SENTINEL,SENTINEL),(VECTOR,ROOT_OBJECT)]:write(a,v)
 machine.mem_write(MANAGER+0x64,bytes([1,1]))
-library=json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text())
+library=json.loads((ROOT/'apps/web/public/effect-library.json').read_text())
 by_id={n['id']:n for n in library['nodes']}
 roots=[n for n in library['nodes'] if n['type']==0 and n['children'] and all(by_id.get(c,{}).get('type')==2 for c in n['children'])]
 parents=[identity,[0,1,0,0,-1,0,0,0,0,0,1,0,12.5,-3.75,21,1],[1.25,0,0,0,0,.5,0,0,0,0,2,0,-8,4,13,1]]

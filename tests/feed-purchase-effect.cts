@@ -17,8 +17,8 @@ import {EFFECT_IDENTITY} from '../apps/web/src/render/effects/common/effect-rend
 import {EffectRuntime} from '../apps/web/src/render/effects/runtime/effect-runtime';
 import type {EffectRuntimeLibrary, EffectRuntimeTree} from '../apps/web/src/render/effects/runtime/effect-runtime-tree';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
-const source = JSON.parse(readFileSync('recovery/output/verified/tables/item.json', 'utf8')) as {
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
+const source = JSON.parse(readFileSync('apps/server/resources/tables/item.json', 'utf8')) as {
   rows: {values: Record<string, string>}[];
 };
 const row = source.rows.find(row => row.values.ItemTableID === '1')!.values;
@@ -31,14 +31,14 @@ const shop: ShopItem[] = [{itemTableId: 1, name: definition.name, info: definiti
   iconId: definition.iconId!, moneyPrice: Number(row.ItemMoney), tokenPrice: Number(row.ItemCoin)}];
 assert.deepEqual([shop[0].moneyPrice, shop[0].tokenPrice], [10, 10]);
 assert.deepEqual([definition.moneyPrice, definition.tokenPrice], [shop[0].moneyPrice, shop[0].tokenPrice]);
-const ui = JSON.parse(readFileSync('recovery/output/web-assets/ui.json', 'utf8')) as {
+const ui = JSON.parse(readFileSync('apps/web/public/ui.json', 'utf8')) as {
   imagesets: {path: string; attributes: {Name: string}; images: {Name: string; asset?: string}[]}[];
 };
 const iconReference = `data\\ui\\daoju\\${String(definition.iconId).padStart(5, '0')}.tga`;
 const icon = ui.imagesets.find(set => set.attributes.Name === 'daoju0' && set.path.includes('imagesets_dds/'))!
   .images.find(image => image.Name === iconReference)!;
 assert.equal(icon.asset, 'ui/regions/57/0.png');
-assert.ok(readFileSync(`recovery/output/web-assets/${icon.asset}`).length > 0);
+assert.ok(readFileSync(`apps/web/public/${icon.asset}`).length > 0);
 
 const directory = mkdtempSync(join(tmpdir(), 'cdtank-feed-effect-'));
 const store = new AccountStore(join(directory, 'accounts.sqlite'));
@@ -91,7 +91,7 @@ try {
   const runtime = new EffectRuntime(scene, camera);
   const loaded = runtime as unknown as {library: EffectRuntimeLibrary; textures: Map<string, RawTexture>;
     instances: {handle: number; tree: EffectRuntimeTree; draws: unknown[]}[]};
-  loaded.library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+  loaded.library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
   const drawnNodes = [2664, 2665, 2667, 2830, 2834];
   for (const asset of new Set(loaded.library.textureGrids.filter(grid => drawnNodes.includes(grid.node)).map(grid => grid.asset))) {
     loaded.textures.set(asset, RawTexture.CreateRGBATexture(new Uint8Array([255, 255, 255, 255]), 1, 1, scene));

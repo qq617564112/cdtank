@@ -1,0 +1,391 @@
+@import '../resources/happy-zcool.css';
+
+#account-shop,
+#account-shop *,
+#account-shop *::before,
+#account-shop *::after {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-synthesis: none;
+}
+
+#account-shop > .shop-dialog-stage {
+  display: block;
+}
+
+#account-shop .shop-source-stage {
+  isolation: isolate;
+}
+
+#account-shop .shop-source-stage > #account-shop-title {
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.shop-source-background {
+  position: absolute;
+  z-index: 0;
+  isolation: isolate;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.shop-source-background.game-dialog-topbar {
+  z-index: 0;
+}
+
+.shop-source-background[data-source-layout='ui/layouts/shop.xml']:is([data-source-control='anniuditu'], [data-source-control='hongsexiaodi']) {
+  z-index: -2;
+}
+
+.shop-source-background.shop-owned-panel {
+  z-index: -1;
+}
+
+.tank-shop-owned-parts {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.shop-source-stage > [data-shop-close] {
+  z-index: 3;
+}
+
+.shop-source-button.cartoon-button {
+  position: absolute;
+  z-index: 1;
+}
+
+.shop-source-button.cartoon-button[data-shop-button-kind]:where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-button-face-top: #d2ffb5;
+  --cartoon-button-face: #a8ec89;
+  --cartoon-button-rim: #346d17;
+  --cartoon-button-highlight: #ecffe1;
+  --cartoon-button-bevel: #55ba28;
+  --cartoon-button-shadow: #172a25;
+  --cartoon-label-fill: #071b00;
+  --cartoon-label-stroke: #d9ffbd;
+  --cartoon-label-outline: 1.3px;
+  --cartoon-label-shadow: none;
+}
+
+.shop-source-button > .cartoon-control-label {
+  display: contents;
+}
+
+.shop-source-button.cartoon-button .cartoon-button-shadow {
+  transform: translate(1.5px, 2px);
+  opacity: .8;
+}
+
+.shop-source-button .shop-button-label {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 27px;
+  color: var(--cartoon-label-fill);
+  font: 20px/27px 'HappyZcool-2016', sans-serif;
+  font-synthesis: none;
+  white-space: nowrap;
+  -webkit-text-stroke: var(--cartoon-label-outline) var(--cartoon-label-stroke);
+  paint-order: stroke fill;
+  text-shadow: var(--cartoon-label-shadow);
+  pointer-events: none;
+}
+
+.shop-source-button[data-shop-button-kind='tab'] > .cartoon-control-art {
+  height: 38px;
+}
+
+.shop-tab-artwork {
+  position: absolute;
+  inset: 0;
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.shop-source-button[data-shop-button-kind='tab'][data-shop-button-checked] {
+  z-index: 2;
+}
+
+.shop-source-button.cartoon-button[data-shop-button-kind='tab']:is([data-shop-button-checked], [data-cartoon-button-state='pressed']):where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-label-fill: #ffff04;
+  --cartoon-label-stroke: #f84907;
+  --cartoon-label-outline: 3px;
+}
+
+.shop-source-button[data-shop-button-kind='tab'][data-shop-button-checked] > .cartoon-control-art {
+  visibility: hidden;
+}
+
+.shop-source-button[data-shop-button-kind='tab'][data-shop-button-checked] .shop-tab-artwork {
+  display: block;
+}
+
+.shop-source-button[data-shop-button-kind='tab'][data-shop-button-checked] .shop-button-label {
+  top: 14px;
+  font-size: 19px;
+}
+
+.shop-source-button.cartoon-button[data-shop-button-kind='category']:where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-button-face-top: #b7fff8;
+  --cartoon-button-face: #29e7e6;
+  --cartoon-button-rim: #006d75;
+  --cartoon-button-highlight: #e2ffff;
+  --cartoon-button-bevel: #00b2b9;
+  --cartoon-label-fill: #003c5c;
+  --cartoon-label-stroke: #efffff;
+  --cartoon-label-outline: 1.5px;
+}
+
+.shop-source-button[data-shop-button-kind='category'] .shop-button-label {
+  top: 0;
+  height: calc(100% - 4px);
+  font-size: 17px;
+  line-height: 21px;
+  letter-spacing: 4px;
+  padding-left: 4px;
+}
+
+.shop-source-button.cartoon-button[data-shop-button-kind='action']:where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-button-face-top: #ff8f9f;
+  --cartoon-button-face: #ff5870;
+  --cartoon-button-rim: #b92545;
+  --cartoon-button-highlight: #fff0ec;
+  --cartoon-button-bevel: #e52b4c;
+  --cartoon-label-fill: #402c2b;
+  --cartoon-label-stroke: #fff;
+  --cartoon-label-outline: 2px;
+}
+
+.shop-source-button[data-shop-button-kind='action'] .shop-button-label {
+  top: 0;
+  height: calc(100% - 4px);
+  font-size: 23px;
+  line-height: 30px;
+  letter-spacing: 10px;
+  padding-left: 10px;
+}
+
+.shop-source-button[data-shop-button-price] .shop-button-label {
+  top: 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  height: 32px;
+  padding-left: 0;
+  letter-spacing: 0;
+}
+
+.shop-source-button[data-shop-button-price] .shop-button-title {
+  padding-left: 4px;
+  font-size: 19px;
+  line-height: 20px;
+  letter-spacing: 4px;
+  -webkit-text-stroke: var(--cartoon-label-outline) var(--cartoon-label-stroke);
+}
+
+.shop-source-button[data-shop-button-price] .shop-button-price {
+  max-width: calc(100% - 20px);
+  font-size: 11px;
+  line-height: 12px;
+  -webkit-text-stroke: 1px var(--cartoon-label-stroke);
+}
+
+.shop-source-button.cartoon-button[data-shop-button-kind='maintenance']:where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-button-face-top: #ffe1b7;
+  --cartoon-button-face: #ffc58b;
+  --cartoon-button-rim: #b77137;
+  --cartoon-button-highlight: #fff7e9;
+  --cartoon-button-bevel: #e89651;
+}
+
+.shop-source-button.cartoon-button[data-cartoon-button-state='hover']:where(:not(:disabled)) {
+  --cartoon-button-face-top: #fff9ad;
+  --cartoon-button-face: #ffe653;
+  --cartoon-button-rim: #8b7610;
+  --cartoon-button-highlight: #fff7d5;
+  --cartoon-button-bevel: #d0b323;
+  --cartoon-label-fill: #171600;
+  --cartoon-label-stroke: #fff9b9;
+}
+
+.shop-source-button.cartoon-button[data-shop-button-kind='category'][data-shop-button-checked]:where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-button-face-top: #4752bc;
+  --cartoon-button-face: #252aa0;
+  --cartoon-button-rim: #101651;
+  --cartoon-button-highlight: #5968b3;
+  --cartoon-button-bevel: #202184;
+  --cartoon-label-fill: #fff;
+  --cartoon-label-stroke: #101521;
+}
+
+.shop-source-button.cartoon-button[data-shop-button-kind='action'][data-cartoon-button-state='pressed']:where(:not(:disabled)) {
+  --cartoon-button-face-top: #bce8ff;
+  --cartoon-button-face: #59c7f5;
+  --cartoon-button-rim: #167da6;
+  --cartoon-button-highlight: #85ddff;
+  --cartoon-button-bevel: #2884b0;
+  --cartoon-label-fill: #ffff00;
+  --cartoon-label-stroke: #0c1b23;
+}
+
+.shop-source-button.cartoon-button[data-shop-button-kind='maintenance'][data-cartoon-button-state='pressed']:where(:not(:disabled)) {
+  --cartoon-button-face-top: #ffd2b7;
+  --cartoon-button-face: #ff9c85;
+  --cartoon-button-rim: #a9543c;
+  --cartoon-button-highlight: #ffe4d4;
+  --cartoon-button-bevel: #d86e46;
+}
+
+.shop-source-button:disabled:where(:not([aria-busy='true'])) .shop-tab-artwork {
+  filter: grayscale(1);
+}
+
+.shop-source-button.cartoon-button:disabled:where(:not([aria-busy='true'])) {
+  --cartoon-button-face-top: #d4d7dc;
+  --cartoon-label-outline: 1.3px;
+}
+
+.shop-source-button[aria-disabled='true'] {
+  pointer-events: none;
+}
+
+.shop-source-button.shop-joined-tab[data-shop-button-kind='tab'][data-shop-button-checked] {
+  z-index: 1;
+}
+
+.shop-source-button.shop-joined-tab[data-shop-button-kind='tab'][data-shop-button-checked] .shop-tab-artwork {
+  display: none;
+}
+
+.shop-currency-marker {
+  position: absolute;
+  pointer-events: none;
+}
+
+.shop-currency-marker > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.shop-painted-label {
+  font-size: 14px;
+  -webkit-text-stroke: .8px #ffffda;
+}
+
+.shop-painted-label[data-shop-label^='yong'],
+.shop-painted-label[data-shop-label^='baoyang'] {
+  color: #643819;
+  font-size: 18px;
+  -webkit-text-stroke: 1px #fff0c5;
+}
+
+#account-shop .home-painted-label:is([data-source-control='jinqian'], [data-source-control='xingbi']),
+#account-shop .shop-painted-label:is([data-shop-label^='jinqian'], [data-shop-label^='xingbi']) {
+  font-size: 15px;
+  -webkit-text-stroke: 1.5px #131b13;
+}
+
+#account-shop .home-font-text:is([data-source-control='txtMoney'], [data-source-control='txtCoin']) {
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.shop-mastery-label {
+  position: absolute;
+  height: 26px;
+  color: #53600b;
+  font: 14px/26px 'HappyZcool-2016', sans-serif;
+  white-space: nowrap;
+  -webkit-text-stroke: 0;
+}
+
+#account-shop .shop-source-stage :is(.shop-item-source-list, .part-shop-source-list, .role-shop-source-list, .mend-shop-list)[role='listbox'] > button[role='option'] {
+  height: 48px;
+  min-height: 0;
+  margin: 0;
+  line-height: 14px;
+}
+
+#account-shop .shop-source-stage :is([data-shop-source-product-grid], [data-part-common-product-grid]) {
+  grid-auto-rows: 48px;
+  gap: 0;
+}
+
+#account-shop .part-shop-list-scroll-shell .part-shop-source-list > [data-part-product-source-row] {
+  --part-row-origin: 10px;
+  width: 171px;
+}
+
+#account-shop .home-button.cartoon-button[data-home-button='skill'][data-cartoon-button-state='hover'],
+#account-shop .home-button.cartoon-button[data-home-button='skill'][data-cartoon-button-state='pressed'] {
+  --cartoon-label-fill: #fff;
+  --cartoon-label-stroke: #252617;
+}
+
+.shop-source-button[data-shop-button-kind='maintenance'] > .cartoon-control-art {
+  visibility: hidden;
+}
+
+.shop-maintenance-artwork {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.shop-source-button:disabled .shop-maintenance-artwork {
+  filter: grayscale(1);
+}
+
+.shop-source-button[data-cartoon-button-state='pressed'] .shop-maintenance-artwork {
+  transform: translateY(-1px) scale(var(--cartoon-button-pressed-scale), .97);
+  transform-origin: center;
+}
+
+.shop-source-button[data-cartoon-button-state='pressed'] .shop-maintenance-shadow {
+  visibility: hidden;
+}
+
+#account-shop :is(.tank-shop-product, .pet-shop-product) {
+  color: #fff;
+  font-size: 12px;
+  -webkit-text-stroke: .6px #4c512b;
+  paint-order: stroke fill;
+}
+
+.shop-tank-stat-row.shop-tank-stat-formula .game-stat-content {
+  justify-content: center;
+}
+
+.shop-tank-stat-row.shop-tank-stat-heading {
+  padding: 0;
+}
+
+.mend-shop-source > :is(.shop-painted-label, .shop-currency-marker, .home-font-text) {
+  z-index: 2;
+}
+
+#account-shop .pet-shop-directory-skill > .home-button.cartoon-button {
+  pointer-events: auto;
+}
+
+.shop-purchase-dialog,
+.shop-purchase-dialog * {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-synthesis: none;
+}

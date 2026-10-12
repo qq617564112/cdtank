@@ -5,12 +5,12 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from pol import read_pol
 from scene import read_scene
 
 source = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 loader = json.loads((ROOT / 'recovery/output/scene-breach21-native.json').read_text())
 assert loader['status'] == 'PASS'
 assert any(row.get('kind') == 'loadIntact' and row.get('reference') == 'data\\scnobj\\obj05467\\obj05467.pol'

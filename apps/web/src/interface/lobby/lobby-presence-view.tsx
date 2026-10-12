@@ -6,5 +6,5 @@ import {LobbyPlayerListView} from './lobby-player-list';
 export function LobbyPresenceView({presence, chooseTarget}: {presence: LobbyPresence; chooseTarget?: (player: {accountId: string; name: string}) => void}) {
   const state = useSyncExternalStore(presence.subscribe, presence.getSnapshot);
   useEffect(() => {presence.start(); return () => presence.stop();}, [presence]);
-  return <LobbyPlayerListView chooseTarget={chooseTarget} players={state.players} status={state.loading ? '载入玩家…' : state.status}/>;
+  return <LobbyPlayerListView chooseTarget={chooseTarget} players={state.players} status={state.status}/>;
 }

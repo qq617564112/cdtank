@@ -59,7 +59,7 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, 
       const scene = new Scene(engine); scene.clearColor = new Color4(0, 0, 0, 0);
       selectEnabledMeshCandidates(scene);
       scene.ambientColor = Color3.White();
-      const camera = new ArcRotateCamera('home-equipment-camera', -Math.PI / 2.5, Math.PI / 3, 100, Vector3.Zero(), scene);
+      const camera = new ArcRotateCamera('home-equipment-camera', Math.PI / 2.5, Math.PI / 3, 100, Vector3.Zero(), scene);
       camera.minZ = HOME_PREVIEW_CLIP_PLANES.near; camera.maxZ = HOME_PREVIEW_CLIP_PLANES.far;
       camera.attachControl(surface, true);
       new HemisphericLight('home-equipment-light', new Vector3(0, 1, 0), scene).intensity = 1.2;
@@ -69,9 +69,11 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, 
       const orbit = {pitch: 0, yaw: 0, orbitYaw: 0};
       let frames = 0;
       engine.runRenderLoop(() => {
-        const previous = orbit.orbitYaw;
-        advanceHomePreviewOrbit(orbit);
-        camera.alpha += orbit.orbitYaw - previous;
+        if (mounted.view) {
+          const previous = orbit.orbitYaw;
+          advanceHomePreviewOrbit(orbit);
+          camera.alpha += orbit.orbitYaw - previous;
+        }
         element.dataset.orbitYaw = String(orbit.orbitYaw);
         scene.render(); element.dataset.frames = String(++frames);
         if (mounted.view) element.dataset.renderedTankId = String(mounted.view.tankId);
@@ -130,6 +132,8 @@ export function HomeEquipmentPreview({tankId, instanceId, textures, decoration, 
       if (!meshes.length) throw new Error('战车模型没有可显示的网格');
       current.camera.target = min.add(max).scale(0.5);
       current.camera.radius = Math.max(max.subtract(min).length(), 1) * 1.4;
+      current.camera.alpha = Math.PI / 2.5;
+      current.camera.beta = Math.PI / 3;
       current.camera.lowerRadiusLimit = current.camera.radius / 2; current.camera.upperRadiusLimit = current.camera.radius * 3;
       element.dataset.meshes = String(meshes.length); element.dataset.status = 'ready';
       setMessage('');

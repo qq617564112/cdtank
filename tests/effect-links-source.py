@@ -5,13 +5,13 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from export_effect_links import export, read_links
 
 result = export()
 assert len(result['files']) == 20
 assert result['missingTankCodes'] == ['154']
-assert result == json.loads((ROOT / 'recovery/output/web-assets/effect-links.json').read_text())
+assert result == json.loads((ROOT / 'apps/web/public/effect-links.json').read_text())
 records = []
 for file in result['files']:
     raw = (ROOT / 'recovery/output/verified/assets/data' / file['path']).read_bytes()

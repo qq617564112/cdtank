@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {WsClient} from 'tsrpc';
 import {serviceProto} from '../apps/shared/protocols/serviceProto';
 import {AccountStore} from '../apps/server/src/account-store';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources';
 import type {OwnedTankTextures} from '../apps/shared/combat/role-owned-textures';
 import type {MsgRoomSnapshot} from '../apps/shared/protocols/MsgRoomSnapshot';
 import type {ResOwnedRoles} from '../apps/shared/protocols/PtlOwnedRoles';

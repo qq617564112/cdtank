@@ -1,5 +1,5 @@
 import {readFileSync} from 'node:fs';
-import {sourceTablePath, webAssetPath} from './runtime/content-paths';
+import {sourceTablePath, serverAssetPath} from './runtime/content-paths';
 import {content} from './content';
 import type {RoleTankBaseDefinition, RolePetBaseDefinition} from '../../shared/contracts/role-base';
 import {BATTLE_RESPAWN_SECONDS} from '../../shared/combat/battle-respawn';
@@ -121,7 +121,7 @@ const sourceMaps: ModeMapConfig[] = [1, 2, 3, 4, 5].flatMap(mode =>
   })));
 
 export const MAPS = playableMapDirectory(sourceMaps,
-  JSON.parse(readFileSync(process.env.SCENE_PLACEMENTS ?? webAssetPath('scene-placements.json'), 'utf8')),
+  JSON.parse(readFileSync(process.env.SCENE_PLACEMENTS ?? serverAssetPath('scene-placements.json'), 'utf8')),
   readTable('gamestring'));
 
 MAPS.push({...MAPS.find(map => map.mode === TEST_MAP.mode && map.mapId === 2)!,

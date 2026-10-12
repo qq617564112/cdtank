@@ -156,7 +156,7 @@ async function state(session) {
   return evaluate(session,`(()=>{const d=document.querySelector('[data-player-info]'),b=d.querySelector('[data-player-info-blacklist-action]'),r=b.getBoundingClientRect();return {account:d.dataset.playerInfoAccount,name:d.querySelector('[data-source-control=txtPlayerName]').textContent,source:b.dataset.sourceControl,asset:b.dataset.sourceAsset,disabled:b.disabled,buttonState:b.dataset.sourceButtonState,focus:document.activeElement.dataset.sourceControl,status:d.querySelector('[data-player-info-status]').value,box:{x:r.x,y:r.y,width:r.width,height:r.height}}})()`);
 }
 try {
-  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5352,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3328',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();
+  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5352,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3328',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();
   const contexts=[];for(let i=0;i<2;i++)contexts.push((await command('Target.createBrowserContext')).browserContextId);
   const owner=await newPage(contexts[0]),target=await newPage(contexts[1]);await waitUntil(owner,`document.querySelectorAll('[data-lobby-player-account]').length===2`);
   const targetName=await evaluate(target,`document.querySelector('[data-lobby-identity] input').value`);

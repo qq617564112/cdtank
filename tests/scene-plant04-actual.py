@@ -13,9 +13,9 @@ partial = raw['status'] != 'PASS'
 map_id = raw['mapId']
 assert map_id in (4, 5, 17)
 map_name = f'{map_id:04d}'
-resource = json.loads((ROOT / f'recovery/output/web-assets/scene-plant-{map_name}.json').read_text())
+resource = json.loads((ROOT / f'apps/web/public/scene-plant-{map_name}.json').read_text())
 plants = {plant['sourcePlacementId']: plant for plant in resource['plants']}
-scene = next(scene for scene in json.loads((ROOT / 'recovery/output/web-assets/scene-placements.json').read_text()) if scene['id'] == map_name)
+scene = next(scene for scene in json.loads((ROOT / 'apps/web/public/scene-placements.json').read_text()) if scene['id'] == map_name)
 records = {record['id']: record for record in scene['records']}
 def f32(value): return struct.unpack('<f', struct.pack('<f', value))[0]
 sides = []
@@ -24,7 +24,7 @@ for side, observed in enumerate(raw['observed'], 1):
     plant = plants[draw['id']]
     record = records[draw['id']]
     assert plant['enabled'] and record['className'] == 'SYcScnObjPlant'
-    glb_raw = (ROOT / f"recovery/output/web-assets/Data/scnobj/{plant['model']}/{plant['model']}.glb").read_bytes()
+    glb_raw = (ROOT / f"apps/web/public/Data/scnobj/{plant['model']}/{plant['model']}.glb").read_bytes()
     size = struct.unpack_from('<I', glb_raw, 12)[0]
     glb = json.loads(glb_raw[20:20+size])
     accessor = glb['accessors'][glb['meshes'][0]['primitives'][0]['attributes']['POSITION']]

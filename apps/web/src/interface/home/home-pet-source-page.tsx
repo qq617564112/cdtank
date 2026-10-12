@@ -1,7 +1,7 @@
 import type {MouseEventHandler} from 'react';
-import {SourceButton} from '../resources/source-button';
-import {SourceStaticImage} from '../resources/source-static-image';
-import {SourceStaticText} from '../resources/source-static-text';
+import {HomeSourceButton as SourceButton} from './home-source-button';
+import {HomeSourceSurface as SourceStaticImage} from './home-surface';
+import {HomeStaticText as SourceStaticText} from './home-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 
 interface HomePetSourcePageProps {
@@ -16,14 +16,14 @@ interface HomePetSourcePageProps {
 }
 
 /** The original pet sheet surrounds the owned model with attributes and mastery regions. */
-export function HomePetSourcePage({ui, name, money, quantity, alreadyUsed, canUse, selectedInstance, use}: HomePetSourcePageProps) {
+export function HomePetSourcePage({ui, name, money, alreadyUsed, canUse, selectedInstance, use}: HomePetSourcePageProps) {
   const suffix = 'myhome_petpage.xml';
   const layout = new HomeSourceLayout(ui, suffix);
   const pictures = [
     'heseditu', 'ditukuang', 'tankeshengjiqu', 'huangtiao5', 'lblCritical', 'lblLucky',
     'huangtiao4', 'cemianzhuangjia', 'hangditu2', 'huangtiao6', 'lblHP',
-    'tankecanshuqu', 'hangditu8', 'lblTank', 'ditu', 'shuliangditu', 'changtiao',
-    'changtiao2', 'jinqiantubiao', 'jinqian', 'chuangyidiantubiao', 'chuangyidiantubiao2', 'maogou',
+    'tankecanshuqu', 'hangditu8', 'lblTank', 'ditu', 'changtiao',
+    'changtiao2', 'jinqiantubiao', 'jinqian', 'chuangyidiantubiao', 'chuangyidiantubiao2',
   ];
   return <>
     {pictures.map(source => <SourceStaticImage key={source} ui={ui} layout={layout}
@@ -31,8 +31,6 @@ export function HomePetSourcePage({ui, name, money, quantity, alreadyUsed, canUs
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtPetName" text={name} />
     <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtMoney"
       text={money === undefined ? '' : String(money)} data-home-pet-money={money} />
-    <SourceStaticText ui={ui} layout={layout} suffix={suffix} name="txtListQuantity"
-      text={quantity === undefined ? '' : String(quantity)} data-home-pet-quantity={quantity} />
     <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnUseMe"
       className="home-role-use home-pet-source-use" aria-label="选择宠物出击"
       disabled={!canUse} data-selected-instance={selectedInstance ?? ''} onClick={use} />

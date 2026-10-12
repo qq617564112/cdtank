@@ -11,7 +11,7 @@ const records = {
   base: input.base.map(record => ({name: record.name, fields: new Map(record.fields)})),
   equipment: input.equipment.map(record => ({name: record.name, fields: new Map(record.fields)})),
 };
-const store = new AccountStore(process.env.ACCOUNT_DB_PATH ?? 'recovery/output/accounts.sqlite');
+const store = new AccountStore(process.env.ACCOUNT_DB_PATH ?? 'state/accounts.sqlite');
 try {
   store.replaceRoleRecords(accountId, records);
   console.log(`Imported ${records.base.length} base and ${records.equipment.length} equipment records for ${accountId}.`);

@@ -4,14 +4,14 @@ from pathlib import Path
 import sys
 from PIL import Image
 root = Path(__file__).resolve().parents[1]
-library = json.loads((root / 'recovery/output/web-assets/ui-font-raster.json').read_text())
+library = json.loads((root / 'apps/web/public/ui-font-raster.json').read_text())
 rows = []
 for capture in json.load(open(sys.argv[1])):
     field = next(row for row in capture['state']['controls'] if row['name'] == 'yeshu')
     slash = next(g for g in field['glyphs'] if g['codepoint'] == 47)
     face = next(f for f in library['faces'] if f"SIMSUN-mono-{f['dpi']}.png" in slash['asset'])
     glyph = next(g for g in face['glyphs'] if g['codepoint'] == 47)
-    atlas = Image.open(root / 'recovery/output/web-assets' / face['atlas']['asset']).convert('RGBA')
+    atlas = Image.open(root / 'apps/web/public' / face['atlas']['asset']).convert('RGBA')
     shot = Image.open(capture['file']).convert('RGB')
     rect = slash['rect']
     matched = []
@@ -29,7 +29,7 @@ for capture in json.load(open(sys.argv[1])):
     assert len(matched) >= 3, (capture['label'], matched)
     button_samples = []
     for button in [r for r in capture['state']['controls'] if r['name'] != 'yeshu']:
-        original = Image.open(root / 'recovery/output/web-assets' / button['images'][0]['asset']).convert('RGBA')
+        original = Image.open(root / 'apps/web/public' / button['images'][0]['asset']).convert('RGBA')
         box = button['rect']
         matched_button = []
         for sy in range(1, original.height - 1):

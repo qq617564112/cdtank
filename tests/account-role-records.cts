@@ -4,11 +4,11 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {AccountStore} from '../apps/server/src/account-store';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources';
 import {receiveRoleOwnedPair, type RoleOwnedSources} from '../apps/server/src/accounts/owned/receive-pair';
 import {resolveRoleRecomputeSource} from '../apps/server/src/accounts/owned/source-selection';
 import {readRoleProfileSelection} from '../apps/server/src/accounts/profile/selection';
-import {setRoleProfileSelection} from '../recovery/evidence/roles/role-profile-selection';
+import {setRoleProfileSelection} from '../tests/evidence/roles/role-profile-selection';
 
 const directory = mkdtempSync(join(tmpdir(), 'cdtank-role-ownership-'));
 const path = join(directory, 'accounts.sqlite');

@@ -7,7 +7,7 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 machine, images = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
 machine.mem_map(0x2000000, 0x20000)
@@ -101,7 +101,7 @@ for observer_present in [False, True]:
         completion.append(dict(observerPresent=observer_present, roleId=role_id, savedRoleId=get(ACTOR + 0x298), events=list(events)))
 tables = {}
 for name, ids in [('item', [2001]), ('skill', [2001, 4020])]:
-    source = json.loads((ROOT / f'recovery/output/verified/tables/{name}.json').read_text())
+    source = json.loads((ROOT / f'apps/server/resources/tables/{name}.json').read_text())
     tables[name] = dict(columns=source['columns'], rows=[r for r in source['rows'] if r['recordId'] in ids])
 cs = Cs(CS_ARCH_X86, CS_MODE_32)
 source_ranges = [(0x422f25, 0x422f48), (0x42282e, 0x422877), (0x464e53, 0x464e72),

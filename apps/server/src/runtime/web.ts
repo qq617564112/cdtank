@@ -27,6 +27,12 @@ export function hostWeb(server: WsServer<ServiceType>, webRoot: string): void {
   // TSRPC 3.4.21 keeps its HTTP listener private; attach after start() resolves.
   const listener = Reflect.get(server, '_httpServer') as Server;
   listener.on('request', (request, response) => {
+    const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+    if ((request.method === 'GET' || request.method === 'HEAD')
+        && (/^\/(login|channels|lobby|closed|quick-start)\/?$/.test(pathname)
+          || /^\/rooms\/[^/]+(?:\/(battle|results))?\/?$/.test(pathname))) {
+      request.url = '/index.html';
+    }
     compress(request, response, () => {
       files(request, response, error => {
         response.statusCode = error?.statusCode ?? 404;

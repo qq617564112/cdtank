@@ -6,12 +6,12 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_EIP, UC_X86_REG_EAX, UC_X86_REG_FPCW
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 machine,_=map_original_binaries([ROOT/'CDTank'/name for name in ['CDTank.exe','gbengine.dll','msvcr71.dll']])
 machine.mem_map(0,0x1000);machine.mem_map(0x2000000,0x80000)
 OBJECT,DEFINITION,RESOURCE,SEGMENTS,STACK,STOP=0x2010000,0x2011000,0x2015000,0x2020000,0x2008000,0x203f000
-library=json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text())
+library=json.loads((ROOT/'apps/web/public/effect-library.json').read_text())
 random_values=[];random_index=0;events=[]
 random_seed=[8191,24575,16383,1000]
 def uint(a):return struct.unpack('<I',machine.mem_read(a,4))[0]

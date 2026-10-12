@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import './quick-chat-settings.css';
 import {useEffect, useRef, useState} from 'react';
 import type {Battle} from '../../match/battle';
@@ -71,7 +72,7 @@ function QuickChatSettingsSession({close, battle, initial, saved}: Omit<QuickCha
           }}/>
       </div>)}
     </div>
-    <output id="quick-chat-settings-status" role="status">{status}</output>
+    <GameMessage id="quick-chat-settings-status" text={status}/>
     <div className="quick-chat-settings-actions">
       <button type="button" id="quick-chat-settings-defaults" onClick={() => {
         setDraft({...DEFAULT_QUICK_CHAT_PREFERENCES});

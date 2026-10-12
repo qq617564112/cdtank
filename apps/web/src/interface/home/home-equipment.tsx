@@ -1,11 +1,9 @@
+import {showGameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {loadCombatCatalog} from '../../content';
 import './home.css';
 import {HomeResourceFeedback} from './home-resource-feedback';
 import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties} from 'react';
-import {createPortal} from 'react-dom';
-import {SourceNotice} from '../dialogs/source-notice';
-import {SourceNoticeView} from '../dialogs/source-notice-view';
 import {HomeItemDescriptionSource, homeItemDescriptionPosition, type HomeItemDescription} from './home-item-description-source';
 import {readOwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import type {Battle} from '../../match/battle';
@@ -20,14 +18,15 @@ import type {HomeSourceControl, HomeSourceUi} from './home-source-layout';
 import {HomeEquipmentPreview} from './home-equipment-preview';
 import {HomeEquipmentSourceList} from './home-equipment-source-list';
 import {HomeSourceRoot} from './home-source-root';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {SourceButton} from '../resources/source-button';
-import {SourceStaticText} from '../resources/source-static-text';
+import {SourceImageScale} from '../resources/source-static-image';
+import {HomeSourceSurface as SourceStaticImage} from './home-surface';
+import {HomeSourceButton as SourceButton} from './home-source-button';
+import {HomeStaticText as SourceStaticText} from './home-text';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {HomeTankDescription, HomeTankOwnedAttributes, HomeTankOwnedParameters, HomeTankSourceRegions} from './home-tank-source-page';
 import {sourceTankDescription} from '../resources/role-source-descriptions';
 import {HomeTankUpgradeDialog} from './home-tank-upgrade-dialog';
-import {HomeTankUpgradeEntries, HomeTankUseControl, homeTankListQuantity} from './home-tank-page-state';
+import {HomeTankUpgradeEntries, HomeTankUseControl} from './home-tank-page-state';
 
 type EquipmentTarget = 'PART' | 'DECORATION' | 'MARK';
 const PART_CONTROLS = ['InternalPart0', 'InternalPart1', 'ExternalPart0', 'ExternalPart1', 'ExternalPart2'];
@@ -97,13 +96,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
   const [resourceError, setResourceError] = useState<string>();
   const [status, setStatus] = useState('载入部件…');
   const [description, setDescription] = useState<HomeItemDescription>();
-  const [notice] = useState(() => new SourceNotice());
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
-
-  useEffect(() => {
-    notice.clear();
-    return () => notice.clear();
-  }, [notice, accountGeneration]);
 
   useEffect(() => {
     const element = dialog.current!;
@@ -157,11 +150,11 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
       if (!current.active) return;
       setQueryFailed(true);
       const message = error instanceof Error ? error.message : String(error);
-      setStatus(message); void notice.show(message);
+      setStatus(message); showGameMessage(message);
     })
       .finally(() => {if (current.active) setBusy(false);});
     return () => {current.active = false;};
-  }, [battle, tankInstanceId, accountGeneration, notice]);
+  }, [battle, tankInstanceId, accountGeneration]);
 
   useLayoutEffect(() => {
     if (!resources) return;
@@ -190,10 +183,10 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
     if (!remove) {
       const record = inventory?.records.find(item => item.instanceId === itemInstanceId);
       if (!record || record.ownedQuantity <= 0 || equipmentTarget(record.itemTableId) !== target) {
-        setStatus('该装备不能安装到此槽位'); void notice.show('该装备不能安装到此槽位'); return;
+        setStatus('该装备不能安装到此槽位'); showGameMessage('该装备不能安装到此槽位', 'error'); return;
       }
       if (equipment.bindings.some(binding => binding.instanceId === itemInstanceId)) {
-        setStatus('该装备已安装，请先卸下'); void notice.show('该装备已安装，请先卸下'); return;
+        setStatus('该装备已安装，请先卸下'); showGameMessage('该装备已安装，请先卸下', 'error'); return;
       }
     }
     const request: ReqEquipment = {operation: remove ? 'UNEQUIP' : 'EQUIP', target,
@@ -209,7 +202,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
       if (!current.active) return;
       setInventory(refreshedInventory); setOwned(refreshedOwned);
     } catch (error) {
-      if (current.active) {setStatus(String(error)); void notice.show(error instanceof Error ? error.message : String(error));}
+      if (current.active) {setStatus(String(error)); showGameMessage(error instanceof Error ? error.message : String(error), 'error');}
     } finally {
       if (current.active) {current.pending = false; setBusy(false);}
     }
@@ -252,7 +245,7 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
       await refreshTarget(current, target);
     } catch (error) {
       if (current.active && session.current === current) {
-        setStatus(String(error)); void notice.show(error instanceof Error ? error.message : String(error));
+        setStatus(String(error)); showGameMessage(error instanceof Error ? error.message : String(error), 'error');
       }
     } finally {
       if (current.active) {current.pending = false; setBusy(false);}
@@ -344,14 +337,11 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
             : equipment ? String(new DataView(Uint8Array.from(equipment.profile.bytes).buffer).getUint32(0x70, true)) : ''} />
         <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtOriginality"
           text={originality === undefined ? '' : String(originality)} />
-        <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtListQuantity"
-          text={inventory ? homeTankListQuantity(records.length) : ''} />
-        <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtTankStatus" text="" />
         <SourceButton ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" source="rdoTank"
-          aria-label="拥有战车" aria-pressed="false" disabled={busy || !onRolePage}
+          aria-label="拥有战车" aria-pressed="false" disabled={busy || !onRolePage} aria-busy={busy && !!onRolePage}
           onClick={() => onRolePage?.('tank')} />
         <SourceButton ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" source="rdoEquip"
-          aria-label="装备部件" aria-pressed="true" selected disabled={busy || !equipment} />
+          aria-label="装备部件" aria-pressed="true" selected disabled={busy || !equipment} aria-busy={busy} />
         {['heseditu2', 'bgHatIcon', 'bgMarkIcon', ...partControls.map(control => `bg${control}`)].map(sourceName =>
           <SourceStaticImage key={sourceName} ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml"
             name={sourceName} className="home-equipment-source-picture" aria-hidden="true" />)}
@@ -361,14 +351,14 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
             decoration={decoration?.itemType === 5 ? decoration : undefined}
             scale={scale} {...sourceProps(resources, 'picModel')} />
           <SourceStaticText ui={resources.ui} layout={layout!} suffix="myhome_panzerpage.xml" name="txtTankName" text={tank.name} />
-          <HomeTankOwnedAttributes ui={resources.ui} record={tank} />
-          <HomeTankOwnedParameters ui={resources.ui} record={tank} pet={pet} catalog={resources.catalog}
-            equippedItemIds={equippedItemIds} alreadyUsed={alreadyUsed} />
         </>}
+        <HomeTankOwnedAttributes ui={resources.ui} record={tank} />
+        <HomeTankOwnedParameters ui={resources.ui} record={tank} pet={pet} catalog={resources.catalog}
+          equippedItemIds={equippedItemIds} alreadyUsed={alreadyUsed} />
         {([['PART', 'rdoCommon', '一般部件'], ['DECORATION', 'rdoHat', '装饰'], ['MARK', 'rdoMark', '标记']] as const)
           .map(([target, sourceName, label]) => <SourceButton key={target} ui={resources.ui} layout={layout!}
             suffix="myhome_panzerpage.xml" source={sourceName} selected={page === target}
-            data-equipment-tab={target} aria-label={label} aria-pressed={page === target} disabled={busy || !equipment}
+            data-equipment-tab={target} aria-label={label} aria-pressed={page === target} disabled={busy || !equipment} aria-busy={busy}
             onClick={() => {setPage(target); setCandidate(undefined); setDescription(undefined);}} />)}
         <HomeEquipmentSourceList ui={resources.ui} selected={candidate} busy={busy}
           dragType={EQUIPMENT_DRAG_TYPE} tankInstanceId={equipment?.tankInstanceId}
@@ -408,8 +398,8 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
           if (confirmedOriginality !== undefined) setOriginality(confirmedOriginality);
           void refreshTarget(upgrade.owner, upgrade.instanceId);
         }}
-        onConfirmed={message => {setStatus(message); void notice.show(message);}} />}
+        onConfirmed={message => {setStatus(message); showGameMessage(message);}} />}
     </SourceImageScale>
-    {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
+
   </dialog>;
 }

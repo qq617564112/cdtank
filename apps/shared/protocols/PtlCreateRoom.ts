@@ -10,6 +10,7 @@ export interface ReqCreateRoom {
   minPlayers?: number;
   maxPlayers?: number;
   friendlyFire?: boolean;
+  timeLimitSeconds?: number;
 }
 
 /** Creates a room and joins its creator on the same connection atomically. */

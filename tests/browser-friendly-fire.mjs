@@ -200,7 +200,7 @@ async function confirmReady(session) {
 }
 try {
   await launchServer();
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     server: {port: 5219, strictPort: true, host: '127.0.0.1', hmr: false, proxy: {'/game': {target: 'ws://127.0.0.1:3181', ws: true, rewrite: () => '/'}}}});
   await vite.listen();
   await launchBrowser();

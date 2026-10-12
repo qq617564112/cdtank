@@ -6,7 +6,7 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 from scene_sound import decode_sound_tail
 uc, images = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
@@ -73,7 +73,7 @@ def hook(machine, a, size, data):
 uc.hook_add(UC_HOOK_CODE, hook)
 put(0x5c0ba0,SINK);put(STREAM,VT);put(VT+0xc,READ)
 rows=[]
-placements=json.loads((ROOT/'recovery/output/web-assets/scene-placements.json').read_text())
+placements=json.loads((ROOT/'apps/web/public/scene-placements.json').read_text())
 records=[r for scene in placements if scene['id']=='0021' for r in scene['records'] if r['className']=='SYcScnObjSound']
 for record in records:
     uc.mem_write(SUB,b'\0'*0x100)

@@ -1,4 +1,15 @@
 export interface CastleDamageTextViewport {width: number; height: number;}
+export type CastleDamageTextOrigin = readonly [number, number, number];
+
+export interface CastleDamageTextProjection {
+  x: number;
+  y: number;
+  depth: number;
+  visible: boolean;
+}
+
+export type CastleDamageTextProjector = (origin: CastleDamageTextOrigin,
+  viewport: CastleDamageTextViewport) => CastleDamageTextProjection;
 
 export interface CastleDamageTextRecord {
   handle: number;
@@ -7,6 +18,7 @@ export interface CastleDamageTextRecord {
   elapsed: number;
   alpha: number;
   scale: number;
+  origin?: CastleDamageTextOrigin;
 }
 
 export interface CastleDamageTextRenderer {
@@ -16,20 +28,26 @@ export interface CastleDamageTextRenderer {
   dispose(): void;
 }
 
-/** One Castle's original selector1 text queue; projection belongs to its scene owner. */
+/** Independent text records; world anchors are projected by the scene owner. */
 export class SceneCastleDamageText {
   private readonly records: CastleDamageTextRecord[] = [];
 
   constructor(private readonly renderer: CastleDamageTextRenderer,
               private readonly screenYRate = 40) {}
 
-  /** Screen position is captured once by the accepted damage event. */
+  /** Screen-space text uses the supplied position and animated vertical offset. */
   show(screenX: number, screenY: number, delta: number): void {
     this.records.push({handle: this.renderer.create(String(delta)),
       x: Math.fround(screenX), y: Math.fround(screenY), elapsed: 0, alpha: 1, scale: 1});
   }
 
-  /** Original45dbff/46449f: current camera depth changes scale, not the captured position. */
+  /** Capture the world position by value; later actor movement cannot move this record. */
+  showWorld(origin: CastleDamageTextOrigin, delta: number, screenOffsetY = 0): void {
+    this.records.push({handle: this.renderer.create(String(delta)),
+      x: 0, y: screenOffsetY, elapsed: 0, alpha: 1, scale: 1, origin: [...origin]});
+  }
+
+  /** Advance the original one-second drift and fade independently for each record. */
   advance(deltaSeconds: number, viewZ: number): void {
     const delta = Math.fround(deltaSeconds);
     const scale = Math.fround(250 / Math.abs(Math.fround(viewZ)) + Math.fround(0.2));
@@ -49,8 +67,14 @@ export class SceneCastleDamageText {
     }
   }
 
-  draw(viewport: CastleDamageTextViewport): void {
-    for (const record of this.records) this.renderer.draw(record, viewport);
+  draw(viewport: CastleDamageTextViewport, projectWorld?: CastleDamageTextProjector): void {
+    for (const record of this.records) {
+      if (!record.origin) {this.renderer.draw(record, viewport); continue;}
+      const point = projectWorld!(record.origin, viewport);
+      this.renderer.draw({...record, x: Math.fround(point.x + record.x),
+        y: Math.fround(point.y + record.y), alpha: point.visible ? record.alpha : 0,
+        scale: point.visible ? Math.fround(250 / Math.abs(Math.fround(point.depth)) + Math.fround(0.2)) : 1}, viewport);
+    }
   }
 
   /** Round/reset clears text records while retaining the loaded glyph resource owner. */
