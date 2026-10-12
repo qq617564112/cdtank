@@ -1,7 +1,7 @@
 import type {AwardType, ResultPlayer} from '../../../../shared/protocols';
-import {SourceStaticImage} from '../resources/source-static-image';
 import {sourceProps} from '../resources/source-ui-props';
-import {BattleNoticeArtwork} from './battle-notice-artwork';
+import {SUMMARY_ART} from './battle-summary-artwork';
+import {imageResourceUrl} from '../../assets/image-cache';
 import type {HomeSourceLayout, HomeSourceUi} from '../resources/source-ui-layout';
 
 const SUFFIX = 'game_summary.xml';
@@ -26,17 +26,14 @@ export function summaryMetric(mode: number, player: ResultPlayer): string {
   return '—';
 }
 
-export function SummaryHeadings({ui, layout, mode, team}: {
-  ui: HomeSourceUi; layout: HomeSourceLayout; mode: number; team: 'Cat' | 'Dog';
-}) {
-  const metric = ['DestroyTank', 'Bunker', 'VIPHurt', 'DestroyTank', 'DestroyItem'][mode - 1];
-  return <>
-    {[metric && `pic${team}${metric}`, `pic${team}Award`]
-      .filter((name): name is string => !!name).map(name => <SourceStaticImage key={name} ui={ui}
-        layout={layout} suffix={SUFFIX} name={name}
-        reference={name === 'picDogDestroyItem' ? layout.control('picCatDestroyItem').properties.Image : undefined}
-        className="battle-summary-picture" aria-hidden="true" />)}
-  </>;
+export function summaryMetricHeading(mode: number) {
+  return [
+    {control: 'DestroyTank', label: '摧毁坦克数'},
+    {control: 'Bunker', label: '对碉堡伤害'},
+    {control: 'VIPHurt', label: '对VIP伤害'},
+    {control: 'DestroyTank', label: '摧毁坦克数'},
+    {control: 'DestroyItem', label: '破坏地物数'},
+  ][mode - 1];
 }
 
 export function SummaryOutcome({ui, layout, outcome}: {
@@ -44,11 +41,11 @@ export function SummaryOutcome({ui, layout, outcome}: {
 }) {
   const outcomeImage = outcome === 'WIN' ? 'picWin' : outcome === 'LOSE' ? 'picLose' : outcome === 'DRAW' ? 'picDraw' : undefined;
   if (!outcomeImage) return null;
-  const props = sourceProps(ui, layout, SUFFIX, outcomeImage, layout.control(outcomeImage).properties.Image);
-  return <BattleNoticeArtwork {...props} name={outcomeImage} style={{...props.style, backgroundImage: 'none'}}
-    className="battle-summary-picture battle-summary-outcome-entry" role="img"
-    aria-label={outcome === 'WIN' ? '胜利' : outcome === 'LOSE' ? '失败' : '平局'}
-    data-summary-outcome={outcome} />;
+  const props = sourceProps(ui, layout, SUFFIX, outcomeImage);
+  if (outcome === 'DRAW') return <span {...props} className="battle-summary-draw battle-summary-outcome-entry"
+    aria-label="平局" data-summary-outcome={outcome}>DRAW</span>;
+  return <img {...props} src={imageResourceUrl(`${SUMMARY_ART}/${outcome!.toLowerCase()}.png`)} alt={outcome === 'WIN' ? '胜利' : '失败'}
+    className="battle-summary-picture battle-summary-outcome-entry" draggable={false} data-summary-outcome={outcome}/>;
 }
 
 /** The nine source award banners share picAward; only real recipients enter the ceremony. */
@@ -58,15 +55,13 @@ export function SummaryCeremony({ui, layout, type, players}: {
   const award = SUMMARY_AWARDS.find(award => award.type === type)!;
   const recipients = players.filter(player => player.awards?.some(entry => entry.type === type));
   return <div className="battle-summary-ceremony" role="status" data-summary-ceremony={type}>
-    <SourceStaticImage ui={ui} layout={layout} suffix={SUFFIX} name="picAwardIcon"
-      reference={`set:jiangxiang0 image:data\\ui\\jiangxiang\\${award.icon}`}
-      className="battle-summary-picture battle-summary-award-animation" aria-hidden="true" />
-    <SourceStaticImage ui={ui} layout={layout} suffix={SUFFIX} name="picAward"
-      className="battle-summary-picture" aria-hidden="true" />
-    <SourceStaticImage ui={ui} layout={layout} suffix={SUFFIX} name="picShowPrize"
-      className="battle-summary-picture" aria-hidden="true" />
-    <SourceStaticImage ui={ui} layout={layout} suffix={SUFFIX} name={award.control}
-      className="battle-summary-picture" aria-hidden="true" />
+    <span {...sourceProps(ui, layout, SUFFIX, 'picAwardIcon')}
+      className="battle-summary-award-art battle-summary-award-animation" aria-hidden="true">
+      <img src={imageResourceUrl(`${SUMMARY_ART}/award-${award.type}.png`)} alt="" draggable={false}/>
+      <span className="battle-summary-award-art-label">{award.name}奖</span>
+    </span>
+    <span {...sourceProps(ui, layout, SUFFIX, 'picShowPrize')} className="battle-summary-prize-intro">现在颁发</span>
+    <span {...sourceProps(ui, layout, SUFFIX, award.control)} className="battle-summary-prize-name">{award.name}奖</span>
     <span className="battle-summary-recipients">{award.name}奖：{recipients.map(player => player.name).join('、')}</span>
   </div>;
 }

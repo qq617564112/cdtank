@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
-import {TankBenefitText} from '../recovery/prepared/actor-benefit-text-consumer/apps/web/src/assets/tanks/tank-benefit-text';
-import {TankDamageText} from '../recovery/prepared/actor-benefit-text-consumer/apps/web/src/assets/tanks/tank-damage-text';
+import {TankBenefitText} from '../tools/recovery/prepared/actor-benefit-text-consumer/apps/web/src/assets/tanks/tank-benefit-text';
+import {TankDamageText} from '../tools/recovery/prepared/actor-benefit-text-consumer/apps/web/src/assets/tanks/tank-damage-text';
 import type {CastleDamageTextRecord, CastleDamageTextRenderer} from '../apps/web/src/assets/scenes/scene-castle-damage-text';
 
 class RecordingRenderer implements CastleDamageTextRenderer {
@@ -58,7 +58,7 @@ damageRenderer.dispose();
 
 const result = {status: 'PASS_PREPARED_BENEFIT_TEXT_MODULE_ONLY',
   source: 'recovery/output/actor-benefit-text-source.json',
-  patch: 'recovery/prepared/actor-benefit-text-consumer.patch',
+  patch: 'tools/recovery/prepared/actor-benefit-text-consumer.patch',
   scope: 'Prepared selector0 positive-prefix text, upward motion, local offset, fade/expiry and independent actor cleanup. One modified selector1 compatibility check; no old native/font suite rerun, live production import, HP observer integration or browser pixel claim.'};
 writeFileSync('recovery/output/tank-benefit-text-prepared.json', JSON.stringify(result, null, 2) + '\n');
 console.log(result.status);

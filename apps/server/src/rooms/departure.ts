@@ -34,7 +34,9 @@ export function leaveRoomPlayer(rooms: Map<string, RoomState>, room: RoomState,
   room.loaded.delete(player.id);
   room.rematch.delete(player.id);
   room.bullets = room.bullets.filter(bullet => bullet.ownerId !== player.id);
-  if (![...room.players.values()].some(value => !value.cpu)) {
+  const nextHuman = [...room.players.values()].find(value => !value.cpu);
+  if (room.creatorClientId === player.clientId) room.creatorClientId = nextHuman?.clientId;
+  if (!nextHuman) {
     resetBreachCollision(room.battlefield);
     resetSceneObjectCollision(room.battlefield);
     rooms.delete(room.roomId);

@@ -10,7 +10,7 @@ var workspace = fileURLToPath(new URL('../', import.meta.url));
 var output = resolve(workspace, 'recovery/output/tank-minimap-renders');
 var overviewOutput = resolve(workspace, 'recovery/output/tank-minimap-icons-overview.png');
 var iconOutput = resolve(workspace, 'apps/web/src/assets/tanks/minimap-icons');
-var assets = resolve(workspace, process.env.CDTANK_WEB_ASSETS ?? 'recovery/output/web-assets');
+var assets = resolve(workspace, process.env.CDTANK_WEB_ASSETS ?? 'apps/web/public');
 
 async function chromiumPath() {
   if (process.env.CDTANK_CHROME) {
@@ -60,7 +60,7 @@ async function main() {
   if (process.argv.length > 2) throw new Error('Usage: node scripts/render-tank-minimap-icons.mjs');
   var executable = await chromiumPath();
   var catalog = JSON.parse(await readFile(join(assets, 'tanks.json'), 'utf8'));
-  var shop = JSON.parse(await readFile(join(workspace, 'recovery/output/verified/tables/tankshop.json'), 'utf8'));
+  var shop = JSON.parse(await readFile(join(workspace, 'apps/server/resources/tables/tankshop.json'), 'utf8'));
   var tanks = catalog.map(tank => {
     var values = shop.rows.find(row => Number(row.values['坦克ID']) === tank.id)?.values;
     var hasSeparateTurret = tank.components.some(component => component.part === 'U' && component.actions.length > 0);

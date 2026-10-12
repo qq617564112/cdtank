@@ -18,8 +18,8 @@ const camera=new FreeCamera('camera',new Vector3(0,0,-100),scene); camera.setTar
 camera.getViewMatrix(true);camera.getProjectionMatrix(true);
 const runtime=new EffectRuntime(scene,camera);
 const loaded=runtime as unknown as {library:unknown;modelLibrary:unknown; textures:Map<string,RawTexture>;instances:{handle:number;tree:EffectRuntimeTree}[]};
-const library=JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json','utf8')) as EffectRuntimeLibrary & {boltTextures:{asset:string}[]};
-const models=JSON.parse(readFileSync('recovery/output/web-assets/effect-models.json','utf8')) as EffectModelLibrary;
+const library=JSON.parse(readFileSync('apps/web/public/effect-library.json','utf8')) as EffectRuntimeLibrary & {boltTextures:{asset:string}[]};
+const models=JSON.parse(readFileSync('apps/web/public/effect-models.json','utf8')) as EffectModelLibrary;
 const creations=JSON.parse(readFileSync('recovery/output/effect-tree-create-native.json','utf8')) as {rows:{node:number;retain:boolean;created:{node:number;retain:boolean}[]}[]};
 const nativeRoot=creations.rows.find(row=>row.node===2469&&!row.retain)!.created;
 loaded.library=library;loaded.modelLibrary=models;
@@ -47,7 +47,7 @@ for(const [index,row] of native.rows.entries()) {
   }
 }
 root.position.x=0;tagPresent=true;
-const catalog=JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json','utf8')) as CombatCatalog;
+const catalog=JSON.parse(readFileSync('apps/web/public/combat-catalog.json','utf8')) as CombatCatalog;
 const notifications=createSkillEffectNotifications(runtime,catalog,{role:id=>id===47?view:undefined,localRole:()=>view});
 const battleEffects=new BattleSkillEffects(notifications);
 battleEffects.event({roomId:'R1',type:'skillEffect',message:'',playerId:'P47',targetId:'',

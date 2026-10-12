@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {Mesh, NullEngine, PBRMaterial, RawTexture, Scene, ShaderMaterial} from '@babylonjs/core';
-import {PlantMaterialModel, ScenePlant05413MaterialOwner} from '../recovery/prepared/scene-plant-four-model-material-owner';
+import {PlantMaterialModel, ScenePlant05413MaterialOwner} from '../tools/recovery/prepared/scene-plant-four-model-material-owner';
 
 const fields = JSON.parse(readFileSync('recovery/output/scene-plant04-material-fields-source.json', 'utf8'));
 const primary = JSON.parse(readFileSync('recovery/output/scene-plant02-material-source.json', 'utf8')).parts[0].properties;

@@ -3,12 +3,16 @@ import {cloneKeyBindings, DEFAULT_KEY_BINDINGS, validateKeyBindings} from '../..
 import {readAudioPreferences} from './audio-preferences';
 import {applyDisplayPreferences, readDisplayPreferences} from './display-preferences';
 import {readQuickChatPreferences} from './quick-chat-preferences';
+import {applyBrightness, readBrightness} from './brightness-preferences';
+import {applySaturation, readSaturation} from './saturation-preferences';
 
 export const KEY_BINDINGS_STORAGE_KEY = 'cdtank.key-bindings.v1';
 
 /** Restore consumers before React can expose room entry or playback controls. */
 export function initializeSettings(battle: Pick<Battle, 'setKeyBindings' | 'setQuickChats' | 'setMusicVolume' | 'setSoundVolume'>) {
   const storage = {getItem: (key: string) => window.localStorage.getItem(key)};
+  applyBrightness(readBrightness(storage));
+  applySaturation(readSaturation(storage));
   const display = readDisplayPreferences(storage);
   applyDisplayPreferences(display.preferences);
   const audio = readAudioPreferences(storage, {music: 0.5, sound: 0.5});

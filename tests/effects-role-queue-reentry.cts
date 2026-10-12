@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import {existsSync, readFileSync, writeFileSync} from 'node:fs';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
-const original = JSON.parse(readFileSync('recovery/output/verified/tables/skill.json', 'utf8')) as {
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
+const original = JSON.parse(readFileSync('apps/server/resources/tables/skill.json', 'utf8')) as {
   rows: {values: Record<string, string>}[];
 };
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as {
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as {
   nodes: {name: string; type: number}[];
   textureGrids: {node: number; asset: string; resolution: string}[];
   soundControls: {node: number; reference: string}[];
@@ -29,7 +29,7 @@ for (const effect of effects) {
   for (const node of effect.draws) {
     const grid = library.textureGrids.find(grid => grid.node === node)!;
     assert.equal(grid.resolution, 'published');
-    assert.ok(existsSync(`recovery/output/web-assets/${grid.asset}`));
+    assert.ok(existsSync(`apps/web/public/${grid.asset}`));
   }
 }
 writeFileSync('recovery/output/effects-role-queue-reentry.json', `${JSON.stringify({status: 'PASS',

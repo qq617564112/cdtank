@@ -1,3 +1,5 @@
+@import '../resources/happy-zcool.css';
+
 [data-waiting-room] {
   padding: 0;
   max-width: 100vw;
@@ -6,7 +8,15 @@
   color: #fff;
   background: transparent;
   border: 0;
-  font-family: 'CDTank-SIMSUN', serif;
+  font-family: 'HappyZcool-2016', sans-serif;
+}
+
+[data-waiting-room],
+[data-waiting-room] *,
+[data-waiting-room] *::before,
+[data-waiting-room] *::after {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-synthesis: none;
 }
 
 .waiting-room-viewport {
@@ -16,7 +26,8 @@
 .waiting-room-stage {
   position: absolute;
   width: 615px;
-  height: 391px;
+  height: 400px;
+  isolation: isolate;
   transform-origin: top left;
 }
 
@@ -28,7 +39,7 @@
   background-size: 100% 100%;
   border: 0;
   color: #fff;
-  font-family: 'CDTank-SIMSUN', serif;
+  font-family: 'HappyZcool-2016', sans-serif;
   font-size: 12px;
   line-height: 16px;
   text-align: center;
@@ -61,18 +72,6 @@
   background-repeat: no-repeat;
 }
 
-.waiting-room-add-robot:not(:disabled):hover {
-  filter: brightness(1.08);
-}
-
-.waiting-room-add-robot:not(:disabled):active {
-  filter: none;
-}
-
-.waiting-room-add-robot:disabled {
-  opacity: .6;
-}
-
 .waiting-room-stage > .waiting-room-map-preview {
   left: 214px;
   top: 23px;
@@ -84,9 +83,12 @@
   background-repeat: no-repeat;
 }
 
-.waiting-room-ready-mark {
+.waiting-room-stage > .waiting-room-ready-mark {
   z-index: 1;
   pointer-events: none;
+  overflow: visible;
+  mix-blend-mode: multiply;
+  opacity: .6;
 }
 
 .waiting-room-slot-actions {
@@ -123,16 +125,7 @@
   cursor: pointer;
 }
 
-.waiting-room-slot-mask > button:not(:disabled):hover {
-  filter: brightness(1.12);
-}
-
-.waiting-room-slot-mask > button:not(:disabled):active {
-  filter: brightness(.9);
-}
-
 .waiting-room-slot-mask > button:disabled {
-  opacity: .55;
   cursor: default;
 }
 
@@ -153,22 +146,6 @@
   background-repeat: no-repeat;
 }
 
-.waiting-room-edit > .source-feedback-text {
-  font-size: 16px;
-}
-
-.waiting-room-edit:not(:disabled):hover {
-  filter: brightness(1.12);
-}
-
-.waiting-room-edit:not(:disabled):active {
-  filter: brightness(.9);
-}
-
-.waiting-room-edit:disabled {
-  opacity: .6;
-}
-
 .waiting-room-stage > .waiting-room-map-name {
   left: 294px;
   top: 58px;
@@ -177,26 +154,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-[data-waiting-room-status] {
-  display: block;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  padding: 0.5rem;
-  color: #fff;
-  background: #263b49;
-}
-
-[data-waiting-room-status-state="normal"] {
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  clip-path: inset(50%);
 }
 
 .waiting-room-stage .waiting-room-label {
@@ -208,7 +165,7 @@
 }
 
 [data-waiting-room]::backdrop {
-  background: transparent;
+  background: rgb(0 0 0 / 55%);
 }
 
 .waiting-room-stage [data-source-text-content] {
@@ -362,37 +319,6 @@
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
-}
-
-.waiting-room-console [data-waiting-room-status] {
-  position: static;
-  inset: auto;
-  width: auto;
-  height: auto;
-  max-height: none;
-  margin: 0 0 10px;
-  padding: 6px;
-  color: #fff8da;
-  background: #263b49;
-  line-height: 16px;
-  overflow-wrap: anywhere;
-  clip-path: none;
-}
-
-.waiting-room-console [data-waiting-room-status-state="normal"] {
-  width: 1px;
-  height: 1px;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  clip-path: inset(50%);
-}
-
-.waiting-room-console [data-waiting-room-status-state="error"],
-.waiting-room-console [data-waiting-room-status-state="pending"],
-.waiting-room-console [data-waiting-room-status-state="confirmation"] {
-  border: 1px solid #fff8da;
 }
 
 .waiting-room-cpu-list,

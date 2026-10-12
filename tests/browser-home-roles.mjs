@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {createServer} from 'vite';
 import {AccountStore} from '../apps/server/src/account-store.ts';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources.ts';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources.ts';
 const require = createRequire(import.meta.url), WebSocket = require('ws');
 const endpoint = process.argv[2];
 if (!endpoint) throw new Error('Usage: node --import tsx tests/browser-home-roles.mjs <CDP WebSocket>');
@@ -28,7 +28,7 @@ async function stop() {
   if(server?.exitCode===null){const ended=new Promise(resolve=>server.once('exit',resolve));server.kill();await ended;}
 }
 await start();
-const vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',
+const vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',
   server:{port:5192,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3133',ws:true,rewrite:()=> '/'}}}});
 await vite.listen();
 const ws=new WebSocket(endpoint);
@@ -101,7 +101,7 @@ async function disposed(session,name){
 }
 
 async function sourceLayout(session,selector,width,height){
-  const ui=JSON.parse(await readFile('recovery/output/web-assets/ui.json','utf8'));
+  const ui=JSON.parse(await readFile('apps/web/public/ui.json','utf8'));
   const scale=Math.min(width/800,height/600);
   const controls=await evaluate(session,`(()=>{const dialog=document.querySelector(${JSON.stringify(selector)}),stage=dialog.querySelector('.home-roles-stage').getBoundingClientRect();return [...dialog.querySelectorAll('.home-roles-stage [data-source-control]')].map(e=>{const r=e.getBoundingClientRect();return {name:e.dataset.sourceControl,layout:e.dataset.sourceLayout,x:r.x-stage.x,y:r.y-stage.y,width:r.width,height:r.height,asset:e.dataset.sourceAsset}})})()`);
   assert(controls.length>0,'Source layout must render recovered controls');
@@ -217,8 +217,8 @@ try {
     await click(session,'[data-roles-close]');
     await waitUntil(session,`!document.querySelector('#home-roles[open]')`);
     await disposed(session,'rolesCloseWitness');
-    const sourceTanks=JSON.parse(await readFile('recovery/output/web-assets/tanks.json','utf8'));
-    const sourceTextures=JSON.parse(await readFile('recovery/output/web-assets/tank-textures.json','utf8')).rows;
+    const sourceTanks=JSON.parse(await readFile('apps/web/public/tanks.json','utf8'));
+    const sourceTextures=JSON.parse(await readFile('apps/web/public/tank-textures.json','utf8')).rows;
     const allTanks=sourceTanks.map(entry=>{const record={name:entry.name,fields:new Map(tank.fields)};
       record.fields.set(0x1c,200+entry.id);record.fields.set(0x24,entry.id);
       for(const [part,offset] of [['U',0x28],['M',0x2c],['XY',0x30]]){

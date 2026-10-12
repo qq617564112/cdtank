@@ -87,7 +87,7 @@ try {
   for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{serverLog+=String(d);});
   const deadline=Date.now()+15000;while(!serverLog.includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));
   assert(serverLog.includes('Server started'),serverLog);
-  vite=await createServer({configFile:false,root:'apps/web',cacheDir:join(directory,'vite-cache'),publicDir:'../../recovery/output/web-assets',server:{port:5625,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3595',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,root:'apps/web',cacheDir:join(directory,'vite-cache'),publicDir:'../../apps/web/public',server:{port:5625,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3595',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9825',
@@ -230,7 +230,7 @@ ws.on('message', raw => {
   for(const initial of evidence.initial)if(initial.mapId!==2||initial.mode!==modeId||initial.players.length!==4||initial.match.scenePlants.length!==29||(modeId===1&&initial.match.sceneObjects.filter(object=>object.id.startsWith('ENV:')).length!==60))failures.push('Map02 full original owner identities missing');
   if(plantRoundResetOnly){
     evidence.scope='Map02 mode2 source327 ordinary NAV contact hidden, one natural OBJECTIVE round, normal Rematch restored root and actual draw, dual normal Leave; no screenshots or new source.';
-    const placements=JSON.parse(await readFile('recovery/output/web-assets/scene-placements.json','utf8')).find(value=>value.id==='0002');
+    const placements=JSON.parse(await readFile('apps/web/public/scene-placements.json','utf8')).find(value=>value.id==='0002');
     const target=placements.records.find(value=>value.id==='327'&&value.className==='SYcScnObjPlant');
     assert(target,'Source327 placement');
     const goal={x:target.matrix[12],y:target.position[1],z:target.matrix[14]};

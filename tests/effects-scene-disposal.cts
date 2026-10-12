@@ -38,7 +38,7 @@ Object.defineProperty(globalThis, 'window', {value: {
   removeEventListener: (_name: string, listener: unknown) => {listeners.delete(listener);},
 }, configurable: true});
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8')) as SkillSoundCatalog;
+const catalog = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8')) as SkillSoundCatalog;
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const camera = new FreeCamera('camera', Vector3.Zero(), scene);

@@ -16,12 +16,12 @@ async function models(directory) {
 }
 
 const results = [];
-for (const file of await models('recovery/output/web-assets')) {
+for (const file of await models('apps/web/public')) {
   const report = await validator.validateBytes(new Uint8Array(await readFile(file)), {maxIssues: 20});
   results.push({file, errors: report.issues.numErrors, warnings: report.issues.numWarnings,
     messages: report.issues.messages});
 }
-await writeFile('recovery/output/web-assets/validation.json', JSON.stringify(results, null, 2));
+await writeFile('apps/web/public/validation.json', JSON.stringify(results, null, 2));
 const failures = results.filter(result => result.errors);
 console.log(`${results.length} GLB validated, ${failures.length} files with errors`);
 if (failures.length) {

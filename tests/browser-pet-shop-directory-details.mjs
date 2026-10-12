@@ -56,7 +56,7 @@ async function nativeClick(session, selector) {
 async function startServer(){const start=serverLog.length;const env={...process.env,PORT:'3384',ACCOUNT_DB_PATH:database,MATCH_TIME_LIMIT_SECONDS:'12'};delete env.MATCH_MIN_PLAYERS;server=spawn(process.execPath,['--import','tsx','apps/server/src/index.ts'],{env,stdio:['ignore','pipe','pipe']});for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{serverLog+=String(d);});const deadline=Date.now()+15000;while(!serverLog.slice(start).includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));assert(serverLog.slice(start).includes('Server started'),serverLog.slice(start));}
 try {
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5434,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3384',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5434,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3384',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9634',
@@ -83,8 +83,8 @@ ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFra
   }
   const s=pages[0].sessionId;
 
-  const pets=JSON.parse(await readFile('recovery/output/verified/tables/pet.json','utf8')).rows;
-  const skills=JSON.parse(await readFile('recovery/output/verified/tables/skill.json','utf8')).rows;
+  const pets=JSON.parse(await readFile('apps/server/resources/tables/pet.json','utf8')).rows;
+  const skills=JSON.parse(await readFile('apps/server/resources/tables/skill.json','utf8')).rows;
   await nativeClick(s,'[data-room-card-shop]');await waitUntil(s,`document.querySelector('[data-shop-root-category="Pet"]')?.matches(':enabled')`);
   await nativeClick(s,'[data-shop-root-category="Pet"]');await waitUntil(s,`document.querySelector('[data-pet-shop-product-id="2"]')?.matches(':enabled')`);
   const confirmed=network.filter(row=>row.name==='PetShop'&&row.success).at(-1).response.pets;evidence.queryProductIds=confirmed.map(p=>p.petId);evidence.candidates=[];

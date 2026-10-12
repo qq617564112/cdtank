@@ -1,4 +1,5 @@
 import {backgroundStyle} from '../../assets/image-artwork';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import {gameContent} from '../../../../shared/content/catalog';
 import {HomeEquipmentCommonRowContent} from './home-equipment-common-row-content';
 import {isAppearanceEffectItem} from '../../../../shared/combat/equipment-target';
@@ -25,7 +26,6 @@ export function HomeEquipmentSourceList({ui, entries, selected, busy, select, dr
   const list = useRef<HTMLDivElement>(null);
   const layout = new HomeSourceLayout(ui, 'myhome_panzerpage.xml');
   const control = layout.control('lstEquip');
-  const selection = sourceProps(ui, layout, 'myhome_panzerpage.xml', 'lstEquip', control.properties.SelectionImage);
   return <div {...sourceProps(ui, layout, 'myhome_panzerpage.xml', 'lstEquip')}
     className="home-equipment-list-scroll-shell">
     <div ref={list} className="home-equipment-source-list" role="listbox" aria-label="拥有装备"
@@ -51,8 +51,6 @@ export function HomeEquipmentSourceList({ui, entries, selected, busy, select, dr
           data-equipment-item={entry.instanceId} data-home-equipment-common-row={common ? entry.instanceId : undefined} data-home-equipment-hat-mark-row={hat || balloon || mark ? entry.instanceId : undefined} aria-selected={selected === entry.instanceId}
           aria-pressed={selected === entry.instanceId}
           aria-describedby={described === entry.instanceId ? 'home-item-description' : undefined}
-          style={selected === entry.instanceId ? {...backgroundStyle(selection.style)} : undefined}
-          data-source-selection-asset={selected === entry.instanceId ? selection['data-source-asset'] : undefined}
           onMouseEnter={event => describe?.(entry, event.currentTarget)}
           onFocus={event => describe?.(entry, event.currentTarget)}
           onClick={() => select(entry.instanceId)} onKeyDown={event => {
@@ -72,6 +70,7 @@ export function HomeEquipmentSourceList({ui, entries, selected, busy, select, dr
           }} onKeyUp={event => {
             if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
           }}>
+          {selected === entry.instanceId && <GameSelectionHighlight/>}
           {common || hat || balloon || mark ? <HomeEquipmentCommonRowContent ui={ui} name={entry.name} iconId={entry.iconId}
             itemTableId={entry.itemTableId} ownedQuantity={entry.ownedQuantity}
             installed={common || hat || balloon || mark ? entry.installed : undefined}

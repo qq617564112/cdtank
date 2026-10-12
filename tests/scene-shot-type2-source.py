@@ -7,7 +7,7 @@ import capstone
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 u,images=map_original_binaries([ROOT/'CDTank/CDTank.exe']);u.mem_map(0,4096);p=images['cdtank.exe'];decoder=capstone.Cs(capstone.CS_ARCH_X86,capstone.CS_MODE_32)
 u.mem_map(0x2040000,0x10000)

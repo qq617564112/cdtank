@@ -4,6 +4,7 @@ export function reserveFullscreenKeys(): () => void {
     const escape = event.key === 'Escape' || event.code === 'Escape';
     const fullscreen = event.key === 'F11' || event.code === 'F11';
     if (!escape && !fullscreen) return;
+    if (escape && document.querySelector('[data-formal-battle-page]')) return;
     event.stopImmediatePropagation();
     if (escape || document.fullscreenElement) event.preventDefault();
     if (event.type === 'keydown' && !event.repeat && document.fullscreenElement) {

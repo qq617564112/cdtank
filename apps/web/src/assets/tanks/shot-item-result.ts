@@ -15,9 +15,9 @@ export class TankShotItemResult {
 
   /** Original423956 endpoint precedes423092 feedback, separate from BeforeShot. */
   show(message: ShotDisplayMessage, attackerId: string, localId: string,
-    shotResult: () => void): void {
+    shotResult: () => void, renderEffect = true): void {
     if (attackerId === localId || !gameContent().items.get(message.itemId)?.runtime.remoteShotResult) return;
-    this.display.show(message);
+    if (renderEffect) this.display.show(message);
     shotResult();
   }
 }

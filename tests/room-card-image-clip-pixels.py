@@ -8,7 +8,7 @@ for row in rows:
  actual=Image.open(row['file']).convert('RGBA');base=Image.open(row['baseline']).convert('RGBA');clipped=visible=0;maxerror=0
  for item in row['images']:
   if item['hidden']:continue
-  source=Image.open(ROOT/'recovery/output/web-assets'/item['asset']).convert('RGBA');r=item['rect'];card=item['cardRect'];scale=card['width']/120;edge=card['x']+19*scale
+  source=Image.open(ROOT/'apps/web/public'/item['asset']).convert('RGBA');r=item['rect'];card=item['cardRect'];scale=card['width']/120;edge=card['x']+19*scale
   for y in range(math.ceil(r['y']+1),math.floor(r['y']+r['height']-1)):
    for x in range(math.ceil(r['x']+1),math.floor(r['x']+r['width']-1)):
     sx=(x+.5-r['x'])/r['width']*source.width;sy=(y+.5-r['y'])/r['height']*source.height

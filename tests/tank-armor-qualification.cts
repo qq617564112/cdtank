@@ -5,7 +5,7 @@ import {TANKS, PET_BASES} from '../apps/server/src/config';
 import type {RoleRecomputeTankBase, RoleRecomputePetBase} from '../apps/shared/contracts/role-base';
 import {combatSkills, combatItemSkills, combatLimits} from '../apps/server/src/battle/catalog';
 import type {RoleSkillSources} from '../apps/server/src/battle/roles/skills';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources';
 
 interface NativeRow {
   sourceIndex: number;

@@ -1,0 +1,48 @@
+.loading-error-dialog .game-dialog-stage {
+  max-height: calc((100dvh - 32px) / var(--game-dialog-ui-scale));
+}
+
+.loading-error-title {
+  position: absolute;
+  top: 7px;
+  left: 28px;
+  margin: 0;
+  color: #fff1b2;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 32px;
+  -webkit-text-stroke: 1.5px #584125;
+  paint-order: stroke fill;
+}
+
+.loading-error-content {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  min-height: 112px;
+  padding: 24px 30px;
+  overflow-y: auto;
+  color: #fff8df;
+  font-size: 18px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  -webkit-text-stroke: .8px #684c2f;
+  paint-order: stroke fill;
+}
+
+.loading-error-content p {
+  margin: 0;
+  white-space: pre-wrap;
+  -webkit-text-stroke: inherit;
+}
+
+.loading-error-details {
+  font-size: 14px;
+}
+
+.loading-error-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}

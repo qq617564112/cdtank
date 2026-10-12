@@ -7,7 +7,7 @@ export interface EffectParticleLifetime {
 export class EffectParticlePool<T extends EffectParticleLifetime> {
   readonly particles: T[] = [];
 
-  constructor(readonly capacity: number, private readonly copy: (particle: T) => T) {}
+  constructor(readonly capacity: number) {}
 
   emit(count: number, initialize: () => T): number {
     let emitted = 0;
@@ -20,7 +20,7 @@ export class EffectParticlePool<T extends EffectParticleLifetime> {
     return emitted;
   }
 
-  /** Expiration copies the tail into the slot; the forward loop then skips it. */
+  /** Expiration moves the retained tail into the slot; the forward loop then skips it. */
   update(deltaSeconds: number, advance: (particle: T, delta: number) => T): void {
     const delta = Math.fround(deltaSeconds);
     for (let index = 0; index < this.particles.length; ++index) {
@@ -29,7 +29,7 @@ export class EffectParticlePool<T extends EffectParticleLifetime> {
       particle.age = Math.fround(age);
       if (age >= Math.fround(particle.lifetime)) {
         const last = this.particles.length - 1;
-        if (last > 0) this.particles[index] = this.copy(this.particles[last]);
+        if (last > 0) this.particles[index] = this.particles[last];
         this.particles.pop();
       } else {
         this.particles[index] = advance(particle, delta);

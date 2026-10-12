@@ -72,6 +72,7 @@ import {advanceOpticalCamouflage, clearOpticalCamouflage} from './battle/items/o
 import {advanceRoleDisguise, clearRoleDisguise, restoreConcealmentAfterAcceptedFire} from './battle/items/role-disguise';
 import {setReady, changeWaitingTeam, voteRematch, readyCpus} from './rooms/preparation';
 import {advanceProjectiles} from './battle/projectiles';
+import {shotCausedDamage} from './battle/shot-impact';
 import {createSceneObjects, damageSceneObject, syncSceneObjectCollision, resetSceneObjectCollision} from './battle/environment';
 import {attachProjectileSceneResult} from './battle/projectile-scene-result';
 import {createObjectives, advanceObjectives, damageObjective, objectiveEnd} from './modes/objectives';
@@ -198,9 +199,12 @@ export class World {
   }
 
   createAndJoin(clientId: string, mode: number, mapId: number, roomName: string,
-                name: string, tankId: number, password = '', minPlayers?: number, maxPlayers?: number, friendlyFire?: boolean): JoinResult {
-    return createAndJoinRoom(this.rooms, {clientId, mode, mapId, roomName, name, tankId, password, minPlayers, maxPlayers, friendlyFire},
-      limits => this.createRoom(mode, mapId, limits.minPlayers, limits.maxPlayers, limits.friendlyFire),
+                name: string, tankId: number, password = '', minPlayers?: number, maxPlayers?: number,
+                friendlyFire?: boolean, timeLimitSeconds?: number): JoinResult {
+    return createAndJoinRoom(this.rooms, {clientId, mode, mapId, roomName, name, tankId, password,
+      minPlayers, maxPlayers, friendlyFire, timeLimitSeconds},
+      limits => this.createRoom(mode, mapId, limits.minPlayers, limits.maxPlayers,
+        limits.friendlyFire, limits.timeLimitSeconds),
       room => this.joinRoom(room.roomId, clientId, name, tankId, password));
   }
 
@@ -909,9 +913,11 @@ export class World {
     return room ? this.snapshotRoom(room, this.now()) : undefined;
   }
 
-  private createRoom(mode: number, mapId?: number, minPlayers?: number, maxPlayers?: number, friendlyFire = false): RoomState {
+  private createRoom(mode: number, mapId?: number, minPlayers?: number, maxPlayers?: number,
+    friendlyFire = false, timeLimitSeconds?: number): RoomState {
     const room = createWaitingRoom(mode, mapId,
-      () => this.options.allocateRoomId?.() ?? `R${this.nextRoomId++}`, minPlayers, maxPlayers, friendlyFire);
+      () => this.options.allocateRoomId?.() ?? `R${this.nextRoomId++}`, minPlayers, maxPlayers,
+      friendlyFire, timeLimitSeconds);
     this.rooms.set(room.roomId, room);
     return room;
   }
@@ -1019,7 +1025,8 @@ export class World {
     if (room.phase !== 'PLAYING') return;
     const resolveShotPlayerHit = (owner: PlayerState, target: PlayerState, damage: number,
       ammoItemId: number | undefined, shotId?: string, bearing?: {x: number; z: number}) => {
-      if (!target.alive || room.phase !== 'PLAYING') return;
+      if (!target.alive || room.phase !== 'PLAYING') return false;
+      const impactFirstEvent = events.length;
       const handler = itemHitHandler(ammoItemId);
       const blastCenter = {x: target.x, y: target.y, z: target.z};
       this.runCombatResolution(room, events, () => {
@@ -1052,6 +1059,7 @@ export class World {
         };
         if (handler) handlers[handler]?.();
       });
+      return shotCausedDamage(events, impactFirstEvent, owner.id, target.id);
     };
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {
       respawn: player => {
@@ -1150,7 +1158,7 @@ export class World {
     advanceGroundItems(room, now, this.groundItemCallbacks, events);
     advanceProjectiles(room, dt, BODY_RADIUS, {
       hitPlayer: (owner, target, damage, ammoItemId, bearing, shotId) => {
-        resolveShotPlayerHit(owner, target, damage, ammoItemId, shotId, bearing);
+        return resolveShotPlayerHit(owner, target, damage, ammoItemId, shotId, bearing);
       },
       hitObjective: (owner, target, damage, ammoItemId) => {
         if (itemHitHandler(ammoItemId) === 'medical') return;
@@ -1162,6 +1170,7 @@ export class World {
           if (end) this.finishObjective(room, now, end, events);
         }
         attachProjectileSceneResult(events, firstEvent, owner.id, ammoItemId);
+        return shotCausedDamage(events, firstEvent, owner.id, target.id);
       },
       hitSceneObject: (owner, target, damage, ammoItemId) => {
         if (itemHitHandler(ammoItemId) === 'medical') return;
@@ -1173,8 +1182,10 @@ export class World {
           if (end) this.finishObjective(room, now, end, events);
         }
         attachProjectileSceneResult(events, firstEvent, owner.id, ammoItemId);
+        return shotCausedDamage(events, firstEvent, owner.id, target.id);
       },
       terrainHit: value => events.push(value),
+      shotImpact: value => events.push(value),
     });
     if (room.phase !== 'PLAYING') return;
     advanceContactMines(room, now, events, hitGroundSkill);
@@ -1315,7 +1326,7 @@ export class World {
   }
 
   private timeLimit(room: RoomState): number {
-    return this.options.timeLimitSeconds ?? room.map.timeLimit;
+    return room.timeLimitSeconds ?? this.options.timeLimitSeconds ?? room.map.timeLimit;
   }
 
   private startRoom(room: RoomState): void {
@@ -1440,7 +1451,8 @@ export class World {
     return roomSnapshot(room, now, this.timeLimit(room), this.minPlayers(room),
       [...room.players.values()].map(player => playerSnapshot(player,
         player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player),
-        (combatTime - room.startedAt) / 1000, battleActive, now)));
+        (combatTime - room.startedAt) / 1000, battleActive, now,
+        player.cpu ? undefined : this.options.resolveAccount?.(player.clientId))));
   }
 
 }

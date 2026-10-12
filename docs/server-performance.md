@@ -14,7 +14,7 @@
 | Node 主线程 CPU | 约 99.4% |
 | 已识别热点 | 动画碰撞重建；`accessorValues` 自耗约 23.3%；`sampleRoleNavigation` 约 5.0%；`searchBotPath` 约 4.7%；碰撞查询与临时分配 |
 
-场景碰撞资产已经在构建阶段固定到动画首帧，正式服务端直接加载预烘焙三角面、包围盒、空间格和 NAV 占用。相关策略见 [animated-scene-collision-runtime.md](../recovery/docs/animated-scene-collision-runtime.md)。
+场景碰撞资产已经在构建阶段固定到动画首帧，正式服务端直接加载预烘焙三角面、包围盒、空间格和 NAV 占用。相关策略见 [animated-scene-collision-runtime.md](../docs/recovery/animated-scene-collision-runtime.md)。
 
 ## 导航采样与寻路
 

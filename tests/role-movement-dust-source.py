@@ -9,7 +9,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 
 pe = pefile.PE(str(ROOT / 'CDTank/CDTank.exe'))
@@ -32,7 +32,7 @@ source = {name: [dict(va=hex(i.address), bytes=i.bytes.hex(),
           for name, (a, z) in ranges.items()}
 assert pe.get_data(0x5c8790-base, 17).split(b'\0')[0] == b'_root\\online\\001'
 assert pe.get_data(0x5c85e0-base, 11) == b'tag_efsoot\0'
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 root = next(n for n in library['nodes'] if n['name'] == '_root\\online\\001')
 by_id = {n['id']: n for n in library['nodes']}
 pending, nodes = [root], []

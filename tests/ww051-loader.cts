@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {EffectSound} from '../apps/web/src/audio/effect-sound';
 const native = JSON.parse(readFileSync('recovery/output/ww051-loader-native.json', 'utf8'));
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8'));
+const catalog = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8'));
 assert.equal(native.reference, 'ww051');
 assert.equal(native.calls[0].exists, false);
 assert.equal(native.loaderReached, false);

@@ -1,3 +1,5 @@
+@import '../resources/happy-zcool.css';
+
 .battle-chat.source-waiting-chat {
   right: auto;
   bottom: auto;
@@ -5,13 +7,13 @@
   border: 0;
   background: transparent;
   overflow: clip;
-  font: 12px 'CDTank-SIMSUN', serif;
+  font: 12px 'HappyZcool-2016', sans-serif;
   color: #fff;
 }
 
 .waiting-chat-stage {
   position: relative;
-  width: 612px;
+  width: 615px;
   height: 198px;
   transform-origin: top left;
 }
@@ -56,8 +58,16 @@
 
 .source-waiting-chat input {
   background: transparent;
-  color: #fff;
+  color: #fffde0;
+  caret-color: #fffde0;
   font: inherit;
+  -webkit-text-stroke: .6px #514229;
+  paint-order: stroke fill;
+}
+
+.source-waiting-chat input::placeholder {
+  color: inherit;
+  opacity: 1;
 }
 
 .waiting-chat-channel-menu,
@@ -73,7 +83,7 @@
 }
 .waiting-chat-family-option {
   position: absolute;
-  left: 9px;
+  left: 15px;
   top: 151px;
   width: 30px;
   height: 16px;
@@ -81,23 +91,76 @@
   padding: 0;
   border: 0;
   color: #fff;
-  background: #263b49;
+  background: transparent;
   font: inherit;
 }
 
-.source-waiting-chat [data-waiting-chat-business-status] {
+.source-waiting-chat,
+.source-waiting-chat *,
+.source-waiting-chat *::before,
+.source-waiting-chat *::after {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-synthesis: none;
+}
+
+.waiting-chat-surface,
+.waiting-chat-announcement,
+.waiting-chat-input-panel,
+.waiting-chat-menu-surface {
   position: absolute;
-  left: 15px;
-  top: 3px;
-  max-width: 579px;
-  max-height: 17px;
-  margin: 0;
-  overflow: auto;
-  color: #fff;
-  background: #263b49;
-  font: inherit;
+  pointer-events: none;
 }
 
-.source-waiting-chat [data-waiting-chat-business-status]:empty {
-  display: none;
+.waiting-chat-surface {
+  border-radius: 8px;
+  background: rgb(5 15 56 / 76%);
+  box-shadow: inset 0 2px 3px rgb(0 0 0 / 35%);
+}
+
+.waiting-chat-announcement {
+  clip-path: polygon(1% 0, 99% 0, 100% 40%, 99% 100%, 0 100%, 0 40%);
+  background: #202b3b;
+}
+
+.waiting-chat-channel-button > .cartoon-control-label {
+  font-size: 16px;
+  -webkit-text-stroke-width: 1.5px;
+}
+
+.waiting-chat-channel-option {
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  color: #4c401b;
+  font: 13px/16px 'HappyZcool-2016', sans-serif;
+  -webkit-text-stroke: .6px #fff7d3;
+  paint-order: stroke fill;
+}
+
+.source-room-intimate-waiting > .game-inset-card {
+  position: absolute;
+  pointer-events: none;
+}
+
+.source-room-intimate-waiting .source-room-intimate-list {
+  color: #4c401b;
+  font-size: 13px;
+  line-height: 18px;
+  -webkit-text-stroke: .6px #fff7d3;
+  paint-order: stroke fill;
+}
+
+.waiting-chat-channel-option > span:not(.game-selection-highlight) {
+  position: relative;
+  pointer-events: none;
+}
+
+.waiting-chat-channel-option:not(:disabled):is(:hover, :focus-visible) {
+  color: #fff9a0;
+  -webkit-text-stroke-color: #674017;
+}
+
+.waiting-chat-channel-option:disabled {
+  color: #858176;
+  cursor: default;
 }

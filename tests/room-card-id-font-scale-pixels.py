@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
-source = json.loads((ROOT / 'recovery/output/web-assets/ui-fonts.json').read_text())
+source = json.loads((ROOT / 'apps/web/public/ui-fonts.json').read_text())
 font = next(face for face in source['fonts'] if face['name'] == 'MediumHT')
 glyphs = {glyph['codepoint']: glyph for glyph in font['glyphs']}
 rows = []
@@ -16,7 +16,7 @@ for capture in json.load(open(sys.argv[1])):
         for actual in card['field']['glyphs']:
             glyph = glyphs[actual['codepoint']]
             assert actual['asset'] == glyph['asset']
-            image = Image.open(ROOT / 'recovery/output/web-assets' / glyph['asset']).convert('RGBA')
+            image = Image.open(ROOT / 'apps/web/public' / glyph['asset']).convert('RGBA')
             box = actual['rect']
             field = card['field']['rect']
             matched = []

@@ -22,33 +22,49 @@ import {HistoryIntroSourceView} from './interface/account/history-intro-source-v
 import {LoginSourceView} from './interface/login/login-source-view';
 import {ChannelSourceView} from './interface/login/channel-source-view';
 import {useLoginNavigation} from './interface/login/use-login-navigation';
+import {navigateGame, roomPath, useGameRoute, useNavigationChoice, useRouteDialog, useNavigationNumber} from './navigation/route';
+import {readQuickStart} from './navigation/quick-start';
+import {GameMessageHost, showGameMessage} from './interface/resources/game-message';
 
 interface AppProps {battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; settings: InitialSettings; validation?: boolean;}
 
 /** One page root; scene and transport remain independent of React render cycles. */
-export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
+export function App(props: AppProps) {
+  return <><GameMessageHost/><GamePages {...props}/></>;
+}
+
+function GamePages({battle,canvas,hud,settings,validation=false}: AppProps) {
   const login = useLoginNavigation(battle, validation);
-  const [inventoryOpen, setInventoryOpen] = useState(false);
-  const [equipmentOpen, setEquipmentOpen] = useState(false);
-  const [equipmentTankInstance, setEquipmentTankInstance] = useState<number>();
-  const [rolesKind, setRolesKind] = useState<'tank' | 'pet'>('tank');
-  const [rolesOpen, setRolesOpen] = useState(false);
-  const [shopOpen, setShopOpen] = useState(false);
-  const [textureOriginInstance, setTextureOriginInstance] = useState<number>();
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [historyIntroOpen, setHistoryIntroOpen] = useState(false);
-  const [keysOpen, setKeysOpen] = useState(false);
-  const [quickChatOpen, setQuickChatOpen] = useState(false);
+  const route = useGameRoute();
+  const [inventoryOpen, setInventoryOpen] = useRouteDialog('inventory');
+  const [equipmentOpen, setEquipmentOpen] = useRouteDialog('equipment');
+  const [equipmentTankInstance, setEquipmentTankInstance] = useNavigationNumber('equipmentTank');
+  const [rolesKind, setRolesKind] = useNavigationChoice('roleKind', ['tank', 'pet'], 'tank');
+  const [rolesOpen, setRolesOpen] = useRouteDialog('roles');
+  const [shopOpen, setShopOpen] = useRouteDialog('shop');
+  const [textureOriginInstance, setTextureOriginInstance] = useNavigationNumber('textureTank');
+  const [, setRoleInstance] = useNavigationNumber('roleInstance');
+  const [historyOpen, setHistoryOpen] = useRouteDialog('history');
+  const [historyIntroOpen, setHistoryIntroOpen] = useRouteDialog('history-intro');
+  const [keysOpen, setKeysOpen] = useRouteDialog('keys');
+  const [quickChatOpen, setQuickChatOpen] = useRouteDialog('settings');
   const [keyBindings, setKeyBindings] = useState(settings.keys.bindings);
-  const accountGeneration = useSyncExternalStore(
-    listener => battle.subscribeAccountContext(listener),
-    () => battle.accountContext.generation,
-    () => 0,
-  );
+  const match = useSyncExternalStore(battle.matchPanel.subscribe, battle.matchPanel.getSnapshot, battle.matchPanel.getSnapshot);
+  const quickStart = useRef(readQuickStart());
   useEffect(() => {
-    setEquipmentTankInstance(undefined);
-    setTextureOriginInstance(undefined);
-  }, [login.phase, accountGeneration]);
+    if (validation || login.restoring || login.phase !== 'lobby' || !quickStart.current) return;
+    const options = quickStart.current;
+    quickStart.current = undefined;
+    void battle.startQuickMatch(options.mapId, options.tankId).catch(error => {
+      hud.value = error instanceof Error ? error.message : String(error);
+      showGameMessage(hud.value, 'error');
+    });
+  }, [battle, hud, validation, login.restoring, login.phase]);
+  useEffect(() => {
+    if (validation || login.restoring || login.phase !== 'lobby') return;
+    if (battle.inRoom && match) navigateGame(roomPath(match.roomId, match.phase), true);
+    else if (!battle.inRoom && route.roomId) navigateGame('/lobby', true);
+  }, [battle, validation, login.restoring, login.phase, match?.roomId, match?.phase, route.page, route.roomId]);
   const settingsOrigin = useRef<HTMLButtonElement | null>(null);
   function closeKeys(): void {
     document.querySelector<HTMLDialogElement>('#key-settings')?.close();
@@ -123,8 +139,8 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
       onLogin={login.login} onRegister={login.register} onExit={login.exit}
       onSettings={()=>setQuickChatOpen(true)} onHistoryIntro={()=>setHistoryIntroOpen(true)}/>}
     {login.phase === 'channel' && <ChannelSourceView busy={login.busy} status={login.status}
-      channels={login.channels} selectedId={login.selectedId} onSelect={login.setSelectedId}
-      onEnter={login.enter} onBack={login.back} onExit={login.exit}/>}
+      channels={login.channels} ping={login.ping} selectedId={login.selectedId} onSelect={login.setSelectedId}
+      onEnter={login.enter} onBack={login.back}/>}
     {login.phase === 'closed' && <main aria-label="已退出游戏"><button type="button" onClick={login.reopen}>返回登录</button></main>}
     <HistoryIntroSourceView open={historyIntroOpen} close={()=>setHistoryIntroOpen(false)}/>
     <SettingsSourceView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings} onKeysSaved={setKeyBindings}/>
@@ -138,24 +154,24 @@ export function App({battle,canvas,hud,settings,validation=false}: AppProps) {
     {validation && <aside className="controls">
       <h1>猫狗大作战 · 验证</h1>
       <button id="fullscreen" type="button" onClick={()=>{
-        void document.documentElement.requestFullscreen().catch(error=>{hud.value=String(error);});
+        void document.documentElement.requestFullscreen().catch(error=>{hud.value=String(error);showGameMessage(hud.value,'error');});
       }}>全屏</button>
       <button id="open-key-settings" type="button" onClick={()=>setKeysOpen(true)}>键位设置</button>
       <button id="open-quick-chat-settings" type="button" onClick={()=>setQuickChatOpen(true)}>快捷聊天设置</button>
       <button data-open-history-intro="" type="button" onClick={()=>setHistoryIntroOpen(true)}>原介绍整页</button>
       <VolumeSettingsView battle={battle} initial={settings.audio}/>
-      <div id="battle-status-host" ref={element=>{if(element && hud.parentElement!==element)element.append(hud);}}/>
+      <div id="battle-status-host" hidden ref={element=>{if(element && hud.parentElement!==element)element.append(hud);}}/>
       <KeyBindingsHint bindings={keyBindings}/>
     </aside>}
-    {!validation && <div className="game-status" ref={element=>{if(element && hud.parentElement!==element)element.append(hud);}}/>}
+    {!validation && <div className="game-status" hidden ref={element=>{if(element && hud.parentElement!==element)element.append(hud);}}/>}
     <BattleMatchView validation={validation} panel={battle.matchPanel}/>
     <BattleChatView chat={battle.chat} formal={!validation}/>
     <BattleHudView hud={battle.originalHud} items={battle.itemInventory} onUseSlot={battle.useHudSlot}/>
-    <BattleScoreboardView hud={battle.originalHud}/>
-    <HomeInventoryView onRolePage={kind => {setRolesKind(kind);closeInventory();setRolesOpen(true);}} battle={battle} open={inventoryOpen} close={closeInventory}/>
+    <BattleScoreboardView hud={battle.originalHud} bindings={keyBindings}/>
+    <HomeInventoryView onRolePage={kind => {setRolesKind(kind);setRoleInstance(undefined);setTextureOriginInstance(undefined);closeInventory();setRolesOpen(true);}} battle={battle} open={inventoryOpen} close={closeInventory}/>
     <HomeEquipmentView battle={battle} open={equipmentOpen} close={closeEquipment} tankInstanceId={equipmentTankInstance}
       onPlayerPage={() => {closeEquipment();openInventory();}}
-      onRolePage={kind => {setRolesKind(kind);setTextureOriginInstance(kind === 'tank' ? equipmentTankInstance : undefined);closeEquipment();setRolesOpen(true);}}/>
+      onRolePage={kind => {setRolesKind(kind);setRoleInstance(kind === 'tank' ? equipmentTankInstance : undefined);setTextureOriginInstance(kind === 'tank' ? equipmentTankInstance : undefined);closeEquipment();setRolesOpen(true);}}/>
     <HomeRolesView initialSelectedInstance={textureOriginInstance} onEquipmentPage={instanceId => {closeRoles();setEquipmentTankInstance(instanceId);setEquipmentOpen(true);}} onPlayerPage={() => {closeRoles();openInventory();}} initialKind={rolesKind} battle={battle} open={rolesOpen} close={closeRoles}/>
     <AccountShopView onEquipmentPage={() => {
       document.querySelector<HTMLDialogElement>('#account-shop')?.close();

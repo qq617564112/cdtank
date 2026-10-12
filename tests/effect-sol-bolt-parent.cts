@@ -6,7 +6,7 @@ interface State extends EffectBoltSegments {worldSegments: number[][]; remainder
 interface Sample {matrix: number[]; delta: number; state: State; randomValues: number[]; frees: number[];}
 interface Row {node: number; config: EffectBoltConfig & {interval: number}; samples: Sample[];}
 const native = JSON.parse(readFileSync('recovery/output/effect-sol-bolt-parent-native.json', 'utf8')) as {rows: Row[]};
-const source = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const source = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 for (const row of native.rows) {
   const definition = source.nodes[row.node];
   // A continuous original node isolates attached rebuilds from controller/lifetime boundaries.

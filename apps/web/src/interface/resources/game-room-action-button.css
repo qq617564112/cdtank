@@ -1,0 +1,139 @@
+@import './happy-zcool.css';
+
+.game-room-action-button {
+  --room-action-face: #5a40ff;
+  --room-action-light: #fffdf0;
+  --room-action-bevel: #1700cd;
+  --room-action-side: #09017a;
+  --room-action-label: #fff7b6;
+  --room-action-label-outline: #15120b;
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.game-room-action-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.game-room-action-label {
+  position: relative;
+  color: var(--room-action-label);
+  font: 25px/1 'HappyZcool-2016', sans-serif;
+  white-space: nowrap;
+  transform: translateY(-1px);
+  -webkit-text-stroke: 2.6px var(--room-action-label-outline);
+  paint-order: stroke fill;
+  text-shadow: 1px 1px #94722c;
+  pointer-events: none;
+}
+
+.game-room-action-button:is([data-room-action='ready'], [data-room-action='cancel']) .game-room-action-label {
+  letter-spacing: 14px;
+  text-indent: 14px;
+}
+
+.game-room-action-button[data-source-button-state='Hover'] {
+  --room-action-face: #fff443;
+  --room-action-bevel: #b88600;
+  --room-action-side: #745900;
+  --room-action-label: #0b0b03;
+  --room-action-label-outline: #b58a11;
+}
+
+.game-room-action-button[data-source-button-state='Pushed'] {
+  --room-action-face: #ff3687;
+  --room-action-bevel: #b90058;
+  --room-action-side: #72043a;
+}
+
+.game-room-action-button:is([data-room-action='ready'], [data-room-action='cancel'])[data-source-button-state='Pushed'] .game-room-action-art {
+  transform: translate(3px, 1px) scale(.96, .96);
+}
+
+.game-room-action-button[data-source-button-state='Pushed'] .game-room-action-label {
+  transform: translateY(0);
+}
+
+.game-room-action-button:is([data-room-action='details'], [data-room-action='kick']) {
+  --room-action-label: #fff;
+  --room-action-label-outline: #79603a;
+}
+
+.game-room-action-button:is([data-room-action='details'], [data-room-action='kick']) .game-room-action-label {
+  font-size: 12px;
+  transform: translateY(.5px);
+  -webkit-text-stroke-width: .8px;
+  text-shadow: none;
+}
+
+.game-room-action-button:is([data-room-action='details'], [data-room-action='kick'])[data-source-button-state='Hover'] .game-room-sign-face {
+  filter: brightness(1.14);
+}
+
+.game-room-action-button:is([data-room-action='details'], [data-room-action='kick'])[data-source-button-state='Pushed'] .game-room-action-art {
+  transform: translateY(1px);
+}
+
+.game-room-action-button[data-room-action='add-robot'] {
+  --room-action-face: #fbe6c2;
+  --room-action-rim: #ffb987;
+  --room-action-label: #fff;
+  --room-action-label-outline: #a29b8a;
+}
+
+.game-room-action-button[data-room-action='add-robot'] .game-room-action-label {
+  font-size: 12px;
+  transform: translateY(.5px);
+  -webkit-text-stroke-width: .65px;
+  text-shadow: none;
+}
+
+.game-room-action-button[data-room-action='add-robot'][data-source-button-state='Hover'] {
+  --room-action-face: #fff2d4;
+  --room-action-rim: #ffc997;
+}
+
+.game-room-action-button[data-room-action='add-robot'][data-source-button-state='Pushed'] {
+  --room-action-face: #f5d9ad;
+  --room-action-rim: #e8a36e;
+}
+
+.game-room-action-button:is([data-room-action='ready'], [data-room-action='cancel']):disabled:not([aria-busy='true']) {
+  --room-action-face: #aaa;
+  --room-action-light: #f7f7f2;
+  --room-action-bevel: #70716b;
+  --room-action-side: #464742;
+  --room-action-label: #ecebe3;
+  --room-action-label-outline: #404139;
+}
+
+.game-room-action-button:is([data-room-action='details'], [data-room-action='kick'], [data-room-action='add-robot']):disabled {
+  opacity: .48;
+}
+
+.game-room-action-button:disabled[aria-busy='true'] {
+  opacity: 1;
+}
+
+.game-room-action-button:disabled {
+  cursor: default;
+}
+
+.game-room-action-button:focus-visible {
+  outline: 2px solid #fff6d4;
+  outline-offset: 1px;
+}

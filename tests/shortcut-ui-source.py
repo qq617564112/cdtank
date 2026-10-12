@@ -5,7 +5,7 @@ import struct
 import sys
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_EBX, UC_X86_REG_EBP, UC_X86_REG_ESP, UC_X86_REG_EDI
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 uc, _ = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
 uc.mem_map(0x2000000, 0x10000)
@@ -24,7 +24,7 @@ for start, end, offset, slots in [(0x4e0dfa, 0x4e0e1b, 0xd0, [1,2,3]),
     cache = [struct.unpack('<2I', uc.mem_read(UI+offset+i*8,8)) for i in range(len(slots))]
     assert cache == [(ids[slot-1], slot) for slot in slots]
     rows.append(dict(start=hex(start), cache=cache))
-u=json.loads((ROOT/'recovery/output/web-assets/ui.json').read_text())
+u=json.loads((ROOT/'apps/web/public/ui.json').read_text())
 l=next(x for x in u['layouts'] if x['path'].endswith('myhome_playerpage.xml'))
 controls={x['name']:x for x in l['windows']}
 for i in range(4):

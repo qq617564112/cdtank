@@ -9,7 +9,7 @@ const native = JSON.parse(readFileSync('recovery/output/scene-plant02-material-n
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const container = await LoadAssetContainerAsync(new Uint8Array(readFileSync(
-  'recovery/output/web-assets/Data/scnobj/obj05413/obj05413.glb')), scene, {pluginExtension: '.glb'});
+  'apps/web/public/Data/scnobj/obj05413/obj05413.glb')), scene, {pluginExtension: '.glb'});
 const mesh = container.meshes.find(value => value.name === source.parts[0].mesh)!;
 assert.ok(mesh);
 const texture = (mesh.material as PBRMaterial).albedoTexture!;

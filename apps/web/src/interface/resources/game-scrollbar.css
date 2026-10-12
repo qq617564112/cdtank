@@ -1,0 +1,140 @@
+.game-scrollbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 28px;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.game-scrollbar[hidden] {
+  display: none;
+}
+
+.game-scrollbar-track {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  bottom: 27px;
+  left: 0;
+  background: linear-gradient(90deg, transparent 12px, #8c472d 12px, #8c472d 13px, #cc693b 13px, #cc693b 15px, #a25231 15px, #a25231 16px, transparent 16px);
+}
+
+.game-scrollbar-thumb {
+  position: absolute;
+  left: 0;
+  width: 28px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.game-scrollbar-thumb[data-dragging] {
+  cursor: grabbing;
+}
+
+.game-scrollbar-thumb img,
+.game-scrollbar-thumb-middle {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.game-scrollbar-thumb-top {
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 29px;
+}
+
+.game-scrollbar-thumb-bottom {
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  height: 17px;
+}
+
+.game-scrollbar-thumb-middle {
+  top: 29px;
+  bottom: 17px;
+  left: 0;
+  width: 28px;
+  background: var(--image-scroll-thumb-middle) center top / 100% 7px repeat-y;
+}
+
+.game-scrollbar .game-scrollbar-arrow {
+  --scroll-arrow-face-top: #ffa37b;
+  --scroll-arrow-face: #ff7042;
+  --scroll-arrow-highlight: #fff5e5;
+  --scroll-arrow-bevel: #aa3c17;
+  position: absolute;
+  left: 0;
+  display: block;
+  width: 28px;
+  height: 27px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.game-scrollbar-arrow[data-arrow-state='Hover'] {
+  --scroll-arrow-face-top: #fff98c;
+  --scroll-arrow-face: #fff33f;
+  --scroll-arrow-highlight: #fffedd;
+  --scroll-arrow-bevel: #9d930e;
+}
+
+.game-scrollbar-arrow[data-arrow-state='Pushed'] {
+  --scroll-arrow-face-top: #8dccff;
+  --scroll-arrow-face: #4599ef;
+  --scroll-arrow-highlight: #dcefff;
+  --scroll-arrow-bevel: #1d4d9d;
+}
+
+.game-scrollbar-arrow-face-top {
+  stop-color: var(--scroll-arrow-face-top);
+}
+
+.game-scrollbar-arrow-face-bottom {
+  stop-color: var(--scroll-arrow-face);
+}
+
+.game-scrollbar-arrow-highlight {
+  fill: var(--scroll-arrow-highlight);
+}
+
+.game-scrollbar-arrow-bevel {
+  fill: var(--scroll-arrow-bevel);
+}
+
+.game-scrollbar-arrow[data-direction='up'] {
+  top: 0;
+  height: 26px;
+}
+
+.game-scrollbar-arrow[data-direction='down'] {
+  bottom: 0;
+}
+
+.game-scrollbar-arrow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.game-scrollbar-arrow:disabled {
+  filter: grayscale(1);
+  opacity: .65;
+  cursor: default;
+}
+
+.game-scrollbar :focus-visible {
+  outline: 1px solid #fff;
+  outline-offset: -1px;
+}

@@ -1,0 +1,202 @@
+@import '../resources/happy-zcool.css';
+
+.source-entry[data-entry-page='login'] {
+  background: #073ca7 var(--image-login-background) center / cover no-repeat;
+}
+
+.source-entry[data-entry-page='login'] .source-entry-stage {
+  --login-side-offset: max(0px, calc((100vw - 800px * var(--source-entry-scale)) / 2 / var(--source-entry-scale)));
+}
+
+.source-entry[data-entry-page='login'],
+.source-entry[data-entry-page='login'] *,
+.source-entry[data-entry-page='login'] *::before,
+.source-entry[data-entry-page='login'] *::after {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+.login-burst {
+  position: absolute;
+  left: 137px;
+  top: 135px;
+  z-index: 0;
+  width: 190px;
+  height: 235px;
+  pointer-events: none;
+}
+
+.login-paper {
+  position: absolute;
+  left: 251px;
+  top: 221px;
+  z-index: 0;
+  width: 300px;
+  height: 295px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.login-logo {
+  position: absolute;
+  left: 149.199px;
+  top: -12.286px;
+  z-index: 3;
+  width: 590.062px;
+  height: auto;
+  transform: scale(.9);
+  transform-origin: center;
+  filter: drop-shadow(0 5px 0 #1337a3);
+  pointer-events: none;
+}
+
+.login-field-label,
+.source-entry[data-entry-page='login'] .cartoon-control-label {
+  color: var(--cartoon-label-fill, #fff600);
+  font-size: 23px;
+  line-height: 1.15;
+  -webkit-text-stroke: 4px var(--cartoon-label-stroke, #101000);
+  paint-order: stroke fill;
+  text-shadow: var(--cartoon-label-shadow, 1px 1px #963507);
+}
+
+.login-field-label {
+  position: absolute;
+  left: 278px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.login-account-label {
+  top: 272px;
+}
+
+.login-password-label {
+  top: 313px;
+}
+
+.source-entry[data-entry-page='login'] .cartoon-input,
+.source-entry[data-entry-page='login'] .cartoon-button,
+.source-entry[data-entry-page='login'] .cartoon-checkbox {
+  z-index: 4;
+}
+
+.source-entry[data-entry-page='login'] .cartoon-checkbox .cartoon-control-label {
+  font-size: 22px;
+}
+
+.login-wood-pole {
+  position: absolute;
+  left: calc(94px - var(--login-side-offset));
+  top: 275px;
+  z-index: 1;
+  width: 38px;
+  height: 325px;
+  pointer-events: none;
+}
+
+.login-wood-button {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.login-wood-button img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.login-wood-button span {
+  position: relative;
+  color: #fff600;
+  font-size: 23px;
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-text-stroke: 4px #101000;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+.login-wood-button:is(:hover, :focus-visible) img {
+  filter: brightness(1.1);
+}
+
+.login-wood-button:is(:hover, :focus-visible) span {
+  color: #100d00;
+  -webkit-text-stroke: 6px #fff600;
+  text-shadow: none;
+}
+
+.login-wood-button:active:enabled span {
+  color: #00b9e8;
+  -webkit-text-stroke: 4px #101000;
+}
+
+.login-wood-button:active:enabled {
+  transform: translateY(2px);
+}
+
+.login-wood-button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.login-wood-home {
+  left: calc(65px - var(--login-side-offset));
+  top: 299px;
+  width: 115px;
+  height: 47px;
+  padding-right: 21px;
+}
+
+.login-wood-currency {
+  display: none;
+  left: calc(4px - var(--login-side-offset));
+  top: 367px;
+  width: 126px;
+  height: 48px;
+}
+
+.login-wood-settings {
+  left: calc(61px - var(--login-side-offset));
+  top: 367px;
+  width: 138px;
+  height: 54px;
+  padding-right: 10px;
+}
+
+.login-wood-intro {
+  right: calc(0px - var(--login-side-offset));
+  top: 332px;
+  width: 117px;
+  height: 193px;
+}
+
+.login-wood-intro span {
+  position: absolute;
+  left: 1px;
+  top: 89px;
+  width: 101px;
+  font-size: 22px;
+  line-height: 1.1;
+  transform: rotate(-46deg);
+}
+
+.login-wood-intro small {
+  display: block;
+  font-size: 18px;
+  -webkit-text-stroke: inherit;
+}

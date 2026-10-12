@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {receiveRoleArrayProperties} from '../recovery/evidence/combat/role-array-property';
+import {receiveRoleArrayProperties} from '../tests/evidence/combat/role-array-property';
 import {createRoleCombatState} from '../apps/server/src/battle/roles/combat-state';
 
 const original = JSON.parse(readFileSync('recovery/output/role-skin-selection-sol-native.json', 'utf8'));

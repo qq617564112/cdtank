@@ -7,13 +7,13 @@ import pefile
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from cvd import read_cvd
 
 base = ROOT / 'recovery/output/verified/assets/data'
-prepared = ROOT / 'recovery/prepared/scene-breach02-05427-assets'
+prepared = ROOT / 'tools/recovery/prepared/scene-breach02-05427-assets'
 library = json.loads((prepared / 'scene-breach-0002-05427.json').read_text())
-placements = next(v for v in json.loads((ROOT / 'recovery/output/web-assets/scene-placements.json').read_text()) if v['id'] == '0002')
+placements = next(v for v in json.loads((ROOT / 'apps/web/public/scene-placements.json').read_text()) if v['id'] == '0002')
 pe = pefile.PE(str(ROOT / 'CDTank/CDTank.exe'))
 image_base = pe.OPTIONAL_HEADER.ImageBase
 instructions = next(v['instructions'] for v in json.loads((ROOT / 'recovery/output/scene-breach18-05424-native.json').read_text())['sources'] if v['start'] == '0x44e081')
@@ -50,7 +50,7 @@ for model, count, compare, target, sound_pointer, cue in [
     assert text(pointer) == model and instructions[index+4]['instruction'] == f'je {target}'
     branch = next(i for i,v in enumerate(instructions) if v['address'] == target)
     assert instructions[branch+5]['instruction'] == f'push {hex(sound_pointer)}' and text(sound_pointer) == cue
-    assert (ROOT / f'recovery/output/web-assets/audio/sound/{cue}.wav').is_file()
+    assert (ROOT / f'apps/web/public/audio/sound/{cue}.wav').is_file()
     records = [v for v in placements['records'] if v['model'] == model and v['enabled']]
     assert len(records) == count
     rows.append({'model':model,'nodes':len(resource['nodes']),'placements':count,'sound':cue,'compare':compare,'branch':target,'cuePointer':hex(sound_pointer),'sourceExact':True})

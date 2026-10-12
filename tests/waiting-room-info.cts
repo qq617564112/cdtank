@@ -4,7 +4,7 @@ import {World} from '../apps/server/src/world';
 import {MAPS} from '../apps/server/src/config';
 import {waitingRoomInfo} from '../apps/web/src/interface/lobby/waiting-room-state';
 const sourceRows = [1,2,3,4,5].flatMap(mode => {
-  const table = JSON.parse(readFileSync(`recovery/output/verified/tables/m00${mode}.json`, 'utf8')) as {rows: {values: Record<string,string>}[]};
+  const table = JSON.parse(readFileSync(`apps/server/resources/tables/m00${mode}.json`, 'utf8')) as {rows: {values: Record<string,string>}[]};
   return table.rows.map(row => ({mode, values: row.values}));
 });
 let clock = 100000;

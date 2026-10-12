@@ -1,6 +1,8 @@
-import type {ReactNode} from 'react';
+import {GameMessage} from '../resources/game-message';
+import type {CSSProperties, ReactNode} from 'react';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
+import {GameDialogBackdrop} from '../resources/game-dialog';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {useSourceScale} from '../lobby/source-react';
@@ -11,13 +13,14 @@ export function SourceEntrySheet({page, ui, error, busy, status, children}: {
   status: string; children: ReactNode;
 }) {
   const scale = useSourceScale(800, 600, 0, 0, 0, Infinity);
-  return <main className="source-entry" data-entry-page={page} aria-label={page === 'login' ? '登录' : '频道选择'} aria-busy={busy}>
+  const feedback = error ? '界面资源载入失败，请重新打开页面。' : status;
+  return <main className="source-entry" data-entry-page={page} aria-label={page === 'login' ? '登录' : '频道选择'} aria-busy={busy || !ui && !error}>
+    {page === 'channel' && <GameDialogBackdrop/>}
     <div className="source-entry-viewport" style={scale.viewport}>
-      <div className="source-entry-stage" style={scale.stage}>
+      <div className="source-entry-stage" style={{...scale.stage,
+        '--source-entry-scale': scale.viewport.width / 800} as CSSProperties}>
         <SourceImageScale value={scale.viewport.width / 800}>{children}</SourceImageScale>
-        <output className={`source-entry-status source-entry-status-${page}`} role="status" aria-live="polite">
-          <SourceFeedbackText text={error ? '界面资源载入失败，请重新打开页面。' : !ui ? '正在载入界面…' : status}/>
-        </output>
+        <GameMessage text={feedback} tone={error ? 'error' : busy ? 'pending' : 'info'}/>
       </div>
     </div>
   </main>;

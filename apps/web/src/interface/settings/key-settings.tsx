@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import './key-settings.css';
 import {useEffect, useRef, useState} from 'react';
 import type {Battle} from '../../match/battle';
@@ -12,6 +13,7 @@ const ACTION_LABELS: Record<InputAction, string> = {
   slot5: '快捷槽 5', slot6: '快捷槽 6', slot7: '快捷槽 7', slot8: '快捷槽 8',
   useItem: '使用当前道具', prevWeapon: '上一个武器', nextWeapon: '下一个武器',
   prevItem: '上一个道具', nextItem: '下一个道具',
+  scoreboard: '计分板',
 };
 const optionalPrimary = (action: InputAction): boolean => action === 'useItem' || action === 'prevWeapon'
   || action === 'nextWeapon' || action === 'prevItem' || action === 'nextItem';
@@ -62,11 +64,6 @@ function KeySettingsSession({close, battle, initial, onSaved}: Omit<KeySettingsV
       }
       if (!selected || event.isComposing) return;
       if (event.repeat) {event.preventDefault(); return;}
-      if (event.code === 'Tab') {
-        current.current.capturing = undefined;
-        setCapturing(undefined);
-        return;
-      }
       event.preventDefault();
       const controlKey = event.code === 'ControlLeft' || event.code === 'ControlRight';
       const combo = event.altKey || event.metaKey || event.shiftKey || (event.ctrlKey && !controlKey);
@@ -162,7 +159,7 @@ function KeySettingsSession({close, battle, initial, onSaved}: Omit<KeySettingsV
           }}>清除</button>
       </div>)}
     </div>
-    <output id="key-settings-status" role="status">{status}</output>
+    <GameMessage id="key-settings-status" text={status}/>
     <div className="key-settings-actions">
       <button type="button" id="key-settings-defaults" onClick={() => {
         replaceDraft(cloneKeyBindings(DEFAULT_KEY_BINDINGS));

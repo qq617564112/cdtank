@@ -6,7 +6,7 @@ import sys
 import capstone
 import pefile
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from scene import read_scene
 from pol import read_pol
 base = ROOT / 'recovery/output/verified/assets/data'

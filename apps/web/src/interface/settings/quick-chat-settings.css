@@ -32,12 +32,6 @@
   min-height: 2.5rem;
 }
 
-#quick-chat-settings-status {
-  display: block;
-  min-height: 1.5em;
-  margin-top: 0.75rem;
-}
-
 .quick-chat-settings-actions {
   display: flex;
   flex-wrap: wrap;

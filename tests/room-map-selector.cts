@@ -4,20 +4,20 @@ import {MAPS} from '../apps/server/src/config';
 import {roomMapPage, roomMapPreviewReference} from '../apps/web/src/interface/lobby/room-map-options';
 import {HomeSourceLayout} from '../apps/web/src/interface/resources/source-ui-layout';
 import type {HomeSourceUi} from '../apps/web/src/interface/resources/source-ui-layout';
-const ui = JSON.parse(readFileSync('recovery/output/web-assets/ui.json', 'utf8')) as HomeSourceUi;
+const ui = JSON.parse(readFileSync('apps/web/public/ui.json', 'utf8')) as HomeSourceUi;
 const layout = new HomeSourceLayout(ui, 'selectgamemode.xml');
 const element = () => ({style: {backgroundImage: ''}, dataset: {} as Record<string, string>}) as unknown as HTMLElement;
 for (const name of ['rdoTeamMode', 'rdoConquerMode', 'rdoVIPMode', 'rdoMeleeMode', 'rdoDestroyMode']) {
   for (const property of ['NormalImage', 'HoverImage', 'PushedImage', 'CheckMarkImage']) {
     const image = element(); layout.picture(image, layout.control(name).properties[property]);
     assert(image.dataset.sourceAsset, `${name}:${property}`);
-    assert(readFileSync(`recovery/output/web-assets/${image.dataset.sourceAsset}`).length > 0);
+    assert(readFileSync(`apps/web/public/${image.dataset.sourceAsset}`).length > 0);
   }
 }
 for (const map of MAPS) {
   const image = element(); layout.picture(image, roomMapPreviewReference(map.mapId));
   assert(image.dataset.sourceAsset?.startsWith('ui/regions/76/'), `DDS preview ${map.mapId}`);
-  assert(readFileSync(`recovery/output/web-assets/${image.dataset.sourceAsset}`).length > 0);
+  assert(readFileSync(`apps/web/public/${image.dataset.sourceAsset}`).length > 0);
   const state = roomMapPage(MAPS, map.mode, 0, map.mapId);
   assert.equal(state.selected?.mapId, map.mapId);
   assert(state.maps.every(candidate => candidate.mode === map.mode));

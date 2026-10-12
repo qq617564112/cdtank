@@ -1,9 +1,7 @@
 # Original client, downloaded runtime resources and local recovery output.
 /CDTank/
 /CDTank.rar
-/recovery/output/
-/recovery/client-local/
-/recovery/captures/
+/recovery/
 /art/
 /b/
 
@@ -11,7 +9,6 @@
 node_modules/
 dist/
 /output/
-/recovery/.venv/
 __pycache__/
 *.py[cod]
 .vite/
@@ -37,3 +34,7 @@ __pycache__/
 *~
 .DS_Store
 Thumbs.db
+
+# Published runtime assets are distributed separately from source.
+/apps/web/public/
+/apps/server/resources/

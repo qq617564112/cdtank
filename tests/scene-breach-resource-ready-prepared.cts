@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {NullEngine, Scene, ShaderMaterial} from '@babylonjs/core';
-import {SceneBreachVisual} from '../recovery/prepared/scene-breach-resource-ready';
+import {SceneBreachVisual} from '../tools/recovery/prepared/scene-breach-resource-ready';
 import {EFFECT_IDENTITY} from '../apps/web/src/render/effects/common/effect-render-transform';
 
 async function main(): Promise<void> {
-  const library = JSON.parse(readFileSync('recovery/output/web-assets/scene-breach-0014.json', 'utf8'));
+  const library = JSON.parse(readFileSync('apps/web/public/scene-breach-0014.json', 'utf8'));
   const originalFetch = globalThis.fetch;
   const originalCompile = ShaderMaterial.prototype.forceCompilationAsync;
   const engine = new NullEngine();

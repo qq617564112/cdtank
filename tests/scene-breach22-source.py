@@ -7,13 +7,13 @@ import wave
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from cvd import read_cvd
 from scene import read_scene
 from scene_breach import decode_breach_tail
 
 base = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 library = json.loads((web / 'scene-breach-0022.json').read_text())
 scene = next(s for s in json.loads((web / 'scene-placements.json').read_text()) if s['id'] == '0022')
 original_placements = [r for r in read_scene(base / 'Data/scn/0022/0022.obj') if r['className'] == 'SYcScnObjBreach']

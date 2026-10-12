@@ -35,13 +35,13 @@ varying vec2 vScreen;
 varying vec4 vColour;
 varying float vMask;
 void main() {
+  vec4 source = texture2D(image, vUv);
   float coverage = 1.0;
   if (clipCircle.z > 0.0) {
     coverage = 1.0 - smoothstep(clipCircle.z - 1.0, clipCircle.z,
       length(vScreen - clipCircle.xy));
     if (coverage < 0.003) discard;
   }
-  vec4 source = texture2D(image, vUv);
   vec4 colour = vec4(mix(source.rgb * vColour.rgb, vColour.rgb, vMask), source.a * vColour.a);
   colour.a *= coverage;
   if (colour.a < 0.003) discard;
@@ -53,6 +53,8 @@ export function createBattleScreenLayer(scene: Scene): UtilityLayerRenderer {
   const layer = new UtilityLayerRenderer(scene, false);
   layer.shouldRender = false;
   layer.pickingEnabled = false;
+  // Screen quads always pass depth testing and never write depth.
+  layer.utilityLayerScene.autoClearDepthAndStencil = false;
   return layer;
 }
 

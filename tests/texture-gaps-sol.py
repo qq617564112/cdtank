@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from texture_gaps_sol import build, classify, texture_maps
 
 # Directory boundaries and alias collisions must remain unresolved, regardless of

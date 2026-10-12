@@ -62,7 +62,7 @@ async function click(selector) {
 var world = `JSON.parse(document.querySelector('#battle-status')?.dataset.world??'null')`;
 try {
   await startServer();
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     server: {port: 5244, strictPort: true, host: '127.0.0.1', hmr: false, proxy: {'/game': {target: 'ws://127.0.0.1:3212', ws: true, rewrite: () => '/'}}}});
   await vite.listen();
   chrome = spawn(process.env.CDTANK_CHROME ?? '/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome', [

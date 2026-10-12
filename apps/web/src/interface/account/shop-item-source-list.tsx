@@ -1,4 +1,5 @@
 import {backgroundStyle} from '../../assets/image-artwork';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import type {ShopItem} from '../../../../shared/protocols/PtlShop';
 import {sourceShopOfferedQuantity, sourceShopPrice, sourceShopOwnedPrice} from './shop-item-display';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
@@ -14,7 +15,7 @@ export interface ShopSourceListEntry {
   itemTableId?: number; ownedQuantity?: number; ownedMoneyPrice?: number; product?: ShopItem;
 }
 
-/** Original list bounds and selection image with React-owned candidate and keyboard focus. */
+/** Original list bounds with React-owned selection and keyboard focus. */
 export function ShopItemSourceList({ui, source, entries, selected, busy, select, activate, canActivate,
   describe, dismissDescription, described}: {
   ui: HomeSourceUi; source: 'lstShopItem' | 'lstMyItem'; entries: ShopSourceListEntry[];
@@ -24,7 +25,6 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
 }) {
   const root = useRef<HTMLDivElement>(null);
   const layout = new HomeSourceLayout(ui, 'shop_itempage.xml');
-  const selection = sourceProps(ui, layout, 'shop_itempage.xml', source, layout.control(source).properties.SelectionImage);
   function move(index: number) {
     const entry = entries[Math.max(0, Math.min(entries.length - 1, index))];
     if (!entry) return;
@@ -49,8 +49,6 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
         {...(ownedItemRow ? {'data-shop-source-owned-item-row': ''} : source === 'lstShopItem' ? {'data-shop-source-product-row': ''} : {})}
         {...(source === 'lstShopItem' ? {'data-shop-product-id': entry.id} : {'data-shop-owned-instance': entry.id})}
         tabIndex={entry.id === selected || selected === undefined && index === 0 ? 0 : -1}
-        style={entry.id === selected ? {...backgroundStyle(selection.style)} : undefined}
-        data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
         data-stack-sale-available={source === 'lstMyItem' && Boolean(activate && canActivate?.(entry.id))}
         onMouseEnter={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
         onFocus={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
@@ -63,6 +61,7 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
             : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;
           if (target !== undefined) {event.preventDefault(); move(target);}
         }}>
+        {entry.id === selected && <GameSelectionHighlight/>}
         {ownedItemRow ? <ShopItemRowContent ui={ui} name={entry.name} itemTableId={entry.itemTableId!}
           iconId={entry.iconId} ownedQuantity={entry.ownedQuantity!}
           sourcePrice={sourceShopOwnedPrice(entry.ownedMoneyPrice)}/> : source === 'lstShopItem' ?

@@ -28,7 +28,7 @@ assert read(0x4689b3, 4) == bytes.fromhex('6a046a03')
 assert read(0x46c3cf, 4) == bytes.fromhex('6a046a03')
 assert read(0x4228c5, 2) == bytes.fromhex('6a01')
 assert read(0x4228b9, 2) == bytes.fromhex('6a04')
-tanks = json.loads(Path('recovery/output/web-assets/tanks.json').read_text())
+tanks = json.loads(Path('apps/web/public/tanks.json').read_text())
 actions = [{'tankId': tank['id'], 'part': part['part'],
             'duration': action['duration'], 'asset': action['asset'], 'events': action['events']}
            for tank in tanks for part in tank['components'] for action in part['actions']

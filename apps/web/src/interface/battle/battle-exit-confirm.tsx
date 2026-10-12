@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import type {LeavePenalty} from '../../../../shared/protocols/PtlLeave';
-import {SourceConfirmView} from '../dialogs/source-confirm-view';
+import {BattleExitConfirmView} from './battle-exit-confirm-view';
+import {useNavigationValue} from '../../navigation/route';
 
 interface FrozenPenalty extends LeavePenalty {roomId: string; round: number;}
 
@@ -10,6 +11,10 @@ export function useBattleExitConfirm(roomId: string, round: number, busy: boolea
   const [quoteState, setQuoteState] = useState<FrozenPenalty>();
   const [pending, setPending] = useState(false);
   const [status, setStatus] = useState('');
+  const [exitRequest, setExitRequest] = useNavigationValue('battleExit');
+  const exitContext = `${roomId}:${round}`;
+  const quoteRef = useRef(quote);
+  quoteRef.current = quote;
   const roundRef = useRef(round);
   const roomRef = useRef(roomId);
   const canLeaveRef = useRef(canLeave);
@@ -20,22 +25,25 @@ export function useBattleExitConfirm(roomId: string, round: number, busy: boolea
     setQuoteState(current => current?.roomId === roomId && current.round === round && canLeave
       ? current : undefined);
   }, [roomId, round, canLeave]);
-  const requestLeave = () => {
-    if (busy || pending || !canLeave) return;
-    const requestedRoom = roomId;
-    const requestedRound = round;
+  useEffect(() => {
+    if (exitRequest !== exitContext || !canLeave) {setPending(false); return;}
+    let active = true;
     setQuoteState(undefined);
     setStatus('');
     setPending(true);
-    void quote().then(penalty => {
-      if (roomRef.current === requestedRoom && roundRef.current === requestedRound && canLeaveRef.current) {
-        setQuoteState({...penalty, roomId: requestedRoom, round: requestedRound});
-      }
+    void quoteRef.current().then(penalty => {
+      if (active) setQuoteState({...penalty, roomId, round});
     }).catch(error => {
-      if (roomRef.current === requestedRoom && roundRef.current === requestedRound) {
+      if (active) {
         setStatus(error instanceof Error ? error.message : String(error));
+        setExitRequest('');
       }
-    }).finally(() => setPending(false));
+    }).finally(() => {if (active) setPending(false);});
+    return () => {active = false;};
+  }, [exitRequest, exitContext, roomId, round, canLeave]);
+  const requestLeave = () => {
+    if (busy || pending || !canLeave) return;
+    setExitRequest(exitContext);
   };
   const confirm = async () => {
     const confirmed = quoteState;
@@ -46,6 +54,7 @@ export function useBattleExitConfirm(roomId: string, round: number, busy: boolea
     try {
       await leave(confirmed.points);
       setQuoteState(undefined);
+      setExitRequest('');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setStatus(message);
@@ -71,13 +80,13 @@ export function useBattleExitConfirm(roomId: string, round: number, busy: boolea
       setPending(false);
     }
   };
-  const confirmation = quoteState?.roomId === roomId && quoteState.round === round && canLeave ? <SourceConfirmView
+  const confirmation = exitRequest === exitContext && quoteState?.roomId === roomId && quoteState.round === round && canLeave ? <BattleExitConfirmView
     label="退出战场" binding="web-battle-leave"
     message={quoteState.count > 7
       ? `现在退出会扣除${quoteState.points}积分作为处罚，仍然要退出吗？`
       : '你真的要从战场中退出吗？'}
     confirmLabel="退出战场" cancelLabel="继续战斗" messageLabel="退出确认"
     pending={busy || pending} disabled={!canLeave} status={status} confirm={() => {void confirm();}}
-    cancel={() => {if (!busy && !pending) {setQuoteState(undefined); setStatus('');}}} /> : null;
+    cancel={() => {if (!busy && !pending) {setQuoteState(undefined); setExitRequest(''); setStatus('');}}} /> : null;
   return {requestLeave, confirmation, pending, status};
 }

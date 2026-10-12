@@ -106,7 +106,7 @@ try {
   const activeInstance=first?19:undefined,preservedInventory=first?evidence.sourceInventory.filter(record=>record.instanceId!==19):evidence.sourceInventory;
   if(first){const spent=evidence.sourceInventory.find(record=>record.instanceId===20);assert(spent);assert.equal(spent.itemTableId,3002);assert.equal(spent.ownedQuantity,0);evidence.preservedSpentMine=spent;const sourceDb=new DatabaseSync(checkpoint,{readOnly:true});try{assert.equal(sourceDb.prepare('SELECT instance_id FROM hotkeys WHERE account_id=? AND slot=1').get(fixture.accounts[0].accountId).instance_id,20);}finally{sourceDb.close();}}
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5697,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3667',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5697,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3667',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9897',

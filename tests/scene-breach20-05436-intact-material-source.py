@@ -6,7 +6,7 @@ from pathlib import Path
 import struct
 import sys
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from pol import read_pol
 from scene import read_scene
 source = ROOT / 'recovery/output/verified/assets/data'
@@ -17,7 +17,7 @@ mesh = read_pol(source / 'Data/scnobj/obj05436/obj05436.POL')['meshes'][0]
 assert mesh['name'] == 'plane02' and mesh['fvf'] == 21 and len(mesh['parts']) == 1
 part = mesh['parts'][0]
 assert part['kind'] == 1 and part['textures'] == ['obj05436.tga']
-raw = (ROOT / 'recovery/output/web-assets/Data/scnobj/obj05436/obj05436.glb').read_bytes()
+raw = (ROOT / 'apps/web/public/Data/scnobj/obj05436/obj05436.glb').read_bytes()
 size = struct.unpack_from('<I', raw, 12)[0]
 glb = json.loads(raw[20:20+size]); binary = 28 + size
 primitive = glb['meshes'][0]['primitives'][0]

@@ -1,4 +1,5 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {GameMessage} from '../resources/game-message';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import './lobby-chat-intimate.css';
 import {useEffect, useRef, useState, type RefObject} from 'react';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
@@ -24,7 +25,6 @@ export function LobbyChatIntimate({ui, players, selected, open, pending, status,
     : players.some(player => player.accountId === selected) ? selected : players[0]?.accountId;
   const chat = new HomeSourceLayout(ui, 'chat.xml');
   const source = new HomeSourceLayout(ui, 'chat_intimatelist.xml');
-  const selection = sourceProps(ui, source, 'chat_intimatelist.xml', 'lstIntimate', source.control('lstIntimate').properties.SelectionImage);
   useEffect(() => {
     const outside = (event: PointerEvent) => {
       if (event.target instanceof Element && !event.target.closest('[data-lobby-intimate-menu], [data-lobby-intimate-toggle]')) close();
@@ -64,8 +64,6 @@ export function LobbyChatIntimate({ui, players, selected, open, pending, status,
         {players.map((player, index) => <button key={player.accountId} type="button" role="option"
           data-lobby-intimate-account={player.accountId} aria-selected={active === player.accountId}
           tabIndex={active === player.accountId ? 0 : -1} disabled={pending} title={player.name}
-          style={active === player.accountId ? {...backgroundStyle(selection.style)} : undefined}
-          data-source-selection-asset={active === player.accountId ? selection['data-source-asset'] : undefined}
           onClick={() => {if (!pending && !composing.current) choose(player);}}
           onFocus={() => setCandidate(player.accountId)} onKeyDown={event => {
             const next = event.key === 'ArrowDown' ? Math.min(index + 1, players.length - 1)
@@ -76,8 +74,10 @@ export function LobbyChatIntimate({ui, players, selected, open, pending, status,
               const button = menu.current?.querySelectorAll<HTMLButtonElement>('[data-lobby-intimate-account]')[next];
               button?.focus(); button?.scrollIntoView({block: 'nearest'});
             }
-          }}>{player.name}</button>)}
-        {!players.length && <output role="status">{status || '当前大厅没有可选对象'}</output>}
+          }}>
+          {active === player.accountId && <GameSelectionHighlight/>}
+          {player.name}</button>)}
+        {!players.length && <GameMessage text={status || '当前大厅没有可选对象'}/>}
       </div>
       <LobbyIntimateScrollbar list={list} ui={ui} properties={source.control('lstIntimate').properties}/>
       </div>

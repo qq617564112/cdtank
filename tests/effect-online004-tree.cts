@@ -13,7 +13,7 @@ interface Row {node: number; phase: number; elapsed: number; controller: number;
 const fixture = JSON.parse(readFileSync(`recovery/output/effect-online004-tree${process.argv.includes('--parent') ? '-parent' : process.argv.includes('--retained') ? '-retained' : ''}-native.json`, 'utf8')) as {
   retained?: boolean; configs: Config[]; origin: EffectVec3; parent?: number[]; steps: {parent?: number[]; delta: number; states: Row[]; randomValues: number[]; events: object[]; childCount: number}[];
 };
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as {nodes: {id: number; index: number; children: number[]}[]};
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as {nodes: {id: number; index: number; children: number[]}[]};
 const nodes = new Map<number, EffectNodeLifecycle>();
 const sprites = new Map<number, EffectSpriteNodeState>();
 const particles = new Map<number, EffectParticleNodeState>();
@@ -22,7 +22,7 @@ const random = (): number => {
   assert.ok(randomIndex < values.length);
   return values[randomIndex++];
 };
-const runtimeLibrary = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const runtimeLibrary = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 const statePool = new EffectRuntimeStatePool();
 if (fixture.retained) {
   const state = statePool as unknown as {pools: Map<number, EffectObjectPool<EffectRuntimeRetainedState>>};

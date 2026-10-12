@@ -7,10 +7,10 @@ import sys
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_FPCW
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 def source_tracks():
-    tanks = json.loads((ROOT / 'recovery/output/web-assets/tanks.json').read_text())
+    tanks = json.loads((ROOT / 'apps/web/public/tanks.json').read_text())
     for tank in tanks:
         for component in tank['components']:
             for action in component['actions']:

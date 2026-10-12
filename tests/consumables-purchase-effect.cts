@@ -22,17 +22,17 @@ import {EffectRuntime} from '../apps/web/src/render/effects/runtime/effect-runti
 import type {EffectRuntimeLibrary, EffectRuntimeTree} from '../apps/web/src/render/effects/runtime/effect-runtime-tree';
 
 const read = <T,>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
-const catalog = read('recovery/output/web-assets/combat-catalog.json') as CombatCatalog;
-const library = read('recovery/output/web-assets/effect-library.json') as EffectRuntimeLibrary;
-const sourceItems = read<{rows: {values: Record<string, string>}[]}>('recovery/output/verified/tables/item.json').rows;
-const sourceSkills = read<{rows: {values: Record<string, string>}[]}>('recovery/output/verified/tables/skill.json').rows;
+const catalog = read('apps/web/public/combat-catalog.json') as CombatCatalog;
+const library = read('apps/web/public/effect-library.json') as EffectRuntimeLibrary;
+const sourceItems = read<{rows: {values: Record<string, string>}[]}>('apps/server/resources/tables/item.json').rows;
+const sourceSkills = read<{rows: {values: Record<string, string>}[]}>('apps/server/resources/tables/skill.json').rows;
 const native = read('recovery/output/effect-tree-create-native.json') as {
   rows: {node: number; retain: boolean; created: {node: number; retain: boolean}[]}[];
 };
-const ui = read('recovery/output/web-assets/ui.json') as {
+const ui = read('apps/web/public/ui.json') as {
   imagesets: {path: string; attributes: {Name: string}; images: {Name: string; asset: string}[]}[];
 };
-const audio = read('recovery/output/web-assets/audio.json') as {sounds: {name: string; asset: string}[]};
+const audio = read('apps/web/public/audio.json') as {sounds: {name: string; asset: string}[]};
 const shop = consumableShopItems(catalog);
 const expected = [
   {item: 1, effect: 11, sound: 'GA15', root: 2637, draws: [2664, 2665, 2667, 2830, 2834]},
@@ -77,7 +77,7 @@ try {
     const iconReference = `data\\ui\\daoju\\${String(definition.iconId).padStart(5, '0')}.tga`;
     const icon = ui.imagesets.find(set => set.attributes.Name === 'daoju0' && set.path.includes('imagesets_dds/'))!
       .images.find(image => image.Name === iconReference)!;
-    assert.ok(readFileSync(`recovery/output/web-assets/${icon.asset}`).length > 0);
+    assert.ok(readFileSync(`apps/web/public/${icon.asset}`).length > 0);
     const first = store.shop(account.accountId, shop, {operation: 'BUY', itemTableId: binding.item,
       quantity: 1, currency: 'MONEY', requestId: `effect-${binding.item}-money`}).purchased!;
     const receipt = store.shop(account.accountId, shop, {operation: 'BUY', itemTableId: binding.item,
@@ -129,7 +129,7 @@ try {
       assert.equal(grids.length, binding.draws.length);
       assert.ok(grids.every(grid => grid.resolution === 'published'));
       for (const asset of new Set(grids.map(grid => grid.asset))) {
-        assert.ok(readFileSync(`recovery/output/web-assets/${asset}`).length > 0);
+        assert.ok(readFileSync(`apps/web/public/${asset}`).length > 0);
         loaded.textures.set(asset, RawTexture.CreateRGBATexture(new Uint8Array([255, 255, 255, 255]), 1, 1, scene));
       }
       const parent = [...EFFECT_IDENTITY];
@@ -153,7 +153,7 @@ try {
       assert.deepEqual(sounds, [{reference: binding.sound, selector: binding.item === 8 ? -1 : 1}]);
       const soundAsset = audio.sounds.find(sound => sound.name === binding.sound)?.asset;
       if (binding.sound === '0') assert.equal(soundAsset, undefined);
-      else assert.ok(readFileSync(`recovery/output/web-assets/${soundAsset}`).length > 0);
+      else assert.ok(readFileSync(`apps/web/public/${soundAsset}`).length > 0);
       const mesh = scene.meshes.find(mesh => mesh.metadata?.sourceNode === binding.draws[0])!;
       assert.ok(mesh);
       const before = [...mesh.getVerticesData(VertexBuffer.PositionKind)!];

@@ -5,19 +5,19 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from pol import read_pol
 from scene import read_scene
 
 source = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 resource = json.loads((web / 'scene-plant-0004.json').read_text())
 records = {record['id']: record for record in read_scene(source / 'Data/scn/0004/0004.obj')
            if record['className'] == 'SYcScnObjPlant'}
 assert len(records) == len(resource['plants']) == 106
 legal = []
 for mode in range(1, 6):
-    table = json.loads((ROOT / f'recovery/output/verified/tables/m{mode:03d}.json').read_text())
+    table = json.loads((ROOT / f'apps/server/resources/tables/m{mode:03d}.json').read_text())
     legal.extend(dict(mode=mode, minimum=int(row['values']['PlayerMin']),
                       maximum=int(row['values']['PlayerMax']))
                  for row in table['rows'] if row['values']['MapID'] == '0004')

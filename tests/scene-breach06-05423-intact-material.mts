@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {Constants, LoadAssetContainerAsync, NullEngine, PBRMaterial, Scene, ShaderMaterial, VertexBuffer} from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
-import {SceneBreachMaterial} from '../recovery/prepared/scene-breach06-05423-material';
+import {SceneBreachMaterial} from '../tools/recovery/prepared/scene-breach06-05423-material';
 
 const engine = new NullEngine();
 const scene = new Scene(engine);
 const asset = await LoadAssetContainerAsync(new Uint8Array(readFileSync(
-  'recovery/output/web-assets/Data/scnobj/obj05423/obj05423.glb')), scene, {pluginExtension: '.glb'});
+  'apps/web/public/Data/scnobj/obj05423/obj05423.glb')), scene, {pluginExtension: '.glb'});
 const mesh = asset.meshes.find(value => value.name === 'cone78/0')!;
 const original = mesh.material as PBRMaterial;
 const texture = original.albedoTexture!;
@@ -49,7 +49,7 @@ assert.equal(scene.materials.length, before);
 assert.equal(disposedTextures, 0);
 asset.dispose();
 const existingAsset = await LoadAssetContainerAsync(new Uint8Array(readFileSync(
-  'recovery/output/web-assets/Data/scnobj/obj05467/obj05467.glb')), scene, {pluginExtension: '.glb'});
+  'apps/web/public/Data/scnobj/obj05467/obj05467.glb')), scene, {pluginExtension: '.glb'});
 const existingMesh = existingAsset.meshes.find(value => value.name === 'object08/0')!;
 const existingMaterial = existingMesh.material;
 const existingOwner = new SceneBreachMaterial();

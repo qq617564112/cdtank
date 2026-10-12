@@ -30,9 +30,9 @@ async function main(): Promise<void> {
     const result = await client.callApi('TankShop', {operation: 'QUERY'});
     assert(result.isSucc);
     const table: {rows: {values: Record<string, string>}[]} = JSON.parse(
-      readFileSync('recovery/output/verified/tables/tankshop.json', 'utf8'));
+      readFileSync('apps/server/resources/tables/tankshop.json', 'utf8'));
     const tanks: {rows: {values: Record<string, string>}[]} = JSON.parse(
-      readFileSync('recovery/output/verified/tables/tank.json', 'utf8'));
+      readFileSync('apps/server/resources/tables/tank.json', 'utf8'));
     const definitions = new Map(tanks.rows.map(row => [Number(row.values.ID), row.values]));
     const expected = table.rows.map(row => row.values).filter(row => Number(row['坦克金钱价']) > 0 && row['购买方式'] === '2');
     assert.equal(result.res.tanks.length, expected.length);

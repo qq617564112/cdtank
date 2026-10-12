@@ -25,21 +25,36 @@ async function enterGame(): Promise<void> {
   if (loading || controller.signal.aborted) return;
   loading=true;
   screen.begin();
+  // Manifest, loading art, page art, UI, content, module and scene runtime.
+  const totalTasks=7;
+  let completedTasks=0;
+  let active=true;
+  const completeTask=()=>{
+    if (active && !controller.signal.aborted) screen.update(++completedTasks/totalTasks);
+  };
   try {
     await images.prepare(controller.signal);
-    await Promise.all([screen.prepare(controller.signal), prepareSourcePageImages(controller.signal)]);
-    await images.load(progress=>screen.update(progress),controller.signal);
+    completeTask();
+    await Promise.all([
+      screen.prepare(controller.signal).then(completeTask),
+      prepareSourcePageImages(controller.signal).then(completeTask),
+    ]);
     controller.signal.throwIfAborted();
-    screen.preparingContentAndUi();
-    await Promise.all([prepareSourceUi(STARTUP_UI_LAYOUTS), prepareGameContent()]);
+    screen.update(completedTasks/totalTasks,'正在准备游戏内容与界面…');
+    await Promise.all([
+      prepareSourceUi(STARTUP_UI_LAYOUTS).then(completeTask),
+      prepareGameContent().then(completeTask),
+    ]);
     const {startGame}=await import('./start-game');
+    completeTask();
     if (controller.signal.aborted) return;
     canvas.hidden=false;
-    disposeGame=await startGame(canvas,root,controller.signal);
+    disposeGame=await startGame(canvas,root,controller.signal,completeTask);
   } catch (error) {
     canvas.hidden=true;
     if (!controller.signal.aborted) screen.fail(error);
   } finally {
+    active=false;
     loading=false;
   }
 }

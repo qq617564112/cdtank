@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRoleCombatState} from '../apps/server/src/battle/roles/combat-state';
-import {requestRoleFreeFire, encodeRoleFreeFire, decodeRoleFreeFire, ROLE_FREE_FIRE_MESSAGE_TYPE} from '../recovery/evidence/roles/role-free-fire';
+import {requestRoleFreeFire, encodeRoleFreeFire, decodeRoleFreeFire, ROLE_FREE_FIRE_MESSAGE_TYPE} from '../tests/evidence/roles/role-free-fire';
 const evidence: {rows: {present: boolean; local: boolean; status: 0 | 1 | 2 | 3; stage: number;
   controller: boolean; scene: boolean; count: number; position: number[]; direction: number[]; current: number;
   events: {kind: string; point?: number[]; type?: number; values?: number[]; itemId?: number}[]; specialFlag12: number}[];

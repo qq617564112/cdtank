@@ -225,7 +225,7 @@ async function assertDeparture(page,peer,before,from,token) {
 }
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5230,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3195',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5230,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3195',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();await launchBrowser();const sessions=[];
   for(const name of ['退出房主','退出访客']) {
     const {browserContextId}=await command('Target.createBrowserContext');const page=await newPage(browserContextId);sessions.push(page);await input(page,'#player-name',name);

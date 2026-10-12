@@ -6,12 +6,12 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_EIP, UC_X86_REG_EAX
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 machine,_=map_original_binaries([ROOT/'CDTank'/name for name in ['CDTank.exe','gbengine.dll','msvcr71.dll']])
 machine.mem_map(0x2000000,0x800000)
 MANAGER,POOLS,DEFINITIONS,RECORDS,CHILDREN,OBJECTS,STACK,STOP=0x2010000,0x2011000,0x2020000,0x2180000,0x21c0000,0x2280000,0x2008000,0x27ff000
-library=json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text())
+library=json.loads((ROOT/'apps/web/public/effect-library.json').read_text())
 created=[];attached=[]
 child_address=CHILDREN
 for node in library['nodes']:

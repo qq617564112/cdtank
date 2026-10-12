@@ -8,7 +8,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 from mv3 import read_mv3
 
@@ -175,7 +175,7 @@ def execute(address, this, argument):
 
 inventory = json.loads((ROOT / 'recovery/output/catalog/inventory.json').read_text())
 selected = {entry['key']: entry for entry in inventory}
-table = json.loads((ROOT / 'recovery/output/verified/tables/tanktexture.json').read_text())
+table = json.loads((ROOT / 'apps/server/resources/tables/tanktexture.json').read_text())
 rows = [row for row in table['rows'] if row['values']['文件名称'].startswith('001')]
 evidence = []
 for current in rows:

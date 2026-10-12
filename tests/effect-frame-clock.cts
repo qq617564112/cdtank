@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {EffectFrameClock} from '../apps/web/src/render/effects/common/effect-frame-clock';
 
-const library = JSON.parse(fs.readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(fs.readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const explosion = library.spriteControls.find((row: {node: number}) => row.node === 2431);
 assert.equal(explosion.frameCount, 16);
 assert.equal(explosion.frameFlags, 1);

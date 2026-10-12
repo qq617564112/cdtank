@@ -1,4 +1,4 @@
-FROM cdtank-assets:1.0.0-20261009-review-ui AS assets
+FROM cdtank-assets:1.0.0-runtime-directories AS assets
 
 FROM node:24.16.0-bookworm-slim AS build
 WORKDIR /workspace
@@ -8,8 +8,12 @@ COPY tsconfig.json ./
 COPY apps/ apps/
 COPY scripts/build-server.mjs scripts/package-release.mjs scripts/account-snapshot.mjs scripts/export-scene-collision.ts scripts/
 COPY deployment/ deployment/
-COPY --from=assets /recovery/output/ recovery/output/
-COPY deployment/assets/ui/fonts/xiangjiao-brush.ttf recovery/output/web-assets/ui/fonts/xiangjiao-brush.ttf
+COPY --from=assets /apps/web/public/ apps/web/public/
+COPY --from=assets /apps/server/resources/ apps/server/resources/
+COPY deployment/assets/ui/fonts/xiangjiao-brush.ttf apps/web/public/ui/fonts/xiangjiao-brush.ttf
+COPY deployment/assets/ui/fonts/Silkscreen-Regular.ttf apps/web/public/ui/fonts/Silkscreen-Regular.ttf
+COPY deployment/assets/ui/fonts/fusion-pixel-hud.ttf apps/web/public/ui/fonts/fusion-pixel-hud.ttf
+COPY deployment/assets/ui/fonts/fusion-pixel-OFL.txt apps/web/public/ui/fonts/fusion-pixel-OFL.txt
 RUN npm run assets:collision \
     && npm exec -- vite build --config apps/web/vite.config.ts \
     && npm run build:server \

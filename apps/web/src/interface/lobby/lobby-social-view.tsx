@@ -7,13 +7,25 @@ import {PlayerInfoView} from './player-info';
 import {PlayerSearchView} from './player-search';
 import {useSourceUi} from './source-react';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {SourceButton} from '../resources/source-button';
-import {SourceStaticImage} from '../resources/source-static-image';
+import {GameTabButton} from '../resources/game-button';
+import {DialogButton} from '../resources/dialog-button';
+import {sourceProps} from '../resources/source-ui-props';
 import type {FriendRecord} from '../../../../shared/protocols/PtlFriends';
 import type {ResPlayerSearch} from '../../../../shared/protocols/PtlPlayerSearch';
+import {useNavigationChoice, useRouteDialog, useNavigationValue} from '../../navigation/route';
 
 type SelectedPlayer = {accountId: string; name: string; online?: boolean; inRoom?: boolean;
   title?: FriendRecord['title']; fromSearch?: boolean};
+
+function readSelectedPlayer(raw: string): SelectedPlayer | null {
+  try {
+    const value: unknown = JSON.parse(raw || 'null');
+    if (value && typeof value === 'object'
+        && 'accountId' in value && typeof value.accountId === 'string'
+        && 'name' in value && typeof value.name === 'string') return value as SelectedPlayer;
+  } catch {return null;}
+  return null;
+}
 
 /** React owns directory selection and the profile session; accounts own relationships. */
 export function LobbySocialView({battle}: {battle: Battle}) {
@@ -22,13 +34,16 @@ export function LobbySocialView({battle}: {battle: Battle}) {
   const trade = useSyncExternalStore(battle.trade.subscribe, battle.trade.getSnapshot);
   const [dismissedTrade, setDismissedTrade] = useState<string>();
   const friends = useSyncExternalStore(battle.friends.subscribe, battle.friends.getSnapshot);
-  const [tab, setTab] = useState<'players' | 'friends'>('players');
-  const [selected, setSelected] = useState<SelectedPlayer | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [tab, setTab] = useNavigationChoice('socialTab', ['players', 'friends'], 'players');
+  const [selectedValue, setSelectedValue] = useNavigationValue('playerProfile');
+  const selected = readSelectedPlayer(selectedValue);
+  const setSelected = (player: SelectedPlayer | null): void => setSelectedValue(player ? JSON.stringify(player) : '');
+  const [searchOpen, setSearchOpen] = useRouteDialog('player-search');
   const searchButton = useRef<HTMLButtonElement>(null);
   const accountContext = useSyncExternalStore(
     useCallback((listener: () => void) => battle.subscribeAccountContext(listener), [battle]),
     useCallback(() => battle.accountContext, [battle]));
+  const previousAccountGeneration = useRef(accountContext.generation);
   const {ui} = useSourceUi(true, ['playerlist.xml']);
   const layout = ui ? new HomeSourceLayout(ui, 'playerlist.xml') : undefined;
   const queryPlayerProfile = useCallback((accountId: string) => battle.playerProfile(accountId), [battle]);
@@ -45,7 +60,11 @@ export function LobbySocialView({battle}: {battle: Battle}) {
     }, 2000);
     return () => clearInterval(timer);
   }, [battle, presence.inRoom]);
-  useEffect(() => {setSearchOpen(false); setSelected(null);}, [accountContext.generation]);
+  useEffect(() => {
+    if (previousAccountGeneration.current === accountContext.generation) return;
+    previousAccountGeneration.current = accountContext.generation;
+    setSearchOpen(false); setSelected(null);
+  }, [accountContext.generation]);
   const relation = friends.friends.find(player => player.accountId === selected?.accountId);
   const onlinePlayer = presence.players.find(player => player.accountId === selected?.accountId);
   const profile = selected ? {accountId: selected.accountId, name: relation?.name ?? onlinePlayer?.name ?? selected.name,
@@ -84,16 +103,14 @@ export function LobbySocialView({battle}: {battle: Battle}) {
   };
   return <>
     {ui && layout && <>
-      <SourceButton ui={ui} layout={layout} suffix="playerlist.xml" source="PlayerTab" className="lobby-source-tab" selected={tab === 'players'}
-        data-lobby-player-tab onClick={() => {setTab('players'); setSelected(null);}} aria-label="大厅玩家"/>
-      <SourceButton ui={ui} layout={layout} suffix="playerlist.xml" source="FriendTab" className="lobby-source-tab" selected={tab === 'friends'}
-        data-lobby-friend-tab onClick={() => {setTab('friends'); setSelected(null); void battle.friends.refresh(); void battle.blacklist.refresh();}} aria-label="好友"/>
-      <SourceStaticImage ui={ui} layout={layout} suffix="playerlist.xml"
-        name={tab === 'friends' ? 'picFriendTabSelect' : 'picPlayerTabSelect'} className="lobby-source-picture"/>
+      <GameTabButton {...sourceProps(ui, layout, 'playerlist.xml', 'PlayerTab')} className="lobby-source-tab" selected={tab === 'players'}
+        data-lobby-player-tab onClick={() => {setTab('players'); setSelected(null);}} aria-label="大厅玩家">玩家</GameTabButton>
+      <GameTabButton {...sourceProps(ui, layout, 'playerlist.xml', 'FriendTab')} className="lobby-source-tab" selected={tab === 'friends'}
+        data-lobby-friend-tab onClick={() => {setTab('friends'); setSelected(null); void battle.friends.refresh(); void battle.blacklist.refresh();}} aria-label="好友">好友</GameTabButton>
     </>}
     <LobbyPlayerListView players={tab === 'friends' ? friends.friends.map(player => ({...player,
       name: `${player.name}${player.online ? player.inRoom ? '（对局中）' : '' : '（离线）'}`})) : presence.players}
-      status={tab === 'friends' ? friends.status : presence.loading ? '载入玩家…' : presence.status}
+      status={tab === 'friends' ? friends.status : presence.status}
       chooseTarget={player => {
         const canonical = friends.friends.find(row => row.accountId === player.accountId);
         chooseTarget(canonical ?? player);
@@ -101,9 +118,9 @@ export function LobbySocialView({battle}: {battle: Battle}) {
         const canonical = friends.friends.find(row => row.accountId === player.accountId);
         setSelected(canonical ?? player); void battle.friends.refresh(); void battle.blacklist.refresh();
       }}/>
-    <button ref={searchButton} type="button" className="lobby-player-search-launcher"
+    <DialogButton ref={searchButton} kind="back" className="lobby-player-search-launcher"
       data-lobby-player-search="" aria-haspopup="dialog" aria-expanded={searchOpen}
-      onClick={() => setSearchOpen(true)}>查找玩家</button>
+      onClick={() => setSearchOpen(true)}>查找玩家</DialogButton>
     <PlayerInfoView open={!!profile && !presence.inRoom && !showTrade} player={profile} pending={friends.pending || blacklist.pending || trade.pending} status={trade.status || blacklist.status || friends.status}
       query={queryPlayerProfile}
       onAddFriend={() => {if (selected) void battle.friends.change('ADD', selected.accountId);}}

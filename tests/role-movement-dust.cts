@@ -6,7 +6,7 @@ import {EffectRuntime} from '../apps/web/src/render/effects/runtime/effect-runti
 import {EffectRuntimeStatePool} from '../apps/web/src/render/effects/runtime/effect-runtime-state-pool';
 import {TankView} from '../apps/web/src/assets/tanks/tank-view';
 
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const native = JSON.parse(readFileSync('recovery/output/role-movement-dust-tree-native.json', 'utf8'));
 let randomIndex = 0;
 const tree = new EffectRuntimeTree(library as EffectRuntimeLibrary, library.nodes[2424].id,

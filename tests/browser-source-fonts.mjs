@@ -26,7 +26,7 @@ async function stop() {
   if(server?.exitCode===null){const ended=new Promise(resolve=>server.once('exit',resolve));server.kill();await ended;}
 }
 await start();
-const vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',
+const vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',
   server:{port:5193,host:'127.0.0.1',proxy:{'/game':{target:'ws://127.0.0.1:3134',ws:true,rewrite:()=> '/'}}}});
 await vite.listen();
 const ws = new WebSocket(endpoint);

@@ -9,7 +9,7 @@ assert.deepEqual(unpackEffectColor(0x127f34ab), [127 / 255, 52 / 255, 171 / 255,
 assert.equal(applyEffectTrailAlpha(0xffabcdef, 1, 2), 0x80abcdef);
 assert.equal(applyEffectTrailAlpha(0x00abcdef, 1, 2), 0x81abcdef);
 assert.throws(() => applyEffectTrailAlpha(0, 0, 0));
-const library = JSON.parse(fs.readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(fs.readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const native = JSON.parse(fs.readFileSync('recovery/output/effect-color-native.json', 'utf8'));
 assert.equal(native.exeSha256, library.exeSha256);
 assert.equal(native.rows.length, (library.spriteControls.length + 5) * 2);

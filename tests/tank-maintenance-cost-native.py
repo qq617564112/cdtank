@@ -8,7 +8,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 
 uc, _ = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
@@ -28,7 +28,7 @@ tank = next(row['values'] for row in json.loads(
     (ROOT / 'recovery/output/role-tank-base-native.json').read_text())['rows']
     if int(row['values']['ID']) == 3)
 scale = next(row['values'] for row in json.loads(
-    (ROOT / 'recovery/output/verified/tables/datascale.json').read_text())['rows']
+    (ROOT / 'apps/server/resources/tables/datascale.json').read_text())['rows']
     if int(row['values']['ID']) == 48)
 write(0x633588, GAME)
 write(GAME + 0x114, STATE)

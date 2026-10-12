@@ -5,14 +5,14 @@ import struct
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'recovery'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/recovery'))
 from mv3 import read_mv3
 from effect_action_keys import action_identifier
 
 root = Path('recovery/output/verified/assets/data')
-out = Path('recovery/output/web-assets')
+out = Path('apps/web/public')
 tanks = json.loads((out / 'tanks.json').read_text())
-table = json.loads(Path('recovery/output/verified/tables/tank.json').read_text())
+table = json.loads(Path('apps/server/resources/tables/tank.json').read_text())
 assert len(tanks) == len(table['rows']) == 21
 actions = absent = 0
 for tank, row in zip(tanks, table['rows']):

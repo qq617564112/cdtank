@@ -183,7 +183,7 @@ async function textState(session) {
 const field=(states,id,name)=>states.find(c=>c.id===id).fields.find(f=>f.name===name);
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5330,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3302',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5330,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3302',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();
   const owners=[];
   for(const [mode,roomName,password] of [[1,'中文房名1234',undefined],[1,'密码房间','cards-pass'],[4,'个人房间',undefined]]) {

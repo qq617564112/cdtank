@@ -1,4 +1,5 @@
 import {roleAmmoActionEffectName} from '../../../assets/tanks/role-ammo-visual';
+import {isSkillStatusAsset} from '../../../assets/skill-status-artwork';
 import {Camera, Frustum, Observer, Scene, Texture, Vector3} from '@babylonjs/core';
 import {TankView, TankActionMessage} from '../../../assets/tanks/tank-view';
 import {EffectPrimaryTag, EFFECT_PRIMARY_TAGS} from '../../../assets/tanks/effect-tag-matrices';
@@ -6,6 +7,7 @@ import {EffectRuntimeStatePool} from './effect-runtime-state-pool';
 import {EffectRuntimeLibrary, EffectRuntimeNode, EffectRuntimeTree} from './effect-runtime-tree';
 import {EffectRenderPass, EffectSpriteMesh} from '../common/effect-sprite-mesh';
 import {EffectParticleRenderer} from '../particles/effect-particle-renderer';
+import {ShotImpactRenderer, SHOT_IMPACT_SMOKE, SHOT_IMPACT_FLASH} from '../particles/shot-impact-renderer';
 import {EFFECT_IDENTITY} from '../common/effect-render-transform';
 import {effectBoltDrawVertices} from '../bolts/effect-bolt-draw';
 import {EffectOverlayMesh} from '../overlays/effect-overlay-mesh';
@@ -41,8 +43,16 @@ interface Library extends EffectRuntimeLibrary {
     overlayScripts: {textured: boolean; techniques: {passes: EffectRenderPass[]}[]}[];
   };
 }
-interface Draw {node: EffectRuntimeNode; controller: number; passKey?: string; sprite?: EffectSpriteMesh; particle?: EffectParticleRenderer; overlay?: EffectOverlayMesh; overlayRectangle?: EffectOverlayDrawState; model?: EffectModelRenderer;}
-interface Instance {handle: number; owner?: TankView; scenePlacement?: boolean; sourceScenePlacementId?: string; crushRetained?: boolean; movementRetained?: boolean; tree: EffectRuntimeTree; draws: Draw[];}
+interface DrawRendering {
+  controller: number;
+  grid: Library['textureGrids'][number];
+  sourcePass: EffectRenderPass;
+  boltControl?: Library['boltControls'][number];
+  overlayControl?: Library['overlayControls'][number];
+  billboard: boolean | 'y';
+}
+interface Draw {node: EffectRuntimeNode; controller: number; rendering?: DrawRendering; passKey?: string; sprite?: EffectSpriteMesh; particle?: EffectParticleRenderer; overlay?: EffectOverlayMesh; overlayRectangle?: EffectOverlayDrawState; model?: EffectModelRenderer;}
+interface Instance {handle: number; owner?: TankView; hideStatusArtwork?: boolean; scenePlacement?: boolean; sourceScenePlacementId?: string; crushRetained?: boolean; movementRetained?: boolean; tree: EffectRuntimeTree; draws: Draw[];}
 
 /** Original ELK messages, shared CRT random stream, source trees and GBF draws. */
 export class EffectRuntime {
@@ -58,6 +68,8 @@ export class EffectRuntime {
   private readonly subscriptions = new Map<TankView, Observer<TankActionMessage>>();
   private readonly movementSubscriptions = new Map<TankView, Observer<readonly [number, number, number]>>();
   private readonly deviceStates = new Map<string, string>([['CullMode', 'CCW']]);
+  private devicePassKey = 'CullMode=CCW';
+  private readonly drawRenderings = new Map<number, Map<number, DrawRendering>>();
   private nextInstance = 0;
   private randomSeed = 1;
   private running = false;
@@ -66,6 +78,7 @@ export class EffectRuntime {
   private readonly cameraShake: EffectCameraShakeView;
   private readonly skillSound: EffectSkillSound;
   private readonly screenBackend: LegacyScreenEffectBackend;
+  private shotImpact?: ShotImpactRenderer;
 
   constructor(private readonly scene: Scene, private readonly camera: Camera) {
     this.screenBackend = new LegacyScreenEffectBackend(scene);
@@ -83,6 +96,7 @@ export class EffectRuntime {
       this.skillSound.dispose();
       this.textures.clear();
       this.screenBackend.dispose();
+      this.shotImpact?.dispose();
     });
   }
 
@@ -123,6 +137,13 @@ export class EffectRuntime {
       .filter(part => part.asset).map(part => this.loadTexture(part.asset!, true)))));
     if (this.scene.isDisposed) return;
     await this.prepareShotRenderer(library);
+    if (this.scene.isDisposed) return;
+    // Separate samplers keep the existing source effects' POINT filtering intact.
+    await Promise.all([SHOT_IMPACT_SMOKE, SHOT_IMPACT_FLASH].map(asset => this.loadTexture(asset, true)));
+    if (this.scene.isDisposed) return;
+    this.shotImpact = new ShotImpactRenderer(this.scene, this.camera,
+      this.textures.get(SHOT_IMPACT_SMOKE)!, this.textures.get(SHOT_IMPACT_FLASH)!);
+    await this.shotImpact.prepare();
     if (this.scene.isDisposed) return;
     this.library = library;
     this.links = links;
@@ -185,6 +206,12 @@ export class EffectRuntime {
     if (this.clipped(new Vector3(-origin[0], origin[1], origin[2]))) return 0;
     const definition = this.library.nodes.find(node => node.name === name);
     return definition ? this.addInstance(undefined, this.createTree(definition.id, origin)) : 0;
+  }
+
+  spawnShotImpact(origin: EffectVec3, damaging: boolean): void {
+    if (!this.running || !this.library) return;
+    if (this.clipped(new Vector3(-origin[0], origin[1], origin[2]))) return;
+    this.shotImpact?.spawn(origin, damaging);
   }
 
   /** Castle45d16f starts named effects on live root or tag matrices without one-shot clipping. */
@@ -254,7 +281,8 @@ export class EffectRuntime {
     if (!parent) return 0;
     const definition = this.library.nodes.find(node => node.name === `_root\\online\\${String(effectId).padStart(3, '0')}`);
     // The oneShot argument controls clipping; native manager creation retains no nodes.
-    return definition ? this.addInstance(view, this.createTree(definition.id, [0, 0, 0], parent)) : 0;
+    return definition ? this.addInstance(view, this.createTree(definition.id, [0, 0, 0], parent),
+      false, undefined, true, view === localView) : 0;
   }
 
   /** Original 4791de searches active handles and recursively ends the matched tree. */
@@ -347,11 +375,11 @@ export class EffectRuntime {
   }
 
   private addInstance(view: TankView | undefined, tree: EffectRuntimeTree, scenePlacement = false,
-    sourceScenePlacementId?: string, startImmediately = true): number {
+    sourceScenePlacementId?: string, startImmediately = true, hideStatusArtwork = false): number {
     this.deltaSeconds = this.scene.getEngine().getDeltaTime() / 1000;
     if (startImmediately) tree.start();
     const handle = ++this.nextInstance;
-    this.instances.push({handle, owner: view, scenePlacement, sourceScenePlacementId,
+    this.instances.push({handle, owner: view, hideStatusArtwork, scenePlacement, sourceScenePlacementId,
       crushRetained: scenePlacement && !startImmediately, tree, draws: tree.nodes.filter(node => node.sprite || node.particle || node.strip || node.bolt || node.overlay || node.model)
       .map(node => ({node, controller: -1, model: node.model ? this.modelBackends.get(node.model) : undefined}))});
     return handle;
@@ -422,7 +450,37 @@ export class EffectRuntime {
         if (mesh) mesh.alphaIndex = drawOrder++;
       }
     }
+    this.shotImpact?.update(deltaSeconds, drawOrder);
     this.sound.update();
+  }
+
+  /** Immutable source bindings are shared by every instance of a node/controller. */
+  private rendering(node: EffectRuntimeNode, controller: number): DrawRendering {
+    let controllers = this.drawRenderings.get(node.definition.index);
+    const cached = controllers?.get(controller);
+    if (cached) return cached;
+    if (!controllers) {
+      controllers = new Map();
+      this.drawRenderings.set(node.definition.index, controllers);
+    }
+    const library = this.library!;
+    const index = node.definition.index;
+    const grid = (node.bolt ? library.boltTextures : library.textureGrids).find(row => row.node === index)!;
+    const boltControl = node.bolt ? library.boltControls.find(row => row.node === index)! : undefined;
+    const overlayControl = node.overlay ? library.overlayControls.find(row => row.node === index)! : undefined;
+    const selections = node.particle ? library.rendering.particleSelections : library.rendering.spriteSelections;
+    const stripFlags = node.strip ? library.stripControls.find(row => row.node === index && row.modifier === controller)!.renderFlags : 0;
+    const selector = node.overlay ? undefined : boltControl ? (boltControl.flag ? 7 : 6) : node.strip ?
+      selectSpriteRenderScript(stripFlags, false) : selections.find(row => row.node === index && row.modifier === controller)!.selector;
+    const sourcePass = overlayControl ? library.rendering.overlayScripts.find(row => row.textured === overlayControl.textured)!.techniques[0].passes[0] :
+      library.rendering.scripts.find(row => row.index === selector)!.techniques[0].passes[0];
+    const spriteControl = node.sprite ? library.spriteControls.find(row => row.node === index && row.modifier === controller)! : undefined;
+    const billboard = spriteControl ? (parseInt(spriteControl.remainingFieldAc.slice(0, 2), 16) & 1) !== 0 : false;
+    // Keep orbiting crow artwork upright and facing the camera.
+    const rendering: DrawRendering = {controller, grid, sourcePass, boltControl, overlayControl,
+      billboard: !billboard && grid.asset === 'Data/effect/xf/WUYA.png' ? 'y' : billboard};
+    controllers.set(controller, rendering);
+    return rendering;
   }
 
   private draw(instance: Instance, draw: Draw): void {
@@ -443,20 +501,22 @@ export class EffectRuntime {
       draw.sprite?.updateQuads([]); draw.particle?.sprite.updateQuads([]); draw.overlay?.update(); return;
     }
     const controller = node.lifecycle.controller;
-    const grid = (node.bolt ? this.library!.boltTextures : this.library!.textureGrids).find(row => row.node === node.definition.index)!;
-    const boltControl = node.bolt ? this.library!.boltControls.find(row => row.node === node.definition.index)! : undefined;
-    const selections = node.particle ? this.library!.rendering.particleSelections : this.library!.rendering.spriteSelections;
-    const stripFlags = node.strip ? this.library!.stripControls.find(row =>
-      row.node === node.definition.index && row.modifier === controller)!.renderFlags : 0;
-    const selector = node.overlay ? undefined : boltControl ? (boltControl.flag ? 7 : 6) : node.strip ? selectSpriteRenderScript(stripFlags, false) : selections.find(row => row.node === node.definition.index && row.modifier === controller)!.selector;
-    const overlayControl = node.overlay ? this.library!.overlayControls.find(row => row.node === node.definition.index)! : undefined;
-    const sourcePass = overlayControl ? this.library!.rendering.overlayScripts.find(row => row.textured === overlayControl.textured)!.techniques[0].passes[0] :
-      this.library!.rendering.scripts.find(row => row.index === selector)!.techniques[0].passes[0];
-    sourcePass.states.forEach(state => this.deviceStates.set(state.name, state.value));
-    const pass = {states: [...this.deviceStates].map(([name, value]) => ({name, value}))};
-    const passKey = pass.states.map(state => `${state.name}=${state.value}`).join(';');
+    if (draw.rendering?.controller !== controller) draw.rendering = this.rendering(node, controller);
+    const {grid, boltControl, overlayControl, sourcePass, billboard} = draw.rendering;
+    // Passes inherit states from earlier draws, including earlier frames.
+    let statesChanged = false;
+    for (const state of sourcePass.states) {
+      if (this.deviceStates.get(state.name) === state.value) continue;
+      this.deviceStates.set(state.name, state.value);
+      statesChanged = true;
+    }
+    if (statesChanged) {
+      this.devicePassKey = [...this.deviceStates].map(([name, value]) => `${name}=${value}`).join(';');
+    }
+    const passKey = this.devicePassKey;
     if (draw.controller !== controller || draw.passKey !== passKey) {
       draw.sprite?.dispose(); draw.particle?.dispose(); draw.overlay?.dispose();
+      const pass = {states: [...this.deviceStates].map(([name, value]) => ({name, value}))};
       const texture = this.textures.get(grid.asset)!;
       if (node.particle) draw.particle = new EffectParticleRenderer(this.scene, pass, texture, grid.uvFrames);
       else if (node.overlay) {
@@ -485,9 +545,9 @@ export class EffectRuntime {
     }
     if (node.sprite) {
       const sprite = node.sprite;
-      const control = this.library!.spriteControls.find(row => row.node === node.definition.index && row.modifier === controller)!;
-      const billboard = (parseInt(control.remainingFieldAc.slice(0, 2), 16) & 1) !== 0;
-      draw.sprite!.updateQuads(effectSpriteDraw(sprite, billboard, grid.uvFrames, this.camera, instance.tree.parentMatrix));
+      const statusArtwork = !!instance.owner && isSkillStatusAsset(grid.asset);
+      draw.sprite!.updateQuads(statusArtwork && instance.hideStatusArtwork ? [] :
+        effectSpriteDraw(sprite, billboard, grid.uvFrames, this.camera, instance.tree.parentMatrix, statusArtwork ? .8 : 1));
     }
     if (node.strip) {
       draw.sprite!.updateQuads(effectStripDraw(node.strip, instance.tree.parentMatrix));
@@ -517,6 +577,7 @@ export class EffectRuntime {
     while (this.instances.length) this.remove(this.instances.length - 1);
     this.screenBackend.clear();
     this.sound.clear();
+    this.shotImpact?.clear();
   }
 
   /** Battle rounds release role effects while the loaded map keeps its owners. */
@@ -527,5 +588,6 @@ export class EffectRuntime {
       if (!this.instances[index].scenePlacement) this.remove(index);
     }
     this.sound.clear();
+    this.shotImpact?.clear();
   }
 }

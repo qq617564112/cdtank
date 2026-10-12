@@ -1,19 +1,22 @@
-import {useLayoutEffect, useRef, useState} from 'react';
-import './room-create-dialog.css';
+import {GameMessage} from '../resources/game-message';
+import {useId, useLayoutEffect, useRef, useState} from 'react';
 import type {MapOption} from '../../../../shared/protocols/PtlListMaps';
+import {ROOM_NAME_MAX_CODEPOINTS, ROOM_PASSWORD_MAX_CODEPOINTS} from '../../../../shared/room-input';
+import {ROOM_TIME_LIMIT_MIN_SECONDS, ROOM_TIME_LIMIT_MAX_SECONDS,
+  ROOM_TIME_LIMIT_STEP_SECONDS} from '../../../../shared/room-time-limit';
+import {CartoonButton, CartoonInput} from '../resources/cartoon-controls';
+import {DialogButton} from '../resources/dialog-button';
+import {GameDialog, GameDialogTopbar, GameDialogTitle,
+  GameDialogPanel, GameDialogFootbar} from '../resources/game-dialog';
+import {useSourceDialog, useSourceScale} from './source-react';
 import type {RoomCreateDraft} from './room-create-draft';
 import {validateRoomCreateDraft, changeRoomCreateBound} from './room-create-draft';
-import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {roomModeIconReference} from './room-mode-icons';
-import {sourceProps, useSourceDialog, useSourceUi} from './source-react';
-
-import {RoomCreateImageScale, RoomCreatePasswordSelection, RoomCreateSourceImage, roomCreateInputVisual, useRoomCreateVisual} from './room-create-source-visual';
-import {RoomCreateCaret} from './room-create-caret';
-import {RoomCreateNameSelection} from './room-create-name-selection';
-import {SourceButton} from '../resources/source-button';
-import {ROOM_NAME_MAX_CODEPOINTS, ROOM_PASSWORD_MAX_CODEPOINTS} from '../../../../shared/room-input';
+import {RoomCreateCard} from './room-create-card';
+import {RoomRuleButton} from './room-rule-button';
+import {RoomAdjustmentButton} from './room-adjustment';
 import {useRoomInputLimit} from './room-input-limit';
-import {SourceFeedbackText} from '../resources/source-feedback-text';
+import {useRoomDraft} from './use-room-draft';
+import './room-create-dialog.css';
 
 export type RoomPasswordAction = 'KEEP' | 'REPLACE' | 'CLEAR';
 
@@ -25,58 +28,73 @@ interface RoomCreateDialogProps {
   submit(draft: RoomCreateDraft, passwordAction?: RoomPasswordAction): Promise<void>;
 }
 
-export function RoomCreateDialog({open, close, initialDraft, map, submit, editing = false, initialPasswordAction = 'KEEP', changeMap}: RoomCreateDialogProps) {
-  const [draft, setDraft] = useState<RoomCreateDraft>(() => ({...initialDraft}));
+const MODE_NAMES = ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'];
+
+export function RoomCreateDialog({open, close, initialDraft, map, submit, editing = false,
+  initialPasswordAction = 'KEEP', changeMap}: RoomCreateDialogProps) {
+  const [draft, setDraft] = useRoomDraft(initialDraft, editing ? 'edit' : 'create');
   const [pending, setPending] = useState(false), [status, setStatus] = useState('');
   const [passwordAction, setPasswordAction] = useState<RoomPasswordAction>(initialPasswordAction);
+  const id = useId();
   const lastInput = useRef<'name' | 'password'>('name');
   const restoreInputFocus = useRef(false);
   const composing = useRef(false), escapePending = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null), passwordRef = useRef<HTMLInputElement>(null);
+  const dialog = useSourceDialog(open);
+  const scale = useSourceScale(800, 600, 0, 0, .25, Infinity).viewport.width / 800;
+  const nameLimit = useRoomInputLimit(nameRef, ROOM_NAME_MAX_CODEPOINTS,
+    value => setDraft(previous => ({...previous, roomName: value})));
+  const passwordLimit = useRoomInputLimit(passwordRef, ROOM_PASSWORD_MAX_CODEPOINTS,
+    value => setDraft(previous => ({...previous, password: value})));
+  const timeLimit = draft.timeLimitSeconds ?? map?.timeLimit;
+  const timeLabel = timeLimit === undefined ? '—' : timeLimit % 60 === 0
+    ? `${timeLimit / 60} 分钟` : `${Math.floor(timeLimit / 60)}分${timeLimit % 60}秒`;
   useLayoutEffect(() => {
     if (pending || !restoreInputFocus.current) return;
     restoreInputFocus.current = false;
     (lastInput.current === 'password' ? passwordRef.current : nameRef.current)?.focus();
   }, [pending]);
-  const {ui, error} = useSourceUi(open, ['createroom.xml']);
-  const dialog = useSourceDialog(open), scale = useRoomCreateVisual(open);
-  const nameLimit = useRoomInputLimit(nameRef, ROOM_NAME_MAX_CODEPOINTS, value => setDraft(previous => ({...previous, roomName: value})), !!ui);
-  const passwordLimit = useRoomInputLimit(passwordRef, ROOM_PASSWORD_MAX_CODEPOINTS, value => setDraft(previous => ({...previous, password: value})), !!ui);
-  const layout = ui ? new HomeSourceLayout(ui, 'createroom.xml') : undefined;
-  const place = (name: string, image?: string) => sourceProps(ui!, layout!, 'createroom.xml', name, image, -246, -130);
-  const image = (name: string, text?: string, reference?: string) => text === undefined
-    ? <RoomCreateSourceImage key={name} ui={ui!} layout={layout!} name={name} reference={reference}/>
-    : <span key={name} className="room-create-source-text" {...place(name)}>{text}</span>;
-  const button = (name: string, control: string, label: string, action: () => void, disabled = false, selected = false, data: Record<string, string> = {}) =>
-    <SourceButton key={name} ui={ui!} layout={layout!} source={name} suffix="createroom.xml" offsetX={-246} offsetY={-130}
-      data-create-control={control} disabled={pending || disabled} aria-label={label} title={label} selected={selected} onClick={action} {...data}/>;
+
   async function confirm() {
     if (pending) return;
-    try {validateRoomCreateDraft(draft, map);} catch (reason) {setStatus(String(reason)); return;}
+    const settings = {...draft, timeLimitSeconds: timeLimit};
+    try {validateRoomCreateDraft(settings, map);} catch (reason) {setStatus(String(reason)); return;}
     if (editing && passwordAction === 'REPLACE' && !draft.password) {
       setStatus('请输入新密码，或选择取消密码');
       return;
     }
-    setPending(true); setStatus(editing ? '正在保存房间…' : '正在创建房间…');
-    try {await submit(draft, editing ? passwordAction : undefined); close();}
+    setPending(true); setStatus('');
+    try {await submit(settings, editing ? passwordAction : undefined); close();}
     catch (reason) {setStatus(String(reason));}
-    finally {
-      restoreInputFocus.current = true;
-      setPending(false);
-    }
+    finally {restoreInputFocus.current = true; setPending(false);}
   }
-  return <dialog ref={dialog} data-room-create-dialog="" data-room-edit-dialog={editing || undefined} aria-label={editing ? '编辑房间' : '创建房间'} onCancel={event => {
-    event.preventDefault();
-    if (!pending && !composing.current) close();
-  }} onCompositionStart={() => {composing.current = true;}}
-    onCompositionEnd={() => {composing.current = false;}}
+
+  const playerBound = (bound: 'minPlayers' | 'maxPlayers') => <div className="room-player-bound">
+    {([-1, 1] as const).map(direction => {
+      let allowed = !!map;
+      if (map) try {changeRoomCreateBound(draft, map, bound, direction);} catch {allowed = false;}
+      const low = bound === 'minPlayers';
+      return <RoomAdjustmentButton key={direction} direction={direction} disabled={pending || !allowed}
+        data-room-create-low={low ? direction : undefined} data-room-create-high={low ? undefined : direction}
+        data-create-control={`${low ? 'low' : 'high'}${direction}`}
+        aria-label={`${direction < 0 ? '减少' : '增加'}${low ? '开局人数' : '房间容量'}`}
+        onClick={() => {
+          if (map) {setDraft(changeRoomCreateBound(draft, map, bound, direction)); setStatus('');}
+        }}/>;
+    })}
+    <output className="room-player-value" aria-label={bound === 'minPlayers' ? '开局人数' : '房间容量'}>{draft[bound]}</output>
+  </div>;
+
+  return <GameDialog ref={dialog} width={310} height={392} uiScale={scale}
+    stageClassName="room-create-stage" data-room-create-stage="" data-room-create-dialog="" data-room-edit-dialog={editing || undefined}
+    aria-label={editing ? '编辑房间' : '创建房间'} aria-busy={pending}
+    onCancel={event => {event.preventDefault(); if (!pending && !composing.current) close();}}
+    onCompositionStart={() => {composing.current = true;}} onCompositionEnd={() => {composing.current = false;}}
     onKeyDown={event => {
       event.stopPropagation();
       if (event.key === 'Escape') {
         event.preventDefault();
-        if (!pending && !composing.current && !event.nativeEvent.isComposing && event.keyCode !== 229) {
-          escapePending.current = true;
-        }
+        if (!pending && !composing.current && !event.nativeEvent.isComposing && event.keyCode !== 229) escapePending.current = true;
       }
     }} onKeyUp={event => {
       event.stopPropagation();
@@ -85,50 +103,81 @@ export function RoomCreateDialog({open, close, initialDraft, map, submit, editin
         if (!pending && !composing.current && !event.nativeEvent.isComposing) close();
       }
     }}>
-    <div className="room-create-viewport" style={scale.viewport}><div className="room-create-stage" data-room-create-stage="" style={scale.stage}>
-      {ui && layout && <RoomCreateImageScale value={scale.scale}>
-        {['daditu','heseditu','xiaoditu','ditu2','tiao1','ditu1','tiao2','ditu4','ditu3','tiao7','daos','fangming','renshu','dituguize','hongtiaotiao', ...(!editing ? ['mima'] : [])].map(name => image(name))}
-        {image('picGameMode', undefined, roomModeIconReference(draft.mode))}
-        {editing && changeMap ? <button type="button" className="room-edit-map-button" {...place('txtMapName')}
-          aria-label="重新选择地图和模式" title="重新选择地图和模式" disabled={pending}
-          onClick={() => changeMap(draft, passwordAction)}><SourceFeedbackText text={map?.name ?? '选择地图'}/></button>
-          : <span className="room-create-source-text" {...place('txtMapName')} title={map?.name ?? ''}>{map?.name ?? '地图不可用'}</span>}
-        {image('txtLowBound', String(draft.minPlayers))}{image('txtHighBound', String(draft.maxPlayers))}
-        <input ref={nameRef} {...place('edtRoomName')} style={{...place('edtRoomName').style, ...roomCreateInputVisual(layout, 'edtRoomName')}} type="text" data-room-create-name="" data-create-control="name" aria-label="房间名称"
-          value={draft.roomName} disabled={pending} onFocus={() => {lastInput.current = 'name';}} {...nameLimit}/>
-        <input ref={passwordRef} {...place('edtPassword')} style={{...place('edtPassword').style, ...roomCreateInputVisual(layout, 'edtPassword')}} type="password" autoComplete="new-password" data-room-create-password="" data-create-control="password" aria-label="房间密码"
-          value={editing && passwordAction !== 'REPLACE' ? '' : draft.password} disabled={pending || (editing && passwordAction !== 'REPLACE')}
-          placeholder={editing ? passwordAction === 'KEEP' ? '保持当前密码' : passwordAction === 'CLEAR' ? '不设密码' : '请输入新密码' : undefined}
-          onFocus={() => {lastInput.current = 'password';}} {...passwordLimit}/>
-        {editing && <select className="room-edit-password-action" aria-label="密码操作" value={passwordAction} disabled={pending}
-          onChange={event => setPasswordAction(event.target.value as RoomPasswordAction)}>
-          <option value="KEEP">保持密码</option><option value="REPLACE">修改密码</option><option value="CLEAR">取消密码</option>
-        </select>}
-        <RoomCreatePasswordSelection input={passwordRef} style={place('edtPassword').style}/>
-        <RoomCreateNameSelection input={nameRef} style={place('edtRoomName').style} disabled={pending}/>
-        <RoomCreateCaret input={nameRef} ui={ui} layout={layout} name="edtRoomName" style={place('edtRoomName').style} disabled={pending}/>
-        <RoomCreateCaret input={passwordRef} ui={ui} layout={layout} name="edtPassword" style={place('edtPassword').style} disabled={pending}/>
-        {(['minPlayers','maxPlayers'] as const).flatMap(bound => [-1, 1].map(delta => {
-          let allowed = !!map;
-          if (map) try {changeRoomCreateBound(draft, map, bound, delta);} catch {allowed = false;}
-          const low = bound === 'minPlayers';
-          return button(`btn${delta < 0 ? 'Dec' : 'Inc'}${low ? 'Low' : 'High'}Bound`, `${low ? 'low' : 'high'}${delta}`,
-            `${delta < 0 ? '减少' : '增加'}${low ? '开局人数' : '房间容量'}`, () => {
-              if (map) {setDraft(changeRoomCreateBound(draft, map, bound, delta)); setStatus('');}
-            }, !allowed, false, {[low ? 'data-room-create-low' : 'data-room-create-high']: String(delta)});
-        }))}
-        {[false, true].map(enabled => button(enabled ? 'rdoFriendlyFireOn' : 'rdoFriendlyFireOff', `friendly${enabled}`,
-          enabled ? '允许伤害队友' : '禁止伤害队友', () => setDraft({...draft, friendlyFire: enabled}), draft.mode > 3, draft.friendlyFire === enabled,
-          {'data-room-create-friendly': String(enabled), 'aria-pressed': String(draft.friendlyFire === enabled)}))}
-        {(['rdoCatVsDog', 'rdoNonCatVsDog'] as const).map((name, index) => <SourceButton key={name}
-          ui={ui} layout={layout} source={name} suffix="createroom.xml" offsetX={-246} offsetY={-130} selected={(draft.mode <= 3) === (index === 0)} disabled
-          aria-label={index === 0 ? '团队模式' : '个人模式'} aria-disabled="true"/>)}
-        {button('btnOK', 'confirm', editing ? '保存房间' : '确认创建房间', () => {void confirm();}, !map, false, {'data-room-create-confirm': ''})}
-        {button('btnCancel', 'cancel', editing ? '取消编辑房间' : '取消创建房间', close, false, false, {'data-room-create-cancel': ''})}
-        {button('btnClose', 'close', editing ? '关闭编辑房间' : '关闭创建房间', close, false, false, {'data-room-create-close': ''})}
-      </RoomCreateImageScale>}
-    </div></div>
-    <output data-room-create-status="" role="status">{(error || scale.fontError) ? `原建房资源载入失败：${error || scale.fontError}；按Escape返回后重试`
-      : !ui ? editing ? '正在载入房间编辑…' : '正在载入创建房间…' : status}</output>
-  </dialog>;
+    <GameDialogTopbar className="room-create-topbar">
+      {editing && <GameDialogTitle>编辑房间</GameDialogTitle>}
+      <DialogButton kind="close" data-room-create-close="" data-create-control="close" disabled={pending}
+        aria-label={editing ? '关闭编辑房间' : '关闭创建房间'} onClick={close}/>
+    </GameDialogTopbar>
+    <GameDialogPanel className="room-create-body" tone="room-canvas">
+      <RoomCreateCard shape="metadata">
+        <div className="room-create-map-heading">
+          <span className="room-create-mode">{MODE_NAMES[draft.mode - 1] ?? '战斗'}</span>
+          <span className="room-create-map-name" title={map?.name}>{map?.name ?? '地图不可用'}</span>
+          {changeMap && <CartoonButton width={84} height={28} shape="slab" tone="orange" gradient
+            className="room-create-map-change" data-room-create-change-map="" disabled={pending}
+            aria-label="修改地图和模式" onClick={() => changeMap(draft, passwordAction)}>修改地图</CartoonButton>}
+        </div>
+        <RoomCreateCard shape="strip" className="room-create-field">
+          <label htmlFor={`${id}-name`}>房名</label>
+          <CartoonInput ref={nameRef} id={`${id}-name`} width={180} height={31}
+            className="room-create-input" type="text" data-room-create-name="" data-create-control="name"
+            aria-label="房间名称" value={draft.roomName} disabled={pending}
+            onFocus={() => {lastInput.current = 'name';}} {...nameLimit}/>
+        </RoomCreateCard>
+        <RoomCreateCard shape="strip" className="room-create-field">
+          {editing ? <select className="room-edit-password-action" aria-label="密码操作" value={passwordAction}
+            disabled={pending} onChange={event => setPasswordAction(event.target.value as RoomPasswordAction)}>
+            <option value="KEEP">保持密码</option><option value="REPLACE">修改密码</option><option value="CLEAR">取消密码</option>
+          </select> : <label htmlFor={`${id}-password`}>密码</label>}
+          <CartoonInput ref={passwordRef} id={`${id}-password`} width={180} height={31} shape="password"
+            className="room-create-input" type="password" autoComplete="new-password"
+            data-room-create-password="" data-create-control="password" aria-label="房间密码"
+            value={editing && passwordAction !== 'REPLACE' ? '' : draft.password}
+            disabled={pending || (editing && passwordAction !== 'REPLACE')}
+            placeholder={editing ? passwordAction === 'KEEP' ? '保持当前密码'
+              : passwordAction === 'CLEAR' ? '不设密码' : '请输入新密码' : undefined}
+            onFocus={() => {lastInput.current = 'password';}} {...passwordLimit}/>
+        </RoomCreateCard>
+      </RoomCreateCard>
+      <RoomCreateCard shape="rules">
+        <h3 className="room-create-rules-title">地图规则</h3>
+        <RoomCreateCard shape="strip" className="room-create-step-row">
+          <span className="room-create-field-label">人数</span>
+          <div className="room-player-bounds">{playerBound('minPlayers')}<span className="room-player-range">～</span>{playerBound('maxPlayers')}</div>
+        </RoomCreateCard>
+        <RoomCreateCard shape="strip" className="room-create-step-row">
+          <span className="room-create-field-label room-time-label">对局时间</span>
+          <div className="room-time-adjustment">
+            {([-1, 1] as const).map(direction => <RoomAdjustmentButton key={direction} direction={direction}
+              data-room-create-time={direction} data-create-control={`time${direction}`}
+              disabled={pending || timeLimit === undefined || (direction < 0
+                ? timeLimit <= ROOM_TIME_LIMIT_MIN_SECONDS : timeLimit >= ROOM_TIME_LIMIT_MAX_SECONDS)}
+              aria-label={`${direction < 0 ? '减少' : '增加'}对局时间一分钟`}
+              onClick={() => {
+                if (timeLimit === undefined) return;
+                setDraft({...draft, timeLimitSeconds: Math.max(ROOM_TIME_LIMIT_MIN_SECONDS,
+                  Math.min(ROOM_TIME_LIMIT_MAX_SECONDS, timeLimit + direction * ROOM_TIME_LIMIT_STEP_SECONDS))});
+                setStatus('');
+              }}/>)}
+            <output className="room-time-value" data-room-create-time-value="" aria-label="对局时间">{timeLabel}</output>
+          </div>
+        </RoomCreateCard>
+        <div className="room-create-rule-grid">
+          <RoomRuleButton rule="cat-vs-dog" selected={draft.mode <= 3} readOnly title="由所选地图模式决定"/>
+          <RoomRuleButton rule="cat-dog-mixed" selected={draft.mode > 3} readOnly title="由所选地图模式决定"/>
+          {[false, true].map(enabled => <RoomRuleButton key={String(enabled)}
+            rule={enabled ? 'friendly-fire' : 'no-friendly-fire'} selected={draft.friendlyFire === enabled}
+            disabled={pending || draft.mode > 3} data-room-create-friendly={String(enabled)}
+            data-create-control={`friendly${enabled}`} onClick={() => setDraft({...draft, friendlyFire: enabled})}/>)}
+        </div>
+      </RoomCreateCard>
+    </GameDialogPanel>
+    <GameDialogFootbar className="room-create-footer">
+      <DialogButton data-room-create-confirm="" data-create-control="confirm" disabled={pending || !map}
+        aria-label={editing ? '保存房间' : '确认创建房间'} onClick={() => {void confirm();}}>确定</DialogButton>
+      <DialogButton data-room-create-cancel="" data-create-control="cancel" disabled={pending}
+        aria-label={editing ? '取消编辑房间' : '取消创建房间'} onClick={close}>取消</DialogButton>
+    </GameDialogFootbar>
+    <GameMessage data-room-create-status="" text={open ? status : ''} tone={pending ? 'pending' : 'error'}/>
+  </GameDialog>;
 }

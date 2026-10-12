@@ -3,10 +3,10 @@ import json
 from pathlib import Path
 import struct
 import sys
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'recovery'))
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools/recovery'))
 from scene import read_scene
 root=Path('recovery/output/verified/assets/data/Data/scn')
-entries=json.loads(Path('recovery/output/web-assets/scene-placements.json').read_text())
+entries=json.loads(Path('apps/web/public/scene-placements.json').read_text())
 count=0
 for entry in entries:
     path=root/entry['id']/(entry['id']+'.obj')
@@ -21,7 +21,7 @@ for entry in entries:
         assert tuple(exported['position'])==struct.unpack_from('<3f',raw,pos)
         assert tuple(exported['matrix'])==struct.unpack_from('<16f',raw,pos+25)
         if exported.get('asset'):
-            assert (Path('recovery/output/web-assets')/exported['asset']).exists()
+            assert (Path('apps/web/public')/exported['asset']).exists()
         count+=1
 print(f'{len(entries)} scenes, {count} records: declared counts, source matrices and resolved GLB files verified')
 
@@ -35,7 +35,7 @@ for entry in entries:
             assert source['matrix']==tuple(exported['matrix'])
             assert source['tail']==exported['tail']
             if extension=='cas':
-                assert (Path('recovery/output/web-assets')/exported['asset']).exists()
+                assert (Path('apps/web/public')/exported['asset']).exists()
                 assert exported['previewAction']=={'obj05447':'c1', 'obj05448':'c1', 'obj05449':'c2', 'obj05450':'c1'}[source['model']]
             else:
                 raw=bytes.fromhex(source['tail'])

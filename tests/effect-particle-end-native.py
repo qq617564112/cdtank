@@ -5,7 +5,7 @@ import struct
 import sys
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 machine, _ = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
 machine.mem_map(0x2000000, 0x10000)

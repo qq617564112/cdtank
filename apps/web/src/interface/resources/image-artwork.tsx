@@ -1,42 +1,29 @@
-import {useId, type ComponentPropsWithoutRef} from 'react';
-import {imageResourceUrl, spriteImage} from '../../assets/image-cache';
-import {imageRegion} from '../../assets/image-resources';
-import {sourceReviewGlyph, SourceReviewGlyph} from './source-review-glyph';
-import {buttonArtwork} from '../../assets/button-artwork';
-import {sourceTextArtwork, SourceTextArtwork} from './source-text-artwork';
+import type {ComponentPropsWithoutRef} from 'react';
+import {imageResourceUrl} from '../../assets/image-cache';
+import {spriteAtlas, spriteRegion} from '../../assets/sprite-images';
 
-/** A clipped SVG viewport displays a sheet region without creating another image. */
+/** Original images stretch, fit or repeat within their source control bounds. */
 export function ImageArtwork({asset, fit = 'stretch', repeat, style, ...props}: {
   asset: string; fit?: 'stretch' | 'contain'; repeat?: {width: number; height: number};
 } & ComponentPropsWithoutRef<'span'>) {
-  const id = `image-tile-${useId().replace(/:/g, '')}`;
-  const glyph = sourceReviewGlyph(asset);
-  if (glyph) return <SourceReviewGlyph {...props} asset={asset} glyph={glyph} fit={fit} style={style}/>;
-  const text = sourceTextArtwork(asset);
-  const background = buttonArtwork(asset)?.background ?? asset;
-  const region = imageRegion(background, false)!;
-  const image = region.image;
-  const href = imageResourceUrl(spriteImage(background)?.atlas ?? background);
+  const region = spriteRegion(asset);
+  const atlas = region ? spriteAtlas(region.atlas) : undefined;
+  const href = imageResourceUrl(region && !repeat ? region.atlas : asset);
   return <span {...props} data-image-artwork="" data-source-asset={asset.replace(/^\//, '')}
     data-image-fit={fit} data-image-repeat-width={repeat?.width} data-image-repeat-height={repeat?.height}
-    data-source-button-label={text ? 'external' : undefined}
-    style={{display: 'inline-block', position: text ? 'relative' : undefined, filter: spriteImage(background)?.filter, ...style}}>
-    {repeat ? <svg width="100%" height="100%" aria-hidden="true" style={{display: 'block', pointerEvents: 'none'}}>
-      <defs><pattern id={id} patternUnits="userSpaceOnUse" width={repeat.width} height={repeat.height}
-        viewBox={`${region.x} ${region.y} ${region.width} ${region.height}`} preserveAspectRatio="none">
-        <image href={href} width={image.width} height={image.height}/>
-      </pattern></defs>
-      <rect width="100%" height="100%" fill={`url(#${id})`}/>
-    </svg> :
-    <svg width="100%" height="100%" viewBox={`0 0 ${region.width} ${region.height}`}
-      preserveAspectRatio={fit === 'contain' ? 'xMidYMid meet' : 'none'}
-      aria-hidden="true" style={{display: 'block', overflow: 'hidden', pointerEvents: 'none'}}>
-      <svg width={region.width} height={region.height}
-        viewBox={`${region.x} ${region.y} ${region.width} ${region.height}`} preserveAspectRatio="none"
-        style={{overflow: 'hidden'}}>
-        <image href={href} width={image.width} height={image.height}/>
+    style={{display: 'inline-block', ...style}}>
+    {repeat ? <span aria-hidden="true" style={{display: 'block', width: '100%', height: '100%',
+      pointerEvents: 'none', backgroundImage: `url("${href}")`,
+      backgroundSize: `${repeat.width}px ${repeat.height}px`, backgroundRepeat: 'repeat'}}/> :
+    region && atlas ? <svg viewBox={`0 0 ${region.width} ${region.height}`}
+      preserveAspectRatio={fit === 'contain' ? 'xMidYMid meet' : 'none'} aria-hidden="true" focusable="false"
+      style={{display: 'block', width: '100%', height: '100%', overflow: 'hidden', pointerEvents: 'none'}}>
+      <svg viewBox={`${region.x} ${region.y} ${region.width} ${region.height}`}
+        width={region.width} height={region.height} preserveAspectRatio="none" overflow="hidden">
+        <image href={href} width={atlas.width} height={atlas.height}/>
       </svg>
-    </svg>}
-    {text && <SourceTextArtwork asset={asset}/>}
+    </svg> : <img src={href} alt="" aria-hidden="true" draggable={false}
+      style={{display: 'block', width: '100%', height: '100%', pointerEvents: 'none',
+        objectFit: fit === 'contain' ? 'contain' : 'fill'}}/>}
   </span>;
 }

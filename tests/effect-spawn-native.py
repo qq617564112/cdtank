@@ -8,7 +8,7 @@ from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_EIP, UC_X86_REG_EAX, UC_X86_REG_FPCW
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 paths = [ROOT / 'CDTank/CDTank.exe', ROOT / 'CDTank/gbengine.dll', ROOT / 'CDTank/msvcr71.dll']
 machine, images = map_original_binaries(paths)
@@ -52,7 +52,7 @@ def hook(uc, address, size, data):
 
 
 machine.hook_add(UC_HOOK_CODE, hook)
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 global_rotation = [0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1]
 parent_options = [None, [0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 8, 4, 2, 1], [0] * 16]
 emitter_position, orbit_offset = [12, -17, 34], [1.25, 2.5, -3.75]

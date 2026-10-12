@@ -10,7 +10,7 @@ for row in json.loads(Path(sys.argv[1]).read_text()):
  for name,zone in zones.items():
   picture=next(p for p in row['state']['sourcePictures'] if p['name']==name);count=0;maximum=0
   for piece in picture['images']:
-   source=Image.open(ROOT/'recovery/output/web-assets'/piece['asset']).convert('RGBA');r=piece['rect']
+   source=Image.open(ROOT/'apps/web/public'/piece['asset']).convert('RGBA');r=piece['rect']
    if r['width']<1 or r['height']<1:continue
    for x in range(max(math.ceil(r['x']+2),math.ceil(stage['x']+zone[0]*scale)),min(math.floor(r['x']+r['width']-2),math.floor(stage['x']+zone[2]*scale)),2):
     for y in range(max(math.ceil(r['y']+2),math.ceil(stage['y']+zone[1]*scale)),min(math.floor(r['y']+r['height']-2),math.floor(stage['y']+zone[3]*scale)),2):

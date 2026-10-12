@@ -1,0 +1,288 @@
+@import './happy-zcool.css';
+
+.cartoon-button,
+.cartoon-button * {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+.cartoon-button {
+  --cartoon-button-face: #ff8546;
+  --cartoon-button-rim: #822500;
+  --cartoon-button-highlight: #ffdfca;
+  --cartoon-button-bevel: #dc2600;
+  --cartoon-button-shadow: #79b3c7;
+  --cartoon-label-fill: #fff600;
+  --cartoon-label-stroke: #101000;
+  --cartoon-label-shadow: 1px 1px #963507;
+  --cartoon-label-size: 23px;
+  --cartoon-label-outline: 4px;
+  position: absolute;
+  display: inline-grid;
+  place-items: center;
+  isolation: isolate;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.cartoon-button[data-cartoon-button-tone='violet'] {
+  --cartoon-button-face: #cca7ee;
+  --cartoon-button-rim: #583168;
+  --cartoon-button-highlight: #fff0ff;
+  --cartoon-button-bevel: #9666b8;
+  --cartoon-button-shadow: #35223e;
+  --cartoon-label-fill: #84ffff;
+  --cartoon-label-stroke: #101321;
+  --cartoon-label-shadow: none;
+}
+
+.cartoon-button[data-cartoon-button-tone='blue'] {
+  --cartoon-button-face: #5058e2;
+  --cartoon-button-rim: #303891;
+  --cartoon-button-highlight: #dfe6ff;
+  --cartoon-button-bevel: #3b43b0;
+  --cartoon-button-shadow: #22213d;
+  --cartoon-label-fill: #fff600;
+  --cartoon-label-stroke: #101321;
+  --cartoon-label-shadow: none;
+}
+
+.cartoon-button[data-cartoon-button-tone='cyan'] {
+  --cartoon-button-face: #80dafa;
+  --cartoon-button-rim: #145475;
+  --cartoon-button-highlight: #e4fbff;
+  --cartoon-button-bevel: #299cc7;
+  --cartoon-button-shadow: #163447;
+  --cartoon-label-fill: #061521;
+  --cartoon-label-stroke: #dffbff;
+  --cartoon-label-shadow: none;
+}
+
+.cartoon-button[data-cartoon-button-tone='red'] {
+  --cartoon-button-face: #fa8065;
+  --cartoon-button-rim: #742616;
+  --cartoon-button-highlight: #fff4dc;
+  --cartoon-button-bevel: #bd4429;
+  --cartoon-button-shadow: #46291f;
+  --cartoon-label-fill: #84ffff;
+  --cartoon-label-stroke: #14201e;
+  --cartoon-label-shadow: none;
+}
+
+.cartoon-button[data-cartoon-button-tone='neutral'] {
+  --cartoon-button-face: #a8aab0;
+  --cartoon-button-rim: #343640;
+  --cartoon-button-highlight: #f4f4f7;
+  --cartoon-button-bevel: #696c76;
+  --cartoon-button-shadow: #282b3c;
+}
+
+.cartoon-control-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cartoon-control-label {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.cartoon-button > .cartoon-control-label {
+  margin-bottom: 7px;
+  color: var(--cartoon-label-fill);
+  font-size: var(--cartoon-label-size);
+  line-height: 1.15;
+  -webkit-text-stroke: var(--cartoon-label-outline) var(--cartoon-label-stroke);
+  paint-order: stroke fill;
+  text-shadow: var(--cartoon-label-shadow);
+}
+
+.cartoon-button-shadow {
+  fill: var(--cartoon-button-shadow);
+}
+
+.cartoon-button-rim {
+  fill: var(--cartoon-button-rim);
+  stroke: #14182b;
+}
+
+.cartoon-button-face {
+  fill: var(--cartoon-button-face);
+}
+
+.cartoon-button-highlight {
+  fill: var(--cartoon-button-highlight);
+}
+
+.cartoon-button-bevel {
+  fill: var(--cartoon-button-bevel);
+}
+
+.cartoon-button[data-cartoon-button-state='hover'] {
+  --cartoon-button-face: #ffdc4f;
+  --cartoon-button-rim: #826000;
+  --cartoon-button-highlight: #fff2bd;
+  --cartoon-button-bevel: #c18c00;
+  --cartoon-label-fill: #100d00;
+  --cartoon-label-stroke: #fff600;
+  --cartoon-label-shadow: none;
+}
+
+.cartoon-button[data-cartoon-button-state='pressed'] {
+  --cartoon-button-face: #459afa;
+  --cartoon-button-rim: #00213a;
+  --cartoon-button-highlight: #a6d5ff;
+  --cartoon-button-bevel: #0073b8;
+  --cartoon-label-fill: #ffffda;
+  --cartoon-label-stroke: #043778;
+  --cartoon-label-shadow: none;
+}
+
+.cartoon-button[data-cartoon-button-tone]:where(:not([data-cartoon-button-tone='orange']))[data-cartoon-button-state='hover'] {
+  --cartoon-button-face: #ffe653;
+  --cartoon-button-rim: #6d5815;
+  --cartoon-button-highlight: #fff6c5;
+  --cartoon-button-bevel: #b29626;
+  --cartoon-label-fill: #ffa800;
+  --cartoon-label-stroke: #171606;
+}
+
+.cartoon-button[data-cartoon-button-tone]:where(:not([data-cartoon-button-tone='orange']))[data-cartoon-button-state='pressed'] {
+  --cartoon-button-face: #ff9156;
+  --cartoon-button-rim: #733218;
+  --cartoon-button-highlight: #ffcea9;
+  --cartoon-button-bevel: #cc662c;
+  --cartoon-label-fill: #ffe400;
+  --cartoon-label-stroke: #211707;
+}
+
+.cartoon-button[data-cartoon-button-tone='blue'][data-cartoon-button-state='hover'],
+.cartoon-button[data-cartoon-button-tone='red'][data-cartoon-button-state='hover'] {
+  --cartoon-label-fill: #04ffff;
+  --cartoon-label-stroke: #121e1e;
+}
+
+.cartoon-button[data-cartoon-button-tone='blue'][data-cartoon-button-state='pressed'],
+.cartoon-button[data-cartoon-button-tone='red'][data-cartoon-button-state='pressed'] {
+  --cartoon-button-face: #00ddeb;
+  --cartoon-button-rim: #195064;
+  --cartoon-button-highlight: #a9ffff;
+  --cartoon-button-bevel: #0a8b9b;
+  --cartoon-label-fill: #fff000;
+  --cartoon-label-stroke: #172015;
+}
+
+.cartoon-button[data-cartoon-button-tone='cyan'][data-cartoon-button-state='hover'],
+.cartoon-button[data-cartoon-button-tone='cyan'][data-cartoon-button-state='pressed'] {
+  --cartoon-label-fill: #061521;
+  --cartoon-label-stroke: #fff4b2;
+}
+
+.cartoon-button[data-cartoon-button-state='pressed'] .cartoon-control-art {
+  transform: translateY(-1px) scale(var(--cartoon-button-pressed-scale), .97);
+  transform-origin: center;
+}
+
+.cartoon-button[data-cartoon-button-state='pressed'] .cartoon-button-shadow {
+  visibility: hidden;
+}
+
+.cartoon-button[data-cartoon-button-state='pressed'] .cartoon-control-label {
+  transform: translateY(-1px);
+}
+
+.cartoon-button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.cartoon-button:focus-visible,
+.cartoon-checkbox:has(input:focus-visible) {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.cartoon-input {
+  position: absolute;
+  display: block;
+}
+
+.cartoon-input:focus-within .cartoon-control-art {
+  filter: drop-shadow(0 0 1px rgb(255 246 206 / 85%));
+}
+
+.cartoon-input-value {
+  position: absolute;
+  left: 21px;
+  top: 6px;
+  box-sizing: border-box;
+  width: calc(100% - 40px);
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+  caret-color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  -webkit-text-stroke: .5px #172035;
+  paint-order: stroke fill;
+}
+
+.cartoon-input-value:is(:autofill, :-webkit-autofill) {
+  background-clip: text;
+  -webkit-text-fill-color: #fff;
+}
+
+.cartoon-checkbox {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 37px;
+  cursor: pointer;
+}
+
+.cartoon-checkbox input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.cartoon-checkbox-art {
+  flex: 0 0 37px;
+  width: 37px;
+  height: 37px;
+  pointer-events: none;
+}
+
+.cartoon-checkbox input:not(:checked) + svg .cartoon-checkbox-tick {
+  display: none;
+}
+
+.cartoon-checkbox:has(input:disabled) {
+  cursor: default;
+}

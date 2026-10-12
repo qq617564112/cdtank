@@ -1,0 +1,73 @@
+.mend-maintenance-options {
+  position: absolute;
+  left: 224px;
+  top: 52px;
+  pointer-events: auto;
+}
+
+.mend-maintenance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 122px);
+  grid-template-rows: repeat(3, 104px);
+  gap: 6px 4px;
+}
+
+.mend-maintenance-grid > .shop-source-button.mend-maintenance-card {
+  position: relative;
+  --cartoon-label-outline: 0;
+  --cartoon-label-shadow: none;
+}
+
+.mend-maintenance-options .mend-maintenance-content {
+  position: absolute;
+  inset: 12px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  color: #643819;
+  font: 12px/16px 'HappyZcool-2016', sans-serif;
+  white-space: nowrap;
+  -webkit-text-stroke: .7px #fff0c5;
+  paint-order: stroke fill;
+}
+
+.mend-maintenance-heading,
+.mend-maintenance-duration {
+  min-width: 0;
+  color: #643819;
+  -webkit-text-stroke: .7px #fff0c5;
+  paint-order: stroke fill;
+  text-shadow: none;
+}
+
+.mend-maintenance-price {
+  display: grid;
+  grid-template-columns: 12px max-content minmax(0, 1fr);
+  align-items: center;
+  column-gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.mend-maintenance-price > .home-currency-dot {
+  width: 12px;
+  height: 12px;
+}
+
+.mend-maintenance-currency {
+  color: #76cee7;
+  -webkit-text-stroke: .8px #131b13;
+}
+
+.mend-maintenance-price[data-maintenance-currency='1'] .mend-maintenance-currency {
+  color: #fff0a8;
+}
+
+.mend-maintenance-amount {
+  color: #fffde0;
+  font-size: 12px;
+  text-align: right;
+  -webkit-text-stroke: .7px #373727;
+}

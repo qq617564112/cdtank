@@ -17,7 +17,7 @@ decoder=new WsClient(serviceProto,{server:`ws://127.0.0.1:${serverPort}`,logger:
 let serverLog='';
 const runId=new Date().toISOString().replace(/[:.]/g,'-');
 const output='recovery/output/browser-tank-shop-owned-part-source-regions-'+runId;
-const catalog=JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json','utf8'));
+const catalog=JSON.parse(await readFile('apps/web/public/combat-catalog.json','utf8'));
 const source=JSON.parse(await readFile('recovery/output/tank-shop-part-parent-source.json','utf8'));
 for(const row of source.slotCountLoader.rows)assert.equal(catalog.tankTypes.find(v=>v.tankId===row.tankId)?.partSlotCount,row.partSlotCount,'Root full21 slot metadata required before browser startup');
 const directory=await mkdtemp(join(tmpdir(),'cdtank-tank-shop-owned-part-source-regions-'));
@@ -66,7 +66,7 @@ async function nativeClick(session, selector) {
 async function startServer(){const start=serverLog.length;const env={...process.env,PORT:String(serverPort),ACCOUNT_DB_PATH:database,MATCH_TIME_LIMIT_SECONDS:'12'};delete env.MATCH_MIN_PLAYERS;server=spawn(process.execPath,['--import','tsx','apps/server/src/index.ts'],{env,stdio:['ignore','pipe','pipe']});for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{serverLog+=String(d);});const deadline=Date.now()+15000;while(!serverLog.slice(start).includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));assert(serverLog.slice(start).includes('Server started'),serverLog.slice(start));}
 try {
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:vitePort,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:`ws://127.0.0.1:${serverPort}`,ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:vitePort,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:`ws://127.0.0.1:${serverPort}`,ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required',`--remote-debugging-port=${cdpPort}`,
@@ -104,7 +104,7 @@ ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFra
   const owned=network.filter(n=>n.direction==='received'&&n.name==='OwnedRoles'&&n.success).at(-1)?.response;
   assert(owned);
   const records=owned.equipment.map(r=>({name:r.name,fields:new Map(r.fields)}));
-  const ui=JSON.parse(await readFile('recovery/output/web-assets/ui.json','utf8'));
+  const ui=JSON.parse(await readFile('apps/web/public/ui.json','utf8'));
   const layout=ui.layouts.find(l=>l.path.endsWith('shop_tankpage_part.xml'));
   const slots=['bgInternalPart0','bgInternalPart1','bgExternalPart0','bgExternalPart1','bgExternalPart2'];
   const dynamic=['picHatIcon','picMarkIcon','picInternalIcon0','picInternalIcon1','picExternalIcon0','picExternalIcon1','picExternalIcon2'];

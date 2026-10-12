@@ -1,7 +1,8 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {GameMessage} from '../resources/game-message';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import './lobby-player-list.css';
-import {PlayerListScrollbar} from './player-list-scrollbar';
+import {GameScrollbar} from '../resources/game-scrollbar';
 import {useEffect, useRef, useState, type KeyboardEvent} from 'react';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {loadUiFont} from '../resources/source-ui-fonts';
@@ -31,7 +32,6 @@ export function LobbyPlayerListView({players, status, chooseTarget, openPlayer}:
   const selectedId = players.some(player => player.accountId === selected) ? selected : '';
   const layout = ui ? new HomeSourceLayout(ui, 'playerlist.xml') : undefined;
   const props = layout ? sourceProps(ui!, layout, 'playerlist.xml', 'PlayerList') : undefined;
-  const selection = layout ? sourceProps(ui!, layout, 'playerlist.xml', 'PlayerList', layout.control('PlayerList').properties.SelectionImage) : undefined;
   function move(event: KeyboardEvent<HTMLButtonElement>, index: number): void {
     if (event.key === 'F10' && event.shiftKey) {event.preventDefault(); event.stopPropagation(); openPlayer?.(players[index]); return;}
     if (event.key === 'Enter') {event.preventDefault(); event.stopPropagation(); chooseTarget?.(players[index]); return;}
@@ -47,20 +47,20 @@ export function LobbyPlayerListView({players, status, chooseTarget, openPlayer}:
     const button = list.current?.querySelector<HTMLButtonElement>(`[data-lobby-player-index="${Math.min(next, players.length - 1)}"]`);
     button?.focus(); button?.scrollIntoView({block: 'nearest'});
   }
-  return <div {...props} className="lobby-player-scroll-shell"><ul ref={list} className="lobby-player-list" data-lobby-player-list=""
+  return <div {...props} className="lobby-player-scroll-shell"
+    style={{...props?.style, height: 'var(--lobby-player-list-height, 393px)'}}><ul ref={list} className="lobby-player-list" data-lobby-player-list=""
     data-source-font="xiangjiao-brush" data-source-font-provider="web-ttf" data-source-font-ready={fontReady}
     role="listbox" aria-label="大厅玩家列表" aria-busy={!ui} title={error || status || undefined}>
-    {(error || status) && <li role="presentation"><output data-lobby-presence-status="" role="status">{error || status}</output></li>}
     {players.map((player, index) => <li key={player.accountId} role="presentation">
       <button type="button" role="option" data-lobby-player-account={player.accountId} data-lobby-player-index={index}
         aria-selected={selectedId === player.accountId} title={player.name}
-        style={selectedId === player.accountId ? {...backgroundStyle(selection?.style)} : undefined}
-        data-source-selection-asset={selectedId === player.accountId ? selection?.['data-source-asset'] : undefined}
         onContextMenu={event => {event.preventDefault(); setSelected(player.accountId); openPlayer?.(player);}}
         onClick={() => setSelected(player.accountId)} onDoubleClick={() => chooseTarget?.(player)} onKeyDown={event => move(event, index)}
         onKeyUp={event => {
           if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter'].includes(event.key) || event.key === 'F10' && event.shiftKey) event.stopPropagation();
-        }}><SourceFeedbackText text={player.name}/></button>
+        }}>
+        {selectedId === player.accountId && <GameSelectionHighlight/>}
+        <SourceFeedbackText text={player.name}/></button>
     </li>)}
-  </ul>{ui && layout && <PlayerListScrollbar list={list} ui={ui} properties={layout.control('PlayerList').properties} />}</div>;
+  </ul><GameMessage data-lobby-presence-status="" text={error || status}/><GameScrollbar list={list} step={20} label="玩家列表滚动条"/></div>;
 }

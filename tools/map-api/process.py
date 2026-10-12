@@ -1,0 +1,440 @@
+"""Redraw complete original object atlases and restore their model UV layout."""
+
+import argparse
+from contextlib import contextmanager
+import fcntl
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
+from assets import ROOT, object_entry, texture_files, uv_triangles
+
+spec = importlib.util.spec_from_file_location('tank_image_api', ROOT / 'tools/tank-api/process.py')
+api = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(api)
+cv2.setNumThreads(2)
+
+
+def paths(workspace, model):
+    output = Path(workspace) / 'output/imagegen/map-api4k' / model
+    entry = object_entry(model)
+    relative = entry.get('runtimeFolder', entry.get('sourceFolder', 'Data/scnobj/' + model))
+    public = Path(workspace) / 'apps/web/public/map-audit/api4k' / relative
+    output.mkdir(parents=True, exist_ok=True)
+    public.mkdir(parents=True, exist_ok=True)
+    return output, public
+
+
+@contextmanager
+def one_request(workspace):
+    folder = Path(workspace) / 'output/imagegen/map-api4k'
+    folder.mkdir(parents=True, exist_ok=True)
+    with (folder / '.image-request.lock').open('a') as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        yield
+
+
+def uv_mask(model, filename, size):
+    mask = Image.new('L', size)
+    draw = ImageDraw.Draw(mask)
+    triangles = uv_triangles(model, filename)
+    for triangle in triangles:
+        # Repeated texture coordinates are rasterized into the same unit tile.
+        low, high = np.floor(triangle.min(axis=0)).astype(int), np.floor(triangle.max(axis=0)).astype(int)
+        for x in range(low[0], high[0] + 1):
+            for y in range(low[1], high[1] + 1):
+                points = (triangle - [x, y]) * np.array(size)
+                draw.polygon([tuple(point) for point in points], fill=255)
+    if not triangles.size:
+        draw.rectangle((0, 0, size[0], size[1]), fill=255)
+    return np.array(mask)
+
+
+def prepare(model, workspace, selected=None):
+    output, _ = paths(workspace, model)
+    for folder in ('inputs', 'native', 'prompts', 'metadata'):
+        (output / folder).mkdir(exist_ok=True)
+    for source in texture_files(model):
+        if selected and source.name not in selected:
+            continue
+        original = Image.open(source).convert('RGBA')
+        item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
+        rotation = item.get('inputRotation', 0)
+        reference = original.transpose(Image.Transpose.ROTATE_180) if rotation == 180 else original
+        factor = 2048 / max(original.size)
+        size = tuple(round(value * factor) for value in original.size)
+        image = reference.resize(size, Image.Resampling.BILINEAR)
+        alpha = np.array(image.getchannel('A'))
+        background = (255, 0, 255) if alpha.min() < 255 else (190,) * 3
+        background_name = '高饱和紫色（#FF00FF）' if alpha.min() < 255 else '灰色'
+        opaque = Image.new('RGBA', size, (*background, 255))
+        pixels = np.array(Image.alpha_composite(opaque, image).convert('RGB'))
+        margin = tuple(max(8, round(value / 64)) for value in size)
+        canvas = Image.new('RGB', (size[0] + margin[0] * 2, size[1] + margin[1] * 2), background)
+        canvas.paste(Image.fromarray(pixels), margin)
+        ImageDraw.Draw(canvas).rectangle((margin[0] - 3, margin[1] - 3,
+            margin[0] + size[0] + 2, margin[1] + size[1] + 2), outline=(245,) * 3, width=2)
+        label = item.get('canvasLabel')
+        if label:
+            font = ImageFont.load_default(size=14)
+            ImageDraw.Draw(canvas).text((round(canvas.width * label['xFraction']), margin[1] / 2),
+                label['text'], font=font, fill=(245,) * 3, anchor='mm')
+        canvas.save(output / 'inputs' / source.name)
+        subject = item.get('promptSubject', '地图物体')
+        prompt = (f'这是一张{subject}的完整二维UV贴图。将这张贴图忠实高清化，输出4K。'
+            '保持原来的卡通风格、全部图案、配色、明暗关系和细节数量，线条清晰锐利。'
+            f'{background_name}是不透明辅助背景，画布外围白色细边是固定边界。保留整个画布和外框，'
+            '边界内图块的位置、大小、方向、形状与输入完全一致，不移动、旋转、变形或重新排版。'
+            f'树叶、孔洞和缺口的轮廓保持原样，辅助底色保持{background_name}，白色引导边保持白色。'
+            '文字和符号逐笔忠实描摹，保留原始方向；'
+            '直线和圆形按原始轮廓描摹，保留不规则手绘笔触和像素边缘，不自动规整。'
+            '只高清化已有内容，不添加木纹、裂缝、铆钉、光泽或其它新细节。'
+            '输出相同布局的平面二维贴图，无透视、无3D模型、无水印。')
+        if label:
+            prompt += (f"画布外框上方的{label['text']}是位置提示，不是原图文字。"
+                '该提示下方、右上圆形油箱盖面板的顶部窄条是深暗柔和阴影；'
+                '忠实保留输入的暗色渐变，不将它改画成车身色块或锈斑。提示保留在外框之外。')
+        (output / 'prompts' / (source.stem + '.txt')).write_text(prompt + '\n')
+        api.save_json(output / 'inputs' / (source.stem + '.json'), {
+            'atlasSize': list(size), 'margin': list(margin), 'canvasSize': list(canvas.size),
+            'sourceSize': list(original.size), 'inputRotation': rotation,
+            'inputResampling': 'bilinear',
+            'helperGuides': 'canvas-frame',
+            'canvasLabel': label,
+            'helperBackground': list(background), 'alphaComposited': True})
+        print(f'{source.name}: opaque complete atlas prepared, background={background_name}', flush=True)
+
+
+def generate(model, workspace, selected, revision):
+    output, _ = paths(workspace, model)
+    config = json.loads((api.PRIVATE / 'image-config.json').read_text())
+    capabilities = api.PRIVATE / 'capabilities.json'
+    if capabilities.exists():
+        config.update(json.loads(capabilities.read_text()))
+    for source in texture_files(model):
+        if selected and source.name not in selected:
+            continue
+        native = output / 'native' / source.name
+        metadata_path = output / 'metadata' / (source.stem + '.json')
+        if (api.valid_image(native) and metadata_path.exists() and not revision
+                and json.loads(metadata_path.read_text()).get('status') == 'received'):
+            print(f'{source.name}: existing result', flush=True)
+            continue
+        prepare(model, workspace, [source.name])
+        input_path = output / 'inputs' / source.name
+        if not api.valid_image(input_path):
+            raise RuntimeError(f'Missing reference: {input_path}')
+        if not revision and reuse_completed(model, source, workspace, input_path):
+            continue
+        original = Image.open(source)
+        maximum = config.get('requestWidth', 4096)
+        size = tuple(round(maximum * value / max(original.size)) for value in original.size)
+        prompt = (output / 'prompts' / (source.stem + '.txt')).read_text().strip()
+        if revision:
+            prompt += '\n完整原图描摹要求：' + revision
+        prepared = json.loads((output / 'inputs' / (source.stem + '.json')).read_text())
+        if prepared['helperBackground'] == [255, 0, 255]:
+            prompt += ('\n本次辅助背景统一为高饱和紫色（#FF00FF），以输入图为准。'
+                       '上传参考已经合成为完全不透明的RGB平面图。纯紫色空白保持RGB(255,0,255)，'
+                       '图块内部及边缘的紫色混合像素也按上传图逐处复制，保持实际合成RGB和柔和渐变。'
+                       '不自行抠图、去紫底、恢复前景色或提高图块的不透明度；去底由后续处理完成。'
+                       '只清晰化已有轮廓，不将内部柔和渐变改成高光、齿纹或新色块。外围白框保持原位。')
+        (output / 'prompts' / (source.stem + '-request.txt')).write_text(prompt + '\n')
+        metadata = {'filename': source.name, 'object': model, 'model': config['model'],
+            'endpoint': config['base'].rstrip('/') + '/images/edits',
+            'requestedSize': f'{size[0]}x{size[1]}', 'quality': 'max',
+            'inputsPerRequest': 1, 'background': 'opaque', 'status': 'submitted',
+            'generationScope': 'whole-atlas', 'reference': str(source),
+            'referenceCoverage': 'complete-original',
+            'input': str(input_path), 'corrections': []}
+        item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
+        metadata['originalSource'] = item.get('originalSource', str(source.relative_to(ROOT)))
+        metadata['inputRotation'] = item.get('inputRotation', 0)
+        metadata['helperBackground'] = prepared['helperBackground']
+        metadata['alphaComposited'] = prepared['alphaComposited']
+        metadata['inputResampling'] = prepared['inputResampling']
+        metadata['helperGuides'] = prepared['helperGuides']
+        metadata['canvasLabel'] = prepared['canvasLabel']
+        with one_request(workspace):
+            api.submit_edit(input_path, native, metadata_path, metadata, config, workspace, prompt)
+
+
+def reuse_completed(model, source, workspace, input_path):
+    candidates = json.loads((ROOT / 'tools/map-api/reuse.json').read_text()) if (ROOT / 'tools/map-api/reuse.json').exists() else {}
+    key = model + '/' + source.name
+    output, public = paths(workspace, model)
+    for candidate in candidates.get(key, []):
+        other_model, filename = candidate.split('/', 1)
+        other = Path(workspace) / 'output/imagegen/map-api4k' / other_model
+        if not (other / 'review.json').exists():
+            other = ROOT / 'output/imagegen/map-api4k' / other_model
+        review_path = other / 'review.json'
+        if not review_path.exists():
+            continue
+        review = json.loads(review_path.read_text())
+        if review.get('status') != 'passed' or review.get('confirmedIssueCount') != 0 or review.get('unresolvedCount') != 0:
+            continue
+        prepared = other / 'inputs' / filename
+        if not prepared.exists():
+            continue
+        with Image.open(input_path) as current, Image.open(prepared) as previous:
+            if current.size != previous.size or current.convert('RGB').tobytes() != previous.convert('RGB').tobytes():
+                continue
+        other_native = other / 'native' / filename
+        other_metadata = other / 'metadata' / (Path(filename).stem + '.json')
+        if not api.valid_image(other_native) or not other_metadata.exists():
+            continue
+        metadata = json.loads(other_metadata.read_text())
+        if metadata.get('status') != 'received':
+            continue
+        shutil.copy2(other_native, output / 'native' / source.name)
+        metadata.update(filename=source.name, object=model, reference=str(source), input=str(input_path),
+                        reusedFrom=candidate, corrections=[])
+        item = next(row for row in object_entry(model)['textures'] if row['filename'] == source.name)
+        metadata['originalSource'] = item.get('originalSource', str(source.relative_to(ROOT)))
+        metadata.pop('runtime', None)
+        api.save_json(output / 'metadata' / (source.stem + '.json'), metadata)
+        print(f'{source.name}: reused complete atlas from {candidate}; no API request', flush=True)
+        return True
+    return False
+
+
+def registered(reference, pixels, boundary):
+    height, width = pixels.shape[:2]
+    scale = min(1, 1024 / max(height, width))
+    shape = (round(width * scale), round(height * scale))
+    old = cv2.resize(cv2.cvtColor(reference, cv2.COLOR_RGB2GRAY), shape)
+    new = cv2.resize(cv2.cvtColor(pixels, cv2.COLOR_RGB2GRAY), shape)
+    padding = 64
+    old = cv2.copyMakeBorder(old, padding, padding, padding, padding, cv2.BORDER_WRAP)
+    new = cv2.copyMakeBorder(new, padding, padding, padding, padding, cv2.BORDER_WRAP)
+    flow = cv2.calcOpticalFlowFarneback(old, new, None, .5, 5, 31, 5, 7, 1.5, 0)
+    flow = flow[padding:-padding, padding:-padding]
+    flow = cv2.resize(flow, (width, height)) / scale
+    yy, xx = np.indices((height, width), dtype=np.float32)
+    aligned = cv2.remap(pixels, xx + flow[:, :, 0], yy + flow[:, :, 1],
+        cv2.INTER_LINEAR, borderMode=cv2.BORDER_WRAP)
+    applied = True
+    if boundary.any():
+        expected = reference[boundary].astype(np.float32)
+        before_error = np.mean(np.abs(pixels[boundary].astype(np.float32) - expected))
+        after_error = np.mean(np.abs(aligned[boundary].astype(np.float32) - expected))
+        if after_error > before_error:
+            aligned = pixels
+            applied = False
+    return aligned, [{'method': 'whole-atlas-optical-registration',
+        'bounds': [0, 0, width, height], 'scale': scale, 'applied': applied}]
+
+
+def finish(model, workspace, selected):
+    output, public = paths(workspace, model)
+    for source in texture_files(model):
+        if selected and source.name not in selected:
+            continue
+        native_path = output / 'native' / source.name
+        if not native_path.exists():
+            continue
+        original = Image.open(source).convert('RGBA')
+        native = Image.open(native_path).convert('RGB')
+        metadata_path = output / 'metadata' / (source.stem + '.json')
+        metadata = json.loads(metadata_path.read_text())
+        if metadata.get('inputRotation', 0) == 180:
+            native = native.transpose(Image.Transpose.ROTATE_180)
+        prep = json.loads((output / 'inputs' / (source.stem + '.json')).read_text())
+        if abs(native.width / native.height - original.width / original.height) > .02:
+            raise ValueError(f'{source.name}: unexpected API aspect ratio {native.size}')
+        sx, sy = native.width / prep['canvasSize'][0], native.height / prep['canvasSize'][1]
+        mx, my = prep['margin']
+        width, height = prep['atlasSize']
+        native = native.crop((round(mx * sx), round(my * sy), round((mx + width) * sx), round((my + height) * sy)))
+        # Keep the outer canvas guide out of filtering at repeated texture edges.
+        cropped = np.array(native)
+        border = max(1, round(min(native.width / original.width,
+                                  native.height / original.height) * .5))
+        cropped[:border] = cropped[border:border + 1]
+        cropped[-border:] = cropped[-border - 1:-border]
+        cropped[:, :border] = cropped[:, border:border + 1]
+        cropped[:, -border:] = cropped[:, -border - 1:-border]
+        native = Image.fromarray(cropped)
+        reference = original.resize(native.size, Image.Resampling.BILINEAR)
+        mask = uv_mask(model, source.name, native.size)
+        alpha = np.array(reference.getchannel('A'))
+        mask[alpha == 0] = 0
+        background = np.float32(metadata.get('helperBackground', [190, 190, 190]))
+        registration_reference = reference
+        if metadata.get('alphaComposited'):
+            prepared_rgb = Image.open(output / 'inputs' / source.name).convert('RGB')
+            if metadata.get('inputRotation', 0) == 180:
+                prepared_rgb = prepared_rgb.transpose(Image.Transpose.ROTATE_180)
+            registration_reference = prepared_rgb.crop((mx, my, mx + width, my + height)).resize(
+                native.size, Image.Resampling.BILINEAR)
+        boundary = (mask > 0) & ((alpha < 255) |
+            (cv2.erode(mask, np.ones((9, 9), np.uint8), borderType=cv2.BORDER_CONSTANT, borderValue=0) == 0))
+        pixels, registration = registered(np.array(registration_reference.convert('RGB')),
+            np.array(native), boundary)
+        if metadata.get('alphaComposited'):
+            foreground_direction = np.array(reference.convert('RGB')).astype(np.float32) - background
+            composited_pixels = pixels.astype(np.float32)
+            estimated_coverage = ((composited_pixels - background) * foreground_direction).sum(axis=2) / np.maximum(
+                (foreground_direction * foreground_direction).sum(axis=2), 1)
+            coverage = np.maximum(alpha.astype(np.float32) / 255,
+                                  np.clip(estimated_coverage, 0, 1))[:, :, None]
+            if metadata.get('helperBackground') == [255, 0, 255]:
+                reference_rgb = np.array(reference.convert('RGB')).astype(np.float32)
+                expected_cast = np.minimum(reference_rgb[:, :, 0], reference_rgb[:, :, 2]) - reference_rgb[:, :, 1]
+                returned_cast = np.minimum(composited_pixels[:, :, 0], composited_pixels[:, :, 2]) - composited_pixels[:, :, 1]
+                # A purple cast above the original colour is residual matte; its
+                # excess estimates how much of the returned pixel is background.
+                matte_coverage = np.clip((255 - returned_cast) /
+                    np.maximum(255 - expected_cast, 1), 0, 1)
+                matte_pixels = returned_cast > expected_cast + 15
+                coverage[matte_pixels] = matte_coverage[matte_pixels, None]
+                coverage[returned_cast <= expected_cast + 15] = 1
+            pixels = np.uint8(np.clip((composited_pixels -
+                (1 - coverage) * background) / np.maximum(coverage, 1 / 255), 0, 255))
+        # Remove helper background and guide contamination at UV and alpha edges.
+        source_scale = native.width / original.width
+        edge_width = max(4, round(source_scale * 1.5))
+        interior = cv2.erode(mask, np.ones((edge_width * 2 + 1,) * 2, np.uint8),
+                             borderType=cv2.BORDER_CONSTANT, borderValue=0)
+        edge = (mask > 0) & (interior == 0)
+        triangles = uv_triangles(model, source.name)
+        sides = triangles[:, 1:] - triangles[:, :1]
+        area = np.abs(sides[:, 0, 0] * sides[:, 1, 1] - sides[:, 0, 1] * sides[:, 1, 0])
+        source_span = np.ptp(triangles, axis=1) * np.array(original.size)
+        sampled_lines = Image.new('L', native.size)
+        draw = ImageDraw.Draw(sampled_lines)
+        for triangle in triangles[(area < 1e-8) | (source_span.min(axis=1) < 1)]:
+            low = np.floor(triangle.min(axis=0)).astype(int)
+            high = np.floor(triangle.max(axis=0)).astype(int)
+            for x in range(low[0], high[0] + 1):
+                for y in range(low[1], high[1] + 1):
+                    points = (triangle - [x, y]) * np.array(native.size)
+                    draw.polygon([tuple(point) for point in points], fill=255)
+        sampled_lines = cv2.dilate(np.array(sampled_lines),
+            np.ones((edge_width * 2 + 1,) * 2, np.uint8))
+        edge |= (mask > 0) & (sampled_lines > 0)
+        if metadata.get('alphaComposited'):
+            cutout_edge = cv2.dilate(np.uint8(alpha < 255),
+                np.ones((edge_width * 2 + 1,) * 2, np.uint8))
+            edge |= (mask > 0) & (cutout_edge > 0)
+        if metadata.get('helperBackground') == [255, 0, 255]:
+            magenta = np.minimum(pixels[:, :, 0], pixels[:, :, 2]).astype(np.float32) - pixels[:, :, 1]
+            original_rgb = np.array(reference.convert('RGB')).astype(np.float32)
+            original_magenta = np.minimum(original_rgb[:, :, 0], original_rgb[:, :, 2]) - original_rgb[:, :, 1]
+            edge |= (mask > 0) & (magenta > 45) & (magenta - original_magenta > 55)
+        edge_pixels = pixels[edge].astype(np.float32)
+        neutral = edge_pixels.max(axis=1) - edge_pixels.min(axis=1) < 10
+        intensity = edge_pixels.mean(axis=1)
+        reference_rgb = np.array(reference.convert('RGB'))[edge].astype(np.float32)
+        delta = edge_pixels - reference_rgb
+        difference = np.linalg.norm(delta, axis=1)
+        canvas_edge = np.zeros_like(mask, dtype=bool)
+        canvas_edge[:edge_width] = canvas_edge[-edge_width:] = True
+        canvas_edge[:, :edge_width] = canvas_edge[:, -edge_width:] = True
+        white_region = canvas_edge[edge] if metadata.get('helperGuides') == 'canvas-frame' else np.ones_like(neutral)
+        contamination = neutral & (intensity > 220) & white_region
+        if metadata.get('helperGuides') != 'canvas-frame' and alpha.min() == 255:
+            contamination |= ((reference_rgb.mean(axis=1) < 64) &
+                (intensity - reference_rgb.mean(axis=1) > 55))
+        for index, guide_color in enumerate((background, np.float32([245, 245, 245]))):
+            guide_pixels = np.linalg.norm(edge_pixels - guide_color, axis=1) < 22
+            direction = guide_color - reference_rgb
+            amount = (delta * direction).sum(axis=1) / np.maximum((direction * direction).sum(axis=1), 1)
+            remainder = np.linalg.norm(delta - amount[:, None] * direction, axis=1)
+            guide_pixels |= (amount > .12) & (amount < 1.05) & (remainder < 15)
+            if index == 1:
+                guide_pixels &= white_region
+            contamination |= guide_pixels
+        if metadata.get('helperBackground') == [255, 0, 255]:
+            magenta = np.minimum(edge_pixels[:, 0], edge_pixels[:, 2]) - edge_pixels[:, 1]
+            original_magenta = np.minimum(reference_rgb[:, 0], reference_rgb[:, 2]) - reference_rgb[:, 1]
+            contamination |= (magenta > 45) & (magenta - original_magenta > 55)
+            native_edge = composited_pixels[edge]
+            weak_cutout_edge = (alpha[edge] <= 96) & (cv2.dilate(np.uint8(alpha == 0),
+                np.ones((edge_width * 2 + 1,) * 2, np.uint8))[edge] > 0)
+            minor_contamination = np.zeros(len(edge_pixels), dtype=bool)
+            for channel in range(3):
+                others = [(channel + 1) % 3, (channel + 2) % 3]
+                dominant = edge_pixels[:, channel] - edge_pixels[:, others].max(axis=1)
+                original_dominant = reference_rgb[:, channel] - reference_rgb[:, others].max(axis=1)
+                native_dominant = native_edge[:, channel] - native_edge[:, others].max(axis=1)
+                contamination |= (dominant > 45) & (dominant - original_dominant > 55) & (dominant - native_dominant > 55)
+                minor_contamination |= (weak_cutout_edge & (original_dominant <= 0) &
+                    (dominant > 12) & (dominant - original_dominant > 20) & (dominant - native_dominant > 12))
+        guides = np.zeros_like(mask)
+        guide_pixels = contamination & (difference > 55)
+        if metadata.get('helperBackground') == [255, 0, 255]:
+            guide_pixels |= minor_contamination
+        guides[edge] = np.uint8(guide_pixels) * 255
+        valid = mask > 0
+        reliable_artwork = valid & (guides == 0) & (alpha >= 128)
+        artwork = reliable_artwork if reliable_artwork.any() else valid & (guides == 0)
+        padding = (~valid) | (guides > 0)
+        if artwork.any() and padding.any():
+            _, nearest = cv2.distanceTransformWithLabels(np.uint8(~artwork), cv2.DIST_L2, 5, labelType=cv2.DIST_LABEL_PIXEL)
+            pixels[padding] = pixels[artwork][nearest[padding] - 1]
+            if alpha.min() == 255:
+                # Repeated and degenerate UVs also sample the padded boundary.
+                # Choose generated artwork with the corresponding source colour
+                # when a spatial neighbour belongs to a different colour region.
+                shape = (min(256, pixels.shape[1]), min(256, pixels.shape[0]))
+                source_rgb = np.array(reference.convert('RGB')).astype(np.float32)
+                source_small = cv2.resize(source_rgb, shape, interpolation=cv2.INTER_AREA)
+                generated_small = cv2.resize(pixels, shape, interpolation=cv2.INTER_AREA)
+                trusted = cv2.resize(np.uint8(artwork & (interior > 0)),
+                    shape, interpolation=cv2.INTER_NEAREST) > 0
+                if trusted.any():
+                    palette = np.ascontiguousarray(generated_small[trusted].astype(np.float32))
+                    index = cv2.flann_Index(palette, {'algorithm': 1, 'trees': 4})
+                    choices, distances = index.knnSearch(
+                        np.ascontiguousarray(source_small.reshape(-1, 3)), 1, params={'checks': 64})
+                    generated_choices = generated_small[trusted][choices[:, 0]].reshape(
+                        shape[1], shape[0], 3)
+                    colour_error = cv2.resize(distances.reshape(shape[1], shape[0]),
+                        (pixels.shape[1], pixels.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    neighbour_error = ((source_rgb[padding] - pixels[padding]) ** 2).sum(axis=1)
+                    matching = np.zeros_like(padding)
+                    matching[padding] = ((colour_error[padding] < 55 ** 2) &
+                        (neighbour_error > colour_error[padding] + 55 ** 2))
+                    generated_choices = cv2.resize(generated_choices,
+                        (pixels.shape[1], pixels.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    pixels[matching] = generated_choices[matching]
+        maximum = 4096
+        final_size = tuple(round(maximum * value / max(original.size)) for value in original.size)
+        final = Image.fromarray(pixels).resize(final_size, Image.Resampling.LANCZOS).convert('RGBA')
+        final.putalpha(original.getchannel('A').resize(final_size, Image.Resampling.LANCZOS))
+        final_pixels = np.array(final)
+        final_pixels[final_pixels[:, :, 3] == 0, :3] = 0
+        final = Image.fromarray(final_pixels)
+        if original.getchannel('A').getextrema() == (255, 255):
+            final = final.convert('RGB')
+        final.save(public / source.name)
+        metadata.update(finalSize=list(final_size), registration=registration, corrections=[],
+                        runtimeMode=final.mode, alphaSource=str(source),
+                        runtime=str((public / source.name).relative_to(Path(workspace))))
+        api.save_json(metadata_path, metadata)
+        print(f'{source.name}: registered {final_size}, {final.mode}', flush=True)
+    rows = [json.loads(path.read_text()) for path in sorted((output / 'metadata').glob('*.json'))]
+    api.save_json(output / 'manifest.json', {'object': model, 'textureCount': len(rows), 'textures': rows})
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('command', choices=['prepare', 'generate', 'finish'])
+    parser.add_argument('model')
+    parser.add_argument('--workspace', required=True)
+    parser.add_argument('--only', nargs='*')
+    parser.add_argument('--revision', default='')
+    args = parser.parse_args()
+    if args.command == 'prepare':
+        prepare(args.model, args.workspace, args.only)
+    elif args.command == 'generate':
+        generate(args.model, args.workspace, args.only, args.revision)
+    else:
+        finish(args.model, args.workspace, args.only)

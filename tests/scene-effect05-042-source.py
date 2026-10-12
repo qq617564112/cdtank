@@ -5,14 +5,14 @@ import struct
 import sys
 from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_sav import read_library
 from effect_controls import particle_controls
 from scene import read_scene
 from mv3 import Reader
 
 SOURCE = ROOT / 'recovery/output/verified/assets/data'
-WEB = ROOT / 'recovery/output/web-assets'
+WEB = ROOT / 'apps/web/public'
 original = read_library((SOURCE / 'Data/effect/effect.sav').read_bytes())
 published = json.loads((WEB / 'effect-library.json').read_text())
 by_id = {node['id']: node for node in original['nodes']}

@@ -4,7 +4,7 @@ import {BattleSound} from '../apps/web/src/audio/battle-sound';
 import type {MsgRoomEvent} from '../apps/shared/protocols/MsgRoomEvent';
 import type {MsgRoomSnapshot} from '../apps/shared/protocols/MsgRoomSnapshot';
 import {TankShotItemResult} from '../apps/web/src/assets/tanks/shot-item-result';
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
 const calls: unknown[][] = [];
 const consumer = new TankShotItemResult({spawnWorldEffect: (...args) => {
   calls.push(['endpoint', ...args]); return 1;
@@ -25,7 +25,7 @@ const created: any[] = [];
 const node = () => ({connect() {}, disconnect() {}, gain: {value: 1},
   positionX: {value: 0}, positionY: {value: 0}, positionZ: {value: 0},
   start() {created.push(this);}});
-const audio = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8'));
+const audio = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8'));
 Object.assign(sound, {active: true, catalog: audio, gain: node(), buffers: new Map([[49, {}]]),
   context: {state: 'running', currentTime: 5, createBufferSource: node, createPanner: node, createGain: node}});
 const event = {type: 'sceneObjectDestroyed', roomId: 'R1', playerId: 'remote', targetId: 'ENV:1'} as MsgRoomEvent;

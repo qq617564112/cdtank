@@ -12,7 +12,7 @@ interface Operation {
 }
 interface Row {node: number; parent?: number[]; origin: EffectVec3; operations: Operation[];}
 const native = JSON.parse(readFileSync('recovery/output/effect-sol-entity-provider-native.json', 'utf8')) as {rows: Row[]};
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 let operations = 0;
 for (const row of native.rows) {
   let values: number[] = [];

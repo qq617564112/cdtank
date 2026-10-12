@@ -5,7 +5,7 @@ import {EFFECT_IDENTITY,multiplyEffectMatrices} from '../apps/web/src/render/eff
 import {transformEffectPosition} from '../apps/web/src/render/effects/common/effect-native-space';
 const run=JSON.parse(readFileSync(process.argv[2],'utf8'));
 const source=JSON.parse(readFileSync('recovery/output/scene-breach04-source.json','utf8'));
-const library=JSON.parse(readFileSync('recovery/output/web-assets/scene-breach-0004.json','utf8'));
+const library=JSON.parse(readFileSync('apps/web/public/scene-breach-0004.json','utf8'));
 assert.equal(run.status,'PASS');
 assert(run.initial.every(w=>w.mode===1&&w.mapId===4&&w.match.sceneObjects.length===17));
 const rows=[];

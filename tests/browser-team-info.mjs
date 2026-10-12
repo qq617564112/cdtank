@@ -187,7 +187,7 @@ async function verifyTeamSource(page,width,height) {
 }
 async function joinRoom(page,roomId) {await click(page,'#refresh-rooms');await waitUntil(page,`[...document.querySelector('#room').options].some(o=>o.value===${JSON.stringify(roomId)})&&!document.querySelector('#refresh-rooms').disabled`);await select(page,'#room',roomId);await click(page,'#join');await waitUntil(page,`(${worldExpression})?.mapLoaded&&(${worldExpression}).phase==='WAITING'`);}
 try {
-  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5232,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3200',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();const sessions=[];
+  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5232,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3200',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();const sessions=[];
   for(const name of ['本队HUD甲','本队HUD乙']){const {browserContextId}=await command('Target.createBrowserContext');const page=await newPage(browserContextId);sessions.push(page);await input(page,'#player-name',name);}
   const [a,b]=sessions;await click(a,'#create-room-controls > summary');await select(a,'#room-mode',1);await select(a,'#room-map',7);await input(a,'#room-min-players',2);await click(a,'#create-room');await waitUntil(a,`(${worldExpression})?.mapLoaded&&(${worldExpression}).phase==='WAITING'`);const initial=await world(a);await joinRoom(b,initial.roomId);
   for(const page of sessions)await waitUntil(page,`(${worldExpression}).players.length===2`);

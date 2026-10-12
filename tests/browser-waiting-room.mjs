@@ -234,7 +234,7 @@ async function launchBrowser() {
 }
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5227,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3192',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5227,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3192',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();await launchBrowser();
   const sessions=[];
   for(const name of ['等待甲','等待乙']) {

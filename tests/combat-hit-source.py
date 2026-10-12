@@ -3,10 +3,10 @@ import json
 from pathlib import Path
 import sys
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from mv3 import read_mv3
 from effect_action_keys import action_identifier
-assets=ROOT/'recovery/output/web-assets'
+assets=ROOT/'apps/web/public'
 tank=next(t for t in json.loads((assets/'tanks.json').read_text()) if t['id']==105)
 links=json.loads((assets/'effect-links.json').read_text())
 file=next(f for f in links['files'] if f['tankCode']=='105')

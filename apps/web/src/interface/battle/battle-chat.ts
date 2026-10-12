@@ -113,7 +113,7 @@ export class BattleChat {
     const channel = this.state.channel;
     const targetName = this.state.targetName;
     if (channel === 2 && !targetName.trim()) {this.update({status: '请填写密语对象'}); return;}
-    this.update({pending: true, status: '正在发送…'});
+    this.update({pending: true, status: ''});
     void this.send(text, channel, targetName).then(() => {
       if (generation !== this.state.generation) return;
       this.update({status: '', editing: false, confirmedSends: this.state.confirmedSends + 1,

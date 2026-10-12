@@ -29,7 +29,7 @@ interface RuntimeFixture {
   tick(time:number):void;
 }
 try {
-  const definition=JSON.parse(readFileSync('recovery/output/web-assets/chat-emote-sequences.json','utf8')).sequences[0];
+  const definition=JSON.parse(readFileSync('apps/web/public/chat-emote-sequences.json','utf8')).sequences[0];
   const provider=new ChatEmoteSequence(definition);
   const production=new ChatEmotes();
   const fixture=production as unknown as RuntimeFixture;

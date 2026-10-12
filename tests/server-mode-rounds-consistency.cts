@@ -68,7 +68,7 @@ async function main(): Promise<void> {
     await wait(() => log.includes(`Server started at ${port}.`));
     for (const client of clients) {assert((await client.connect()).isSucc); assert((await client.callApi('Account', {})).isSucc);}
     const maps = await clients[0].callApi('ListMaps', {}); assert(maps.isSucc);
-    const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+    const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
     const loadout = [2007, 2, 4, 6, 8].map((itemTableId, index) => {
       const item = catalog.items.find(value => value.itemTableId === itemTableId); assert(item);
       return {slot: index ? index + 4 : 2, itemTableId, quantity: Math.min(2, item.battleUseMax)};

@@ -6,12 +6,12 @@ import sys
 import wave
 from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from cvd import read_cvd
 from scene import read_scene
 from scene_breach import decode_breach_tail
 base = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 reference = 'Data/scnobj/obj05424/c9.CVD'
 library = json.loads((web / 'scene-breach-0018.json').read_text())
 matches = [resource for resource in library['resources'] if resource['reference'] == reference]

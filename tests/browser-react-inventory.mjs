@@ -43,7 +43,7 @@ try {
   assert.equal(evidence.status,'PASS');
   result.inventoryEvidence=`${prefix}.json`;
   result.status='PASS';
-  result.reusedEvidence='recovery/docs/react-match-browser.md: E-R01 natural rounds and dual-page Effect11/GA15';
+  result.reusedEvidence='docs/recovery/react-match-browser.md: E-R01 natural rounds and dual-page Effect11/GA15';
   console.log('PASS: React inventory real mouse/keyboard/native drag, source 1080p/4K, pending isolation, failure preservation, account/restart and first-item consumption');
 } catch(error) {result.status='FAIL';result.error=String(error);throw error;}
 finally {

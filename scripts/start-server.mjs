@@ -7,10 +7,11 @@ const child = spawn(process.execPath, [resolve(workspace, 'dist/server/server/sr
   cwd: workspace,
   stdio: 'inherit',
   env: {...process.env,
-    CONTENT_TABLES: process.env.CONTENT_TABLES ?? resolve(workspace, 'recovery/output/verified/tables'),
-    WEB_ASSETS: process.env.WEB_ASSETS ?? resolve(workspace, 'recovery/output/web-assets'),
+    CONTENT_TABLES: process.env.CONTENT_TABLES ?? resolve(workspace, 'apps/server/resources/tables'),
+    SERVER_ASSETS: process.env.SERVER_ASSETS ?? resolve(workspace, 'apps/server/resources/assets'),
+    WEB_ASSETS: process.env.WEB_ASSETS ?? resolve(workspace, 'apps/web/public'),
     WEB_ROOT: process.env.WEB_ROOT ?? resolve(workspace, 'dist/web'),
-    ACCOUNT_DB_PATH: process.env.ACCOUNT_DB_PATH ?? resolve(workspace, 'recovery/output/accounts.sqlite')},
+    ACCOUNT_DB_PATH: process.env.ACCOUNT_DB_PATH ?? resolve(workspace, 'state/accounts.sqlite')},
 });
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
 child.on('error', error => {console.error(error); process.exitCode = 1;});

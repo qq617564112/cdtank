@@ -10,8 +10,8 @@ import {EFFECT_IDENTITY} from '../apps/web/src/render/effects/common/effect-rend
 import {EffectRuntime} from '../apps/web/src/render/effects/runtime/effect-runtime';
 import type {EffectRuntimeLibrary, EffectRuntimeTree} from '../apps/web/src/render/effects/runtime/effect-runtime-tree';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 const native = JSON.parse(readFileSync('recovery/output/effect-tree-create-native.json', 'utf8')) as {
   rows: {node: number; retain: boolean; created: {node: number; retain: boolean}[]}[];
 };
@@ -31,13 +31,13 @@ assert.deepEqual(drawnNodes.map(node => library.nodes[node].type), [1, 1, 1, 7, 
 const grids = library.textureGrids.filter(grid => drawnNodes.includes(grid.node));
 assert.equal(grids.length, 7);
 assert.ok(grids.every(grid => grid.resolution === 'published' && grid.asset));
-for (const grid of grids) assert.ok(existsSync(`recovery/output/web-assets/${grid.asset}`), grid.asset);
-const audio = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8')) as {
+for (const grid of grids) assert.ok(existsSync(`apps/web/public/${grid.asset}`), grid.asset);
+const audio = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8')) as {
   sounds: {name: string; asset: string}[];
 };
 const soundAsset = audio.sounds.find(sound => sound.name === 'SE38')!.asset;
 assert.equal(soundAsset, 'audio/sound/SE38.wav');
-assert.ok(existsSync(`recovery/output/web-assets/${soundAsset}`));
+assert.ok(existsSync(`apps/web/public/${soundAsset}`));
 
 const embeddedSoundAsset = audio.sounds.find(sound =>
   sound.name.toLowerCase() === embeddedSound.reference.toLowerCase())?.asset;

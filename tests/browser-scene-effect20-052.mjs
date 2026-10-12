@@ -72,7 +72,7 @@ try {
   for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{log+=String(d);});
   const deadline=Date.now()+15000;while(!log.includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));
   assert(log.includes('Server started'),log);
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5332,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3302',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5332,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3302',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--remote-debugging-port=9532',
@@ -142,7 +142,7 @@ ws.on('message', raw => {
   assert(evidence.initial.every(w=>w.mode===5&&w.mapId===20&&w.match.objectives.length===117));
   for(const page of pages)await nativeClick(page.sessionId,'[data-autopilot]');
   console.log('Ordinary0020 dual001/twoCPU source052 actual sprite draws');
-  const source=JSON.parse(await readFile('recovery/output/web-assets/scene-effects-0020.json','utf8'));
+  const source=JSON.parse(await readFile('apps/web/public/scene-effects-0020.json','utf8'));
   const snapshot=()=>Promise.all(pages.map(page=>evaluate(page.sessionId,`({observed:window.breach,instances:window.breachBattle.effects.instances.filter(i=>i.scenePlacement).map(i=>({handle:i.handle,id:i.sourceScenePlacementId,matrix:i.tree.parentMatrix,nodes:i.tree.nodes.map(n=>({node:n.definition.index,retain:n.lifecycle.retainWhenEnded,phase:n.lifecycle.phase,elapsed:n.lifecycle.elapsed,appearance:n.sprite?.history.entries[0]}))}))})`)));
   evidence.loaded=await snapshot();
   if(roundOnly){

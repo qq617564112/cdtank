@@ -6,7 +6,7 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 uc, _ = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
 uc.mem_map(0, 4096); uc.mem_map(0x2000000, 0x40000)
@@ -119,7 +119,7 @@ execute(0x42f385, OWNER, RECORD, FIELD, 0)
 assert before_role == bytes(uc.mem_read(ROLE, 0x370))
 assert before_record == bytes(uc.mem_read(RECORD, 0x140))
 
-tables = ROOT / 'recovery/output/verified/tables'
+tables = ROOT / 'apps/server/resources/tables'
 item = next(row for row in json.loads((tables / 'item.json').read_text())['rows']
             if int(row['values']['ItemTableID']) == 10001)
 assert item['values']['ItemType'] == '5'

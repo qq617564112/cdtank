@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import {useLayoutEffect, useRef, useState} from 'react';
 import type {MsgRoomInvitation} from '../../../../shared/protocols/MsgRoomInvitation';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
@@ -35,7 +36,7 @@ function InvitationCard({message, ignore, join}: {message: MsgRoomInvitation} & 
       data-invitation-password="" disabled={pending} value={password} onChange={event => setPassword(event.target.value)}/>
     <button type="button" data-invitation-accept="" disabled={pending || expired} onClick={() => {void accept();}}>加入房间</button>
     <button type="button" data-invitation-ignore="" disabled={pending} onClick={() => ignore(message.invitationId)}>忽略</button>
-    <output role="status" data-invitation-status="">{status}</output>
+    <GameMessage data-invitation-status="" text={status} tone="error"/>
   </article>;
 }
 function InvitationConfirm({message, ignore, join}: {message: MsgRoomInvitation} & Omit<RoomInvitationsProps, 'messages'>) {

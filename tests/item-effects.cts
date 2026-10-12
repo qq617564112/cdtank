@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
-import {roleAmmoUiDefinition} from '../recovery/evidence/combat/role-ammo-change-ui';
+import {roleAmmoUiDefinition} from '../tests/evidence/combat/role-ammo-change-ui';
 import {roleAmmoEffectName} from '../apps/web/src/assets/tanks/role-ammo-visual';
 const evidence: {rows: {itemTableId: number; effects: {effectId: number; tag: number; method: number; sound: string}[]}[]} =
   JSON.parse(readFileSync('recovery/output/item-effects-native.json', 'utf8'));
-const catalog: CombatCatalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const catalog: CombatCatalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
 for (const row of evidence.rows) {
   const item = catalog.items.find(item => item.itemTableId === row.itemTableId)!;
   assert(item);

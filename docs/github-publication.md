@@ -2,7 +2,7 @@
 
 仓库包含应用代码、转换工具、开发与还原文档、现有验收入口、依赖锁文件和资源安装脚本。已提取并转换的运行资源、字体和解码数据表压缩为 `.tar.xz`，单独发布到 GitHub Releases。下载源码后按 README 安装依赖及资源并启动，无需原客户端。
 
-安装后运行资源位于 `recovery/output/web-assets/`，内容表位于 `recovery/output/verified/tables/`。地图预览、角色缩略图和界面图片由图片图集与 `sprite-images.json` 提供。原客户端、下载与恢复输出、依赖、构建产物、账户存档及本地配置由 `.gitignore` 排除。
+安装后运行资源位于 `apps/web/public/`，内容表位于 `apps/server/resources/tables/`。地图预览、角色缩略图和界面图片由图片图集与 `sprite-images.json` 提供。原客户端、下载与恢复输出、依赖、构建产物、账户存档及本地配置由 `.gitignore` 排除。
 
 ## 资源包
 

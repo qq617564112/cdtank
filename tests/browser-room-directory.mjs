@@ -184,7 +184,7 @@ function expectedOrder(rooms, mode) {
 }
 try {
   await launchServer();
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     server: {port: 5221, strictPort: true, host: '127.0.0.1', hmr: false, proxy: {'/game': {target: 'ws://127.0.0.1:3184', ws: true, rewrite: () => '/'}}}});
   await vite.listen();
   const created = [];

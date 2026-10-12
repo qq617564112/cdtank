@@ -8,7 +8,7 @@ const run = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 assert(['PASS','INCOMPLETE'].includes(run.status));
 const results: unknown[] = [];
 assert(run.initial.every(world => world.mode === 1 && world.mapId === 2 && world.match.sceneObjects.filter(o => o.id.startsWith('ENV:')).length === 60 && world.match.sceneObjects.filter(o => o.id.startsWith('CASTLE:')).length === 2));
-const scene = JSON.parse(readFileSync('recovery/output/web-assets/scene-placements.json','utf8')).find(s => s.id === '0002');
+const scene = JSON.parse(readFileSync('apps/web/public/scene-placements.json','utf8')).find(s => s.id === '0002');
 for (const world of run.initial) {
   for (const source of scene.castles) {
     const castle = world.match.sceneObjects.find(o => o.id === `CASTLE:${source.id}`);
@@ -28,7 +28,7 @@ assert(events[0].some(e=>e.type==='sceneObjectDestroyed'));
 assert.equal(events[0].filter(e=>e.type==='sceneObjectHit').reduce((sum,e)=>sum+e.value,0),200);
 const placement = scene.records.find(p => p.id === id);
 assert.equal(placement.model, model);
-const library = JSON.parse(readFileSync('recovery/output/web-assets/'+asset,'utf8'));
+const library = JSON.parse(readFileSync('apps/web/public/'+asset,'utf8'));
 const resource = library.resources.find(r => r.reference === 'Data/scnobj/'+model+'/c9.CVD');
 const matrix = [...placement.matrix];matrix.splice(12,3,...placement.position);
 const page = run.observed[0], capture = page.captures[id];

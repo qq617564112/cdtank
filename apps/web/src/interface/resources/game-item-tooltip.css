@@ -1,0 +1,49 @@
+.game-item-tooltip {
+  position: absolute;
+  width: 218px;
+  height: 103px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.game-item-tooltip-frame {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 200px;
+  height: 85px;
+  overflow: visible;
+}
+
+.game-item-tooltip > [data-source-control] {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.game-item-tooltip .game-item-tooltip-title,
+.game-item-tooltip .game-item-tooltip-description {
+  color: #fff;
+  font-size: 12px;
+  -webkit-text-stroke: 1px #000;
+  paint-order: stroke fill;
+}
+
+.game-item-tooltip-title > [data-source-text-content] {
+  -webkit-text-stroke: inherit;
+}
+
+.game-item-tooltip-description {
+  overflow: auto;
+  background: transparent;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  scrollbar-width: none;
+  line-height: 17px;
+}
+
+.game-item-tooltip-description::-webkit-scrollbar {
+  display: none;
+}

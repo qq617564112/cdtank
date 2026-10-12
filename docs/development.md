@@ -10,12 +10,17 @@
 | `apps/web/src/network/` | 账户、房间和通信请求 |
 | `apps/server/src/` | 账户存档、房间管理、战斗判定与结算 |
 | `apps/shared/` | TSRPC 协议、共同契约及两端共用规则 |
-| `recovery/` | 原客户端格式解析、资源转换、取证与还原文档 |
+| `tools/recovery/` | 原客户端格式解析与资源转换工具 |
+| `docs/recovery/` | 还原任务、来源依据与专题文档 |
+| `tests/evidence/` | 原程序行为取证脚本 |
+| `recovery/` | 本地提取来源、中间结果与 Python 环境，由 Git 忽略 |
 | `tests/`、`tools/` | 独立验收入口和资源查看工具 |
 
 ## 开发范围
 
-目标是还原原客户端的资产、界面、游戏模式和业务功能，并提供可联机的浏览器版本。范围按以下阶段组织，逐项完成状态统一记录在[任务清单](../recovery/docs/tasklist.md)。
+页面路径、弹窗状态及刷新后的账户和房间恢复见[路由与会话恢复](navigation.md)。
+
+目标是还原原客户端的资产、界面、游戏模式和业务功能，并提供可联机的浏览器版本。范围按以下阶段组织，逐项完成状态统一记录在[任务清单](recovery/tasklist.md)。
 
 | 阶段 | 范围 |
 | --- | --- |
@@ -29,17 +34,20 @@
 
 ## 运行资源
 
-高清运行资源、字体和解码数据表已发布到 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v1.0.0)。普通开发与运行使用 Node.js 24.16 或更高版本及支持 `.tar.xz` 的 `tar`，执行 `npm ci` 和 `npm run assets:install` 后即可启动服务端和网页。安装脚本直接解压已处理资源，地图预览、角色缩略图与界面图片通过 `sprite-images.json` 和图片缓存加载。主要目录为：
+运行资源使用原版 UI 单图、高清模型贴图和 minimap。已整理的本地资源可直接用于开发；安装单图资源包使用 `npm run assets:install -- --archive /path/to/cdtank-assets.tar.xz`。GitHub v1.0.0 资源包仍使用精灵图，需要更新后才能用于当前版本。图片通过各自的 URL 和图片缓存加载。主要目录为：
 
 | 目录 | 内容 |
 | --- | --- |
-| `recovery/output/web-assets/` | 安装脚本下载的模型、贴图、音频、界面、字体及资源目录，由 Git 忽略 |
-| `recovery/output/verified/tables/` | 安装脚本下载的解码内容表，包含 JSON 和 CSV，由 Git 忽略 |
-| `recovery/output/accounts.sqlite` | 开发环境默认账户数据库，由运行时创建并由 Git 忽略 |
+| `art/original/` | 原版图片与模型，保留导出尺寸及文件内容，由 Git 忽略 |
+| `art/hd/` | 高清模型贴图与 minimap，由 Git 忽略 |
+| `apps/web/public/` | 安装脚本下载的模型、贴图、音频、界面、字体及资源目录，由 Git 忽略 |
+| `apps/server/resources/assets/` | 服务端场景目录、战场配置与预烘焙碰撞数据，由 Git 忽略 |
+| `apps/server/resources/tables/` | 安装脚本下载的解码内容表，包含 JSON 和 CSV，由 Git 忽略 |
+| `state/accounts.sqlite` | 开发环境默认账户数据库，由运行时创建并由 Git 忽略 |
 | `recovery/output/` 中的其他文件 | 本地提取结果、来源清单、专题取证与截图，由 Git 忽略 |
 | `recovery/.venv/` | 可选资源重建使用的 Python 依赖，由 Git 忽略 |
 
-资源重新提取和转换是可选的维护流程，才需要将原客户端放在 `CDTank/` 并安装 Python 依赖，步骤见[从原客户端重建资源](../recovery/docs/reproducible-assets.md)。运行中账户数据库通过备份命令保存。
+资源重新提取和转换是可选的维护流程，才需要将原客户端放在 `CDTank/` 并安装 Python 依赖，步骤见[从原客户端重建资源](recovery/reproducible-assets.md)。运行中账户数据库通过备份命令保存。
 
 ## 常用命令
 
@@ -48,7 +56,7 @@
 | 命令 | 用途 |
 | --- | --- |
 | `npm ci` | 按锁文件安装 JavaScript 依赖 |
-| `npm run assets:install` | 自动下载并解压 Release 运行资源包，包含字体和内容表 |
+| `npm run assets:install -- --archive /path/to/cdtank-assets.tar.xz` | 安装单图运行资源包，包含字体和内容表 |
 | `npm run assets:rebuild` | 可选：从原客户端重新提取资源，发布模型高清贴图与原版 UI |
 | `npm run assets:rebuild -- --reuse-verified` | 可选：复用本地完整提取结果重新导出资源，发布原版 UI 字体与模型高清贴图 |
 | `npm run assets:original` | 从本地原始资源恢复非模型图片，保留涂鸦小地图 |
@@ -76,16 +84,17 @@ Web 开发服务器将同源 `/game` WebSocket 转发到游戏服务端。
 | `PORT` | `3001` | 网页、资源与 WebSocket 共用的服务端端口 |
 | `CDTANK_WEB_PORT` | `5173` | Vite 开发端口 |
 | `CDTANK_GAME_SERVER` | `ws://127.0.0.1:3001` | 开发 WebSocket 代理目标 |
-| `CDTANK_WEB_ASSETS` | `recovery/output/web-assets` | Web 静态资源目录 |
-| `WEB_ASSETS` | `recovery/output/web-assets` | 服务端资源目录 |
+| `CDTANK_WEB_ASSETS` | `apps/web/public` | Web 静态资源目录 |
+| `WEB_ASSETS` | `apps/web/public` | 离线转换工具读取的 Web 资源目录 |
+| `SERVER_ASSETS` | `apps/server/resources/assets` | 服务端场景与碰撞资源目录 |
 | `WEB_ROOT` | `dist/web` | 服务端托管的已构建网页目录，发行包默认 `web` |
-| `CONTENT_TABLES` | `recovery/output/verified/tables` | 服务端内容表目录 |
-| `ACCOUNT_DB_PATH` | `recovery/output/accounts.sqlite` | 账户存档路径 |
+| `CONTENT_TABLES` | `apps/server/resources/tables` | 服务端内容表目录 |
+| `ACCOUNT_DB_PATH` | `state/accounts.sqlite` | 账户存档路径 |
 
 生产配置、独立发行包、反向代理和存档操作见[运行与账户存档](../deployment/operations.md)及[环境变量示例](../deployment/server.env.example)。
 
 ## 验收与来源
 
-现有验收命令保留在根 `package.json`，对应的原始来源和范围记录在[还原文档索引](../recovery/docs/README.md)及各专题中。资产结构、原程序行为对照、联机业务、网页表现和性能分别记录证据，完成状态按[任务清单](../recovery/docs/tasklist.md)维护。
+现有验收命令保留在根 `package.json`，对应的原始来源和范围记录在[还原文档索引](recovery/README.md)及各专题中。资产结构、原程序行为对照、联机业务、网页表现和性能分别记录证据，完成状态按[任务清单](recovery/tasklist.md)维护。
 
 本仓库当前协作约定见[AGENTS.md](../AGENTS.md)。执行检查前需明确要检测的失败和失败后的修改；当前约定不编写单元测试，不运行测试、浏览器验收、构建或类型检查。

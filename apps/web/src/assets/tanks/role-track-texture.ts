@@ -1,7 +1,7 @@
-/** CDTank.exe 46e0e3 / 46aaef: one shared X/Y phase per tank actor. */
+/** Each track retains its phase while stopped or changing actor actions. */
 export interface RoleTrackTextureState {
   readonly elapsed: number;
-  readonly index: 0 | 1;
+  readonly index: number;
 }
 
 export function createRoleTrackTextureState(): RoleTrackTextureState {
@@ -14,13 +14,22 @@ export function roleTrackCommandMoves(command: number): boolean {
     command === 7 || command === 8;
 }
 
-/** Caller supplies the accepted-command gate, independently of visual actions. */
+/** X is the left track in native role space; pivot turns drive opposite directions. */
+export function roleTrackDirection(command: number, part: 'X' | 'Y'): -1 | 0 | 1 {
+  if (command === 3) return part === 'X' ? -1 : 1;
+  if (command === 4) return part === 'X' ? 1 : -1;
+  if (command === 1 || command === 5 || command === 6) return 1;
+  if (command === 2 || command === 7 || command === 8) return -1;
+  return 0;
+}
+
+/** Keep elapsed remainder and advance every crossed frame, including reverse playback. */
 export function advanceRoleTrackTexture(
-    state: RoleTrackTextureState, deltaSeconds: number): RoleTrackTextureState {
-  const total = Math.fround(state.elapsed) + Math.fround(deltaSeconds);
-  // Native x87 compares before rounding the stored float32 accumulator.
-  if (total > Math.fround(0.1)) {
-    return {elapsed: 0, index: state.index === 0 ? 1 : 0};
-  }
-  return {elapsed: Math.fround(total), index: state.index};
+    state: RoleTrackTextureState, deltaSeconds: number, frameCount: number,
+    frameDuration: number, direction: -1 | 0 | 1): RoleTrackTextureState {
+  if (direction === 0) return state;
+  const total = state.elapsed + deltaSeconds;
+  const steps = Math.floor(total / frameDuration);
+  const index = ((state.index + steps * direction) % frameCount + frameCount) % frameCount;
+  return {elapsed: total - steps * frameDuration, index};
 }

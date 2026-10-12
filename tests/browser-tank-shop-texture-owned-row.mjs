@@ -61,7 +61,7 @@ async function nativeClick(session, selector) {
 async function startServer(){const start=serverLog.length;const env={...process.env,PORT:'3596',ACCOUNT_DB_PATH:database,MATCH_TIME_LIMIT_SECONDS:'12'};delete env.MATCH_MIN_PLAYERS;server=spawn(process.execPath,['--import','tsx','apps/server/src/index.ts'],{env,stdio:['ignore','pipe','pipe']});for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{serverLog+=String(d);});const deadline=Date.now()+15000;while(!serverLog.slice(start).includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));assert(serverLog.slice(start).includes('Server started'),serverLog.slice(start));}
 try {
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5626,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3596',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5626,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3596',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9826',
@@ -98,8 +98,8 @@ ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFra
   await waitUntil(s,`document.querySelector('[data-tank-shop-owned-instance="1"] [data-home-owned-tank-name]')&&document.querySelector('[data-tank-shop-owned-instance="1"]')?.matches(':enabled')`);
   const owned=network.filter(n=>n.direction==='received'&&n.name==='OwnedRoles'&&n.success).at(-1)?.response;
   assert(owned); const records=owned.equipment.map(r=>({name:r.name,fields:new Map(r.fields)}));assert(records.length>0);assert(records.some(r=>r.fields.get(0x1c)===1&&r.fields.get(0x24)===3));
-  const catalog=JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json','utf8'));
-  const offers=catalog.tankTypes;assert(offers); const ui=JSON.parse(await readFile('recovery/output/web-assets/ui.json','utf8'));
+  const catalog=JSON.parse(await readFile('apps/web/public/combat-catalog.json','utf8'));
+  const offers=catalog.tankTypes;assert(offers); const ui=JSON.parse(await readFile('apps/web/public/ui.json','utf8'));
   const sets=ui.imagesets.filter(s=>s.attributes.Name==='tanke0'),set=sets.find(s=>s.path.includes('imagesets_dds/'))??sets[0];
   evidence.records=records.map(r=>({instanceId:r.fields.get(0x1c),tankId:r.fields.get(0x24),durationMinutes:r.fields.get(0x34),name:r.name}));
   evidence.frames=[];evidence.screenshots=[];
@@ -124,7 +124,7 @@ ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFra
     evidence.scope=combinedNewScope ? 'UI59 new source owned rows threeRes and finite arrow bounds; noBUY/SAVE' : 'UI59 finite Texture arrow candidate bounds; no row geometry/BUY/SAVE';
     await command('Emulation.setDeviceMetricsOverride',{width:1920,height:1080,deviceScaleFactor:1,mobile:false},s);
     await nativeClick(s,'[data-tank-shop-owned-instance="1"]');
-    const textures=JSON.parse(await readFile('recovery/output/web-assets/tank-textures.json','utf8'));
+    const textures=JSON.parse(await readFile('apps/web/public/tank-textures.json','utf8'));
     const selection=()=>evaluate(s,`JSON.parse(document.querySelector('[data-tank-shop-texture-status]').dataset.textureSelection)`);
     const initial=await selection();evidence.arrowBounds=[];
     for(const [part,control] of [['U','Turret'],['M','Body'],['XY','Tread']]){

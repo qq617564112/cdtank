@@ -5,12 +5,12 @@ import sys
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from export_tank_textures import PARTS
 
-WEB = ROOT / 'recovery/output/web-assets'
+WEB = ROOT / 'apps/web/public'
 catalog = json.loads((WEB / 'tank-textures.json').read_text())
-originals = json.loads((ROOT / 'recovery/output/verified/tables/tanktexture.json').read_text())['rows']
+originals = json.loads((ROOT / 'apps/server/resources/tables/tanktexture.json').read_text())['rows']
 inventory = {item['key']: item for item in json.loads(
     (ROOT / 'recovery/output/catalog/inventory.json').read_text())}
 assert len(catalog['rows']) == len(originals) == 711

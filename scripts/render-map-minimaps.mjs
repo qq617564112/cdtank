@@ -9,7 +9,7 @@ import WebSocket from 'ws';
 var workspace = fileURLToPath(new URL('../', import.meta.url));
 var output = resolve(workspace, 'apps/web/src/assets/maps/minimaps');
 var overviewOutput = resolve(workspace, 'recovery/output/map-minimaps-overview.png');
-var assets = resolve(workspace, process.env.CDTANK_WEB_ASSETS ?? 'recovery/output/web-assets');
+var assets = resolve(workspace, process.env.CDTANK_WEB_ASSETS ?? 'apps/web/public');
 
 async function chromiumPath() {
   if (process.env.CDTANK_CHROME) {

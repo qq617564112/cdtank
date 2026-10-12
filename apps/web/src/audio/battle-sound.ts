@@ -1,6 +1,7 @@
 import {gameContent} from '../../../shared/content/catalog';
 import type {MsgRoomEvent} from '../../../shared/protocols/MsgRoomEvent';
 import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
+import {setSpatialListener} from './spatial-listener';
 
 interface Position {x: number; y: number; z: number}
 interface Voice {
@@ -145,17 +146,8 @@ export class BattleSound {
 
   listener(position: Position, forward: Position, up: Position): void {
     if (!this.active || !this.context) return;
-    const listener = this.context.listener;
     this.listenerPosition = {...position};
-    listener.positionX.value = position.x;
-    listener.positionY.value = position.y;
-    listener.positionZ.value = position.z;
-    listener.forwardX.value = forward.x;
-    listener.forwardY.value = forward.y;
-    listener.forwardZ.value = forward.z;
-    listener.upX.value = up.x;
-    listener.upY.value = up.y;
-    listener.upZ.value = up.z;
+    setSpatialListener(this.context.listener, position, forward, up);
     this.voices.forEach(voice => {this.attenuate(voice);});
   }
 

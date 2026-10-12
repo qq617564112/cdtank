@@ -6,7 +6,7 @@ import {AccountStore} from '../apps/server/src/account-store';
 import {World} from '../apps/server/src/world';
 import {TANKS, PET_BASES} from '../apps/server/src/config';
 import {BattleRoleSources} from '../apps/server/src/battle-role-sources';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources';
 
 const directory = mkdtempSync(join(tmpdir(), 'cdtank-battle-role-sources-'));
 const database = join(directory, 'accounts.sqlite');

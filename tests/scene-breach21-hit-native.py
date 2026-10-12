@@ -7,7 +7,7 @@ import capstone
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX,UC_X86_REG_ECX,UC_X86_REG_EIP,UC_X86_REG_ESP
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 # Reuse original-model loader bindings; execute the receiver into44e081/45e7b0.
 namespace = {'__file__': str(ROOT / 'tests/scene-breach21-05466-native.py')}

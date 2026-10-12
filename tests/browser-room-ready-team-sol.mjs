@@ -106,7 +106,7 @@ try {
   const deadline = Date.now() + 15000;
   while (!log.includes('Server started') && Date.now() < deadline && server.exitCode === null) await pause(20);
   assert(log.includes('Server started'), log);
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     server: {port: 5203, strictPort: true, host: '127.0.0.1', hmr: false,
       proxy: {'/game': {target: 'ws://127.0.0.1:3020', ws: true, rewrite: () => '/'}}}});
   await vite.listen();

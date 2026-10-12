@@ -69,7 +69,7 @@
   background: transparent;
 }
 
-.battle-match:has(> [data-waiting-room][open]) > :not([data-waiting-room]):not([data-source-notice]) {
+.battle-match:has(> [data-waiting-room][open]) > :not([data-waiting-room]) {
   visibility: hidden;
 }
 
@@ -84,8 +84,7 @@
   pointer-events: none;
 }
 
-.battle-match:has(> [data-waiting-room-formal][open]) > [data-waiting-room],
-.battle-match:has(> [data-waiting-room-formal][open]) > [data-source-notice] {
+.battle-match:has(> [data-waiting-room-formal][open]) > [data-waiting-room] {
   pointer-events: auto;
 }
 

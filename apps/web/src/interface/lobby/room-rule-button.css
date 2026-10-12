@@ -1,0 +1,83 @@
+@import '../resources/happy-zcool.css';
+
+.room-rule-button {
+  position: relative;
+  display: inline-grid;
+  place-items: end center;
+  width: 98px;
+  height: 41px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.room-rule-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.room-rule-art-selected,
+.room-rule-button[data-rule-selected='true'] .room-rule-art-normal {
+  visibility: hidden;
+}
+
+.room-rule-button[data-rule-selected='true'] .room-rule-art-selected {
+  visibility: visible;
+}
+
+.room-rule-label {
+  position: relative;
+  margin-bottom: 1px;
+  color: #00ffff;
+  font-family: 'HappyZcool-2016', sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: .5px;
+  white-space: nowrap;
+  -webkit-text-stroke: 2.3px #062624;
+  paint-order: stroke fill;
+  text-shadow: 0 1px #001a22;
+  pointer-events: none;
+}
+
+.room-rule-button[data-rule-selected='true'] .room-rule-label {
+  color: #ffff7c;
+  -webkit-text-stroke-color: #302100;
+}
+
+.room-rule-button[data-source-button-state='Hover'] .room-rule-art {
+  filter: brightness(1.12) saturate(1.08);
+}
+
+.room-rule-button[data-source-button-state='Hover'] .room-rule-label {
+  color: #fff67a;
+}
+
+.room-rule-button[data-source-button-state='Pushed'] {
+  transform: translateY(1px) scale(.96);
+}
+
+.room-rule-button[data-rule-muted='true'] {
+  filter: grayscale(1);
+  opacity: .55;
+}
+
+.room-rule-button:disabled {
+  cursor: default;
+}
+
+.room-rule-button:focus-visible {
+  outline: 2px solid #fff47c;
+  outline-offset: 2px;
+}

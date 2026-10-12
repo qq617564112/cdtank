@@ -4,7 +4,7 @@ import math
 import struct
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'recovery'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/recovery'))
 from nav import read_nav
 
 count = cells = triangles = 0

@@ -6,11 +6,11 @@ import sys
 import wave
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from inspect_assets import read_table
 from effect_sav import read_library
 base=ROOT/'recovery/output/verified/assets/data'
-web=ROOT/'recovery/output/web-assets'
+web=ROOT/'apps/web/public'
 catalog=json.loads((web/'combat-catalog.json').read_text())
 item=next(r['values'] for r in read_table(ROOT/'CDTank/Data/table/item.dat')['rows'] if int(r['values']['ItemTableID'])==2011)
 skill=next(r['values'] for r in read_table(ROOT/'CDTank/Data/table/skill.dat')['rows'] if int(r['values']['SkillTableID'])==4009)

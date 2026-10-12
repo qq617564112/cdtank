@@ -60,7 +60,7 @@ def original_step(control, delta, precision):
     return result, {'position': read(FRAME + 0xc, 3), 'velocity': read(FRAME + 0x24, 3)}
 
 
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 rows = []
 # The client's process-wide x87 control word is not yet recovered: verify both
 # 53-bit and 64-bit significands rather than assuming either initialization.

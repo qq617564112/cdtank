@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {applyInventoryQuery, type InventoryItemRecord} from '../apps/shared/combat/inventory-query';
-import {applyKitbagDeletion} from '../recovery/evidence/inventory/inventory-notifications';
+import {applyKitbagDeletion} from '../tests/evidence/inventory/inventory-notifications';
 import {initializeBattleQuantities, resolveItemHotkey} from '../apps/shared/combat/item-hotkeys';
 
 interface QueryRow {

@@ -10,7 +10,7 @@ interface OracleRow {
   readonly result: boolean;
   readonly trace: {readonly cross_comparisons: number; readonly cross_continues: number};
 }
-const output = resolve(__dirname, '../recovery/output');
+const output = resolve(__dirname, '../tools/recovery/output');
 const oracle = JSON.parse(readFileSync(resolve(output, 'role-obb-kernel-native.json'), 'utf8')) as {
   status: string;
   rows: OracleRow[];

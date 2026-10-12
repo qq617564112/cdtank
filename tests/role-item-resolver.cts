@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {resolveRoleItemInstance} from '../recovery/evidence/combat/role-item-resolver';
+import {resolveRoleItemInstance} from '../tests/evidence/combat/role-item-resolver';
 import type {BattleItemRecord} from '../apps/shared/combat/item-hotkeys';
 
 const evidence: {rows: {tableId: number; instanceId: number; group: number;

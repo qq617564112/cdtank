@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
-import {freezeSelectedBoundSource} from '../recovery/prepared/selected-bound-source';
+import {freezeSelectedBoundSource} from '../tools/recovery/prepared/selected-bound-source';
 import {readRoleSkillSources} from '../apps/server/src/battle/roles/skill-sources';
 import {selectRoleSkills} from '../apps/server/src/battle/roles/skills';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
@@ -15,7 +15,7 @@ assert.notEqual(bound, selected);
 assert.notEqual(bound.fields, selected.fields);
 assert.deepEqual([...bound.fields], fixture.record.fields);
 const currentSkillIds = [2001, ...Array<number>(15).fill(0)];
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
 const skills = new Map(catalog.skills.map(skill => [skill.skillId, skill]));
 const sources = readRoleSkillSources({currentSkillIds, boundGear: bound,
   equipment: {name: '', fields: new Map([[0x58, 0], [0x5c, 0], [0x60, 0]])},

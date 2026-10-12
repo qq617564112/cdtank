@@ -61,7 +61,7 @@ async function nativeClick(session, selector) {
 async function startServer(){const start=serverLog.length;const env={...process.env,PORT:'3551',ACCOUNT_DB_PATH:database,MATCH_TIME_LIMIT_SECONDS:'12'};delete env.MATCH_MIN_PLAYERS;server=spawn(process.execPath,['--import','tsx','apps/server/src/index.ts'],{env,stdio:['ignore','pipe','pipe']});for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{serverLog+=String(d);});const deadline=Date.now()+15000;while(!serverLog.slice(start).includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));assert(serverLog.slice(start).includes('Server started'),serverLog.slice(start));}
 try {
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5581,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3551',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5581,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3551',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9781',
@@ -97,7 +97,7 @@ ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFra
   const response=network.filter(n=>n.direction==='received'&&n.name==='Inventory'&&n.success).at(-1)?.response;
   const record=response?.records.find(r=>r.itemTableId===3003&&r.ownedQuantity>0);assert(record,'lawful positive quantity trap3003');evidence.inventoryRecord=record;
   assert.equal(classifyItemId(record.itemTableId),4);
-  const sourceTable=JSON.parse(await readFile('recovery/output/verified/tables/item.json','utf8'));
+  const sourceTable=JSON.parse(await readFile('apps/server/resources/tables/item.json','utf8'));
   const sourceRecord=sourceTable.rows.find(r=>r.recordId===record.itemTableId);assert(sourceRecord);
   const product={name:sourceRecord.values.ItemName,iconId:Number(sourceRecord.values.D2)};evidence.product=product;
   evidence.rows=[];evidence.screenshots=[];

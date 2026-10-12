@@ -1,4 +1,4 @@
-import {AbstractMesh, AnimationGroup, AssetContainer, Constants, LoadAssetContainerAsync, Matrix,
+import {AbstractMesh, AnimationGroup, AssetContainer, Constants, LoadAssetContainerAsync, Matrix, Mesh,
   Observer, PBRMaterial, Scene, Texture, TransformNode, Vector3} from '@babylonjs/core';
 import type {IGLTFLoaderData} from '@babylonjs/loaders/glTF/glTFFileLoader';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
@@ -27,11 +27,16 @@ const SOURCE_TEXTURES: Readonly<Partial<Record<string, Readonly<Partial<Record<'
   obj05008: {A: 'obj05014A', B: 'obj05008B'},
 };
 
+/** Ground display scale for the green box. */
+const GROUND_ITEM_SCALES: Readonly<Partial<Record<string, number>>> = {
+  obj05001: 0.5,
+};
+
 export function groundItemTexture(modelId: string, texture: 'A' | 'B'): string {
   return SOURCE_TEXTURES[modelId]?.[texture] ?? `${modelId}A`;
 }
 
-/** Original dropitem ground prop at its authoritative XYZ; geometry keeps the model's own scale. */
+/** Original dropitem model and node animation at its authoritative XYZ. */
 export class GroundItemVisual {
   readonly root: TransformNode;
   /** Live native-space translation at the animated model's visible center. */
@@ -47,6 +52,7 @@ export class GroundItemVisual {
     this.root = new TransformNode(`ground-item-${id}`, scene);
     // Native X reflection matches the scene/ground placement convention.
     this.root.position.set(-x, y, z);
+    this.root.scaling.setAll(GROUND_ITEM_SCALES[modelId] ?? 1);
     this.root.metadata = {groundItemId: id, groundItemModelId: modelId, groundItemTexture: variant,
       sourceModel: `Data/scnobj/${modelId}/${modelId}.CVD`};
   }
@@ -79,6 +85,9 @@ export class GroundItemVisual {
       this.texture = texture;
       let applied = false;
       for (const mesh of asset.meshes) {
+        // Drop vertex frames are identical; only the CVD node transform animates.
+        // Removing empty morph channels enables shared hard-edge outline normals.
+        if (mesh instanceof Mesh) mesh.morphTargetManager = null;
         if (mesh.material instanceof PBRMaterial) {
           mesh.material.albedoTexture = texture;
           applied = true;

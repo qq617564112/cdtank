@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawn, execFileSync} from 'node:child_process';
 import {createServer} from 'vite';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources.ts';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources.ts';
 import {AccountStore} from '../apps/server/src/account-store.ts';
 import {serviceProto} from '../apps/shared/protocols/serviceProto.ts';
 
@@ -169,7 +169,7 @@ const preview='[data-role-preview]';
 const previewReady=`document.querySelector('${preview}')?.dataset.status==='ready'&&document.querySelector('${preview}').dataset.renderedTankId==='2'&&Number(document.querySelector('${preview}').dataset.frames)>1`;
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5349,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3325',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5349,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3325',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();await launchBrowser();const page=await newPage();
   await waitUntil(page,`localStorage.getItem('cdtank-account-token')`);
   const store=new AccountStore(join(directory,'accounts.sqlite')),owner=store.open(await evaluate(page,`localStorage.getItem('cdtank-account-token')`));

@@ -4,8 +4,8 @@ import {TankShotDisplay} from '../apps/web/src/assets/tanks/shot-display';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
 
 const catalog: CombatCatalog = JSON.parse(readFileSync(
-  'recovery/output/web-assets/combat-catalog.json', 'utf8'));
-const audio = JSON.parse(readFileSync('recovery/output/web-assets/audio.json', 'utf8'));
+  'apps/web/public/combat-catalog.json', 'utf8'));
+const audio = JSON.parse(readFileSync('apps/web/public/audio.json', 'utf8'));
 const item = catalog.items.find(row => row.itemTableId === 2004)!;
 const skill = catalog.skills.find(row => row.skillId === item.skillIds[1])!;
 const feedback = audio.battleFire.find((row: {skillId: number}) => row.skillId === 2004);

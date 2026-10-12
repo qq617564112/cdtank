@@ -14,12 +14,12 @@ camera.setTarget(Vector3.Zero()); camera.getViewMatrix(true); camera.getProjecti
 const runtime = new EffectRuntime(scene, camera);
 const state = runtime as unknown as {library: EffectRuntimeLibrary; textures: Map<string, RawTexture>;
   instances: {handle: number; tree: EffectRuntimeTree; owner: TankView}[]};
-state.library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+state.library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const nodes = new Set([2449, 2450, 2451, 2452]);
 const textures = state.library.textureGrids.filter(grid => nodes.has(grid.node));
 assert(textures.length > 0);
 for (const grid of textures) {
-  const asset = 'recovery/output/web-assets/' + grid.asset;
+  const asset = 'apps/web/public/' + grid.asset;
   const size = JSON.parse(execFileSync('recovery/.venv/bin/python', ['-c',
     'from PIL import Image; import json,sys; print(json.dumps(Image.open(sys.argv[1]).size))', asset], {encoding: 'utf8'}));
   const pixels = execFileSync('recovery/.venv/bin/python', ['-c',

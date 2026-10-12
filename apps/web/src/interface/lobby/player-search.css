@@ -1,154 +1,172 @@
-.lobby-player-search-launcher {
+.game-dialog-button.lobby-player-search-launcher {
   position: absolute;
   left: 619px;
-  top: 578px;
+  top: 556px;
   width: 170px;
-  height: 20px;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0 6px;
-  border: 1px solid #8faac7;
-  background: #203c5c;
-  color: #fff;
-  font: 12px 'CDTank-SIMSUN', serif;
-  line-height: 18px;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
+  height: 41px;
 }
 
-.lobby-player-search-launcher:hover,
-.lobby-player-search-launcher[aria-expanded='true'] { background: #2b4f78; }
-
-.lobby-player-search-launcher:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-
-[data-player-search] {
-  max-width: none;
-  max-height: none;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  overflow: visible;
+.game-dialog-button.lobby-player-search-launcher[data-dialog-button='back'] .game-dialog-button-label {
+  font-size: 21px;
 }
 
-[data-player-search]::backdrop { background: rgb(0 33 74 / 60%); }
+.game-dialog[data-player-search] {
+  max-width: calc((100vw - 32px) / var(--game-dialog-ui-scale));
+  max-height: calc((100dvh - 32px) / var(--game-dialog-ui-scale));
+}
 
-.player-search-stage {
-  box-sizing: border-box;
+.game-dialog-stage.player-search-stage {
+  font-size: 16px;
+}
+
+.player-search-close {
+  position: absolute;
+  top: 3px;
+  right: 7px;
+}
+
+.player-search-panel {
+  padding: 16px 20px;
+}
+
+.player-search-content {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(340px, calc(100vw - 32px));
-  max-height: min(460px, calc(100vh - 48px));
-  padding: 12px;
-  border: 2px solid #8faac7;
-  background: #12305a;
-  color: #fff;
-  font: 12px 'CDTank-SIMSUN', serif;
+  max-height: calc((100dvh - 32px) / var(--game-dialog-ui-scale) - 123px);
+  color: #fffde0;
   overflow: auto;
 }
 
-.player-search-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.player-search-form {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  gap: 8px;
+  align-items: center;
+}
 
-.player-search-label { flex: 0 0 100%; }
+.player-search-label {
+  flex: 0 0 100%;
+  color: #fffde0;
+  -webkit-text-stroke: 1px #49351d;
+  paint-order: stroke fill;
+}
 
-.player-search-input {
-  flex: 1 1 120px;
+.cartoon-input.player-search-input {
+  position: relative;
+  flex: 0 0 100%;
   min-width: 0;
+}
+
+.player-search-footbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.player-search-footbar .game-dialog-button:disabled,
+.player-search-close:disabled,
+.player-search-error .game-dialog-button:disabled {
+  opacity: .6;
+}
+
+.player-search-error {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  gap: 8px;
+  align-items: center;
+  color: #7a211d;
+}
+
+.player-search-results-region {
+  flex: 0 0 194px;
+  height: 194px;
   box-sizing: border-box;
-  height: 26px;
-  padding: 0 8px;
-  border: 1px solid #8faac7;
-  background: #0a2440;
-  color: #fff;
-  font: inherit;
+  padding: 6px;
+  border: 1px solid #9b7946;
+  border-radius: 5px;
+  background: rgb(255 235 186 / 30%);
+  box-shadow: inset 0 2px 4px rgb(82 46 22 / 20%);
 }
-
-.player-search-input:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-
-.player-search-submit {
-  flex: 0 0 auto;
-  height: 26px;
-  padding: 0 14px;
-  border: 1px solid #8faac7;
-  background: #203c5c;
-  color: #fff;
-  font: inherit;
-  cursor: pointer;
-}
-
-.player-search-submit:hover:not(:disabled) { background: #2b4f78; }
-
-.player-search-submit:disabled { opacity: 0.6; cursor: default; }
-
-.player-search-submit:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-
-.player-search-status { min-height: 16px; margin: 0; line-height: 16px; }
-
-.player-search-error { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: #ffd7d7; }
-
-.player-search-error button {
-  padding: 2px 10px;
-  border: 1px solid #8faac7;
-  background: #203c5c;
-  color: #fff;
-  font: inherit;
-  cursor: pointer;
-}
-
-.player-search-error button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
 .player-search-results {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  max-height: 260px;
+  gap: 4px;
+  height: 100%;
   margin: 0;
   padding: 0;
   overflow: auto;
   list-style: none;
 }
 
+.player-search-results li {
+  flex: 0 0 42px;
+}
+
 .player-search-results button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 6px;
+  gap: 0 6px;
   align-items: center;
+  align-content: center;
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
-  min-height: 24px;
   padding: 2px 6px;
-  border: 1px solid transparent;
-  background: #0a2440;
-  color: #fff;
+  border: 1px solid #a88656;
+  border-radius: 4px;
+  background: #f3d6a3;
+  color: #422815;
   font: inherit;
+  font-size: 14px;
+  line-height: 16px;
   text-align: left;
   cursor: pointer;
 }
 
-.player-search-results button:hover { background: #1b3f66; }
+.player-search-results button:hover { background: #ffe7b8; }
 
 .player-search-results button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 
 .player-search-result-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.player-search-result-tag { color: #9fb8d4; white-space: nowrap; }
+.player-search-result-tag { color: #72563e; white-space: nowrap; }
 
 .player-search-result-state { white-space: nowrap; }
 
-.player-search-result-state[data-search-state='online'] { color: #9fd4a3; }
+.player-search-result-state[data-search-state='online'] { color: #275c2c; }
 
-.player-search-result-state[data-search-state='in-room'] { color: #8fc7ff; }
+.player-search-result-state[data-search-state='in-room'] { color: #124e84; }
 
-.player-search-result-state[data-search-state='offline'] { color: #9fb8d4; }
+.player-search-result-state[data-search-state='offline'] { color: #72563e; }
 
 .player-search-result-title {
   grid-column: 1 / -1;
-  color: #d8c07a;
+  color: #785517;
+  font-size: 12px;
+  line-height: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.player-search-pagination {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 41px;
+}
+
+.player-search-pagination > output {
+  min-width: 140px;
+  font-size: 14px;
+  text-align: center;
+  -webkit-text-stroke: 1px #49351d;
+  paint-order: stroke fill;
 }

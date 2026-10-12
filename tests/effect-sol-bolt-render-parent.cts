@@ -12,7 +12,7 @@ interface Row {
   segments: number[][]; vertices: EffectStripVertex[]; width: number; color: number;
 }
 const rows = JSON.parse(readFileSync('recovery/output/effect-sol-bolt-render-parent-native.json', 'utf8')).rows as Row[];
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as EffectRuntimeLibrary;
 let maxError = 0;
 const compare = (actual: number, expected: number): void => {
   maxError = Math.max(maxError, Math.abs(actual - expected));

@@ -6,7 +6,8 @@ import {createSceneRuntime} from './render/scene-runtime';
 import {initializeSettings} from './interface/settings/settings-startup';
 
 /** Create the scene and page only after startup images are ready. */
-export async function startGame(canvas: HTMLCanvasElement, root: Root, signal: AbortSignal): Promise<() => void> {
+export async function startGame(canvas: HTMLCanvasElement, root: Root, signal: AbortSignal,
+  onReady: () => void): Promise<() => void> {
   const runtime = await createSceneRuntime(canvas);
   if (signal.aborted) {runtime.dispose(); signal.throwIfAborted();}
   const hud = document.createElement('output');
@@ -15,6 +16,7 @@ export async function startGame(canvas: HTMLCanvasElement, root: Root, signal: A
   const battle = new Battle(runtime.scene, runtime.camera, hud);
   if (location.pathname !== '/validation.html') battle.startPageMusic();
   const settings = initializeSettings(battle);
+  onReady();
   root.render(createElement(App, {battle, canvas, hud, settings, validation: location.pathname === '/validation.html'}));
-  return () => {battle.leave(); root.unmount(); runtime.dispose();};
+  return () => {battle.leave(true, true); root.unmount(); runtime.dispose();};
 }

@@ -1,3 +1,4 @@
+import {showGameMessage} from '../interface/resources/game-message-store';
 import {itemHitHandler, gameContent} from '../../../shared/content/catalog';
 import {loadCombatCatalog} from '../content';
 import type {ReqStackItemSale, ResStackItemSale} from '../../../shared/protocols/PtlStackItemSale';
@@ -19,8 +20,6 @@ import {BattlePlayers} from '../render/battle-players';
 import {battleInfoText} from '../interface/battle/battle-info-messages';
 import {mapMinimaps} from '../assets/maps/minimaps';
 import {BattleMinimapRenderer} from '../render/battle-minimap-renderer';
-import {BattleCrosshairRenderer} from '../render/battle-crosshair-renderer';
-import {BattleHudVectorRenderer} from '../render/battle-hud-vector-renderer';
 import {GameConnection} from '../network/game-connection';
 import type {AccountContext} from '../network/accounts';
 import {LobbyChat} from '../network/lobby-chat';
@@ -76,6 +75,7 @@ import type {KeyBindings} from './input-bindings';
 import type {QuickChatPreferences} from '../interface/settings/quick-chat-preferences';
 import {battleIsActive} from '../../../shared/combat/battle-start';
 import {GroundItemAction} from '../../../shared/protocols/MsgPlayerAction';
+import {readRoomSession, saveRoomSession} from '../navigation/session';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
 import {BattleProjectiles} from '../render/battle-projectiles';
 
@@ -122,6 +122,7 @@ export class Battle {
     return this.connection.authenticate(credentials);
   }
   channels(channelId?: string) {return this.connection.channels(channelId);}
+  get ping() {return this.connection.ping;}
   disconnectAccount(): Promise<void> {
     if (this.inRoom) throw new Error('请先离开房间');
     this.lobbyPresence.stop();
@@ -191,8 +192,6 @@ export class Battle {
   private readonly projectiles: BattleProjectiles;
   private readonly battlefield: ScenePreview;
   private readonly minimapRenderer: BattleMinimapRenderer;
-  private readonly crosshairRenderer: BattleCrosshairRenderer;
-  private readonly hudVectorRenderer: BattleHudVectorRenderer;
   private readonly groundTraps: GroundTrapsPresentation;
   private groundTrapError?: string;
   private readonly groundItems: GroundItemsPresentation;
@@ -218,7 +217,7 @@ export class Battle {
     () => this.soundVolume,
     {candidates: () => this.discardCandidates(), selected: () => this.discardSelectedInstance,
       setSelected: instanceId => this.setDiscardSelection(instanceId), discard: () => this.discardSelected()},
-    () => this.quoteExitPenalty());
+    () => this.quoteExitPenalty(), accountId => this.playerProfile(accountId));
   private readonly targets: BattleTargets;
   private readonly roomFeed: RoomFeed;
   private playerId?: string;
@@ -256,8 +255,6 @@ export class Battle {
     });
     this.projectiles = new BattleProjectiles(scene);
     this.minimapRenderer = new BattleMinimapRenderer(scene, camera, id => this.players.get(id));
-    this.crosshairRenderer = new BattleCrosshairRenderer(scene);
-    this.hudVectorRenderer = new BattleHudVectorRenderer(scene);
     this.targets = new BattleTargets(scene);
     this.roomFeed = new RoomFeed(this.client, {
       beforeSnapshot: (snapshot, previous) => {
@@ -292,6 +289,7 @@ export class Battle {
           this.leave(false);
           this.returnToLobby?.();
           this.hud.value = event.message;
+          showGameMessage(event.message, 'error');
           return;
         }
         this.itemInventory.event(event);
@@ -330,11 +328,24 @@ export class Battle {
           if (event.playerId === this.playerId && localRecoil) this.effects.ordinaryFireCamera();
         }
         if (event.type === 'fire') {
-          if (event.shotDisplay) this.shotDisplay?.show(event.shotDisplay);
+          if (event.shotDisplay && !event.targetId) {
+            const display = event.shotDisplay;
+            // Scene impact particles start on the NAV floor beneath the endpoint.
+            const ground = this.localMotion.field.navigation?.sample(display.x, display.z)?.height ?? 0;
+            this.shotDisplay?.show({...display, y: ground});
+          }
           if (event.playerId === this.playerId && this.active && this.mapLoaded
               && this.loadedRound === snapshot?.match?.round && snapshot?.phase === 'PLAYING'
               && this.client.isConnected && !this.reconnecting) {
             this.battleUiSound.play(72);
+          }
+        }
+        if (event.type === 'shotImpact' && this.mapLoaded && !this.reconnecting) {
+          this.effects.spawnShotImpact([event.x, event.y, event.z], event.value > 0);
+          if (event.shotDisplay) {
+            const display = event.shotDisplay;
+            const ground = this.localMotion.field.navigation?.sample(display.x, display.z)?.height ?? 0;
+            this.shotDisplay?.show({...display, y: ground});
           }
         }
         if (event.type === 'hit') {
@@ -352,7 +363,7 @@ export class Battle {
           const hasExplosiveAmmoBlastNotification = event.type === 'hit'
             && itemHitHandler(event.shotPlayerResult?.itemId) === 'explosive';
           if (victim && event.shotPlayerResult && !hasRadarJamNotification
-              && !hasExplosiveAmmoBlastNotification) {
+              && !hasExplosiveAmmoBlastNotification && (event.type === 'playerHealed' || event.value > 0)) {
             this.shotPlayerResult?.showPlayerResult(victim, event.shotPlayerResult.itemId,
               this.playerId ? this.players.get(this.playerId) : undefined);
           }
@@ -386,9 +397,11 @@ export class Battle {
           if (sourceId !== undefined) this.battlefield.destroyObject(sourceId, this.effects);
         }
         if (event.shotItemResult && snapshot && this.playerId) {
-          const result = event.shotItemResult;
+          const display = event.shotItemResult;
+          const ground = this.localMotion.field.navigation?.sample(display.x, display.z)?.height ?? 0;
+          const result = {...display, y: ground};
           this.shotItemResult?.show(result, event.playerId, this.playerId,
-            () => this.sound.shotItemResult(event, snapshot, this.playerId!, result.itemId));
+            () => this.sound.shotItemResult(event, snapshot, this.playerId!, result.itemId), false);
         }
       },
     });
@@ -536,13 +549,44 @@ export class Battle {
   async listMaps(): Promise<MapOption[]> {return this.rooms.listMaps();}
 
   async createRoom(mode: number, mapId: number, roomName: string, name: string, tankId: number, password = '',
-                   minPlayers?: number, maxPlayers?: number, friendlyFire?: boolean): Promise<void> {
+                   minPlayers?: number, maxPlayers?: number, friendlyFire?: boolean,
+                   timeLimitSeconds?: number): Promise<void> {
     const session = this.session;
     await this.connection.ensureConnected();
-    const result = await this.rooms.create({mode, mapId, roomName, name, tankId, password, minPlayers, maxPlayers, friendlyFire});
+    const result = await this.rooms.create({mode, mapId, roomName, name, tankId, password,
+      minPlayers, maxPlayers, friendlyFire, timeLimitSeconds});
     if (session !== this.session) return;
     if (!result.isSucc) throw new Error(result.err.message);
     await this.enter(result.res, session);
+  }
+
+  /** One human account and nine CPUs, with the human tank controlled by the server. */
+  async startQuickMatch(mapId: 2 | 5, tankId: number): Promise<void> {
+    if (!this.active) await this.resumeSavedRoom();
+    if (this.active) await this.exitRoom();
+    const session = this.session;
+    this.hud.value = '创建自动托管对局…';
+    await this.createRoom(1, mapId, '自动托管对局', '坦克手', tankId, '', 10, 10);
+    const waitFor = async (ready: () => boolean): Promise<boolean> => {
+      const deadline = performance.now() + 60000;
+      while (!ready()) {
+        if (session !== this.session || !this.active) return false;
+        if (performance.now() > deadline) throw new Error('等待自动托管对局超时，请重试');
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      return session === this.session && this.active;
+    };
+    if (!await waitFor(() => this.roomFeed.snapshot?.match?.round !== undefined)) return;
+    const round = this.roomFeed.snapshot!.match!.round;
+    for (let count = 0; count < 9; count++) {
+      await this.rooms.cpu({round, operation: 'ADD', tankId});
+      if (session !== this.session || !this.active) return;
+    }
+    if (!await waitFor(() => this.roomFeed.snapshot?.players.length === 10)) return;
+    await this.autopilot(true);
+    if (!await waitFor(() => this.roomFeed.snapshot?.players
+      .some(player => player.id === this.playerId && player.isAutopilot) === true)) return;
+    await this.ready(true);
   }
 
   async startCpuMatch(name: string, tankId: number): Promise<void> {
@@ -582,6 +626,31 @@ export class Battle {
     await this.enter(result.res, session);
   }
 
+  async resumeSavedRoom(): Promise<boolean> {
+    const saved = readRoomSession();
+    if (!saved) return false;
+    if (saved.accountId !== this.accountContext.identity?.accountId) {
+      saveRoomSession();
+      return false;
+    }
+    const session = this.session;
+    const result = await this.rooms.resume({roomId: saved.roomId, playerId: saved.playerId});
+    if (session !== this.session) return false;
+    if (!result.isSucc) {
+      saveRoomSession();
+      this.hud.value = result.err.message;
+      return false;
+    }
+    const snapshot = result.res.snapshot;
+    if (!snapshot.roomInfo) throw new Error('房间信息不可用，请重试');
+    await this.enter({playerId: saved.playerId, serverTime: snapshot.serverTime,
+      room: {id: snapshot.roomId, name: snapshot.roomInfo?.name ?? '', mode: snapshot.mode,
+        mapId: snapshot.roomInfo.mapId, players: snapshot.players, round: snapshot.match?.round ?? 0, phase: snapshot.phase}}, session);
+    this.input.resetSequence(result.res.inputSequence);
+    this.roomFeed.receive(snapshot);
+    return true;
+  }
+
   private async enter(result: ResJoin, session: number): Promise<void> {
     if (session !== this.session) return;
     this.family.reset();
@@ -590,6 +659,8 @@ export class Battle {
     this.mapId = result.room.mapId;
     this.input.resetSequence();
     this.active = true;
+    const accountId = this.accountContext.identity?.accountId;
+    if (accountId) saveRoomSession({accountId, roomId: result.room.id, playerId: result.playerId});
     this.pageMusic?.room(result.room.phase ?? 'WAITING', result.room.mode, result.room.mapId);
     this.lobbyChat.setInRoom(true);
     this.lobbyPresence.setInRoom(true);
@@ -675,8 +746,7 @@ export class Battle {
         await new Promise(resolve => setTimeout(resolve, 50));
       }
       progress(0.95, '正在准备画面…');
-      await Promise.all([this.players.loadLabels(), this.minimapRenderer.load(this.originalHud.getSnapshot().data!),
-        this.hudVectorRenderer.load()]);
+      await Promise.all([this.players.loadLabels(), this.minimapRenderer.load(this.originalHud.getSnapshot().data!)]);
       if (!current()) return;
       if (!this.minimapRenderer.hasMap(this.mapId!)) {
         const imageUrl = mapMinimaps[this.mapId!];
@@ -722,8 +792,6 @@ export class Battle {
   private clearCancelledLoading(): void {
     this.projectiles.clear();
     this.minimapRenderer.clear();
-    this.crosshairRenderer.clear();
-    this.hudVectorRenderer.clear();
     this.resourceRevision++;
     this.loadingRound = undefined;
     this.loadedRound = undefined;
@@ -755,6 +823,7 @@ export class Battle {
   }
 
   get inRoom(): boolean {return this.active;}
+  get roomId(): string | undefined {return this.roomFeed.roomId;}
 
   setRoomExitHandler(handler?: () => void): void {this.returnToLobby = handler;}
 
@@ -780,6 +849,7 @@ export class Battle {
     this.reconnecting = true;
     const deadline = performance.now() + ROOM_RECONNECT_WINDOW_MS;
     this.hud.value = '连接已断开，正在恢复原房间…';
+    showGameMessage(this.hud.value, 'pending');
     while (session === this.session && this.active && performance.now() < deadline) {
       try {
         await this.connection.ensureConnected();
@@ -814,6 +884,7 @@ export class Battle {
       this.leave(false);
       this.returnToLobby?.();
       this.hud.value = '原房间保留已结束，请重新加入';
+      showGameMessage(this.hud.value, 'error');
     }
   }
 
@@ -861,11 +932,10 @@ export class Battle {
     return this.exiting;
   }
 
-  leave(disconnect = true): void {
+  leave(disconnect = true, preserveSession = false): void {
+    if (!preserveSession) saveRoomSession();
     this.projectiles.clear();
     this.minimapRenderer.clear();
-    this.crosshairRenderer.clear();
-    this.hudVectorRenderer.clear();
     this.resourceRevision++;
     this.loadingRound = undefined;
     this.loadedRound = undefined;
@@ -1253,15 +1323,11 @@ export class Battle {
     const snapshot = this.roomFeed.snapshot;
     if (!this.active || !snapshot || !this.client.isConnected || this.reconnecting) {
       this.projectiles.clear();
-      this.crosshairRenderer.clear();
-      this.hudVectorRenderer.clear();
       return;
     }
     if (!this.mapLoaded || this.loadedRound !== snapshot.match?.round
         || (snapshot.phase !== 'PLAYING' && snapshot.phase !== 'FINISHED')) {
       this.projectiles.clear();
-      this.crosshairRenderer.clear();
-      this.hudVectorRenderer.clear();
       return;
     }
     const alpha = Math.min(1, this.scene.getEngine().getDeltaTime() / 80);
@@ -1279,9 +1345,6 @@ export class Battle {
       this.originalHud.update(snapshot, this.playerId, performance.now(), now);
       this.syncBattleUiSounds(snapshot);
     }
-    this.crosshairRenderer.render(this.originalHud.getReloadSnapshot());
-    const items = this.itemInventory.getSnapshot();
-    this.hudVectorRenderer.render(this.originalHud, this.combatCatalog, items.inventory, items.selectedItemSlot, now);
     const spectator = this.originalHud.spectator.getSnapshot();
     this.players.render(alpha, this.playerId, snapshot.phase === 'PLAYING',
       this.localMotion.renderedPose, this.localMotion.moving,
@@ -1295,8 +1358,10 @@ export class Battle {
       battleStartsAt: snapshot.match?.battleStartsAt ?? now, objects: snapshot.match?.sceneObjects ?? []});
     this.battlefield.updateObjects([...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? [])], snapshot.match?.round ?? 0,
       snapshot.serverTime, this.scene.getEngine().getDeltaTime() / 1000);
-    this.hud.value = this.groundTrapError || this.groundItemError || this.players.loadingError
+    const resourceError = this.groundTrapError || this.groundItemError || this.players.loadingError
       || this.battleUiSoundError || '';
+    if (resourceError && resourceError !== this.hud.value) showGameMessage(resourceError, 'error');
+    this.hud.value = resourceError;
     // DOM world state supports HUD accessibility and browser integration verification.
     this.hud.dataset.world = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,
       mapId: this.mapId, mapLoaded: this.mapLoaded,

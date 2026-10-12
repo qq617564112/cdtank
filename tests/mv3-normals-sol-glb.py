@@ -8,13 +8,13 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from mv3 import read_mv3
 from mv3_normals import decode_frame_normals
 
 SOURCE = ROOT / 'recovery/output/verified/assets/data/Data'
 published = '--published' in sys.argv
-OUTPUT = ROOT / ('recovery/output/web-assets/Data' if published else 'recovery/output/mv3-normals-sol-glb')
+OUTPUT = ROOT / ('apps/web/public/Data' if published else 'recovery/output/mv3-normals-sol-glb')
 fixtures = ['role/001/01M.MV3', 'role/001/04X.MV3', 'role/001/c14m.MV3', 'Pet/001/n1.MV3']
 if not published:
     with tempfile.TemporaryDirectory() as temporary:
@@ -23,7 +23,7 @@ if not published:
             destination = source / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(SOURCE / relative, destination)
-        subprocess.run([sys.executable, str(ROOT / 'recovery/convert_mv3.py'), '--assets',
+        subprocess.run([sys.executable, str(ROOT / 'tools/recovery/convert_mv3.py'), '--assets',
                         str(source), '--out', str(OUTPUT), '--models-only'], check=True)
 
 rows = []

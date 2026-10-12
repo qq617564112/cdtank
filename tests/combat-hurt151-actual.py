@@ -6,7 +6,7 @@ import struct
 import sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from mv3 import read_mv3
 runpath=Path(sys.argv[1]).resolve();run=json.loads(runpath.read_text())
 source=json.loads((ROOT/'recovery/output/combat-hurt-representatives-source.json').read_text())

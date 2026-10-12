@@ -7,12 +7,12 @@ import capstone
 import pefile
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from pol import read_pol
 from scene import read_scene
 
 source = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 records = [r for r in read_scene(source / 'Data/scn/0011/0011.obj')
            if r['className'] == 'SYcScnObjGeneral' and r['model'] == 'obj05431']
 assert len(records) == 23 and all(r['enabled'] == 1 for r in records)

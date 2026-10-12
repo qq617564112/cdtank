@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {classifyItemId} from '../apps/shared/combat/item-hotkeys';
 
-const items = JSON.parse(readFileSync('recovery/output/verified/tables/item.json', 'utf8'));
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const items = JSON.parse(readFileSync('apps/server/resources/tables/item.json', 'utf8'));
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
 const queue = JSON.parse(readFileSync('recovery/output/effects-role-queue-reentry.json', 'utf8'));
 const mappings = [17031, 17032].map((itemId, index) => {
   const source = items.rows.find((row: {values: Record<string, string>}) =>

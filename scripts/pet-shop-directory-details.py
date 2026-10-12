@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-tables = root / 'recovery/output/verified/tables'
+tables = root / 'apps/server/resources/tables'
 pets = json.loads((tables / 'pet.json').read_text())['rows']
 skills = {int(row['values']['SkillTableID']): row['values']['SkillName']
           for row in json.loads((tables / 'skill.json').read_text())['rows']}

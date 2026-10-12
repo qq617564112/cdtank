@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawn, execFileSync} from 'node:child_process';
 import {createServer} from 'vite';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources.ts';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources.ts';
 import {AccountStore} from '../apps/server/src/account-store.ts';
 import {serviceProto} from '../apps/shared/protocols/serviceProto.ts';
 
@@ -153,7 +153,7 @@ async function launchBrowser() {
 
 
 try {
- await launchServer();vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5404,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3354',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();const page=await newPage();
+ await launchServer();vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5404,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3354',ws:true,rewrite:()=> '/'}}}});await vite.listen();await launchBrowser();const page=await newPage();
  if (!validationOnly) {
  const state = await evaluate(page, `({identity:!!document.querySelector('[data-lobby-identity]'),name:!!document.querySelector('#player-name'),background:document.querySelector('[data-lobby-background] [data-source-image]').dataset.sourceAsset,rooms:document.querySelectorAll('[data-room-card-id]').length,players:!!document.querySelector('[data-lobby-player-panel]'),chat:!!document.querySelector('[data-lobby-chat-input]')})`);
  assert.equal(state.identity,false); assert.equal(state.name,false); assert.equal(state.background,'ui/regions/55/1.png');assert(state.rooms>0&&state.players&&state.chat);

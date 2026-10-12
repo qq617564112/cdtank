@@ -5,13 +5,13 @@ import struct
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'recovery'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/recovery'))
 from pol import read_pol
 from scene import read_scene
 from nav import read_nav
 
 root = Path('recovery/output/verified/assets/data')
-fields = json.loads(Path('recovery/output/web-assets/battlefields.json').read_text())
+fields = json.loads(Path('apps/web/public/battlefields.json').read_text())
 triangles = slots = boxes = cells = 0
 assert len(fields) == 25
 for field in fields:

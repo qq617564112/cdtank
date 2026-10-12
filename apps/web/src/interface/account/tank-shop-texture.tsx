@@ -1,4 +1,5 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {GameMessage} from '../resources/game-message';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import {loadTankTextureCatalog} from '../../content';
 import {loadCombatCatalog} from '../../content';
 import {HomeOwnedTankRowContent} from '../home/home-owned-tank-row-content';
@@ -10,8 +11,8 @@ import type {ResTankTextures} from '../../../../shared/protocols/PtlTankTextures
 import {readOwnedTankTextures, type OwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import type {ShopSource} from './shop';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
-import {SourceButton} from '../resources/source-button';
-import {SourceStaticText} from '../resources/source-static-text';
+import {ShopSourceButton} from './shop-source-button';
+import {HomeStaticText as SourceStaticText} from '../home/home-text';
 import {sourceProps} from '../resources/source-ui-props';
 import {TankProductPreview} from '../resources/tank-product-preview';
 import {TankShopSourceRegions} from './tank-shop-source-regions';
@@ -19,6 +20,7 @@ import {TankShopTextureSourceRegions} from './tank-shop-texture-source-regions';
 import {RoleShopListScrollbar} from './role-shop-list-scrollbar';
 import {tankCatalog} from '../../assets/tanks/tank-view';
 import {loadStaticJson} from '../../assets/static-resources';
+import {ShopTankAttributes, ShopTankParameters} from './shop-tank-stat-row';
 
 interface TextureRow {
   recordId: number; tankId: number; part: 'U' | 'M' | 'XY'; name: string;
@@ -43,8 +45,6 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
 }) {
   const layout = new HomeSourceLayout(ui, 'shop_tankpage.xml');
   const textureLayout = new HomeSourceLayout(ui, 'shop_tankpage_texture.xml');
-  const selection = sourceProps(ui, layout, 'shop_tankpage.xml', 'lstTank', layout.control('lstTank').properties.SelectionImage);
-  const unavailable = sourceProps(ui, layout, 'shop_tankpage.xml', 'btnChangeTexture', layout.control('btnChangeTexture').properties.NormalImage);
   const session = useRef({active: false, query: false, identity: {}});
   const [tankTypes, setTankTypes] = useState<CombatCatalog['tankTypes']>([]);
   const [owned, setOwned] = useState<ResOwnedRoles>();
@@ -54,7 +54,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
   const [instance, setInstance] = useState(owner.selected);
   const [draft, setDraft] = useState<OwnedTankTextures>();
   const [busy, setBusy] = useState(true);
-  const [status, setStatus] = useState('载入拥有战车与迷彩资料…');
+  const [status, setStatus] = useState('');
   const saveButton = useRef<HTMLButtonElement | null>(null);
   const ownedList = useRef<HTMLDivElement>(null);
   const focusAfterSave = useRef(false);
@@ -93,7 +93,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
           owner.selected = id; return id;
         });
         setDraft(undefined);
-        setStatus(owner.inFlight ? '等待迷彩保存确认…' : roles.equipment.length ? '选择迷彩后更换' : '当前没有拥有战车，请先购买战车。');
+        setStatus(owner.inFlight || roles.equipment.length ? '' : '当前没有拥有战车，请先购买战车。');
       } catch (error) {
         if (currentSession.active) setStatus(error instanceof Error ? error.message : '迷彩资料载入失败');
       } finally {
@@ -119,7 +119,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
 
   function selectRecord(value: OwnedRoleRecordData) {
     owner.selected = new Map(value.fields).get(0x1c); setInstance(owner.selected); setDraft(undefined);
-    setStatus('选择迷彩后更换');
+    setStatus('');
   }
   const choices = (part: 'U' | 'M' | 'XY') => rows.filter(row => row.tankId === tankId && row.part === part
     && (row.recordId === current?.[part] || row.selectable && row.textures.A.status === 'resolved' && !!row.textures.A.asset
@@ -128,7 +128,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
     const currentSession = session.current;
     if (!currentSession.active || currentSession.query || owner.inFlight || !selected || !current || !changed || instance === undefined) return;
     focusAfterSave.current = document.activeElement === button; saveButton.current = button;
-    setBusy(true); setStatus('保存战车迷彩…');
+    setBusy(true); setStatus('');
     const request = source.configureTankTextures!({instanceId: instance, textures: {...selected}}); owner.inFlight = request;
     try {
       const result = await request;
@@ -146,23 +146,22 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
     }
   }
   return <>
-    <TankShopSourceRegions ui={ui} />
-    <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoBuy" aria-label="购买战车商品"
-      disabled={busy} onClick={onBuy} data-tank-shop-buy-tab="" />
-    <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoTexture" selected aria-pressed="true"
-      aria-label="更换拥有战车迷彩" disabled={busy} data-tank-shop-texture-tab="" />
+    <TankShopSourceRegions ui={ui} tab="rdoTexture"/>
+    <ShopTankAttributes ui={ui} owned/>
+    <ShopTankParameters ui={ui} owned/>
+    <ShopSourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoBuy" aria-label="购买战车商品"
+      disabled={busy} aria-busy={busy} onClick={onBuy} data-tank-shop-buy-tab="" />
+    <ShopSourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoTexture" selected aria-pressed="true"
+      aria-label="更换拥有战车迷彩" disabled={busy} aria-busy={busy} data-tank-shop-texture-tab="" />
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtMoney" text={wallet ? String(wallet.getUint32(0x70, true)) : ''} />
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtCoin" text={wallet ? String(wallet.getUint32(0x74, true)) : ''} />
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtName" text={record?.name ?? ''} />
-    <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtListQuantity" text={owned ? String(records.length) : ''} />
     <div {...sourceProps(ui, layout, 'shop_tankpage.xml', 'lstTank')} className="role-shop-list-scroll-shell">
     <div ref={ownedList} className="role-shop-source-list" data-tank-shop-owned-list="" role="listbox" aria-label="拥有战车" aria-busy={busy}>
       {records.map((value, index) => {
         const rowFields = new Map(value.fields), id = rowFields.get(0x1c)!, rowTankId = rowFields.get(0x24);
         return <button key={id} type="button" role="option" data-tank-shop-owned-instance={id} data-home-owned-tank-row={id} disabled={busy}
           aria-selected={id === instance} tabIndex={id === instance ? 0 : -1}
-          style={id === instance ? {...backgroundStyle(selection.style)} : undefined}
-          data-source-selection-asset={id === instance ? selection['data-source-asset'] : undefined}
           onClick={() => selectRecord(value)} onKeyDown={event => {
             const destination = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
               : event.key === 'Home' ? 0 : event.key === 'End' ? records.length - 1 : undefined;
@@ -172,7 +171,9 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
             button?.focus(); button?.scrollIntoView({block: 'nearest'});
           }} onKeyUp={event => {
             if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) event.stopPropagation();
-          }}><HomeOwnedTankRowContent ui={ui} name={value.name} tankId={rowTankId}
+          }}>
+          {id === instance && <GameSelectionHighlight/>}
+          <HomeOwnedTankRowContent ui={ui} name={value.name} tankId={rowTankId}
             tankType={tankTypes?.find(tank => tank.tankId === rowTankId)?.tankType}
             durationMinutes={rowFields.get(0x34)} /></button>;
       })}
@@ -189,7 +190,7 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
       return <div key={part} className="tank-shop-texture-component">
         <span {...sourceProps(ui, textureLayout, 'shop_tankpage_texture.xml', `txt${control}TextureName`, undefined, 0, 36)} data-texture-part={part} data-presentation-colour="web-readable">
           {!record ? '' : !available ? `${label}：无组件` : row?.name ?? `${label}：原纹理`}</span>
-        {([['Dec', -1], ['Inc', 1]] as const).map(([direction, delta]) => <SourceButton key={direction}
+        {([['Dec', -1], ['Inc', 1]] as const).map(([direction, delta]) => <ShopSourceButton key={direction}
           ui={ui} layout={textureLayout} suffix="shop_tankpage_texture.xml" source={`btn${direction}${control}Texture`} offsetY={36}
           aria-label={`${delta < 0 ? '上一款' : '下一款'}${label}迷彩`} disabled={busy || !selected || !available || !options.some(value => value.selectable)}
           onClick={() => {if (selected) {const next = ids.indexOf(selected[part]) + delta; if (next < 0 || next >= ids.length) return; setDraft({...selected, [part]: ids[next]}); setStatus('预览尚未保存');}}} />)}
@@ -197,14 +198,9 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
           {!available || !selected ? '' : selected[part] === current?.[part] ? '已选' : row?.rarity === 1 ? `${row.moneyPrice}金币` : row?.rarity === 2 ? `${row.tokenPrice}代币` : ''}</span>
       </div>;
     })}
-    <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="btnChangeTexture" data-tank-shop-texture-save=""
-      aria-label="保存战车迷彩" disabled={busy || !profile || !changed} onClick={event => {void save(event.currentTarget);}}>
-      {(busy || !profile || !changed) && <span className="tank-shop-texture-save-unavailable" data-presentation-state="web-disabled"
-        data-source-asset={unavailable['data-source-asset']} data-source-button-label="external"
-        style={{...backgroundStyle(unavailable.style)}} />}
-    </SourceButton>
-    <button type="button" className="tank-shop-refresh" disabled={busy} onClick={() => owner.session?.refresh()} data-tank-shop-texture-refresh="">刷新拥有资料</button>
-    <output className="tank-shop-status" data-tank-shop-texture-status="" data-texture-selection={selected ? JSON.stringify(selected) : undefined}
-      role="status" aria-live="polite">{status}</output>
+    <ShopSourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="btnChangeTexture" data-tank-shop-texture-save=""
+      aria-label="保存战车迷彩" disabled={busy || !profile || !changed} onClick={event => {void save(event.currentTarget);}}/>
+    <GameMessage data-tank-shop-texture-status="" data-texture-selection={selected ? JSON.stringify(selected) : undefined}
+      text={status} tone={busy ? 'pending' : 'info'}/>
   </>;
 }

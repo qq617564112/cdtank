@@ -1,9 +1,8 @@
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {ShopCurrency} from '../../../../shared/protocols/PtlShop';
-import {SourceButton} from '../resources/source-button';
-import {SourceFeedbackText} from '../resources/source-feedback-text';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
+import {DialogButton} from '../resources/dialog-button';
+import {GameConfirmFrame} from '../resources/game-confirm-frame';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import './shop-purchase-source.css';
@@ -11,7 +10,7 @@ import './shop-purchase-source.css';
 const suffix = 'userinput_dialog.xml';
 const viewportScale = () => Math.min(innerWidth / 800, innerHeight / 600);
 
-/** Shop decisions use the original input sheet and confirmation buttons. */
+/** Shop decisions use an SVG frame around native input and payment controls. */
 export function ShopPurchaseSource({ui, name, moneyPrice, tokenPrice, moneyAvailable = true, quantity, changeQuantity,
   currency, changeCurrency, pending, status, confirm, cancel}: {
   ui: HomeSourceUi; name: string; moneyPrice: number; tokenPrice: number; moneyAvailable?: boolean;
@@ -20,6 +19,7 @@ export function ShopPurchaseSource({ui, name, moneyPrice, tokenPrice, moneyAvail
   pending: boolean; status: string; confirm: () => void; cancel: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const messageId = useId();
   const [step, setStep] = useState<'Quantity' | 'Payment'>(quantity === undefined ? 'Payment' : 'Quantity');
   const [scale, setScale] = useState(viewportScale);
   const layout = new HomeSourceLayout(ui, suffix);
@@ -54,8 +54,10 @@ export function ShopPurchaseSource({ui, name, moneyPrice, tokenPrice, moneyAvail
     else confirm();
   }
   const text = sourceProps(ui, layout, suffix, 'txtMessage');
-  return createPortal(<dialog ref={dialog} className="shop-purchase-dialog" data-shop-purchase-confirm=""
-    data-shop-purchase-step={step} aria-label={`购买${name}`} aria-busy={pending}
+  const field = sourceProps(ui, layout, suffix, 'shufukuangditu');
+  const input = sourceProps(ui, layout, suffix, 'edtInput');
+  return createPortal(<dialog ref={dialog} className="game-confirm-dialog shop-purchase-dialog" data-shop-purchase-confirm=""
+    data-shop-purchase-step={step} aria-label={`购买${name}`} aria-describedby={messageId} aria-busy={pending}
     style={{width: 307 * scale, height: 120 * scale}}
     onCancel={event => {event.preventDefault(); event.stopPropagation(); if (!pending) cancel();}}
     onKeyDown={event => {
@@ -66,26 +68,28 @@ export function ShopPurchaseSource({ui, name, moneyPrice, tokenPrice, moneyAvail
       }
     }} onKeyUp={event => event.stopPropagation()}>
     <div className="shop-purchase-stage" style={{transform: `scale(${scale})`}}>
-      <SourceImageScale value={scale}>
-        {['SheetWindow', 'picBackgroundMask', 'shangkuang', 'xiakuang', 'shufukuangditu'].map(control =>
-          <SourceStaticImage key={control} ui={ui} layout={layout} suffix={suffix} name={control} aria-hidden="true"/>)}
-        <div {...text} style={{...text.style, height: 28}} role={status ? 'alert' : 'document'}>
-          <SourceFeedbackText text={message}/>
-        </div>
-        {step === 'Quantity' ? <input {...sourceProps(ui, layout, suffix, 'edtInput')}
+      <GameConfirmFrame width={307} height={120} headerHeight={42}/>
+      <div {...text} id={messageId} style={{...text.style, top: 6, height: 30}}
+        role={status ? 'alert' : 'document'}>{message}</div>
+      <div {...field} className="shop-purchase-field">
+        {step === 'Quantity' ? <input {...input} style={{left: 0, top: 0, width: '100%', height: '100%'}}
           inputMode="numeric" aria-label="购买数量" data-shop-quantity="" value={quantity}
           disabled={pending} onChange={event => changeQuantity?.(event.currentTarget.value)}/>
-          : <select {...sourceProps(ui, layout, suffix, 'edtInput')} aria-label="购买币种"
+          : <select {...input} style={{left: 0, top: 0, width: '100%', height: '100%'}} aria-label="购买币种"
             data-shop-currency="" value={currency} disabled={pending}
             onChange={event => changeCurrency(event.currentTarget.value === 'TOKENS' ? 'TOKENS' : 'MONEY')}>
             <option value="TOKENS" disabled={tokenPrice <= 0}>用星币购买</option>
             <option value="MONEY" disabled={!moneyAvailable}>用金钱购买</option>
           </select>}
-        <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnOK" data-shop-buy=""
-          aria-label={step === 'Quantity' ? '确认购买数量' : '确认购买'} disabled={pending || disabled} onClick={accept}/>
-        <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnCancel" data-shop-purchase-cancel=""
-          aria-label="取消购买" disabled={pending} onClick={cancel}/>
-      </SourceImageScale>
+        {step === 'Payment' && <svg className="shop-purchase-select-arrow" viewBox="0 0 12 8"
+          aria-hidden="true" focusable="false">
+          <path d="M1 1L6 6L11 1" fill="none" stroke="#e4f4ff" strokeWidth="2" strokeLinejoin="round"/>
+        </svg>}
+      </div>
+      <DialogButton {...sourceProps(ui, layout, suffix, 'btnOK')} data-shop-buy=""
+        aria-label={step === 'Quantity' ? '确认购买数量' : '确认购买'} disabled={pending || disabled} onClick={accept}>确定</DialogButton>
+      <DialogButton {...sourceProps(ui, layout, suffix, 'btnCancel')} data-shop-purchase-cancel=""
+        aria-label="取消购买" disabled={pending} onClick={cancel}>取消</DialogButton>
     </div>
   </dialog>, document.body);
 }

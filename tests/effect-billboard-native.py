@@ -15,7 +15,7 @@ machine.mem_map(0x400000, (pe.OPTIONAL_HEADER.SizeOfImage + 4095) & ~4095)
 machine.mem_write(0x400000, pe.get_memory_mapped_image())
 machine.mem_map(0x2000000, 0x20000)
 FRAME, STATE, STACK = 0x2009000, 0x2010000, 0x2008000
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 cases = [(c['motion']['position'], c['appearance']['scale'], c['appearance']['angles'][2])
          for c in library['spriteControls']]
 cases += [([4, 5, 6], [2, 3, 1], angle) for angle in [0, 30, 45, 90, 180, 270, 360, -30]]

@@ -7,7 +7,7 @@ const engine = new NullEngine();
 const scene = new Scene(engine);
 const texture = RawTexture.CreateRGBATexture(new Uint8Array([255, 255, 255, 255]), 1, 1,
   scene, false, false, Texture.NEAREST_SAMPLINGMODE);
-const library = JSON.parse(fs.readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(fs.readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const corners: [[number, number, number], [number, number, number], [number, number, number], [number, number, number]] =
   [[-1, -2, 0], [1, -2, 0], [1, 2, 0], [-1, 2, 0]];
 for (const index of [6, 7, 8, 9]) {

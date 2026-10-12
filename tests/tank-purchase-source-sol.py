@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
-TABLES = ROOT / 'recovery/output/verified/tables'
+TABLES = ROOT / 'apps/server/resources/tables'
 def table(name):
     return json.loads((TABLES / f'{name}.json').read_text())['rows']
 def row(name, record_id):

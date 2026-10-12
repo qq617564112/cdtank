@@ -15,7 +15,7 @@ try {
   const player = world.snapshot(joined.roomId)!.players.find(p => p.id === joined.playerId)!;
   const start = {x: player.x, y: player.y, z: player.z};
   interface Placement {id: string; model: string; className: string; enabled: boolean; position: number[];}
-  const scenes = JSON.parse(readFileSync('recovery/output/web-assets/scene-placements.json', 'utf8')) as Array<{id: string; records: Placement[]}>;
+  const scenes = JSON.parse(readFileSync('apps/web/public/scene-placements.json', 'utf8')) as Array<{id: string; records: Placement[]}>;
   const records = scenes.find(s => s.id === '0021')!.records.filter(r =>
     r.className === 'SYcScnObjBreach' && r.model === 'obj05422' && r.enabled);
   const nearest = [...records].sort((a, b) =>

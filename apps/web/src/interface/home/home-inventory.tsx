@@ -1,14 +1,13 @@
+import {showGameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
+import {useNavigationChoice, useNavigationValue} from '../../navigation/route';
 import {isTreasureItem} from '../../../../shared/combat/treasure-items';
 import {defaultAmmoId} from '../../../../shared/content/catalog';
 import {loadCombatCatalog} from '../../content';
 import './home.css';
 import {HomeResourceFeedback} from './home-resource-feedback';
 import {Fragment, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties} from 'react';
-import {createPortal} from 'react-dom';
-import {SourceNotice} from '../dialogs/source-notice';
-import {SourceNoticeView} from '../dialogs/source-notice-view';
-import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-feedback-text';
+import {HomeStaticText as SourceStaticText} from './home-text';
 import {HomeItemDescriptionSource, homeItemDescriptionPosition, type HomeItemDescription} from './home-item-description-source';
 import {HomeSourceRoot} from './home-source-root';
 import {HomePlayerSourcePage} from './home-player-source-page';
@@ -18,7 +17,7 @@ import {HomeNameSourceDialog} from './home-name-source-dialog';
 import {HomeBattleSummarySourcePage} from './home-battle-summary-source-page';
 import {HomeAwardSummarySourcePage} from './home-award-summary-source-page';
 import {HomeTitleSummarySourcePage} from './home-title-summary-source-page';
-import {SourceButton} from '../resources/source-button';
+import {HomeSourceButton as SourceButton} from './home-source-button';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
@@ -69,7 +68,7 @@ function itemImage(item: CombatCatalog['items'][number]): string {
 
 /** Each opening owns its inventory requests, selection and confirmed slot state. */
 export function HomeInventoryView({open, close, battle, onRolePage}: HomeInventoryViewProps) {
-  const [page, setPage] = useState<'weapon' | 'item' | 'valuable'>('weapon');
+  const [page, setPage] = useNavigationChoice('inventoryPage', ['weapon', 'item', 'valuable'], 'weapon');
   const valuableOwner = useRef<ValuableItemSaleOwner>({});
   return open ? <InventorySession close={close} battle={battle} onRolePage={onRolePage}
     page={page} changePage={setPage} valuableOwner={valuableOwner.current} /> : null;
@@ -100,12 +99,13 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
   const [statistics, setStatistics] = useState<AccountStatistics>();
   const [awards, setAwards] = useState<AwardCounts>();
   const [titlePending, setTitlePending] = useState(false);
-  const [notice] = useState(() => new SourceNotice());
   const [description, setDescription] = useState<HomeItemDescription>();
   const [balanceError, setBalanceError] = useState('');
   const [name, setName] = useState('');
-  const [nameOpen, setNameOpen] = useState(false);
-  const [summaryTab, setSummaryTab] = useState<'battle' | 'title' | 'award'>('battle');
+  const [rename, setRename] = useNavigationValue('rename');
+  const nameOpen = rename === 'true';
+  const setNameOpen = (open: boolean): void => setRename(open ? 'true' : '');
+  const [summaryTab, setSummaryTab] = useNavigationChoice('summaryTab', ['battle', 'title', 'award'], 'battle');
   const [selected, setSelected] = useState(0);
   const requestFocus = useRef<HTMLElement | null>(null);
   const [busy, setBusy] = useState(false);
@@ -114,11 +114,6 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
   const [valuableActivation, setValuableActivation] = useState<{instanceId: number; sequence: number}>();
   const valuableActivationSequence = useRef(0);
-
-  useEffect(() => {
-    notice.clear();
-    return () => notice.clear();
-  }, [notice, accountGeneration]);
 
   useEffect(() => {
     const element = dialog.current!;
@@ -153,7 +148,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
         setAwards(confirmed.awards);
       }
     }).catch(error => {
-      if (current.active) {setBalanceError(String(error)); void notice.show('玩家资料读取失败');}
+      if (current.active) {setBalanceError(String(error)); showGameMessage('玩家资料读取失败', 'error');}
     })
       .finally(() => {if (current.active) setProfilePending(false);});
     void battle.ownedRoles().then(confirmed => {
@@ -175,12 +170,12 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
     }).catch(error => {
       if (current.active) {
         const message = `物品资料读取失败：${error instanceof Error ? error.message : String(error)}`;
-        setStatus(message); void notice.show(message);
+        setStatus(message); showGameMessage(message);
       }
     })
       .finally(() => {if (current.active) setBusy(false);});
     return () => {current.active = false;};
-  }, [battle, accountContext, notice]);
+  }, [battle, accountContext]);
 
   useLayoutEffect(() => {
     if (busy || !requestFocus.current) return;
@@ -236,7 +231,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
       setInventory(value => value ? {...value, hotkeys: [...confirmed.hotkeys]} : value);
       setStatus('快捷槽已保存');
     } catch (error) {
-      if (current.active) {setStatus(String(error)); void notice.show(error instanceof Error ? error.message : String(error));}
+      if (current.active) {setStatus(String(error)); showGameMessage(error instanceof Error ? error.message : String(error), 'error');}
     } finally {
       if (current.active) {current.pending = false; setBusy(false);}
     }
@@ -264,7 +259,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
       if (!current.active) return;
       setTitles(confirmed.titles);
     } catch (error) {
-      if (current.active) void notice.show(`称号保存失败：${error instanceof Error ? error.message : String(error)}`);
+      if (current.active) showGameMessage(`称号保存失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       if (current.active) {current.pending = false; setBusy(false); setTitlePending(false);}
     }
@@ -285,7 +280,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
     <SourceImageScale value={scale}>
     <div className="home-inventory-stage" data-home-page="">
       {resources && <>
-        <HomeSourceRoot ui={resources.ui} page="player" busy={busy}
+        <HomeSourceRoot ui={resources.ui} page="player" busy={busy} inventoryTab={page}
           selectPage={kind => {if (kind !== 'player') onRolePage?.(kind);}}
           close={requestClose} closeAttribute="data-home-close" />
         <HomePlayerSourcePage ui={resources.ui} name={name} playerSummary={playerSummary} growth={growth}
@@ -302,7 +297,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
           data-home-name-open="" disabled={busy || !inventory} onClick={() => setNameOpen(true)} />
         <div data-home-summary-battle-slot="" hidden={summaryTab !== 'battle'} style={{position: 'static'}}>
           <HomeBattleSummarySourcePage ui={resources.ui} source={battle} statistics={statistics}
-            onError={message => {void notice.show(message);}} />
+            onError={message => {showGameMessage(message, 'error');}} />
         </div>
         {summaryTab === 'title' && <HomeTitleSummarySourcePage ui={resources.ui} titles={titles} pending={titlePending}
           select={titleId => void selectTitle(titleId)} />}
@@ -323,7 +318,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
           const name = ['rdoWeapon', 'rdoItem', 'rdoValuable'][index];
           return <SourceButton key={tab} ui={resources.ui} layout={new HomeSourceLayout(resources.ui, 'myhome_playerpage.xml')}
             suffix="myhome_playerpage.xml" source={name} className="home-tab" aria-label={['武器', '道具', '贵重品'][index]}
-            selected={page === tab} aria-pressed={page === tab} disabled={busy || !inventory}
+            selected={page === tab} aria-pressed={page === tab} disabled={busy || !inventory} aria-busy={busy}
             onClick={() => {changePage(tab); setSelected(0); setValuableActivation(undefined); setDescription(undefined); setStatus('');}} />;
         })}
         <HomeInventorySourceList ui={resources.ui} selected={selected} busy={busy} itemRows={page === 'item'}
@@ -340,7 +335,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
           })} />
         {page === 'valuable' && <ValuableItemSaleSource ui={resources.ui} battle={battle}
           activation={valuableActivation} owner={valuableOwner} refreshKey={selected}
-          onError={message => {void notice.show(message);}}
+          onError={message => {showGameMessage(message, 'error');}}
           onConfirmed={installValuableSale} onBusy={setBusy} />}
         {page !== 'valuable' && [0, 1, 2, 3].map(index => {
           const slot = slotNumber(index), instanceId = slot ? inventory?.hotkeys[slot - 1] ?? 0 : 0;
@@ -376,6 +371,6 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
     </SourceImageScale>
     {nameOpen && resources && <HomeNameSourceDialog ui={resources.ui} battle={battle}
       close={() => setNameOpen(false)} saved={setName} />}
-    {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
+
   </dialog>;
 }

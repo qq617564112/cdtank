@@ -1,33 +1,23 @@
-.hud-item-source-bar,
-.hud-item-source-control {
+.hud-item-source-bar {
   position: absolute;
   pointer-events: none;
 }
 
-.hud-item-source-control[data-item-selected]::after,
-.hud-item-source-control[data-item-cursor]::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border: 2px solid #ffdf41;
-  pointer-events: none;
-}
-
-.hud-item-remaining {
+.hud-item-bar-frame,
+.battle-item-socket {
   position: absolute;
   inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #fff;
-  font-size: 14px;
-  text-shadow: 1px 1px #000;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
 }
 
 .hud-item-action {
   position: absolute;
-  inset: 0;
-  z-index: 1;
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -39,12 +29,72 @@
   cursor: default;
 }
 
-.hud-item-action:enabled:hover,
-.hud-item-action:focus-visible {
-  outline: 1px solid #fff0a0;
-  outline-offset: 1px;
+.hud-item-action:enabled:hover .battle-item-socket {
+  filter: brightness(1.25);
 }
 
-.hud-item-action:enabled:active {
-  background: rgb(255 223 65 / 12%);
+.hud-item-action:enabled:active .battle-item-socket {
+  filter: brightness(.9);
+  transform: translateY(1px);
+}
+
+.hud-item-action:focus-visible {
+  outline: 2px solid #fff0a0;
+  outline-offset: 2px;
+}
+
+.hud-item-icon {
+  position: absolute;
+  inset: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  pointer-events: none;
+}
+
+.hud-item-key,
+.hud-item-count,
+.hud-item-remaining {
+  position: absolute;
+  z-index: 2;
+  color: #fff;
+  line-height: 1;
+  -webkit-text-stroke: 1.5px #16221c;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+#original-battle-hud .hud-item-key,
+#original-battle-hud .hud-item-count {
+  font-family: 'Silkscreen', 'HappyZcool-2016', sans-serif !important;
+  font-weight: 700;
+  font-synthesis: weight;
+}
+
+.hud-item-key {
+  left: 1px;
+  top: 1px;
+  font-size: 16px;
+}
+
+.hud-item-count {
+  right: 1px;
+  bottom: -1px;
+  color: #ffe862;
+  font-size: 14px;
+  -webkit-text-stroke-width: 1.2px;
+}
+
+.hud-item-cooldown {
+  position: absolute;
+  inset: 2px;
+  z-index: 1;
+  background: rgb(15 30 23 / 65%);
+  pointer-events: none;
+}
+
+.hud-item-remaining {
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
 }

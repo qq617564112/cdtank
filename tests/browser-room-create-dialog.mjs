@@ -206,7 +206,7 @@ async function verifyButtonImages(session,source) {
 }
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5229,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3194',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5229,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3194',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();await launchBrowser();
   const page=await newPage(),maps=network.find(r=>r.page===page&&r.name==='ListMaps'&&r.direction==='received').response.maps;
   await click(page,'#create-room-controls > summary');

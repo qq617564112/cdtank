@@ -1,19 +1,19 @@
 """Check original terrain packed colour/UV inputs against published GLB."""
 import json,struct,sys
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'recovery'))
+ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'tools/recovery'))
 from pol import read_pol
 map_id=int(sys.argv[1]) if len(sys.argv)>1 else 2
 map_name=f'{map_id:04d}'
 source=ROOT/'recovery/output/verified/assets/data'
 pol=read_pol(source/f'Data/map/{map_name}/{map_name}.POL')
-b=(ROOT/f'recovery/output/web-assets/Data/map/{map_name}/{map_name}.glb').read_bytes();n=struct.unpack_from('<I',b,12)[0];glb=json.loads(b[20:20+n]);start=28+n
+b=(ROOT/f'apps/web/public/Data/map/{map_name}/{map_name}.glb').read_bytes();n=struct.unpack_from('<I',b,12)[0];glb=json.loads(b[20:20+n]);start=28+n
 parts={mesh['name']:mesh['primitives'][0] for mesh in glb['meshes']}
 def values(accessor):
  a=glb['accessors'][accessor];v=glb['bufferViews'][a['bufferView']];count=a['count']*{'VEC2':2,'VEC4':4}[a['type']]
  return struct.unpack_from('<'+'f'*count,b,start+v.get('byteOffset',0)+a.get('byteOffset',0))
 vertices=0;different=0;material_factors=[];material_mismatches=[]
-library_path=ROOT/f'recovery/output/web-assets/scene-terrain-material-{map_name}.json'
+library_path=ROOT/f'apps/web/public/scene-terrain-material-{map_name}.json'
 withheld={part['mesh'] for part in json.loads(library_path.read_text()).get('withheldParts',[])} if library_path.exists() else set()
 for mesh in pol['meshes']:
  for i,part in enumerate(mesh['parts']):

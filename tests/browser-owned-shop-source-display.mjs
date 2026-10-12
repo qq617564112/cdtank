@@ -17,7 +17,7 @@ decoder=new WsClient(serviceProto,{server:`ws://127.0.0.1:${serverPort}`,logger:
 let serverLog='';
 const runId=new Date().toISOString().replace(/[:.]/g,'-');
 const output='recovery/output/browser-owned-shop-source-display-'+runId;
-const catalog=JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json','utf8'));
+const catalog=JSON.parse(await readFile('apps/web/public/combat-catalog.json','utf8'));
 const source=JSON.parse(await readFile('recovery/output/tank-shop-part-parent-source.json','utf8'));
 for(const row of source.slotCountLoader.rows)assert.equal(catalog.tankTypes.find(v=>v.tankId===row.tankId)?.partSlotCount,row.partSlotCount,'Root full21 slot metadata required before browser startup');
 const tankPrices=JSON.parse(await readFile('recovery/output/tank-shop-owned-price-native.json','utf8'));
@@ -79,7 +79,7 @@ async function inspectPrice(session,rowSelector,priceSelector,provider,expected,
 }
 try {
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:vitePort,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:`ws://127.0.0.1:${serverPort}`,ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:vitePort,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:`ws://127.0.0.1:${serverPort}`,ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required',`--remote-debugging-port=${cdpPort}`,
@@ -128,7 +128,7 @@ ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFra
   const owned=network.filter(n=>n.direction==='received'&&n.name==='OwnedRoles'&&n.success).at(-1)?.response;
   assert(owned);
   const records=owned.equipment.map(r=>({name:r.name,fields:new Map(r.fields)}));
-  const ui=JSON.parse(await readFile('recovery/output/web-assets/ui.json','utf8'));
+  const ui=JSON.parse(await readFile('apps/web/public/ui.json','utf8'));
   const layout=ui.layouts.find(l=>l.path.endsWith('shop_tankpage_part.xml'));
   const slots=['bgInternalPart0','bgInternalPart1','bgExternalPart0','bgExternalPart1','bgExternalPart2'];
   const dynamic=['picHatIcon','picMarkIcon','picInternalIcon0','picInternalIcon1','picExternalIcon0','picExternalIcon1','picExternalIcon2'];

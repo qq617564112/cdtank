@@ -3,8 +3,8 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {
   createRoleEntityFireRequest, encodeRoleEntityFireRequest, decodeRoleEntityFireRequest,
   ROLE_ENTITY_FIRE_BODY_BITS, ROLE_ENTITY_FIRE_MESSAGE_TYPE,
-} from '../recovery/evidence/combat/role-entity-fire';
-import type {RoleEntityFireSnapshot} from '../recovery/evidence/combat/role-entity-fire';
+} from '../tests/evidence/combat/role-entity-fire';
+import type {RoleEntityFireSnapshot} from '../tests/evidence/combat/role-entity-fire';
 
 interface NativeSend {
   kind: string; type: number; targetId: number; actor: number[]; target: number[];

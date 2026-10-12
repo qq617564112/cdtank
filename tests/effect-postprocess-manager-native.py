@@ -8,7 +8,7 @@ import capstone
 from unicorn import UC_HOOK_CODE, UC_HOOK_MEM_READ
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 from inspect_assets import read_table
 machine,images=map_original_binaries([ROOT/'CDTank'/n for n in ['CDTank.exe','gbengine.dll','msvcr71.dll']])
@@ -55,7 +55,7 @@ for section in pe.sections:
    getterCalls.append(hex(base+offset))
 assert getterCalls==['0x47ee9a','0x47eea7']
 vt=list(struct.unpack('<5I',pe.get_data(0x5c9e70-0x400000,20)))
-library=json.loads((ROOT/'recovery/output/web-assets/effect-library.json').read_text())
+library=json.loads((ROOT/'apps/web/public/effect-library.json').read_text())
 skills=read_table(ROOT/'CDTank/Data/table/skill.dat')
 effect_ids={int(row['values'][f'Effect{i}']) for row in skills['rows'] for i in range(1,4)}
 roots={f'_root\\online\\{identifier:03d}' for identifier in effect_ids if identifier>0}

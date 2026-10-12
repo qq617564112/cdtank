@@ -1,15 +1,18 @@
 import type {MapOption} from '../../../../shared/protocols/PtlListMaps';
 import {ROOM_NAME_MAX_CODEPOINTS, ROOM_PASSWORD_MAX_CODEPOINTS, validateRoomInputLength} from '../../../../shared/room-input';
+import {validateRoomTimeLimit} from '../../../../shared/room-time-limit';
 
 export interface RoomCreateDraft {
   mode: number; mapId: number; roomName: string; password: string;
   minPlayers: number; maxPlayers: number; friendlyFire: boolean;
+  timeLimitSeconds?: number;
 }
 
 /** Same reconstructed map bounds as ordinary creation; server retains final authority. */
 export function validateRoomCreateDraft(draft: RoomCreateDraft, map: MapOption | undefined): void {
   validateRoomInputLength(draft.roomName, ROOM_NAME_MAX_CODEPOINTS, '房间名称');
   validateRoomInputLength(draft.password, ROOM_PASSWORD_MAX_CODEPOINTS, '房间密码');
+  validateRoomTimeLimit(draft.timeLimitSeconds);
   if (!map || draft.mode !== map.mode || draft.mapId !== map.mapId) throw new Error('所选模式或地图已不可用');
   if (!Number.isInteger(draft.minPlayers) || !Number.isInteger(draft.maxPlayers)
       || draft.minPlayers < map.sourceMinPlayers || draft.minPlayers > draft.maxPlayers

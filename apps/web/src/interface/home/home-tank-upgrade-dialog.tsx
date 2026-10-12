@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import './home-tank-upgrade.css';
 import {createPortal} from 'react-dom';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
@@ -7,8 +8,9 @@ import {createRequestId} from '../../network/request-id';
 import {decodeImageRegion} from '../../assets/image-resources';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {SourceButton} from '../resources/source-button';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {SourceStaticText} from '../resources/source-static-text';
+import {SourceImageScale} from '../resources/source-static-image';
+import {HomeSourceSurface as SourceStaticImage} from './home-surface';
+import {HomeStaticText as SourceStaticText} from './home-text';
 
 const suffix = 'myhome_panzerpage_modify.xml';
 const viewportScale = () => Math.min(innerWidth / 800, innerHeight / 599);
@@ -134,7 +136,7 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
       request = {instanceId, action, requestId: createRequestId(), completed: false};
       attempt.current = request;
     }
-    current.pending = true; setPending(true); setStatus('正在提交改装…'); setError('');
+    current.pending = true; setPending(true); setStatus(''); setError('');
     try {
       const result = await battle.tankUpgrade({operation: 'UPGRADE', instanceId, action, requestId: request.requestId});
       if (!current.active) return;
@@ -239,11 +241,9 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
             else void submit();}} />
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnClose"
           data-tank-upgrade-close="" aria-label="关闭改装" onClick={close} />
-        <output className="home-tank-upgrade-status" aria-live="polite">
-          {resourceError ? `改装弹窗资源读取失败：${resourceError}。请重试资源。`
-            : resourcePending ? '正在准备改装弹窗资源…' : status || (pending ? '正在读取改装信息…' : error
-              ? `改装信息读取失败：${error}。点击确认按钮重试` : reasonText(quote))}
-        </output>
+        <GameMessage text={resourceError ? `改装弹窗资源读取失败：${resourceError}。请重试资源。`
+          : error ? `改装信息读取失败：${error}。点击确认按钮重试` : status}
+          tone={resourceError || error ? 'error' : pending ? 'pending' : 'info'}/>
       </SourceImageScale>
     </div>
   </dialog>, document.body);

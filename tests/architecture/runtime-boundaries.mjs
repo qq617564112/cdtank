@@ -8,7 +8,7 @@ function visit(file) {
   if (visited.has(file)) return;
   visited.add(file);
   const path = relative(workspace, file).replaceAll('\\', '/');
-  assert(!path.startsWith('recovery/evidence/') && !path.startsWith('tests/') && !path.startsWith('tools/'),
+  assert(!path.startsWith('tests/evidence/') && !path.startsWith('tests/') && !path.startsWith('tools/'),
     `Runtime imports verification code: ${path}`);
   assert(!path.includes('render-check'), `Runtime imports rendering validation: ${path}`);
   const source = readFileSync(file, 'utf8');
@@ -29,15 +29,15 @@ for (const name of ['item-request-dispatch', 'item-use', 'role-ammo-request']) {
 }
 assert(!existsSync('apps/shared/combat/inventory-notifications.ts'));
 assert(existsSync('apps/server/src/battle/items/inventory.ts'));
-assert(existsSync('recovery/evidence/inventory/inventory-notifications.ts'));
+assert(existsSync('tests/evidence/inventory/inventory-notifications.ts'));
 assert(!existsSync('apps/shared/combat/inventory-wire.ts'));
-assert(existsSync('recovery/evidence/inventory/inventory-wire.ts'));
+assert(existsSync('tests/evidence/inventory/inventory-wire.ts'));
 assert(!existsSync('apps/shared/combat/role-profile-selection.ts'));
 assert(existsSync('apps/server/src/accounts/profile/selection.ts'));
-assert(existsSync('recovery/evidence/roles/role-profile-selection.ts'));
+assert(existsSync('tests/evidence/roles/role-profile-selection.ts'));
 assert(!existsSync('apps/shared/combat/role-owned-sources.ts'));
 assert(existsSync('apps/server/src/accounts/owned/receive-pair.ts'));
-assert(existsSync('recovery/evidence/roles/role-owned-sources.ts'));
+assert(existsSync('tests/evidence/roles/role-owned-sources.ts'));
 assert(!existsSync('apps/shared/combat/role-owned-equipment.ts'));
 assert(existsSync('apps/shared/contracts/owned-equipment.ts'));
 for (const [original, owner] of [
@@ -51,7 +51,7 @@ for (const [original, owner] of [
 for (const suffix of ['-native.py', '.cts']) {
   const file = `role-recompute-sources${suffix}`;
   assert(!existsSync(`tests/${file}`));
-  assert(existsSync(`recovery/evidence/roles/${file}`));
+  assert(existsSync(`tests/evidence/roles/${file}`));
 }
 assert(existsSync('apps/shared/contracts/role-skills.ts'));
 for (const [original, owner] of [
@@ -72,7 +72,7 @@ for (const [original, owner] of [
 for (const name of ["combat-role-skills", "role-data-scale", "role-recompute-base", "role-recompute-limits", "role-recompute-mastery", "role-recompute-readiness", "role-recompute"]) {
   for (const suffix of ['-native.py', '.cts']) {
     assert(!existsSync(`tests/${name}${suffix}`));
-    assert(existsSync(`recovery/evidence/attributes/${name}${suffix}`));
+    assert(existsSync(`tests/evidence/attributes/${name}${suffix}`));
   }
 }
 for (const [original, owner] of [['role-state', 'combat-state'], ['role-record-defaults', 'record-defaults'], ['reload', 'reload'], ['role-free-fire', 'free-aim']]) {
@@ -81,14 +81,14 @@ for (const [original, owner] of [['role-state', 'combat-state'], ['role-record-d
 }
 for (const name of ['reload', 'role-free-fire', 'role-respawn-notification', 'role-skill-observer', 'role-ammo-observer', 'role-max-hp', 'role-ammo-change-wire']) {
   assert(!existsSync(`apps/shared/combat/${name}.ts`));
-  assert(existsSync(`recovery/evidence/roles/${name}.ts`));
+  assert(existsSync(`tests/evidence/roles/${name}.ts`));
 }
 assert(!existsSync('apps/shared/combat/role-numeric-property.ts'));
-assert(existsSync('recovery/evidence/roles/role-numeric-property.ts'));
+assert(existsSync('tests/evidence/roles/role-numeric-property.ts'));
 assert(!existsSync('apps/shared/combat/role-texture-transfer-sol.ts'));
 assert(existsSync('apps/shared/contracts/tank-textures.ts'));
 assert(existsSync('apps/server/src/accounts/tank-texture-change.ts'));
-assert(existsSync('recovery/evidence/tank-textures/role-texture-transfer-sol.ts'));
+assert(existsSync('tests/evidence/tank-textures/role-texture-transfer-sol.ts'));
 assert(existsSync('apps/shared/contracts/role-base.ts'));
 assert(existsSync('apps/server/src/config/role-base.ts'));
 for (const kind of ['tank', 'pet']) {
@@ -96,7 +96,7 @@ for (const kind of ['tank', 'pet']) {
   for (const suffix of ['-native.py', '.cts']) {
     const file = `role-${kind}-base${suffix}`;
     assert(!existsSync(`tests/${file}`));
-    assert(existsSync(`recovery/evidence/roles/${file}`));
+    assert(existsSync(`tests/evidence/roles/${file}`));
   }
 }
 assert(!existsSync('apps/shared/combat/role-owned-definition.ts'));
@@ -104,38 +104,38 @@ assert(existsSync('apps/server/src/accounts/owned/definition.ts'));
 for (const suffix of ['-native.py', '.cts']) {
   const file = `role-owned-definition${suffix}`;
   assert(!existsSync(`tests/${file}`));
-  assert(existsSync(`recovery/evidence/roles/${file}`));
+  assert(existsSync(`tests/evidence/roles/${file}`));
 }
 assert(!existsSync('apps/shared/combat/role-owned-base.ts'));
 assert(existsSync('apps/shared/contracts/owned-base.ts'));
 for (const suffix of ['.ts', '-native.py', '.cts']) {
   const file = `role-owned-base${suffix}`;
   assert(!existsSync(`tests/${file}`));
-  assert(existsSync(`recovery/evidence/roles/${file}`));
+  assert(existsSync(`tests/evidence/roles/${file}`));
 }
 for (const suffix of ['.ts', '-native.py', '.cts']) {
   const file = `role-owned-equipment${suffix}`;
   assert(!existsSync(`tests/${file}`));
-  assert(existsSync(`recovery/evidence/roles/${file}`));
+  assert(existsSync(`tests/evidence/roles/${file}`));
 }
 for (const name of ['pair', 'receive']) {
   for (const suffix of ['-native.py', '.cts']) {
     const file = `role-owned-${name}${suffix}`;
     assert(!existsSync(`tests/${file}`));
-    assert(existsSync(`recovery/evidence/roles/${file}`));
+    assert(existsSync(`tests/evidence/roles/${file}`));
   }
 }
 for (const name of ['tank', 'pet']) {
   assert(!existsSync(`apps/shared/combat/role-${name}-selection.ts`));
-  assert(existsSync(`recovery/evidence/roles/role-${name}-selection.ts`));
+  assert(existsSync(`tests/evidence/roles/role-${name}-selection.ts`));
   for (const suffix of ['-native.py', '.cts']) {
     const file = `role-${name}-selection${suffix}`;
     assert(!existsSync(`tests/${file}`));
-    assert(existsSync(`recovery/evidence/roles/${file}`));
+    assert(existsSync(`tests/evidence/roles/${file}`));
   }
 }
 assert(!existsSync('tests/role-selection-callback-native.py'));
-assert(existsSync('recovery/evidence/roles/role-selection-callback-native.py'));
+assert(existsSync('tests/evidence/roles/role-selection-callback-native.py'));
 for (const name of ['confirmation', 'update', 'update-wire', 'equipment', 'cosmetics']) {
   assert(!existsSync(`apps/shared/combat/role-profile-${name}.ts`));
 }
@@ -145,40 +145,40 @@ for (const name of ['payload', 'equipment', 'cosmetics']) {
 for (const name of ['request', 'unload', 'slot-count', 'error']) {
   assert(!existsSync(`apps/shared/combat/role-equipment-${name}.ts`));
   assert(existsSync(name === 'error'
-    ? 'recovery/evidence/roles/role-equipment-error.ts'
+    ? 'tests/evidence/roles/role-equipment-error.ts'
     : `apps/server/src/accounts/equipment/${name}.ts`));
   for (const suffix of ['-native.py', '.cts']) {
     const file = `role-equipment-${name}${suffix}`;
     assert(!existsSync(`tests/${file}`));
-    assert(existsSync(`recovery/evidence/roles/${file}`));
+    assert(existsSync(`tests/evidence/roles/${file}`));
   }
 }
 for (const name of ['confirmation', 'update', 'update-wire', 'cosmetics']) {
   for (const suffix of ['-native.py', '.cts']) {
     const file = `role-profile-${name}${suffix}`;
     assert(!existsSync(`tests/${file}`));
-    assert(existsSync(`recovery/evidence/roles/${file}`));
+    assert(existsSync(`tests/evidence/roles/${file}`));
   }
-  if (name !== 'cosmetics') assert(existsSync(`recovery/evidence/roles/role-profile-${name}.ts`));
+  if (name !== 'cosmetics') assert(existsSync(`tests/evidence/roles/role-profile-${name}.ts`));
 }
 for (const name of ['wire', 'packet', 'notifications']) {
   for (const suffix of ['-native.py', '.cts']) {
     const file = `inventory-${name}${suffix}`;
     assert(!existsSync(`tests/${file}`));
-    assert(existsSync(`recovery/evidence/inventory/${file}`));
+    assert(existsSync(`tests/evidence/inventory/${file}`));
   }
 }
 assert(!existsSync('apps/shared/combat/kitbag-configuration.ts'));
 assert(!existsSync('apps/shared/combat/kitbag-configuration-wire.ts'));
 assert(!existsSync('apps/shared/combat/skill-effect-wire.ts'));
 for (const file of ['skill-effect-wire.ts', 'skill-effect-wire.cts', 'skill-effect-message-native.py', 'skill-effect-queue-native.py']) {
-  assert(existsSync(`recovery/evidence/skills/${file}`));
+  assert(existsSync(`tests/evidence/skills/${file}`));
   assert(!existsSync(`tests/${file}`));
 }
 assert(existsSync('apps/server/src/accounts/kitbag-configuration.ts'));
 assert(existsSync('apps/server/src/battle/items/kitbag-confirmation.ts'));
 for (const file of ['kitbag-configuration-wire.ts', 'kitbag-configuration-native.py', 'kitbag-configuration.cts']) {
-  assert(existsSync(`recovery/evidence/inventory/${file}`));
+  assert(existsSync(`tests/evidence/inventory/${file}`));
   assert(!existsSync(`tests/${file}`));
 }
 assert(!existsSync('apps/web/effect-model-render-check.html'));
@@ -192,11 +192,11 @@ for (const name of ['effect', 'effect-particle', 'effect-overlay', 'skill-effect
   assert(!existsSync(`apps/web/src/${name}-render-check.ts`));
   assert(existsSync(`tests/render/${name}/index.html`));
 }
-assert(existsSync('recovery/evidence/tank-textures/role-texture-transfer-sol-native.py'));
+assert(existsSync('tests/evidence/tank-textures/role-texture-transfer-sol-native.py'));
 assert(!existsSync('apps/shared/combat/home-preview-orbit.ts'));
 assert(existsSync('apps/web/src/interface/home/home-preview-orbit.ts'));
-assert(existsSync('recovery/evidence/home-preview/home-preview-orbit-native.py'));
-assert(existsSync('recovery/evidence/home-preview/home-preview-projection-native.py'));
+assert(existsSync('tests/evidence/home-preview/home-preview-orbit-native.py'));
+assert(existsSync('tests/evidence/home-preview/home-preview-projection-native.py'));
 assert(!existsSync('tests/home-preview-orbit-native.py'));
 assert(!existsSync('tests/home-preview-projection-native.py'));
 assert(!existsSync('apps/web/src/assets/asset-viewer.ts'));

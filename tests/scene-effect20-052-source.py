@@ -5,11 +5,11 @@ import struct
 import sys
 from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_sav import read_library
 
 base = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 original = read_library((base/'Data/effect/effect.sav').read_bytes())
 published = json.loads((web/'effect-library.json').read_text())
 indices = [2987, 2988, 2989]

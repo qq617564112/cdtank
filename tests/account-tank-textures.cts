@@ -7,7 +7,7 @@ import {AccountStore} from '../apps/server/src/account-store';
 import type {OwnedTankTextures} from '../apps/shared/combat/role-owned-textures';
 import {readOwnedTankTextures} from '../apps/shared/combat/role-owned-textures';
 
-const table = JSON.parse(readFileSync('recovery/output/verified/tables/tanktexture.json', 'utf8')) as {
+const table = JSON.parse(readFileSync('apps/server/resources/tables/tanktexture.json', 'utf8')) as {
   rows: {recordId: number; values: Record<string, string>}[];
 };
 const parts = ['U', 'M', 'XY'] as const;

@@ -1,4 +1,5 @@
 .home-title-summary-source {
+  position: absolute;
   left: 219px;
   top: 36px;
   width: 375px;
@@ -11,7 +12,7 @@
   pointer-events: none;
 }
 
-#home-inventory .home-title-summary-list-shell { position: absolute; padding: 0; }
+#home-inventory .home-title-summary-list-shell { position: absolute; padding: 0; overflow: hidden; pointer-events: auto; }
 
 #home-inventory .home-title-summary-list {
   position: absolute;
@@ -20,8 +21,9 @@
   width: 100%;
   height: 100%;
   padding: 0;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
+  scrollbar-width: none;
 }
 
 #home-inventory .home-title-summary-list > button {

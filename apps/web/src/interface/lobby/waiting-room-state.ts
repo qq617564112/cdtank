@@ -22,6 +22,11 @@ export function waitingTankReference(tankId: number): string | undefined {
   return `set:tanke0 image:${['data', 'ui', 'tanke', `${String(tankId).padStart(3, '0')}.tga`].join('\\')}`;
 }
 
+/** Selected pets use the original gy0 portrait regions. */
+export function waitingPetReference(petId: number): string {
+  return `set:gy0 image:data\\ui\\gy\\maogou_${petId}.tga`;
+}
+
 /** Older servers omit metadata; do not infer it from live remaining time or room IDs. */
 export function waitingRoomInfo(snapshot: MsgRoomSnapshot) {
   const info = snapshot.roomInfo;

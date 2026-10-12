@@ -7,7 +7,7 @@ import {WsClient} from 'tsrpc';
 import {FreeCamera, NullEngine, RawTexture, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import {serviceProto} from '../apps/shared/protocols/serviceProto';
 import {AccountStore} from '../apps/server/src/account-store';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources';
 import type {MsgRoomSnapshot} from '../apps/shared/protocols/MsgRoomSnapshot';
 import type {MsgRoomEvent} from '../apps/shared/protocols/MsgRoomEvent';
 import type {ReqShop} from '../apps/shared/protocols/PtlShop';
@@ -29,7 +29,7 @@ function finiteEffect(event: MsgRoomEvent): {drawNodes: number[]; expired: boole
     const runtime = new EffectRuntime(scene, camera);
     const loaded = runtime as unknown as {library: EffectRuntimeLibrary; textures: Map<string, RawTexture>;
       instances: {handle: number}[]};
-    loaded.library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+    loaded.library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
     const drawNodes = [2664, 2665, 2667, 2830, 2834];
     for (const grid of loaded.library.textureGrids.filter(grid => drawNodes.includes(grid.node))) {
       if (!loaded.textures.has(grid.asset)) loaded.textures.set(grid.asset,
@@ -37,7 +37,7 @@ function finiteEffect(event: MsgRoomEvent): {drawNodes: number[]; expired: boole
     }
     const root = new TransformNode('received-event-actor', scene);
     const view = {root, primaryTag: (name: string) => name === 'tag_efcenter' ? EFFECT_IDENTITY : undefined} as unknown as TankView;
-    const catalog: CombatCatalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+    const catalog: CombatCatalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
     const notifications = createSkillEffectNotifications(runtime, catalog, {role: () => view, localRole: () => view});
     runtime.start(); new BattleSkillEffects(notifications).event(event);
     assert.equal(loaded.instances.length, 1);

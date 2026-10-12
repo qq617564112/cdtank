@@ -1,0 +1,282 @@
+@import '../resources/happy-zcool.css';
+
+.waiting-room-stage {
+  --waiting-room-details-font-size: 12px;
+  --waiting-room-title-color: #8d4219;
+  --waiting-room-value-color: #fff;
+}
+
+.waiting-room-stage > .waiting-room-surface,
+.waiting-room-stage > .waiting-room-player-surface,
+.waiting-room-stage > .waiting-room-rule,
+.waiting-room-stage > .waiting-room-description-shell {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.waiting-room-surface {
+  pointer-events: none;
+}
+
+.waiting-room-surface .game-surface-panel-artwork {
+  filter: drop-shadow(1px 2px 2px rgb(74 42 23 / 30%));
+}
+
+.waiting-room-surface[data-surface-panel='waiting-sheet'] {
+  z-index: -1;
+}
+
+.waiting-room-surface[data-surface-panel='waiting-sheet'] .game-surface-panel-artwork {
+  filter: drop-shadow(2px 3px 2px rgb(31 33 19 / 45%));
+}
+
+.waiting-room-surface:is([data-surface-panel='waiting-rules'], [data-surface-panel='waiting-description']) .game-surface-panel-artwork {
+  filter: none;
+}
+
+.waiting-room-player-surface {
+  pointer-events: none;
+}
+
+.waiting-room-player-surface .game-surface-panel-artwork {
+  filter: none;
+}
+
+.waiting-room-stage > :is(.waiting-room-button, .waiting-room-edit, .waiting-room-close) {
+  z-index: 2;
+}
+
+.waiting-room-description-shell {
+  overflow: hidden;
+}
+
+.waiting-room-description {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  color: #fff;
+  font-size: var(--waiting-room-details-font-size);
+  line-height: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  scrollbar-width: none;
+  -webkit-text-stroke: .6px #753f2d;
+  paint-order: stroke fill;
+}
+
+.waiting-room-description::-webkit-scrollbar {
+  display: none;
+}
+
+.waiting-room-description:focus-visible {
+  outline: 1px solid #fff4d6;
+  outline-offset: -1px;
+}
+
+.waiting-room-stage > .home-font-text {
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-text-stroke: .6px #753f2d;
+  paint-order: stroke fill;
+}
+
+.waiting-room-stage > .waiting-room-info-text {
+  color: var(--waiting-room-title-color);
+  font-size: var(--waiting-room-details-font-size);
+  line-height: 16px;
+  white-space: nowrap;
+  -webkit-text-stroke: 1.1px #fff9e6;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+.waiting-room-stage > .home-font-text *,
+.waiting-room-button > .cartoon-control-label * {
+  color: inherit;
+  -webkit-text-stroke: inherit;
+  paint-order: inherit;
+}
+
+.waiting-room-info-text > [data-source-text-content] {
+  transform: translateY(.5px);
+}
+
+.waiting-room-info-text[data-source-control='renshu'] > [data-source-text-content] {
+  display: flex;
+  gap: 20px;
+}
+
+.waiting-room-stage > .waiting-room-info-text:is(
+  [data-source-control='txtMinPlayer'],
+  [data-source-control='txtMaxPlayer'],
+  [data-source-control='daos'],
+  [data-source-control='txtGameTime'],
+  [data-source-control='sec']
+) {
+  color: var(--waiting-room-value-color);
+  -webkit-text-stroke: 1.1px #000;
+}
+
+.waiting-room-stage > .home-font-text[data-source-control^='txtPlayerName'],
+.waiting-room-stage > .waiting-room-add-robot > .game-room-action-label {
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  -webkit-text-stroke: 1px #675133;
+  paint-order: stroke fill;
+  text-shadow: none;
+}
+
+.waiting-room-stage > .home-font-text[data-source-control^='txtPlayerTitle'] {
+  color: #fff4ae;
+  font-size: 12px;
+  -webkit-text-stroke: 1px #735b35;
+}
+
+.waiting-room-edit > .game-artwork-button-label {
+  font-size: var(--waiting-room-details-font-size) !important;
+}
+
+.waiting-room-stage > .waiting-room-map-name {
+  width: 108px;
+  color: var(--waiting-room-title-color);
+  font-size: var(--waiting-room-details-font-size);
+  line-height: 16px;
+  white-space: nowrap;
+  -webkit-text-stroke: 1.1px #fff9e6;
+  paint-order: stroke fill;
+}
+
+.waiting-room-stage > .waiting-room-rule {
+  opacity: 1;
+  pointer-events: none;
+}
+
+.waiting-room-rule .room-rule-label {
+  font-size: var(--waiting-room-details-font-size);
+  -webkit-text-stroke-width: 1.4px;
+}
+
+.waiting-room-stage > .source-static-image:is([data-source-control^='picCatTeam'], [data-source-control^='picDogTeam'], [data-source-control^='picPlayerTank'], [data-source-control^='picPlayerIcon'], [data-source-control^='picReady']) {
+  image-rendering: pixelated;
+}
+
+.waiting-room-stage > .source-static-image[data-pet-thumbnail],
+.waiting-room-stage > .source-static-image[data-tank-icon-mark] {
+  image-rendering: auto;
+}
+
+.waiting-room-button.cartoon-button,
+.waiting-room-edit.cartoon-button,
+.waiting-room-add-robot.cartoon-button {
+  --cartoon-label-shadow: none;
+}
+
+.waiting-room-stage > .waiting-room-button.cartoon-button:where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-button-face-top: #6542ff;
+  --cartoon-button-face: #6038ff;
+  --cartoon-button-rim: #162359;
+  --cartoon-button-highlight: #fffef0;
+  --cartoon-button-bevel: #281ab4;
+  --cartoon-label-fill: #fffbc2;
+  --cartoon-label-stroke: #171821;
+}
+
+.waiting-room-stage > .waiting-room-button[data-waiting-button='btnCatTeam']:where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-button-face-top: #43f34a;
+  --cartoon-button-face: #31e943;
+  --cartoon-button-rim: #16391c;
+  --cartoon-button-bevel: #078428;
+  --cartoon-label-fill: #10472b;
+  --cartoon-label-stroke: #fffef1;
+}
+
+.waiting-room-stage > .waiting-room-button[data-waiting-button='btnDogTeam']:where(:not(:disabled), [aria-busy='true']) {
+  --cartoon-button-face-top: #ff60b6;
+  --cartoon-button-face: #ff48a6;
+  --cartoon-button-rim: #461526;
+  --cartoon-button-bevel: #a81458;
+  --cartoon-label-fill: #fff;
+  --cartoon-label-stroke: #4c1029;
+}
+
+.waiting-room-stage > .waiting-room-button.cartoon-button[data-cartoon-button-state='hover'] {
+  --cartoon-button-face-top: #ffff71;
+  --cartoon-button-face: #fff338;
+  --cartoon-button-rim: #35401b;
+  --cartoon-button-bevel: #b49b12;
+  --cartoon-label-fill: #080d00;
+  --cartoon-label-stroke: #fffde8;
+}
+
+.waiting-room-stage > .waiting-room-button.cartoon-button[data-cartoon-button-state='pressed'] {
+  --cartoon-button-face-top: #ff62af;
+  --cartoon-button-face: #ff359c;
+  --cartoon-button-rim: #471026;
+  --cartoon-button-bevel: #ad0754;
+  --cartoon-label-fill: #fffcb0;
+  --cartoon-label-stroke: #201319;
+}
+
+.waiting-room-stage > .waiting-room-button[data-waiting-button='btnCatTeam']:is([aria-pressed='true'], [data-cartoon-button-state='pressed']) {
+  --cartoon-button-face-top: #bfcc96;
+  --cartoon-button-face: #aeba87;
+  --cartoon-button-rim: #465344;
+  --cartoon-button-highlight: #e4e7c2;
+  --cartoon-button-bevel: #687456;
+  --cartoon-label-fill: #fff4af;
+  --cartoon-label-stroke: #758254;
+}
+
+.waiting-room-stage > .waiting-room-button[data-waiting-button='btnDogTeam']:is([aria-pressed='true'], [data-cartoon-button-state='pressed']) {
+  --cartoon-button-face-top: #c8c7b6;
+  --cartoon-button-face: #b5b7a6;
+  --cartoon-button-rim: #544c4b;
+  --cartoon-button-highlight: #ece9d4;
+  --cartoon-button-bevel: #787968;
+  --cartoon-label-fill: #eeb7c7;
+  --cartoon-label-stroke: #7e7773;
+}
+
+.waiting-room-button:is([aria-pressed='true'], [data-cartoon-button-state='pressed']) .cartoon-team-motif {
+  visibility: visible;
+}
+
+.waiting-room-button[data-cartoon-button-state='pressed'] .waiting-room-team-prefix {
+  display: none;
+}
+
+.waiting-room-stage > .waiting-room-button.cartoon-button:disabled:where(:not([aria-pressed='true'], [aria-busy='true'])) {
+  --cartoon-button-face-top: #bdbdbd;
+  --cartoon-button-face: #aaa;
+  --cartoon-button-rim: #353535;
+  --cartoon-button-highlight: #fff;
+  --cartoon-button-bevel: #6c6c6c;
+  --cartoon-label-fill: #151515;
+  --cartoon-label-stroke: #fff;
+}
+
+.waiting-room-button.cartoon-button > .cartoon-control-label {
+  margin-bottom: 4px;
+  font-size: 25px;
+  -webkit-text-stroke-width: 2.5px;
+}
+
+.waiting-room-button[data-cartoon-button-shape='ready'] > .cartoon-control-label {
+  letter-spacing: 12px;
+  text-indent: 12px;
+}
+
+.waiting-room-button[data-cartoon-button-shape='team']:is([aria-pressed='true'], [data-cartoon-button-state='pressed']) > .cartoon-control-label {
+  letter-spacing: 8px;
+  text-indent: 8px;
+}
+
+.waiting-room-button[data-waiting-button='btnInvite'] > .cartoon-control-label {
+  margin-bottom: 0;
+  font-size: 19px;
+  letter-spacing: 0;
+}

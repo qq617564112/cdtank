@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {RoleCombatState} from '../apps/server/src/battle/roles/combat-state';
-import {dispatchRoleLifecycleNotification} from '../recovery/evidence/roles/role-respawn-notification';
+import {dispatchRoleLifecycleNotification} from '../tests/evidence/roles/role-respawn-notification';
 
 const original = JSON.parse(readFileSync('recovery/output/respawn-rules-sol-native.json', 'utf8'));
 const results: unknown[] = [];

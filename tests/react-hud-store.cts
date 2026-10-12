@@ -4,7 +4,7 @@ import {BattleHud} from '../apps/web/src/interface/battle/battle-hud';
 import type {SourceUi} from '../apps/web/src/interface/battle/battle-hud';
 import type {MsgRoomSnapshot, PlayerSnapshot} from '../apps/shared/protocols/MsgRoomSnapshot';
 
-const data = JSON.parse(readFileSync('recovery/output/web-assets/ui.json', 'utf8')) as SourceUi;
+const data = JSON.parse(readFileSync('apps/web/public/ui.json', 'utf8')) as SourceUi;
 const originalFetch = globalThis.fetch;
 let resolveUi: ((value: Response) => void) | undefined;
 let deferred = false;

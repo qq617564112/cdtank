@@ -150,7 +150,7 @@ async function launchBrowser() {
 
 try {
   await launchServer();
-  vite = await createServer({configFile: false, cacheDir:join(directory,'vite-cache'), root: 'apps/web', publicDir: '../../recovery/output/web-assets', server: {port:5415, strictPort:true, host:'127.0.0.1', hmr:false, proxy:{'/game':{target:'ws://127.0.0.1:3365',ws:true,rewrite:()=> '/'}}}});
+  vite = await createServer({configFile: false, cacheDir:join(directory,'vite-cache'), root: 'apps/web', publicDir: '../../apps/web/public', server: {port:5415, strictPort:true, host:'127.0.0.1', hmr:false, proxy:{'/game':{target:'ws://127.0.0.1:3365',ws:true,rewrite:()=> '/'}}}});
   await vite.listen(); await launchBrowser(); const page = await newPage();
   await waitUntil(page, `localStorage.getItem('cdtank-account-token')`);
   const store = new AccountStore(join(directory, 'accounts.sqlite'));

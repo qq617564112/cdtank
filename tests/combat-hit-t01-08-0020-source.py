@@ -5,12 +5,12 @@ import struct
 from pathlib import Path
 import sys
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from mv3 import read_mv3
 from effect_action_keys import action_identifier
 from export_effect_links import read_links
 base=ROOT/'recovery/output/verified/assets/data'
-published=ROOT/'recovery/output/web-assets'
+published=ROOT/'apps/web/public'
 tank=next(t for t in json.loads((published/'tanks.json').read_text()) if t['id']==1)
 rows=[]
 for component in tank['components']:

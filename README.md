@@ -27,7 +27,7 @@
 - **资源工具**：独立资源查看器，以及 CPK、MV3、POL、CVD 和数据表的提取与转换工具。
 - **显示与加载**：窗口／全屏、画质和卡通描边设置，图片缓存与加载恢复，以及离线高清素材和模型预览工具。
 
-项目仍在持续还原中。完整原版规则、全部技能道具、界面表现和高清多人性能的完成情况，以[任务清单](recovery/docs/tasklist.md)和各专题证据为准。
+项目仍在持续还原中。完整原版规则、全部技能道具、界面表现和高清多人性能的完成情况，以[任务清单](docs/recovery/tasklist.md)和各专题证据为准。
 
 ## 项目截图
 
@@ -49,18 +49,21 @@
 
 ## 本地运行
 
-需要 **Node.js 24.16 或更高版本**、支持 **WebGPU** 的浏览器和支持 `.tar.xz` 的 `tar`。客户端通过 HTTPS 或 localhost 访问。高清贴图、模型、音频、界面、字体和数据表通过 [GitHub Releases](https://github.com/qq617564112/cdtank/releases/tag/v1.0.0) 提供，安装脚本自动下载解压，无需原客户端、Python 或另行准备字体。Windows 10/11 和 macOS 使用系统 `tar`；Linux 需安装 `tar` 和 `xz-utils`。以下命令在仓库根目录执行。
-
-### 1. 安装依赖和资源
-
-克隆仓库或下载 ZIP 并解压后安装依赖：
+需要 **Node.js 24.16 或更高版本**和支持 **WebGPU** 的浏览器。客户端通过 HTTPS 或 localhost 访问。以下命令在仓库根目录执行。
 
 ```bash
 npm ci
-npm run assets:install
 ```
 
-脚本依次下载 `cdtank-assets-1.0.0.tar.xz.part01`、`.part02`，自动合并解压。两个分卷下载共约 2.28 GB，解压后约占 2.76 GB。运行资源安装到 `recovery/output/web-assets/`，内容表安装到 `recovery/output/verified/tables/`，包含高清图片图集、共享模型贴图、字体、地图预览、角色缩略图、移动数据、测试地图和高清田野路。使用旧版资源包的用户更新源码后重新运行 `npm run assets:install` 即可升级。
+已有 `apps/web/public/` 和 `apps/server/resources/` 时可直接启动。美术目录只保留 `art/original/` 与 `art/hd/`：UI 使用原版低清单图，模型贴图和 minimap 使用高清图片。发布本地美术资源运行 `npm run assets:original`；目录与发布方式见[运行美术资源](docs/original-assets.md)。
+
+全新环境需安装包含模型、独立贴图、音频、UI、字体与数据表的单图资源包：
+
+```bash
+npm run assets:install -- --archive /path/to/cdtank-assets.tar.xz
+```
+
+安装资源包需要支持 `.tar.xz` 的 `tar`；Linux 需安装 `tar` 和 `xz-utils`。资源解压到 `apps/web/public/` 和 `apps/server/resources/`。GitHub v1.0.0 已发布资源包仍使用精灵图，需要更新为单图资源包后才能用于当前版本；安装器会在解压前识别该格式。
 
 ### 2. 启动服务端和网页
 
@@ -88,7 +91,7 @@ npm run build:server
 PORT=40171 npm run start:server
 ```
 
-本机打开 [http://localhost:40171/](http://localhost:40171/)，局域网及远程访问通过 HTTPS 反向代理连接该端口，以满足 WebGPU 的安全上下文要求。默认账户数据库仍为 `recovery/output/accounts.sqlite`，可通过 `ACCOUNT_DB_PATH` 指定已有存档。渲染实现见 [WebGPU 客户端渲染](docs/webgpu-rendering.md)。
+本机打开 [http://localhost:40171/](http://localhost:40171/)，局域网及远程访问通过 HTTPS 反向代理连接该端口，以满足 WebGPU 的安全上下文要求。默认账户数据库仍为 `state/accounts.sqlite`，可通过 `ACCOUNT_DB_PATH` 指定已有存档。渲染实现见 [WebGPU 客户端渲染](docs/webgpu-rendering.md)。
 
 | 默认按键 | 操作 |
 | --- | --- |
@@ -112,25 +115,23 @@ npm run tools:assets:dev
 
 ```text
 apps/
-  web/                  浏览器客户端：界面、渲染、音频与对局
-  server/               联机服务端：房间、战斗、账户与社交
+  web/src/              浏览器客户端：界面、渲染、音频与对局
+  web/public/           正式静态资源：模型、贴图、音频、UI 与字体
+  server/src/           联机服务端：房间、战斗、账户与社交
+  server/resources/     正式服务端资源：数据表、场景与碰撞数据
   shared/               通信协议、共同契约和两端共用规则
-docs/                   项目介绍、开发指南与图片来源
-recovery/
-  *.py                  原客户端格式解析、资源导出与转换
-  docs/                 还原任务、来源依据与专题说明
-  evidence/             原程序行为取证脚本和对应实现
-  prepared/             还原切片与部分验证所用的候选实现
-  implementation/       待集成的界面实现稿
-  output/web-assets/    安装脚本下载的模型、贴图、音频、界面与字体
-  output/verified/tables/ 安装脚本下载的解码数据表
+docs/recovery/          还原任务、来源依据与专题说明
+tools/recovery/         原客户端解析、导出和转换工具
+tests/evidence/         原程序行为取证脚本和对应实现
+recovery/               本地提取来源与中间结果，由 Git 忽略
+state/                  本地账户存档，由 Git 忽略
 scripts/                构建、资源重建、打包和账户备份脚本
 deployment/             运行配置、反向代理与存档说明
 tools/asset-viewer/     独立资源查看器
 tests/                  现有资产、规则、联机和页面验收入口
 ```
 
-运行资源单独发布到 GitHub Releases。原客户端 `CDTank/`、下载与提取输出 `recovery/output/`、账户数据库、`node_modules/` 和 `dist/` 由 `.gitignore` 排除。
+运行资源单独发布到 GitHub Releases。原客户端 `CDTank/`、恢复工作目录 `recovery/`、正式运行资产目录和账户数据库、`node_modules/` 和 `dist/` 由 `.gitignore` 排除。
 
 ## 文档
 
@@ -140,8 +141,8 @@ tests/                  现有资产、规则、联机和页面验收入口
 | 原作背景与参考资料 | [原作介绍](docs/game-background.md) |
 | 图片出处与权利归属 | [素材来源](docs/assets/README.md) |
 | 开发命令、配置与项目范围 | [开发指南](docs/development.md) |
-| 当前还原状态与专题导航 | [还原文档索引](recovery/docs/README.md) |
-| 可选：从原客户端重新生成资源 | [资源重建](recovery/docs/reproducible-assets.md) |
+| 当前还原状态与专题导航 | [还原文档索引](docs/recovery/README.md) |
+| 可选：从原客户端重新生成资源 | [资源重建](docs/recovery/reproducible-assets.md) |
 | 生产部署与账户备份恢复 | [运行与账户存档](deployment/operations.md) |
 | Forgejo CI/CD 与 Docker 部署 | [自动部署](deployment/forgejo.md) |
 | GitHub 源码发布 | [发布说明](docs/github-publication.md) |

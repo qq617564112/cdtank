@@ -1,6 +1,6 @@
 import {AbstractMesh, Color3, InstancedMesh, Mesh, Node, Observer, Scene, VertexBuffer} from '@babylonjs/core';
-import '@babylonjs/core/Rendering/outlineRenderer';
 import {getDisplayPreferences, subscribeDisplayPreferences} from '../../interface/settings/display-preferences';
+import {prepareCartoonOutlineMesh} from './cartoon-outline-renderer';
 
 /** cartoon.gbf silhouette: position + normal * Ink, black RGB. */
 export const CARTOON_INK = 0.65;
@@ -72,6 +72,7 @@ function registerOutlineSource(mesh: Mesh): void {
     return;
   }
   const scene = mesh.getScene();
+  prepareCartoonOutlineMesh(mesh);
   const registration: OutlineRegistration = {
     scene,
     meshObserver: mesh.onDisposeObservable.add(() => removeRegistration(mesh)),

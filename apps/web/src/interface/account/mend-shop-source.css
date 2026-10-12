@@ -15,7 +15,7 @@
 }
 
 .mend-shop-source > button,
-.mend-shop-source > .mend-shop-list {
+.mend-shop-source > .mend-shop-list-scroll-shell {
   pointer-events: auto;
 }
 
@@ -23,9 +23,19 @@
   background-color: transparent;
 }
 
+.mend-shop-list-scroll-shell {
+  overflow: hidden;
+}
+
 .mend-shop-list {
-  overflow: auto;
-  font: 12px 'CDTank-SIMSUN', serif;
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  scrollbar-width: none;
+  font: inherit;
 }
 
 .mend-shop-list > button {
@@ -39,21 +49,6 @@
   background: transparent center / 100% 100% no-repeat;
   font: inherit;
   text-align: left;
-}
-
-.mend-shop-status {
-  position: absolute;
-  left: 12px;
-  top: 410px;
-  width: 590px;
-  padding: 6px;
-  color: white;
-  background: #263b49;
-  overflow-wrap: anywhere;
-}
-
-.mend-shop-status:empty {
-  display: none;
 }
 
 [data-shop-active-page='Mend'] #account-shop-title {

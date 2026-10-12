@@ -1,0 +1,23 @@
+.game-card,
+.game-inset-card {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+}
+
+.game-card-artwork {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  user-select: none;
+}
+
+.game-card-artwork-framed {
+  filter: drop-shadow(0 2px 2px rgb(48 28 19 / 42%))
+    drop-shadow(0 4px 4px rgb(47 29 21 / 26%));
+}

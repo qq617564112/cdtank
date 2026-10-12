@@ -1,9 +1,9 @@
 import type {RoleSkillRecord} from '../apps/shared/contracts/role-skills';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {observeRoleSkillSlots} from '../recovery/evidence/roles/role-skill-observer';
+import {observeRoleSkillSlots} from '../tests/evidence/roles/role-skill-observer';
 import {createRoleCombatState} from '../apps/server/src/battle/roles/combat-state';
-import {encodeRoleArrayProperty, receiveRoleArrayProperties} from '../recovery/evidence/combat/role-array-property';
+import {encodeRoleArrayProperty, receiveRoleArrayProperties} from '../tests/evidence/combat/role-array-property';
 import {selectRoleSkills} from '../apps/server/src/battle/roles/skills';
 
 interface ObserverState {previous: number[]; dirty: boolean}

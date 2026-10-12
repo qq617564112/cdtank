@@ -26,6 +26,16 @@
   color: #fff;
   font: 12px 'SimSun', serif;
 }
+.lobby-chat [data-lobby-chat-input]:focus,
+.lobby-chat [data-lobby-whisper-target]:focus {
+  outline: none;
+}
+
+.lobby-chat [data-lobby-chat-input]::placeholder {
+  color: inherit;
+  opacity: 1;
+}
+
 .lobby-chat [data-lobby-chat-status] {
   position: absolute;
   left: 66px;
@@ -38,18 +48,101 @@
 .lobby-chat button {border: 0; margin: 0; padding: 0; background-color: transparent; background-size: 100% 100%; cursor: pointer;}
 .lobby-chat button:disabled {cursor: default;}
 .lobby-chat [data-lobby-whisper-target] {border: 0; margin: 0; padding: 0; background: transparent; color: #fff; font: 12px 'SimSun', serif;}
-.lobby-channel-menu {position: absolute; left: 0; top: 454px; width: 48px; height: 110px; z-index: 20;}
-.lobby-channel-menu > span {position: absolute; display: block; pointer-events: none;}
-.lobby-family-channel-option {
+.lobby-channel-menu {
   position: absolute;
-  left: 9px;
-  top: 100px;
-  width: 30px;
-  height: 15px;
+  z-index: 20;
+  display: grid;
+  grid-auto-rows: 24px;
+  box-sizing: border-box;
+  width: 48px;
+  padding: 6px 3px;
+  border: 1.5px solid #a9faff;
+  border-radius: 9px 10px 10px 8px;
+  background: linear-gradient(180deg, rgb(13 8 55 / 96%), rgb(10 17 57 / 96%));
+  box-shadow: 0 0 1px 1px #287fa6, inset 0 0 0 1px #3185b6,
+    inset 0 0 5px rgb(111 234 255 / 28%);
+  transform: translateY(-100%);
+}
+
+.lobby-channel-menu::before {
+  position: absolute;
+  inset: 1px;
+  border: 1px solid rgb(180 255 255 / 35%);
+  border-radius: inherit;
+  content: '';
+  pointer-events: none;
+}
+
+.lobby-chat .lobby-channel-option {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 24px;
   margin: 0;
   padding: 0;
   border: 0;
-  color: #fff;
-  background: #263b49;
-  font: 10px 'SimSun', serif;
+  border-radius: 3px;
+  background: transparent;
+  color: #83fcb7;
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 22px;
+  white-space: nowrap;
+  -webkit-text-stroke: 1.6px #00190f;
+  paint-order: stroke fill;
+  text-shadow: 0 1px #001b19;
+}
+
+.lobby-channel-option[data-lobby-channel='gm'] {
+  letter-spacing: 3px;
+  text-indent: 3px;
+}
+
+.lobby-channel-option[aria-checked='true'],
+.lobby-channel-option:enabled:hover {
+  color: #ffc628;
+  -webkit-text-stroke-color: #302100;
+  text-shadow: 0 1px #211700;
+}
+
+.lobby-channel-option:enabled:hover,
+.lobby-channel-option:focus-visible {
+  background: rgb(110 234 255 / 12%);
+}
+
+.lobby-channel-option:focus-visible {
+  outline: 1px solid #a9faff;
+  outline-offset: -1px;
+}
+
+.lobby-channel-option:enabled:active {
+  transform: translateY(1px) scale(.96);
+}
+
+.lobby-channel-option:disabled {
+  opacity: .5;
+}
+
+[data-lobby-hd] .lobby-chat [data-lobby-chat-input],
+[data-lobby-hd] .lobby-chat [data-lobby-whisper-target] {
+  color: #fffde0;
+  caret-color: #fffde0;
+  -webkit-text-stroke: .6px #514229;
+  paint-order: stroke fill;
+}
+
+[data-lobby-hd] .lobby-chat .lobby-chat-rich-input {
+  -webkit-text-stroke: 0;
+}
+
+[data-lobby-hd] .lobby-chat .lobby-chat-input-preview > span {
+  -webkit-text-stroke: .6px #514229;
+  paint-order: stroke fill;
+}
+
+.lobby-chat .cartoon-button.lobby-channel-button {
+  --cartoon-label-size: 19px;
+  z-index: 2;
 }

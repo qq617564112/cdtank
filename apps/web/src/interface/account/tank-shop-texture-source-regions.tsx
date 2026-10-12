@@ -1,4 +1,4 @@
-import {SourceStaticImage} from '../resources/source-static-image';
+import {ShopSourceBackground as SourceStaticImage} from './shop-source-background';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 
 /** The texture sheet owns its own parent chain; the caller supplies its attachment offset. */

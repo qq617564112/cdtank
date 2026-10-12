@@ -5,13 +5,13 @@ import struct
 import sys
 from unicorn.x86_const import UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_FPCW
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 machine, _ = map_original_binaries([ROOT / 'CDTank' / name for name in ['CDTank.exe', 'gbengine.dll', 'msvcr71.dll']])
 machine.mem_map(0x2000000, 0x40000)
 PATH, RESOURCE, MODEL, VERTICES, OUTPUT, STACK, STOP = (
     0x2010000, 0x2011000, 0x2012000, 0x2013000, 0x2018000, 0x2008000, 0x203f000)
-tracks = json.loads((ROOT / 'recovery/output/web-assets/effect-path-tracks.json').read_text())
+tracks = json.loads((ROOT / 'apps/web/public/effect-path-tracks.json').read_text())
 rows = []
 for row in tracks['rows'] + tracks.get('spriteRows', []):
     assert len(row['tracks']) == 1

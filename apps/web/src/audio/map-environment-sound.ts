@@ -1,4 +1,5 @@
-import {Camera, Vector3} from '@babylonjs/core';
+import {Camera} from '@babylonjs/core';
+import {setCameraSpatialListener} from './spatial-listener';
 import type {EffectVec3} from '../render/effects/common/types';
 import type {SkillSoundCatalog} from './effect-skill-sound';
 import {FIELD_ROAD_HD} from '../../../shared/maps/field-road-hd';
@@ -113,18 +114,7 @@ export class MapEnvironmentSound {
   update(): void {
     if (!this.map) return;
     const position = this.camera.globalPosition;
-    const forward = this.camera.getForwardRay().direction;
-    const up = this.camera.getDirection(Vector3.Up());
-    const listener = this.context.listener;
-    listener.positionX.value = -position.x;
-    listener.positionY.value = position.y;
-    listener.positionZ.value = position.z;
-    listener.forwardX.value = -forward.x;
-    listener.forwardY.value = forward.y;
-    listener.forwardZ.value = forward.z;
-    listener.upX.value = -up.x;
-    listener.upY.value = up.y;
-    listener.upZ.value = up.z;
+    setCameraSpatialListener(this.context.listener, this.camera);
     const {referenceDistance, maxDistance, rolloffFactor} = this.map.spatial;
     for (const voice of this.voices.values()) {
       const [x, y, z] = voice.placement.position;

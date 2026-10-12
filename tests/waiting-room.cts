@@ -5,14 +5,14 @@ import {HomeSourceLayout} from '../apps/web/src/interface/resources/source-ui-la
 import type {HomeSourceUi} from '../apps/web/src/interface/resources/source-ui-layout';
 import type {MsgRoomSnapshot} from '../apps/shared/protocols';
 import {TANKS} from '../apps/server/src/config';
-const ui = JSON.parse(readFileSync('recovery/output/web-assets/ui.json', 'utf8')) as HomeSourceUi;
+const ui = JSON.parse(readFileSync('apps/web/public/ui.json', 'utf8')) as HomeSourceUi;
 const layout = new HomeSourceLayout(ui, 'room_main.xml');
 const element = () => ({style: {backgroundImage: ''}, dataset: {} as Record<string, string>}) as unknown as HTMLElement;
 for (let slot = 0; slot < 12; slot++) {
   for (const name of [`PlayerPanel${slot}`, `picReady${slot}`, `picNA${slot}`]) {
     const image = element(); layout.picture(image, layout.control(name).properties.Image);
     assert(image.dataset.sourceAsset, name);
-    assert(readFileSync(`recovery/output/web-assets/${image.dataset.sourceAsset}`).length > 0);
+    assert(readFileSync(`apps/web/public/${image.dataset.sourceAsset}`).length > 0);
   }
 }
 for (const name of ['btnReady', 'btnCancel', 'btnCatTeam', 'btnDogTeam', 'btnClose']) {
@@ -26,7 +26,7 @@ for (const name of ['btnReady', 'btnCancel', 'btnCatTeam', 'btnDogTeam', 'btnClo
 for (const tank of TANKS) {
   const image = element(); layout.picture(image, waitingTankReference(tank.id));
   assert(image.dataset.sourceAsset?.startsWith('ui/regions/73/'), `tank ${tank.id}`);
-  assert(readFileSync(`recovery/output/web-assets/${image.dataset.sourceAsset}`).length > 0);
+  assert(readFileSync(`apps/web/public/${image.dataset.sourceAsset}`).length > 0);
 }
 const players = Array.from({length: 15}, (_, index) => ({id: `P${index}`, team: index % 2})) as MsgRoomSnapshot['players'];
 const snapshot = {mode: 1, players} as MsgRoomSnapshot;

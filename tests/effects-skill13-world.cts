@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import {existsSync, readFileSync, writeFileSync} from 'node:fs';
 import type {CombatCatalog} from '../apps/shared/combat/catalog';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8')) as CombatCatalog;
-const original = JSON.parse(readFileSync('recovery/output/verified/tables/skill.json', 'utf8')) as {
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8')) as CombatCatalog;
+const original = JSON.parse(readFileSync('apps/server/resources/tables/skill.json', 'utf8')) as {
   rows: {values: Record<string, string>}[];
 };
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8')) as {
+const library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8')) as {
   nodes: {name: string; type: number}[];
   textureGrids: {node: number; asset: string; resolution: string}[];
   soundControls: {node: number; reference: string}[];
@@ -22,7 +22,7 @@ assert.deepEqual(tree,[2462,2463,2464,2465,2466,2467,2468,2558,2559,2560]);
 const draws=tree.filter(node=>library.nodes[node].type!==0);
 assert.deepEqual(draws,[2463,2464,2465,2466,2467,2468,2559,2560]);
 assert.equal(library.soundControls.some(control=>tree.includes(control.node)),false);
-for(const node of draws){const grid=library.textureGrids.find(grid=>grid.node===node)!;assert.equal(grid.resolution,'published');assert.ok(existsSync(`recovery/output/web-assets/${grid.asset}`));}
+for(const node of draws){const grid=library.textureGrids.find(grid=>grid.node===node)!;assert.equal(grid.resolution,'published');assert.ok(existsSync(`apps/web/public/${grid.asset}`));}
 writeFileSync('recovery/output/effects-skill13-world.json',`${JSON.stringify({status:'PASS',skill:13,effect:10,catalogSound:'SE02',worldHandlerSound:'none',sourceNodes:tree,drawNodes:draws,
   scope:'Original source table/tree/resources; role0 notification world dispatch and silent branch follow existing native message contract'},null,2)}\n`);
 console.log('PASS: Skill13 Effect10 original world tree, eight published draw resources and no tree audio');

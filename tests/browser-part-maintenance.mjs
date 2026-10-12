@@ -67,7 +67,7 @@ async function nativeClick(session, selector) {
 async function startServer(){const start=serverLog.length;const env={...process.env,PORT:'3612',ACCOUNT_DB_PATH:database};server=spawn(process.execPath,['scripts/start-server.mjs'],{env,stdio:['ignore','pipe','pipe']});for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{serverLog+=String(d);});const deadline=Date.now()+15000;while(!serverLog.slice(start).includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));assert(serverLog.slice(start).includes('Server started'),serverLog.slice(start));}
 try {
   await startServer();
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5642,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3612',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5642,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3612',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9842',
@@ -143,7 +143,7 @@ ws.on('message',raw=>{const m=JSON.parse(String(raw));if(!['Network.webSocketFra
   await nativeClick(s,'[data-pet-shop-owned-tab]');await waitUntil(s,`document.querySelector('[data-pet-shop-source-row="3"]')?.matches(':enabled')`);
   await nativeClick(s,'[data-pet-shop-source-row="3"]');
   const confirmed=last('OwnedRoleSale').owned.base.find(r=>new Map(r.fields).get(0)===3);assert(confirmed);
-  const fields=new Map(confirmed.fields),catalog=JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json','utf8'));
+  const fields=new Map(confirmed.fields),catalog=JSON.parse(await readFile('apps/web/public/combat-catalog.json','utf8'));
   const expected=Array.from({length:6},(_,slot)=>{const base=fields.get(0x44+slot*4),rank=fields.get(0x5c+slot*4),id=base+Math.max(0,rank-1);return {slot,id,rank,name:catalog.skills.find(s=>s.skillId===id)?.name??''};});
   await waitUntil(s,`document.querySelector('[data-pet-directory-skill="0"]')?.dataset.skillLevel==='${expected[0].rank}'`);
   const actual=await evaluate(s,`[...document.querySelectorAll('[data-pet-directory-skill]')].map(e=>({slot:Number(e.dataset.petDirectorySkill),id:Number(e.dataset.skillId),rank:Number(e.dataset.skillLevel),name:e.querySelector('[data-source-control^="txtSkillName"]').textContent}))`);assert.deepEqual(actual,expected);evidence.ownedPetProjection={instanceId:3,expected,actual};

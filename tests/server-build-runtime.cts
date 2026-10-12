@@ -9,7 +9,7 @@ async function main(): Promise<void> {
   const entry = process.env.CDTANK_SERVER_ENTRY ?? join(root, 'dist/server/server/src/index.js');
   const directory = mkdtempSync(join(tmpdir(), 'cdtank-built-server-'));
   const env = {...process.env, CDTANK_SERVER_ENTRY: entry, CDTANK_SERVER_CWD: directory,
-    CONTENT_TABLES: join(root, 'recovery/output/verified/tables'), WEB_ASSETS: join(root, 'recovery/output/web-assets')};
+    CONTENT_TABLES: join(root, 'apps/server/resources/tables'), WEB_ASSETS: join(root, 'apps/web/public')};
   const checks = [
     {test: 'account-network.cts', evidence: 'account-network.json', port: 3129},
     {test: 'tank-texture-network.cts', evidence: 'tank-texture-network.json', port: 3018},
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
     writeFileSync(join(root, 'recovery/output/server-build-runtime.json'), JSON.stringify({
       status: 'PASS', entry, runtime: 'node',
       serverCwdOutsideWorkspace: true,
-      contentTables: 'recovery/output/verified/tables', webAssets: 'recovery/output/web-assets',
+      contentTables: 'apps/server/resources/tables', webAssets: 'apps/web/public',
       checks: checks.map(check => ({test: `tests/${check.test}`, evidence: `recovery/output/${check.evidence}`,
         port: check.port, restartPersistence: true})),
       cpu: {fixture: 'tests/autopilot-match.cts', modules: ['account-store.js', 'world.js'],

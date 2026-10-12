@@ -1,7 +1,9 @@
+import {DialogButton} from '../resources/dialog-button';
+import {GameMessage} from '../resources/game-message';
 import './tutorial-settings-source.css';
 import {useEffect, useRef, useState} from 'react';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {SourceButton} from '../resources/source-button';
+import {GameArtworkButton} from '../resources/game-artwork-button';
 import {sourceProps, useSourceUi} from '../lobby/source-react';
 
 export const TUTORIAL_SETTINGS_LAYOUT = 'tut_settings.xml';
@@ -36,20 +38,20 @@ function TutorialSettingsSession({onSettings, onExit, retried, retry}: TutorialS
     return <section className="tutorial-settings-feedback"
       data-tutorial-settings-state={error ? 'error' : 'loading'}
       data-tutorial-settings-error={error || undefined} data-feedback-binding="web-source-resource"
-      role="status" aria-live="polite" aria-busy={!error}>
-      <p>{error ? '顶栏暂时无法显示' : '正在载入顶栏…'}</p>
-      {error && <button ref={retryButton} type="button" data-tutorial-settings-retry="" onClick={retry}>重试</button>}
+      aria-busy={!error}>
+      <GameMessage text={error ? '顶栏暂时无法显示' : ''} tone="error"/>
+      {error && <DialogButton ref={retryButton} type="button" data-tutorial-settings-retry="" onClick={retry}>重试</DialogButton>}
     </section>;
   }
   const layout = new HomeSourceLayout(ui, TUTORIAL_SETTINGS_LAYOUT);
   const frame = sourceProps(ui, layout, TUTORIAL_SETTINGS_LAYOUT, 'SheetWindow');
   return <div ref={bar} {...frame} className="tutorial-settings-bar" data-tutorial-settings-bar="">
-    <SourceButton ui={ui} layout={layout} suffix={TUTORIAL_SETTINGS_LAYOUT} source="btnTutorial"
+    <GameArtworkButton {...sourceProps(ui, layout, TUTORIAL_SETTINGS_LAYOUT, 'btnTutorial')} kind="tutorial"
       className="tutorial-settings-button" data-tutorial-first="" aria-label="查看教学说明" title="查看教学说明"
-      onClick={() => {window.open(TUTORIAL_LINK, '_blank', 'noopener');}}/>
-    <SourceButton ui={ui} layout={layout} suffix={TUTORIAL_SETTINGS_LAYOUT} source="btnSettings"
-      className="tutorial-settings-button" aria-label="系统设置" title="系统设置" onClick={onSettings}/>
-    <SourceButton ui={ui} layout={layout} suffix={TUTORIAL_SETTINGS_LAYOUT} source="btnClose"
+      onClick={() => {window.open(TUTORIAL_LINK, '_blank', 'noopener');}}>教学说明</GameArtworkButton>
+    <GameArtworkButton {...sourceProps(ui, layout, TUTORIAL_SETTINGS_LAYOUT, 'btnSettings')} kind="settings"
+      className="tutorial-settings-button" aria-label="系统设定" title="系统设定" onClick={onSettings}>系统设定</GameArtworkButton>
+    <GameArtworkButton {...sourceProps(ui, layout, TUTORIAL_SETTINGS_LAYOUT, 'btnClose')} kind="return"
       className="tutorial-settings-button" aria-label="返回登录" title="返回登录" onClick={onExit}/>
   </div>;
 }

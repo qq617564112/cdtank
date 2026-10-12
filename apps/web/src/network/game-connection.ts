@@ -10,6 +10,11 @@ interface GameConnectionOptions {
   tokenStore?: Pick<Storage, 'getItem' | 'setItem'>;
 }
 
+export interface ConnectionPing {
+  connected: boolean;
+  milliseconds?: number;
+}
+
 /** Owns the single authenticated transport shared by account and room requests. */
 export class GameConnection {
   readonly client: WsClient<ServiceType>;
@@ -27,6 +32,12 @@ export class GameConnection {
 
   get hasSavedIdentity(): boolean {return !!this.tokenStore.getItem('cdtank-account-token');}
   get accountContext(): AccountContext {return this.accountContextValue;}
+  /** Round-trip time of the latest WebSocket heartbeat on this connection. */
+  get ping(): ConnectionPing {
+    const connected = this.client.isConnected;
+    const latency = this.client.lastHeartbeatLatency;
+    return {connected, milliseconds: connected && latency >= 0 ? latency : undefined};
+  }
   subscribeAccountContext(listener: () => void): () => void {
     this.accountContextListeners.add(listener);
     return () => {this.accountContextListeners.delete(listener);};
@@ -84,6 +95,8 @@ export class GameConnection {
     await this.disconnection;
     if (this.connectionReady !== readiness()) throw new Error('连接已取消，请重试');
     this.transportReady = readiness();
+    // Wait for this transport's first heartbeat instead of displaying an old sample.
+    this.client.lastHeartbeatLatency = -1;
     const connection = await this.client.connect();
     if (this.connectionReady !== readiness()) throw new Error('连接已取消，请重试');
     if (!connection.isSucc) throw new Error(connection.errMsg);

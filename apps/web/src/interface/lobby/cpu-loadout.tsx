@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import {gameContent} from '../../../../shared/content/catalog';
 import {isTreasureItem} from '../../../../shared/combat/treasure-items';
 import {loadCombatCatalog} from '../../content';
@@ -67,7 +68,7 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
       loadout.push({slot: row.slot, itemTableId: row.itemTableId, quantity});
     }
     const current = generation.current;
-    requestPending.current = true; setPending(true); setStatus('正在确认配给…');
+    requestPending.current = true; setPending(true); setStatus('');
     try {
       await configure(loadout);
       if (generation.current === current) setStatus('配给已确认');
@@ -111,7 +112,7 @@ function CpuLoadoutEditor({player, busy, configure}: CpuLoadoutViewProps) {
         })}
       </div>
       <button type="submit" data-cpu-loadout-save="" disabled={busy || pending || !items}>确认CPU配给</button>
-      <output role="status" data-cpu-loadout-status="">{status || (!items ? '正在载入道具目录…' : '')}</output>
+      <GameMessage data-cpu-loadout-status="" text={status}/>
     </form>
   </details>;
 }

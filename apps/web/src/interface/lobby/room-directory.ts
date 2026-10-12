@@ -1,8 +1,8 @@
 import type {RoomSummary} from '../../../../shared/protocols/PtlListRooms';
 
 export type RoomSort = 'ID' | 'EMPTY';
-/** Original roomlist.xml has picRoomIcon0 through picRoomIcon9. */
-export const ROOM_PAGE_SIZE = 10;
+/** Four columns and two rows share each directory page. */
+export const ROOM_PAGE_SIZE = 8;
 
 export interface RoomDirectoryPage {
   rooms: RoomSummary[];

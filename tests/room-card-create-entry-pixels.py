@@ -6,7 +6,7 @@ from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
 rows=[]
 for capture in json.load(open(sys.argv[1])):
- state=capture['state'];original=Image.open(ROOT/'recovery/output/web-assets'/state['images'][0]['asset']).convert('RGBA');shot=Image.open(ROOT/capture['file']).convert('RGB');box=state['rect'];samples=[]
+ state=capture['state'];original=Image.open(ROOT/'apps/web/public'/state['images'][0]['asset']).convert('RGBA');shot=Image.open(ROOT/capture['file']).convert('RGB');box=state['rect'];samples=[]
  for sy in range(1,original.height-1):
   for sx in range(1,original.width-1):
    colour=original.getpixel((sx,sy))

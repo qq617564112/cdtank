@@ -69,7 +69,9 @@ export function registerRoomApis(
   server.implementApi('CreateRoom', async call => {
     try {
       const result = await world.createAndJoin(call.conn.id, call.req.mode, call.req.mapId,
-        call.req.roomName, displayName(call.conn.id), roomTankId(call.conn.id, call.req.tankId), call.req.password, call.req.minPlayers, call.req.maxPlayers, call.req.friendlyFire);
+        call.req.roomName, displayName(call.conn.id), roomTankId(call.conn.id, call.req.tankId),
+        call.req.password, call.req.minPlayers, call.req.maxPlayers, call.req.friendlyFire,
+        call.req.timeLimitSeconds);
       if (!server.connections.some(connection => connection.id === call.conn.id)) {
         await world.leave(result.playerId);
         return;

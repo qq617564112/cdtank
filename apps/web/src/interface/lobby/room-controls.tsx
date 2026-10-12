@@ -1,3 +1,4 @@
+import {GameMessage, showGameMessage} from '../resources/game-message';
 import {LobbyIdentityView} from './lobby-identity-view';
 import {useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode} from 'react';
 import {LobbySourcePage} from './lobby-source-page';
@@ -15,6 +16,8 @@ import type {MsgRoomInvitation} from '../../../../shared/protocols/MsgRoomInvita
 import {useRoomInputLimit} from './room-input-limit';
 import {ROOM_NAME_MAX_CODEPOINTS, ROOM_PASSWORD_MAX_CODEPOINTS} from '../../../../shared/room-input';
 import {waitingRoomInfo} from './waiting-room-state';
+import {navigateGame, roomPath, useRouteDialog, useNavigationValue} from '../../navigation/route';
+import {useRoomDraft} from './use-room-draft';
 
 interface LobbyViewProps {validation?: boolean; chatContent?: ReactNode; playerContent?: ReactNode; headerContent?: ReactNode; battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; openInventory: () => void; openEquipment: () => void; openRoles: () => void; openShop: () => void; openHistory: () => void}
 const MODE_NAMES = ['团队', '占领', '擒王', '混战', '破坏'];
@@ -28,21 +31,22 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
   const [tanks, setTanks] = useState<Awaited<ReturnType<typeof tankCatalog>>>([]);
   const [maps, setMaps] = useState<Awaited<ReturnType<Battle['listMaps']>>>([]);
   const [directory, setDirectory] = useState<Awaited<ReturnType<Battle['listRooms']>>>([]);
-  const [draft, setDraft] = useState<RoomCreateDraft>(INITIAL_DRAFT);
+  const [draft, setDraft] = useRoomDraft(INITIAL_DRAFT, 'create');
+  const [cachedMap] = useNavigationValue('createMap');
   const [mapError, setMapError] = useState(''), [cpuStatus, setCpuStatus] = useState('');
   const [sort, setSort] = useState<RoomSort>('ID'), [pageIndex, setPageIndex] = useState(0), [selectedId, setSelectedId] = useState('');
   const [joinPassword, setJoinPassword] = useState('');
-  const [passwordRoom, setPasswordRoom] = useState(''), [status, setStatus] = useState('');
+  const [passwordRoom, setPasswordRoom] = useNavigationValue('passwordRoom'), [status, setStatus] = useState('');
   const roomNameRef = useRef<HTMLInputElement>(null), createPasswordRef = useRef<HTMLInputElement>(null), joinPasswordRef = useRef<HTMLInputElement>(null);
   const nameInput = useRoomInputLimit(roomNameRef, ROOM_NAME_MAX_CODEPOINTS, value => setDraft(previous => ({...previous, roomName: value})));
   const createPasswordInput = useRoomInputLimit(createPasswordRef, ROOM_PASSWORD_MAX_CODEPOINTS, value => setDraft(previous => ({...previous, password: value})));
   const joinPasswordInput = useRoomInputLimit(joinPasswordRef, ROOM_PASSWORD_MAX_CODEPOINTS, setJoinPassword);
   const [busy, setBusy] = useState(false), [refreshing, setRefreshing] = useState(false), [leaving, setLeaving] = useState(false);
-  const [inBattle, setInBattle] = useState(false), [cardsOpen, setCardsOpen] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false), [createOpen, setCreateOpen] = useState(false);
+  const [inBattle, setInBattle] = useState(battle.inRoom), [cardsOpen, setCardsOpen] = useRouteDialog('rooms');
+  const [mapOpen, setMapOpen] = useRouteDialog('room-map'), [createOpen, setCreateOpen] = useRouteDialog('room-create');
   const [invitations, setInvitations] = useState<MsgRoomInvitation[]>([]);
   const createOrigin = useRef<'cards' | 'controls'>('controls');
-  const createAfterMap = useRef(false);
+  const createAfterMap = useRef(!validation && mapOpen);
   const entering = useRef(false), joinRef = useRef<HTMLButtonElement>(null);
   const page = roomDirectoryPage(orderRooms(directory, sort), pageIndex, selectedId);
   const map = maps.find(value => value.mode === draft.mode && value.mapId === draft.mapId);
@@ -59,14 +63,25 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
       if (!active) return;
       setMaps(next);
       setDraft(value => {
+        const existing = next.find(option => option.mode === value.mode && option.mapId === value.mapId);
+        if (cachedMap && existing) return value;
         const selected = next.find(option => option.mode === value.mode);
         return {...value, mapId: selected?.mapId ?? 0, minPlayers: selected?.sourceMinPlayers ?? 1, maxPlayers: selected?.maxPlayers ?? 1};
       });
-    }).catch(error => {if (active) setMapError(`地图目录载入失败：${String(error)}`);});
+    }).catch(error => {if (active) {setMapError(`地图目录载入失败：${String(error)}`);showGameMessage(`地图目录载入失败：${String(error)}`, 'error');}});
     void tankCatalog().then(next => {if (active) {setTanks(next); setTankId(next[0]?.id ?? 0);}})
-      .catch(error => {if (active) hud.value = String(error);});
+      .catch(error => {if (active) {hud.value = String(error);showGameMessage(hud.value, 'error');}});
     return () => {active = false;};
   }, [battle, hud]);
+  useEffect(() => {
+    if (!maps.length) return;
+    setDraft(value => {
+      if (maps.some(option => option.mode === value.mode && option.mapId === value.mapId)) return value;
+      const selected = maps.find(option => option.mode === value.mode);
+      return {...value, mapId: selected?.mapId ?? 0, minPlayers: selected?.sourceMinPlayers ?? 1,
+        maxPlayers: selected?.maxPlayers ?? 1};
+    });
+  }, [maps, cachedMap]);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -75,11 +90,17 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
       setDirectory(rooms);
       const next = roomDirectoryPage(orderRooms(rooms, sort), page.page, page.selectedId, true);
       setPageIndex(next.page); setSelectedId(next.selectedId);
-      hud.value = '选择房间，加入对战'; setStatus('选择房间，双击加入对战');
+      hud.value = '选择房间，加入对战'; setStatus('');
     } catch (error) {hud.value = String(error); setStatus(String(error));}
     finally {setRefreshing(false);}
   }, [battle, hud, sort, page.page, page.selectedId]);
   useEffect(() => {void refresh();}, [battle]);
+  useEffect(() => {
+    if (!battle.inRoom) return;
+    setInBattle(true);
+    document.body.classList.add('in-battle');
+    return () => {document.body.classList.remove('in-battle');};
+  }, [battle, match?.roomId]);
   useEffect(() => {
     if (validation || inBattle) return;
     let active = true, polling = false;
@@ -100,6 +121,7 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
     battle.setRoomExitHandler(() => {
       document.body.classList.remove('in-battle');
       setInBattle(false);
+      navigateGame('/lobby', false, true);
       void refresh().finally(() => requestAnimationFrame(() => {
         if (validation) joinRef.current?.focus();
         else document.querySelector<HTMLButtonElement>('[data-room-card-create]')?.focus();
@@ -125,6 +147,7 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
     if (!battle.inRoom) return;
     setInvitations([]); setPasswordRoom(''); setCardsOpen(false); setMapOpen(false); setCreateOpen(false);
     setInBattle(true); document.body.classList.add('in-battle');
+    if (battle.roomId) navigateGame(roomPath(battle.roomId, battle.matchPanel.getSnapshot()?.phase));
     requestAnimationFrame(() => {
       if (battle.matchPanel.getSnapshot()?.phase === 'PLAYING') canvas.focus();
       else document.querySelector<HTMLButtonElement>('[data-waiting-ready]')?.focus();
@@ -140,12 +163,13 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
     validateRoomCreateDraft(next, maps.find(value => value.mode === next.mode && value.mapId === next.mapId));
     startEntering();
     try {
-      await battle.createRoom(next.mode, next.mapId, next.roomName, playerName, tankId, next.password, next.minPlayers, next.maxPlayers, next.friendlyFire);
+      await battle.createRoom(next.mode, next.mapId, next.roomName, playerName, tankId,
+        next.password, next.minPlayers, next.maxPlayers, next.friendlyFire, next.timeLimitSeconds);
       setDraft({...next, password: ''}); showBattle();
     } finally {finishEntering();}
   }
   async function startCpu() {
-    startEntering(); setCpuStatus('正在创建对局并载入地图与 CPU…');
+    startEntering(); setCpuStatus('');
     try {await battle.startCpuMatch(playerName, tankId); setCpuStatus(''); showBattle();}
     catch (error) {
       const message = `CPU 对局失败：${error instanceof Error ? error.message : String(error)}`;
@@ -194,7 +218,7 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
         {tanks.map(tank => <option key={tank.id} value={tank.id}>{tank.name}</option>)}
       </select>
       <button id="start-cpu" type="button" disabled={!cpuEnabled} aria-busy={busy || undefined} onClick={() => report(startCpu())}>一键 CPU 对局</button>
-      <output id="cpu-status" aria-live="polite">{cpuStatus}</output>
+      <GameMessage id="cpu-status" text={cpuStatus} tone={busy ? 'pending' : 'info'}/>
       <button id="open-home" type="button" onClick={openInventory}>我的家：物品</button>
       <button id="open-equipment" type="button" onClick={openEquipment}>我的家：战车部件</button>
       <button id="open-roles" type="button" onClick={openRoles}>我的家：战车与宠物</button>
@@ -252,7 +276,7 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
     </div>}
     {validation && roomCards}
     <button id="leave" type="button" hidden={!inBattle || !validation} disabled={leaving} onClick={() => {
-      setLeaving(true); void battle.exitRoom().catch(error => {hud.value = String(error);}).finally(() => setLeaving(false));
+      setLeaving(true); void battle.exitRoom().catch(error => {hud.value = String(error);showGameMessage(hud.value, 'error');}).finally(() => setLeaving(false));
     }}>返回</button>
     {passwordRoom && <RoomPasswordDialog key={passwordRoom} roomId={passwordRoom} close={() => {
       setPasswordRoom(''); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-room-card-id="${passwordRoom}"]`)?.focus());
@@ -269,10 +293,11 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
         if (createAfterMap.current) setCreateOpen(true);
         return true;
       }}/>} 
-    {createOpen && <RoomCreateDialog open close={() => {
+    {createOpen && !mapOpen && <RoomCreateDialog open close={() => {
       document.querySelector<HTMLDialogElement>('[data-room-create-dialog]')?.close();
       document.querySelector<HTMLButtonElement>(createOrigin.current === 'cards' ? '[data-room-card-create]' : '#open-room-create-dialog')?.focus();
       setCreateOpen(false);
-    }} initialDraft={draft} map={map} submit={createRoom}/>}
+    }} initialDraft={draft} map={map} submit={createRoom}
+      changeMap={value => {setDraft(value); setMapOpen(true);}}/>}
   </>;
 }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRoleBeforeShotNotify, createRoleShotNotify, decodeRoleBeforeShotNotify,
   decodeRoleShotNotify, encodeRoleBeforeShotNotify, encodeRoleShotNotify,
-  ROLE_BEFORE_SHOT_NOTIFY_TYPE, ROLE_SHOT_NOTIFY_TYPE} from '../recovery/evidence/combat/role-shot-notify';
+  ROLE_BEFORE_SHOT_NOTIFY_TYPE, ROLE_SHOT_NOTIFY_TYPE} from '../tests/evidence/combat/role-shot-notify';
 const evidence = JSON.parse(readFileSync('recovery/output/projectile-sol-shot-wire-native.json', 'utf8')) as {
   factories: Array<{kind: string; type: number}>;
   rows: Array<{kind: string; roleId: number; itemId: number; xyz: number[]; offset: number; payload: string; decodedItemId: number}>;

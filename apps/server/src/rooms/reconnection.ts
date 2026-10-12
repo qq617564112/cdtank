@@ -34,8 +34,7 @@ export class RoomReconnections {
     try {await this.world.pauseDisconnectedPlayer(session.playerId);}
     catch {return false;}
     const snapshot = this.world.snapshot(session.roomId);
-    if (!snapshot || !snapshot.players.some(player => player.id === session.playerId)
-        || (snapshot.phase !== 'PLAYING' && snapshot.phase !== 'LOADING')) return false;
+    if (!snapshot || !snapshot.players.some(player => player.id === session.playerId)) return false;
     const timer = setTimeout(() => {
       this.retained.delete(accountId);
       // Settlement captures account identity before its room binding is removed.

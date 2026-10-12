@@ -1,0 +1,44 @@
+.room-adjustment-button {
+  --room-arrow-light: #ffdfc1;
+  --room-arrow-face: #ff9353;
+  --room-arrow-shade: #e66a31;
+  display: inline-grid;
+  flex: 0 0 26px;
+  place-items: center;
+  width: 26px;
+  height: 27px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.room-adjustment-button svg {
+  width: 26px;
+  height: 27px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.room-adjustment-button[data-source-button-state='Hover'] {
+  --room-arrow-light: #fff7d1;
+  --room-arrow-face: #ffc74f;
+  --room-arrow-shade: #e99b20;
+}
+
+.room-adjustment-button[data-source-button-state='Pushed'] svg {
+  transform: translateY(1px) scale(.91);
+}
+
+.room-adjustment-button:disabled {
+  filter: grayscale(1);
+  opacity: .45;
+  cursor: default;
+}
+
+.room-adjustment-button:focus-visible {
+  outline: 2px solid #82671c;
+  outline-offset: 1px;
+}

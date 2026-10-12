@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import sys
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from scene import read_scene
 source = Path(sys.argv[1]).resolve()
 run = json.loads(source.read_text())
@@ -12,7 +12,7 @@ assert len(run['initial']) == 2 and all(w['mode'] == 5 and w['mapId'] == 20 and 
 id = run['targetId'].removeprefix('SCN:')
 placement = next(r for r in read_scene(ROOT / 'recovery/output/verified/assets/data/Data/scn/0020/0020.obj') if r['id'] == id)
 assert placement['model'] == 'obj05436' and abs(placement['bounds'][2]) < 1e-10
-resource = next(r for r in json.loads((ROOT / 'recovery/output/web-assets/scene-breach-0020.json').read_text())['resources'] if r['reference'] == 'Data/scnobj/obj05436/c9.CVD')
+resource = next(r for r in json.loads((ROOT / 'apps/web/public/scene-breach-0020.json').read_text())['resources'] if r['reference'] == 'Data/scnobj/obj05436/c9.CVD')
 expected = [i for i, n in enumerate(resource['nodes']) if n['parts']]
 assert expected == run['sourceGeometryNodes'] == list(range(13))
 source_proof = json.loads((ROOT / 'recovery/output/scene-breach20-05436-source.json').read_text())

@@ -6,6 +6,7 @@ export interface ReqEditRoom {
   minPlayers: number;
   maxPlayers: number;
   friendlyFire: boolean;
+  timeLimitSeconds?: number;
   /** Omit to keep the password; an empty string removes it. */
   password?: string;
 }

@@ -1,0 +1,66 @@
+.game-room-card {
+  --room-card-fill: #fcc589;
+  --room-card-shadow: #825e36;
+  --room-card-shadow-opacity: 0.46;
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.game-room-card:disabled {
+  cursor: default;
+}
+
+.game-room-card-silhouette {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.game-room-card-fill {
+  fill: var(--room-card-fill);
+  transition: fill 100ms;
+}
+
+.game-room-card-shadow {
+  fill: var(--room-card-shadow);
+  opacity: var(--room-card-shadow-opacity);
+  filter: blur(1.4px);
+  transform: translate(0.6px, 1px);
+}
+
+.game-room-card[data-source-button-state='Hover'] {
+  --room-card-fill: #ffe3af;
+  --room-card-shadow: #916a3b;
+}
+
+.game-room-card[data-source-button-state='Hover'] .game-room-card-silhouette {
+  filter: drop-shadow(0 0 1.8px #fff0b7);
+}
+
+.game-room-card[data-source-button-state='Pushed'] {
+  --room-card-fill: #ffda9e;
+}
+
+.game-room-card[data-source-button-state='Pushed'] .game-room-card-silhouette {
+  transform: translate(0.4px, 0.7px);
+}
+
+.game-room-card:focus-visible {
+  outline: 2px solid #fff6dc;
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-room-card-fill {
+    transition: none;
+  }
+}

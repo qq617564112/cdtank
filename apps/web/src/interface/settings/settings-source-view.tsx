@@ -1,6 +1,6 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {GameMessage} from '../resources/game-message';
 import './settings-source.css';
-import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent} from 'react';
+import {useEffect, useRef, useState, type KeyboardEvent} from 'react';
 import type {Battle} from '../../match/battle';
 import {cloneKeyBindings, DEFAULT_KEY_BINDINGS, INPUT_ACTIONS, isSupportedKeyCode,
   keyLabel, validateKeyBindings, type InputAction, type KeyBindings} from '../../match/input-bindings';
@@ -10,14 +10,18 @@ import {applyDisplayPreferences, DEFAULT_DISPLAY_PREFERENCES, getDisplayPreferen
 import {DEFAULT_QUICK_CHAT_PREFERENCES, QUICK_CHAT_KEYS, readQuickChatPreferences,
   validateQuickChatPreferences, writeQuickChatPreferences, type QuickChatPreferences} from './quick-chat-preferences';
 import {KEY_BINDINGS_STORAGE_KEY, type InitialSettings} from './settings-startup';
-import {SettingsSourceButton, SettingsSourceCheckmark, SettingsSourcePage, SETTINGS_LAYOUT} from './settings-source-page';
+import {SettingsSourceButton, SettingsSourcePage, SETTINGS_LAYOUT} from './settings-source-page';
+import {SettingsAdjustment, SettingsChatField, SettingsChoice, SettingsKeyField} from './settings-controls';
+import {applyBrightness, DEFAULT_BRIGHTNESS, getBrightness, MIN_BRIGHTNESS, MAX_BRIGHTNESS,
+  writeBrightness} from './brightness-preferences';
+import {applySaturation, DEFAULT_SATURATION, getSaturation, MIN_SATURATION, MAX_SATURATION,
+  writeSaturation} from './saturation-preferences';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
-import {sourceUiImage} from '../resources/source-ui-image';
 import {SourceImageScale} from '../resources/source-static-image';
-import {loadUiFont} from '../resources/source-ui-fonts';
 import {loadSourceUi} from '../resources/source-ui-resources';
 import {SettingsResourceFeedback} from './settings-resource-feedback';
+import {GameDialog} from '../resources/game-dialog';
 
 export interface SettingsSourceViewProps {
   open: boolean;
@@ -26,13 +30,14 @@ export interface SettingsSourceViewProps {
   initial: InitialSettings;
   onKeysSaved: (bindings: KeyBindings) => void;
 }
-const KEY_REGIONS = [
-  ['forward', 'txtUp', '前进'], ['backward', 'txtDown', '后退'],
-  ['turnLeft', 'txtLeft', '车体左转'], ['turnRight', 'txtRight', '车体右转'],
-  ['fire', 'txtFire', '开火'], ['useItem', 'txtUseItem', '使用当前道具'],
-  ['prevWeapon', 'txtPrevWeapon', '上一个武器'], ['nextWeapon', 'txtNextWeapon', '下一个武器'],
-  ['prevItem', 'txtPrevItem', '上一个道具'], ['nextItem', 'txtNextItem', '下一个道具'],
-] as const;
+const KEY_ROWS = [
+  ['forward', '前进'], ['backward', '后退'],
+  ['turnLeft', '车身左转'], ['turnRight', '车身右转'],
+  ['aimLeft', '炮塔左转'], ['aimRight', '炮塔右转'], ['scoreboard', '计分板'],
+  ['fire', '发炮'], ['useItem', '道具使用'],
+  ['prevWeapon', '前一个炮弹'], ['nextWeapon', '后一个炮弹'],
+  ['prevItem', '前一个道具'], ['nextItem', '后一个道具'],
+] as const satisfies readonly (readonly [InputAction, string])[];
 const UNSUPPORTED_OPTIONS = [
   ['rdo16ColorDepth', '16位色'], ['rdo32ColorDepth', '32位色'], ['chkWaitVSync', '垂直同步'],
   ['chkSoftwareCursor', '软件光标'], ['zhandoubiaoqing', '战斗表情'],
@@ -54,6 +59,8 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
   const [bindings, setBindings] = useState(() => cloneKeyBindings(battle.getKeyBindings()));
   const [quickChats, setQuickChats] = useState<QuickChatPreferences>(() => readQuickChatPreferences(localStorage).preferences);
   const [audio, setAudio] = useState<AudioPreferences>(() => readAudioPreferences(localStorage, initial.audio.preferences).preferences);
+  const [brightness, setBrightness] = useState(getBrightness);
+  const [saturation, setSaturation] = useState(getSaturation);
   const [display, setDisplay] = useState<DisplayPreferences>(() => ({...getDisplayPreferences()}));
   const [capture, setCapture] = useState<Capture>();
   const composing = useRef(false), escapePending = useRef(false);
@@ -81,7 +88,7 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
   useEffect(() => {
     let live = true;
     setResourceError(undefined);
-    void loadUiFont().catch(() => {});
+    void document.fonts.load('16px "HappyZcool-2016"').catch(() => {});
     void loadSourceUi().then(resources => {
       if (!resources.layouts.some(page => page.path.endsWith(SETTINGS_LAYOUT))) throw new Error('原设置布局缺失');
       if (live) setUi(resources);
@@ -121,6 +128,43 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
     setStatus(writeAudioPreferences(localStorage, next) ? '音量设置已保存。' : '无法保存音量设置，刷新后将恢复默认值。');
   }
 
+  function changeBrightness(value: number) {
+    setBrightness(value);
+    applyBrightness(value);
+    setStatus(writeBrightness(localStorage, value) ? '亮度设置已保存。' : '无法保存亮度设置，刷新后将恢复默认值。');
+  }
+
+  function changeSaturation(value: number) {
+    setSaturation(value);
+    applySaturation(value);
+    setStatus(writeSaturation(localStorage, value) ? '饱和度设置已保存。' : '无法保存饱和度设置，刷新后将恢复默认值。');
+  }
+
+  function beginCapture(action: InputAction, secondary: boolean) {
+    const selected = {action, secondary};
+    current.current.capture = selected;
+    setCapture(selected);
+    setStatus('请按新键；Esc取消选择。');
+  }
+
+  function restoreDefaults() {
+    const next = cloneKeyBindings(DEFAULT_KEY_BINDINGS);
+    current.current = {bindings: next, capture: undefined};
+    setBindings(next);
+    setQuickChats({...DEFAULT_QUICK_CHAT_PREFERENCES});
+    setDisplay({...DEFAULT_DISPLAY_PREFERENCES});
+    setCapture(undefined);
+    setBrightness(DEFAULT_BRIGHTNESS);
+    applyBrightness(DEFAULT_BRIGHTNESS);
+    setSaturation(DEFAULT_SATURATION);
+    applySaturation(DEFAULT_SATURATION);
+    const brightnessSaved = writeBrightness(localStorage, DEFAULT_BRIGHTNESS);
+    const saturationSaved = writeSaturation(localStorage, DEFAULT_SATURATION);
+    setStatus(brightnessSaved && saturationSaved
+      ? '已恢复默认草稿，确认后生效；亮度与饱和度已恢复100%。'
+      : '已恢复默认草稿；亮度与饱和度已恢复100%，部分调节无法保存。');
+  }
+
   function save() {
     const keys = validateKeyBindings(bindings), chats = validateQuickChatPreferences(quickChats);
     const displayPreferences = validateDisplayPreferences(display);
@@ -151,7 +195,6 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
       return;
     }
     if (!selected || event.nativeEvent.isComposing) return;
-    if (event.code === 'Tab') {setCapture(undefined); return;}
     event.preventDefault();
     if (event.repeat) return;
     const controlKey = event.code === 'ControlLeft' || event.code === 'ControlRight';
@@ -172,28 +215,8 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
 
   const layout = ui ? new HomeSourceLayout(ui, SETTINGS_LAYOUT) : undefined;
   const props = (name: string) => sourceProps(ui!, layout!, SETTINGS_LAYOUT, name);
-  function sliderArtwork(source: string, value: number) {
-    const properties = layout!.control(source).properties;
-    const image = (property: string) => sourceUiImage(ui!, properties[property]);
-    const reference = /^set:(\S+) image:(.+)$/.exec(properties.ThumbNormalImage);
-    const sets = ui!.imagesets.filter(set => set.attributes.Name === reference?.[1]);
-    const set = sets.find(value => value.path.includes('imagesets_dds/')) ?? sets[0];
-    const thumb = set?.images.find(value => value.Name === reference?.[2]);
-    const style = {...props(source).style,
-      '--settings-thumb-width': `${thumb?.Width ?? 7}px`, '--settings-thumb-height': `${thumb?.Height ?? 10}px`,
-    } as CSSProperties;
-    return {style, layers: <>
-      {([['TrackLeftImage', 'left'], ['TrackMiddleImage', 'middle'], ['TrackRightImage', 'right']] as const).map(([property, part]) => {
-        const artwork = image(property);
-        return <span key={property} className={`settings-volume-track-${part}`} aria-hidden="true"
-          data-source-asset={artwork.asset} style={{...backgroundStyle(artwork.style)}} />;
-      })}
-      <span className="settings-volume-thumb" aria-hidden="true" data-source-asset={image('ThumbNormalImage').asset}
-        style={{left: value * (Number(style.width) - Number(thumb?.Width ?? 7)),
-          ...backgroundStyle(image('ThumbNormalImage').style)}} />
-    </>};
-  }
-  return <dialog ref={dialog} id="source-settings" aria-label="系统设置" aria-busy={!ui && !resourceError} style={{zoom: scale}}
+  return <GameDialog ref={dialog} id="source-settings" width={800} height={599} stageClassName="settings-source-stage"
+    aria-label="系统设置" aria-busy={!ui && !resourceError} data-settings-source-page="" uiScale={scale}
     onCompositionStart={() => {composing.current = true;}}
     onCompositionEnd={() => {composing.current = false;}}
     onCancel={event => {event.preventDefault(); if (!composing.current) close();}}
@@ -204,68 +227,96 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
         if (!composing.current && !event.nativeEvent.isComposing) close();
       }
     }}>
-    <SourceImageScale value={scale}><div className="settings-source-stage" data-settings-source-page="">
+    <SourceImageScale value={scale}>
       {ui && <>
-        <SettingsSourcePage ui={ui} />
-        {KEY_REGIONS.flatMap(([action, region, label]) => [false, true].map(secondary => {
-          const active = capture?.action === action && capture.secondary === secondary;
-          const code = secondary ? bindings.secondary?.[action] : bindings[action];
-          const unsetOptionalPrimary = !secondary && optionalPrimary(action) && !code;
-          return <button key={region + Number(secondary)} {...props(region + Number(secondary))} type="button"
-            className="settings-key" data-settings-key={action} data-settings-secondary={String(secondary)}
-            data-settings-unset={unsetOptionalPrimary ? '' : undefined}
-            title={unsetOptionalPrimary ? '未设置' : undefined}
-            aria-label={`${label}${secondary ? '备用键' : '主键'}${unsetOptionalPrimary ? '，未设置' : ''}`}
-            aria-pressed={active}
-            onClick={() => {current.current.capture = {action, secondary}; setCapture({action, secondary}); setStatus('请按新键；Esc取消选择。');}}
-            onContextMenu={event => {
-              event.preventDefault(); if (!secondary) return;
-              const next = cloneKeyBindings(bindings); delete next.secondary?.[action]; setBindings(next); setCapture(undefined);
-            }}>{active ? '按新键' : code ? keyLabel(code) : unsetOptionalPrimary ? '未设置' : ''}</button>;
-        }))}
-        {QUICK_CHAT_KEYS.map(key => <input key={key} {...props('edt' + key)} className="settings-quick-chat"
+        <SettingsSourcePage ui={ui}
+          topbar={<SettingsSourceButton ui={ui} source="btnClose" offsetX={-41} offsetY={-5}
+            aria-label="关闭设置" data-settings-close="" onClick={close} />}
+          footbar={<>
+            <SettingsSourceButton ui={ui} source="btnDefault" offsetX={-76} offsetY={-548}
+              aria-label="恢复默认草稿" data-settings-default=""
+              onClick={restoreDefaults} />
+            <SettingsSourceButton ui={ui} source="btnOK" offsetX={-76} offsetY={-548}
+              aria-label="确认设置" data-settings-confirm="" onClick={save} />
+            <SettingsSourceButton ui={ui} source="btnCancel" offsetX={-76} offsetY={-548}
+              aria-label="取消设置" data-settings-cancel="" onClick={close} />
+          </>} />
+        <div className="settings-key-headings" aria-hidden="true"><span>主键</span><span>备用键</span></div>
+        <div className="settings-key-list" role="group" aria-label="键位设置">
+          {KEY_ROWS.map(([action, label]) => <div key={action} className="settings-key-row">
+            <label className="settings-art-label settings-key-label" htmlFor={`settings-key-${action}`}>{label}</label>
+            {[false, true].map(secondary => {
+              const active = capture?.action === action && capture.secondary === secondary;
+              const code = secondary ? bindings.secondary?.[action] : bindings[action];
+              const unsetOptionalPrimary = !secondary && optionalPrimary(action) && !code;
+              return <SettingsKeyField key={String(secondary)} active={active}
+                id={`settings-key-${action}${secondary ? '-secondary' : ''}`}
+                data-settings-key={action} data-settings-secondary={String(secondary)}
+                data-settings-unset={unsetOptionalPrimary ? '' : undefined}
+                aria-label={`${label}${secondary ? '备用键' : '主键'}${active ? '，请按新键' : !code ? '，未设置' : ''}`}
+                title="点击或按Enter设置；Esc取消选择；右键清除备用键"
+                value={active ? '按新键' : code ? keyLabel(code) : unsetOptionalPrimary ? '未设置' : ''}
+                onClick={() => beginCapture(action, secondary)}
+                onKeyDown={event => {
+                  if (!current.current.capture && event.code === 'Enter') {
+                    event.preventDefault(); event.stopPropagation(); beginCapture(action, secondary);
+                  }
+                }}
+                onBlur={() => {
+                  const selected = current.current.capture;
+                  if (selected?.action === action && selected.secondary === secondary) {
+                    current.current.capture = undefined; setCapture(undefined); setStatus('已取消按键选择。');
+                  }
+                }}
+                onContextMenu={event => {
+                  event.preventDefault(); if (!secondary) return;
+                  const next = cloneKeyBindings(current.current.bindings);
+                  delete next.secondary?.[action];
+                  current.current = {bindings: next, capture: undefined};
+                  setBindings(next); setCapture(undefined); setStatus('备用键已清除，确认后生效。');
+                }}/>
+            })}
+          </div>)}
+        </div>
+        {QUICK_CHAT_KEYS.map((key, index) => <SettingsChatField key={key} {...props('edt' + key)}
+          frameStyle={props('dikuang' + (13 + index)).style}
           aria-label={key + '快捷聊天'} data-settings-quick-chat={key} value={quickChats[key]} maxLength={72}
           autoComplete="off" onChange={event => setQuickChats({...quickChats, [key]: event.currentTarget.value})} />)}
-        {(['music', 'sound'] as const).map(name => {
-          const source = name === 'music' ? 'sldMusicVolume' : 'sldSoundVolume';
-          const artwork = sliderArtwork(source, audio[name]);
-          return <div key={name} {...props(source)} className="settings-volume-control" style={artwork.style}>
-            {artwork.layers}
-            <input type="range" min="0" max="1" step="0.05" className="settings-volume" data-settings-volume={name}
-              aria-label={name === 'music' ? '音乐音量' : '音效音量'} aria-valuetext={`${Math.round(audio[name] * 100)}%`}
-              value={audio[name]} onChange={event => changeAudio(name, event.currentTarget.valueAsNumber)} />
-          </div>;
-        })}
+        <div className="settings-adjustments" role="group" aria-label="音量、亮度与饱和度调节">
+          <SettingsAdjustment icon="/ui/settings/music-cat.png" label="音乐音量" data-settings-volume="music"
+            value={audio.music} onValueChange={value => changeAudio('music', value)}/>
+          <SettingsAdjustment icon="/ui/settings/sound-dog.png" label="音效音量" data-settings-volume="sound"
+            value={audio.sound} onValueChange={value => changeAudio('sound', value)}/>
+          <SettingsAdjustment icon="/ui/settings/brightness-shiba.png" label="亮度" data-settings-brightness=""
+            min={MIN_BRIGHTNESS} max={MAX_BRIGHTNESS} value={brightness} onValueChange={changeBrightness}/>
+          <SettingsAdjustment icon="/ui/settings/saturation-pug.svg" label="饱和度" iconLabel="饱和度"
+            data-settings-saturation="" min={MIN_SATURATION} max={MAX_SATURATION}
+            value={saturation} onValueChange={changeSaturation}/>
+        </div>
         {([['window', 'rdoWindowMode', '窗口模式'], ['fullscreen', 'rdoFullscreenMode', '全屏模式']] as const)
-          .map(([mode, source, label]) => <SettingsSourceButton key={source} ui={ui} source={source}
+          .map(([mode, source, label]) => <SettingsChoice key={source} {...props(source)} kind="radio"
             data-settings-display-mode={mode} data-settings-display-binding="web-browser-fullscreen"
-            aria-label={label} aria-pressed={mode === 'fullscreen' ? fullscreen : !fullscreen}
-            selected={mode === 'fullscreen' ? fullscreen : !fullscreen}
+            aria-label={label} checked={mode === 'fullscreen' ? fullscreen : !fullscreen}
             aria-busy={displayPending}
             disabled={mode === 'fullscreen' && !document.fullscreenEnabled}
-            onClick={event => {void changeDisplayMode(mode === 'fullscreen', event.currentTarget);}} />)}
+            onClick={event => {void changeDisplayMode(mode === 'fullscreen', event.currentTarget);}}>
+            {mode === 'fullscreen' ? '全屏' : '窗口'}
+          </SettingsChoice>)}
         {([['low', 'rdoLow', '低画质', false], ['high', 'rdoHigh', '高画质', true]] as const)
-          .map(([quality, source, label, highPrecision]) => <SettingsSourceButton key={source} ui={ui} source={source}
-            data-settings-display-quality={quality} aria-label={label} aria-pressed={display.highPrecision === highPrecision}
-            selected={display.highPrecision === highPrecision}
-            onClick={() => setDisplay(value => ({...value, highPrecision}))} />)}
-        <SettingsSourceButton ui={ui} source="chkSilhouette"
-          data-settings-display-setting="silhouette" aria-label="卡通渲染" role="checkbox"
-          aria-checked={display.silhouette} selected={display.silhouette}
-          onClick={() => setDisplay(value => ({...value, silhouette: !value.silhouette}))} />
-        {display.silhouette && <SettingsSourceCheckmark ui={ui} source="chkSilhouette" />}
-        {UNSUPPORTED_OPTIONS.map(([source, label]) => <SettingsSourceButton key={source} ui={ui} source={source}
-          disabled aria-label={label} title="尚未接入" />)}
-        <SettingsSourceButton ui={ui} source="btnOK" aria-label="确认设置" data-settings-confirm="" onClick={save} />
-        <SettingsSourceButton ui={ui} source="btnDefault" aria-label="恢复默认草稿" data-settings-default=""
-          onClick={() => {setBindings(cloneKeyBindings(DEFAULT_KEY_BINDINGS)); setQuickChats({...DEFAULT_QUICK_CHAT_PREFERENCES});
-            setDisplay({...DEFAULT_DISPLAY_PREFERENCES}); setCapture(undefined); setStatus('已恢复默认草稿，确认后生效。');}} />
-        <SettingsSourceButton ui={ui} source="btnCancel" aria-label="取消设置" data-settings-cancel="" onClick={close} />
-        <SettingsSourceButton ui={ui} source="btnClose" aria-label="关闭设置" data-settings-close="" onClick={close} />
+          .map(([quality, source, label, highPrecision]) => <SettingsChoice key={source} {...props(source)} kind="radio"
+            data-settings-display-quality={quality} aria-label={label} checked={display.highPrecision === highPrecision}
+            onClick={() => setDisplay(value => ({...value, highPrecision}))}>{label}</SettingsChoice>)}
+        <SettingsChoice {...props('chkSilhouette')} kind="checkbox"
+          data-settings-display-setting="silhouette" aria-label="卡通渲染" checked={display.silhouette}
+          onClick={() => setDisplay(value => ({...value, silhouette: !value.silhouette}))}>卡通渲染</SettingsChoice>
+        {UNSUPPORTED_OPTIONS.map(([source, label]) => <SettingsChoice key={source} {...props(source)}
+          kind={source.startsWith('rdo') ? 'radio' : 'checkbox'} disabled aria-label={label} title="尚未接入">
+          {label}
+        </SettingsChoice>)}
       </>}
-      {ui && <output className="settings-status" role="status" data-settings-status="">{status}</output>}
+      {ui && <GameMessage data-settings-status="" text={status}/>}
       {!ui && <SettingsResourceFeedback error={resourceError} close={close}
         retry={() => {setResourceError(undefined); setResourceAttempt(attempt => attempt + 1);}} />}
-    </div></SourceImageScale>
-  </dialog>;
+    </SourceImageScale>
+  </GameDialog>;
 }

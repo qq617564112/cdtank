@@ -1,0 +1,38 @@
+:is(.lobby-chat, .source-battle-chat) .lobby-chat-rich-input {
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+
+:is(.lobby-chat, .source-battle-chat) .lobby-chat-input-preview {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  white-space: pre;
+  line-height: normal;
+}
+
+:is(.lobby-chat, .source-battle-chat) .lobby-chat-input-preview[hidden] {
+  display: none;
+}
+
+:is(.lobby-chat, .source-battle-chat) .lobby-chat-input-preview,
+:is(.lobby-chat, .source-battle-chat) .lobby-chat-input-preview * {
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+
+.lobby-chat-input-preview > span {
+  flex: none;
+}
+
+:is(.lobby-chat, .source-battle-chat) .lobby-chat-input-emote {
+  display: inline-block;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}

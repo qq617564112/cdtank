@@ -46,7 +46,7 @@ assert.deepEqual(advanceSpriteAppearance(initialSpriteAppearance(precisionConfig
 assert.deepEqual(advanceSpriteAppearance(initialSpriteAppearance(precisionConfig),
   precisionConfig, 1 - 2 ** -23).color, [2 ** -46, 2 ** -46, 2 ** -46, 2 ** -46]);
 
-const library = JSON.parse(fs.readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(fs.readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const explosion = library.spriteControls.find((c: {node: number}) => c.node === 2431);
 assert.deepEqual(explosion.appearance, {
   scale: [10, 10, 10], scaleRate: [15, 15, 15], angles: [0, 0, 0],

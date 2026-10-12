@@ -3,11 +3,11 @@ import json
 from pathlib import Path
 import struct
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'recovery'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/recovery'))
 from mv3 import read_mv3
 
 root = Path('recovery/output/verified/assets/data/Data')
-converted = Path('recovery/output/web-assets/Data')
+converted = Path('apps/web/public/Data')
 fixtures = ['role/001/01M.MV3', 'role/001/04X.MV3', 'role/001/c14m.MV3', 'Pet/001/n1.MV3']
 for relative in fixtures:
     model = read_mv3(root / relative)

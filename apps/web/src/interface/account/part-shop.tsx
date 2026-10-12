@@ -1,11 +1,8 @@
-import {gameContent} from '../../../../shared/content/catalog';
+import {GameMessage, showGameMessage} from '../resources/game-message';
 import {loadCombatCatalog} from '../../content';
 import type {ReqPartSale, ResPartSale} from '../../../../shared/protocols/PtlPartSale';
 import {createRequestId} from '../../network/request-id';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
-import {SourceNotice} from '../dialogs/source-notice';
-import {SourceNoticeView} from '../dialogs/source-notice-view';
-import {createPortal} from 'react-dom';
 import {ShopPurchaseSource} from './shop-purchase-source';
 import {ShopItemDescriptionSource} from './shop-item-description-source';
 import './part-shop.css';
@@ -29,8 +26,7 @@ const inCategory = (id: number, category: PartShopCategory) => {
   return category === 'Common' ? type >= 8 && type <= 12 : type === (category === 'Hat' ? 5 : 7);
 };
 const hasCategoryCatalog = (items: readonly {itemTableId: number}[], category: PartShopCategory) =>
-  [...gameContent().items.values()].filter(item => item.shop.available && item.shop.group === 'part'
-    && inCategory(item.id, category)).every(item => items.some(row => row.itemTableId === item.id));
+  items.some(item => inCategory(item.itemTableId, category));
 const hasMarkCatalog = (items: readonly {itemTableId: number}[]) => hasCategoryCatalog(items, 'Mark');
 const hasHatCatalog = (items: readonly {itemTableId: number}[]) => hasCategoryCatalog(items, 'Hat');
 const categoryForItem = (id: number): PartShopCategory => {
@@ -64,17 +60,16 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
   const [saleConfirm, setSaleConfirm] = useState(false);
   const [buyConfirm, setBuyConfirm] = useState(false);
   const [description, setDescription] = useState<{id: number; left: number; top: number}>();
-  const [notice] = useState(() => new SourceNotice());
   const generation = useRef(0);
   const [catalog, setCatalog] = useState<CombatCatalog>();
   const initialSelected = owner.pending?.itemTableId ?? owner.selected;
   const [selected, setSelected] = useState(initialSelected);
   const [ownedSelected, setOwnedSelected] = useState<number>();
-  const [category, setCategory] = useState<PartShopCategory>(() => initialSelected === undefined ? 'Common' : categoryForItem(initialSelected));
+  const [category, setCategory] = useState<PartShopCategory>(() => initialSelected === undefined ? 'Hat' : categoryForItem(initialSelected));
   const [ownedCategory, setOwnedCategory] = useState<PartShopCategory>('Common');
   const [currency, setCurrency] = useState<ShopCurrency>(owner.pending?.currency ?? 'MONEY');
   const [busy, setBusy] = useState(true);
-  const [status, setStatus] = useState('载入部件商品与库存…');
+  const [status, setStatus] = useState('');
   const focusAfterCommit = useRef<HTMLButtonElement | null>(null);
   const categoryRef = useRef(category);
   categoryRef.current = category;
@@ -90,7 +85,6 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
       : moneyPrice !== undefined ? 'MONEY' : tokenPrice !== undefined ? 'TOKENS' : undefined;
   const unitPrice = effectiveCurrency === 'MONEY' ? moneyPrice : effectiveCurrency === 'TOKENS' ? tokenPrice : undefined;
   const owned = inventory?.records.filter(item => inCategory(item.itemTableId, ownedCategory)) ?? [];
-  useEffect(() => () => notice.clear(), [notice]);
   useEffect(() => {onBusy(busy);}, [busy, onBusy]);
   useEffect(() => {
     if (effectiveCurrency && effectiveCurrency !== currency) setCurrency(effectiveCurrency);
@@ -112,22 +106,22 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
         setConfirmed(saleResult?.money === undefined ? shop : {...shop, money: saleResult.money});
         setInventory(items); setSale(saleResult); setCatalog(definitions);
         if (saleResult?.money !== undefined) onMoney?.(saleResult.money);
-        const hatCatalogComplete = hasHatCatalog(shop.items);
-        const markCatalogComplete = hasMarkCatalog(shop.items);
-        const nextCategory = categoryRef.current === 'Hat' && !hatCatalogComplete ? 'Common'
-          : categoryRef.current === 'Mark' && !markCatalogComplete ? 'Common' : categoryRef.current;
+        const hatCatalogAvailable = hasHatCatalog(shop.items);
+        const markCatalogAvailable = hasMarkCatalog(shop.items);
+        const nextCategory = categoryRef.current === 'Hat' && !hatCatalogAvailable ? 'Common'
+          : categoryRef.current === 'Mark' && !markCatalogAvailable ? 'Common' : categoryRef.current;
         categoryRef.current = nextCategory; setCategory(nextCategory);
         setSelected(value => {const id = shop.items.some(item => item.itemTableId === value
           && inCategory(item.itemTableId, nextCategory)) ? value
           : shop.items.find(item => inCategory(item.itemTableId, nextCategory))?.itemTableId;
         owner.selected = id; return id;});
-        setStatus(owner.inFlight ? '等待购买确认…' : owner.pending ? '购买未确认，可重试原请求。' : '购买部件后可前往装备。');
-      } catch (error) {if (current.active) void notice.show(error instanceof Error ? error.message : '部件资料载入失败');}
+        setStatus(owner.pending && !owner.inFlight ? '购买未确认，可重试原请求。' : '');
+      } catch (error) {if (current.active) showGameMessage(error instanceof Error ? error.message : '部件资料载入失败');}
       finally {current.query = false; if (current.active) {setBusy(Boolean(owner.inFlight || owner.saleInFlight)); if (queued) {queued = false; void refresh();}}}
     }
     owner.session = {identity: current.identity, refresh: () => {void refresh();}}; void refresh();
     return () => {generation.current++; current.active = false; if (owner.session?.identity === current.identity) owner.session = undefined;};
-  }, [source, owner, notice]);
+  }, [source, owner]);
   useLayoutEffect(() => {
     const target = focusAfterCommit.current;
     if (busy || !target) return; focusAfterCommit.current = null;
@@ -159,7 +153,7 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
       owner.pending = {operation: 'BUY', itemTableId: product.itemTableId, quantity: 1,
         currency: effectiveCurrency, requestId: createRequestId()};
     }
-    setBusy(true); setStatus('等待购买确认…');
+    setBusy(true); setStatus('');
     const request = source.shop(owner.pending); owner.inFlight = request;
     try {
       const result = await request; owner.pending = undefined;
@@ -169,11 +163,11 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
         const items = saleResult?.inventory ?? await source.inventory?.();
         if (current.active) {setInventory(items); setSale(saleResult);
           if (saleResult?.money !== undefined) {setConfirmed(value => value && {...value, money: saleResult.money!}); onMoney?.(saleResult.money);} setOwnedSelected(result.purchased?.instanceId);
-          void notice.show(`已购买${product.name}。`);}
+          showGameMessage(`已购买${product.name}。`, 'success');}
       }
     } catch (error) {if (current.active) {
       const message = error instanceof Error ? error.message : '购买未确认，请重试';
-      if (owner.pending) setStatus(message); else void notice.show(`购买已完成，库存载入失败：${message}`);
+      if (owner.pending) setStatus(message); else showGameMessage(`购买已完成，库存载入失败：${message}`);
     }}
     finally {owner.inFlight = undefined; if (current.active) setBusy(current.query); else owner.session?.refresh();}
   }
@@ -196,7 +190,7 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
   async function sell() {
     const current = session.current, ticket = generation.current;
     if (!current.active || owner.saleInFlight || !owner.salePending || !source.partSale) return;
-    setBusy(true); setStatus('等待出售确认…');
+    setBusy(true); setStatus('');
     const inFlight = source.partSale(owner.salePending); owner.saleInFlight = inFlight;
     try {
       const result = await inFlight;
@@ -210,7 +204,7 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
       focusAfterCommit.current = document.querySelector<HTMLButtonElement>(`[data-part-owned-instance]:not([data-part-owned-instance="${result.sold.instanceId}"])`)
         ?? document.querySelector<HTMLButtonElement>(`[data-part-owned-category="${ownedCategory}"]`);
       setSaleConfirm(false); setStatus('');
-      void notice.show(`已出售零件，收入${result.sold.price}金币。`);
+      showGameMessage(`已出售零件，收入${result.sold.price}金币。`, 'success');
     } catch (error) {
       if (current.active && generation.current === ticket) setStatus(error instanceof Error ? error.message : '出售未确认，请重试原请求');
     } finally {
@@ -219,7 +213,7 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
     }
   }
   return <>
-    <PartShopSourcePage ui={ui} money={confirmed?.money} tokens={confirmed?.tokens} quantity={inventory ? owned.length : undefined}
+    <PartShopSourcePage ui={ui} money={confirmed?.money} tokens={confirmed?.tokens}
       category={category} ownedCategory={ownedCategory} busy={busy} hatAvailable={hatAvailable} markAvailable={markAvailable} selectCategory={selectProductCategory}
       selectOwned={value => {generation.current++; setSaleConfirm(false); setOwnedCategory(value); setOwnedSelected(undefined);}} />
     <PartShopSourceList ui={ui} source="lstShopEquip" selected={selected} busy={busy}
@@ -247,7 +241,7 @@ export function PartShopView({ui, source, owner, onBusy, onMoney}: {
       message="你确定出售该零件吗？" pending={busy}
       disabled={!sale?.quotes.some(quote => quote.instanceId === owner.salePending?.instanceId && quote.canSell)}
       status={status} confirm={() => {void sell();}} cancel={() => setSaleConfirm(false)} />}
-    <output hidden data-part-status="">{status}</output>
-    {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
+    <GameMessage data-part-status="" text={status} tone={busy ? 'pending' : 'info'}/>
+
   </>;
 }

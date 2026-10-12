@@ -1,8 +1,12 @@
 import './waiting-chat-source.css';
 import {useEffect, useRef, useState, type ReactNode, type RefObject} from 'react';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
-import {SourceButton} from '../resources/source-button';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
+import {SourceImageScale} from '../resources/source-static-image';
+import {GameButton} from '../resources/game-button';
+import {GameInsetCard} from '../resources/game-inset-card';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
+import {GameSurfacePanel} from '../resources/game-surface-panel';
+import {ChatEmoteButton} from '../resources/chat-emote-button';
 import {sourceProps} from '../resources/source-ui-props';
 import {emoteGlyph} from './chat-emote-text';
 import {SourceChatIntimate, type RoomIntimatePlayer} from './source-chat-intimate';
@@ -23,6 +27,7 @@ export function WaitingChatSourceView({ui, scale, channel, pending, composing, i
   const channels = new HomeSourceLayout(ui, 'chat_channellist.xml');
   const emotes = new HomeSourceLayout(ui, 'chat_emotelist.xml');
   const toggleName = ['btnPublicChannel', 'btnTeamChannel', 'btnPrivateChannel', 'btnFriendChannel', 'btnGMChannel', 'btnFamilyChannel'][channel];
+  const channelLabel = ['房间', '队伍', '密语', '好友', 'GM', '家族'][channel];
   useEffect(() => {
     const outside = (event: PointerEvent) => {
       if (event.target instanceof Element && !event.target.closest('[data-waiting-chat-channel-menu], [data-waiting-chat-emote-menu], [data-waiting-chat-toggle], [data-waiting-chat-emotes], [data-room-intimate-menu], [data-room-intimate-toggle]')) setMenu(undefined);
@@ -61,39 +66,49 @@ export function WaitingChatSourceView({ui, scale, channel, pending, composing, i
       }
     }} onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}>
     <SourceImageScale value={scale}>
-      {['SheetWindow', 'lt', 'liaotiankuangditu', 'paomadengditu',
-        ...(channel === 2 ? ['picIntimateChat', 'tiao'] : ['picNormalChat'])].map(name =>
-        <SourceStaticImage key={name} ui={ui} layout={layout} suffix="chat.xml" name={name} offsetY={-402}
-          className="waiting-chat-picture" aria-hidden="true" />)}
+      <div {...sourceProps(ui, layout, 'chat.xml', 'lt', undefined, 0, -402)}
+        className="waiting-chat-surface" aria-hidden="true"/>
+      <div {...sourceProps(ui, layout, 'chat.xml', 'paomadengditu', undefined, 0, -402)}
+        className="waiting-chat-announcement" aria-hidden="true"/>
+      <GameSurfacePanel shape="chat-input" className="waiting-chat-input-panel"
+        style={{left: 0, top: 160, width: 615, height: 38}} aria-hidden="true"/>
       {children}
-      <SourceButton ui={ui} layout={layout} suffix="chat.xml" source={toggleName} offsetY={-402}
+      <GameButton {...sourceProps(ui, layout, 'chat.xml', toggleName, undefined, 0, -402)}
+        tone="red" shape="chat" className="waiting-chat-channel-button"
+        style={{...sourceProps(ui, layout, 'chat.xml', toggleName, undefined, 0, -402).style, left: 4}}
         data-waiting-chat-toggle="" aria-label="房间聊天频道" aria-haspopup="menu" aria-expanded={menu === 'channel'}
-        disabled={pending} onClick={() => toggle('channel')} />
-      <SourceButton ui={ui} layout={layout} suffix="chat.xml" source="btnExpandEmotion" offsetY={-402}
+        disabled={pending} aria-busy={pending || undefined} onClick={() => toggle('channel')}>{channelLabel}</GameButton>
+      <ChatEmoteButton {...sourceProps(ui, layout, 'chat.xml', 'btnExpandEmotion', undefined, 0, -402)}
         aria-label="插入表情" data-waiting-chat-emotes="" aria-haspopup="menu" aria-expanded={menu === 'emote'}
         disabled={pending} onClick={() => toggle('emote')} />
-      {channel === 2 && <SourceButton ui={ui} layout={layout} suffix="chat.xml" source="btnExpandIntimate" offsetY={-402}
+      {channel === 2 && <GameButton {...sourceProps(ui, layout, 'chat.xml', 'btnExpandIntimate', undefined, 0, -402)}
+        tone="orange" shape="next"
         data-room-intimate-toggle="" aria-label="选择密语对象" aria-haspopup="listbox" aria-expanded={menu === 'intimate'}
         disabled={pending} onClick={() => toggle('intimate')} />}
       {channel === 2 && menu === 'intimate' && <SourceChatIntimate ui={ui} waiting players={players}
         selectedName={selectedName} pending={pending} composing={composing}
         choose={name => {chooseTarget(name); setMenu(undefined);}} />}
       {menu === 'channel' && <div className="waiting-chat-channel-menu" data-waiting-chat-channel-menu="" role="menu">
-        {['all', 'biaoqingfuhaokuang'].map(name => <SourceStaticImage key={name} ui={ui} layout={channels}
-          suffix="chat_channellist.xml" name={name} className="waiting-chat-picture" aria-hidden="true" />)}
+        <GameInsetCard shape="options" tone="peach" insetShadow className="waiting-chat-menu-surface"
+          style={{left: 6, top: 27, width: 48, height: 145}} aria-hidden="true"/>
         {([['rdoPublic', '房间', 0], ['rdoTeam', '队伍', 1], ['rdoFriend', '好友', 3],
           ['rdoPrivate', '密语', 2], ['rdoGM', '联系GM', 4]] as const).map(([name, label, value]) =>
-          <SourceButton key={name} ui={ui} layout={channels} suffix="chat_channellist.xml" source={name}
-            role="menuitemradio" aria-label={label} selected={channel === value} aria-checked={channel === value}
+          <button key={name} type="button" {...sourceProps(ui, channels, 'chat_channellist.xml', name)}
+            className="waiting-chat-channel-option"
+            role="menuitemradio" aria-label={label} aria-checked={channel === value}
             data-waiting-chat-channel={value} disabled={pending}
-            onClick={() => {releaseKeys(); changeChannel(value); setMenu(undefined); input.current?.focus();}} />)}
-        <button type="button" className="waiting-chat-family-option" role="menuitemradio"
+            onClick={() => {releaseKeys(); changeChannel(value); setMenu(undefined); input.current?.focus();}}>
+            {channel === value && <GameSelectionHighlight/>}<span>{value === 4 ? 'GM' : label}</span>
+          </button>)}
+        <button type="button" className="waiting-chat-channel-option waiting-chat-family-option" role="menuitemradio"
           aria-label="家族" aria-checked={channel === 5} data-waiting-chat-channel="5" disabled={pending}
-          onClick={() => {releaseKeys(); changeChannel(5); setMenu(undefined); input.current?.focus();}}>家族</button>
+          onClick={() => {releaseKeys(); changeChannel(5); setMenu(undefined); input.current?.focus();}}>
+          {channel === 5 && <GameSelectionHighlight/>}<span>家族</span>
+        </button>
       </div>}
       {menu === 'emote' && <div className="waiting-chat-emote-menu" data-waiting-chat-emote-menu="" role="menu">
-        {['all', 'biaoqingfuhaokuang'].map(name => <SourceStaticImage key={name} ui={ui} layout={emotes}
-          suffix="chat_emotelist.xml" name={name} className="waiting-chat-picture" aria-hidden="true" />)}
+        <GameInsetCard {...sourceProps(ui, emotes, 'chat_emotelist.xml', 'biaoqingfuhaokuang')}
+          shape="keyboard" tone="peach" insetShadow className="waiting-chat-menu-surface" aria-hidden="true"/>
         {Array.from({length: 30}, (_, index) => index + 1).map(id => {
           const name = String(id).padStart(3, '0');
           return <button type="button" key={id} {...sourceProps(ui, emotes, 'chat_emotelist.xml', name, emotes.control(name).properties.Image)}

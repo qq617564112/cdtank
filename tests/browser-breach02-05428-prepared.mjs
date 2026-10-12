@@ -74,7 +74,7 @@ try {
   for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{log+=String(d);});
   const deadline=Date.now()+15000;while(!log.includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));
   assert(log.includes('Server started'),log);
-  vite=await createServer({configFile:false,root:'apps/web',cacheDir:join(directory,'vite-cache'),publicDir:'../../recovery/output/web-assets',server:{port:5616,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3586',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,root:'apps/web',cacheDir:join(directory,'vite-cache'),publicDir:'../../apps/web/public',server:{port:5616,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3586',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required','--remote-debugging-port=9816',
@@ -185,7 +185,7 @@ ws.on('message', raw => {
   await new Promise(r=>setTimeout(r,4500));
   evidence.observed=await Promise.all(pages.map(p=>evaluate(p.sessionId,'window.breach')));
   evidence.finalWorld=await Promise.all(pages.map(p=>world(p.sessionId)));
-  const resource=JSON.parse(await readFile('recovery/output/web-assets/scene-breach-0014.json','utf8')).resources.find(r=>r.reference==='Data/scnobj/obj05428/c9.CVD');
+  const resource=JSON.parse(await readFile('apps/web/public/scene-breach-0014.json','utf8')).resources.find(r=>r.reference==='Data/scnobj/obj05428/c9.CVD');
   const sourceNodes=resource.nodes.flatMap((n,i)=>n.parts.length?[i]:[]);
   evidence.sourceGeometryNodes=sourceNodes;
   const failures=[];

@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createRequestId} from '../../network/request-id';
 import {createPortal} from 'react-dom';
@@ -6,7 +7,6 @@ import type {ShopSource} from './shop';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {SourceButton} from '../resources/source-button';
-import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import './stack-item-sale-source.css';
 
@@ -96,7 +96,7 @@ export function StackItemSaleSource({ui, source, instanceId, activation, refresh
     {saleInstance !== undefined && <InventorySaleQuantityDialog ui={ui} quantity={quantity} change={setQuantity}
       busy={busy} disabled={disabled || !valid} status={status} confirm={() => void sell()}
       cancel={() => {if (!locked.current) setSaleInstance(undefined);}}/>}
-    {!onError && saleInstance === undefined && status && <output role="status" data-stack-sale-status=""><SourceFeedbackText text={status}/></output>}
+    {!onError && saleInstance === undefined && <GameMessage data-stack-sale-status="" text={status} tone="error"/>}
   </>;
 }
 
@@ -135,7 +135,7 @@ export function InventorySaleQuantityDialog({ui, quantity, change, busy, disable
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnCancel" aria-label="取消出售"
           {...{[cancelAttribute]: ''}} disabled={busy} onClick={cancel}/>
       </SourceImageScale>
-      {status && <output className="stack-sale-status" role="status"><SourceFeedbackText text={status}/></output>}
+      <GameMessage text={status} tone={busy ? 'pending' : 'error'}/>
     </div>
   </dialog>, document.body);
 }

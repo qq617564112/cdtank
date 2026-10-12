@@ -1,4 +1,4 @@
-import {mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import {copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {CollisionMesh, type SerializedCollisionMesh} from '../apps/shared/movement/collision-mesh';
@@ -7,7 +7,7 @@ import {navigationOccupancy} from '../apps/shared/movement/navigation-collision'
 import {castleResourceFile} from '../apps/shared/maps/castle-resources';
 import {plantSwayDisplacement, plantSwayParameter} from '../apps/shared/movement/scene-animation-clock';
 import {loadCvdTriangles, loadGlbTriangles, placedCollisionMesh, sampleGlbTriangles} from '../apps/server/src/render-collision-assets';
-import {webAssetPath} from '../apps/server/src/runtime/content-paths';
+import {serverAssetPath, webAssetPath} from '../apps/server/src/runtime/content-paths';
 
 interface SourcePlacement {
   id: string;
@@ -40,9 +40,13 @@ interface CastleResource {
 }
 
 const workspace = fileURLToPath(new URL('../', import.meta.url));
-const webAssets = resolve(process.env.WEB_ASSETS ?? resolve(workspace, 'recovery/output/web-assets'));
+const serverAssets = resolve(process.env.SERVER_ASSETS ?? resolve(workspace, 'apps/server/resources/assets'));
 const output = resolve(process.env.SCENE_COLLISION_ASSETS ??
-  resolve(webAssets, 'scene-collision'));
+  resolve(serverAssets, 'scene-collision'));
+mkdirSync(serverAssets, {recursive: true});
+for (const filename of ['scene-placements.json', 'battlefields.json']) {
+  copyFileSync(webAssetPath(filename), serverAssetPath(filename));
+}
 const scenes = JSON.parse(readFileSync(webAssetPath('scene-placements.json'), 'utf8')) as SourceScene[];
 const fields = new Map((JSON.parse(readFileSync(webAssetPath('battlefields.json'), 'utf8')) as SourceField[])
   .map(field => [Number(field.id), field] as const));

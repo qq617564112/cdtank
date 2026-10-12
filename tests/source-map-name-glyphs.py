@@ -3,13 +3,13 @@ import json
 from pathlib import Path
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
-current=json.loads((ROOT/'recovery/output/web-assets/ui-font-raster.json').read_text())
+current=json.loads((ROOT/'apps/web/public/ui-font-raster.json').read_text())
 previous=json.loads((ROOT/'recovery/output/waiting-room-font-450-raster.json').read_text())
-names=[dict(mode=mode,mapId=int(row['values']['MapID']),name=row['values']['MapName']) for mode in range(1,6) for row in json.loads((ROOT/f'recovery/output/verified/tables/m00{mode}.json').read_text())['rows']]
+names=[dict(mode=mode,mapId=int(row['values']['MapID']),name=row['values']['MapName']) for mode in range(1,6) for row in json.loads((ROOT/f'apps/server/resources/tables/m00{mode}.json').read_text())['rows']]
 checks=[]
 for face in current['faces']:
  glyphs={g['codepoint']:g for g in face['glyphs']};assert len(glyphs)==454
- image=Image.open(ROOT/'recovery/output/web-assets'/face['atlas']['asset']).convert('RGBA')
+ image=Image.open(ROOT/'apps/web/public'/face['atlas']['asset']).convert('RGBA')
  assert image.size==(face['atlas']['width'],face['atlas']['height'])
  assert set(image.getchannel('A').get_flattened_data())=={0,255}
  assert all(pixel[:3]==(255,255,255) for pixel in image.get_flattened_data())

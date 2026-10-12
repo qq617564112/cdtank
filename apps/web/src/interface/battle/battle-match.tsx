@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import {useSyncExternalStore} from 'react';
 import './match.css';
 import type {MsgRoomSnapshot, ResultPlayer} from '../../../../shared/protocols';
@@ -8,7 +9,7 @@ import {BattlePlayPage} from './battle-play-page';
 import {BattleSummaryPage} from './battle-summary-page';
 import {BattleLoadingPage} from './battle-loading-page';
 import {BattleEndPage} from './battle-end-page';
-import type {WaitingRoomActions} from '../lobby/waiting-room';
+import type {WaitingRoomActions, WaitingRoomViewProps} from '../lobby/waiting-room';
 import type {RoomEditor} from '../lobby/room-edit-dialog';
 
 interface MatchPlayer {
@@ -84,16 +85,16 @@ export class BattleMatch {
   readonly getSnapshot = (): MatchViewState | undefined => this.state;
 
   readonly waitingActions: WaitingRoomActions = {
-    ready: isReady => this.request(() => this.ready(isReady), '正在提交准备状态…'),
-    team: team => this.request(() => this.changeTeam(team), '正在换队…'),
+    ready: isReady => this.request(() => this.ready(isReady)),
+    team: team => this.request(() => this.changeTeam(team)),
     leave: () => this.request(async () => {
       if (!this.leave) throw new Error('退出入口不可用');
       await this.leave(0);
-    }, '正在退出房间…'),
+    }),
     invite: () => this.request(async () => {
       if (!this.invite) throw new Error('邀请入口不可用');
       return this.invite();
-    }, '正在发送邀请…'),
+    }),
   };
 
   constructor(private readonly returnToRoom: () => Promise<void>,
@@ -109,10 +110,11 @@ export class BattleMatch {
               private readonly kick?: (playerId: string) => Promise<void>,
               readonly summarySoundVolume?: () => number | undefined,
               private readonly discard?: BattleDiscard,
-              private readonly quote?: () => Promise<LeavePenalty>) {
+              private readonly quote?: () => Promise<LeavePenalty>,
+              readonly queryPlayerProfile?: WaitingRoomViewProps['queryPlayerProfile']) {
     if (editor) this.roomEditor = {
       listMaps: () => editor.listMaps(),
-      save: settings => this.request(() => editor.save(settings), '正在保存房间…'),
+      save: settings => this.request(() => editor.save(settings)),
     };
   }
 
@@ -122,14 +124,14 @@ export class BattleMatch {
     return this.request(async () => {
       if (!this.configureCpu) throw new Error('CPU配置入口不可用');
       await this.configureCpu(playerId, loadout);
-    }, '正在确认CPU配给…');
+    });
   }
   get supportsAutopilot(): boolean {return !!this.autopilot;}
   get supportsDiscard(): boolean {return !!this.discard;}
 
   discardSelected(): void {
     if (!this.discard) return;
-    this.run(() => this.request(() => this.discard!.discard(), '正在请求丢弃…'));
+    this.run(() => this.request(() => this.discard!.discard()));
   }
 
   setDiscardSelection(instanceId: number | undefined): void {
@@ -146,14 +148,14 @@ export class BattleMatch {
   requestTeam(team: number): void {this.run(() => this.waitingActions.team(team));}
 
   requestCpu(operation: 'ADD' | 'REMOVE', playerId?: string): void {
-    if (this.cpu) this.run(() => this.request(() => this.cpu!(operation, playerId), '正在更新CPU…'));
+    if (this.cpu) this.run(() => this.request(() => this.cpu!(operation, playerId)));
   }
 
   addRobot(team?: number): Promise<void> {
     return this.request(async () => {
       if (!this.cpu) throw new Error('机器人添加入口不可用');
       await this.cpu('ADD', undefined, team);
-    }, '正在新增机器人…');
+    });
   }
 
   get supportsKick(): boolean {return !!this.kick;}
@@ -162,17 +164,17 @@ export class BattleMatch {
     return this.request(async () => {
       if (!this.kick) throw new Error('踢出入口不可用');
       await this.kick(playerId);
-    }, '正在踢出成员…');
+    });
   }
 
   requestAutopilot(): void {
     if (this.autopilot && this.state) {
       const enabled = !this.state.isAutopilot;
-      this.run(() => this.request(() => this.autopilot!(enabled), '正在切换AI托管…'));
+      this.run(() => this.request(() => this.autopilot!(enabled)));
     }
   }
 
-  requestReturnToRoom(): void {this.run(() => this.request(this.returnToRoom, '正在返回原房间…'));}
+  requestReturnToRoom(): void {this.run(() => this.request(this.returnToRoom));}
 
   quoteExitPenalty(): Promise<LeavePenalty> {
     const state = this.state;
@@ -197,7 +199,7 @@ export class BattleMatch {
     return this.request(async () => {
       if (!this.leave) throw new Error('退出入口不可用');
       await this.leave(confirmedPenaltyPoints ?? 0);
-    }, '正在退出房间…');
+    });
   }
 
   matchesExitQuote(roomId: string, round: number, points: number): boolean {
@@ -360,11 +362,11 @@ export class BattleMatch {
       discardSelection: this.discard?.selected()});
   }
 
-  private async request<T>(action: () => Promise<T>, status: string): Promise<T> {
+  private async request<T>(action: () => Promise<T>): Promise<T> {
     if (this.pending) throw new Error('请等待上一请求完成');
     const generation = this.generation;
     this.pending = true;
-    this.requestStatus = status;
+    this.requestStatus = '';
     this.refreshRequest();
     try {
       const value = await action();
@@ -440,6 +442,7 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
     data-round={state.round} data-formal-waiting-page="" aria-label="等待房间">
     {state.waiting && <WaitingRoomView formal key={`${state.waiting.roomId}:${state.round}`} snapshot={state.waiting}
       playerId={state.playerId} externalBusy={state.pending} readyAvailable={state.readyAvailable} actions={panel.waitingActions}
+      queryPlayerProfile={panel.queryPlayerProfile}
       roomEditor={state.canManageCpu ? panel.roomEditor : undefined}
       kickPlayer={panel.supportsKick && state.canManageCpu ? playerId => panel.kickPlayer(playerId) : undefined}
       addRobot={panel.supportsCpu && state.canManageCpu ? team => panel.addRobot(team) : undefined}/>} 
@@ -453,6 +456,7 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
     data-phase={state.phase} data-round={state.round} aria-label="对局目标与结算">
     {state.waiting && <WaitingRoomView key={`${state.waiting.roomId}:${state.round}`} snapshot={state.waiting}
       playerId={state.playerId} externalBusy={state.pending} readyAvailable={state.readyAvailable} actions={panel.waitingActions}
+      queryPlayerProfile={panel.queryPlayerProfile}
       roomEditor={state.canManageCpu ? panel.roomEditor : undefined}
       kickPlayer={panel.supportsKick && state.canManageCpu ? playerId => panel.kickPlayer(playerId) : undefined}
       addRobot={panel.supportsCpu && state.canManageCpu ? team => panel.addRobot(team) : undefined} />}
@@ -487,6 +491,6 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
     </table></div>}
     {finished && <button type="button" data-summary-continue="" disabled={state.pending || !state.hasLocalPlayer}
       onClick={() => panel.requestReturnToRoom()}>继续，返回原房间</button>}
-    <p role="status">{state.status}</p>
+    <GameMessage text={state.status} tone={state.pending ? 'pending' : 'info'}/>
   </section>;
 }

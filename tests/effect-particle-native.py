@@ -12,7 +12,7 @@ from unicorn.x86_const import (UC_X86_REG_ECX, UC_X86_REG_ESP, UC_X86_REG_EIP,
 ROOT = Path(__file__).resolve().parents[1]
 exe = ROOT / 'CDTank/CDTank.exe'
 pe = pefile.PE(str(exe))
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 machine, images = map_original_binaries([exe, ROOT / 'CDTank/gbengine.dll', ROOT / 'CDTank/msvcr71.dll'])
 machine.mem_map(0x2000000, 0x20000)
@@ -59,7 +59,7 @@ def unpack_state(raw):
 
 
 machine.hook_add(UC_HOOK_CODE, hook)
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 rows = []
 for control in library['particleControls']:
     source = library['nodes'][control['node']]['modifiers'][control['modifier']]

@@ -6,7 +6,7 @@ import sys
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP, UC_X86_REG_FPCW
 ROOT=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'recovery'))
+sys.path.insert(0,str(ROOT/'tools/recovery'))
 from effect_native import map_original_binaries
 from cvd import read_cvd
 machine,_=map_original_binaries([ROOT/'CDTank'/name for name in ['CDTank.exe','gbengine.dll','msvcr71.dll']])
@@ -57,4 +57,4 @@ for time in times:
 print(f'PASS: {len(rows)} complete animated mesh frame draws / {count*len(rows)} original vertices')
 
 browser=dict(animation=animation,geometry=dict(times=node['times'],frames=node['frames'],indices=[i for face in node['parts'][0]['faces'] for i in face],rows=rows))
-(ROOT/'recovery/output/web-assets/effect-model-browser-native.json').write_text(json.dumps(browser)+'\n')
+(ROOT/'apps/web/public/effect-model-browser-native.json').write_text(json.dumps(browser)+'\n')

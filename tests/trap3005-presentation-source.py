@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from inspect_assets import read_table
 from pol import read_pol
 
@@ -22,11 +22,11 @@ meshes = [dict(name=mesh['name'], bounds=list(mesh['bounds']),
 assert meshes[0]['textureReferences'] == ['03005A.tga']
 texture_path = model_path.parent / '03005A.dds'
 assert texture_path.is_file()
-published = next(row for row in json.loads((ROOT / 'recovery/output/web-assets/pol-conversion.json').read_text())
+published = next(row for row in json.loads((ROOT / 'apps/web/public/pol-conversion.json').read_text())
                  if row['path'] == 'Data/scnobj/03005/03005.POL')
 assert published['missingTextures'] == []
-assert (ROOT / 'recovery/output/web-assets' / published['output']).is_file()
-assert (ROOT / 'recovery/output/web-assets/Data/scnobj/03005/03005A.png').is_file()
+assert (ROOT / 'apps/web/public' / published['output']).is_file()
+assert (ROOT / 'apps/web/public/Data/scnobj/03005/03005A.png').is_file()
 assert len(meshes) == 1 and meshes[0]['vertices'] == 36 and meshes[0]['triangles'] == 44
 output = dict(status='PASS_ORIGINAL3005_DATA_AND_MODEL_ONLY',
               item={key: item[key] for key in ['ItemTableID', 'ItemName', 'D3', 'ItemType', 'ItemSkill1']},

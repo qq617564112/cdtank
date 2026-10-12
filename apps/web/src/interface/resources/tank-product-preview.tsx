@@ -41,7 +41,7 @@ export function TankProductPreview({tankId, textures, scale, ...props}: ProductP
       const scene = new Scene(engine);
       scene.clearColor = new Color4(0, 0, 0, 0);
       scene.ambientColor = Color3.White();
-      const camera = new ArcRotateCamera('shop-product-camera', -Math.PI / 2.5,
+      const camera = new ArcRotateCamera('shop-product-camera', Math.PI / 2.5,
         Math.PI / 3, 100, Vector3.Zero(), scene);
       camera.minZ = 10; camera.maxZ = 5000;
       camera.attachControl(surface, true);
@@ -62,7 +62,7 @@ export function TankProductPreview({tankId, textures, scale, ...props}: ProductP
       const mounted: PreviewRuntime = {active: true, engine, scene, camera, resize};
       let frames = 0;
       engine.runRenderLoop(() => {
-        if (!dragging) camera.alpha += .0075;
+        if (mounted.view && !dragging) camera.alpha += .0075;
         element.dataset.orbitYaw = String(camera.alpha);
         element.dataset.orbitPitch = String(camera.beta);
         scene.render();
@@ -117,6 +117,8 @@ export function TankProductPreview({tankId, textures, scale, ...props}: ProductP
       }
       current.camera.target = min.add(max).scale(0.5);
       current.camera.radius = Math.max(max.subtract(min).length(), 1) * 1.4;
+      current.camera.alpha = Math.PI / 2.5;
+      current.camera.beta = Math.PI / 3;
       element.dataset.status = 'ready'; element.dataset.meshes = String(meshes.length);
       setMessage('');
     }).catch(error => {

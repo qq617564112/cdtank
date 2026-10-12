@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {existsSync, readFileSync} from 'node:fs';
-const root = 'recovery/output/web-assets/';
+const root = 'apps/web/public/';
 const tanks = JSON.parse(readFileSync(root + 'tanks.json', 'utf8'));
 const links = JSON.parse(readFileSync(root + 'effect-links.json', 'utf8'));
 const library = JSON.parse(readFileSync(root + 'effect-library.json', 'utf8'));

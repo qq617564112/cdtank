@@ -1,10 +1,11 @@
+import {GameMessage} from '../resources/game-message';
 import './home-name-source-dialog.css';
 import {createPortal} from 'react-dom';
 import {useEffect, useRef, useState} from 'react';
 import type {Battle} from '../../match/battle';
 import {SourceButton} from '../resources/source-button';
 import {SourceStaticImage, SourceImageScale} from '../resources/source-static-image';
-import {SourceStaticText} from '../resources/source-static-text';
+import {HomeStaticText as SourceStaticText} from './home-text';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 
@@ -16,7 +17,7 @@ export function HomeNameSourceDialog({ui, battle, close, saved}: {
   const dialog = useRef<HTMLDialogElement>(null), input = useRef<HTMLInputElement>(null);
   const owner = useRef({active: false, pending: false}), composing = useRef(false);
   const escapePending = useRef(false);
-  const [draft, setDraft] = useState(''), [pending, setPending] = useState(true), [status, setStatus] = useState('载入昵称…');
+  const [draft, setDraft] = useState(''), [pending, setPending] = useState(true), [status, setStatus] = useState('');
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
   const layout = new HomeSourceLayout(ui, 'userinput_dialog.xml');
   useEffect(() => {
@@ -38,7 +39,7 @@ export function HomeNameSourceDialog({ui, battle, close, saved}: {
   async function confirm(){
     const current=owner.current;
     if(!current.active||current.pending||composing.current)return;
-    current.pending=true;setPending(true);setStatus('正在确认昵称…');
+    current.pending=true;setPending(true);setStatus('');
     try{
       const name=await battle.displayName(draft);
       void battle.lobbyPresence.refresh();
@@ -68,7 +69,7 @@ export function HomeNameSourceDialog({ui, battle, close, saved}: {
         <SourceButton ui={ui} layout={layout} suffix="userinput_dialog.xml" source="btnCancel" data-home-name-cancel=""
           aria-label="取消修改昵称" onClick={cancel}/>
       </form>
-      <output role="status" className="home-name-source-status" data-home-name-status="">{status}</output>
+      <GameMessage data-home-name-status="" text={status} tone={pending ? 'pending' : 'error'}/>
     </div></SourceImageScale>
   </dialog>, document.body);
 }

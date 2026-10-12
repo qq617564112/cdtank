@@ -45,15 +45,6 @@
   font-size: 12px;
   line-height: 18px;
 }
-.source-entry[data-entry-page='login'] .source-entry-input[type='password'] {
-  font-family: 'CDTank-Login-Password', 'CDTank-SIMSUN', serif;
-}
-
-@font-face {
-  font-family: 'CDTank-Login-Password';
-  src: url('/ui/fonts/SIMSUN-password.ttf') format('truetype');
-  font-display: swap;
-}
 .source-entry-input:is(:autofill, :-webkit-autofill) {
   background-clip: text;
   -webkit-text-fill-color: #fff;
@@ -66,14 +57,6 @@
 }
 .source-entry :is(button, .source-entry-checkbox):focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .source-entry :is(button, input):disabled { cursor: default; }
-.source-entry-status {
-  position: absolute;
-  left: 200px;
-  width: 390px;
-  text-align: center;
-}
-.source-entry-status-login { top: 525px; }
-.source-entry-status-channel { top: 559px; }
 .source-channel-list { position: absolute; overflow: auto; }
 .source-channel-list > button {
   position: relative;

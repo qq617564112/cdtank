@@ -3,7 +3,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {TankShotPlayerResult} from '../apps/web/src/assets/tanks/shot-player-result';
 import type {TankView} from '../apps/web/src/assets/tanks/tank-view';
 
-const catalog = JSON.parse(readFileSync('recovery/output/web-assets/combat-catalog.json', 'utf8'));
+const catalog = JSON.parse(readFileSync('apps/web/public/combat-catalog.json', 'utf8'));
 const victim = {tankId: 1} as TankView;
 const local = {tankId: 105} as TankView;
 const calls: unknown[][] = [];

@@ -68,7 +68,7 @@ try {
   for(const stream of [server.stdout,server.stderr])stream.on('data',d=>{log+=String(d);});
   const deadline=Date.now()+15000;while(!log.includes('Server started')&&Date.now()<deadline&&server.exitCode===null)await new Promise(r=>setTimeout(r,20));
   assert(log.includes('Server started'),log);
-  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5326,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3296',ws:true,rewrite:()=> '/'}}}});await vite.listen();
+  vite=await createServer({configFile:false,cacheDir:join(directory,'vite-cache'),root:'apps/web',publicDir:'../../apps/web/public',server:{port:5326,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3296',ws:true,rewrite:()=> '/'}}}});await vite.listen();
   chrome=spawn(process.env.CDTANK_CHROME??'/home/node/.cache/ms-playwright/chromium-1223/chrome-linux64/chrome',[
     '--headless=new','--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-renderer-backgrounding',
     '--use-angle=swiftshader','--enable-unsafe-swiftshader','--remote-debugging-port=9526',
@@ -122,7 +122,7 @@ ws.on('message', raw => {
   const snapshot=()=>Promise.all(pages.map(p=>evaluate(p.sessionId,'window.environmentState()')));
   for(const page of pages)await waitUntil(page.sessionId,`window.environmentState().count===1&&window.environmentState().voices.every(v=>!v.paused&&v.time>0)&&window.environmentState().context==='running'`);
   evidence.playing=await snapshot();
-  const source=JSON.parse(await readFile('recovery/output/web-assets/scene-environment-sound-0020.json','utf8'));
+  const source=JSON.parse(await readFile('apps/web/public/scene-environment-sound-0020.json','utf8'));
   for(const row of evidence.playing){assert(row.sharedContext);assert.equal(row.count,1);for(const v of row.voices){const placement=source.sounds.find(s=>s.id===v.id);assert.deepEqual(v.position,placement.position);assert(v.loop&&v.src.endsWith('/audio/sound/'+placement.name+'.wav'));}}
   const key=async(session,selector,value)=>{await nativeClick(session,selector);await command('Input.dispatchKeyEvent',{type:'keyDown',key:value,code:value,windowsVirtualKeyCode:value==='Home'?36:35},session);await command('Input.dispatchKeyEvent',{type:'keyUp',key:value,code:value,windowsVirtualKeyCode:value==='Home'?36:35},session);};
   evidence.navigation={...JSON.parse(await readFile('recovery/output/scene-environment-sound20-route.json','utf8')),samples:[]};

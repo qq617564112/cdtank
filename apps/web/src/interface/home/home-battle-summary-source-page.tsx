@@ -3,9 +3,7 @@ import {useEffect, useRef, useState} from 'react';
 import type {AccountHistorySource} from '../account/history';
 import type {MatchHistoryRecord} from '../../../../shared/protocols/PtlHistory';
 import type {AccountStatistics} from '../../../../shared/protocols/PtlRoleProfile';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-feedback-text';
-import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
+import type {HomeSourceUi} from '../resources/source-ui-layout';
 
 const SUFFIX = 'myhome_playerpage_battlesummary.xml';
 /** Source static-text controls in their original layout order, keyed by their business field. */
@@ -64,7 +62,7 @@ function fromTotals(totals: SavedTotals): DisplayValues {
  * Confirmed profile statistics drive the full source region; when the profile carries no
  * lifetime statistics the five win/loss fields fall back to the saved-history projection.
  */
-export function HomeBattleSummarySourcePage({ui, source, statistics, onError}: {
+export function HomeBattleSummarySourcePage({source, statistics, onError}: {
   ui: HomeSourceUi; source: AccountHistorySource; statistics?: AccountStatistics; onError(message: string): void;
 }) {
   const errorCallback = useRef(onError); errorCallback.current = onError;
@@ -110,16 +108,45 @@ export function HomeBattleSummarySourcePage({ui, source, statistics, onError}: {
       if (current.active) setPending(false);
     }
   }
-  const layout = new HomeSourceLayout(ui, SUFFIX);
   const queryFailed = status.startsWith('统计载入失败：');
   const values: DisplayValues = statistics ? fromStats(statistics) : totals ? fromTotals(totals) : {};
   return <section className="home-battle-summary-source" data-home-saved-summary="" aria-label="已保存对局统计" aria-busy={pending}>
-    <SourceStaticImage ui={ui} layout={layout} suffix={SUFFIX} name="xiamiandeditu" aria-hidden="true" />
-    <SourceImageScale value={1}>{FIELDS.map(({control, key}) => <SourceStaticText key={control} ui={ui} layout={layout}
-      suffix={SUFFIX} name={control} text={values[key] ?? ''}
-      data-summary-statistics={key} data-summary-statistics-value={values[key]}
-      data-saved-summary-field={FALLBACK.has(key) ? key : undefined}
-      data-saved-summary-value={FALLBACK.has(key) ? values[key] : undefined} />)}</SourceImageScale>
+    <HomeBattleStatistics values={values}/>
     <output hidden data-home-saved-summary-status="" data-summary-query-error={queryFailed || undefined}>{status}</output>
   </section>;
+}
+
+/** The same lifetime-statistics table serves the account and public player cards. */
+export function HomeBattleStatistics({statistics, values = statistics ? fromStats(statistics) : {}}: {
+  statistics?: AccountStatistics; values?: DisplayValues;
+}) {
+  const stat = (key: Field) => <span className="home-stat-value" data-source-control={FIELDS.find(field => field.key === key)!.control}
+    data-source-layout={`ui/layouts/${SUFFIX}`} data-summary-statistics={key} data-summary-statistics-value={values[key]}
+    data-saved-summary-field={FALLBACK.has(key) ? key : undefined}
+    data-saved-summary-value={FALLBACK.has(key) ? values[key] : undefined}>{values[key] ?? ''}</span>;
+  return <div className="home-battle-statistics-grid">
+    <div className="home-stat-card home-stat-results">
+      <div><span>获胜</span>{stat('wins')}</div>
+      <div><span>失败</span>{stat('losses')}</div>
+      <div><span>打和</span>{stat('draws')}</div>
+    </div>
+    <div className="home-stat-card home-stat-accuracy">
+      <div className="home-stat-fraction"><div><span>命中</span>{stat('hits')}</div>
+        <div><span>发射</span>{stat('shots')}</div></div>
+      <span className="home-stat-hit-rate">={stat('hitRate')}</span>
+      <div className="home-stat-combo"><span>连续击毁</span>{stat('killCombo')}</div>
+    </div>
+    <div className="home-stat-card home-stat-total"><span>总伤害值</span>{stat('damage')}</div>
+    <div className="home-stat-card home-stat-streaks">
+      <div><span>连胜</span>{stat('winStreak')}</div>
+      <div><span>连败</span>{stat('loseStreak')}</div>
+    </div>
+    <div className="home-stat-card home-stat-kills">
+      <div><span>击毁数</span>{stat('kills')}</div>
+      <div><span>被击毁</span>{stat('deaths')}</div>
+    </div>
+    <div className="home-stat-card home-stat-total"><span>总战斗时间</span>
+      <span className="home-stat-duration">{stat('totalDays')}天{stat('totalTime')}时</span>
+    </div>
+  </div>;
 }

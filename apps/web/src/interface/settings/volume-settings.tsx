@@ -1,3 +1,4 @@
+import {GameMessage} from '../resources/game-message';
 import {useState} from 'react';
 import type {Battle} from '../../match/battle';
 import {writeAudioPreferences} from './audio-preferences';
@@ -36,6 +37,6 @@ export function VolumeSettingsView({battle, initial}: VolumeSettingsViewProps) {
     <input id="sound-volume" type="range" min="0" max="1" step="0.05" value={preferences.sound}
       aria-valuetext={percent(preferences.sound)} onChange={event => update('sound', event.currentTarget.valueAsNumber)}/>
     <output id="sound-volume-value" htmlFor="sound-volume">{percent(preferences.sound)}</output>
-    <output id="volume-settings-status" role="status">{status}</output>
+    <GameMessage id="volume-settings-status" text={status}/>
   </>;
 }

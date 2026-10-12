@@ -19,8 +19,21 @@
   transform-origin: top left;
 }
 
-.room-card-slot, .room-source-card, .room-source-card > span {
+.room-card-grid {
   position: absolute;
+  left: 9px;
+  right: 9px;
+  top: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 118px);
+  justify-items: center;
+}
+
+.room-card-slot {
+  position: relative;
+  width: 132px;
+  height: 132px;
   box-sizing: border-box;
 }
 
@@ -41,11 +54,156 @@
   cursor: pointer;
 }
 
-.room-source-card > span {
-  background-size: 100% 100%;
+.room-source-card.game-room-card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.room-card-content {
+  --room-card-info-width: 70px;
+  position: absolute;
+  left: 27px;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 76px;
+  box-sizing: border-box;
   pointer-events: none;
   white-space: nowrap;
+}
+
+.room-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  height: 12px;
+}
+
+.room-card-lock {
+  flex: none;
+}
+
+.room-card-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
+}
+
+.room-card-name-track {
+  display: flex;
+  width: max-content;
+  animation: room-card-name-scroll 14s linear infinite;
+}
+
+.room-card-name-track > span {
+  flex: none;
+  box-sizing: border-box;
+  min-width: 76px;
+  padding: 0 9px;
+}
+
+.room-source-card:hover .room-card-name-track,
+.room-source-card:focus-visible .room-card-name-track {
+  animation-play-state: paused;
+}
+
+.room-card-name,
+.room-card-map,
+.room-card-status,
+.room-card-text {
+  color: #fffef1;
+  font: 10px/12px 'HappyZcool-2016', sans-serif;
+  -webkit-text-stroke: 0.8px #352715;
+  paint-order: stroke fill;
+}
+
+.room-card-map {
+  width: 100%;
+  height: 11px;
+  overflow: hidden;
+  font-size: 9px;
+  line-height: 11px;
+  text-overflow: ellipsis;
+}
+
+.room-card-factions {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: var(--room-card-info-width);
+}
+
+.room-card-faction-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 15px;
+  padding: 0 4px;
+  background-size: 100% 100%;
+}
+
+.room-card-mode-artwork,
+.room-card-faction-portrait > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.room-source-card .room-card-faction-portrait {
+  position: relative;
+  flex: none;
+  width: 19px;
+  height: 15px;
+}
+
+.room-card-player-star {
+  flex: none;
+  width: 16px;
+  height: 15px;
+  object-fit: contain;
+}
+
+.room-card-content,
+.room-card-content span,
+.room-source-card .room-card-mode-label {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+}
+
+.room-source-card .room-card-text {
+  flex: 1;
+  font-size: 11px;
+  line-height: 15px;
+  text-align: center;
+}
+
+.room-card-content .room-card-mode-badge {
+  position: relative;
+  flex: none;
+  width: var(--room-card-info-width);
+  height: 20px;
+  transform: scale(0.9);
+}
+
+.room-card-mode-label {
+  position: absolute;
+  inset: 0 4px 1px 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fffef1;
+  font: 9px/1 'HappyZcool-2016', sans-serif;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.9px #352715;
+  paint-order: stroke fill;
+  text-shadow: 0 0.8px 0 #8e602e;
 }
 
 .room-source-card:disabled {
@@ -58,28 +216,25 @@
   z-index: 1;
 }
 
-.room-source-card .room-card-capacity {
-  left: 16px;
-  top: 89px;
-  width: 94px;
-  height: 16px;
-  color: #fff;
+.room-card-status {
+  flex: none;
+  font-size: 8px;
 }
 
-.room-source-card [data-source-control='txtRoomName'] > .source-feedback-text {
-  font-size: 10px;
-  line-height: 14px;
+@keyframes room-card-name-scroll {
+  0%, 12% {
+    transform: translateX(0);
+  }
+
+  88%, 100% {
+    transform: translateX(-50%);
+  }
 }
 
-.room-card-capacity > .source-feedback-text {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 11px;
-  line-height: 16px;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+@media (prefers-reduced-motion: reduce) {
+  .room-card-name-track {
+    animation: none;
+  }
 }
 
 .room-card-toolbar {
@@ -102,7 +257,23 @@
   pointer-events: none;
 }
 
-.room-source-page-button {
+.room-card-pagination > .lobby-room-footbar {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.room-card-pagination > .cartoon-button.game-button {
+  --cartoon-label-size: 17px;
+  z-index: 1;
+}
+
+.room-card-pagination [data-room-card-shop] .cartoon-control-label {
+  padding-left: 7px;
+  letter-spacing: 7px;
+}
+
+.room-card-pagination > .room-source-page-button {
   position: absolute;
   margin: 0;
   padding: 0;
@@ -119,6 +290,33 @@
   position: absolute;
   display: block;
   box-sizing: border-box;
+}
+
+.room-card-page-controls {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  pointer-events: auto;
+}
+
+.room-card-page-controls > .game-button {
+  position: relative;
+  flex: none;
+}
+
+.room-card-page-controls > output {
+  min-width: 28px;
+  margin: 0;
+  padding: 0;
+  color: #fffde0;
+  font: 12px/18px 'HappyZcool-2016', sans-serif;
+  text-align: center;
+  white-space: nowrap;
+  -webkit-text-stroke: 1.2px #283444;
+  paint-order: stroke fill;
 }
 
 [data-room-cards-embedded] {

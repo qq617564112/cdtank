@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 from PIL import Image
 root = Path(__file__).resolve().parents[1]
-library = json.loads((root / 'recovery/output/web-assets/ui-font-raster.json').read_text())
+library = json.loads((root / 'apps/web/public/ui-font-raster.json').read_text())
 face = next(f for f in library['faces'] if f['dpi'] == 96)
-atlas = Image.open(root / 'recovery/output/web-assets' / face['atlas']['asset']).convert('RGBA')
+atlas = Image.open(root / 'apps/web/public' / face['atlas']['asset']).convert('RGBA')
 rows = []
 for capture in json.load(open(sys.argv[1])):
     field = capture['field']

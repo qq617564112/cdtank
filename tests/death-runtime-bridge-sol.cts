@@ -5,7 +5,7 @@ import {
   resetRoleDeathRuntime,
   startRoleDeathRuntime,
   RoleDeathRuntimeServices,
-} from '../recovery/evidence/combat/role-death-runtime-bridge';
+} from '../tests/evidence/combat/role-death-runtime-bridge';
 
 interface Role {readonly id: number; readonly status: number;}
 interface Row {

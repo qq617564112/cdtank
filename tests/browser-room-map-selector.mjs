@@ -206,7 +206,7 @@ async function verifySource(session, width, height) {
 }
 try {
   await launchServer();
-  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5226,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3191',ws:true,rewrite:()=> '/'}}}});
+  vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5226,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3191',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();await launchBrowser();
   const page=await newPage();
   const maps=network.find(row=>row.page===page&&row.name==='ListMaps'&&row.direction==='received')?.response.maps;

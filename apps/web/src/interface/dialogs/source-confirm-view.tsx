@@ -1,30 +1,27 @@
+import {GameMessage} from '../resources/game-message';
 import './source-confirm.css';
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {SourceButton} from '../resources/source-button';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
-import {loadUiFont} from '../resources/source-ui-fonts';
-import {sourceProps, useSourceUi} from '../lobby/source-react';
+import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
+import {DialogButton} from '../resources/dialog-button';
+import {GameConfirmFrame} from '../resources/game-confirm-frame';
 
-const suffix = 'confirm_dialog.xml';
 const viewportScale = () => Math.min(innerWidth / 800, innerHeight / 600);
 
-/** Original confirmation imagery consumes the current decision. */
+/** Native confirmation controls share the shop's two-panel SVG frame. */
 export function SourceConfirmView({message, pending, disabled, status, confirm, cancel, label = '房间邀请', binding = 'web-room-invitation',
-  confirmLabel = '加入房间', cancelLabel = '忽略邀请', messageLabel = '邀请内容'}: {
+  confirmLabel = '确定', cancelLabel = '取消', messageLabel = '确认内容'}: {
   label?: string; binding?: string; confirmLabel?: string; cancelLabel?: string; messageLabel?: string;
   message: string; pending: boolean; disabled: boolean; status: string;
   confirm(): void; cancel(): void;
 }) {
-  const {ui, error} = useSourceUi(true, [suffix]);
   const dialog = useRef<HTMLDialogElement>(null);
+  const messageId = useId();
   const escapePending = useRef(false);
   const [scale, setScale] = useState(viewportScale);
-  const layout = ui ? new HomeSourceLayout(ui, suffix) : undefined;
   useLayoutEffect(() => {
     const element = dialog.current!;
     const origin = document.activeElement;
     element.showModal();
+    element.querySelector<HTMLButtonElement>('[data-source-confirm-cancel]')?.focus();
     return () => {
       const restore = document.activeElement === document.body || element.contains(document.activeElement);
       if (element.open) element.close();
@@ -37,17 +34,16 @@ export function SourceConfirmView({message, pending, disabled, status, confirm, 
   useEffect(() => {
     const resize = () => setScale(viewportScale());
     window.addEventListener('resize', resize);
-    void loadUiFont().catch(() => {});
     return () => window.removeEventListener('resize', resize);
   }, []);
   useLayoutEffect(() => {
     if (!pending && (document.activeElement === document.body || document.activeElement === dialog.current)) {
       dialog.current?.querySelector<HTMLButtonElement>('[data-source-confirm-cancel]')?.focus();
     }
-  }, [ui, pending]);
+  }, [pending]);
   const requestCancel = () => {if (!pending) cancel();};
-  return <dialog ref={dialog} data-source-confirm="" data-confirm-binding={binding}
-    aria-label={label} aria-busy={pending} style={{width: 315 * scale, height: 108 * scale}}
+  return <dialog ref={dialog} className="game-confirm-dialog" data-source-confirm="" data-confirm-binding={binding}
+    aria-label={label} aria-describedby={messageId} aria-busy={pending} style={{width: 315 * scale, height: 108 * scale}}
     onCancel={event => {event.preventDefault(); requestCancel();}}
     onKeyDown={event => {
       event.stopPropagation();
@@ -63,20 +59,14 @@ export function SourceConfirmView({message, pending, disabled, status, confirm, 
       }
     }}>
     <div className="source-confirm-stage" style={{transform: `scale(${scale})`}}>
-      <SourceImageScale value={scale}>
-        {ui && layout && <>
-          {['SheetWindow', 'picBackgroundMask', 'shangkuang', 'xiakuang'].map(name =>
-            <SourceStaticImage key={name} ui={ui} layout={layout} suffix={suffix} name={name}
-              className="source-confirm-picture" aria-hidden="true" />)}
-          <div {...sourceProps(ui, layout, suffix, 'txtMessage')} role="document" aria-label={messageLabel}>{message}</div>
-          <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnOK" data-source-confirm-ok=""
-            aria-label={confirmLabel} disabled={pending || disabled} onClick={confirm}/>
-          <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnCancel" data-source-confirm-cancel=""
-            aria-label={cancelLabel} disabled={pending} onClick={requestCancel}/>
-        </>}
-      </SourceImageScale>
-      <output className="source-confirm-status" role="status" aria-live="polite" hidden={!error && !status}>{error || status}</output>
-      {!ui && <button type="button" data-source-confirm-cancel="" disabled={pending} onClick={requestCancel}>{cancelLabel}</button>}
+      <GameConfirmFrame width={315} height={108} headerHeight={56}/>
+      <div id={messageId} data-source-control="txtMessage" data-source-layout="ui/layouts/confirm_dialog.xml"
+        role="document" aria-label={messageLabel}>{message}</div>
+      <DialogButton data-source-control="btnOK" data-source-layout="ui/layouts/confirm_dialog.xml" data-source-confirm-ok=""
+        aria-label={confirmLabel} disabled={pending || disabled} onClick={confirm}>确定</DialogButton>
+      <DialogButton data-source-control="btnCancel" data-source-layout="ui/layouts/confirm_dialog.xml" data-source-confirm-cancel=""
+        aria-label={cancelLabel} disabled={pending} onClick={requestCancel}>取消</DialogButton>
+      <GameMessage text={status} tone={pending ? 'pending' : 'info'}/>
     </div>
   </dialog>;
 }

@@ -67,9 +67,11 @@ varying vec2 vUV;
 varying vec3 sceneLitColor;
 uniform vec4 sourceAmbient;
 uniform float actorOpacity;
+uniform vec3 sourceColorFilter;
 ${texture ? 'uniform sampler2D sourceTexture;' : ''}
 void main(){
 vec4 base=${texture ? 'texture2D(sourceTexture,vUV)' : 'vec4(1.0)'};
+base.rgb=clamp(base.rgb*sourceColorFilter,0.0,1.0);
 vec4 color;
 ${actorToon ? `if(actorToonEnabled>0.5){
 vec3 toon=texture2D(actorToonTexture,vec2(actorToonLight,1.0)).rgb;
@@ -85,7 +87,7 @@ gl_FragColor=color;
 ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
 }`,
   }, {attributes: ['position', 'normal', 'uv'], defines: ['NORMAL'],
-    uniforms: ['world', 'worldViewProjection', 'sourceAmbient', 'actorOpacity',
+    uniforms: ['world', 'worldViewProjection', 'sourceAmbient', 'actorOpacity', 'sourceColorFilter',
       ...(actorToon ? ['actorToonEnabled', 'actorToonLightDirection'] : []),
       ...SCENE_ENVIRONMENT_UNIFORMS],
     samplers: [...(texture ? ['sourceTexture'] : []), ...(actorToon ? ['actorToonTexture'] : [])],
@@ -106,6 +108,7 @@ ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
   updateAmbient();
   material.onBindObservable.add(updateAmbient);
   material.setFloat('actorOpacity', 1);
+  material.setVector3('sourceColorFilter', Vector3.One());
   if (texture) {
     // default.gbf/newgeom/geom_t: LINEAR min/mag, WRAP U/V; no mip filter.
     texture.updateSamplingMode(Constants.TEXTURE_LINEAR_LINEAR);

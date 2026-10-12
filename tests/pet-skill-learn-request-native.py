@@ -6,15 +6,15 @@ from pathlib import Path
 from unicorn import UC_HOOK_CODE
 from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EIP, UC_X86_REG_ESP
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from effect_native import map_original_binaries
 uc, _ = map_original_binaries([ROOT / 'CDTank/CDTank.exe'])
 uc.mem_map(0, 0x1000)  # Original SEH prologue reads fs:[0].
 uc.mem_map(0x2000000, 0x30000)
 GAME, MODES, MODE, VT, MANAGER, CONTAINER, CATALOG, PET_MANAGER, PRICE_MANAGER, OWNED, PET, PRICE, SHOP, CALLBACK, CVT, SENTINEL, NODE = [0x2001000+i*0x1000 for i in range(17)]
 STACK, STOP, MODE_GETTER, NOTIFY = [0x2020000+i*0x1000 for i in range(4)]
-pet = next(row['values'] for row in json.loads((ROOT/'recovery/output/verified/tables/pet.json').read_text())['rows'] if row['values']['ID']=='2')
-priceRows = {int(row['values']['技能ID']): row['values'] for row in json.loads((ROOT/'recovery/output/verified/tables/petskill.json').read_text())['rows']}
+pet = next(row['values'] for row in json.loads((ROOT/'apps/server/resources/tables/pet.json').read_text())['rows'] if row['values']['ID']=='2')
+priceRows = {int(row['values']['技能ID']): row['values'] for row in json.loads((ROOT/'apps/server/resources/tables/petskill.json').read_text())['rows']}
 mode, sent, feedback, lookups = 2, [], [], []
 def put(a,*v):uc.mem_write(a,struct.pack('<'+'I'*len(v),*v))
 def get(a):return struct.unpack('<I',uc.mem_read(a,4))[0]

@@ -1,11 +1,10 @@
 import './battle-summary-equipment-page.css';
 import {useEffect, useRef} from 'react';
 import type {ResultItemGrant, ResultTankGrant} from '../../../../shared/protocols/MsgRoomSnapshot';
-import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
+import {SourceStaticImage} from '../resources/source-static-image';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
-import {HudBattleInfoView} from './hud-battle-info-view';
-import {battleInfoText} from './battle-info-messages';
+import {SummaryReceiptArtwork} from './battle-summary-artwork';
 
 /** One committed equipped reward: an owned item record or an owned tank record. */
 export type EquipmentGrant =
@@ -55,15 +54,12 @@ export function BattleSummaryEquipmentPage({ui, grant, scale, close, origin}: {
       }
     }} onKeyUp={event => event.stopPropagation()}>
     <div className="battle-summary-equipment-stage" style={{zoom: scale}}>
-      <SourceImageScale value={scale}>
-        <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name="wndDialog" aria-hidden="true" />
-        <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name="picItem" reference={equipmentIcon(grant)}
-          className="battle-summary-equipment-icon" role="img" aria-label={`获得${name}`} />
-        <span {...sourceProps(ui, layout, suffix, 'txtMessage')}>
-          <HudBattleInfoView ui={ui} label="获得装备奖励"
-            text={`你获得了<colour red=255 green=0 blue=0 alpha=255>${battleInfoText(name)}</colour>。`} />
-        </span>
-      </SourceImageScale>
+      <SummaryReceiptArtwork style={sourceProps(ui, layout, suffix, 'wndDialog').style}/>
+      <SourceStaticImage ui={ui} layout={layout} suffix={suffix} name="picItem" reference={equipmentIcon(grant)}
+        className="battle-summary-equipment-icon" role="img" aria-label={`获得${name}`} />
+      <span {...sourceProps(ui, layout, suffix, 'txtMessage')} className="battle-summary-title-message">
+        你获得了<strong>{name}</strong>。
+      </span>
     </div>
   </dialog>;
 }

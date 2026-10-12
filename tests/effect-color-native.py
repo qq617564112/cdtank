@@ -46,7 +46,7 @@ def trail(packed, index, count, precision):
     return int.from_bytes(machine.mem_read(FRAME - 0x45, 1), 'little') << 24 | packed & 0xffffff
 
 
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 colors = [c['appearance']['color'] for c in library['spriteControls']]
 colors += [[.5, .25, .75, 1], [1 / 255, 2 / 255, 254 / 255, .3],
            [-.5, 1.5, 2, -1], [0, 0, 0, 0], [1, 1, 1, 1]]

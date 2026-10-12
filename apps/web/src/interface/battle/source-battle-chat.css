@@ -1,136 +1,296 @@
+@import '../resources/happy-zcool.css';
+
 .battle-chat.source-battle-chat {
   right: auto;
   bottom: auto;
   padding: 0;
   border: 0;
   background: transparent;
-  font-family: 'CDTank-SIMSUN', serif;
+  color: #fff;
   font-size: 12px;
 }
-/* Idle PLAYING/FINISHED shows a confirmed-message frame at full opacity, then fades
-   through a semi-transparent blur to hidden. The 5s full hold matches the store timer. */
-.battle-chat.source-battle-chat[data-chat-presentation='notice'] {
-  pointer-events: none;
+
+.source-battle-chat,
+.source-battle-chat * {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-synthesis: none;
 }
+
+.source-battle-chat [hidden] {
+  display: none !important;
+}
+
+.battle-chat.source-battle-chat[data-chat-presentation='notice'],
 .battle-chat.source-battle-chat[data-chat-presentation='notice'] * {
   pointer-events: none;
 }
+
 .battle-chat.source-battle-chat[data-chat-notice='fading'] {
-  animation: chat-notice-fade 0.4s ease-out 0s 1 forwards;
+  animation: chat-notice-fade .4s ease-out forwards;
 }
+
 @keyframes chat-notice-fade {
-  0% {opacity: 1; filter: blur(0);}
-  100% {opacity: 0; filter: blur(2px);}
+  from {opacity: 1; filter: blur(0);}
+  to {opacity: 0; filter: blur(2px);}
 }
+
 .source-battle-chat .source-chat-stage {
   position: relative;
   width: 301px;
   height: 164px;
   transform-origin: top left;
 }
-.source-battle-chat .source-chat-stage div,
-.source-battle-chat .source-chat-stage span,
-.source-battle-chat [data-source-control] {
+
+.battle-chat-frame {
   position: absolute;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  box-sizing: border-box;
-  background-size: 100% 100%;
+  left: 0;
+  top: 20px;
+  width: 300px;
+  height: 107px;
+  pointer-events: none;
 }
+
 .source-battle-chat form {
   display: contents;
 }
+
 .source-battle-chat input {
+  position: absolute;
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
   background: transparent;
-  color: white;
-  font: inherit;
+  color: #372817;
+  font-size: 12px;
+  line-height: 18px;
+  caret-color: #372817;
+  -webkit-text-stroke: 0;
 }
+
+.source-battle-chat input::placeholder {
+  color: inherit;
+  opacity: .7;
+}
+
 .source-battle-chat ol {
+  position: absolute;
+  box-sizing: border-box;
   max-height: none;
+  margin: 0;
+  padding: 0 4px 0 0;
+  overflow: auto;
+  color: #fff;
+  font-size: 12px;
   line-height: 16px;
-  color: white;
+  scrollbar-width: thin;
+  scrollbar-color: #c9c492 rgb(8 0 54 / 55%);
 }
+
+.source-battle-chat [data-chat-rich-kind='text'] {
+  -webkit-text-stroke: 0;
+  text-shadow: 0 1px 1px rgb(0 0 20 / 70%);
+}
+
 .source-battle-chat [data-chat-channel],
 .source-battle-chat button[type='submit'] {
   display: none;
 }
-.source-battle-chat .source-chat-channel-menu {
-  left: 2px;
-  top: 10px;
-  width: 48px;
-  height: 123px;
-  z-index: 2;
-}
-.source-battle-chat .source-chat-family-option {
+
+.battle-chat-input-panel {
   position: absolute;
-  left: 9px;
-  top: 119px;
-  width: 30px;
-  height: 16px;
+  pointer-events: none;
+}
+
+.battle-chat-input-divider {
+  position: absolute;
+  left: 151px;
+  top: 135px;
+  width: 1px;
+  height: 18px;
+  background: rgb(128 96 47 / 40%);
+  pointer-events: none;
+}
+
+.source-battle-chat .cartoon-button.battle-chat-channel-toggle {
+  --cartoon-label-size: 14px;
+  --cartoon-label-outline: 2px;
+  z-index: 1;
+  border: 0;
+  background: transparent;
+}
+
+.source-battle-chat .battle-chat-channel-toggle > .cartoon-control-label {
+  margin-bottom: 3px;
+}
+
+.source-battle-chat .battle-chat-target-toggle {
+  position: absolute;
+  left: 52px;
+  top: 134px;
+  width: 13px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #9a6a28;
+}
+
+.source-battle-chat .battle-chat-target-toggle:hover {
+  color: #d89530;
+}
+
+.source-battle-chat .battle-chat-target-toggle:active {
+  transform: translateY(1px);
+}
+
+.battle-chat-target-toggle svg {
+  width: 100%;
+  height: 100%;
+}
+
+.source-battle-chat .battle-chat-emote-toggle {
+  position: absolute;
+  left: 273px;
+  top: 135px;
+  width: 17px;
+  height: 18px;
   margin: 0;
   padding: 0;
   border: 0;
-  color: #fff;
-  background: #263b49;
-  font: inherit;
+  background: transparent;
 }
-.source-battle-chat button {
-  background-color: transparent;
-}
-.source-battle-chat [role='status'] {
+
+.source-battle-chat .battle-chat-menu {
   position: absolute;
-  bottom: 39px;
-  left: 7px;
-  max-width: 286px;
-  margin: 0;
+  z-index: 3;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1.5px solid #a9faff;
+  border-radius: 9px 10px 10px 8px;
+  color: #83fcb7;
+  background: linear-gradient(rgb(13 8 55 / 96%), rgb(10 17 57 / 96%));
+  box-shadow: 0 0 1px 1px #287fa6, inset 0 0 0 1px #3185b6,
+    inset 0 0 5px rgb(111 234 255 / 28%);
+}
+
+.source-battle-chat .battle-chat-menu::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border: 1px solid rgb(180 255 255 / 35%);
+  border-radius: inherit;
   pointer-events: none;
-  color: #fff8da;
-  background: #263b49;
 }
-.source-battle-chat [role='status']:empty {
-  display: none;
+
+.source-battle-chat .source-chat-channel-menu {
+  left: 1px;
+  bottom: 37px;
+  width: 48px;
 }
+
+.source-battle-chat .battle-chat-menu > button {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: nowrap;
+  text-align: center;
+  text-overflow: ellipsis;
+  -webkit-text-stroke: 1.3px #00190f;
+  paint-order: stroke fill;
+  text-shadow: 0 1px #001b19;
+}
+
+.source-battle-chat .battle-chat-menu > button:is(:hover, [aria-checked='true'], [aria-selected='true']) {
+  color: #ffc628;
+  -webkit-text-stroke-color: #302100;
+  text-shadow: 0 1px #211700;
+}
+
+.source-battle-chat .battle-chat-menu > button:is(:hover, :focus-visible) {
+  background: rgb(110 234 255 / 12%);
+}
+
+.source-battle-chat .battle-chat-menu > button:active {
+  transform: translateY(1px) scale(.96);
+}
+
+.source-battle-chat .battle-chat-menu > button:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.source-battle-chat .battle-chat-target-menu {
+  left: 52px;
+  bottom: 37px;
+  width: 118px;
+  max-height: 139px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #a9faff #0d0837;
+}
+
+.source-battle-chat .battle-chat-target-menu > button {
+  text-align: left;
+  font-size: 12px;
+}
+
+.source-battle-chat .source-chat-emotes {
+  left: 89px;
+  bottom: 37px;
+  width: 194px;
+  height: 134px;
+}
+
+.source-battle-chat .source-chat-emotes > button {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.source-chat-emotes [data-image-artwork] {
+  width: 100%;
+  height: 100%;
+}
+
 .battle-chat:not(.source-battle-chat) .source-chat-stage {
   display: contents;
 }
-.battle-chat:not(.source-battle-chat) .source-chat-stage > div {
+
+.battle-chat:not(.source-battle-chat) .source-chat-stage > div,
+.battle-chat:not(.source-battle-chat) .battle-chat-frame {
   display: none;
 }
+
 .battle-chat:not(.source-battle-chat):not(.source-waiting-chat) [data-source-control] {
   position: static;
   width: auto !important;
   height: auto !important;
 }
+
 .battle-chat:not(.source-battle-chat):not(.source-waiting-chat) [data-chat-input] {
   flex: 1;
 }
 
-/* Keep rebuilt utility controls outside the original lower-left chat region. */
 .source-chat-active.in-battle .controls {
   bottom: auto;
   top: 1rem;
 }
-.source-battle-chat .source-chat-emotes {
-  left: 89px;
-  top: -7px;
-  width: 194px;
-  height: 134px;
-  z-index: 3;
-  isolation: isolate;
-}
-.source-battle-chat [data-chat-emote] {
-  vertical-align: middle;
-}
+
+.source-battle-chat [data-chat-emote],
 .battle-chat:not(.source-battle-chat) [data-chat-emote] {
   vertical-align: middle;
-}
-
-.source-battle-chat .source-chat-channel-menu > span {
-  position: absolute;
-  pointer-events: none;
-}
-
-.source-battle-chat .source-chat-emotes > span {
-  pointer-events: none;
 }

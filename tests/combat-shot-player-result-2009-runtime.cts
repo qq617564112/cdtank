@@ -14,11 +14,11 @@ camera.setTarget(Vector3.Zero()); camera.getViewMatrix(true); camera.getProjecti
 const runtime = new EffectRuntime(scene, camera);
 const state = runtime as unknown as {library: EffectRuntimeLibrary; textures: Map<string, RawTexture>;
   instances: {handle: number; tree: EffectRuntimeTree; owner: TankView; draws: unknown[]}[]};
-state.library = JSON.parse(readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+state.library = JSON.parse(readFileSync('apps/web/public/effect-library.json', 'utf8'));
 for (const grid of source.textures) {
   const pixels = execFileSync('recovery/.venv/bin/python', ['-c',
     'from PIL import Image; import sys; sys.stdout.buffer.write(Image.open(sys.argv[1]).convert("RGBA").tobytes())',
-    'recovery/output/web-assets/' + grid.asset]);
+    'apps/web/public/' + grid.asset]);
   state.textures.set(grid.asset, RawTexture.CreateRGBATexture(new Uint8Array(pixels), grid.size[0], grid.size[1], scene));
 }
 const parent = [...EFFECT_IDENTITY], root = new TransformNode('victim', scene);

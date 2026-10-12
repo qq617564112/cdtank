@@ -10,7 +10,7 @@ interface Row {reference: string; node: number; part: number; fvf: number; kind:
 const original = JSON.parse(readFileSync('recovery/output/effect-material-combo-sol-native.json', 'utf8')) as {
   rows: Row[]; trees: {reference: string; blend: 0 | 1; alpha: number; inherited: {blend: number; alpha: number}[]}[];
 };
-const library = JSON.parse(readFileSync('recovery/output/web-assets/effect-models.json', 'utf8')) as EffectModelLibrary;
+const library = JSON.parse(readFileSync('apps/web/public/effect-models.json', 'utf8')) as EffectModelLibrary;
 for (const row of original.rows) {
   assert.deepEqual(effectModelMaterialSelection(row.fvf, row.kind, row.blend), {flags: row.flags, script: row.script});
   assert.equal(effectModelScript(row.fvf, row.kind, row.alpha), row.script);

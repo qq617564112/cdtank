@@ -1,4 +1,5 @@
-import {backgroundStyle} from '../../assets/image-artwork';
+import {GameMessage} from '../resources/game-message';
+import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import type {ResPartMaintenance} from '../../../../shared/protocols/PtlPartMaintenance';
 import {createRequestId} from '../../network/request-id';
 import './mend-shop-source.css';
@@ -13,10 +14,12 @@ import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {classifyItemId} from '../../../../shared/combat/item-hotkeys';
 import type {ShopSource} from './shop';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
-import {SourceStaticImage} from '../resources/source-static-image';
-import {SourceStaticText} from '../resources/source-static-text';
-import {SourceButton} from '../resources/source-button';
+import {ShopOwnedPanel, ShopSourceBackground as SourceStaticImage} from './shop-source-background';
+import {HomeStaticText as SourceStaticText} from '../home/home-text';
+import {ShopSourceButton as SourceButton} from './shop-source-button';
 import {sourceProps} from '../resources/source-ui-props';
+import {GameScrollbar} from '../resources/game-scrollbar';
+import {MendMaintenanceOptions} from './mend-maintenance-options';
 
 const suffix = 'shop_mendpage.xml';
 const legacyCoinImages = new Set([
@@ -43,6 +46,7 @@ function profileInstalled(profile: {bytes: number[]} | undefined, category: Part
 export function MendShopSourcePage({ui, catalog, source, onBusy}: {
   ui: HomeSourceUi; catalog?: CombatCatalog; source: ShopSource; onBusy(busy: boolean): void;
 }) {
+  const list = useRef<HTMLDivElement>(null);
   const [owned, setOwned] = useState<ResOwnedRoles>();
   const [inventory, setInventory] = useState<ResInventory>();
   const [profile, setProfile] = useState<ResRoleProfile>();
@@ -54,7 +58,7 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
   const [category, setCategory] = useState<PartCategory>('Common');
   const [selected, setSelected] = useState<number>();
   const [busy, setBusy] = useState(true);
-  const [status, setStatus] = useState('载入拥有资料…');
+  const [status, setStatus] = useState('');
   const layout = new HomeSourceLayout(ui, suffix);
   useEffect(() => {
     let active = true;
@@ -98,7 +102,7 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
   async function maintain(quote: TankMaintenanceQuote) {
     if (!canMaintain || selected === undefined || busy || submitting.current) return;
     const current = generation.current;
-    submitting.current = true; setBusy(true); onBusy(true); setStatus('正在确认保养…');
+    submitting.current = true; setBusy(true); onBusy(true); setStatus('');
     try {
       const request = {operation: 'MAINTAIN' as const, instanceId: selected,
         days: quote.days, currency: quote.currency, requestId: createRequestId()};
@@ -121,57 +125,40 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
   }
   const bytes = profile?.profile ? new DataView(Uint8Array.from(profile.profile.bytes).buffer) : undefined;
   const values: Record<string, string> = {txtMoney: bytes ? String(bytes.getUint32(0x70, true)) : '',
-    txtCoin: bytes ? String(bytes.getUint32(0x74, true)) : '',
-    txtListQuantity: owned && inventory ? String(entries.length) : ''};
-  for (const currency of ['Coin', 'Money'] as const) {
-    ([1, 7, 30] as const).forEach((days, index) => {
-      const quote = selectedQuotes?.find(value => value.days === days && value.currency === (currency === 'Coin' ? 0 : 1));
-      values[`txt${currency}${index}`] = quote?.displayCost ?? '';
-    });
-  }
+    txtCoin: bytes ? String(bytes.getUint32(0x74, true)) : ''};
   const partNames = new Set(['picPartPagePanel', 'heseditu2']);
   const controls = ui.layouts.find(value => value.path.endsWith(suffix))!.windows.filter(control =>
-    selected !== undefined || !/^btn(?:Coin|Money)Mend[0-2]$/.test(control.parent ?? ''));
-  const listSource = page === 'Tank' ? 'lstTank' : 'lstPart';
-  const selection = sourceProps(ui, layout, suffix, listSource, layout.control(listSource).properties.SelectionImage);
+    !/^btn(?:Coin|Money)Mend[0-2]$/.test(control.parent ?? ''));
   return <>
+    <ShopOwnedPanel ui={ui} suffix={suffix} tab={`rdo${page}Page`}/>
     <div className="mend-shop-source" data-mend-shop-page="" data-mend-page={page} aria-busy={busy}>
-      {selected !== undefined && (['Coin', 'Money'] as const).flatMap(currency => ([1, 7, 30] as const).map((days, index) => {
-        const quote = selectedQuotes?.find(value => value.days === days && value.currency === (currency === 'Coin' ? 0 : 1));
-        return <SourceButton key={`${currency}${index}`} ui={ui} layout={layout} suffix={suffix}
-          source={`btn${currency}Mend${index}`} disabled={busy || !quote || !canMaintain} data-mend-repair=""
-          data-mend-repair-binding={quote ? page === 'Tank' ? 'tank-maintenance-confirmed-quote' : 'part-maintenance-confirmed-quote' : 'unbound'}
-          data-mend-repair-days={days} data-mend-repair-currency={currency === 'Coin' ? 0 : 1}
-          aria-label={`${currency === 'Coin' ? '代币' : '金币'}保养${days}天`}
-          onClick={() => {if (quote) void maintain(quote);}} />;
-      }))}
+      {selected !== undefined && <MendMaintenanceOptions quotes={selectedQuotes} page={page}
+        busy={busy} canMaintain={canMaintain} maintain={quote => {void maintain(quote);}}/>}
       {controls.filter(control => control.type === 'WindowsLook/StaticImage'
         && !legacyCoinImages.has(control.name)).map(control =>
         <SourceStaticImage key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name}
           hidden={control.name === 'dankequ' ? page !== 'Tank' : partNames.has(control.name) ? page !== 'Part' : undefined}
           aria-hidden="true" />)}
-      {controls.filter(control => control.type === 'WindowsLook/StaticText').map(control =>
+      {controls.filter(control => control.type === 'WindowsLook/StaticText' && control.name !== 'txtListQuantity').map(control =>
         <SourceStaticText key={control.name} ui={ui} layout={layout} suffix={suffix} name={control.name}
-          text={values[control.name] ?? ''} data-mend-text-binding={/^txt(Coin|Money)[0-2]$/.test(control.name)
-            ? selectedQuotes ? page === 'Tank' ? 'tank-maintenance-source-display-cost' : 'part-maintenance-source-display-cost' : 'unbound'
-            : control.name in values ? 'web-confirmed-account' : 'unbound'} />)}
+          text={values[control.name] ?? ''}
+          data-mend-text-binding={control.name in values ? 'web-confirmed-account' : 'unbound'} />)}
       {(['Tank', 'Part'] as const).map(kind => <SourceButton key={kind} ui={ui} layout={layout} suffix={suffix}
         source={`rdo${kind}Page`} selected={page === kind} data-mend-select-page={kind}
-        aria-label={kind === 'Tank' ? '拥有战车' : '拥有部件'} aria-pressed={page === kind} disabled={busy}
+        aria-label={kind === 'Tank' ? '拥有战车' : '拥有部件'} aria-pressed={page === kind} disabled={busy} aria-busy={busy}
         onClick={() => {generation.current++; setPage(kind); setSelected(undefined);}} />)}
       {page === 'Part' && (['Common', 'Hat', 'Mark'] as const).map(kind => <SourceButton key={kind} ui={ui} layout={layout} suffix={suffix}
         source={`rdo${kind}Page`} selected={category === kind} data-mend-category={kind}
         aria-label={kind === 'Common' ? '一般部件' : kind === 'Hat' ? '装饰' : '标记'}
-        aria-pressed={category === kind} disabled={busy} onClick={() => {generation.current++; setCategory(kind); setSelected(undefined);}} />)}
+        aria-pressed={category === kind} disabled={busy} aria-busy={busy} onClick={() => {generation.current++; setCategory(kind); setSelected(undefined);}} />)}
       <div {...sourceProps(ui, layout, suffix, page === 'Tank' ? 'lstPart' : 'lstTank')} hidden aria-hidden="true" />
       <div {...sourceProps(ui, layout, suffix, page === 'Tank' ? 'lstTank' : 'lstPart')}
-        className="mend-shop-list" data-mend-owned-list="" role="listbox" aria-label={page === 'Tank' ? '拥有战车名单' : '拥有部件名单'}>
+        className="mend-shop-list-scroll-shell">
+      <div ref={list} className="mend-shop-list" data-mend-owned-list="" role="listbox" aria-label={page === 'Tank' ? '拥有战车名单' : '拥有部件名单'}>
         {entries.map((entry, index) => <button key={entry.id} type="button" role="option"
           data-mend-owned-instance={entry.id} data-home-owned-tank-row={page === 'Tank' ? entry.id : undefined}
           data-mend-owned-tank-row={page === 'Tank' ? entry.id : undefined} data-mend-owned-part-row={page === 'Part' ? '' : undefined} aria-selected={entry.id === selected} disabled={busy}
           tabIndex={selected === entry.id || selected === undefined && index === 0 ? 0 : -1}
-          style={entry.id === selected ? {...backgroundStyle(selection.style)} : undefined}
-          data-source-selection-asset={entry.id === selected ? selection['data-source-asset'] : undefined}
           onClick={() => setSelected(entry.id)} onKeyDown={event => {
             const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
               : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;
@@ -182,11 +169,15 @@ export function MendShopSourcePage({ui, catalog, source, onBusy}: {
             setSelected(value.id);
             const button = event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-mend-owned-instance="${value.id}"]`);
             button?.focus(); button?.scrollIntoView({block: 'nearest'});
-          }}>{page === 'Part' ? <MendPartRowContent ui={ui} name={entry.name}
+          }}>
+          {entry.id === selected && <GameSelectionHighlight/>}
+          {page === 'Part' ? <MendPartRowContent ui={ui} name={entry.name}
             itemTableId={entry.itemTableId!} iconId={entry.iconId} ownedQuantity={entry.ownedQuantity!} installed={entry.installed} /> : <HomeOwnedTankRowContent ui={ui} name={entry.name}
               tankId={entry.tankId} tankType={entry.tankType} durationMinutes={entry.durationMinutes} />}</button>)}
       </div>
+      <GameScrollbar list={list} step={48} label={page === 'Tank' ? '拥有战车名单' : '拥有部件名单'}/>
+      </div>
     </div>
-    <output className="mend-shop-status" data-mend-status="" role="status" aria-live="polite">{status}</output>
+    <GameMessage data-mend-status="" text={status} tone={busy ? 'pending' : 'info'}/>
   </>;
 }

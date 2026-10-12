@@ -1,0 +1,20 @@
+@import './happy-zcool.css';
+
+.game-confirm-dialog,
+.game-confirm-dialog * {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-synthesis: none;
+}
+
+.game-confirm-dialog::backdrop {
+  background: rgb(0 0 0 / 20%);
+}
+
+.game-confirm-frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}

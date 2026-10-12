@@ -6,7 +6,7 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from mv3 import read_mv3
 
 def float32(value):
@@ -18,7 +18,7 @@ rows = []
 for source in native['rows']:
     relative = source['asset']
     model = read_mv3(ROOT / 'recovery/output/verified/assets/data/Data' / relative)
-    blob = (ROOT / 'recovery/output/web-assets/Data' / Path(relative).with_suffix('.glb')).read_bytes()
+    blob = (ROOT / 'apps/web/public/Data' / Path(relative).with_suffix('.glb')).read_bytes()
     size = struct.unpack_from('<I', blob, 12)[0]
     document = json.loads(blob[20:20 + size])
     binary = blob[28 + size:]

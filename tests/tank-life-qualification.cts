@@ -3,7 +3,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {recomputeQualifiedRoleLife} from '../apps/server/src/battle/roles/recompute-life';
 import {combatSkills, combatItemSkills, combatLimits} from '../apps/server/src/battle/catalog';
 import type {RoleSkillSources} from '../apps/server/src/battle/roles/skills';
-import {readOwnedRolePairMessage} from '../recovery/evidence/roles/role-owned-sources';
+import {readOwnedRolePairMessage} from '../tests/evidence/roles/role-owned-sources';
 
 interface NativeRow {
   sourceIndex: number;

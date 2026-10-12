@@ -1,0 +1,83 @@
+@import './happy-zcool.css';
+
+.game-artwork-button {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.game-artwork-button-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.game-artwork-button-label {
+  position: absolute;
+  left: 5%;
+  top: 27%;
+  width: 90%;
+  color: #2b1600;
+  font: 16px/22px 'HappyZcool-2016', sans-serif !important;
+  white-space: nowrap;
+  text-align: center;
+  -webkit-text-stroke: 2.5px #fcef00;
+  paint-order: stroke fill;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+.game-artwork-button[data-artwork-button='settings'] .game-artwork-button-label {
+  top: 47%;
+  transform: rotate(6deg);
+}
+
+.game-artwork-button[data-artwork-button='plaque'] .game-artwork-button-label {
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: #fffde0;
+  -webkit-text-stroke: 1.2px #42331b;
+  transform: none;
+}
+
+.game-artwork-button[data-artwork-button='plaque'][data-source-button-state='Hover'] .game-artwork-button-image {
+  filter: brightness(1.15);
+}
+
+.game-artwork-button[data-artwork-button='plaque'][data-source-button-state='Pushed'] {
+  transform: translateY(1px);
+}
+
+.game-artwork-button[data-artwork-button='tutorial'][data-source-button-state='Hover'] .game-artwork-button-label {
+  top: 50%;
+}
+
+.game-artwork-button[data-artwork-button='tutorial'][data-source-button-state='Pushed'] .game-artwork-button-label {
+  top: 45%;
+}
+
+.game-artwork-button[data-artwork-button='settings'][data-source-button-state='Hover'] .game-artwork-button-label {
+  top: 37%;
+}
+
+.game-artwork-button[data-artwork-button='settings'][data-source-button-state='Pushed'] .game-artwork-button-label {
+  top: 45%;
+}
+
+.game-artwork-button[data-source-button-state='Pushed'] .game-artwork-button-label {
+  color: #00faff;
+  -webkit-text-stroke-color: #001928;
+}
+.game-artwork-button:disabled { cursor: default; }
+.game-artwork-button:disabled[aria-busy='true'] { opacity: 1; }
+.game-artwork-button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }

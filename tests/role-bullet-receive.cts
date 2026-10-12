@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {encodeRoleNumericProperty, receiveRoleNumericProperties} from '../recovery/evidence/roles/role-numeric-property';
+import {encodeRoleNumericProperty, receiveRoleNumericProperties} from '../tests/evidence/roles/role-numeric-property';
 import {createRoleCombatState, RoleCombatState} from '../apps/server/src/battle/roles/combat-state';
-import {readRoleNetworkMessage} from '../recovery/evidence/combat/role-network-message';
-import {routeRolePropertyMessage} from '../recovery/evidence/combat/role-property-route';
+import {readRoleNetworkMessage} from '../tests/evidence/combat/role-network-message';
+import {routeRolePropertyMessage} from '../tests/evidence/combat/role-property-route';
 import {applyRoleFireReloadNotification} from '../apps/server/src/battle/roles/reload';
 
 interface State {bullet: number; maximum: number; hp: number; maxHp: number}

@@ -12,7 +12,7 @@ import type {ResShop} from '../apps/shared/protocols/PtlShop';
 const native: {rows: {itemTableId: number; stored: Record<string, number>}[]} = JSON.parse(
   readFileSync('recovery/output/shop-item-price-count-loader-native.json', 'utf8'));
 const table: {rows: {values: Record<string, string>}[]} = JSON.parse(
-  readFileSync('recovery/output/verified/tables/item.json', 'utf8'));
+  readFileSync('apps/server/resources/tables/item.json', 'utf8'));
 const items = [...consumableShopItems(combatCatalog), ...partShopItems(combatCatalog)];
 for (const item of items) {
   const original = table.rows.find(row => Number(row.values.ItemTableID) === item.itemTableId)!.values;

@@ -55,7 +55,7 @@ def hook(uc, address, size, data):
 
 
 machine.hook_add(UC_HOOK_CODE, hook)
-library = json.loads((ROOT / 'recovery/output/web-assets/effect-library.json').read_text())
+library = json.loads((ROOT / 'apps/web/public/effect-library.json').read_text())
 rows = []
 for control in library['particleControls']:
     source = library['nodes'][control['node']]['modifiers'][control['modifier']]

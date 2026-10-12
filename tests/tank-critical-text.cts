@@ -6,9 +6,9 @@ import {TankCriticalTextRenderer} from '../apps/web/src/render/tank-critical-tex
 import type {CastleDamageTextFont} from '../apps/web/src/render/scene-castle-damage-text-renderer';
 import type {CastleDamageTextRecord, CastleDamageTextRenderer} from '../apps/web/src/assets/scenes/scene-castle-damage-text';
 
-const fonts = JSON.parse(readFileSync('recovery/output/web-assets/ui-fonts.json', 'utf8'));
+const fonts = JSON.parse(readFileSync('apps/web/public/ui-fonts.json', 'utf8'));
 const font = fonts.fonts.find((value: CastleDamageTextFont) => value.name === 'Critical');
-const ui = JSON.parse(readFileSync('recovery/output/web-assets/ui.json', 'utf8'));
+const ui = JSON.parse(readFileSync('apps/web/public/ui.json', 'utf8'));
 const set = ui.imagesets.find((value: {path: string}) => value.path === 'ui/imagesets/zhandou0_0.imageset');
 const image = {...set.images.find((value: {Name: string}) => value.Name === 'data\\ui\\zhandou\\1_baojishuziditu.tga'), attributes: set.attributes};
 assert.equal(image.asset, 'ui/regions/44/11.png');

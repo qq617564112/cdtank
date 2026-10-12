@@ -1,4 +1,4 @@
-import {AnimationGroup, ArcRotateCamera, AssetContainer, LoadAssetContainerAsync, Matrix, Observable, Quaternion, Scene, TransformNode, Vector3, Viewport} from '@babylonjs/core';
+import {AnimationGroup, ArcRotateCamera, AssetContainer, LoadAssetContainerAsync, Matrix, Observable, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import {loadStaticJson} from '../static-resources';
 import type {ObjectiveSnapshot, SceneObjectSnapshot} from '../../../../shared/protocols';
 import {SceneCvdAnimation} from './scene-cvd-animation';
@@ -12,6 +12,8 @@ import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {hasSceneActorToon, registerSceneActorToon, SceneActorToon} from '../../render/materials/actor-toon';
 import {SceneCastleVisual, type CastleModelResource} from './scene-castle-visual';
 import {SceneCastleDamageText} from './scene-castle-damage-text';
+import type {CastleDamageTextProjector} from './scene-castle-damage-text';
+import {createBattleWorldTextProjector} from '../../render/battle-world-text-projection';
 import {SceneCastleDamageTextRenderer} from '../../render/scene-castle-damage-text-renderer';
 import type {CastleDamageTextFont} from '../../render/scene-castle-damage-text-renderer';
 import {SceneCastlePresentation} from './scene-castle-presentation';
@@ -101,8 +103,10 @@ export class ScenePreview {
   private readonly glbAnimations: AnimationGroup[] = [];
   private readonly breakables = new Map<string, {root: TransformNode; state: SceneBreachState;
     broken?: SceneBreachVisual; position: EffectVec3; soundPlayed: boolean}>();
+  private readonly projectDamageText: CastleDamageTextProjector;
 
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera) {
+    this.projectDamageText = createBattleWorldTextProjector(camera);
     scene.onDisposeObservable.addOnce(() => {this.clear();});
   }
 
@@ -517,7 +521,7 @@ export class ScenePreview {
         this.camera.getViewMatrix());
       const viewZ = viewPoint.z;
       queue.advance(deltaSeconds, viewZ);
-      queue.draw(viewport);
+      queue.draw(viewport, this.projectDamageText);
     });
     this.objectDamageTexts.forEach((queue, placementId) => {
       const value = this.breakables.get(placementId);
@@ -526,7 +530,7 @@ export class ScenePreview {
       const viewPoint = Vector3.TransformCoordinates(new Vector3(-native[0], native[1], native[2]),
         this.camera.getViewMatrix());
       queue.advance(deltaSeconds, viewPoint.z);
-      queue.draw(viewport);
+      queue.draw(viewport, this.projectDamageText);
     });
   }
 
@@ -542,6 +546,9 @@ export class ScenePreview {
   }
 
   private registerPlant(id: string, root: TransformNode, sourceEnabled: boolean): void {
+    // Plant artwork lies in XY; face the camera around world Y while staying upright.
+    root.rotationQuaternion = Quaternion.Identity();
+    root.billboardMode = TransformNode.BILLBOARDMODE_Y | TransformNode.BILLBOARDMODE_USE_POSITION;
     this.plantRoots.set(id, {root, sourceEnabled});
     const state = this.plantSnapshots.get(id);
     root.setEnabled(sourceEnabled && (state?.enabled ?? true) && !state?.hidden);
@@ -560,11 +567,7 @@ export class ScenePreview {
       queue = new SceneCastleDamageText(this.castleDamageTextRenderer);
       this.objectDamageTexts.set(placementId, queue);
     }
-    const engine = this.scene.getEngine();
-    const point = Vector3.Project(new Vector3(-position[0], position[1], position[2]),
-      Matrix.Identity(), this.camera.getTransformationMatrix(),
-      new Viewport(0, 0, engine.getRenderWidth(), engine.getRenderHeight()));
-    queue.show(Math.trunc(point.x), Math.trunc(point.y), Math.trunc(delta));
+    queue.showWorld([-position[0], position[1], position[2]], Math.trunc(delta));
   }
 
   /** Loading and room recovery restore current state without replaying past impacts. */
@@ -650,13 +653,8 @@ export class ScenePreview {
     this.onCastleDamageText.notifyObservers({castleId, delta});
     const queue = this.castleDamageTexts.get(castleId);
     if (!queue || !this.castleDamageTextRenderer) return;
-    const engine = this.scene.getEngine();
-    const viewport = {width: engine.getRenderWidth(), height: engine.getRenderHeight()};
     const native = visual.position;
-    const point = Vector3.Project(new Vector3(-native[0], native[1], native[2]),
-      Matrix.Identity(), this.camera.getTransformationMatrix(),
-      new Viewport(0, 0, viewport.width, viewport.height));
-    queue.show(Math.trunc(point.x), Math.trunc(point.y), delta);
+    queue.showWorld([-native[0], native[1], native[2]], delta);
   }
 
   /** Original44e081 selects the model's cue once at object+58 after destruction. */

@@ -291,7 +291,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 120,
+    "version": 123,
     "services": [
         {
             "id": 55,
@@ -1838,6 +1838,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "String"
                     }
+                },
+                {
+                    "id": 49,
+                    "name": "accountId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
                 },
                 {
                     "id": 1,
@@ -4975,6 +4983,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "type": "String"
                     },
                     "optional": true
+                },
+                {
+                    "id": 8,
+                    "name": "timeLimitSeconds",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -5057,6 +5073,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "friendlyFire",
                     "type": {
                         "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "timeLimitSeconds",
+                    "type": {
+                        "type": "Number"
                     },
                     "optional": true
                 }
@@ -8070,6 +8094,39 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 "type": {
                                     "type": "String"
                                 }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 10,
+                    "name": "models",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "tankId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "petId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "textures",
+                                "type": {
+                                    "type": "Reference",
+                                    "target": "../combat/role-owned-textures/OwnedTankTextures"
+                                },
+                                "optional": true
                             }
                         ]
                     },

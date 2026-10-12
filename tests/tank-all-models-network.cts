@@ -24,7 +24,7 @@ const oldAmmo = ['recovery/output/tank-other-models-ammo-network-2026-10-04T15-5
   'recovery/output/tank-three-models-ammo-realtime-network-2026-10-04T21-36-12-165Z.json'];
 const oldTank1 = 'recovery/output/tank-numeric-network-2026-10-04T14-34-12-516Z-analysis.json';
 const table = (name: string): Record<string, string>[] =>
-  JSON.parse(readFileSync(`recovery/output/verified/tables/${name}.json`, 'utf8')).rows
+  JSON.parse(readFileSync(`apps/server/resources/tables/${name}.json`, 'utf8')).rows
     .map((row: {values: Record<string, string>}) => row.values);
 const fields = (record: OwnedRoleRecordData): Map<number, number> => new Map(record.fields);
 const wrap = (angle: number): number => Math.atan2(Math.sin(angle), Math.cos(angle));

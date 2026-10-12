@@ -218,7 +218,7 @@ async function launchBrowser() {
   evidence.checks.push({name:'ordinary untargeted RoomInvite reaches authenticated lobby only; cooldown and password-free notification',rows});return message.payload;
 }
 try {
-  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../recovery/output/web-assets',server:{port:5231,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3198',ws:true,rewrite:()=> '/'}}}});
+  await launchServer();vite=await createServer({configFile:false,root:'apps/web',publicDir:'../../apps/web/public',server:{port:5231,strictPort:true,host:'127.0.0.1',hmr:false,proxy:{'/game':{target:'ws://127.0.0.1:3198',ws:true,rewrite:()=> '/'}}}});
   await vite.listen();await launchBrowser();const sessions=[];
   for(const name of ['邀请房主','大厅受邀']) {const {browserContextId}=await command('Target.createBrowserContext');const page=await newPage(browserContextId);sessions.push(page);await input(page,'#player-name',name);}
   const [a,b]=sessions;await click(a,'#create-room-controls > summary');await input(a,'#room-name','公开邀请');await select(a,'#room-mode',1);await select(a,'#room-map',7);await input(a,'#room-min-players',2);await click(a,'#create-room');

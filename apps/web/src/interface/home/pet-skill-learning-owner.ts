@@ -99,7 +99,7 @@ export class PetSkillLearningOwner {
     this.attempt = attempt;
     const revision = ++this.revision;
     this.publish({busy: true, attempt, confirmation: undefined, queryError: undefined, actionError: undefined,
-      message: '学习技能…'});
+      message: undefined});
     try {
       const result = await this.battle.petSkillLearning({operation: 'LEARN', instanceId: attempt.instanceId,
         slot: attempt.slot, requestId: attempt.requestId});
@@ -118,7 +118,7 @@ export class PetSkillLearningOwner {
       const attempt = this.attempt;
       if (!attempt) {this.publish({message: '没有待确认的学习结果'}); return;}
       const revision = ++this.revision;
-      this.publish({busy: true, actionError: undefined, queryError: undefined, message: '确认学习结果…'});
+      this.publish({busy: true, actionError: undefined, queryError: undefined, message: undefined});
       try {
         const result = await this.battle.petSkillLearning({operation: 'CONFIRM', instanceId: attempt.instanceId,
           slot: attempt.slot, requestId: attempt.requestId});
@@ -146,7 +146,7 @@ export class PetSkillLearningOwner {
       if (!this.current() || this.confirmation !== 'ABSENT' || !this.attempt) return;
       const attempt = this.attempt;
       const revision = ++this.revision;
-      this.publish({busy: true, actionError: undefined, message: '读取当前报价…'});
+      this.publish({busy: true, actionError: undefined, message: undefined});
       try {
         const result = await this.battle.petSkillLearning({operation: 'QUERY'});
         if (!this.accept(result, revision)) return;

@@ -32,27 +32,29 @@
   outline: 1px solid white;
 }
 
-.source-confirm-picture {
-  pointer-events: none;
-}
-
 .source-confirm-stage [data-source-control='txtMessage'] {
+  left: 10px;
+  top: 8px;
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
+  width: 295px;
+  height: 40px;
   overflow: auto;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: center;
   font-size: 12px;
   line-height: 18px;
+  -webkit-text-stroke: 1px #232332;
 }
 
-.source-confirm-status {
-  position: absolute;
-  top: 114px;
-  left: 0;
-  box-sizing: border-box;
-  width: 315px;
-  padding: 8px;
-  background: #152a3b;
-  color: white;
-  font-size: 12px;
-  line-height: 18px;
-  overflow-wrap: anywhere;
+.source-confirm-stage [data-source-control='btnOK'] {
+  left: 40px;
+  top: 61px;
+}
+
+.source-confirm-stage [data-source-control='btnCancel'] {
+  left: 194px;
+  top: 61px;
 }

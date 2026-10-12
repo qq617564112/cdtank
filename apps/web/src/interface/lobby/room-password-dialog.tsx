@@ -1,5 +1,5 @@
+import {GameMessage} from '../resources/game-message';
 import {useRef, useState} from 'react';
-import './room-password-dialog.css';
 import {SourceButton} from '../resources/source-button';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceStaticText} from '../resources/source-static-text';
@@ -63,6 +63,6 @@ export function RoomPasswordDialog({roomId, close, submit}: {
         </form>
       </SourceImageScale>}
     </div></div>
-    <output data-room-password-status="" role="status" aria-live="polite" hidden={!error && !status}>{error || status}</output>
+    <GameMessage data-room-password-status="" text={error || status} tone="error"/>
   </dialog>;
 }

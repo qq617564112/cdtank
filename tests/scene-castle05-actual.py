@@ -5,7 +5,7 @@ import struct
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-WEB = ROOT / 'recovery/output/web-assets'
+WEB = ROOT / 'apps/web/public'
 raw_path = Path(sys.argv[1]).resolve()
 raw = json.loads(raw_path.read_text())
 library = json.loads((WEB / 'scene-castle-0005.json').read_text())

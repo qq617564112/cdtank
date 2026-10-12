@@ -4,11 +4,11 @@ from pathlib import Path
 import sys
 from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'recovery'))
+sys.path.insert(0, str(ROOT / 'tools/recovery'))
 from cvd import read_cvd
 
 source = ROOT / 'recovery/output/verified/assets/data'
-web = ROOT / 'recovery/output/web-assets'
+web = ROOT / 'apps/web/public'
 resource = json.loads((web / 'scene-animation-0007.json').read_text())['resources'][0]
 native = read_cvd(source / resource['reference'])['nodes']
 assert len(native) == len(resource['nodes']) == 23

@@ -1,4 +1,5 @@
-import {gameContent} from '../../../shared/content/catalog';
+import {gameContent, itemHitHandler} from '../../../shared/content/catalog';
+import {shotCausedDamage, shotImpactEvent} from './shot-impact';
 import {createRoleFreeAim} from './roles/free-aim';
 import {queryShotTarget} from './shot-query';
 import type {MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot} from '../../../shared/protocols';
@@ -44,11 +45,13 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
   sceneObjects?: SceneObjectSnapshot[];
   battlefield: Battlefield;
 }, dt: number, bodyRadius: number, handlers: {
+  /** Damage handlers return true for a confirmed damaging hit. */
   hitPlayer(owner: Player, target: Player, damage: number, ammoItemId: number | undefined,
-    bearing?: {x: number; z: number}, shotId?: string): void;
-  hitObjective(owner: Player, target: ObjectiveSnapshot, damage: number, ammoItemId?: number): void;
-  hitSceneObject?(owner: Player, target: SceneObjectSnapshot, damage: number, ammoItemId?: number): void;
+    bearing?: {x: number; z: number}, shotId?: string): boolean | void;
+  hitObjective(owner: Player, target: ObjectiveSnapshot, damage: number, ammoItemId?: number): boolean | void;
+  hitSceneObject?(owner: Player, target: SceneObjectSnapshot, damage: number, ammoItemId?: number): boolean | void;
   terrainHit(event: MsgRoomEvent): void;
+  shotImpact?(event: MsgRoomEvent): void;
 }): void {
   for (let index = room.bullets.length - 1; index >= 0 && room.phase === 'PLAYING'; index--) {
     const bullet = room.bullets[index];
@@ -106,19 +109,28 @@ export function advanceProjectiles<Player extends ProjectilePlayer>(room: {
     }
     if (hitFraction <= 1) {
       const owner = room.players.get(bullet.ownerId);
+      const point = {x: bullet.x + (destination.x - bullet.x) * hitFraction,
+        y: bullet.y + (destination.y - bullet.y) * hitFraction,
+        z: bullet.z + (destination.z - bullet.z) * hitFraction};
+      let damaging = false;
+      let targetId = wall?.boxId ?? '';
       if (hitPlayer && owner) {
-        handlers.hitPlayer(owner, hitPlayer, bullet.damage, bullet.ammoItemId,
-          {x: -bullet.vx, z: -bullet.vz}, bullet.shotId ?? bullet.id);
+        targetId = hitPlayer.id;
+        damaging = handlers.hitPlayer(owner, hitPlayer, bullet.damage, bullet.ammoItemId,
+          {x: -bullet.vx, z: -bullet.vz}, bullet.shotId ?? bullet.id) === true;
       } else if (hitObjective && owner) {
-        handlers.hitObjective(owner, hitObjective, bullet.damage, bullet.ammoItemId);
+        targetId = hitObjective.id;
+        damaging = handlers.hitObjective(owner, hitObjective, bullet.damage, bullet.ammoItemId) === true;
       } else if (hitSceneObject && owner) {
-        handlers.hitSceneObject?.(owner, hitSceneObject, bullet.damage, bullet.ammoItemId);
+        targetId = hitSceneObject.id;
+        damaging = handlers.hitSceneObject?.(owner, hitSceneObject, bullet.damage, bullet.ammoItemId) === true;
       } else if (wall) {
         handlers.terrainHit({roomId: room.roomId, type: 'terrainHit', message: '弹丸命中障碍',
-          playerId: bullet.ownerId, targetId: wall.boxId, value: 0,
-          x: bullet.x + (destination.x - bullet.x) * hitFraction,
-          y: bullet.y + (destination.y - bullet.y) * hitFraction,
-          z: bullet.z + (destination.z - bullet.z) * hitFraction});
+          playerId: bullet.ownerId, targetId: wall.boxId, value: 0, ...point});
+      }
+      if (!(hitPlayer && itemHitHandler(bullet.ammoItemId) === 'medical')) {
+        handlers.shotImpact?.(shotImpactEvent(room.roomId, bullet.ownerId, targetId, point,
+          damaging, bullet.ammoItemId, !hitPlayer));
       }
       if (room.phase === 'PLAYING') room.bullets.splice(index, 1);
     } else {
@@ -190,30 +202,55 @@ export function fireProjectile(room: {
   const damage = player.armorReady && player.recoveredArmor
     ? calculateQualifiedShotAttack(player.recoveredArmor)
     : ammo.runtime.values.baseDamage + prototypeAttack(player.tank.attack, player.attackBoost) * ammo.runtime.values.attackScale;
-  // Ordinary2001 and FuncType22 resolve one selected target during the accepted
-  // query boundary; query geometry and server damage are rebuilt.
+  // Instant ammunition and FuncType22 resolve one selected target at the
+  // accepted query boundary; query geometry and server damage are rebuilt.
   if (instant || penetratesObstacles) {
-    if (target.kind === 'PLAYER') hitPlayer?.(target.targetId, damage, itemId, shotId);
-    else if (target.kind === 'SCENE' && !hitSceneObject?.(target.targetId, damage, itemId)) {
-      // Original type2 receives remote result feedback without a damage transaction.
-      // Source BOX identity and server notification eligibility are reconstructed.
-      const sourceBox = room.battlefield.boxes.some(box => box.id === target.targetId);
-      events.push({roomId: room.roomId, type: sourceBox ? 'sceneStaticHit' : 'terrainHit',
-        message: '射击命中场景', playerId: player.id, targetId: target.targetId,
-        value: 0, ...target.point,
-        shotItemResult: sourceBox ? {itemId, ...target.point} : undefined});
+    const firstEvent = events.length;
+    if (target.kind === 'PLAYER') {
+      const victim = room.players.get(target.targetId)!;
+      const center = {...victim, y: victim.y + bodyRadius};
+      const endpoint = {x: muzzle.x + Math.sin(angle) * range, y: muzzle.y,
+        z: muzzle.z + Math.cos(angle) * range};
+      const fraction = segmentSphere(muzzle, endpoint, center, bodyRadius);
+      // The ordinary strip can accept a hull off the center ray; use its front surface.
+      const length = Math.hypot(muzzle.x - center.x, muzzle.y - center.y, muzzle.z - center.z);
+      const offset = length > 0 ? Math.min(1, bodyRadius / length) : 0;
+      const point = fraction === undefined ? {
+        x: center.x + (muzzle.x - center.x) * offset,
+        y: center.y + (muzzle.y - center.y) * offset,
+        z: center.z + (muzzle.z - center.z) * offset,
+      } : {x: muzzle.x + (endpoint.x - muzzle.x) * fraction,
+        y: muzzle.y + (endpoint.y - muzzle.y) * fraction,
+        z: muzzle.z + (endpoint.z - muzzle.z) * fraction};
+      hitPlayer?.(target.targetId, damage, itemId, shotId);
+      if (itemHitHandler(itemId) !== 'medical') events.push(shotImpactEvent(room.roomId, player.id,
+        target.targetId, point, shotCausedDamage(events, firstEvent, player.id, target.targetId), itemId, false));
+    } else if (target.kind === 'SCENE') {
+      if (!hitSceneObject?.(target.targetId, damage, itemId)) {
+        // Original type2 receives remote result feedback without a damage transaction.
+        // Source BOX identity and server notification eligibility are reconstructed.
+        const sourceBox = room.battlefield.boxes.some(box => box.id === target.targetId);
+        events.push({roomId: room.roomId, type: sourceBox ? 'sceneStaticHit' : 'terrainHit',
+          message: '射击命中场景', playerId: player.id, targetId: target.targetId,
+          value: 0, ...target.point,
+          shotItemResult: sourceBox ? {itemId, ...target.point} : undefined});
+      }
+      events.push(shotImpactEvent(room.roomId, player.id, target.targetId, target.point,
+        shotCausedDamage(events, firstEvent, player.id, target.targetId), itemId, true));
     }
     return;
   }
   const obstruction = room.battlefield.firstSurfaceHit({...player, y: muzzle.y}, muzzle, 1);
   if (obstruction) {
-    if (hitSceneObject?.(obstruction.boxId, damage, itemId)) return;
-    events.push({roomId: room.roomId, type: 'terrainHit', message: '弹丸命中障碍', playerId: player.id,
-      targetId: obstruction.boxId, value: 0,
-      x: player.x + (muzzle.x - player.x) * obstruction.fraction,
-      y: muzzle.y,
-      z: player.z + (muzzle.z - player.z) * obstruction.fraction,
-      skillId: undefined});
+    const point = {x: player.x + (muzzle.x - player.x) * obstruction.fraction, y: muzzle.y,
+      z: player.z + (muzzle.z - player.z) * obstruction.fraction};
+    const firstEvent = events.length;
+    if (!hitSceneObject?.(obstruction.boxId, damage, itemId)) {
+      events.push({roomId: room.roomId, type: 'terrainHit', message: '弹丸命中障碍', playerId: player.id,
+        targetId: obstruction.boxId, value: 0, ...point});
+    }
+    events.push(shotImpactEvent(room.roomId, player.id, obstruction.boxId, point,
+      shotCausedDamage(events, firstEvent, player.id, obstruction.boxId), itemId, true));
     return;
   }
   const travelDistance = Math.max(0, range - ammo.runtime.muzzleForward!);

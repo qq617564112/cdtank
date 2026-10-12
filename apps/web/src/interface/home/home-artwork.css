@@ -1,0 +1,513 @@
+@import '../resources/happy-zcool.css';
+
+:is(#home-inventory, #home-roles, #home-equipment, [data-home-name-dialog], [data-home-tank-upgrade-dialog], [data-pet-skill-dialog]),
+:is(#home-inventory, #home-roles, #home-equipment, [data-home-name-dialog], [data-home-tank-upgrade-dialog], [data-pet-skill-dialog]) *,
+:is(#home-inventory, #home-roles, #home-equipment, [data-home-name-dialog], [data-home-tank-upgrade-dialog], [data-pet-skill-dialog]) *::before,
+:is(#home-inventory, #home-roles, #home-equipment, [data-home-name-dialog], [data-home-tank-upgrade-dialog], [data-pet-skill-dialog]) *::after {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-synthesis: none;
+}
+
+.home-font-text {
+  position: absolute;
+  display: flex;
+  overflow: hidden;
+  color: #fff;
+  font: 12px/1.2 'HappyZcool-2016', sans-serif;
+  white-space: nowrap;
+  -webkit-text-stroke: 1px #35392b;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+.home-font-text.home-kitbag-label {
+  font-size: 15px;
+}
+
+.home-font-text[data-source-control^='txtQuantity'] {
+  font-size: 12px;
+}
+
+.home-painted-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #646718;
+  font: 16px/1 'HappyZcool-2016', sans-serif;
+  -webkit-text-stroke: 1.1px #ffffda;
+  paint-order: stroke fill;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.home-painted-label[data-home-label-tone='gold'],
+.home-painted-label[data-home-label-tone='green'],
+.home-painted-label[data-home-label-tone='skill'],
+.home-painted-label[data-home-label-tone='blue'] {
+  color: #fffba0;
+  font-size: 19px;
+  -webkit-text-stroke: 3px #131b13;
+}
+
+.home-painted-label[data-home-label-tone='green'] {
+  color: #aeed64;
+}
+
+.home-painted-label[data-home-label-tone='blue'] {
+  color: #28b8e8;
+}
+
+.home-painted-label[data-home-label-tone='skill'] {
+  color: #ffc400;
+}
+
+.home-painted-label[data-source-control='jinqian'],
+.home-painted-label[data-source-control='jinqian2'],
+.home-painted-label[data-source-control='xingbi'] {
+  font-size: 16px;
+  -webkit-text-stroke: 2px #131b13;
+}
+
+:is(#home-roles, #home-equipment) .home-painted-label:is([data-source-control='chuangyidiantubiao'], [data-source-control='huofeijinengdian']) {
+  font-size: 14px;
+  -webkit-text-stroke: 1.5px #131b13;
+}
+
+.home-painted-label:is([data-source-control='shengyutianshu'], [data-source-control='lblPanzerSide'], [data-source-control='lblPanzerBack'], [data-source-control='lblShootInterval'], [data-source-control='lblMoveSpeed'], [data-source-control='lblRotationSpeed'], [data-source-control='lblLoadBullet']) {
+  font-size: 14px;
+  -webkit-text-stroke: .8px #ffffda;
+}
+
+.home-painted-label:is([data-source-control='sec'], [data-source-control='km'], [data-source-control='xiegangsec']) {
+  font-size: 12px;
+  -webkit-text-stroke: .6px #ffffda;
+}
+
+#home-inventory [data-source-control='chaotiaodi'],
+#home-inventory [data-source-control='xiugainicheng'] {
+  z-index: 1;
+}
+
+.home-pet-mastery {
+  position: absolute;
+  pointer-events: none;
+}
+
+.home-pet-mastery-label {
+  position: absolute;
+  color: #53600b;
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-text-stroke: 0;
+  pointer-events: none;
+}
+
+.shop-source-button.home-joined-tab[data-shop-button-kind='tab'][data-shop-button-checked] .shop-tab-artwork {
+  display: none;
+}
+
+.shop-source-button.home-joined-tab[data-shop-button-kind='tab'][data-shop-button-checked] {
+  z-index: 1;
+}
+
+.home-profile-label {
+  position: absolute;
+  left: 254px;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 20px;
+  color: #686619;
+  font: 18px/1 'HappyZcool-2016', sans-serif;
+  letter-spacing: 2px;
+  -webkit-text-stroke: 0;
+  pointer-events: none;
+}
+
+.home-player-profile-background {
+  position: absolute;
+  pointer-events: none;
+}
+
+.home-player-profile-background svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.home-score-star {
+  position: absolute;
+  left: 389px;
+  top: 146px;
+  width: 38px;
+  height: 39px;
+  pointer-events: none;
+}
+
+.home-currency-marker {
+  position: absolute;
+  pointer-events: none;
+}
+
+.home-currency-dot {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.home-shortcut-panel {
+  position: absolute;
+  left: 7px;
+  top: 275px;
+  width: 200px;
+  height: 118px;
+  pointer-events: none;
+}
+
+.home-shortcut-panel > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.home-shortcut-panel[data-valuable-mode] {
+  top: 330px;
+  height: 63px;
+}
+
+.home-shortcut-heading {
+  position: absolute;
+  left: 57px;
+  top: 15px;
+  width: 86px;
+  color: #fff9b6;
+  font: 17px/1 'HappyZcool-2016', sans-serif;
+  text-align: center;
+  -webkit-text-stroke: 2px #43381e;
+  paint-order: stroke fill;
+}
+
+.home-shortcut-slot-frame {
+  position: absolute;
+  top: 34px;
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+  border: 1.5px solid #755933;
+  background: linear-gradient(135deg, #719a9b, #203b47);
+  box-shadow: inset 1px 1px 0 #cce7d9, 1px 2px 1px #695130;
+}
+
+.home-currency-strip {
+  position: absolute;
+  left: 6px;
+  top: 74px;
+  width: 183px;
+  height: 15px;
+  border-radius: 2px;
+  background: linear-gradient(#64250f, #51200d);
+  box-shadow: inset 0 1px 2px #2c180d, 0 1px 0 #e4c385;
+}
+
+.home-currency-strip[data-currency='tokens'] {
+  top: 95px;
+}
+
+.home-summary-sheet {
+  position: absolute;
+  left: 0;
+  width: 375px;
+  height: 132px;
+  box-sizing: border-box;
+  border: 3px solid #d5edbc;
+  background: #f8f6c4;
+  box-shadow: inset 0 1px 2px rgb(112 105 44 / 18%);
+  pointer-events: none;
+}
+
+.shop-source-button.home-summary-tab .cartoon-control-art {
+  transform: scaleY(-1);
+}
+
+.shop-source-button.home-summary-tab .shop-button-label {
+  top: 2px;
+  height: 24px;
+  font-size: 16px;
+  letter-spacing: 1px;
+  padding-left: 1px;
+}
+
+.shop-source-button.home-summary-tab[data-shop-button-checked] > .cartoon-control-art {
+  visibility: hidden;
+}
+
+.shop-source-button.home-summary-tab[data-shop-button-checked]::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  content: '';
+  background: #f8f6c4;
+  box-shadow: inset 3px 0 #d5edbc, inset -3px -3px #d5edbc;
+  clip-path: polygon(0 0, 100% 0, 100% 86%, 95% 100%, 5% 99%, 0 84%);
+}
+
+.shop-source-button.cartoon-button.home-summary-tab[data-shop-button-checked]:where(:not(:disabled)) {
+  --cartoon-label-fill: #656818;
+  --cartoon-label-stroke: #ffffe0;
+  --cartoon-label-outline: 1px;
+}
+
+.home-surface-panel {
+  position: absolute;
+  pointer-events: none;
+}
+
+.home-surface-panel > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.home-surface-panel:is([data-home-surface='canvas'], [data-home-surface='header']) > svg {
+  filter: drop-shadow(2px 2px 1.5px rgb(21 30 16 / 50%));
+}
+
+.home-button.game-button,
+.home-button.game-dialog-button {
+  position: absolute;
+}
+
+.home-button.cartoon-button[data-home-button='use'] {
+  --cartoon-button-face-top: #ff899e;
+  --cartoon-button-face: #ff5570;
+  --cartoon-button-rim: #bd274b;
+  --cartoon-button-highlight: #ffe5ec;
+  --cartoon-button-bevel: #eb3152;
+  --cartoon-label-fill: #fff;
+  --cartoon-label-stroke: #eb3152;
+  --cartoon-label-outline: 2px;
+  --cartoon-label-size: 23px;
+  --cartoon-label-shadow: none;
+}
+
+.home-button[data-home-button='use'] > .cartoon-control-label {
+  margin-bottom: 4px;
+  letter-spacing: 9px;
+}
+
+.home-button.cartoon-button[data-home-button='skill'] {
+  --cartoon-button-face-top: #b2fff8;
+  --cartoon-button-face: #5dffef;
+  --cartoon-button-rim: #347a6b;
+  --cartoon-button-highlight: #e3fff5;
+  --cartoon-button-bevel: #29a89c;
+  --cartoon-label-fill: #fff;
+  --cartoon-label-stroke: #24544b;
+  --cartoon-label-outline: 1px;
+  --cartoon-label-size: 12px;
+  --cartoon-label-shadow: none;
+}
+
+.home-button[data-home-button='skill'] > .cartoon-control-label {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+.home-button[data-home-button='skill'] .home-font-text {
+  color: var(--cartoon-label-fill);
+  -webkit-text-stroke: 1px var(--cartoon-label-stroke);
+}
+
+.home-skill-level-caption {
+  position: absolute;
+  left: 107px;
+  top: 5px;
+  height: 16px;
+  line-height: 16px;
+}
+
+.home-symbol-meter {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.home-tank-stat-row {
+  position: absolute;
+  display: grid;
+  align-content: center;
+  box-sizing: border-box;
+  padding: 1px 7px 2px;
+  pointer-events: none;
+}
+
+.home-tank-stat-content {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.home-tank-stat-label {
+  color: #646718;
+  font-size: 14px;
+  line-height: 1.2;
+  -webkit-text-stroke: .8px #ffffda;
+  paint-order: stroke fill;
+}
+
+.home-tank-stat-number {
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.2;
+  -webkit-text-stroke: 1px #35392b;
+  paint-order: stroke fill;
+}
+
+.home-tank-stat-value {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.home-tank-stat-unit {
+  color: #646718;
+  font-size: 12px;
+  line-height: 1.2;
+  -webkit-text-stroke: .6px #ffffda;
+  paint-order: stroke fill;
+}
+
+.home-tank-stat-formula .home-tank-stat-content {
+  justify-content: center;
+}
+
+.home-tank-stat-formula .home-tank-stat-content > .home-tank-stat-value {
+  gap: 8px;
+}
+
+.home-tank-stat-operator {
+  color: #646718;
+  font-size: 14px;
+  line-height: 1.2;
+  -webkit-text-stroke: .8px #ffffda;
+  paint-order: stroke fill;
+}
+
+.home-tank-stat-days {
+  padding: 0;
+}
+
+.home-tank-stat-capacity .home-tank-stat-content {
+  align-items: center;
+}
+
+.home-tank-stat-meter {
+  flex: 0 0 88px;
+  height: 20px;
+}
+
+:is(.home-pet-owned-description, .home-tank-description) {
+  font-size: 12px;
+  -webkit-text-stroke: .6px #4c512b;
+  paint-order: stroke fill;
+  scrollbar-width: thin;
+  scrollbar-color: #ae7b48 #fffbd1;
+}
+
+.home-button.cartoon-button[data-cartoon-button-state='hover'] {
+  --cartoon-button-face-top: #fff7ce;
+  --cartoon-button-face: #ffe26a;
+  --cartoon-button-rim: #6d5815;
+  --cartoon-button-highlight: #fffbd7;
+  --cartoon-button-bevel: #d7ac23;
+  --cartoon-label-fill: #111500;
+  --cartoon-label-stroke: #ffffc5;
+}
+
+.home-button.cartoon-button[data-cartoon-button-state='pressed'] {
+  --cartoon-button-face-top: #ffd6b6;
+  --cartoon-button-face: #ff9754;
+  --cartoon-button-rim: #733218;
+  --cartoon-button-highlight: #fff0cf;
+  --cartoon-button-bevel: #dc6332;
+}
+
+.home-button.cartoon-button[data-home-button='skill'][data-cartoon-button-state='hover'] {
+  --cartoon-button-face-top: #ffffcb;
+  --cartoon-button-face: #fffc5d;
+  --cartoon-button-bevel: #bcb92b;
+  --cartoon-label-fill: #fff;
+  --cartoon-label-stroke: #24544b;
+}
+
+.home-button.cartoon-button[data-home-button='skill'][data-cartoon-button-state='pressed'] {
+  --cartoon-button-face-top: #ffe089;
+  --cartoon-button-face: #f4b300;
+  --cartoon-button-bevel: #a87515;
+  --cartoon-label-fill: #fff;
+  --cartoon-label-stroke: #6a551f;
+}
+
+.home-button.cartoon-button:disabled {
+  --cartoon-button-face-top: #d4d8cd;
+  --cartoon-button-face: #a6aaa2;
+  --cartoon-button-rim: #59604f;
+  --cartoon-button-highlight: #e1e4dc;
+  --cartoon-button-bevel: #858e7b;
+  --cartoon-label-fill: #e7e8df;
+  --cartoon-label-stroke: #59604f;
+}
+
+.home-button.home-role-use:disabled {
+  opacity: 1;
+}
+
+.shop-source-button.home-upgrade-button .shop-button-label {
+  left: 6px;
+  width: 64px;
+  font-size: 17px;
+}
+
+.home-upgrade-level-caption,
+.home-upgrade-level-close {
+  position: absolute;
+  top: 3px;
+  color: #003c5c;
+  font-size: 16px;
+  line-height: 19px;
+  -webkit-text-stroke: 1px #efffff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+.home-upgrade-level-caption {
+  left: 76px;
+  font-size: 13px;
+}
+
+.home-upgrade-level-close {
+  left: 114px;
+}
+
+.home-button.cartoon-button[data-home-state='current'] {
+  --cartoon-button-face-top: #ffd439;
+  --cartoon-button-face: #ffbe00;
+  --cartoon-button-rim: #9c6800;
+  --cartoon-button-bevel: #eba500;
+  --cartoon-label-fill: #00e7ff;
+  --cartoon-label-stroke: #112822;
+  cursor: default;
+  pointer-events: none;
+}

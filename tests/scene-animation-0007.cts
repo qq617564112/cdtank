@@ -5,7 +5,7 @@ import {EffectModelLibrary, EffectModelRenderer} from '../apps/web/src/render/ef
 import {EffectModelAnimation, effectModelVertices} from '../apps/web/src/render/effects/models/effect-model-animation';
 import {SceneCvdAnimation} from '../apps/web/src/assets/scenes/scene-cvd-animation';
 import {EFFECT_IDENTITY} from '../apps/web/src/render/effects/common/effect-render-transform';
-const library = JSON.parse(readFileSync('recovery/output/web-assets/scene-animation-0007.json', 'utf8')) as EffectModelLibrary;
+const library = JSON.parse(readFileSync('apps/web/public/scene-animation-0007.json', 'utf8')) as EffectModelLibrary;
 const resource = library.resources[0];
 assert.equal(resource.reference, 'Data/scnobj/obj05025/obj05025.CVD');
 assert.equal(resource.nodes.filter(node => node.parts.length).length, 3);

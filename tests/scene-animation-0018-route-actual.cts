@@ -28,7 +28,7 @@ interface Source {status: string; geometryNodes: number[]; placements: {id: stri
 const inputs = process.argv.slice(2);
 assert(inputs.length > 0, 'Provide the recorded ordinary route browser JSON paths');
 const source = JSON.parse(readFileSync('recovery/output/scene-animation-0018-source.json', 'utf8')) as Source;
-const resource = JSON.parse(readFileSync('recovery/output/web-assets/scene-animation-0018.json', 'utf8')).resources[0] as EffectModelResource;
+const resource = JSON.parse(readFileSync('apps/web/public/scene-animation-0018.json', 'utf8')).resources[0] as EffectModelResource;
 assert.equal(source.status, 'PASS');
 assert.deepEqual(source.geometryNodes, [0, 2, 3, 4, 5]);
 assert.equal(resource.nodes.length, 6);

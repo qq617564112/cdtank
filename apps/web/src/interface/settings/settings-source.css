@@ -1,26 +1,411 @@
-#source-settings { position: fixed; inset: 0; width: 800px; height: 599px; max-width: none; max-height: none; margin: auto; padding: 0; border: 0; background: transparent; overflow: visible; color: #fff; }
-#source-settings::backdrop { background: rgb(0 33 74 / 60%); }
-.settings-source-stage { position: relative; width: 800px; height: 599px; font-family: 'CDTank-SIMSUN', serif; font-size: 12px; }
-.settings-source-stage > * { position: absolute; box-sizing: border-box; }
-.settings-source-picture { pointer-events: none; }
-.settings-source-checkmark { pointer-events: none; }
-.settings-source-button { margin: 0; padding: 0; border: 0; background-color: transparent; background-size: 100% 100%; background-repeat: no-repeat; }
-.settings-source-button:disabled { opacity: .55; }
-.settings-source-button:focus-visible, .settings-key:focus-visible, .settings-quick-chat:focus-visible { outline: 1px solid #fff; outline-offset: 1px; }
-.settings-key { border: 0; padding: 0; margin: 0; background: transparent; color: #fff; font: inherit; text-align: center; white-space: nowrap; }
-.settings-key[data-settings-unset] { color: #b8c4c9; font-size: 11px; }
-.settings-key[aria-pressed='true'] { outline: 1px solid #fff; }
-.settings-quick-chat { border: 0; padding: 0; margin: 0; background: transparent; color: #fff; font: inherit; line-height: 14px; }
-.settings-volume-control > span { position: absolute; top: calc((100% - 10px) / 2); height: 10px; background-size: 100% 100%; pointer-events: none; }
-.settings-volume-track-left { left: 0; width: 10px; }
-.settings-volume-track-middle { left: 10px; right: 10px; }
-.settings-volume-track-right { right: 0; width: 10px; }
-.settings-volume-control > .settings-volume-thumb { top: calc((100% - var(--settings-thumb-height)) / 2); width: var(--settings-thumb-width); height: var(--settings-thumb-height); }
-.settings-volume { position: absolute; inset: 0; width: 100%; height: 100%; appearance: none; margin: 0; background: transparent; padding: 0; border: 0; }
-.settings-volume:focus-visible { outline: 1px solid #fff; outline-offset: 1px; }
-.settings-volume::-webkit-slider-runnable-track { height: 10px; background: transparent; }
-.settings-volume::-webkit-slider-thumb { appearance: none; width: var(--settings-thumb-width); height: var(--settings-thumb-height); margin-top: calc((10px - var(--settings-thumb-height)) / 2); background: transparent; }
-.settings-volume::-moz-range-track { height: 10px; background: transparent; }
-.settings-volume::-moz-range-thumb { width: var(--settings-thumb-width); height: var(--settings-thumb-height); border: 0; border-radius: 0; background: transparent; }
-.settings-status { left: 220px; top: 13px; width: 450px; min-height: 18px; font-size: 12px; }
-.settings-loading-close { left: 740px; top: 10px; }
+#source-settings {
+  position: fixed;
+  inset: 0;
+  width: 800px;
+  height: 599px;
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+  color: #fff;
+}
+
+.settings-source-stage,
+.settings-source-stage * {
+  font-family: 'HappyZcool-2016', sans-serif !important;
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+.game-dialog-stage.settings-source-stage {
+  position: relative;
+  display: block;
+  width: 800px;
+  height: 599px;
+  font-size: 12px;
+}
+
+.game-dialog-stage.settings-source-stage > * {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.settings-source-stage > .game-dialog-footbar {
+  z-index: 1;
+}
+
+.settings-source-stage .settings-source-button {
+  position: absolute;
+}
+
+.settings-source-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.settings-source-button:disabled {
+  opacity: .55;
+}
+
+.settings-source-button:focus-visible,
+.settings-key-field:focus-within,
+.settings-chat-field:focus-within,
+.settings-volume:focus-visible,
+.settings-option:focus-visible {
+  outline: 1.5px solid #fff7b7;
+  outline-offset: 2px;
+}
+
+.settings-source-panel {
+  pointer-events: none;
+}
+
+.settings-source-panel > .settings-display-options,
+.settings-source-panel > .settings-display-modes {
+  position: absolute;
+  top: 11px;
+}
+
+.settings-display-options {
+  left: 8px;
+}
+
+.settings-display-modes {
+  left: 143px;
+}
+
+.settings-art-label {
+  display: flex;
+  align-items: center;
+  color: #fff794;
+  font-size: 16px;
+  line-height: 17px;
+  white-space: nowrap;
+  -webkit-text-stroke: 2px #7b0800;
+  paint-order: stroke fill;
+  text-shadow: 1px 1px #7b0800;
+  pointer-events: none;
+}
+
+.settings-chat-label {
+  display: block;
+  padding-left: 14px;
+  color: #7b0800;
+  font-size: 14px;
+  line-height: 17px;
+  -webkit-text-stroke: 2px #fffad9;
+  text-shadow: none;
+}
+
+.settings-key-headings {
+  left: 151px;
+  top: 143px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+  width: 214px;
+  color: #fff794;
+  font-size: 12px;
+  line-height: 15px;
+  text-align: center;
+  -webkit-text-stroke: 1.5px #7b0800;
+  paint-order: stroke fill;
+}
+
+.settings-key-list {
+  left: 66px;
+  top: 162px;
+  display: grid;
+  gap: 8px;
+  width: 299px;
+}
+
+.settings-key-row {
+  display: grid;
+  grid-template-columns: 82px repeat(2, minmax(0, 1fr));
+  column-gap: 3px;
+  align-items: center;
+}
+
+.settings-key-label {
+  justify-content: flex-end;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.settings-key-field,
+.settings-chat-field {
+  isolation: isolate;
+  border: 0;
+  background: transparent;
+}
+
+.settings-key-field::before,
+.settings-chat-field::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  box-sizing: border-box;
+  border: solid transparent;
+  border-width: 0 15px;
+  border-image: var(--image-settings-red-field) 0 15 fill;
+  pointer-events: none;
+  content: '';
+}
+
+.settings-key-field {
+  position: relative;
+  display: block;
+  min-width: 0;
+  height: 21px;
+}
+
+.settings-key {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  line-height: 14px;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-text-stroke: 1px #160b07;
+  paint-order: stroke fill;
+}
+
+.settings-key[data-settings-unset] {
+  color: #d4c4b6;
+  font-size: 11px;
+}
+
+.settings-key-field[data-settings-capturing] {
+  outline: 1px solid #fff;
+  outline-offset: 1px;
+}
+
+.settings-quick-chat {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+  line-height: 14px;
+  caret-color: #fff;
+  -webkit-text-stroke: .5px #160b07;
+  paint-order: stroke fill;
+}
+
+.settings-adjustments {
+  left: 70px;
+  top: 85px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 666px;
+  height: 56px;
+}
+
+.settings-adjustment {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+.settings-adjustment-icon {
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 48px;
+  height: 39px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.settings-adjustment-max {
+  position: absolute;
+  right: 4px;
+  top: 20px;
+  width: 30px;
+  font-size: 14px;
+  line-height: 12px;
+  transform: scaleY(.8);
+  transform-origin: center;
+}
+
+.settings-volume {
+  position: absolute;
+  left: 51px;
+  top: 18px;
+  width: calc(100% - 91px);
+  height: 18px;
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.settings-adjustment-icon-label {
+  position: absolute;
+  left: 17px;
+  top: 36px;
+  color: #eff600;
+  font-size: 10px;
+  line-height: 11px;
+  white-space: nowrap;
+  -webkit-text-stroke: 3px #382008;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+.settings-volume::-webkit-slider-runnable-track {
+  box-sizing: border-box;
+  height: 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: linear-gradient(#ffe097 0 12.5%, #b76141 12.5% 25%,
+    #ef8252 25% 62.5%, #de8b5d 62.5% 75%, #ce6142 75% 87.5%,
+    #ffdf94 87.5%) padding-box;
+  box-shadow: inset 1px 0 #ffe097, inset -1px 0 #ffe097;
+}
+
+.settings-volume::-moz-range-track {
+  box-sizing: border-box;
+  height: 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: linear-gradient(#ffe097 0 12.5%, #b76141 12.5% 25%,
+    #ef8252 25% 62.5%, #de8b5d 62.5% 75%, #ce6142 75% 87.5%,
+    #ffdf94 87.5%) padding-box;
+  box-shadow: inset 1px 0 #ffe097, inset -1px 0 #ffe097;
+}
+
+.settings-volume::-webkit-slider-thumb {
+  appearance: none;
+  width: 21px;
+  height: 16px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 0;
+  background: var(--image-settings-pumpkin) center / contain no-repeat;
+  cursor: grab;
+}
+
+.settings-volume::-moz-range-thumb {
+  width: 21px;
+  height: 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--image-settings-pumpkin) center / contain no-repeat;
+  cursor: grab;
+}
+
+.settings-volume::-moz-range-progress {
+  background: transparent;
+}
+
+.settings-volume:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+
+.settings-volume:active::-moz-range-thumb {
+  cursor: grabbing;
+}
+
+.settings-option {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-option-mark {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  box-sizing: border-box;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid #5a0c08;
+  border-radius: 50%;
+  background: radial-gradient(#8c0408 45%, #750808 72%, #500d09);
+}
+
+.settings-option-radio[data-settings-marked='true'] .settings-option-mark {
+  border: 1.8px solid #310408;
+  background: linear-gradient(#ffffdf 0 27%, #fffca3 35%, #fff300 55%, #e5dd00);
+}
+
+.settings-option-checkbox .settings-option-mark {
+  top: 6px;
+  width: 24px;
+  height: 14px;
+  border: 0;
+  border-radius: 7px;
+  background: linear-gradient(#5a0808, #8c1410 26%, #8e1008 68%, #620808);
+  box-shadow: inset 1px 0 #520808, inset -1px 0 #520808;
+}
+
+.settings-checkbox-glyph {
+  position: absolute;
+  left: -4px;
+  top: -9px;
+  width: 29px;
+  height: 27px;
+  background: linear-gradient(#ffffdc 0 47%, #ffffa0 52%, #ffff00 70%);
+  background-clip: text;
+  color: transparent;
+  font-size: 27px;
+  line-height: 27px;
+  text-align: center;
+  transform: scale(1.4, .9);
+  -webkit-text-stroke: 2px #211006;
+  paint-order: stroke fill;
+}
+
+.settings-option-label {
+  position: absolute;
+  left: 16px;
+  top: 0;
+  color: #fff794;
+  font-size: 16px;
+  line-height: 18px;
+  white-space: nowrap;
+  -webkit-text-stroke: 2px #7b0800;
+  paint-order: stroke fill;
+  text-shadow: 1px 1px #7b0800;
+}
+
+.settings-option-checkbox .settings-option-label {
+  left: 27px;
+  top: 1px;
+  line-height: 20px;
+}
+
+.settings-option:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.settings-loading-close {
+  left: 740px;
+  top: 10px;
+}

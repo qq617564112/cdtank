@@ -5,7 +5,7 @@ import {partShopItems, consumableShopItems} from '../apps/server/src/accounts/sh
 import {classifyItemId} from '../apps/shared/combat/item-hotkeys';
 
 const source: {rows: {values: Record<string, string>}[]} = JSON.parse(
-  readFileSync('recovery/output/verified/tables/item.json', 'utf8'));
+  readFileSync('apps/server/resources/tables/item.json', 'utf8'));
 const products = partShopItems(combatCatalog);
 assert.equal(products.length, 74);
 assert.deepEqual([8, 9, 10, 11, 12].map(category =>

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {effectBillboardCorners} from '../apps/web/src/render/effects/camera/effect-billboard';
-const library = JSON.parse(fs.readFileSync('recovery/output/web-assets/effect-library.json', 'utf8'));
+const library = JSON.parse(fs.readFileSync('apps/web/public/effect-library.json', 'utf8'));
 const native = JSON.parse(fs.readFileSync('recovery/output/effect-billboard-native.json', 'utf8'));
 assert.equal(native.exeSha256, library.exeSha256);
 assert.equal(native.rows.length, (library.spriteControls.length + 8) * 2);

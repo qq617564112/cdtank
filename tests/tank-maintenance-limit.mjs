@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile, writeFile} from 'node:fs/promises';
 import {AccountStore} from '../apps/server/src/account-store.ts';
-const catalog=JSON.parse(await readFile('recovery/output/web-assets/combat-catalog.json','utf8'));
+const catalog=JSON.parse(await readFile('apps/web/public/combat-catalog.json','utf8'));
 const store=new AccountStore(':memory:');
 try{
  const account=store.open(),bytes=new Uint8Array(0x170);new DataView(bytes.buffer).setUint32(0x74,1000,true);

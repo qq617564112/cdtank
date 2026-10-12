@@ -228,7 +228,7 @@ async function createRoom(session, mode = 1) {
 }
 try {
   await launchServer();
-  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../recovery/output/web-assets',
+  vite = await createServer({configFile: false, root: 'apps/web', publicDir: '../../apps/web/public',
     plugins: [{name: 'quick-chat-readiness-observer', transform(source, id) {
       if (!id.endsWith('/src/match/battle.ts')) return;
       return source + `\nconst setQuickChats = Battle.prototype.setQuickChats; Battle.prototype.setQuickChats = function(value) {window.quickChatBattle = this; window.quickPresetWrites.push({...value}); return setQuickChats.call(this, value);};\n`;

@@ -3,7 +3,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {createRoomBattlefield} from '../apps/server/src/battlefield';
 import {createOriginalBotNavigation} from '../apps/server/src/battle/cpu/original-navigation';
 import {findBotPath} from '../apps/server/src/battle/cpu/navigation';
-const entry = JSON.parse(readFileSync('recovery/output/web-assets/scene-placements.json','utf8')).find((s: {id: string})=>s.id==='0002');
+const entry = JSON.parse(readFileSync('apps/web/public/scene-placements.json','utf8')).find((s: {id: string})=>s.id==='0002');
 const target = entry.records.find((s: {id: string})=>s.id==='325');
 assert.equal(target.className,'SYcScnObjPlant');
 const start={x:-1779.89,y:0,z:525.64};

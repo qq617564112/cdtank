@@ -9,7 +9,7 @@ raw = json.loads(raw_path.read_text())
 assert raw['status'] == 'PASS_HOST_MATERIAL_NORMAL_LEAVE' and raw['mapId'] == 20
 complete = True
 source = json.loads((ROOT / 'recovery/output/scene-breach18-intact-material-source.json').read_text())
-scene = next(value for value in json.loads((ROOT / 'recovery/output/web-assets/scene-placements.json').read_text()) if value['id'] == '0020')
+scene = next(value for value in json.loads((ROOT / 'apps/web/public/scene-placements.json').read_text()) if value['id'] == '0020')
 records = {value['id']: value for value in scene['records'] if value['className'] == 'SYcScnObjBreach' and value['model'] == 'obj05442'}
 rows = []
 for side, observed in enumerate(raw['observed'], 1):

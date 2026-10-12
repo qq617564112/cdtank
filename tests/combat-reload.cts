@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {accumulateRoleReload, computeRoleReload, type RoleReloadFields} from '../recovery/evidence/roles/reload';
+import {accumulateRoleReload, computeRoleReload, type RoleReloadFields} from '../tests/evidence/roles/reload';
 import {isRoleFireReady, roleSkillMultiplier} from '../apps/server/src/battle/roles/reload';
 const evidence: {limits: {lower: number; upper: number}; rows: Array<{baseDuration: number; type1Factor: number;
   normalSeconds: number; type1Seconds: number}>;

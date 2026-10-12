@@ -3,8 +3,8 @@ import type {PetLearningQuote} from '../../../../shared/contracts/pet-learning';
 import type {OwnedRoleRecordData} from '../../../../shared/protocols/PtlOwnedRoles';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import {useEffect, useState} from 'react';
-import {SourceButton} from '../resources/source-button';
-import {SourceStaticText} from '../resources/source-static-text';
+import {HomeSourceButton as SourceButton} from './home-source-button';
+import {HomeStaticText as SourceStaticText} from './home-text';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {PetSkillSourceView} from './pet-skill-source-view';
@@ -48,16 +48,23 @@ export function HomePetOwnedDetails({ui, record, catalog, description, quotes, p
         ? rankedPetSkillId(skillId, Math.max(1, level)) : undefined;
       const skill = currentSkillId ? catalog?.skills.find(definition => definition.skillId === currentSkillId) : undefined;
       const button = `btnViewSkill${index}`;
+      const buttonBounds = sourceProps(ui, layout, suffix, button).style;
+      const textPosition = (name: string) => {
+        const bounds = sourceProps(ui, layout, suffix, name).style;
+        return {left: Number(bounds.left) - Number(buttonBounds.left),
+          top: Number(bounds.top) - Number(buttonBounds.top)};
+      };
       return <span key={index} className="home-pet-owned-skill" data-home-pet-skill={index}
         data-skill-id={skillId} data-skill-level={level}>
         <SourceButton ui={ui} layout={layout} suffix={suffix} source={button}
           data-home-pet-view-skill={index} aria-label={`查看技能：${skill?.name ?? ''}`}
           disabled={busy || !skill || level === undefined || instanceId === undefined}
-          onClick={() => {if (instanceId !== undefined) setSelected({owner: instanceId, index});}} />
-        <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txtSkillName${index}`}
-          text={skill?.name ?? ''} title={skill?.info} />
-        <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txtSkillLevel${index}`}
-          text={skill && level !== undefined ? String(level) : ''} />
+          onClick={() => {if (instanceId !== undefined) setSelected({owner: instanceId, index});}}>
+          <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txtSkillName${index}`}
+            style={textPosition(`txtSkillName${index}`)} text={skill?.name ?? ''} title={skill?.info} />
+          <SourceStaticText ui={ui} layout={layout} suffix={suffix} name={`txtSkillLevel${index}`}
+            style={textPosition(`txtSkillLevel${index}`)} text={skill && level !== undefined ? String(level) : ''} />
+        </SourceButton>
       </span>;
     })}
     <div {...sourceProps(ui, layout, suffix, 'edtPetDesc')} className="home-pet-owned-description"

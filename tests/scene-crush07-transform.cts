@@ -4,7 +4,7 @@ import {sceneCrushTransform} from '../apps/web/src/assets/scenes/scene-crush-tra
 import type {EffectVec3} from '../apps/web/src/render/effects/common/types';
 
 const native = JSON.parse(readFileSync('recovery/output/scene-crush07-matrix-native.json', 'utf8'));
-const source = JSON.parse(readFileSync('recovery/output/web-assets/scene-placements.json', 'utf8'));
+const source = JSON.parse(readFileSync('apps/web/public/scene-placements.json', 'utf8'));
 const map = source.find((entry: {id: string}) => entry.id === '0007');
 const rows = native.placements.map((expected: {id: string; position: EffectVec3;
   rotation: EffectVec3; enabled: number; matrix: number[]}) => {

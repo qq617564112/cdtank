@@ -1,18 +1,18 @@
+import {GameMessage, showGameMessage} from '../resources/game-message';
 import {loadCombatCatalog} from '../../content';
 import type {ReqOwnedRoleSale, ResOwnedRoleSale} from '../../../../shared/protocols/PtlOwnedRoleSale';
 import {createRequestId} from '../../network/request-id';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
-import {SourceNotice} from '../dialogs/source-notice';
-import {SourceNoticeView} from '../dialogs/source-notice-view';
-import {createPortal} from 'react-dom';
 import type {ShopCurrency} from '../../../../shared/protocols/PtlShop';
 import {ShopPurchaseSource} from './shop-purchase-source';
 import {TankShopOwnedPartSourceRegions} from './tank-shop-owned-part-source-regions';
 import {SourceImageScale} from '../resources/source-static-image';
-import {TANK_SHOP_SOURCE_ATTRIBUTES} from './tank-shop-source-attributes';
+import {ShopTankAttributes} from './shop-tank-stat-row';
 import {TankShopBuyParametersView} from './tank-shop-buy-parameters-view';
 import {TankShopOwnedParametersView} from './tank-shop-owned-parameters-view';
 import {tankShopOwnedParameters} from './tank-shop-owned-parameters';
+import {sourceTankKind} from './tank-shop-row-display';
+import {shopButtonPrice} from './shop-button-price';
 import {TankShopTextureView, type TankTextureOwner} from './tank-shop-texture';
 import './tank-shop.css';
 import {RoleShopSourceList} from './role-shop-source-list';
@@ -26,8 +26,8 @@ import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import {readOwnedTankTextures} from '../../../../shared/combat/role-owned-textures';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {TankShopSourceRegions} from './tank-shop-source-regions';
-import {SourceFeedbackStaticText as SourceStaticText} from '../resources/source-feedback-text';
-import {SourceButton} from '../resources/source-button';
+import {HomeStaticText as SourceStaticText} from '../home/home-text';
+import {ShopSourceButton as SourceButton} from './shop-source-button';
 import {sourceProps} from '../resources/source-ui-props';
 import {TankProductPreview} from '../resources/tank-product-preview';
 import {sourceTankDescription} from '../resources/role-source-descriptions';
@@ -57,7 +57,6 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const [saleConfirm, setSaleConfirm] = useState(false);
   const [buyConfirm, setBuyConfirm] = useState(false);
   const [currency, setCurrency] = useState<ShopCurrency>(owner.pending?.currency ?? 'TOKENS');
-  const [notice] = useState(() => new SourceNotice());
   const generation = useRef(0);
   const [catalog, setCatalog] = useState<CombatCatalog>();
   const [ownedSelection, setOwnedSelection] = useState<number>();
@@ -67,7 +66,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const [confirmed, setConfirmed] = useState<ResTankShop>();
   const [selected, setSelected] = useState(owner.pending?.tankId ?? owner.selected);
   const [busy, setBusy] = useState(true);
-  const [status, setStatus] = useState('正在载入战车目录…');
+  const [status, setStatus] = useState('');
   const session = useRef({active: false, query: false, identity: {}});
   const focusAfterCommit = useRef<HTMLElement | null>(null);
   const ownedRecord = owned?.equipment.find(record => new Map(record.fields).get(0x1c) === ownedSelection);
@@ -76,6 +75,8 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const product = confirmed?.tanks.find(tank => tank.tankId === displayedTankId);
   const saleQuote = sale?.quotes.find(quote => quote.kind === 'tank' && quote.instanceId === ownedSelection);
   const displayedName = mode === 'Owned' ? ownedRecord?.name ?? '' : product?.name ?? '';
+  const displayedTankType = mode === 'Owned'
+    ? catalog?.tankTypes?.find(value => value.tankId === displayedTankId)?.tankType : product?.tankType;
   const displayedDescription = mode === 'Owned' ? sourceTankDescription(displayedTankId) : product?.info;
   const descriptionText = mode === 'Owned' ? displayedDescription : product ? `${product.name} — ${product.info}` : undefined;
   const previewTextures = mode === 'Owned' && ownedRecord
@@ -83,7 +84,6 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   const ownedPartEquipment = partEquipment?.tankInstanceId === ownedSelection ? partEquipment : undefined;
   const ownedParameters = ownedConfirmed ? tankShopOwnedParameters({owned, record: ownedRecord, profile: sale?.profile,
     partEquipment: ownedPartEquipment, inventory: partInventory, catalog}) : undefined;
-  useEffect(() => () => notice.clear(), [notice]);
   useEffect(() => {if (mode !== 'Texture') onBusy(busy);}, [busy, onBusy, mode]);
   useEffect(() => {
     setPartEquipment(undefined); setPartInventory(undefined);
@@ -100,11 +100,11 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     }).catch(() => {
       if (active) {
         setPartEquipment(undefined); setPartInventory(undefined);
-        void notice.show('部件信息载入失败，请重试');
+        showGameMessage('部件信息载入失败，请重试', 'error');
       }
     });
     return () => {active = false;};
-  }, [mode, ownedSelection, source, notice]);
+  }, [mode, ownedSelection, source]);
   useEffect(() => {
     setOwnedConfirmed(false);
     const current = {active: true, query: false, identity: {}}; session.current = current;
@@ -121,11 +121,11 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
           const id = result.tanks.some(tank => tank.tankId === value) ? value : result.tanks[0]?.tankId;
           owner.selected = id; return id;
         });
-        setStatus(owner.inFlight ? '等待购买确认…' : owner.pending ? '购买尚未确认，可重试原请求。' : '');
+        setStatus(owner.pending && !owner.inFlight ? '购买尚未确认，可重试原请求。' : '');
       } catch (error) {
         if (current.active) {
           const message = error instanceof Error ? error.message : '战车目录载入失败';
-          setStatus(message); void notice.show(message);
+          setStatus(message); showGameMessage(message);
         }
       } finally {
         current.query = false;
@@ -138,7 +138,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     owner.session = {identity: current.identity, refresh: () => {void refresh();}};
     void refresh();
     return () => {generation.current++; current.active = false; if (owner.session?.identity === current.identity) owner.session = undefined;};
-  }, [source, owner, notice]);
+  }, [source, owner]);
   useLayoutEffect(() => {
     if (busy || !focusAfterCommit.current) return;
     const target = focusAfterCommit.current; focusAfterCommit.current = null;
@@ -150,7 +150,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     if (!current.active || busy || owner.inFlight || owner.saleInFlight || !source.ownedRoles) return;
     const ticket = ++generation.current;
     setOwnedConfirmed(false);
-    setMode('Owned'); setBusy(true); setStatus('正在载入拥有战车…');
+    setMode('Owned'); setBusy(true); setStatus('');
     try {
       const [result, metadata] = await Promise.all([source.ownedRoleSale ? source.ownedRoleSale({operation: 'QUERY'}) : undefined,
         loadCombatCatalog()]);
@@ -166,7 +166,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     } catch (error) {
       if (current.active && generation.current === ticket) {
         const message = error instanceof Error ? error.message : '拥有战车载入失败';
-        setStatus(message); void notice.show(message);
+        setStatus(message); showGameMessage(message);
       }
     } finally {
       if (current.active) setBusy(Boolean(owner.inFlight || owner.saleInFlight));
@@ -184,7 +184,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   async function sell() {
     const current = session.current, ticket = generation.current;
     if (!current.active || owner.saleInFlight || !owner.salePending || !source.ownedRoleSale) return;
-    setBusy(true); setStatus('等待出售确认…');
+    setBusy(true); setStatus('');
     const inFlight = source.ownedRoleSale(owner.salePending); owner.saleInFlight = inFlight;
     try {
       const result = await inFlight;
@@ -195,7 +195,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
       setOwnedSelection(value => result.owned.equipment.some(record => new Map(record.fields).get(0x1c) === value)
         ? value : result.owned.equipment[0] ? new Map(result.owned.equipment[0].fields).get(0x1c) : undefined);
       if (result.money !== undefined) {setConfirmed(value => value && {...value, money: result.money!}); onMoney?.(result.money);}
-      setSaleConfirm(false); setStatus(''); void notice.show('这辆坦克已售出。');
+      setSaleConfirm(false); setStatus(''); showGameMessage('这辆坦克已售出。', 'success');
     } catch (error) {
       if (current.active && generation.current === ticket) setStatus(error instanceof Error ? error.message : '出售未确认，请重试原请求');
     } finally {
@@ -217,7 +217,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
     if (!owner.pending || owner.pending.tankId !== product.tankId || owner.pending.currency !== currency) {
       owner.pending = {operation: 'BUY', tankId: product.tankId, currency, requestId: createRequestId()};
     }
-    setBusy(true); setStatus('等待购买确认…');
+    setBusy(true); setStatus('');
     const inFlight = source.tankShop!(owner.pending); owner.inFlight = inFlight;
     try {
       const result = await inFlight;
@@ -230,7 +230,7 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
           owner.selected = id; return id;
         });
         setBuyConfirm(false); setStatus('');
-        void notice.show('你买的新坦克很厉害的哦，快去试试它的威力吧。');
+        showGameMessage('你买的新坦克很厉害的哦，快去试试它的威力吧。', 'success');
       }
     } catch (error) {
       if (current.active) setStatus(error instanceof Error ? error.message : '购买未确认，请重试');
@@ -242,39 +242,33 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
   if (mode === 'Texture') return <TankShopTextureView ui={ui} source={source} owner={owner.texture} scale={scale}
     onBusy={onBusy} onBuy={() => {setOwnedConfirmed(false); setMode('Buy'); owner.session?.refresh();}} />;
   return <SourceImageScale value={1}>
-    <TankShopSourceRegions ui={ui} />
+    <TankShopSourceRegions ui={ui} tab={mode === 'Owned' ? 'rdoSell' : 'rdoBuy'}/>
     {mode === 'Owned' && <TankShopOwnedPartSourceRegions ui={ui}
       partSlotCount={catalog?.tankTypes?.find(value => value.tankId === displayedTankId)?.partSlotCount}
       equipment={ownedPartEquipment} inventory={partInventory} catalog={catalog} />}
-    {mode === 'Buy' && product && <TankShopBuyParametersView ui={ui} tankId={product.tankId} />}
+    {mode === 'Buy' && <TankShopBuyParametersView ui={ui} tankId={product?.tankId}/>}
     {mode === 'Owned' && <TankShopOwnedParametersView ui={ui} values={ownedParameters} />}
-    {mode === 'Buy' && product && Object.entries(TANK_SHOP_SOURCE_ATTRIBUTES[product.tankId] ?? {}).map(([name, value]) =>
-      <SourceStaticText key={name} ui={ui} layout={layout} suffix="shop_tankpage.xml" name={name}
-        text={String(value)} className="tank-shop-source-attribute" data-tank-source-attribute={name}
-        data-tank-source-value={value} data-tank-source-product={product.tankId} />)}
-    {mode === 'Owned' && ownedRecord && ([['txtAttack', 0x3c], ['txtAttackExtra', 0x40],
-      ['txtPanzer', 0x4c], ['txtPanzerExtra', 0x50], ['txtAttackLevel', 0x44], ['txtPanzerLevel', 0x54]] as const)
-      .map(([name, offset]) => <SourceStaticText key={name} ui={ui} layout={layout} suffix="shop_tankpage.xml" name={name}
-        className="tank-shop-source-attribute" text={ownedFields?.has(offset) ? String(ownedFields.get(offset)) : ''}
-        data-tank-owned-field={offset} data-owned-value={ownedFields?.get(offset)} />)}
+    <ShopTankAttributes ui={ui} tankId={product?.tankId} owned={mode === 'Owned'} fields={ownedFields}/>
     <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoTexture"
       data-tank-shop-texture-tab="" aria-label="更换拥有战车迷彩" disabled={busy || !source.ownedRoles || !source.roleProfile || !source.configureTankTextures}
+      aria-busy={busy && !!source.ownedRoles && !!source.roleProfile && !!source.configureTankTextures}
       onClick={() => {generation.current++; setOwnedConfirmed(false); setSaleConfirm(false); setBuyConfirm(false); setMode('Texture');}} />
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtMoney" text={confirmed?.money === undefined ? '' : String(confirmed.money)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtCoin" text={confirmed?.tokens === undefined ? '' : String(confirmed.tokens)}/>
     <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtName" text={displayedName}/>
-    <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtListQuantity" text={mode === 'Owned' ? owned ? String(owned.equipment.length) : '' : confirmed ? String(confirmed.tanks.length) : ''}/>
+    <SourceStaticText ui={ui} layout={layout} suffix="shop_tankpage.xml" name="txtType" text={sourceTankKind(displayedTankType)}/>
     <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoBuy" selected={mode === 'Buy'}
-      data-tank-shop-buy-tab="" aria-label="购买战车商品" aria-pressed={mode === 'Buy'} disabled={busy} onClick={() => {generation.current++; setOwnedConfirmed(false); setSaleConfirm(false); setBuyConfirm(false); setMode('Buy'); setStatus(''); owner.session?.refresh();}} />
+      data-tank-shop-buy-tab="" aria-label="购买战车商品" aria-pressed={mode === 'Buy'} disabled={busy} aria-busy={busy} onClick={() => {generation.current++; setOwnedConfirmed(false); setSaleConfirm(false); setBuyConfirm(false); setMode('Buy'); setStatus(''); owner.session?.refresh();}} />
     <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoSell" selected={mode === 'Owned'}
       data-tank-shop-owned-tab="" aria-label="拥有战车" aria-pressed={mode === 'Owned'} disabled={busy || !source.ownedRoles}
+      aria-busy={busy && !!source.ownedRoles}
       onClick={() => {void openOwned();}} />
     <RoleShopSourceList ui={ui} kind="tank" entries={mode === 'Owned' ? owned?.equipment.map(record => {
       const fields = new Map(record.fields), tankId = fields.get(0x24);
       return {id: fields.get(0x1c)!, name: record.name, tankId, durationMinutes: fields.get(0x34),
         tankType: catalog?.tankTypes?.find(value => value.tankId === tankId)?.tankType,
-        tankMoney: catalog?.tankTypes?.find(value => value.tankId === tankId)?.tankMoney, owned: true};
-    }) ?? [] : confirmed?.tanks.map(entry => ({id: entry.tankId, name: entry.name, moneyPrice: entry.moneyPrice, tokenPrice: entry.tokenPrice, tankType: entry.tankType, defaultDurability: entry.defaultDurability})) ?? []}
+        owned: true};
+    }) ?? [] : confirmed?.tanks.map(entry => ({id: entry.tankId, name: entry.name, tankType: entry.tankType, defaultDurability: entry.defaultDurability})) ?? []}
       selected={mode === 'Owned' ? ownedSelection : selected} busy={busy} select={id => {
         if (mode === 'Owned') setOwnedSelection(id); else {owner.selected = id; setSelected(id);}
       }}/>
@@ -287,18 +281,20 @@ export function TankShopView({ui, source, owner, onBusy, scale, onMoney, initial
       aria-label={descriptionText ? mode === 'Owned' ? '拥有战车介绍' : '战车商品介绍' : undefined}
       tabIndex={descriptionText ? 0 : -1}>{descriptionText ?? ''}</div>
     {mode === 'Buy' && <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="btnBuy" data-tank-shop-buy=""
+      price={shopButtonPrice({moneyPrice: product?.moneyPrice, tokenPrice: product?.tokenPrice})}
       aria-label="购买选中战车" disabled={busy || !product} onClick={event => requestPurchase(event.currentTarget)}/>}
     {buyConfirm && product && <ShopPurchaseSource ui={ui} name={product.name}
       moneyPrice={product.moneyPrice} tokenPrice={product.tokenPrice} currency={currency}
       changeCurrency={value => {setCurrency(value); setStatus('');}} pending={busy} status={status}
       confirm={() => {void purchase();}} cancel={() => {setBuyConfirm(false); setStatus('');}}/>}
     {mode === 'Owned' && <SourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="btnSell"
+      price={shopButtonPrice({moneyPrice: saleQuote?.price})}
       data-tank-shop-sell="" aria-label="出售选中战车" disabled={busy || !source.ownedRoleSale || !saleQuote?.canSell || saleQuote.selected}
       onClick={event => requestSale(event.currentTarget)} />}
     {saleConfirm && <SourceConfirmView label="出售战车" binding="owned-tank-sale"
       message="你确定出售这辆坦克吗？" pending={busy} disabled={!saleQuote?.canSell || saleQuote.selected}
       status={status} confirm={() => {void sell();}} cancel={() => {setSaleConfirm(false);}} />}
-    <output hidden data-tank-shop-status="" data-purchased-tank-instance={owner.purchasedInstance}>{status}</output>
-    {createPortal(<SourceNoticeView notice={notice}/>, document.body)}
+    <GameMessage data-tank-shop-status="" data-purchased-tank-instance={owner.purchasedInstance} text={status} tone={busy ? 'pending' : 'info'}/>
+
   </SourceImageScale>;
 }
