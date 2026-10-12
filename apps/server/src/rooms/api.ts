@@ -59,7 +59,8 @@ export function registerRoomApis(
       },
       serverTime: Date.now(),
     });
-    await server.broadcastMsg('RoomSnapshot', world.snapshot(result.roomId)!, [call.conn])
+    await server.broadcastMsg('RoomSnapshot', world.snapshot(result.roomId)!,
+      server.connections.filter(connection => connection.id === call.conn.id))
       .catch((error: unknown) => console.error('Snapshot failed', error));
     broadcastRoomState(result.roomId);
   });
@@ -85,7 +86,8 @@ export function registerRoomApis(
         id: result.roomId, name: world.roomName(result.roomId), mode: result.mode, mapId: result.mapId,
         players: world.roomPlayers(result.roomId), round: snapshot.match!.round, phase: snapshot.phase,
       }});
-      await server.broadcastMsg('RoomSnapshot', world.snapshot(result.roomId)!, [call.conn])
+      await server.broadcastMsg('RoomSnapshot', world.snapshot(result.roomId)!,
+        server.connections.filter(connection => connection.id === call.conn.id))
         .catch((error: unknown) => console.error('Snapshot failed', error));
       broadcastRoomState(result.roomId);
     } catch (error) {
