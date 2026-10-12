@@ -87,7 +87,10 @@ async function loadModel(preserveCamera = false): Promise<void> {
   const quality = qualitySelect.value === 'original' ? 'original' : 'api4k';
   try {
     const next = await LoadAssetContainerAsync(state[quality], scene,
-      {pluginOptions: {gltf: {useSRGBBuffers: false}}});
+      {pluginOptions: {gltf: {
+        useSRGBBuffers: false,
+        preprocessUrlAsync: async url => new URL(url, location.href).href,
+      }}});
     container?.dispose();
     container = next;
     container.addAllToScene();
