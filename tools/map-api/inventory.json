@@ -1,7 +1,7 @@
 {
   "mapCount": 27,
   "objectCount": 75,
-  "textureCount": 379,
+  "textureCount": 377,
   "objects": [
     {
       "model": "obj05015",
@@ -1292,7 +1292,24 @@
             255
           ]
         }
-      ]
+      ],
+      "modelTextures": {
+        "Data/scnobj/obj05447/c1.glb": [
+          "obj05447A.png"
+        ],
+        "Data/scnobj/obj05447/c2.glb": [
+          "obj05447B.png"
+        ],
+        "Data/scnobj/obj05447/c3.glb": [
+          "obj05447C.png"
+        ],
+        "Data/scnobj/obj05447/n1.glb": [
+          "obj05447A.png"
+        ],
+        "Data/scnobj/obj05447/n2.glb": [
+          "obj05447B.png"
+        ]
+      }
     },
     {
       "model": "obj05448",
@@ -4324,7 +4341,6 @@
         "object01/1",
         "object01/2",
         "object01/3",
-        "object02/0",
         "object04/0",
         "object05/0",
         "object05/1",
@@ -4405,15 +4421,6 @@
           ],
           "textures": [
             "shuye.png"
-          ]
-        },
-        {
-          "name": "object02",
-          "meshes": [
-            "object02/0"
-          ],
-          "textures": [
-            "w.png"
           ]
         },
         {
@@ -4543,19 +4550,6 @@
           "promptSubject": "卡通树木（树冠在上、树干在下，多个树木图块横向排列）"
         },
         {
-          "filename": "w.png",
-          "reference": "art/original/Data/map/0007/w.png",
-          "originalSource": "art/original/Data/map/0007/w.png",
-          "sourceSize": [
-            256,
-            256
-          ],
-          "alphaRange": [
-            221,
-            221
-          ]
-        },
-        {
           "filename": "wan01.png",
           "reference": "art/original/Data/map/0007/wan01.png",
           "originalSource": "art/original/Data/map/0007/wan01.png",
@@ -4594,6 +4588,9 @@
             255
           ]
         }
+      ],
+      "excludedMeshes": [
+        "object02/0"
       ]
     },
     {
@@ -5703,7 +5700,6 @@
         "box86/4",
         "box86/5",
         "btree06/0",
-        "btree06/1",
         "btree06/3",
         "btree06/4",
         "btree11/0",
@@ -5757,12 +5753,10 @@
           "name": "btree06",
           "meshes": [
             "btree06/0",
-            "btree06/1",
             "btree06/3",
             "btree06/4"
           ],
           "textures": [
-            "2011-12.png",
             "shu_01.png",
             "za-2.png"
           ]
@@ -5787,19 +5781,6 @@
         }
       ],
       "textures": [
-        {
-          "filename": "2011-12.png",
-          "reference": "art/original/Data/map/0011/2011-12.png",
-          "originalSource": "art/original/Data/map/0011/2011-12.png",
-          "sourceSize": [
-            512,
-            256
-          ],
-          "alphaRange": [
-            255,
-            255
-          ]
-        },
         {
           "filename": "hua.png",
           "reference": "art/original/Data/map/0011/hua.png",
@@ -5881,6 +5862,9 @@
             255
           ]
         }
+      ],
+      "excludedMeshes": [
+        "btree06/1"
       ]
     },
     {

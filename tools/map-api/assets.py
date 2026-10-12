@@ -124,6 +124,16 @@ def inventory():
             row['modelTextures'] = {
                 sequence['base']['asset']: [Path(sequence['base']['texture']).name],
                 sequence['screen']['asset']: [Path(frame['asset']).name for frame in sequence['frames']]}
+        else:
+            model_textures = {}
+            for relative in row['models']:
+                document, _ = glb(ROOT / 'art/original' / relative)
+                model_textures[relative] = sorted({texture_name(material)
+                    for material in document['materials']
+                    if material.get('pbrMetallicRoughness', {}).get('baseColorTexture')})
+            if (all(len(names) == 1 for names in model_textures.values())
+                    and len({name for names in model_textures.values() for name in names}) > 1):
+                row['modelTextures'] = model_textures
         rows.append(row)
     for kind, source in [('brick', 'Data/scnobj/obj05443/obj05443.png'),
                          ('steel', 'Data/map/0018/dimian01.png')]:

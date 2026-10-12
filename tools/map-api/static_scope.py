@@ -20,6 +20,11 @@ GROUND_GROUPS = {
     '0022': ['plane02'], '0023': ['plane1134'], '0024': ['ddd'], '0025': ['plane03'],
 }
 
+EXCLUDED_MESHES = {
+    '0007': {'object02/0'},
+    '0011': {'btree06/1'},
+}
+
 
 def static_objects():
     result = []
@@ -34,6 +39,8 @@ def static_objects():
         textures = {}
         selected = []
         for mesh in document['meshes']:
+            if mesh['name'] in EXCLUDED_MESHES.get(mid, set()):
+                continue
             group = mesh['name'].split('/')[0]
             for primitive in mesh['primitives']:
                 material = document['materials'][primitive.get('material', 0)]
@@ -81,6 +88,7 @@ def static_objects():
             'maps': [mid] + (['1002'] if mid == '0002' else []),
             'classes': ['StaticMapObject'], 'publishedAssets': [relative], 'models': [relative],
             'excludedGroundGroups': ground_groups, 'meshNames': sorted(set(selected)),
+            'excludedMeshes': sorted(EXCLUDED_MESHES.get(mid, set())),
             'reviewGroups': reviewed, 'textures': [textures[name] for name in sorted(textures)]})
     return result
 
