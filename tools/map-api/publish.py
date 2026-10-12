@@ -123,7 +123,8 @@ def install(entry, generated_images, public):
     sources = list(entry['models'])
     installed = dict(images)
     if '1002' in entry['maps']:
-        sources.extend('custom-maps/1002/' + source for source in entry['models'])
+        sources.extend('custom-maps/1002/' + source for source in entry['models']
+                       if (public / 'custom-maps/1002' / source).is_file())
     for source in sources:
         target = public / source
         raw = target.read_bytes()
