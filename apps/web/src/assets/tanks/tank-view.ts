@@ -162,7 +162,7 @@ export class TankView {
       // Loading their geometry during a hit can outlast the whole action.
       await Promise.all(['02', '03', '05', '06', '07', '08', '09'].map(name => view.action(name)));
       view.sceneShadowRegistration = sceneShadowLight(scene)?.addRoot(view.root,
-        {dynamic: true, meshes: () => view.current?.components
+        {dynamic: true, softShadows: false, meshes: () => view.current?.components
           .flatMap(component => component.assets.meshes) ?? []});
       return view;
     } catch (error) {

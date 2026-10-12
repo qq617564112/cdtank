@@ -2,7 +2,7 @@
 
 Docker 部署使用完整运行资源：先导入本地资源镜像，再从源码构建应用镜像，最后通过 Compose 启动。网页、静态资源和 `/game` WebSocket 由同一容器提供；账户保存在独立 Docker 卷中。
 
-以下命令以 **1.0.1** 为例，在仓库根目录执行，后续版本替换应用镜像标签并使用同版本资源。自动部署到 Forgejo 的配置见[Forgejo 部署](../deployment/forgejo.md)。
+以下命令以 **1.0.2** 为例，在仓库根目录执行，后续版本替换应用镜像标签并使用同版本资源。自动部署到 Forgejo 的配置见[Forgejo 部署](../deployment/forgejo.md)。
 
 ## 环境与资源
 
@@ -37,8 +37,8 @@ bash deployment/import-assets.sh
 构建应用镜像并启动 Compose：
 
 ```sh
-docker build --tag cdtank:1.0.1 .
-CDTANK_IMAGE_TAG=1.0.1 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
+docker build --tag cdtank:1.0.2 .
+CDTANK_IMAGE_TAG=1.0.2 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
 ```
 
 Dockerfile 在容器内安装依赖、构建 Web 和服务端、组装完整发行目录。运行镜像包含程序、完整资源与运行依赖，以 `node` 用户执行 `node start.mjs`。
@@ -104,15 +104,15 @@ server {
 查看运行状态和日志：
 
 ```sh
-CDTANK_IMAGE_TAG=1.0.1 docker compose -f deployment/compose.yml ps
+CDTANK_IMAGE_TAG=1.0.2 docker compose -f deployment/compose.yml ps
 docker logs --tail 100 cdtank
 ```
 
 停止或重新启动服务：
 
 ```sh
-CDTANK_IMAGE_TAG=1.0.1 docker compose -f deployment/compose.yml stop
-CDTANK_IMAGE_TAG=1.0.1 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
+CDTANK_IMAGE_TAG=1.0.2 docker compose -f deployment/compose.yml stop
+CDTANK_IMAGE_TAG=1.0.2 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
 ```
 
 容器重建和重启保留 `cdtank-accounts`。普通停服也可使用 `docker compose -f deployment/compose.yml down`，该命令保留命名卷；`down --volumes` 会删除账户卷。服务重启后账户可继续登录，正在进行的房间与比赛结束，玩家重新进入大厅。
@@ -123,8 +123,8 @@ CDTANK_IMAGE_TAG=1.0.1 docker compose -f deployment/compose.yml up --detach --wa
 
 ```sh
 docker exec cdtank node account-snapshot.mjs backup \
-  /app/state/accounts.sqlite /app/state/accounts-backup-1.0.1.sqlite
-docker cp cdtank:/app/state/accounts-backup-1.0.1.sqlite ./accounts-backup-1.0.1.sqlite
+  /app/state/accounts.sqlite /app/state/accounts-backup-1.0.2.sqlite
+docker cp cdtank:/app/state/accounts-backup-1.0.2.sqlite ./accounts-backup-1.0.2.sqlite
 ```
 
 每次备份使用新的目标文件名。工具使用 SQLite 在线备份 API，包含已提交的 WAL 数据；运行中的数据库按此方式备份。
@@ -132,12 +132,12 @@ docker cp cdtank:/app/state/accounts-backup-1.0.1.sqlite ./accounts-backup-1.0.1
 恢复时先停止服务，从宿主机备份恢复到卷中的新数据库路径：
 
 ```sh
-CDTANK_IMAGE_TAG=1.0.1 docker compose -f deployment/compose.yml stop
+CDTANK_IMAGE_TAG=1.0.2 docker compose -f deployment/compose.yml stop
 docker run --rm \
   --volume cdtank-accounts:/app/state \
   --volume "$PWD:/backups:ro" \
-  cdtank:1.0.1 node account-snapshot.mjs restore \
-  /backups/accounts-backup-1.0.1.sqlite /app/state/accounts-restored.sqlite
+  cdtank:1.0.2 node account-snapshot.mjs restore \
+  /backups/accounts-backup-1.0.2.sqlite /app/state/accounts-restored.sqlite
 ```
 
 在 `deployment/compose.yml` 的 `services.app` 下增加以下配置，与 `image` 同级：

@@ -70,6 +70,8 @@ interface PlantSnapshot {
   hidden: boolean;
 }
 
+type SceneLoadProgress = (fraction: number, status: string) => void;
+
 export class ScenePreview {
   readonly onCastleDamageText = new Observable<{castleId: string; delta: number}>();
   readonly onCastleDestroyed = new Observable<{castleId: string}>();
@@ -160,7 +162,7 @@ export class ScenePreview {
     this.assets.splice(0).forEach(asset => asset.dispose());
   }
 
-  async load(id: string, runtime?: EffectRuntime): Promise<string> {
+  async load(id: string, runtime?: EffectRuntime, onProgress: SceneLoadProgress = () => {}): Promise<string> {
     const pendingPlants = this.plantRoots.size === 0 ? [...this.plantSnapshots.values()] : [];
     const pendingPlantRound = this.plantRoots.size === 0 ? this.plantRound : undefined;
     this.clear();
@@ -168,7 +170,18 @@ export class ScenePreview {
       this.reconcilePlants(pendingPlants, pendingPlantRound);
     }
     const revision = this.revision;
+    let lastProgress = -1;
+    let lastStatus = '';
+    const report = (fraction: number, status: string): void => {
+      if (revision !== this.revision) return;
+      const value = Math.max(lastProgress, Math.min(1, fraction));
+      if (value === lastProgress && status === lastStatus) return;
+      lastProgress = value;
+      lastStatus = status;
+      onProgress(value, status);
+    };
     if (this.scene.isDisposed) return '';
+    report(0, '正在读取地图配置…');
     if (hasSceneActorToon(id) && !sceneShadowLight(this.scene)) {
       const owner = new SceneActorToon(this.scene, id);
       this.actorToon = owner;
@@ -180,6 +193,7 @@ export class ScenePreview {
         throw error;
       }
       if (revision !== this.revision) return '';
+      report(0.06, '正在准备地图材质…');
     }
     const entries = await loadStaticJson<SceneEntry[]>('/data/maps/shared/placements.json');
     if (revision !== this.revision) {
@@ -189,9 +203,11 @@ export class ScenePreview {
     if (!entry) {
       throw new Error('找不到地图放置数据');
     }
+    report(0.1, '正在读取地图放置数据…');
     // Environment binds before any asset/shaders load so actors, castle and
     // effects capture the current map's ambient, fog and light registers.
     applySceneEnvironment(this.scene, sceneEnvironmentFor(id));
+    report(0.12, '正在解析地形模型…');
     const terrain = await loadPreparedModel(battleArtworkUrl(`/${entry.terrain}`, this.scene), this.scene, {
       pluginOptions: {gltf: {useSRGBBuffers: false}},
     });
@@ -214,12 +230,14 @@ export class ScenePreview {
       }
       if (revision !== this.revision) {owner.dispose(); return '';}
     }
+    report(0.22, '正在上传地形资源…');
     if (['0002', '0003', '0004', '0005', '0006', '0008', '0012', '0016', '0017', '0019',
       '0021', '0023', '0024', '0025'].includes(id)) {
       this.plants = new ScenePlantSway();
       await this.plants.load(id);
       if (revision !== this.revision) return '';
     }
+    report(0.27, '正在准备地图地形…');
     const cache = new Map<string, AssetContainer>();
     let castleResources: CastleModelResource[] = [];
     if (entry.castles.length > 0 && runtime) {
@@ -234,7 +252,9 @@ export class ScenePreview {
     }
     const placements = [...entry.records, ...entry.castles];
     const paths = [...new Set(placements.flatMap(placement => castleResources.some(c => c.sourcePlacementId === placement.id) ? [] : placement.asset ? [placement.asset] : []))];
+    report(0.31, '正在解析场景模型…');
     let next = 0;
+    let completed = 0;
     try {
       // Decode independent assets concurrently. Instances still use their exact
       // source placement order, and every pending container belongs to this load.
@@ -248,6 +268,9 @@ export class ScenePreview {
           asset.animationGroups.forEach(group => {group.stop(); group.reset();});
           cache.set(path, asset);
           this.assets.push(asset);
+          completed++;
+          report(0.31 + (paths.length === 0 ? 0.31 : completed / paths.length * 0.31),
+            `正在解析场景模型… ${completed}/${paths.length}`);
         }
       }));
     } catch (error) {
@@ -255,6 +278,7 @@ export class ScenePreview {
       throw error;
     }
     if (revision !== this.revision) return '';
+    report(0.64, '正在准备场景对象…');
     let damageRenderer: SceneCastleDamageTextRenderer | undefined;
     if (castleResources.length > 0 || placements.some(value => value.className === 'SYcScnObjBreach')) {
       const fonts = await loadStaticJson<{fonts: {name: string; attributes: Record<string, string>;
@@ -334,8 +358,18 @@ export class ScenePreview {
         return '';
       }
     }
+    report(0.7, '正在实例化场景对象…');
+    let completedPlacements = 0;
+    const reportPlacement = (): void => {
+      completedPlacements++;
+      report(0.7 + completedPlacements / Math.max(1, placements.length) * 0.2,
+        `正在实例化场景对象… ${completedPlacements}/${placements.length}`);
+    };
     for (const placement of placements) {
-      if (placement.className === 'SYcScnObjSequence') continue;
+      if (placement.className === 'SYcScnObjSequence') {
+        reportPlacement();
+        continue;
+      }
       if (placement.special) {
         const visual = placement.special.kind === 'hook'
           ? new SceneHook(this.scene, placement, runtime)
@@ -349,6 +383,7 @@ export class ScenePreview {
         }
         if (revision !== this.revision) {visual.dispose(); return '';}
         this.minimapGeometry.push(...visual.meshes);
+        reportPlacement();
         continue;
       }
       const castle = castleResources.find(value => value.sourcePlacementId === placement.id);
@@ -368,6 +403,7 @@ export class ScenePreview {
           this.castleDamageTexts.set(castle.sourcePlacementId,
             new SceneCastleDamageText(damageRenderer));
         }
+        reportPlacement();
         continue;
       }
       if (placement.animation) {
@@ -387,6 +423,7 @@ export class ScenePreview {
         this.minimapGeometry.push(...this.scene.meshes.filter(mesh => mesh.metadata?.sourcePlacementId === placement.id));
       }
       if (!placement.asset) {
+        reportPlacement();
         continue;
       }
       const asset = cache.get(placement.asset)!;
@@ -430,6 +467,7 @@ export class ScenePreview {
         if (revision !== this.revision) {runtime.releaseSceneEffect(handle); return '';}
         const presentation = new SceneCrushPresentation({hide: () => root.setEnabled(false)}, runtime, handle);
         this.registerCrush(placement.id, root, matrix, presentation, Boolean(placement.enabled));
+        reportPlacement();
         continue;
       }
       if (placement.className === 'SYcScnObjBreach') {
@@ -455,6 +493,7 @@ export class ScenePreview {
           value.state = new SceneBreachState(value.broken.durationSeconds);
         }
       }
+      reportPlacement();
     }
     // Original queue priority is a per-object band; opaque draws before
     // transparent within each band, independent of the previous scene's
@@ -506,6 +545,7 @@ export class ScenePreview {
     this.camera.radius = Math.hypot(bounds.max.x - bounds.min.x, bounds.max.z - bounds.min.z) * 0.8;
     this.camera.lowerRadiusLimit = 20;
     this.camera.upperRadiusLimit = this.camera.radius * 4;
+    report(1, '正在完成地图准备…');
     return `地图 ${id} · ${entry.resolved} 个物件 · ${placements.length - entry.resolved} 个记录待接入`;
   }
 

@@ -23,7 +23,9 @@ export function GameScrollbar({list, step = 38, label, className = '', ...props}
     if (!element) return;
     const height = element.clientHeight, track = Math.max(0, height - 53);
     const extent = Math.max(0, element.scrollHeight - height);
-    const thumbSize = Math.min(track, Math.max(53, Math.round(track * height / Math.max(height, element.scrollHeight) * 2) / 2));
+    const thumbSize = height > 0
+      ? Math.min(track, Math.max(53, Math.round(track * height / Math.max(height, element.scrollHeight) * 2) / 2))
+      : 0;
     element.style.paddingRight = extent ? '30px' : '';
     const next = {height, extent, scroll: element.scrollTop,
       scale: height ? element.getBoundingClientRect().height / height : 1,

@@ -4,17 +4,17 @@
 
 ## 发行附件
 
-以 1.0.1 为例：
+以 1.0.2 为例：
 
 | 附件 | 内容 |
 | --- | --- |
-| `cdtank-1.0.1.tar.gz` | 编译服务端、前端构建文件、服务端内容表与碰撞数据、依赖锁文件、安装与启动入口、存档工具和许可声明 |
-| `cdtank-assets-1.0.1.tar.gz` | 完整 `apps/web/public/`，包含模型、贴图、音频、UI 图集、两套战斗素材、字体及许可、数据与清单 |
+| `cdtank-1.0.2.tar.gz` | 编译服务端、前端构建文件、服务端内容表与碰撞数据、依赖锁文件、安装与启动入口、存档工具和许可声明 |
+| `cdtank-assets-1.0.2.tar.gz` | 完整 `apps/web/public/`，包含模型、贴图、音频、UI 图集、两套战斗素材、字体及许可、数据与清单 |
 
-程序包解压后是 `cdtank-1.0.1/`，资产包顶层是 `public/`：
+程序包解压后是 `cdtank-1.0.2/`，资产包顶层是 `public/`：
 
 ```text
-cdtank-1.0.1/
+cdtank-1.0.2/
   install.mjs                   自动安装、启动并打开浏览器
   start.mjs                     已安装后的直接启动入口
   release.json                  版本、标签、仓库、源码提交与资产附件名
@@ -45,7 +45,7 @@ public/
 从 [GitHub Releases](https://github.com/qq617564112/cdtank/releases) 下载程序包并解压，进入目录：
 
 ```bash
-cd /path/to/cdtank-1.0.1
+cd /path/to/cdtank-1.0.2
 node install.mjs
 ```
 
@@ -56,7 +56,7 @@ node install.mjs
 使用已下载的同版本资产附件：
 
 ```bash
-node install.mjs --archive /path/to/cdtank-assets-1.0.1.tar.gz
+node install.mjs --archive /path/to/cdtank-assets-1.0.2.tar.gz
 ```
 
 在无桌面的服务器上关闭浏览器自动打开：
@@ -97,8 +97,8 @@ npm run assets:install
 
 ```bash
 npm run assets:install -- \
-  --archive /path/to/cdtank-assets-1.0.1.tar.gz \
-  --program /path/to/cdtank-1.0.1.tar.gz
+  --archive /path/to/cdtank-assets-1.0.2.tar.gz \
+  --program /path/to/cdtank-1.0.2.tar.gz
 ```
 
 安装器先在临时目录解压并确认目录内容，再替换上述两个运行资源目录。素材编辑在 `art/` 中完成；已有配套运行目录可跳过安装。两端构建和开发服务器命令见[根 README](../README.md)与[开发指南](development.md)。
@@ -116,7 +116,7 @@ npm run assets:install -- \
 npm run release:build
 ```
 
-该命令按锁文件执行 `npm ci`，依次构建 Web 和服务端，组装程序目录，生成两个 `.tar.gz` 附件和发布说明，输出到 `dist/github/v1.0.1/`。它不会创建 Git 标签、推送或调用 GitHub 发布。
+该命令按锁文件执行 `npm ci`，依次构建 Web 和服务端，组装程序目录，生成两个 `.tar.gz` 附件和发布说明，输出到 `dist/github/v1.0.2/`。它不会创建 Git 标签、推送或调用 GitHub 发布。
 
 原有 `npm run release:package -- <新目录>` 继续组装包含所有资源的完整运行目录，供本地部署与 Docker 使用；GitHub 脚本使用其 `--without-public` 选项拆分素材。完整目录不携带 GitHub 安装元数据，安装包内服务端依赖后直接运行 `start.mjs`。
 
@@ -140,6 +140,5 @@ npm run release:github -- --notes /path/to/release-notes.md
 
 ## 限制与许可
 
-- 当前仅完成 1.0.1 的流程与脚本，尚未执行构建或实际发布；自动下载需对应 Release 的两个附件可用。
 - 每个附件必须小于 GitHub 的 2 GiB 上限。脚本在上传前检查大小，超限时按压缩配方调整素材后重新打包。
 - 原创代码、工具与文档采用 [CDTank 非商业研究用途源码许可](../LICENSE)，保留 [NOTICE](../NOTICE)。原作素材和第三方字体保留各自权利，完整素材分发需取得相应授权；来源见[素材说明](asset-sources.md)。

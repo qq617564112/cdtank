@@ -695,7 +695,8 @@ export class Battle {
         this.shotPlayerResult = new TankShotPlayerResult(this.effects, catalog);
         this.shotItemResult = new TankShotItemResult(this.effects, catalog);
         this.ammoBurnPresentation = new AmmoBurnPresentation(this.effects, id => this.players.get(id));
-        await this.battlefield.load(String(this.mapId).padStart(4, '0'), this.effects);
+        await this.battlefield.load(String(this.mapId).padStart(4, '0'), this.effects,
+          (fraction, status) => progress(0.15 + fraction * 0.45, status));
         if (!current()) return;
         await this.localMotion.field.load(this.mapId!);
         if (current() && this.roomFeed.snapshot) {

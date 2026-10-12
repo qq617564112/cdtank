@@ -25,7 +25,7 @@
 
 `SceneShadowLight`由`createSceneRuntime`持有，使用Babylon `DirectionalLight`和`ShadowGenerator`绘制一张2048×2048浮点深度贴图。正交投影自动覆盖当前地形、场景物件与坦克的世界包围盒，并自动计算深度范围；边缘保留5%余量。
 
-接收材质使用生成阴影时的同一光源投影矩阵和Babylon深度范围。WebGPU的0–1深度直接比较；二维UV由投影XY乘.5加.5得到。九点`texelFetch`读取LOD 0的真实深度，比较结果取平均以软化边缘。每点按实际texel中心与接收平面的深度梯度校正比较值，并使用生成端bias的十分之一作为接收端深度容差。斜面梯度与CVD缺失法线时的世界位置导数都在fragment main入口无条件计算，先于透明裁切和阴影开关。
+接收材质使用生成阴影时的同一光源投影矩阵和Babylon深度范围。WebGPU的0–1深度直接比较；二维UV由投影XY乘.5加.5得到。坦克表面使用单点`texelFetch`比较，保持清晰阴影；地面和其他场景物件使用九点比较结果平均以软化边缘。坦克投在地面的阴影按地面的接收规则柔化。每点读取LOD 0真实深度，按实际texel中心与接收平面的深度梯度校正比较值，并使用生成端bias的十分之一作为接收端深度容差。斜面梯度与CVD缺失法线时的世界位置导数都在fragment main入口无条件计算，先于透明裁切和阴影开关。
 
 1001的PBR接收路径使用Babylon的四次Poisson比较滤波。同一配置的softness写入`blurScale`，阴影强度写入`darkness=1-shadowStrength`；PBR阴影调制方向光的直接光照，自定义材质在原色之后乘阴影系数。
 

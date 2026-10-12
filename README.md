@@ -1,6 +1,6 @@
 # CDTank · 阿猫阿狗大作战复刻
 
-当前版本：**1.0.1** · [GitHub Releases](https://github.com/qq617564112/cdtank/releases) · [当前状态与文档](docs/README.md) · [更新日志](CHANGELOG.md)
+当前版本：**1.0.2** · [GitHub Releases](https://github.com/qq617564112/cdtank/releases) · [当前状态与文档](docs/README.md) · [更新日志](CHANGELOG.md)
 
 ![阿猫阿狗大作战 Online 高清标志](docs/assets/logo-hd.webp)
 
@@ -58,10 +58,10 @@
 
 ### 1. 直接使用 Release 运行
 
-安装 [Node.js](https://nodejs.org/en/download) **24.16 或更高版本**，从 [GitHub Releases](https://github.com/qq617564112/cdtank/releases) 下载程序包 `cdtank-1.0.1.tar.gz` 并解压。在解压目录运行：
+安装 [Node.js](https://nodejs.org/en/download) **24.16 或更高版本**，从 [GitHub Releases](https://github.com/qq617564112/cdtank/releases) 下载程序包 `cdtank-1.0.2.tar.gz` 并解压。在解压目录运行：
 
 ```bash
-cd /path/to/cdtank-1.0.1
+cd /path/to/cdtank-1.0.2
 node install.mjs
 ```
 
@@ -119,8 +119,8 @@ npm run dev
 
 ```bash
 bash deployment/import-assets.sh
-docker build --tag cdtank:1.0.1 .
-CDTANK_IMAGE_TAG=1.0.1 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
+docker build --tag cdtank:1.0.2 .
+CDTANK_IMAGE_TAG=1.0.2 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
 ```
 
 本机入口为 [http://localhost:61002](http://localhost:61002)，账户保存在 `cdtank-accounts` 持久卷中。资源准备、HTTPS 反代、镜像更新及存档备份恢复见[Docker 部署](docs/docker-deployment.md)。
@@ -202,7 +202,6 @@ tests/                  现有资产、规则、联机和页面验收入口
 
 ## 当前限制
 
-- 1.0.1 发布与安装流程已准备，两个 GitHub 附件尚未发布；自动下载需对应 Release 可用。已有配套资源目录可用于本地构建和开发。
 - 房间刷新恢复沿用 30 秒断线保留窗口；超时、房间关闭或服务端重启后回到大厅。账户存档保留，正在进行的对局不随重启恢复。
 - 既有两图性能记录覆盖特定设备与配置；后续贴图、缓存和软阴影改动的整局视觉效果与性能仍以专题记录及任务清单的实测范围为准。
 

@@ -89,7 +89,7 @@ npm run accounts:restore -- /srv/cdtank/backups/accounts-2026-10-04.sqlite /srv/
 
 ## 验证范围
 
-1.0.1 发布与安装脚本本次仅完成静态核对，未执行新流程的构建、安装、浏览器验收或实际上传；以下证据属于已有完整发行目录与账户存档流程。
+以下证据属于完整发行目录与账户存档流程；GitHub 分包的安装入口按[发布说明](https://github.com/qq617564112/cdtank/blob/main/docs/github-publication.md)使用同版本附件。
 
 `npm run test:release:network` 组装临时完整发行目录、安装包内固定依赖，再从仓库外启动两次服务。两个普通空账户通过认证、地图目录、建房、加入、双端玩家同步、退出及冷重启身份/昵称恢复。测试静态 HTTP 服务检查正式 HTML、入口 JS 与目录资源；浏览器与实际 nginx 反代范围见下段。
 

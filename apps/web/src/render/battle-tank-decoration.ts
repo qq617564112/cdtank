@@ -70,7 +70,6 @@ export class BattleTankDecoration {
           alpha: material.alpha, transparencyMode: material.transparencyMode, alphaMode: material.alphaMode,
         });
       }
-      assets.rootNodes.forEach(node => {node.parent = this.anchor;});
       const texturePath = this.texturePath;
       if (texturePath) {
         const texture = await new Promise<Texture>((resolve, reject) => {
@@ -86,6 +85,7 @@ export class BattleTankDecoration {
         }
       }
       assets.addAllToScene();
+      assets.rootNodes.forEach(node => {node.parent = this.anchor;});
       applyCartoonOutlines(assets.meshes);
       this.update();
       this.scene.onBeforeRenderObservable.add(this.update);

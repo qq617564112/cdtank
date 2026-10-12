@@ -5,6 +5,7 @@ import {sceneShadowLightProfile} from './scene-shadow-light-profiles';
 interface ShadowRoot {
   readonly root: TransformNode;
   readonly dynamic: boolean;
+  readonly softShadows: boolean;
   readonly meshes?: () => readonly AbstractMesh[];
 }
 
@@ -31,6 +32,7 @@ uniform SceneShadowLight {
 };
 uniform sampler2D sceneShadowTexture;
 uniform float sceneShadowReceiver;
+uniform float sceneShadowSoftness;
 varying vec3 sceneShadowWorldPosition;
 varying vec3 sceneShadowWorldNormal;
 vec3 sceneShadowCoordinates() {
@@ -46,19 +48,23 @@ vec2 sceneShadowDepthSlope(vec3 coordinates) {
   if (abs(determinant) < 1.0e-12) return vec2(0.0);
   return vec2(dy.y * dx.z - dx.y * dy.z, dx.x * dy.z - dy.x * dx.z) / determinant;
 }
+float sceneShadowSample(vec2 uv, float depth, vec2 slope, vec2 offset) {
+  ivec2 texel = ivec2(clamp(floor((uv + offset) * ${MAP_SIZE}.0), vec2(0.0), vec2(${MAP_SIZE - 1}.0)));
+  vec2 sampleUv = (vec2(texel) + 0.5) / ${MAP_SIZE}.0;
+  float receiverDepth = depth + dot(slope, sampleUv - uv) - sceneShadowDepth.w;
+  float stored = texelFetch(sceneShadowTexture, texel, 0).r;
+  return step(receiverDepth, stored);
+}
 float sceneShadowVisibility(vec3 coordinates, vec2 slope) {
   vec2 uv = coordinates.xy;
   float depth = coordinates.z;
   if (depth < 0.0 || depth > 1.0 || uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return 1.0;
+  if (sceneShadowSoftness < 0.5) return sceneShadowSample(uv, depth, slope, vec2(0.0));
   float visibility = 0.0;
   for (int row = -1; row <= 1; row++) {
     for (int column = -1; column <= 1; column++) {
       vec2 offset = vec2(float(column), float(row)) * sceneShadowSettings.y;
-      ivec2 texel = ivec2(clamp(floor((uv + offset) * ${MAP_SIZE}.0), vec2(0.0), vec2(${MAP_SIZE - 1}.0)));
-      vec2 sampleUv = (vec2(texel) + 0.5) / ${MAP_SIZE}.0;
-      float receiverDepth = depth + dot(slope, sampleUv - uv) - sceneShadowDepth.w;
-      float stored = texelFetch(sceneShadowTexture, texel, 0).r;
-      visibility += step(receiverDepth, stored);
+      visibility += sceneShadowSample(uv, depth, slope, offset);
     }
   }
   return visibility / 9.0;
@@ -158,6 +164,7 @@ export class SceneShadowLight {
   bindMaterial(material: ShaderMaterial): void {
     material.setUniformBuffer('SceneShadowLight', this.buffer);
     material.setFloat('sceneShadowReceiver', 0);
+    material.setFloat('sceneShadowSoftness', 1);
     material.setTexture('sceneShadowTexture', this.generator.getShadowMap()!);
   }
 
@@ -199,9 +206,10 @@ export class SceneShadowLight {
     this.light.setEnabled(true);
   }
 
-  addRoot(root: TransformNode, options: {dynamic?: boolean;
+  addRoot(root: TransformNode, options: {dynamic?: boolean; softShadows?: boolean;
     meshes?: () => readonly AbstractMesh[]} = {}): () => void {
-    const entry = {root, dynamic: options.dynamic ?? false, meshes: options.meshes};
+    const entry = {root, dynamic: options.dynamic ?? false,
+      softShadows: options.softShadows ?? true, meshes: options.meshes};
     this.roots.add(entry);
     return () => {this.roots.delete(entry);};
   }
@@ -229,7 +237,7 @@ export class SceneShadowLight {
       if (entry.root.isDisposed()) {this.roots.delete(entry); continue;}
       for (const mesh of entry.meshes?.() ?? entry.root.getChildMeshes()) {
         if (!this.eligible(mesh)) continue;
-        this.receive(mesh);
+        this.receive(mesh, entry.softShadows);
         if (entry.root.isEnabled() && mesh.isEnabled() && mesh.isVisible && mesh.visibility > 0) {
           mesh.computeWorldMatrix(true);
           casters.add(mesh);
@@ -257,12 +265,15 @@ export class SceneShadowLight {
     this.receiversChanged = false;
   }
 
-  private receive(mesh: AbstractMesh): void {
+  private receive(mesh: AbstractMesh, softShadows = true): void {
     if (this.receivers.has(mesh)) return;
     this.receivers.add(mesh);
     this.receiversChanged = true;
     mesh.receiveShadows = true;
-    if (mesh.material instanceof ShaderMaterial) mesh.material.setFloat('sceneShadowReceiver', 1);
+    if (mesh.material instanceof ShaderMaterial) {
+      mesh.material.setFloat('sceneShadowReceiver', 1);
+      mesh.material.setFloat('sceneShadowSoftness', softShadows ? 1 : 0);
+    }
   }
 
   private eligible(mesh: AbstractMesh): boolean {
