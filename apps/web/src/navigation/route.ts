@@ -1,4 +1,5 @@
 import {useSyncExternalStore, type Dispatch, type SetStateAction} from 'react';
+import {disableBrowserNavigation} from './browser-navigation';
 
 export type GamePage = 'login' | 'channels' | 'lobby' | 'room' | 'battle' | 'results' | 'closed';
 export interface GameRoute {page: GamePage; roomId?: string;}
@@ -34,11 +35,11 @@ function publicParameter(url: URL, key: string): boolean {
 const cachedState = readSessionState();
 let generation = cachedState?.generation ?? 0;
 
-function restoreNavigation(url: URL, state?: NavigationState, readQuery = true): NavigationState {
+function restoreNavigation(url: URL, state?: NavigationState): NavigationState {
   const privateValues: Record<string, string> = {};
   for (const [key, value] of [...url.searchParams]) {
     if (publicParameter(url, key)) continue;
-    if (readQuery) privateValues[key] = value;
+    privateValues[key] = value;
     url.searchParams.delete(key);
   }
   const path = urlPath(url);
@@ -67,13 +68,13 @@ function saveHistoryState(replace: boolean): void {
 saveSessionState();
 saveHistoryState(true);
 
-window.addEventListener('popstate', event => {
-  const state = readNavigationState(event.state?.cdtankNavigation);
-  snapshot = restoreNavigation(new URL(location.href), state, state?.generation === generation);
-  saveSessionState();
-  saveHistoryState(true);
-  publish();
-});
+/** Browser traversal keeps the live page and selections without restoring older snapshots. */
+export function reserveBrowserNavigation(): () => void {
+  return disableBrowserNavigation(() => ({
+    url: snapshot.url,
+    state: {...history.state, cdtankNavigation: snapshot},
+  }));
+}
 
 function currentUrl(): URL {return new URL(snapshot.url, location.origin);}
 
@@ -179,7 +180,7 @@ export function useNavigationNumber(key: string, replace = false): [number | und
   }];
 }
 
-/** Dialog visibility is URL state, so refresh and browser history use the same source. */
+/** Dialog visibility is URL state, so refresh restores the current dialogs. */
 export function useRouteDialog(name: string): [boolean, Dispatch<SetStateAction<boolean>>] {
   useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const read = (): string[] => currentUrl().searchParams.get('dialogs')?.split(',').filter(Boolean) ?? [];

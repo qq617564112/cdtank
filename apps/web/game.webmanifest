@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "阿猫阿狗大作战Online",
+  "short_name": "阿猫阿狗大作战Online",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6e5b7",
+  "theme_color": "#6d422a",
+  "icons": [
+    {
+      "src": "/assets/ui/images/app-icons/client-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/ui/images/app-icons/client-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+:root {
+  --game-safe-left: env(safe-area-inset-left, 0px);
+  --game-safe-right: env(safe-area-inset-right, 0px);
+  --game-safe-top: env(safe-area-inset-top, 0px);
+  --game-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --game-viewport-width: 100vw;
+  --game-viewport-height: 100dvh;
+  --game-viewport-left: 0px;
+  --game-viewport-top: 0px;
+  --game-page-width: min(100vw, 233.333333vh);
+  --game-page-height: min(100vh, 56.25vw);
+  --game-page-left: calc((100vw - var(--game-page-width)) / 2);
+  --game-page-top: calc((100vh - var(--game-page-height)) / 2);
+  --mobile-page-width: 960px;
+  --mobile-account-width: 720px;
+}
+
+html body {
+  background: #101c28;
+}
+
+:root body :is(.source-entry, [data-lobby-page], .loading-page, .battle-summary-viewport, .game-closed-page) {
+  inset: var(--game-page-top) auto auto var(--game-page-left);
+  width: var(--game-page-width);
+  height: var(--game-page-height);
+}
+
+html[data-mobile-device] body :is(.source-entry, [data-lobby-page], .loading-page, .battle-summary-viewport, .game-closed-page) {
+  inset: var(--game-viewport-top) auto auto var(--game-viewport-left);
+  width: var(--game-viewport-width);
+  height: var(--game-viewport-height);
+  box-sizing: border-box;
+  padding:
+    calc(var(--game-page-top) - var(--game-viewport-top))
+    calc(var(--game-viewport-width) - var(--game-page-left) + var(--game-viewport-left) - var(--game-page-width))
+    calc(var(--game-viewport-height) - var(--game-page-top) + var(--game-viewport-top) - var(--game-page-height))
+    calc(var(--game-page-left) - var(--game-viewport-left));
+}
+
+.game-closed-page {
+  position: fixed;
+  display: grid;
+  place-items: center;
+  background: #073ca7 var(--image-login-background) center / cover no-repeat;
+}

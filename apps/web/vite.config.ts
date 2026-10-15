@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {defineConfig} from 'vite';
 import {imageAssetsPlugin} from './image-assets-plugin';
+import {webAppPlugin} from './web-app-plugin';
 
 const webRoot = fileURLToPath(new URL('.', import.meta.url));
 const workspaceRoot = resolve(webRoot, '../..');
@@ -24,6 +25,7 @@ export default defineConfig({
   root: webRoot,
   publicDir,
   plugins: [contentPlugin(resolve(workspaceRoot, 'apps/shared/content/definitions')),
+    webAppPlugin(resolve(webRoot, 'game.webmanifest')),
     imageAssetsPlugin(publicDir, resolve(workspaceRoot, 'apps/shared/content/definitions'))],
   server: {
     allowedHosts: ['tank.cloyd.fun'],

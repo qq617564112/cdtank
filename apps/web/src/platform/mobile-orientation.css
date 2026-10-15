@@ -1,0 +1,58 @@
+html[data-mobile-device] {
+  overscroll-behavior: none;
+}
+
+.mobile-orientation {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  margin: 0;
+  padding: max(32px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom));
+  border: 0;
+  background: #243d35;
+  color: #fff8da;
+  font-family: 'Microsoft YaHei', sans-serif;
+  text-align: center;
+  touch-action: manipulation;
+}
+
+.mobile-orientation[open] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+}
+
+.mobile-orientation::backdrop {
+  background: #243d35;
+}
+
+.mobile-orientation-phone {
+  display: block;
+  width: 96px;
+  height: 52px;
+  border: 4px solid #bce5cd;
+  border-radius: 12px;
+  box-shadow: inset 9px 0 #bce5cd;
+}
+
+.mobile-orientation p {
+  margin: 0;
+  font-size: 20px;
+}
+
+.mobile-orientation button {
+  min-height: 48px;
+  margin: 0;
+  padding: 8px 24px;
+  border: 2px solid #193024;
+  border-radius: 8px;
+  background: #91bd68;
+  color: #193024;
+  font: inherit;
+}
