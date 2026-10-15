@@ -1,7 +1,9 @@
 import {battleArtworkUrl} from '../battle-artwork';
-import {loadStaticJson} from '../static-resources';
+import {withResourceTimeout} from '../static-resources';
+import {loadEffectModelLibrary} from '../../render/effects/models/effect-model-resources';
 import {Scene, Texture} from '@babylonjs/core';
-import {EffectModelRenderer, type EffectModelLibrary} from '../../render/effects/models/effect-model-renderer';
+import {EffectModelRenderer} from '../../render/effects/models/effect-model-renderer';
+import type {EffectModelDraw} from '../../render/effects/models/effect-model-draw';
 import type {EffectModelGraphicsState} from '../../render/effects/models/effect-model-material';
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import {multiplyEffectMatrices} from '../../render/effects/common/effect-render-transform';
@@ -19,7 +21,7 @@ export class SceneBreachVisual {
   private disposed = false;
   private duration = 0;
   private elapsed = 0;
-  private readonly matrix: EffectNativeMatrix;
+  private readonly drawState: EffectModelDraw;
 
   get durationSeconds(): number {return this.duration;}
 
@@ -27,24 +29,29 @@ export class SceneBreachVisual {
               matrix: EffectNativeMatrix, readonly model: string,
               private readonly libraryAsset: string,
               private readonly reference?: string) {
-    this.matrix = multiplyEffectMatrices(matrix, CVD_SCENE_ROOT);
+    this.drawState = {matrix: multiplyEffectMatrices(matrix, CVD_SCENE_ROOT),
+      blend: 1, alpha: 1, priority: -1};
   }
 
   async load(): Promise<void> {
-    const library = await loadStaticJson<EffectModelLibrary>(this.libraryAsset);
-    if (this.disposed || this.scene.isDisposed) return;
     const reference = this.reference ?? `Data/scnobj/${this.model}/c9.CVD`;
+    const library = await loadEffectModelLibrary(this.libraryAsset, this.scene, new Set([reference]));
+    if (this.disposed || this.scene.isDisposed) return;
     const resource = library.resources.find(value => value.reference === reference);
     if (!resource) throw new Error(`缺少原破损模型：${reference}`);
     this.duration = Math.max(0, ...resource.nodes.map(node => node.duration ?? 0));
     const paths = [...new Set(resource.nodes.flatMap(node => node.parts.flatMap(part => part.asset ? [part.asset] : [])))];
-    await Promise.all(paths.map(asset => new Promise<void>((resolve, reject) => {
-      const texture = new Texture(battleArtworkUrl(`/${asset}`, this.scene), this.scene, true, false,
-        Texture.BILINEAR_SAMPLINGMODE, resolve, message => reject(new Error(message)));
-      texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE;
-      texture.anisotropicFilteringLevel = 1;
-      this.textures.set(asset, texture);
-    })));
+    await Promise.all(paths.map(asset => {
+      const url = battleArtworkUrl(`/${asset}`, this.scene);
+      return withResourceTimeout(new Promise<void>((resolve, reject) => {
+        const texture = new Texture(url, this.scene, true, false,
+          Texture.BILINEAR_SAMPLINGMODE, resolve,
+          message => reject(new Error(`破损模型贴图载入失败：${url}（${message}）`)));
+        texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE;
+        texture.anisotropicFilteringLevel = 1;
+        this.textures.set(asset, texture);
+      }), url);
+    }));
     if (this.disposed || this.scene.isDisposed) return;
     this.graphics = {...library.graphics, ambient: this.scene.ambientColor.asArray()};
     this.renderer = new EffectModelRenderer(this.scene, resource,
@@ -52,15 +59,16 @@ export class SceneBreachVisual {
     this.renderer.setRate(0);
     this.renderer.setTime(0);
     this.renderer.update();
-    this.renderer.draw({matrix: this.matrix, blend: 1, alpha: 1, priority: -1});
+    this.drawState.alpha = 1;
+    this.renderer.draw(this.drawState);
     this.renderer.draw(undefined);
     const meshes = this.renderer.meshes;
     for (const mesh of meshes) {
       mesh.name = `placement-${this.placementId}/broken-cvd-${mesh.metadata.sourceModelNode}`;
       mesh.metadata = {...mesh.metadata, sourcePlacementId: this.placementId, sourceBreachBroken: true};
     }
-    await Promise.all(meshes.map(mesh =>
-      mesh.material!.forceCompilationAsync(mesh)));
+    await Promise.all(meshes.map(mesh => withResourceTimeout(
+      mesh.material!.forceCompilationAsync(mesh), `破损模型材质：${reference} / ${mesh.name}`)));
     if (this.disposed || this.scene.isDisposed) return;
     await sceneShadowLight(this.scene)?.prepareMeshes(meshes);
   }
@@ -85,8 +93,12 @@ export class SceneBreachVisual {
     this.elapsed = Math.min(this.duration, this.elapsed + Math.fround(deltaSeconds));
     this.renderer.setTime(this.elapsed);
     this.renderer.update();
-    this.graphics!.ambient = this.scene.ambientColor.asArray();
-    this.renderer.draw({matrix: this.matrix, blend: 1, alpha: Math.max(0, alpha), priority: -1});
+    const ambient = this.graphics!.ambient as number[];
+    ambient[0] = this.scene.ambientColor.r;
+    ambient[1] = this.scene.ambientColor.g;
+    ambient[2] = this.scene.ambientColor.b;
+    this.drawState.alpha = Math.max(0, alpha);
+    this.renderer.draw(this.drawState);
   }
 
   dispose(): void {

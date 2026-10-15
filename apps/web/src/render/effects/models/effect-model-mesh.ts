@@ -37,26 +37,32 @@ ${sceneShadows ? SCENE_SHADOW_VERTEX_DECLARATION : ''}
 attribute vec3 position;
 attribute vec2 uv;
 ${vertices.colors ? 'attribute vec4 color;' : 'uniform vec4 sourceAmbient;'}
-${vertices.animated ? `attribute float sourceVertexId;
+${vertices.animated ? 'uniform vec4 sourceFrameSample;' : ''}
+${vertices.usesFrameTexture ? `attribute float sourceVertexId;
 uniform sampler2D sourceFrames;
+uniform sampler2D sourceFrameV;
 uniform vec2 sourceFrameSize;
-uniform vec4 sourceFrameSample;
-vec4 modelTexel(float index) {
+ivec2 modelCoordinate(float index) {
   vec2 texel = vec2(mod(index, sourceFrameSize.x), floor(index / sourceFrameSize.x));
-  return texelFetch(sourceFrames, ivec2(texel), 0);
+  return ivec2(texel);
 }` : ''}
 uniform mat4 worldViewProjection;
 varying vec2 vUV;
 varying vec4 vColor;
 uniform mat4 world;
 void main(){
-${vertices.animated ? `  float first = (sourceFrameSample.x + sourceVertexId) * 2.0;
-  float second = (sourceFrameSample.y + sourceVertexId) * 2.0;
-  vec3 nativePosition = sourceFrameSample.w * modelTexel(first).xyz
-    + sourceFrameSample.z * modelTexel(second).xyz;
+${vertices.usesFrameTexture ? `  ivec2 first = modelCoordinate(sourceFrameSample.x + sourceVertexId);
+  ivec2 second = modelCoordinate(sourceFrameSample.y + sourceVertexId);
+  vec4 firstVertex = texelFetch(sourceFrames, first, 0);
+  vec4 secondVertex = texelFetch(sourceFrames, second, 0);
+  vec3 nativePosition = sourceFrameSample.w * firstVertex.xyz
+    + sourceFrameSample.z * secondVertex.xyz;
   vec3 localPosition = vec3(-nativePosition.x, nativePosition.yz);
-  vUV = sourceFrameSample.w * modelTexel(first + 1.0).xy
-    + sourceFrameSample.z * modelTexel(second + 1.0).xy;` : '  vec3 localPosition = position; vUV = uv;'}
+  vUV = sourceFrameSample.w * vec2(firstVertex.w, texelFetch(sourceFrameV, first, 0).r)
+    + sourceFrameSample.z * vec2(secondVertex.w, texelFetch(sourceFrameV, second, 0).r);` : vertices.animated ? `  vec3 nativeVertex = vec3(-position.x, position.yz);
+  vec3 nativePosition = sourceFrameSample.w * nativeVertex + sourceFrameSample.z * nativeVertex;
+  vec3 localPosition = vec3(-nativePosition.x, nativePosition.yz);
+  vUV = sourceFrameSample.w * uv + sourceFrameSample.z * uv;` : '  vec3 localPosition = position; vUV = uv;'}
   vec4 worldPosition=world*vec4(localPosition,1.0);
 ${sceneShadows ? '  sceneShadowWorldPosition=worldPosition.xyz; sceneShadowWorldNormal=vec3(0.0);' : ''}
   gl_Position=worldViewProjection*vec4(localPosition,1.0);
@@ -64,10 +70,11 @@ ${sceneShadows ? '  sceneShadowWorldPosition=worldPosition.xyz; sceneShadowWorld
   sceneFogFactor=sceneFog(worldPosition.xyz);
 }`;
     const attributes = ['position', 'uv', ...(vertices.colors ? ['color'] : []),
-      ...(vertices.animated ? ['sourceVertexId'] : [])];
+      ...(vertices.usesFrameTexture ? ['sourceVertexId'] : [])];
     const uniforms = ['world', 'worldViewProjection', 'sourceAmbient',
-      ...(vertices.animated ? ['sourceFrameSize', 'sourceFrameSample'] : []), ...SCENE_ENVIRONMENT_UNIFORMS];
-    const samplers = ['modelTexture', ...(vertices.animated ? ['sourceFrames'] : [])];
+      ...(vertices.animated ? ['sourceFrameSample'] : []),
+      ...(vertices.usesFrameTexture ? ['sourceFrameSize'] : []), ...SCENE_ENVIRONMENT_UNIFORMS];
+    const samplers = ['modelTexture', ...(vertices.usesFrameTexture ? ['sourceFrames', 'sourceFrameV'] : [])];
     this.material = new ShaderMaterial('original-effect-model', scene, {vertexSource,
       fragmentSource: `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
 ${sceneShadows ? SCENE_SHADOW_FRAGMENT_DECLARATION : ''}
@@ -117,8 +124,7 @@ ${state.alphaTest ? '  if(colour.a<=100.0/255.0)discard;' : ''}
     }
     this.mesh.material = this.material;
     this.mesh.isPickable = false;
-    vertices.geometry(indices).applyToMesh(this.mesh);
-    if (vertices.animated) this.mesh.setVerticesData('sourceVertexId', vertices.vertexIds, false, 1);
+    vertices.apply(this.mesh, indices);
     this.mesh.setBoundingInfo(vertices.bounds());
     for (const subMesh of this.mesh.subMeshes) subMesh.setBoundingInfo(vertices.bounds());
     vertices.bind(this.material);
@@ -128,7 +134,12 @@ ${state.alphaTest ? '  if(colour.a<=100.0/255.0)discard;' : ''}
   update(matrix: EffectNativeMatrix, ambient: readonly number[]): void {
     // R * nativeWorld * R maps the native local/world X reflection to Babylon.
     this.reflectedMatrix.set(matrix);
-    for (const index of [1, 2, 3, 4, 8, 12]) this.reflectedMatrix[index] *= -1;
+    this.reflectedMatrix[1] *= -1;
+    this.reflectedMatrix[2] *= -1;
+    this.reflectedMatrix[3] *= -1;
+    this.reflectedMatrix[4] *= -1;
+    this.reflectedMatrix[8] *= -1;
+    this.reflectedMatrix[12] *= -1;
     Matrix.FromArrayToRef(this.reflectedMatrix, 0, this.matrix);
     this.mesh.freezeWorldMatrix(this.matrix);
     Vector4.FromArrayToRef(ambient, 0, this.ambient);

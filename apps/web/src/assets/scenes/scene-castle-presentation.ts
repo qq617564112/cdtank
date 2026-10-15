@@ -45,16 +45,14 @@ export class SceneCastlePresentation {
         case 'destroyCallback': this.view.destroyCallback(); break;
         case 'damageText': this.view.damageText(command.delta); break;
         case 'effect': {
-          const handle = this.runtime.spawnCastleEffect(command.name, this.view.matrix(command.target));
-          if (handle) this.effects.add(handle);
+          const handle = this.runtime.spawnCastleEffect(command.name, this.view.matrix(command.target), this.effects);
           if (command.slot !== undefined) this.effectSlots.set(command.slot, handle);
           break;
         }
         case 'sound': {
           const matrix = command.target === 'position' ? undefined : this.view.matrix(command.target);
           const position = matrix ? [matrix[12], matrix[13], matrix[14]] as EffectVec3 : this.view.position;
-          const handle = this.runtime.playSceneSound(command.name, position, command.selector);
-          if (handle) this.sounds.add(handle);
+          const handle = this.runtime.playSceneSound(command.name, position, command.selector, this.sounds);
           if (command.slot !== undefined) this.soundSlots.set(command.slot, handle);
           break;
         }

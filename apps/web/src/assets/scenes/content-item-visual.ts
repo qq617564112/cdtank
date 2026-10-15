@@ -2,8 +2,6 @@ import {battleArtworkUrl} from '../battle-artwork';
 import {AssetContainer, Constants, Matrix, PBRMaterial, Quaternion,
   Scene, Texture, TransformNode, Vector3} from '@babylonjs/core';
 import {loadPreparedModel} from '../model-resources';
-import {decodeImageRegion} from '../image-resources';
-import {imageResourceUrl} from '../image-cache';
 import type {ItemDefinition} from '../../../../shared/content/types';
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
@@ -30,21 +28,30 @@ export class ContentItemVisual {
     if (this.disposed || this.scene.isDisposed) return;
     const resources = this.definition.resources;
     if (!resources.model) throw new Error(`物品模型资源缺失：${this.definition.name}`);
-    const asset = await loadPreparedModel(`/${resources.model}`, this.scene);
+    const asset = await loadPreparedModel(`/${resources.model}`, this.scene, {
+      pluginOptions: {gltf: {onParsed: data => {
+        if (!resources.texturePath) return;
+        for (const material of data.json.materials ?? []) {
+          if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
+        }
+      }}},
+    });
     if (this.disposed || this.scene.isDisposed) {asset.dispose(); return;}
     this.asset = asset;
     try {
       if (resources.texturePath) {
-        await decodeImageRegion(battleArtworkUrl(`/${resources.texturePath}`, this.scene));
-        if (this.disposed || this.scene.isDisposed) {asset.dispose(); return;}
         this.texture = await new Promise<Texture>((resolve, reject) => {
-          const texture = new Texture(imageResourceUrl(battleArtworkUrl(`/${resources.texturePath}`, this.scene)), this.scene, true, false,
+          const texture = new Texture(battleArtworkUrl(`/${resources.texturePath}`, this.scene), this.scene, true, false,
             Constants.TEXTURE_LINEAR_LINEAR, () => resolve(texture),
             (_message, error) => {texture.dispose(); reject(error ?? new Error('物品贴图载入失败'));});
         });
         if (this.disposed || this.scene.isDisposed) {this.texture.dispose(); asset.dispose(); return;}
         for (const material of asset.materials) {
-          if (material instanceof PBRMaterial) material.albedoTexture = this.texture;
+          if (material instanceof PBRMaterial) {
+            material.albedoTexture = this.texture;
+            // Retain the source MASK material's alpha-source setting without its default image.
+            material.useAlphaFromAlbedoTexture = true;
+          }
         }
       }
       applyCartoonOutlines(asset.meshes);

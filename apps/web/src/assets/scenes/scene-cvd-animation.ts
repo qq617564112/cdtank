@@ -1,9 +1,10 @@
 import {battleArtworkUrl} from '../battle-artwork';
-import {loadStaticJson} from '../static-resources';
+import {loadEffectModelLibrary} from '../../render/effects/models/effect-model-resources';
 import {Scene, Texture} from '@babylonjs/core';
-import {EffectModelRenderer, EffectModelLibrary} from '../../render/effects/models/effect-model-renderer';
+import {EffectModelRenderer} from '../../render/effects/models/effect-model-renderer';
 import {effectModelEngineDelta} from '../../render/effects/models/effect-model-animation';
 import {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
+import type {EffectModelDraw} from '../../render/effects/models/effect-model-draw';
 
 /** Original CVD tracks and vertices placed in native scene coordinates. */
 export class SceneCvdAnimation {
@@ -12,12 +13,15 @@ export class SceneCvdAnimation {
   private disposed = false;
   private delta = 0;
   private time = 0;
+  private readonly drawState: EffectModelDraw;
 
   constructor(private readonly scene: Scene, private readonly placementId: string,
-              private readonly matrix: EffectNativeMatrix) {}
+              matrix: EffectNativeMatrix) {
+    this.drawState = {matrix, blend: 0, alpha: 1, priority: 0};
+  }
 
   async load(path: string, reference: string): Promise<void> {
-    const library = await loadStaticJson<EffectModelLibrary>(`/${path}`);
+    const library = await loadEffectModelLibrary(`/${path}`, this.scene, new Set([reference]));
     if (this.disposed || this.scene.isDisposed) return;
     const resource = library.resources.find(value => value.reference === reference);
     if (!resource) throw new Error(`缺少原场景动画：${reference}`);
@@ -40,8 +44,9 @@ export class SceneCvdAnimation {
     this.delta = effectModelEngineDelta(deltaSeconds);
     this.time += this.delta;
     this.renderer.update();
-    this.renderer.draw({matrix: this.matrix, blend: 0, alpha: 1, priority: 0});
+    this.renderer.draw(this.drawState);
     for (const mesh of this.renderer.meshes) {
+      if (mesh.metadata.sourcePlacementId === this.placementId) continue;
       const sourceModel = mesh.metadata.sourceSceneModel ?? mesh.metadata.sourceModel;
       const sourceModelNode = mesh.metadata.sourceSceneModelNode ?? mesh.metadata.sourceModelNode;
       mesh.name = `placement-${this.placementId}/cvd-${sourceModelNode}`;

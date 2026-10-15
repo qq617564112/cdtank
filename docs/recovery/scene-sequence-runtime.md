@@ -124,9 +124,10 @@ base与screen各加载一次，并分别为当前map的每个放置实例化。`
   `deltaSeconds`当作原计时器。
 - `advance()`仅在elapsed严格大于`delay.seconds`时把计时起点重置到当前时刻、索引加1，
   并在4处回零。一次调用最多前进一帧，不补漏帧。
-- 当前帧纹理赋给screen容器所有现有screen mesh的已有基础色纹理槽。不得创建新材质，
-  不推断alpha、blend、unlit、shader、挂点、声音或碰撞语义。
-- 若screen GLB没有可复用的既有纹理槽，沿`load()`错误路径失败，不做材质替身。
+- screen沿用`SceneGeneralMaterial`的原`geom_c1`材质，当前帧赋给全部screen实例的
+  `sourceTexture`槽；顶点色、UV和原剔除设置保留。
+- screen GLB保留原命名网格及PBR材质描述，导入时移除基色图片绑定，注册原材质时
+  借用已加载的`frames[0]`。缺少原网格或材质时沿`load()`错误路径失败。
 
 ## 生命周期
 
@@ -135,8 +136,8 @@ base与screen各加载一次，并分别为当前map的每个放置实例化。`
 - 新Sequence在第一个异步请求前登记到`ScenePreview.sequence`。每个`await`后检查
   disposed与`ScenePreview.revision`；晚完成的container、texture、instance或root由
   Sequence自身dispose。
-- screen实例克隆的既有原基色纹理在首次换帧前登记owner，正常clear与失败清理释放；
-  base container与源container纹理保持原owner。
+- screen模板及克隆材质借用四张帧纹理，wrap和采样由帧加载器保持原值；帧数组为唯一
+  owner，正常clear与失败清理统一释放。base container纹理保持原owner。
 - `load()`失败且revision仍为当前世代时，沿现有`ScenePreview.load()`错误路径清理并重新
   抛出；revision已失效时，自身dispose后不覆盖当前场景。
 - `clear()`设置disposed，释放base/screen container、四帧texture、全部实例与root，

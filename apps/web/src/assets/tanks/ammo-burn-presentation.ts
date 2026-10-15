@@ -28,6 +28,8 @@ export class AmmoBurnPresentation {
   private readonly active = new Map<string, ActiveBurn>();
   /** Real startedAt values an ammoBurnEnded event already retired for a role. */
   private readonly ended = new Map<string, Set<number>>();
+  private readonly currentEnded = new Map<string, Set<number>>();
+  private readonly present = new Set<string>();
 
   constructor(private readonly runtime: Pick<EffectRuntime,
     'spawnAttachedEffect' | 'playSkillSound' | 'stopEffect' | 'stopSkillSound'>,
@@ -38,7 +40,8 @@ export class AmmoBurnPresentation {
       this.clear();
       this.context = context;
     }
-    const currentEnded = new Map<string, Set<number>>();
+    const currentEnded = this.currentEnded;
+    for (const startedAt of currentEnded.values()) startedAt.clear();
     for (const player of players) {
       const burn = player.ammoBurn;
       if (!player.alive || !burn || gameContent().items.get(burn.itemId)?.runtime.hit !== 'burn') continue;
@@ -48,8 +51,12 @@ export class AmmoBurnPresentation {
         startedAt.add(burn.startedAt);
       }
     }
+    for (const id of currentEnded.keys()) {
+      if (!currentEnded.get(id)!.size) currentEnded.delete(id);
+    }
     this.clearMarkers(currentEnded);
-    const present = new Set<string>();
+    const present = this.present;
+    present.clear();
     if (playing) for (const player of players) {
       const burn = player.ammoBurn;
       if (!player.alive || !burn || gameContent().items.get(burn.itemId)?.runtime.hit !== 'burn') continue;
@@ -70,6 +77,7 @@ export class AmmoBurnPresentation {
       this.active.set(player.id, {startedAt: burn.startedAt, view, effect, sound});
     }
     for (const id of this.active.keys()) if (!present.has(id)) this.remove(id);
+    present.clear();
   }
 
   /**
@@ -94,9 +102,10 @@ export class AmmoBurnPresentation {
   }
 
   private clearMarkers(current: ReadonlyMap<string, ReadonlySet<number>>): void {
-    for (const [id, ended] of [...this.ended]) {
+    for (const id of this.ended.keys()) {
+      const ended = this.ended.get(id)!;
       const currentEnded = current.get(id);
-      for (const startedAt of [...ended]) if (!currentEnded?.has(startedAt)) ended.delete(startedAt);
+      for (const startedAt of ended) if (!currentEnded?.has(startedAt)) ended.delete(startedAt);
       if (!ended.size) this.ended.delete(id);
     }
   }
@@ -104,6 +113,8 @@ export class AmmoBurnPresentation {
   clear(): void {
     for (const id of this.active.keys()) this.remove(id);
     this.ended.clear();
+    this.currentEnded.clear();
+    this.present.clear();
     this.context = '';
   }
 }

@@ -1,4 +1,4 @@
-import {EffectActionEvent, effectActorTimeStep, queryEffectActionEvents} from './effect-action-events';
+import {EffectActionEvent, effectActorTimeStep, queryEffectActionEventsToRef} from './effect-action-events';
 
 /** Original immediate GotoAction(id, flags) uses start=1 and end=0. */
 export class EffectActorActionClock {
@@ -9,6 +9,13 @@ export class EffectActorActionClock {
     readonly stopAtEnd: boolean, readonly timeScale: number, readonly precision: 53 | 64) {}
 
   advance(deltaSeconds: number): number[] {
+    const messages: number[] = [];
+    this.advanceToRef(deltaSeconds, messages);
+    return messages;
+  }
+
+  advanceToRef(deltaSeconds: number, messages: number[]): void {
+    messages.length = 0;
     const previous = this.time;
     this.time = (this.time + effectActorTimeStep(deltaSeconds, this.timeScale, this.precision)) >>> 0;
     let message = 0;
@@ -18,8 +25,11 @@ export class EffectActorActionClock {
       this.overMessage = 0;
     }
     // Update sends the explicit completion message before querying timed events.
-    if (message !== 0) return [message];
-    if (this.time === previous) return [];
-    return queryEffectActionEvents(this.duration, this.events, previous, this.time);
+    if (message !== 0) {
+      messages.push(message);
+      return;
+    }
+    if (this.time === previous) return;
+    queryEffectActionEventsToRef(this.duration, this.events, previous, this.time, messages);
   }
 }

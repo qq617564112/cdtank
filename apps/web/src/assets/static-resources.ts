@@ -3,49 +3,38 @@ import {loadStaticResourceBlob} from './static-resource-cache';
 const RESOURCE_TIMEOUT_MS = 30_000;
 const jsonResources = new Map<string, Promise<unknown>>();
 const binaryResources = new Map<string, Promise<ArrayBuffer>>();
-const resourceUrls = new Map<string, string>();
 
-/** Models and sounds retain their downloaded bytes for later battle instances. */
+/** Share pending reads; consumed bytes are owned by their decoder, not the cache. */
 export function loadStaticBinary(url: string): Promise<ArrayBuffer> {
   const key = new URL(url, location.href).href;
   const cached = binaryResources.get(key);
   if (cached) return cached;
-  const loading = loadStaticResourceBlob(key).then(blob => blob.arrayBuffer()).catch(error => {
-    binaryResources.delete(key);
-    throw error;
+  const loading = loadStaticResourceBlob(key).then(blob => blob.arrayBuffer()).finally(() => {
+    if (binaryResources.get(key) === loading) binaryResources.delete(key);
   });
   binaryResources.set(key, loading);
   return loading;
 }
 
-/** Streaming audio uses a complete local body instead of starting another request. */
-export async function prepareStaticResourceUrl(url: string): Promise<string> {
-  const key = new URL(url, location.href).href;
-  const bytes = await loadStaticBinary(key);
-  let ready = resourceUrls.get(key);
-  if (!ready) {
-    ready = URL.createObjectURL(new Blob([bytes]));
-    resourceUrls.set(key, ready);
-  }
-  return ready;
-}
-
-export function staticResourceUrl(url: string): string {
-  return resourceUrls.get(new URL(url, location.href).href) ?? url;
-}
-
 export function releaseStaticResources(): void {
-  for (const url of resourceUrls.values()) URL.revokeObjectURL(url);
-  resourceUrls.clear();
   binaryResources.clear();
+  jsonResources.clear();
+}
+
+/** Parsed map data is owned by the active scene; IndexedDB retains the files. */
+export function releaseStaticJsonResources(prefix: string): void {
+  for (const url of jsonResources.keys()) {
+    if (new URL(url, location.href).pathname.startsWith(prefix)) jsonResources.delete(url);
+  }
 }
 
 /** Share both the request and parsed directory across page sessions. */
-export function loadStaticJson<T>(url: string): Promise<T> {
+export function loadStaticJson<T>(url: string, retain = true): Promise<T> {
+  if (!retain) return loadStaticResourceBlob(url).then(async blob => JSON.parse(await blob.text()) as T);
   const cached = jsonResources.get(url);
   if (cached) return cached as Promise<T>;
   const loading = loadStaticResourceBlob(url).then(async blob => JSON.parse(await blob.text()) as T).catch(error => {
-    jsonResources.delete(url);
+    if (jsonResources.get(url) === loading) jsonResources.delete(url);
     throw error;
   });
   jsonResources.set(url, loading);

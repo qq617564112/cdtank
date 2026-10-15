@@ -1,8 +1,9 @@
 import {BaseTexture, Constants, Scene, Texture, TransformNode} from '@babylonjs/core';
 import {loadStaticJson} from '../../assets/static-resources';
-import {normalizeEffectVector} from '../effects/common/effect-native-space';
+import {normalizeEffectVectorToRef} from '../effects/common/effect-native-space';
 import type {EffectVec3} from '../effects/common/types';
 import {originalSceneId} from '../../../../shared/maps/scene-environment';
+import {isMobileDevice} from '../../platform/device';
 
 interface SceneActorToonResource {
   texture: string;
@@ -15,14 +16,15 @@ interface SceneActorToonResource {
 export interface SceneActorToonBinding {
   readonly texture: BaseTexture;
   active(): boolean;
+  /** Borrowed direction, copied by the material before the next bind. */
   lightDirection(): EffectVec3;
 }
 
 const registered = new WeakMap<Scene, SceneActorToon>();
 
-/** Original maps and artwork variants share their source actor light. */
+/** Desktop original maps and artwork variants share their source actor light. */
 export function hasSceneActorToon(mapId: string): boolean {
-  return originalSceneId(mapId) !== undefined;
+  return !isMobileDevice() && originalSceneId(mapId) !== undefined;
 }
 
 function validPosition(value: readonly number[] | undefined): value is [number, number, number] {
@@ -75,16 +77,17 @@ export class SceneActorToon {
     const light = [
       -lightPosition[0], lightPosition[1], lightPosition[2],
     ] as const;
+    const direction: EffectVec3 = [0, 0, 0];
     return {
       texture,
       active: () => !this.disposed && !actor.isDisposed(),
       lightDirection: () => {
         const position = actor.getAbsolutePosition();
-        return normalizeEffectVector([
-          light[0] - position.x,
-          light[1] - position.y,
-          light[2] - position.z,
-        ]);
+        direction[0] = light[0] - position.x;
+        direction[1] = light[1] - position.y;
+        direction[2] = light[2] - position.z;
+        normalizeEffectVectorToRef(direction, direction);
+        return direction;
       },
     };
   }

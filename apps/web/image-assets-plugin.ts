@@ -3,6 +3,7 @@ import {join, extname} from 'node:path';
 import type {Plugin} from 'vite';
 import type {SpriteManifest} from './src/assets/sprite-images';
 import type {StaticResourceAsset} from './src/assets/static-resource-cache';
+import {contentAssets} from './content-assets';
 
 const imageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif', '.bmp', '.ico']);
 
@@ -37,7 +38,10 @@ export function imageAssetsPlugin(publicDir: string, contentDir: string): Plugin
       }
     }
     visit(publicDir, '');
-    visit(contentDir, '/content');
+    for (const asset of contentAssets(contentDir)) {
+      const url = `/content/${asset.path.split('/').map(encodeURIComponent).join('/')}`;
+      resources.set(url, {url, bytes: asset.source.length, modifiedAt: asset.modifiedAt});
+    }
     if (sourceRoot) {
       visit(join(sourceRoot, 'src'), '/src', true);
       for (const file of importedFiles) {

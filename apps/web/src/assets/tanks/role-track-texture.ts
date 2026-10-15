@@ -1,7 +1,7 @@
 /** Each track retains its phase while stopped or changing actor actions. */
 export interface RoleTrackTextureState {
-  readonly elapsed: number;
-  readonly index: number;
+  elapsed: number;
+  index: number;
 }
 
 export function createRoleTrackTextureState(): RoleTrackTextureState {
@@ -28,8 +28,21 @@ export function advanceRoleTrackTexture(
     state: RoleTrackTextureState, deltaSeconds: number, frameCount: number,
     frameDuration: number, direction: -1 | 0 | 1): RoleTrackTextureState {
   if (direction === 0) return state;
+  const result = createRoleTrackTextureState();
+  advanceRoleTrackTextureToRef(state, deltaSeconds, frameCount, frameDuration, direction, result);
+  return result;
+}
+
+export function advanceRoleTrackTextureToRef(state: RoleTrackTextureState,
+  deltaSeconds: number, frameCount: number, frameDuration: number,
+  direction: -1 | 0 | 1, result: RoleTrackTextureState): void {
+  if (direction === 0) {
+    result.elapsed = state.elapsed; result.index = state.index;
+    return;
+  }
   const total = state.elapsed + deltaSeconds;
   const steps = Math.floor(total / frameDuration);
   const index = ((state.index + steps * direction) % frameCount + frameCount) % frameCount;
-  return {elapsed: total - steps * frameDuration, index};
+  result.elapsed = total - steps * frameDuration;
+  result.index = index;
 }

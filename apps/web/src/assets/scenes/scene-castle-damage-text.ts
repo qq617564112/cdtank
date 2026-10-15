@@ -8,6 +8,7 @@ export interface CastleDamageTextProjection {
   visible: boolean;
 }
 
+/** Consume the projection before calling the same projector again. */
 export type CastleDamageTextProjector = (origin: CastleDamageTextOrigin,
   viewport: CastleDamageTextViewport) => CastleDamageTextProjection;
 
@@ -21,6 +22,14 @@ export interface CastleDamageTextRecord {
   origin?: CastleDamageTextOrigin;
 }
 
+/** Copy the record fields into renderer-owned synchronous draw storage. */
+export function copyCastleDamageTextRecordToRef(record: Readonly<CastleDamageTextRecord>,
+  result: CastleDamageTextRecord): void {
+  result.handle = record.handle; result.x = record.x; result.y = record.y;
+  result.elapsed = record.elapsed; result.alpha = record.alpha; result.scale = record.scale;
+  result.origin = record.origin;
+}
+
 export interface CastleDamageTextRenderer {
   create(text: string): number;
   draw(record: Readonly<CastleDamageTextRecord>, viewport: CastleDamageTextViewport): void;
@@ -31,6 +40,8 @@ export interface CastleDamageTextRenderer {
 /** Independent text records; world anchors are projected by the scene owner. */
 export class SceneCastleDamageText {
   private readonly records: CastleDamageTextRecord[] = [];
+  private readonly projectedRecord: CastleDamageTextRecord = {handle: 0, x: 0, y: 0,
+    elapsed: 0, alpha: 1, scale: 1};
 
   constructor(private readonly renderer: CastleDamageTextRenderer,
               private readonly screenYRate = 40) {}
@@ -71,9 +82,13 @@ export class SceneCastleDamageText {
     for (const record of this.records) {
       if (!record.origin) {this.renderer.draw(record, viewport); continue;}
       const point = projectWorld!(record.origin, viewport);
-      this.renderer.draw({...record, x: Math.fround(point.x + record.x),
-        y: Math.fround(point.y + record.y), alpha: point.visible ? record.alpha : 0,
-        scale: point.visible ? Math.fround(250 / Math.abs(Math.fround(point.depth)) + Math.fround(0.2)) : 1}, viewport);
+      const projected = this.projectedRecord;
+      copyCastleDamageTextRecordToRef(record, projected);
+      projected.x = Math.fround(point.x + record.x); projected.y = Math.fround(point.y + record.y);
+      projected.alpha = point.visible ? record.alpha : 0;
+      projected.scale = point.visible ? Math.fround(250 / Math.abs(Math.fround(point.depth)) + Math.fround(0.2)) : 1;
+      this.renderer.draw(projected, viewport);
+      projected.origin = undefined;
     }
   }
 
@@ -81,6 +96,7 @@ export class SceneCastleDamageText {
   clear(): void {
     for (const record of this.records) this.renderer.release(record.handle);
     this.records.length = 0;
+    this.projectedRecord.origin = undefined;
   }
 
   dispose(): void {

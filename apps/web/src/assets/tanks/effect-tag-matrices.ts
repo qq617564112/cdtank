@@ -1,5 +1,5 @@
 import {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
-import {EffectTagWorldPose, composeEffectWorldTag} from './effect-tag-world';
+import {EffectTagWorldComposer, type EffectTagWorldPose} from './effect-tag-world';
 
 export const EFFECT_PRIMARY_TAGS = ['tag_efcenter', 'tag_effront', 'tag_efback',
   'tag_efleft', 'tag_efright', 'tag_efsoot', 'tag_efattack'] as const;
@@ -12,6 +12,7 @@ export interface EffectTagSource {
 /** Primary tag references remain stable while original per-frame values change. */
 export class EffectPrimaryTagMatrices {
   private readonly matrices = new Map<EffectPrimaryTag, number[]>();
+  private readonly composer = new EffectTagWorldComposer();
 
   constructor(readonly fourPart: boolean) {}
 
@@ -28,10 +29,9 @@ export class EffectPrimaryTagMatrices {
     for (const name of EFFECT_PRIMARY_TAGS) {
       let local = source.read('M', name);
       if (local === undefined && this.fourPart) local = source.read('U', name);
-      const values = composeEffectWorldTag(local ?? Array<number>(16).fill(0), pose,
-        this.fourPart && name === 'tag_efattack');
       const matrix = this.get(name) as number[];
-      for (let index = 0; index < 16; ++index) matrix[index] = values[index];
+      if (local === undefined) matrix.fill(0);
+      else this.composer.composeToRef(local, pose, this.fourPart && name === 'tag_efattack', matrix);
     }
   }
 }

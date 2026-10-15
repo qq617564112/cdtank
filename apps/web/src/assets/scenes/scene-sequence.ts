@@ -1,7 +1,7 @@
 import {loadPreparedModel} from '../model-resources';
 import {battleArtworkUrl} from '../battle-artwork';
 import {
-  AbstractMesh, AssetContainer, BaseTexture, InstantiatedEntries, Material, Matrix,
+  AbstractMesh, AssetContainer, InstantiatedEntries, Material, Matrix,
   MultiMaterial, PBRMaterial, Quaternion, Scene, ShaderMaterial, StandardMaterial, Texture, TransformNode, Vector3,
 } from '@babylonjs/core';
 import {loadStaticJson} from '../static-resources';
@@ -29,7 +29,6 @@ export class SceneSequence {
   private readonly roots: TransformNode[] = [];
   private readonly frameSlots: FrameSlot[] = [];
   private readonly clonedMaterials = new Set<Material>();
-  private readonly replacedBaseTextures = new Set<BaseTexture>();
   private readonly baseMaterial = new SceneGeneralMaterial();
   private readonly screenMaterial = new SceneGeneralMaterial();
   private disposed = false;
@@ -68,11 +67,15 @@ export class SceneSequence {
       this.base = base;
       this.baseMaterial.register(base, 'obj05023');
       const screen = await loadPreparedModel(battleArtworkUrl(`/${library.screen.asset}`, this.scene), this.scene, {
-        pluginOptions: {gltf: {useSRGBBuffers: false}},
+        pluginOptions: {gltf: {useSRGBBuffers: false, onParsed: data => {
+          for (const material of data.json.materials ?? []) {
+            if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
+          }
+        }}},
       });
       if (this.disposed || this.scene.isDisposed) {screen.dispose(); return;}
       this.screen = screen;
-      this.screenMaterial.register(screen, 'obj05023/scr');
+      this.screenMaterial.register(screen, 'obj05023/scr', this.frames[0]);
       for (const placement of selected) this.instantiatePlacement(placement, library);
       if (!this.frameSlots.length) throw new Error('原Sequence screen模型缺少基础色纹理槽');
       this.applyFrame(0);
@@ -105,8 +108,6 @@ export class SceneSequence {
       else material.dispose(true, true);
     }
     this.clonedMaterials.clear();
-    this.replacedBaseTextures.forEach(texture => {texture.dispose();});
-    this.replacedBaseTextures.clear();
     this.baseMaterial.dispose();
     this.screenMaterial.dispose();
     this.base?.dispose();
@@ -192,14 +193,10 @@ export class SceneSequence {
     const slots: FrameSlot[] = [];
     for (const material of materials) {
       if (material instanceof ShaderMaterial && material.metadata?.sourceGeneralShader === 'geom_c1.gbf') {
-        const texture = material.getActiveTextures()[0];
-        if (texture) this.replacedBaseTextures.add(texture);
         slots.push(texture => {material.setTexture('sourceTexture', texture);});
       } else if (material instanceof PBRMaterial && material.albedoTexture) {
-        this.replacedBaseTextures.add(material.albedoTexture);
         slots.push(texture => {material.albedoTexture = texture;});
       } else if (material instanceof StandardMaterial && material.diffuseTexture) {
-        this.replacedBaseTextures.add(material.diffuseTexture);
         slots.push(texture => {material.diffuseTexture = texture;});
       }
     }

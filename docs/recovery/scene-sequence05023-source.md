@@ -12,4 +12,4 @@ scene-sequence05023-source.py/json/log保存原精确指令范围、三虚槽、
 
 ## 当前实现边界
 
-0008/0013已进入当前正式扩展地图目录，原四条placement为`0008/446`、`0008/447`、`0013/204`、`0013/205`。当前实现新增publisher并消费已发布`obj05023.glb`静态主体、`scr.glb` screen模型与`001–004`帧PNG；shared类型和`ScenePreview`只接load/advance/clear，不改变本文上面的原虚槽、路径、delay乘数和计时代码事实。screen实例克隆的既有原基色纹理在首次换帧前登记owner，正常clear与失败清理释放。Web `performance.now()/1000`是采用时钟，不等同原Windows provider、单位或首帧恢复。`scene-sequence05023.json`已由定向publisher发布，实际页面加载、逐像素、双端phase、高清和GPU行为仍未验，详`scene-sequence-runtime.md`。
+0008/0013已进入当前正式扩展地图目录，原四条placement为`0008/446`、`0008/447`、`0013/204`、`0013/205`。运行时消费已发布`obj05023.glb`静态主体、`scr.glb` screen模型与`001–004`帧WebP；shared类型和`ScenePreview`只接load/advance/clear，不改变本文上面的原虚槽、路径、delay乘数和计时代码事实。screen模板和克隆材质直接借用已载入的动画帧，帧数组统一持有并在正常clear与失败清理释放。Web `performance.now()/1000`是采用时钟，不等同原Windows provider、单位或首帧恢复。`data/maps/shared/sequence05023.json`已由发布流程生成，实际页面加载、逐像素、双端phase、高清和GPU行为仍未验，详`scene-sequence-runtime.md`。

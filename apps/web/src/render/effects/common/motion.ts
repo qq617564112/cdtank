@@ -16,16 +16,23 @@ export function integrateSpriteMotion(
   acceleration: EffectVec3,
   deltaSeconds: number,
 ): EffectSpriteMotion {
+  const result: EffectSpriteMotion = {position: [0, 0, 0], velocity: [0, 0, 0]};
+  integrateSpriteMotionToRef(state, acceleration, deltaSeconds, result);
+  return result;
+}
+
+export function integrateSpriteMotionToRef(state: EffectSpriteMotion, acceleration: EffectVec3,
+  deltaSeconds: number, result: EffectSpriteMotion): void {
   const delta = spriteDelta(deltaSeconds);
-  const velocity = state.velocity.map((v, i) => {
+  const velocity = result.velocity;
+  for (let i = 0; i < 3; i++) {
     const product = Math.fround(acceleration[i]) * delta;
     // The native Z path spills the product to f32; X/Y keep it in x87.
-    return Math.fround(Math.fround(v) + (i === 2 ? Math.fround(product) : product));
-  }) as EffectVec3;
-  const position = state.position.map((v, i) => {
+    velocity[i] = Math.fround(Math.fround(state.velocity[i]) + (i === 2 ? Math.fround(product) : product));
+  }
+  for (let i = 0; i < 3; i++) {
     const product = velocity[i] * delta;
-    return Math.fround(Math.fround(v) + (i === 2 ? Math.fround(product) : product));
-  }) as EffectVec3;
-  return {position, velocity};
+    result.position[i] = Math.fround(Math.fround(state.position[i]) + (i === 2 ? Math.fround(product) : product));
+  }
 }
 

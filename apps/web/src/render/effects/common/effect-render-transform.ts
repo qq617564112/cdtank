@@ -1,33 +1,66 @@
-import {EffectNativeMatrix, transformEffectPosition} from './effect-native-space';
+import {EffectNativeMatrix, transformEffectPositionToRef} from './effect-native-space';
 import {EffectVec3} from './types';
 
 export const EFFECT_IDENTITY: EffectNativeMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+const UNIT_SCALE: EffectVec3 = [1, 1, 1];
+
+/** Per-draw matrix storage; the returned matrix lasts until the next update. */
+export class EffectRenderTransform {
+  private readonly first = [...EFFECT_IDENTITY];
+  private readonly second = [...EFFECT_IDENTITY];
+  private readonly operation = [...EFFECT_IDENTITY];
+
+  update(position: EffectVec3, orbit: EffectVec3, angles: EffectVec3,
+    scale: EffectVec3, parent?: EffectNativeMatrix, global: EffectNativeMatrix = EFFECT_IDENTITY): number[] {
+    let matrix = this.first;
+    const base = parent ?? EFFECT_IDENTITY;
+    for (let index = 0; index < 16; index++) matrix[index] = base[index];
+    const operation = this.operation;
+    this.resetOperation();
+    for (let axis = 0; axis < 3; ++axis) operation[12 + axis] = Math.fround(position[axis] + orbit[axis]);
+    matrix = this.multiply(matrix, operation);
+    for (let axis = 0; axis < 3; ++axis) {
+      const half = Math.fround(angles[axis]) * Math.fround(.01745329238474369) * .5;
+      const sine = Math.fround(Math.sin(Math.fround(half))), cosine = Math.fround(Math.cos(half));
+      const diagonal = Math.fround(1 - 2 * sine * sine), offDiagonal = Math.fround(2 * sine * cosine);
+      this.resetOperation();
+      const first = (axis + 1) % 3, second = (axis + 2) % 3;
+      operation[first * 4 + first] = diagonal; operation[second * 4 + second] = diagonal;
+      operation[first * 4 + second] = offDiagonal; operation[second * 4 + first] = -offDiagonal;
+      matrix = this.multiply(matrix, operation);
+    }
+    if (!parent) matrix = this.multiply(matrix, global);
+    this.resetOperation();
+    for (let axis = 0; axis < 3; axis++) operation[axis * 5] = Math.fround(scale[axis]);
+    return this.multiply(matrix, operation);
+  }
+
+  private resetOperation(): void {
+    for (let index = 0; index < 16; index++) this.operation[index] = EFFECT_IDENTITY[index];
+  }
+
+  private multiply(left: number[], right: EffectNativeMatrix): number[] {
+    const result = left === this.first ? this.second : this.first;
+    multiplyEffectMatricesToRef(left, right, result);
+    return result;
+  }
+}
 
 /** gbMatrixStack postmultiplies each translation, XYZ rotation and scale. */
 export function effectRenderMatrix(position: EffectVec3, orbit: EffectVec3, angles: EffectVec3,
   scale: EffectVec3, parent?: EffectNativeMatrix, global: EffectNativeMatrix = EFFECT_IDENTITY): EffectNativeMatrix {
-  let matrix = [...(parent ?? EFFECT_IDENTITY)];
-  const translate = [...EFFECT_IDENTITY];
-  for (let axis = 0; axis < 3; ++axis) translate[12 + axis] = Math.fround(position[axis] + orbit[axis]);
-  matrix = multiplyEffectMatrices(matrix, translate);
-  for (let axis = 0; axis < 3; ++axis) {
-    const half = Math.fround(angles[axis]) * Math.fround(.01745329238474369) * .5;
-    const sine = Math.fround(Math.sin(Math.fround(half))), cosine = Math.fround(Math.cos(half));
-    const diagonal = Math.fround(1 - 2 * sine * sine), offDiagonal = Math.fround(2 * sine * cosine);
-    const rotation = [...EFFECT_IDENTITY];
-    const first = (axis + 1) % 3, second = (axis + 2) % 3;
-    rotation[first * 4 + first] = diagonal; rotation[second * 4 + second] = diagonal;
-    rotation[first * 4 + second] = offDiagonal; rotation[second * 4 + first] = -offDiagonal;
-    matrix = multiplyEffectMatrices(matrix, rotation);
-  }
-  if (!parent) matrix = multiplyEffectMatrices(matrix, global);
-  const scaling = [...EFFECT_IDENTITY];
-  scale.forEach((value, axis) => {scaling[axis * 5] = Math.fround(value);});
-  return multiplyEffectMatrices(matrix, scaling);
+  return new EffectRenderTransform().update(position, orbit, angles, scale, parent, global);
 }
 
 export function multiplyEffectMatrices(left: EffectNativeMatrix, right: EffectNativeMatrix): number[] {
   const result = new Array<number>(16);
+  multiplyEffectMatricesToRef(left, right, result);
+  return result;
+}
+
+/** Output has its own storage; preserve the original float32 operation order. */
+export function multiplyEffectMatricesToRef(left: EffectNativeMatrix, right: EffectNativeMatrix,
+  result: number[]): void {
   for (let column = 0; column < 4; ++column) {
     for (let row = 0; row < 4; ++row) {
       result[column * 4 + row] = Math.fround(((left[row] * right[column * 4] +
@@ -35,13 +68,18 @@ export function multiplyEffectMatrices(left: EffectNativeMatrix, right: EffectNa
         left[row + 12] * right[column * 4 + 3]);
     }
   }
-  return result;
 }
 
-export function effectOrientedCorners(position: EffectVec3, orbit: EffectVec3, angles: EffectVec3,
-  halfSize: EffectVec3, parent?: EffectNativeMatrix, global?: EffectNativeMatrix): [EffectVec3, EffectVec3, EffectVec3, EffectVec3] {
-  const matrix = effectRenderMatrix(position, orbit, angles, [1, 1, 1], parent, global);
+export function effectOrientedCornersToRef(position: EffectVec3, orbit: EffectVec3, angles: EffectVec3,
+  halfSize: EffectVec3, result: readonly [EffectVec3, EffectVec3, EffectVec3, EffectVec3],
+  transform: EffectRenderTransform, parent?: EffectNativeMatrix, global?: EffectNativeMatrix): void {
+  const matrix = transform.update(position, orbit, angles, UNIT_SCALE, parent, global);
   const [x, y] = halfSize;
-  return [[-x, -y, 0], [x, -y, 0], [x, y, 0], [-x, y, 0]].map(corner =>
-    transformEffectPosition(matrix, corner as EffectVec3)) as [EffectVec3, EffectVec3, EffectVec3, EffectVec3];
+  for (let index = 0; index < 4; index++) {
+    const corner = result[index];
+    corner[0] = index === 1 || index === 2 ? x : -x;
+    corner[1] = index >= 2 ? y : -y;
+    corner[2] = 0;
+    transformEffectPositionToRef(matrix, corner, corner);
+  }
 }

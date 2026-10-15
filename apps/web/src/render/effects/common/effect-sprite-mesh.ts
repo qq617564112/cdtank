@@ -13,46 +13,56 @@ export interface EffectRenderPass {
   states: readonly {name: string; value: string}[];
 }
 
-/** Renderer for resolved world-space GBF passes; native XYZ inputs. */
-export class EffectSpriteMesh {
-  readonly mesh: Mesh;
+interface SharedEffectMaterial {
   readonly material: ShaderMaterial;
-  private disposed = false;
-  private capacity = 0;
-  private count = 0;
-  private topology?: 'quads' | 'strip';
-  private positions = new Float32Array(0);
-  private uvs = new Float32Array(0);
-  private colors = new Float32Array(0);
-  private shapes = new Float32Array(0);
-  private readonly minimum = new Vector3();
-  private readonly maximum = new Vector3();
-  private readonly bounds = new BoundingInfo(Vector3.Zero(), Vector3.Zero());
+  owners: number;
+  disposed: boolean;
+}
 
-  constructor(scene: Scene, pass: EffectRenderPass, texture: Texture, private readonly billboard = false) {
-    const states = new Map(pass.states.map(s => [s.name, s.value]));
-    // Unresolved defaults are not silently replaced with Babylon defaults.
-    for (const [name, expected] of Object.entries({FVF: 'XYZ|DIFFUSE|TEX1',
-      Lighting: 'FALSE', AlphaTestEnable: 'FALSE',
-      AlphaBlendEnable: 'TRUE', SrcBlend: 'SRCALPHA', ZWriteEnable: 'FALSE',
-      'ColorOp[0]': 'MODULATE', 'ColorArg1[0]': 'TEXTURE', 'ColorArg2[0]': 'DIFFUSE',
-      'AlphaOp[0]': 'MODULATE', 'AlphaArg1[0]': 'TEXTURE', 'AlphaArg2[0]': 'DIFFUSE',
-      'AddressU[0]': 'WRAP', 'AddressV[0]': 'WRAP'})) {
-      if (states.get(name) !== expected) throw new Error(`Unresolved/unsupported effect state ${name}`);
-    }
-    const additive = states.get('DestBlend') === 'ONE';
-    if (!additive && states.get('DestBlend') !== 'INVSRCALPHA') throw new Error('Unsupported effect blend');
-    if (!['TRUE', 'FALSE'].includes(states.get('ZEnable') ?? '')) throw new Error('Unresolved depth test');
-    const filter = states.get('MinFilter[0]');
-    if (!['POINT', 'LINEAR'].includes(filter ?? '') || states.get('MagFilter[0]') !== filter) {
-      throw new Error('Unsupported effect filtering');
-    }
-    const cull = states.get('CullMode');
-    if (!['NONE', 'CW', 'CCW'].includes(cull ?? '')) throw new Error('Unresolved effect culling');
-    texture.updateSamplingMode(filter === 'POINT' ? Texture.NEAREST_SAMPLINGMODE : Texture.BILINEAR_SAMPLINGMODE);
-    texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE;
-    this.material = new ShaderMaterial('original-effect', scene, {
-      vertexSource: `precision highp float;
+const sharedEffectMaterials = new WeakMap<Scene, WeakMap<Texture, Map<string, SharedEffectMaterial>>>();
+
+/** Mesh-specific appearance stays in vertex data; materials share only fixed state. */
+function acquireEffectMaterial(scene: Scene, pass: EffectRenderPass, texture: Texture,
+  billboard: boolean): SharedEffectMaterial {
+  const states = new Map(pass.states.map(s => [s.name, s.value]));
+  // Unresolved defaults are not silently replaced with Babylon defaults.
+  for (const [name, expected] of Object.entries({FVF: 'XYZ|DIFFUSE|TEX1',
+    Lighting: 'FALSE', AlphaTestEnable: 'FALSE',
+    AlphaBlendEnable: 'TRUE', SrcBlend: 'SRCALPHA', ZWriteEnable: 'FALSE',
+    'ColorOp[0]': 'MODULATE', 'ColorArg1[0]': 'TEXTURE', 'ColorArg2[0]': 'DIFFUSE',
+    'AlphaOp[0]': 'MODULATE', 'AlphaArg1[0]': 'TEXTURE', 'AlphaArg2[0]': 'DIFFUSE',
+    'AddressU[0]': 'WRAP', 'AddressV[0]': 'WRAP'})) {
+    if (states.get(name) !== expected) throw new Error(`Unresolved/unsupported effect state ${name}`);
+  }
+  const additive = states.get('DestBlend') === 'ONE';
+  if (!additive && states.get('DestBlend') !== 'INVSRCALPHA') throw new Error('Unsupported effect blend');
+  if (!['TRUE', 'FALSE'].includes(states.get('ZEnable') ?? '')) throw new Error('Unresolved depth test');
+  const filter = states.get('MinFilter[0]');
+  if (!['POINT', 'LINEAR'].includes(filter ?? '') || states.get('MagFilter[0]') !== filter) {
+    throw new Error('Unsupported effect filtering');
+  }
+  const cull = states.get('CullMode');
+  if (!['NONE', 'CW', 'CCW'].includes(cull ?? '')) throw new Error('Unresolved effect culling');
+  texture.updateSamplingMode(filter === 'POINT' ? Texture.NEAREST_SAMPLINGMODE : Texture.BILINEAR_SAMPLINGMODE);
+  texture.wrapU = texture.wrapV = Texture.WRAP_ADDRESSMODE;
+  let textures = sharedEffectMaterials.get(scene);
+  if (!textures) {
+    textures = new WeakMap();
+    sharedEffectMaterials.set(scene, textures);
+  }
+  let variants = textures.get(texture);
+  if (!variants) {
+    variants = new Map();
+    textures.set(texture, variants);
+  }
+  const key = `${billboard};${cull};${additive};${states.get('ZEnable')};${filter}`;
+  const existing = variants.get(key);
+  if (existing) {
+    existing.owners++;
+    return existing;
+  }
+  const material = new ShaderMaterial('original-effect', scene, {
+    vertexSource: `precision highp float;
 attribute vec3 position;
 attribute vec2 uv;
 attribute vec4 color;
@@ -71,7 +81,7 @@ ${billboard ? `  vec4 viewPosition = worldView * vec4(position, 1.0);
   gl_Position = projection * viewPosition;` : '  gl_Position=worldViewProjection*vec4(position,1.0);'}
   vUV=uv;vColor=color;
 }`,
-      fragmentSource: `precision highp float;
+    fragmentSource: `precision highp float;
 varying vec2 vUV;
 varying vec4 vColor;
 uniform sampler2D effectTexture;
@@ -81,19 +91,58 @@ void main(){
   if(texel.a==0.0)discard;
   gl_FragColor=texel*vColor;
 }`,
-    }, {attributes: ['position', 'uv', 'color', ...(billboard ? ['billboardCorner', 'particleShape'] : [])],
-      uniforms: billboard ? ['worldView', 'projection'] : ['worldViewProjection'],
-      samplers: ['effectTexture'], needAlphaBlending: true});
-    this.material.setTexture('effectTexture', texture);
-    this.material.backFaceCulling = cull !== 'NONE';
-    // GBF names the culled winding; Babylon names the retained front face.
-    this.material.sideOrientation = cull === 'CCW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
-    this.material.disableDepthWrite = true;
-    this.material.depthFunction = states.get('ZEnable') === 'TRUE' ? Constants.LEQUAL : Constants.ALWAYS;
-    this.material.transparencyMode = Material.MATERIAL_ALPHABLEND;
-    // RGB factors match the GBF. Separate-alpha device state is still unrecovered;
-    // Babylon's alpha-channel accumulation is retained pending source evidence.
-    this.material.alphaMode = additive ? Constants.ALPHA_ADD : Constants.ALPHA_COMBINE;
+  }, {attributes: ['position', 'uv', 'color', ...(billboard ? ['billboardCorner', 'particleShape'] : [])],
+    uniforms: billboard ? ['worldView', 'projection'] : ['worldViewProjection'],
+    samplers: ['effectTexture'], needAlphaBlending: true});
+  material.setTexture('effectTexture', texture);
+  material.backFaceCulling = cull !== 'NONE';
+  // GBF names the culled winding; Babylon names the retained front face.
+  material.sideOrientation = cull === 'CCW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
+  material.disableDepthWrite = true;
+  material.depthFunction = states.get('ZEnable') === 'TRUE' ? Constants.LEQUAL : Constants.ALWAYS;
+  material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+  // RGB factors match the GBF. Separate-alpha device state is still unrecovered;
+  // Babylon's alpha-channel accumulation is retained pending source evidence.
+  material.alphaMode = additive ? Constants.ALPHA_ADD : Constants.ALPHA_COMBINE;
+  const shared: SharedEffectMaterial = {material, owners: 1, disposed: false};
+  const cache = variants;
+  cache.set(key, shared);
+  material.onDisposeObservable.addOnce(() => {
+    shared.disposed = true;
+    cache.delete(key);
+  });
+  return shared;
+}
+
+function releaseEffectMaterial(shared: SharedEffectMaterial): void {
+  if (--shared.owners === 0 && !shared.disposed) shared.material.dispose(false, false);
+}
+
+/** Renderer for resolved world-space GBF passes; native XYZ inputs. */
+export class EffectSpriteMesh {
+  readonly mesh: Mesh;
+  readonly material: ShaderMaterial;
+  private readonly sharedMaterial: SharedEffectMaterial;
+  private disposed = false;
+  private capacity = 0;
+  private count = 0;
+  private topology?: 'quads' | 'strip';
+  private positions = new Float32Array(0);
+  private uvs = new Float32Array(0);
+  private colors = new Float32Array(0);
+  private shapes = new Float32Array(0);
+  private uploadCount = -1;
+  private positionUpload = this.positions;
+  private uvUpload = this.uvs;
+  private colourUpload = this.colors;
+  private shapeUpload = this.shapes;
+  private readonly minimum = new Vector3();
+  private readonly maximum = new Vector3();
+  private readonly bounds = new BoundingInfo(Vector3.Zero(), Vector3.Zero());
+
+  constructor(scene: Scene, pass: EffectRenderPass, texture: Texture, private readonly billboard = false) {
+    this.sharedMaterial = acquireEffectMaterial(scene, pass, texture, billboard);
+    this.material = this.sharedMaterial.material;
     this.mesh = new Mesh('original-effect-quad', scene);
     this.mesh.material = this.material;
     this.mesh.isPickable = false;
@@ -105,6 +154,19 @@ void main(){
   update(corners: readonly [EffectVec3, EffectVec3, EffectVec3, EffectVec3],
     uv: readonly [number, number, number, number], packedColor: number): void {
     this.updateQuads([{corners, uv, packedColor}]);
+  }
+
+  /** Allocate the expected quad capacity and compile while battle resources load. */
+  async prepare(quadCount = 1): Promise<void> {
+    this.reserve(Math.max(1, quadCount) * 4, 'quads');
+    this.mesh.setEnabled(false);
+    await this.material.forceCompilationAsync(this.mesh);
+  }
+
+  clear(): void {
+    if (this.disposed) return;
+    this.count = 0;
+    this.mesh.setEnabled(false);
   }
 
   /** Keep particle/history order in one draw using the original quad diagonal. */
@@ -137,16 +199,27 @@ void main(){
   billboardQuad(position: EffectVec3, size: number, angle: number,
     uv: readonly [number, number, number, number], color: number): void {
     this.reserve(this.count + 4, 'quads');
+    const x = -position[0], y = position[1], z = position[2];
+    const red = ((color >>> 16) & 255) / 255, green = ((color >>> 8) & 255) / 255;
+    const blue = (color & 255) / 255, alpha = (color >>> 24) / 255;
+    const radians = Math.fround(angle) * Math.fround(0.01745329238474369);
     for (let corner = 0; corner < 4; corner++) {
-      const index = this.count;
-      this.vertex(-position[0], position[1], position[2],
-        uv[corner === 1 || corner === 2 ? 0 : 2], uv[corner >= 2 ? 3 : 1], color);
+      const index = this.count++;
+      this.positions[index * 3] = x;
+      this.positions[index * 3 + 1] = y;
+      this.positions[index * 3 + 2] = z;
+      this.uvs[index * 2] = uv[corner === 1 || corner === 2 ? 0 : 2];
+      this.uvs[index * 2 + 1] = uv[corner >= 2 ? 3 : 1];
+      this.colors[index * 4] = red;
+      this.colors[index * 4 + 1] = green;
+      this.colors[index * 4 + 2] = blue;
+      this.colors[index * 4 + 3] = alpha;
       this.shapes[index * 2] = size;
-      this.shapes[index * 2 + 1] = Math.fround(angle) * Math.fround(0.01745329238474369);
+      this.shapes[index * 2 + 1] = radians;
     }
     const radius = Math.abs(size) * Math.SQRT2;
-    this.include(-position[0] - radius, position[1] - radius, position[2] - radius);
-    this.include(-position[0] + radius, position[1] + radius, position[2] + radius);
+    this.include(x - radius, y - radius, z - radius);
+    this.include(x + radius, y + radius, z + radius);
   }
 
   endBillboards(): void {this.end(this.count / 4 * 6);}
@@ -178,10 +251,17 @@ void main(){
     this.mesh.setEnabled(indexCount > 0);
     if (!indexCount) return;
     const geometry = this.mesh.geometry!;
-    geometry.updateVerticesDataDirectly(VertexBuffer.PositionKind, this.positions.subarray(0, this.count * 3), 0);
-    geometry.updateVerticesDataDirectly(VertexBuffer.UVKind, this.uvs.subarray(0, this.count * 2), 0);
-    geometry.updateVerticesDataDirectly(VertexBuffer.ColorKind, this.colors.subarray(0, this.count * 4), 0);
-    if (this.billboard) geometry.updateVerticesDataDirectly('particleShape', this.shapes.subarray(0, this.count * 2), 0);
+    if (this.uploadCount !== this.count) {
+      this.positionUpload = this.positions.subarray(0, this.count * 3);
+      this.uvUpload = this.uvs.subarray(0, this.count * 2);
+      this.colourUpload = this.colors.subarray(0, this.count * 4);
+      if (this.billboard) this.shapeUpload = this.shapes.subarray(0, this.count * 2);
+      this.uploadCount = this.count;
+    }
+    geometry.updateVerticesDataDirectly(VertexBuffer.PositionKind, this.positionUpload, 0);
+    geometry.updateVerticesDataDirectly(VertexBuffer.UVKind, this.uvUpload, 0);
+    geometry.updateVerticesDataDirectly(VertexBuffer.ColorKind, this.colourUpload, 0);
+    if (this.billboard) geometry.updateVerticesDataDirectly('particleShape', this.shapeUpload, 0);
     this.bounds.reConstruct(this.minimum, this.maximum, this.mesh.getWorldMatrix());
     this.mesh.setBoundingInfo(this.bounds);
     setDynamicMeshIndexCount(this.mesh, indexCount);
@@ -192,24 +272,34 @@ void main(){
     let capacity = Math.max(16, this.capacity);
     while (capacity < required) capacity *= 2;
     const positions = new Float32Array(capacity * 3), uvs = new Float32Array(capacity * 2);
-    const colors = new Float32Array(capacity * 4), shapes = new Float32Array(capacity * 2);
-    positions.set(this.positions); uvs.set(this.uvs); colors.set(this.colors); shapes.set(this.shapes);
-    this.positions = positions; this.uvs = uvs; this.colors = colors; this.shapes = shapes;
+    const colors = new Float32Array(capacity * 4);
+    positions.set(this.positions); uvs.set(this.uvs); colors.set(this.colors);
+    this.positions = positions; this.uvs = uvs; this.colors = colors;
+    this.uploadCount = -1;
+    this.positionUpload = positions; this.uvUpload = uvs; this.colourUpload = colors;
     this.capacity = capacity; this.topology = topology;
     const indices = new Uint32Array(topology === 'quads' ? capacity / 4 * 6 : (capacity - 2) * 3);
     if (topology === 'quads') {
       for (let vertex = 0; vertex < capacity; vertex += 4) {
-        indices.set([vertex, vertex + 1, vertex + 3, vertex + 3, vertex + 1, vertex + 2], vertex / 4 * 6);
+        const index = vertex / 4 * 6;
+        indices[index] = vertex; indices[index + 1] = vertex + 1; indices[index + 2] = vertex + 3;
+        indices[index + 3] = vertex + 3; indices[index + 4] = vertex + 1; indices[index + 5] = vertex + 2;
       }
     } else {
       for (let vertex = 2; vertex < capacity; vertex++) {
-        indices.set(vertex % 2 ? [vertex - 1, vertex - 2, vertex] : [vertex - 2, vertex - 1, vertex], (vertex - 2) * 3);
+        const index = (vertex - 2) * 3;
+        indices[index] = vertex % 2 ? vertex - 1 : vertex - 2;
+        indices[index + 1] = vertex % 2 ? vertex - 2 : vertex - 1;
+        indices[index + 2] = vertex;
       }
     }
     const data = new VertexData();
     data.positions = positions; data.uvs = uvs; data.colors = colors; data.indices = indices;
     data.applyToMesh(this.mesh, true);
     if (this.billboard) {
+      const shapes = new Float32Array(capacity * 2);
+      shapes.set(this.shapes);
+      this.shapes = shapes; this.shapeUpload = shapes;
       const corners = new Float32Array(capacity * 2);
       for (let vertex = 0; vertex < capacity; vertex++) {
         const corner = vertex % 4;
@@ -225,6 +315,6 @@ void main(){
     if (this.disposed) return;
     this.disposed = true;
     this.mesh.dispose();
-    this.material.dispose(false, false); // caller owns the texture
+    releaseEffectMaterial(this.sharedMaterial); // caller owns the texture
   }
 }

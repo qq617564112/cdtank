@@ -1,7 +1,15 @@
-export interface AnimationTrack {
+export interface AnimationKeyTrack {
   readonly mode: number;
   readonly keys: readonly (readonly number[])[];
 }
+
+export interface PackedAnimationTrack {
+  readonly mode: number;
+  readonly values: Float32Array;
+  readonly stride: number;
+}
+
+export type AnimationTrack = AnimationKeyTrack | PackedAnimationTrack;
 
 export interface AnimationVertices {
   readonly frames: readonly (readonly (readonly number[])[])[];
@@ -47,23 +55,64 @@ export function loopAnimationTime(time: number, duration: number): number {
 }
 
 export function animationMatrix(transform: AnimationTransform, time: number): number[] {
-  const position = vector(transform.position, time);
-  const rotation = quaternion(transform.rotation, time);
-  const scale = vector(transform.scale, time);
-  const scaleRotation = quaternion({...transform.scale,
-    keys: transform.scale.keys.map(key => [key[0], key[1], ...key.slice(5, 9)])}, time);
-  const uniform = new DataView(new ArrayBuffer(4));
-  uniform.setUint32(0, transform.value, true);
-  let matrix = [...ANIMATION_IDENTITY];
-  matrix[12] = position[0];
-  matrix[13] = position[1];
-  matrix[14] = position[2];
-  const amount = uniform.getFloat32(0, true);
-  matrix = multiply(matrix, [amount, 0, 0, 0, 0, amount, 0, 0, 0, 0, amount, 0, 0, 0, 0, 1]);
-  matrix = multiply(matrix, quaternionMatrix([rotation[0], rotation[1], rotation[2], -rotation[3]]));
-  matrix = multiply(matrix, quaternionMatrix([scaleRotation[0], scaleRotation[1], scaleRotation[2], -scaleRotation[3]]));
-  matrix = multiply(matrix, [scale[0], 0, 0, 0, 0, scale[1], 0, 0, 0, 0, scale[2], 0, 0, 0, 0, 1]);
-  return multiply(matrix, quaternionMatrix(scaleRotation));
+  return new AnimationTransformSampler(transform).sample(time);
+}
+
+interface AnimationInterval {
+  first: ArrayLike<number>;
+  second: ArrayLike<number>;
+  firstOffset: number;
+  secondOffset: number;
+  fraction: number;
+}
+
+/** One immutable CVD transform with a live output matrix and retained sampling buffers. */
+export class AnimationTransformSampler {
+  readonly matrix = [...ANIMATION_IDENTITY];
+  private readonly position = new Array<number>(3);
+  private readonly rotation = new Array<number>(4);
+  private readonly scale = new Array<number>(3);
+  private readonly scaleRotation = new Array<number>(4);
+  private readonly operand = new Array<number>(16);
+  private readonly product = new Array<number>(16);
+  private readonly interval: AnimationInterval = {
+    first: ANIMATION_IDENTITY, second: ANIMATION_IDENTITY,
+    firstOffset: 0, secondOffset: 0, fraction: 0,
+  };
+  private readonly uniform: number;
+  private sampledTime: number | undefined;
+
+  constructor(private readonly transform: AnimationTransform) {
+    const value = new DataView(new ArrayBuffer(4));
+    value.setUint32(0, transform.value, true);
+    this.uniform = value.getFloat32(0, true);
+  }
+
+  /** The returned array belongs to this sampler and changes on the next sample. */
+  sample(time: number): number[] {
+    if (this.sampledTime === time) return this.matrix;
+    const {transform, position, rotation, scale, scaleRotation, matrix, operand, product} = this;
+    vectorToRef(transform.position, time, position, this.interval);
+    quaternionToRef(transform.rotation, time, 0, rotation, this.interval);
+    vectorToRef(transform.scale, time, scale, this.interval);
+    // Scale tracks store their quaternion immediately after XYZ.
+    quaternionIntervalToRef(this.interval, 3, scaleRotation);
+    for (let index = 0; index < 16; ++index) matrix[index] = ANIMATION_IDENTITY[index];
+    matrix[12] = position[0]; matrix[13] = position[1]; matrix[14] = position[2];
+    scalingToRef(this.uniform, this.uniform, this.uniform, operand);
+    multiplyToRef(matrix, operand, product);
+    quaternionMatrixToRef(rotation, true, operand);
+    multiplyToRef(product, operand, matrix);
+    quaternionMatrixToRef(scaleRotation, true, operand);
+    multiplyToRef(matrix, operand, product);
+    scalingToRef(scale[0], scale[1], scale[2], operand);
+    multiplyToRef(product, operand, matrix);
+    quaternionMatrixToRef(scaleRotation, false, operand);
+    multiplyToRef(matrix, operand, product);
+    for (let index = 0; index < 16; ++index) matrix[index] = product[index];
+    this.sampledTime = time;
+    return matrix;
+  }
 }
 
 export function sampleAnimationVertices(animation: AnimationVertices, time: number): number[][] {
@@ -86,35 +135,60 @@ export function sampleAnimationVertices(animation: AnimationVertices, time: numb
   });
 }
 
-function interval(track: AnimationTrack, time: number): [readonly number[], readonly number[], number] {
+function intervalToRef(track: AnimationTrack, time: number, result: AnimationInterval): void {
   if (track.mode !== 3) throw new Error(`Unrecovered CVD track mode ${track.mode}`);
-  if (track.keys.length === 0) throw new Error('CVD track contains no keys');
-  const origin = track.keys[0][0];
-  const last = track.keys[track.keys.length - 1];
-  if (track.keys.length === 1 || time >= Math.fround(last[0] - origin)) return [last, last, 0];
-  let index = 0;
-  while (index + 1 < track.keys.length - 1
-    && Math.fround(track.keys[index + 1][0] - origin) <= time) ++index;
-  const first = track.keys[index], second = track.keys[index + 1];
-  const start = Math.fround(first[0] - origin), end = Math.fround(second[0] - origin);
-  return [first, second, (time - start) / (end - start)];
-}
-
-function vector(track: AnimationTrack, time: number): number[] {
-  const [first, second, fraction] = interval(track, time);
-  return [2, 3, 4].map(index => Math.fround((1 - fraction) * first[index] + fraction * second[index]));
-}
-
-function quaternion(track: AnimationTrack, time: number): number[] {
-  const [first, second, rawFraction] = interval(track, time);
-  const fraction = Math.fround(rawFraction);
-  const left = first.slice(2, 6);
-  let right = second.slice(2, 6);
-  let dot = left[3] * right[3] + left[2] * right[2] + left[0] * right[0] + left[1] * right[1];
-  if (dot < 0) {
-    dot = -dot;
-    right = right.map(value => -value);
+  const packed = 'values' in track;
+  const count = packed ? track.values.length / track.stride : track.keys.length;
+  if (count === 0) throw new Error('CVD track contains no keys');
+  const origin = packed ? track.values[0] : track.keys[0][0];
+  const lastIndex = count - 1;
+  const lastTime = packed ? track.values[lastIndex * track.stride] : track.keys[lastIndex][0];
+  if (count === 1 || time >= Math.fround(lastTime - origin)) {
+    result.first = result.second = packed ? track.values : track.keys[lastIndex];
+    result.firstOffset = result.secondOffset = packed ? lastIndex * track.stride + 1 : 2;
+    result.fraction = 0;
+    return;
   }
+  let index = 0, high = count - 2;
+  while (index < high) {
+    const middle = Math.ceil((index + high) / 2);
+    const middleTime = packed ? track.values[middle * track.stride] : track.keys[middle][0];
+    if (Math.fround(middleTime - origin) <= time) index = middle;
+    else high = middle - 1;
+  }
+  const firstTime = packed ? track.values[index * track.stride] : track.keys[index][0];
+  const secondTime = packed ? track.values[(index + 1) * track.stride] : track.keys[index + 1][0];
+  const start = Math.fround(firstTime - origin), end = Math.fround(secondTime - origin);
+  result.first = packed ? track.values : track.keys[index];
+  result.second = packed ? track.values : track.keys[index + 1];
+  result.firstOffset = packed ? index * track.stride + 1 : 2;
+  result.secondOffset = packed ? (index + 1) * track.stride + 1 : 2;
+  result.fraction = (time - start) / (end - start);
+}
+
+function vectorToRef(track: AnimationTrack, time: number, result: number[], interval: AnimationInterval): void {
+  intervalToRef(track, time, interval);
+  const {first, second, firstOffset, secondOffset, fraction} = interval;
+  for (let index = 0; index < 3; ++index) {
+    result[index] = Math.fround((1 - fraction) * first[firstOffset + index]
+      + fraction * second[secondOffset + index]);
+  }
+}
+
+function quaternionToRef(track: AnimationTrack, time: number, offset: number,
+  result: number[], interval: AnimationInterval): void {
+  intervalToRef(track, time, interval);
+  quaternionIntervalToRef(interval, offset, result);
+}
+
+function quaternionIntervalToRef(interval: AnimationInterval, offset: number, result: number[]): void {
+  const {first, second} = interval;
+  const firstOffset = interval.firstOffset + offset, secondOffset = interval.secondOffset + offset;
+  const fraction = Math.fround(interval.fraction);
+  let dot = first[firstOffset + 3] * second[secondOffset + 3] + first[firstOffset + 2] * second[secondOffset + 2]
+    + first[firstOffset] * second[secondOffset] + first[firstOffset + 1] * second[secondOffset + 1];
+  const negate = dot < 0;
+  if (negate) dot = -dot;
   let a = Math.fround(1 - fraction), b = fraction;
   if (1 - dot > .00001) {
     const degrees = Math.fround(Math.acos(dot) * Math.fround(57.2957763671875));
@@ -123,24 +197,37 @@ function quaternion(track: AnimationTrack, time: number): number[] {
     a = Math.fround(Math.sin((1 - fraction) * degrees * toRadians) * inverse);
     b = Math.sin(degrees * fraction * toRadians) * inverse;
   }
-  return left.map((value, index) => Math.fround(a * value + b * right[index]));
+  for (let index = 0; index < 4; ++index) {
+    const right = negate ? -second[secondOffset + index] : second[secondOffset + index];
+    result[index] = Math.fround(a * first[firstOffset + index] + b * right);
+  }
 }
 
-function quaternionMatrix([x, y, z, w]: readonly number[]): number[] {
+function quaternionMatrixToRef(quaternion: readonly number[], negateW: boolean, result: number[]): void {
+  const x = quaternion[0], y = quaternion[1], z = quaternion[2];
+  const w = negateW ? -quaternion[3] : quaternion[3];
   const yy = Math.fround(2 * y * y), zz = Math.fround(2 * z * z), xz = Math.fround(2 * x * z);
   const xw = Math.fround(2 * x * w), yz = Math.fround(2 * y * z), yw = Math.fround(2 * y * w);
   const xy = 2 * x * y, xx = 2 * x * x, zw = 2 * z * w;
-  return [Math.fround(1 - yy - zz), Math.fround(zw + xy), Math.fround(xz - yw), 0,
-    Math.fround(xy - zw), Math.fround(1 - xx - zz), Math.fround(yz + xw), 0,
-    Math.fround(yw + xz), Math.fround(yz - xw), Math.fround(1 - xx - yy), 0, 0, 0, 0, 1];
+  result[0] = Math.fround(1 - yy - zz); result[1] = Math.fround(zw + xy); result[2] = Math.fround(xz - yw);
+  result[3] = 0;
+  result[4] = Math.fround(xy - zw); result[5] = Math.fround(1 - xx - zz); result[6] = Math.fround(yz + xw);
+  result[7] = 0;
+  result[8] = Math.fround(yw + xz); result[9] = Math.fround(yz - xw); result[10] = Math.fround(1 - xx - yy);
+  result[11] = result[12] = result[13] = result[14] = 0;
+  result[15] = 1;
 }
 
-function multiply(left: readonly number[], right: readonly number[]): number[] {
-  const result = new Array<number>(16);
+function scalingToRef(x: number, y: number, z: number, result: number[]): void {
+  result.fill(0);
+  result[0] = x; result[5] = y; result[10] = z; result[15] = 1;
+}
+
+/** Result storage is separate from both operands. */
+function multiplyToRef(left: readonly number[], right: readonly number[], result: number[]): void {
   for (let column = 0; column < 4; column++) for (let row = 0; row < 4; row++) {
     const value = ((left[row] * right[column * 4] + left[row + 4] * right[column * 4 + 1])
       + left[row + 8] * right[column * 4 + 2]) + left[row + 12] * right[column * 4 + 3];
     result[column * 4 + row] = Math.fround(value);
   }
-  return result;
 }

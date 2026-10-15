@@ -1,9 +1,7 @@
 import {battleArtworkUrl} from '../battle-artwork';
-import {AbstractMesh, AnimationGroup, AssetContainer, Constants, Matrix, Mesh,
+import {AbstractMesh, AssetContainer, Constants, Matrix,
   Observer, PBRMaterial, Scene, Texture, TransformNode, Vector3} from '@babylonjs/core';
 import {loadPreparedModel} from '../model-resources';
-import {decodeImageRegion} from '../image-resources';
-import {imageResourceUrl} from '../image-cache';
 import type {IGLTFLoaderData} from '@babylonjs/loaders/glTF/glTFFileLoader';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {EffectModelAnimation, effectModelEngineDelta,
@@ -16,7 +14,6 @@ interface GroundItemTrack extends EffectModelAnimationNode {
 interface GroundItemAnimation {
   clock: EffectModelAnimation;
   meshes: AbstractMesh[];
-  groups: AnimationGroup[];
 }
 
 /**
@@ -48,6 +45,9 @@ export class GroundItemVisual {
   private asset?: AssetContainer;
   private texture?: Texture;
   private readonly animations: GroundItemAnimation[] = [];
+  private readonly animationMatrix = Matrix.Identity();
+  private readonly animationMinimum = new Vector3();
+  private readonly animationMaximum = new Vector3();
   private animationObserver?: Observer<Scene>;
   private disposed = false;
 
@@ -61,12 +61,11 @@ export class GroundItemVisual {
       sourceModel: `Data/scnobj/${modelId}/${modelId}.CVD`};
   }
 
-  private async loadTexture(): Promise<Texture> {
+  private loadTexture(): Promise<Texture> {
     const basename = groundItemTexture(this.modelId, this.variant);
     const asset = `Data/scnobj/${this.modelId}/${basename}.webp`;
-    await decodeImageRegion(battleArtworkUrl(`/${asset}`, this.scene));
     return new Promise<Texture>((resolve, reject) => {
-      const texture = new Texture(imageResourceUrl(battleArtworkUrl(`/${asset}`, this.scene)), this.scene, true, false, Constants.TEXTURE_LINEAR_LINEAR,
+      const texture = new Texture(battleArtworkUrl(`/${asset}`, this.scene), this.scene, true, false, Constants.TEXTURE_LINEAR_LINEAR,
         () => {texture.wrapU = texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE; resolve(texture);},
         (_message, error) => {texture.dispose(); reject(error ?? new Error(`原地面物件贴图载入失败 ${asset}`));});
     });
@@ -76,9 +75,14 @@ export class GroundItemVisual {
     if (this.disposed || this.scene.isDisposed) return;
     let tracks: GroundItemTrack[] = [];
     const asset = await loadPreparedModel(`/Data/scnobj/${this.modelId}/${this.modelId}.glb`, this.scene, {
-      pluginOptions: {gltf: {onParsed: (data: IGLTFLoaderData) => {
-        const source = data.json as {extras?: {attachmentTracks?: GroundItemTrack[]}};
+      pluginOptions: {gltf: {loadMorphTargets: false, onParsed: (data: IGLTFLoaderData) => {
+        const source = data.json as {extras?: {attachmentTracks?: GroundItemTrack[]}; animations?: unknown};
         tracks = source.extras?.attachmentTracks ?? [];
+        // Ground drops move through source node tracks; their vertex deltas are zero.
+        delete source.animations;
+        for (const material of data.json.materials ?? []) {
+          if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
+        }
       }}},
     });
     if (this.disposed || this.scene.isDisposed) {asset.dispose(); return;}
@@ -90,11 +94,10 @@ export class GroundItemVisual {
       this.texture = texture;
       let applied = false;
       for (const mesh of asset.meshes) {
-        // Drop vertex frames are identical; only the CVD node transform animates.
-        // Removing empty morph channels enables shared hard-edge outline normals.
-        if (mesh instanceof Mesh) mesh.morphTargetManager = null;
         if (mesh.material instanceof PBRMaterial) {
           mesh.material.albedoTexture = texture;
+          // Retain the source MASK material's alpha-source setting without its default image.
+          mesh.material.useAlphaFromAlbedoTexture = true;
           applied = true;
         }
         mesh.metadata = {...mesh.metadata, groundItemId: this.id, groundItemModelId: this.modelId,
@@ -121,32 +124,24 @@ export class GroundItemVisual {
     if (!tracks.length) throw new Error(`原地面物件模型缺少节点轨道 ${this.modelId}`);
     for (const [index, track] of tracks.entries()) {
       const meshes = asset.meshes.filter(mesh => mesh.name.startsWith(`node-${index}/`));
-      const groups = asset.animationGroups.filter(group => group.name.startsWith(`node-${index}/`));
       const duration = track.times[track.times.length - 1] - track.times[0];
       if (!meshes.length) throw new Error(`原地面物件节点缺失 ${this.modelId}/${index}`);
-      for (const group of groups) {
-        group.stop();
-        group.reset();
-        group.start(true);
-        group.pause();
-      }
-      this.animations.push({clock: new EffectModelAnimation(track, duration), meshes, groups});
+      this.animations.push({clock: new EffectModelAnimation(track, duration), meshes});
     }
   }
 
   private advanceAnimation(deltaSeconds: number): void {
-    for (const {clock, meshes, groups} of this.animations) {
+    for (const {clock, meshes} of this.animations) {
       clock.update(deltaSeconds);
       // Native node transforms sit below the GLTF loader's X-reflection root.
-      const matrix = Matrix.FromArray([...clock.matrix]);
+      const matrix = this.animationMatrix;
+      Matrix.FromArrayToRef(clock.matrix, 0, matrix);
       for (const mesh of meshes) mesh.setPreTransformMatrix(matrix);
-      for (const group of groups) {
-        const fps = group.targetedAnimations[0]?.animation.framePerSecond;
-        if (fps !== undefined) group.goToFrame(clock.time * fps);
-      }
     }
-    const minimum = new Vector3(Infinity, Infinity, Infinity);
-    const maximum = new Vector3(-Infinity, -Infinity, -Infinity);
+    const minimum = this.animationMinimum;
+    const maximum = this.animationMaximum;
+    minimum.set(Infinity, Infinity, Infinity);
+    maximum.set(-Infinity, -Infinity, -Infinity);
     for (const {meshes} of this.animations) {
       for (const mesh of meshes) {
         mesh.computeWorldMatrix(true);

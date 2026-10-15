@@ -2,8 +2,6 @@ import {battleArtworkUrl} from '../battle-artwork';
 import {gameContent} from '../../../../shared/content/catalog';
 import {AssetContainer, Constants, PBRMaterial, Scene, Texture, TransformNode} from '@babylonjs/core';
 import {loadPreparedModel} from '../model-resources';
-import {decodeImageRegion} from '../image-resources';
-import {imageResourceUrl} from '../image-cache';
 import type {RoleDisguiseSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import {SceneBreachMaterial} from './scene-breach-material';
 
@@ -35,7 +33,15 @@ export class RoleDisguiseVisual {
   async load(): Promise<void> {
     if (this.disposed || this.scene.isDisposed) return;
     const resources = this.resources, model = resources.name;
-    const asset = await loadPreparedModel(`/${resources.model}`, this.scene);
+    const texturePath = resources.textures[0];
+    const asset = await loadPreparedModel(`/${resources.model}`, this.scene, {
+      pluginOptions: {gltf: {onParsed: data => {
+        if (!texturePath) return;
+        for (const material of data.json.materials ?? []) {
+          if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
+        }
+      }}},
+    });
     if (this.disposed || this.scene.isDisposed) {
       asset.dispose();
       return;
@@ -44,19 +50,19 @@ export class RoleDisguiseVisual {
     this.owner = owner;
     this.asset = asset;
     try {
-      const texturePath = resources.textures[0];
       if (texturePath) {
-        await decodeImageRegion(battleArtworkUrl(`/${texturePath}`, this.scene));
-        if (this.disposed || this.scene.isDisposed) {this.dispose(); return;}
         this.texture = await new Promise<Texture>((resolve, reject) => {
-          const value = new Texture(imageResourceUrl(battleArtworkUrl(`/${texturePath}`, this.scene)), this.scene, false, false,
+          const value = new Texture(battleArtworkUrl(`/${texturePath}`, this.scene), this.scene, false, false,
             Constants.TEXTURE_LINEAR_LINEAR, () => resolve(value),
             (_message, error) => {value.dispose(); reject(error ?? new Error('伪装贴图载入失败'));});
         });
       }
       if (this.disposed || this.scene.isDisposed) {this.texture?.dispose(); this.dispose(); return;}
       const mesh = asset.meshes.find(value => value.name === resources.meshName);
-      if (mesh?.material instanceof PBRMaterial && this.texture) mesh.material.albedoTexture = this.texture;
+      if (mesh?.material instanceof PBRMaterial && this.texture) {
+        mesh.material.albedoTexture = this.texture;
+        mesh.material.useAlphaFromAlbedoTexture = true;
+      }
       owner.register(asset, {name: model, meshName: resources.meshName, transparent: resources.transparent});
     } catch (error) {
       this.dispose();

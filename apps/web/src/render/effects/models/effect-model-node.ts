@@ -1,7 +1,7 @@
-import {effectOrbitOffset} from '../common/orbit';
-import {EffectNativeMatrix, rotateEffectVector, transformEffectPositionInPlace} from '../common/effect-native-space';
+import {effectOrbitOffsetToRef} from '../common/orbit';
+import {EffectNativeMatrix, rotateEffectVectorToRef, transformEffectPositionInPlaceToRef} from '../common/effect-native-space';
 import {EffectVec3} from '../common/types';
-import {integrateSpriteMotion} from '../common/motion';
+import {integrateSpriteMotionToRef} from '../common/motion';
 
 export interface EffectModelControl {
   baseStart: number;
@@ -32,7 +32,8 @@ export class EffectModelNodeState {
   angles: EffectVec3 = [0, 0, 0];
   scale: EffectVec3 = [0, 0, 0];
   alpha = 0;
-  private origin: EffectVec3 = [0, 0, 0];
+  private readonly origin: EffectVec3 = [0, 0, 0];
+  private readonly acceleration: EffectVec3 = [0, 0, 0];
 
   constructor(readonly controls: readonly EffectModelControl[],
     private readonly globalRotation: EffectNativeMatrix, private readonly hasParent: boolean,
@@ -40,9 +41,10 @@ export class EffectModelNodeState {
 
   start(origin: EffectVec3): void {
     this.controller = 0;
-    this.origin = [...origin];
+    for (let axis = 0; axis < 3; axis++) this.origin[axis] = origin[axis];
     const control = this.controls[0];
     this.initialize(control);
+    this.initializeOrbit(control);
     this.alpha = control.alpha;
     this.backend.setTime(0);
     this.backend.setRate(control.animationRate);
@@ -53,38 +55,44 @@ export class EffectModelNodeState {
     this.controller = controller;
     const control = this.controls[controller];
     if (!control.baseFlag) this.initialize(control);
-    this.orbitOffset = control.orbit.angularRate === 0 ? [0, 0, 0] :
-      effectOrbitOffset(control.orbit, control.baseStart, control.baseStart);
+    this.initializeOrbit(control);
   }
 
   update(elapsed: number, deltaSeconds: number): void {
     const control = this.controls[this.controller];
     const delta = Math.fround(deltaSeconds);
-    const acceleration = this.hasParent ? control.motion.acceleration :
-      rotateEffectVector(this.globalRotation, control.motion.acceleration);
-    const motion = integrateSpriteMotion(this, acceleration, delta);
-    this.position = motion.position;
-    this.velocity = motion.velocity;
+    if (!this.hasParent) rotateEffectVectorToRef(this.globalRotation, control.motion.acceleration, this.acceleration);
+    integrateSpriteMotionToRef(this, this.hasParent ? control.motion.acceleration : this.acceleration, delta, this);
     if (control.orbit.angularRate !== 0) {
-      this.orbitOffset = effectOrbitOffset(control.orbit, elapsed, control.baseStart);
+      effectOrbitOffsetToRef(control.orbit, elapsed, control.baseStart, this.orbitOffset);
     }
-    this.scale = this.scale.map((value, axis) =>
-      Math.fround(value + Math.fround(delta * control.scaleRate[axis]))) as EffectVec3;
-    this.angles = this.angles.map((value, axis) =>
-      Math.fround(value + Math.fround(delta * control.angleRate[axis]))) as EffectVec3;
+    for (let axis = 0; axis < 3; axis++) {
+      this.scale[axis] = Math.fround(this.scale[axis] + Math.fround(delta * control.scaleRate[axis]));
+      this.angles[axis] = Math.fround(this.angles[axis] + Math.fround(delta * control.angleRate[axis]));
+    }
     this.alpha = Math.max(0, Math.min(1, Math.fround(this.alpha + delta * control.alphaRate)));
     this.backend.update();
   }
 
   private initialize(control: EffectModelControl): void {
-    const position = this.hasParent ? control.motion.position :
-      transformEffectPositionInPlace(this.globalRotation, control.motion.position);
-    this.position = position.map((value, axis) => Math.fround(value + this.origin[axis])) as EffectVec3;
-    this.velocity = this.hasParent ? [...control.motion.velocity] :
-      rotateEffectVector(this.globalRotation, control.motion.velocity);
-    this.angles = [...control.angles];
-    this.scale = [...control.scale];
-    this.orbitOffset = control.orbit.angularRate === 0 ? [0, 0, 0] :
-      effectOrbitOffset(control.orbit, control.baseStart, control.baseStart);
+    if (!this.hasParent) {
+      transformEffectPositionInPlaceToRef(this.globalRotation, control.motion.position, this.position);
+      rotateEffectVectorToRef(this.globalRotation, control.motion.velocity, this.velocity);
+    }
+    for (let axis = 0; axis < 3; axis++) {
+      const position = this.hasParent ? control.motion.position[axis] : this.position[axis];
+      this.position[axis] = Math.fround(position + this.origin[axis]);
+      if (this.hasParent) this.velocity[axis] = control.motion.velocity[axis];
+      this.angles[axis] = control.angles[axis];
+      this.scale[axis] = control.scale[axis];
+    }
+  }
+
+  private initializeOrbit(control: EffectModelControl): void {
+    if (control.orbit.angularRate === 0) {
+      for (let axis = 0; axis < 3; axis++) this.orbitOffset[axis] = 0;
+    } else {
+      effectOrbitOffsetToRef(control.orbit, control.baseStart, control.baseStart, this.orbitOffset);
+    }
   }
 }

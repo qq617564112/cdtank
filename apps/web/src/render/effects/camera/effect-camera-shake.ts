@@ -20,6 +20,22 @@ export class EffectCameraShakeState {
 
   update(deltaSeconds: number, pose: EffectCameraPose, random: () => number): EffectCameraPose {
     if (!this.active) return pose;
+    const key = this.parameter === 0 ? 'target' : 'eye';
+    const result = {...pose, [key]: [...pose[key]] as EffectVec3};
+    this.updateToRef(deltaSeconds, pose, random, result);
+    return result;
+  }
+
+  /** Keep the original samples and rounding while writing caller-owned vectors. */
+  updateToRef(deltaSeconds: number, pose: EffectCameraPose, random: () => number,
+    result: EffectCameraPose): void {
+    if (!this.active) {
+      for (let axis = 0; axis < 3; axis++) {
+        result.eye[axis] = pose.eye[axis]; result.target[axis] = pose.target[axis];
+        result.right[axis] = pose.right[axis]; result.up[axis] = pose.up[axis];
+      }
+      return;
+    }
     const f = Math.fround;
     const elapsed = this.elapsed + f(deltaSeconds);
     this.elapsed = f(elapsed);
@@ -28,13 +44,17 @@ export class EffectCameraShakeState {
       this.elapsed = 0;
     }
     const amplitude = f((1 - this.elapsed / this.duration) * this.strength);
-    const sample = (): number => f(random() * 2 * f(3.0518509447574615e-5) - 1);
-    const horizontal = sample(), vertical = sample();
-    const right = pose.right.map(value => f(f(value) * horizontal));
-    const up = pose.up.map(value => f(f(value) * vertical));
-    const offset = right.map((value, axis) => f((axis === 1 ? f(value + up[axis]) : value + up[axis]) * (amplitude * .5)));
+    const horizontal = f(random() * 2 * f(3.0518509447574615e-5) - 1);
+    const vertical = f(random() * 2 * f(3.0518509447574615e-5) - 1);
     const key = this.parameter === 0 ? 'target' : 'eye';
-    return {...pose, [key]: pose[key].map((value, axis) => f(value + offset[axis])) as EffectVec3};
+    for (let axis = 0; axis < 3; axis++) {
+      const right = f(f(pose.right[axis]) * horizontal);
+      const up = f(f(pose.up[axis]) * vertical);
+      const offset = f((axis === 1 ? f(right + up) : right + up) * (amplitude * .5));
+      result.eye[axis] = key === 'eye' ? f(pose.eye[axis] + offset) : pose.eye[axis];
+      result.target[axis] = key === 'target' ? f(pose.target[axis] + offset) : pose.target[axis];
+      result.right[axis] = pose.right[axis]; result.up[axis] = pose.up[axis];
+    }
   }
 
   clear(): void {this.active = false; this.elapsed = 0;}

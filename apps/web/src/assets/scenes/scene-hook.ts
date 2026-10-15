@@ -1,19 +1,14 @@
-import {loadPreparedModel} from '../model-resources';
+import {createMv3AnimationSampler, loadMv3Model} from '../tanks/mv3-animation-sampler';
 import {battleArtworkUrl} from '../battle-artwork';
 import {AssetContainer, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
 import type {AbstractMesh} from '@babylonjs/core';
-import {loadStaticJson} from '../static-resources';
+import {loadSceneHookResource, type HookLibrary} from './scene-tag-resources';
 import {applyMv3Materials} from '../../render/materials/mv3-material';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
-import {sampleEffectTag, type EffectTagFrame} from '../tanks/effect-tag-sampler';
-import {multiplyEffectMatrices} from '../../render/effects/common/effect-render-transform';
+import {sampleEffectTagTrackToRef} from '../tanks/effect-tag-sampler';
+import {multiplyEffectMatricesToRef} from '../../render/effects/common/effect-render-transform';
 import type {EffectRuntime} from '../../render/effects/runtime/effect-runtime';
 
-interface HookLibrary {
-  mapId: string; sourcePlacementId: string; model: string; className: string;
-  asset: string; action: string; durationMs: number;
-  track: {name: string; frames: EffectTagFrame[]}; effect: string;
-}
 export interface HookPlacement {
   id: string; model: string; className?: string; matrix: readonly number[];
   position: readonly number[]; enabled: number;
@@ -24,7 +19,9 @@ export class SceneHook {
   private container?: AssetContainer;
   private root?: TransformNode;
   private library?: HookLibrary;
+  private sampleAnimation?: (milliseconds: number) => void;
   private readonly parent = [...Matrix.Identity().asArray()];
+  private readonly localTag = new Array<number>(16);
   private readonly world: number[];
   private handle = 0;
   private disposed = false;
@@ -38,19 +35,20 @@ export class SceneHook {
 
   async load(path: string): Promise<void> {
     try {
-      const library = await loadStaticJson<HookLibrary>(`/${path}`);
+      const library = await loadSceneHookResource(`/${path}`);
       if (this.disposed || this.scene.isDisposed) return;
       if (library.mapId !== '0012' || library.sourcePlacementId !== this.placement.id ||
         library.model !== this.placement.model || library.className !== this.placement.className) {
         throw new Error('Hook放置与资源身份不符');
       }
       this.library = library;
-      const container = await loadPreparedModel(battleArtworkUrl(`/${library.asset}`, this.scene), this.scene, {
+      const container = await loadMv3Model(battleArtworkUrl(`/${library.asset}`, this.scene), this.scene, {
         pluginOptions: {gltf: {useSRGBBuffers: false}},
       });
       if (this.disposed || this.scene.isDisposed) {container.dispose(); return;}
       this.container = container;
-      container.materials.push(...applyMv3Materials(this.scene, container.meshes));
+      this.sampleAnimation = createMv3AnimationSampler(container);
+      applyMv3Materials(this.scene, container);
       applyCartoonOutlines(container.meshes);
       container.addAllToScene();
       const root = new TransformNode(`placement-${this.placement.id}`, this.scene);
@@ -66,7 +64,6 @@ export class SceneHook {
         mesh.metadata = {...mesh.metadata, sourcePlacementId: this.placement.id,
           sourceClass: this.placement.className, sourceHookAction: library.action};
       });
-      container.animationGroups.forEach(group => {group.start(true); group.pause();});
       root.setEnabled(Boolean(this.placement.enabled));
       this.setAnimationTime(0);
       if (this.placement.enabled && this.effects) {
@@ -87,12 +84,9 @@ export class SceneHook {
     if (this.disposed || !this.library || !this.container) return;
     this.elapsed = Math.max(0, seconds);
     const time = Math.trunc(this.elapsed * 1000) % this.library.durationMs;
-    for (const group of this.container.animationGroups) {
-      const fps = group.targetedAnimations[0]?.animation.framePerSecond;
-      if (fps !== undefined) group.goToFrame(group.from + time / 1000 * fps);
-    }
-    const matrix = multiplyEffectMatrices(this.world, sampleEffectTag(this.library.track.frames, time));
-    for (let index = 0; index < 16; ++index) this.parent[index] = matrix[index];
+    this.sampleAnimation?.(time);
+    sampleEffectTagTrackToRef(this.library.track.frames, time, this.localTag);
+    multiplyEffectMatricesToRef(this.world, this.localTag, this.parent);
   }
 
   get meshes(): readonly AbstractMesh[] {return this.root?.getChildMeshes() ?? [];}
@@ -104,7 +98,9 @@ export class SceneHook {
     this.handle = 0;
     this.container?.dispose();
     this.container = undefined;
+    this.sampleAnimation = undefined;
     this.root?.dispose();
     this.root = undefined;
+    this.library = undefined;
   }
 }

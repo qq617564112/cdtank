@@ -7,7 +7,7 @@ export interface EffectFrameConfig {
 
 export class EffectFrameClock {
   frame = 0;
-  remainder = 0;
+  frameRemainder = 0;
 
   constructor(
     private readonly config: EffectFrameConfig,
@@ -25,39 +25,35 @@ export class EffectFrameClock {
     // Initialization tests reverse before random. Update tests random first.
     this.frame = frameFlags & 2 ? frameCount - 1 :
         frameFlags & 4 ? this.randomFrame(frameCount) : 0;
-    this.remainder = 0;
+    this.frameRemainder = 0;
   }
 
   advance(deltaSeconds: number): number {
-    const state = advanceEffectFrame({frame: this.frame, remainder: this.remainder},
-      this.config, deltaSeconds, this.randomFrame);
-    this.frame = state.frame;
-    this.remainder = state.remainder;
+    advanceEffectFrame(this, this.config, deltaSeconds, this.randomFrame);
     return this.frame;
   }
 }
 
 export interface EffectFrameState {
   frame: number;
-  remainder: number;
+  frameRemainder: number;
 }
 
-/** Advance an existing instance without initialization or an extra RNG draw. */
-export function advanceEffectFrame(previous: EffectFrameState, config: EffectFrameConfig,
-  deltaSeconds: number, randomFrame: (count: number) => number): EffectFrameState {
-  const state = {...previous};
+/** Advance the retained state in place without initialization or an extra RNG draw. */
+export function advanceEffectFrame(state: EffectFrameState, config: EffectFrameConfig,
+  deltaSeconds: number, randomFrame: (count: number) => number): void {
   if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0) {
     throw new Error('Invalid sprite update delta');
   }
   const {frameCount, frameFlags} = config;
   const interval = Math.fround(config.frameInterval);
   // Original x87 adds f32 inputs, compares the sum, then stores f32.
-  const accumulated = state.remainder + Math.fround(deltaSeconds);
+  const accumulated = state.frameRemainder + Math.fround(deltaSeconds);
   if (accumulated < interval) {
-    state.remainder = Math.fround(accumulated);
-    return state;
+    state.frameRemainder = Math.fround(accumulated);
+    return;
   }
-  state.remainder = Math.fround(accumulated - interval);
+  state.frameRemainder = Math.fround(accumulated - interval);
   // One step per update, including updates with a remainder >= interval.
   if (frameFlags & 4) {
     state.frame = randomFrame(frameCount);
@@ -72,5 +68,4 @@ export function advanceEffectFrame(previous: EffectFrameState, config: EffectFra
       state.frame = frameFlags & 1 ? frameCount - 1 : 0;
     }
   }
-  return state;
 }

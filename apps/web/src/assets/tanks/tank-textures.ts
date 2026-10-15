@@ -92,19 +92,41 @@ export async function loadTankTrackTextures(scene: Scene, ids: OwnedTankTextures
   };
 }
 
-/** The default material names map to editable paths in the tank definition. */
-export async function loadTankDefaultTextures(scene: Scene, tankId: number): Promise<Map<string, Texture>> {
-  const definition = (await prepareGameContent()).tanks.get(tankId)!;
-  const loaded = new Map<string, Texture>();
-  try {
-    for (const [request, asset] of Object.entries(definition.resources.textures)) {
-      if (request === definition.resources.trackTextures.A || request === definition.resources.trackTextures.B) continue;
-      loaded.set(request, await loadTexture(scene, asset));
+/** One actor owns only the default images referenced by its unmodified meshes. */
+export class TankDefaultTextures {
+  readonly bySource = new Map<string, Texture>();
+  private readonly byAsset = new Map<string, Promise<Texture>>();
+  private disposed = false;
+
+  constructor(private readonly scene: Scene, private readonly tankId: number) {}
+
+  async load(request: string): Promise<void> {
+    if (this.disposed || this.bySource.has(request)) return;
+    const definition = (await prepareGameContent()).tanks.get(this.tankId)!;
+    if (this.disposed) return;
+    const asset = definition.resources.textures[request];
+    if (!asset) throw new Error(`缺少战车默认贴图 ${this.tankId}/${request}`);
+    let loading = this.byAsset.get(asset);
+    if (!loading) {
+      const pending = loadTexture(this.scene, asset).catch(error => {
+        if (this.byAsset.get(asset) === pending) this.byAsset.delete(asset);
+        throw error;
+      });
+      loading = pending;
+      this.byAsset.set(asset, loading);
     }
-    return loaded;
-  } catch (error) {
-    loaded.forEach(texture => texture.dispose());
-    throw error;
+    const texture = await loading;
+    if (!this.disposed) this.bySource.set(request, texture);
+  }
+
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    for (const loading of this.byAsset.values()) {
+      void loading.then(texture => {texture.dispose();}, () => {});
+    }
+    this.byAsset.clear();
+    this.bySource.clear();
   }
 }
 

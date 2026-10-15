@@ -46,16 +46,23 @@ function roundExtended(significand: bigint, exponent: number): [bigint, number] 
 /** Original 0x1000bdc0 query, including its leading loop-completion message. */
 export function queryEffectActionEvents(duration: number, events: readonly EffectActionEvent[],
   previous: number, current: number): number[] {
+  const messages: number[] = [];
+  queryEffectActionEventsToRef(duration, events, previous, current, messages);
+  return messages;
+}
+
+export function queryEffectActionEventsToRef(duration: number, events: readonly EffectActionEvent[],
+  previous: number, current: number, messages: number[]): void {
+  messages.length = 0;
   const beginning = previous % duration;
   const ending = (beginning + ((current - previous) >>> 0)) >>> 0;
-  const messages: number[] = ending >= duration ? [0x6f766572] : [];
-  if (events.length === 0) return messages;
+  if (ending >= duration) messages.push(0x6f766572);
+  if (events.length === 0) return;
   for (let loop = 0; loop * duration <= ending; ++loop) {
     for (const event of events) {
       const occurrence = loop * duration + event.time;
-      if (occurrence > ending) return messages;
+      if (occurrence > ending) return;
       if (occurrence > beginning) messages.push(event.identifier);
     }
   }
-  return messages;
 }

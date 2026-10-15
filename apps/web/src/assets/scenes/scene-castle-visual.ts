@@ -1,33 +1,23 @@
-import {loadPreparedModel} from '../model-resources';
 import {battleArtworkUrl} from '../battle-artwork';
-import {AssetContainer, Matrix, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
+import {AssetContainer, Matrix, PBRMaterial, Quaternion, Scene, TransformNode, Vector3, type BaseTexture} from '@babylonjs/core';
 import {applyMv3Materials} from '../../render/materials/mv3-material';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {EffectActorActionClock} from '../tanks/effect-actor-clock';
-import {sampleEffectTag, type EffectTagFrame} from '../tanks/effect-tag-sampler';
+import {sampleEffectTagTrackToRef} from '../tanks/effect-tag-sampler';
+import type {TankTagTrack} from '../tanks/tank-action-format';
+import type {CastleModelResource} from './scene-tag-resources';
 import type {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import type {EffectVec3} from '../../render/effects/common/types';
 import type {CastleEffectTarget} from './scene-castle-state';
 import {castleAnimationTime} from '../../../../shared/movement/scene-animation-clock';
-import {createMv3AnimationSampler} from '../tanks/mv3-animation-sampler';
+import {createMv3AnimationSampler, loadMv3Model} from '../tanks/mv3-animation-sampler';
+import type {SourceMv3Material} from '../tanks/mv3-model-extras';
 
-interface CastleAction {
-  name: string;
-  asset: string;
-  available: boolean;
-  durationMs: number;
-  tracks: {name: string; frames: EffectTagFrame[]}[];
-}
-export interface CastleModelResource {
-  sourcePlacementId: string;
-  model: string;
-  position: EffectVec3;
-  matrix: number[];
-  actions: CastleAction[];
-}
 interface ActionView {
-  resource: CastleAction; container: AssetContainer; root: TransformNode;
+  resource: CastleModelResource['actions'][number]; container: AssetContainer; root: TransformNode;
+  tracks: TankTagTrack[];
   sampleAnimation: (milliseconds: number) => void;
+  metadata: {sourceCastlePlacementId: string; action: string; time: number; duration: number};
 }
 
 /** Original Castle MV3 actions and five named live spout matrices. */
@@ -36,28 +26,49 @@ export class SceneCastleVisual {
   private readonly actions = new Map<string, ActionView>();
   private readonly world: number[];
   private readonly tags = Array.from({length: 5}, () => Matrix.Identity().asArray());
+  private readonly localTag = new Array<number>(16);
   private current?: ActionView;
   private clock?: EffectActorActionClock;
+  private readonly actionIdentifiers: number[] = [];
   private disposed = false;
+  private resource?: CastleModelResource;
 
-  constructor(private readonly scene: Scene, private readonly resource: CastleModelResource) {
+  constructor(private readonly scene: Scene, resource: CastleModelResource) {
+    this.resource = resource;
     this.position = resource.position;
     this.world = [...resource.matrix];
     [this.world[12], this.world[13], this.world[14]] = resource.position;
   }
 
   async load(): Promise<void> {
+    const castle = this.resource;
+    if (!castle) return;
     try {
-      for (const resource of this.resource.actions) {
+      // Action containers retain the templates that own these source textures.
+      const textures = new Map<string, BaseTexture>();
+      for (const resource of castle.actions) {
         if (!resource.available) throw new Error(`缺少原城堡动作：${resource.name}`);
-        const container = await loadPreparedModel(battleArtworkUrl(`/${resource.asset}`, this.scene), this.scene, {
-          pluginOptions: {gltf: {useSRGBBuffers: false}},
+        const tracks = Array.from({length: 5}, (_, index) => {
+          const name = `tag_spout${index + 1}`;
+          const track = resource.tracks.find(track => track.name === name);
+          if (!track) throw new Error(`缺少原城堡挂点：${name}`);
+          return track.frames;
         });
+        const container = await loadMv3Model(battleArtworkUrl(`/${resource.asset}`, this.scene), this.scene, {
+          pluginOptions: {gltf: {useSRGBBuffers: false}},
+        }, [], textures);
         if (this.disposed || this.scene.isDisposed) {container.dispose(); return;}
-        container.materials.push(...applyMv3Materials(this.scene, container.meshes));
+        for (const mesh of container.meshes) {
+          const material = mesh.material;
+          if (!(material instanceof PBRMaterial)) continue;
+          const source = material.metadata?.gltf?.extras?.originalMV3 as SourceMv3Material | undefined;
+          const name = source?.textures?.[0];
+          if (name && material.albedoTexture && !textures.has(name)) textures.set(name, material.albedoTexture);
+        }
+        applyMv3Materials(this.scene, container, undefined, textures);
         applyCartoonOutlines(container.meshes);
         container.addAllToScene();
-        const root = new TransformNode(`castle-${this.resource.sourcePlacementId}/${resource.name}`, this.scene);
+        const root = new TransformNode(`castle-${castle.sourcePlacementId}/${resource.name}`, this.scene);
         const scale = new Vector3();
         const rotation = new Quaternion();
         Matrix.FromArray(this.world).decompose(scale, rotation, new Vector3());
@@ -65,14 +76,15 @@ export class SceneCastleVisual {
         root.rotationQuaternion = new Quaternion(rotation.x, -rotation.y, -rotation.z, rotation.w);
         root.position.set(-this.position[0], this.position[1], this.position[2]);
         container.rootNodes.forEach(node => {node.parent = root;});
-        container.animationGroups.forEach(group => {group.stop(); group.reset();});
         container.meshes.forEach(mesh => {
-          mesh.metadata = {...mesh.metadata, sourceCastlePlacementId: this.resource.sourcePlacementId,
-            sourceCastleModel: this.resource.model, sourceCastleAction: resource.name};
+          mesh.metadata = {...mesh.metadata, sourceCastlePlacementId: castle.sourcePlacementId,
+            sourceCastleModel: castle.model, sourceCastleAction: resource.name};
         });
         root.setEnabled(false);
-        this.actions.set(resource.name, {resource, container, root,
-          sampleAnimation: createMv3AnimationSampler(container)});
+        this.actions.set(resource.name, {resource, container, root, tracks,
+          sampleAnimation: createMv3AnimationSampler(container),
+          metadata: {sourceCastlePlacementId: castle.sourcePlacementId,
+            action: resource.name, time: 0, duration: resource.durationMs}});
       }
       // Castle45dd2d initializes n2 then n1, both with mode0.
       this.action('n1', 0);
@@ -86,19 +98,16 @@ export class SceneCastleVisual {
     this.current?.root.setEnabled(false);
     this.current = view;
     view.root.setEnabled(true);
-    view.container.animationGroups.forEach(group => {
-      group.stop(); group.reset(); group.start(true); group.pause();
-    });
     this.clock = new EffectActorActionClock(view.resource.durationMs, [], mode === 4, 1, 53);
     // Named GotoAction starts at0 when its default start1 exceeds end0.
     this.clock.time = 0;
-    if (elapsedSeconds > 0) this.clock.advance(elapsedSeconds);
+    if (elapsedSeconds > 0) this.clock.advanceToRef(elapsedSeconds, this.actionIdentifiers);
     this.sample();
   }
 
   update(deltaSeconds: number): void {
     if (this.disposed || !this.clock) return;
-    this.clock.advance(deltaSeconds);
+    this.clock.advanceToRef(deltaSeconds, this.actionIdentifiers);
     this.sample();
   }
 
@@ -121,7 +130,7 @@ export class SceneCastleVisual {
   seekDestroyed(elapsedSeconds: number): void {
     if (this.disposed || !this.clock || this.current?.resource.name !== 'c3') return;
     this.clock.time = 0;
-    this.clock.advance(elapsedSeconds);
+    this.clock.advanceToRef(elapsedSeconds, this.actionIdentifiers);
     this.sample();
   }
 
@@ -134,9 +143,8 @@ export class SceneCastleVisual {
     const time = this.clock.time;
     this.current.sampleAnimation(time % this.clock.duration);
     for (let index = 0; index < 5; index++) {
-      const track = this.current.resource.tracks.find(track => track.name === `tag_spout${index + 1}`);
-      if (!track) throw new Error(`缺少原城堡挂点：tag_spout${index + 1}`);
-      const local = sampleEffectTag(track.frames, time);
+      const local = this.localTag;
+      sampleEffectTagTrackToRef(this.current.tracks[index], time, local);
       const target = this.tags[index];
       for (let row = 0; row < 4; row++) {
         for (let column = 0; column < 4; column++) {
@@ -146,8 +154,9 @@ export class SceneCastleVisual {
         }
       }
     }
-    this.current.root.metadata = {sourceCastlePlacementId: this.resource.sourcePlacementId,
-      action: this.current.resource.name, time, duration: this.clock.duration};
+    this.current.metadata.time = time;
+    this.current.metadata.duration = this.clock.duration;
+    this.current.root.metadata = this.current.metadata;
   }
 
   dispose(): void {
@@ -156,5 +165,6 @@ export class SceneCastleVisual {
     this.actions.clear();
     this.current = undefined;
     this.clock = undefined;
+    this.resource = undefined;
   }
 }

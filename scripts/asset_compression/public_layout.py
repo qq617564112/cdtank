@@ -220,6 +220,10 @@ def organize_public(root):
         content = json.dumps(sprites, ensure_ascii=False, indent=2) + '\n'
         if content != previous:
             sprite_path.write_text(content)
+    from .cvd import publish_model_libraries
+    publish_model_libraries(root)
+    from .runtime_data import publish_runtime_data
+    publish_runtime_data(root)
     prune_empty_directories(root)
     return {'moved_files': moved, 'duplicate_files_removed': duplicates, 'mapping': mapping,
         'directories': dict(Counter(path.relative_to(root).parts[0]

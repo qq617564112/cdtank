@@ -1,18 +1,20 @@
 import {loadPreparedModel} from '../model-resources';
 import {battleArtworkUrl} from '../battle-artwork';
 import {AnimationGroup, ArcRotateCamera, AssetContainer, Matrix, Observable, Quaternion, Scene, TransformNode, Vector3} from '@babylonjs/core';
-import {loadStaticJson} from '../static-resources';
+import {loadStaticJson, releaseStaticJsonResources} from '../static-resources';
+import {releaseModelLibraries} from '../../render/effects/models/effect-model-resources';
 import type {ObjectiveSnapshot, SceneObjectSnapshot} from '../../../../shared/protocols';
 import {SceneCvdAnimation} from './scene-cvd-animation';
 import {EffectNativeMatrix} from '../../render/effects/common/effect-native-space';
 import {effectModelEngineDelta} from '../../render/effects/models/effect-model-animation';
-import {SceneBreachState} from './scene-breach-state';
+import {SceneBreachState, type SceneBreachSnapshot} from './scene-breach-state';
 import {SceneBreachVisual} from './scene-breach-visual';
 import type {EffectRuntime} from '../../render/effects/runtime/effect-runtime';
 import type {EffectVec3} from '../../render/effects/common/types';
 import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 import {hasSceneActorToon, registerSceneActorToon, SceneActorToon} from '../../render/materials/actor-toon';
-import {SceneCastleVisual, type CastleModelResource} from './scene-castle-visual';
+import {SceneCastleVisual} from './scene-castle-visual';
+import {loadSceneCastleResources, type CastleModelResource} from './scene-tag-resources';
 import {SceneCastleDamageText} from './scene-castle-damage-text';
 import type {CastleDamageTextProjector} from './scene-castle-damage-text';
 import {createBattleWorldTextProjector} from '../../render/battle-world-text-projection';
@@ -106,8 +108,11 @@ export class ScenePreview {
   private round?: number;
   private readonly glbAnimations: AnimationGroup[] = [];
   private readonly breakables = new Map<string, {root: TransformNode; state: SceneBreachState;
-    broken?: SceneBreachVisual; position: EffectVec3; soundPlayed: boolean}>();
+    broken?: SceneBreachVisual; position: EffectVec3; soundPlayed: boolean;
+    visual: SceneBreachSnapshot; meshes: readonly AbstractMesh[]}>();
   private readonly projectDamageText: CastleDamageTextProjector;
+  private readonly damageTextViewport = {width: 0, height: 0};
+  private readonly damageTextPosition = new Vector3();
 
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera) {
     this.projectDamageText = createBattleWorldTextProjector(camera);
@@ -160,6 +165,8 @@ export class ScenePreview {
     this.scene.setRenderingOrder(0);
     this.disposals.splice(0).forEach(dispose => dispose());
     this.assets.splice(0).forEach(asset => asset.dispose());
+    releaseModelLibraries(this.scene, '/data/maps/');
+    releaseStaticJsonResources('/data/maps/');
   }
 
   async load(id: string, runtime?: EffectRuntime, onProgress: SceneLoadProgress = () => {}): Promise<string> {
@@ -195,13 +202,9 @@ export class ScenePreview {
       if (revision !== this.revision) return '';
       report(0.06, '正在准备地图材质…');
     }
-    const entries = await loadStaticJson<SceneEntry[]>('/data/maps/shared/placements.json');
+    const entry = await loadStaticJson<SceneEntry>(`/data/maps/${id}/placements.json`);
     if (revision !== this.revision) {
       return '';
-    }
-    const entry = entries.find(value => value.id === id);
-    if (!entry) {
-      throw new Error('找不到地图放置数据');
     }
     report(0.1, '正在读取地图放置数据…');
     // Environment binds before any asset/shaders load so actors, castle and
@@ -241,7 +244,7 @@ export class ScenePreview {
     const cache = new Map<string, AssetContainer>();
     let castleResources: CastleModelResource[] = [];
     if (entry.castles.length > 0 && runtime) {
-      const models = (await loadStaticJson<{castles: CastleModelResource[]}>(`/${castleResourceFile(Number(id))}`)).castles;
+      const models = await loadSceneCastleResources(`/${castleResourceFile(Number(id))}`);
       castleResources = entry.castles.map(placement => {
         const model = models.find(value => value.model === placement.model);
         if (!model) throw new Error(`原城堡模型载入失败：${placement.model}`);
@@ -472,7 +475,8 @@ export class ScenePreview {
       }
       if (placement.className === 'SYcScnObjBreach') {
         const value = {root, state: new SceneBreachState(), position: [...placement.position] as EffectVec3,
-          soundPlayed: false, broken: undefined as SceneBreachVisual | undefined};
+          soundPlayed: false, broken: undefined as SceneBreachVisual | undefined,
+          visual: {fading: false, hidden: false, alpha: 1}, meshes: root.getChildMeshes()};
         this.breakables.set(placement.id, value);
         const libraryAsset = sceneBreachLibrary(id, placement.model, placement.destruction);
         if (libraryAsset) {
@@ -574,13 +578,15 @@ export class ScenePreview {
       this.castles.forEach(value => value.visual.update(deltaSeconds));
     }
     const engine = this.scene.getEngine();
-    const viewport = {width: engine.getRenderWidth(), height: engine.getRenderHeight()};
+    const viewport = this.damageTextViewport;
+    viewport.width = engine.getRenderWidth(); viewport.height = engine.getRenderHeight();
     this.castles.forEach((value, castleId) => {
       const queue = this.castleDamageTexts.get(castleId);
       if (!queue) return;
       const native = value.visual.position;
-      const viewPoint = Vector3.TransformCoordinates(new Vector3(-native[0], native[1], native[2]),
-        this.camera.getViewMatrix());
+      const viewPoint = this.damageTextPosition;
+      Vector3.TransformCoordinatesFromFloatsToRef(-native[0], native[1], native[2],
+        this.camera.getViewMatrix(), viewPoint);
       const viewZ = viewPoint.z;
       queue.advance(deltaSeconds, viewZ);
       queue.draw(viewport, this.projectDamageText);
@@ -589,8 +595,9 @@ export class ScenePreview {
       const value = this.breakables.get(placementId);
       if (!value) return;
       const native = value.position;
-      const viewPoint = Vector3.TransformCoordinates(new Vector3(-native[0], native[1], native[2]),
-        this.camera.getViewMatrix());
+      const viewPoint = this.damageTextPosition;
+      Vector3.TransformCoordinatesFromFloatsToRef(-native[0], native[1], native[2],
+        this.camera.getViewMatrix(), viewPoint);
       queue.advance(deltaSeconds, viewPoint.z);
       queue.draw(viewport, this.projectDamageText);
     });
@@ -759,7 +766,8 @@ export class ScenePreview {
       if (objective.hp > 0) {
         // A positive HP snapshot after an existing break is the same-round
         // respawn signal; reset only that source instance, never every frame.
-        if (!value.state.snapshot().fading) continue;
+        value.state.snapshotToRef(value.visual);
+        if (!value.visual.fading) continue;
         value.state.reset();
         value.broken?.reset();
         value.soundPlayed = false;
@@ -777,13 +785,14 @@ export class ScenePreview {
 
   private advanceBreachVisuals(deltaSeconds: number): void {
     const elapsed = Math.fround(effectModelEngineDelta(deltaSeconds));
-    for (const {root, state, broken} of this.breakables.values()) {
+    for (const {root, state, broken, visual, meshes} of this.breakables.values()) {
       state.update(elapsed);
-      const visual = state.snapshot();
+      state.snapshotToRef(visual);
       root.setEnabled(broken ? !visual.fading : !visual.hidden);
       broken?.advance(elapsed, visual.alpha, visual.fading && !visual.hidden);
-      root.metadata = {...root.metadata, sourceBreach: visual};
-      for (const mesh of root.getChildMeshes()) mesh.visibility = Math.max(0, visual.alpha);
+      root.metadata ??= {};
+      root.metadata.sourceBreach = visual;
+      for (const mesh of meshes) mesh.visibility = Math.max(0, visual.alpha);
     }
   }
 }

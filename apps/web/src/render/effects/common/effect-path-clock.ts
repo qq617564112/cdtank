@@ -14,6 +14,12 @@ export class EffectPathClock {
   }
 
   advance(deltaSeconds: number): EffectVec3 {
+    const result: EffectVec3 = [0, 0, 0];
+    this.advanceToRef(deltaSeconds, result);
+    return result;
+  }
+
+  advanceToRef(deltaSeconds: number, result: EffectVec3): void {
     const amount = Math.fround(deltaSeconds) * Math.fround(this.rate);
     let frames = Math.trunc(amount);
     const fraction = amount - frames + this.remainder;
@@ -30,7 +36,10 @@ export class EffectPathClock {
     const next = this.frame + 1 <= this.vertices.length ? this.frame + 1 : this.frame;
     const first = this.vertices[this.frame];
     const second = next === this.vertices.length ? this.trailingVertex : this.vertices[next];
-    return first.map((value, index) => Math.fround(Math.fround(value) +
-      Math.fround(Math.fround(Math.fround(second[index]) - Math.fround(value)) * this.remainder))) as EffectVec3;
+    for (let index = 0; index < 3; index++) {
+      const value = first[index];
+      result[index] = Math.fround(Math.fround(value) +
+        Math.fround(Math.fround(Math.fround(second[index]) - Math.fround(value)) * this.remainder));
+    }
   }
 }

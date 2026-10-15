@@ -1,21 +1,30 @@
 import {Camera, Matrix, Observer, TargetCamera, Vector3} from '@babylonjs/core';
 import {EffectCameraPose, EffectCameraShakeState} from './effect-camera-shake';
-import {EffectVec3} from '../common/types';
 
 /** Apply original native eye/target offsets to the Web camera's current base view. */
 export class EffectCameraShakeView {
   readonly state = new EffectCameraShakeState();
   private pose?: EffectCameraPose;
   private readonly observer: Observer<Camera>;
+  private readonly inverse = Matrix.Identity();
+  private readonly basePose: EffectCameraPose = {eye: [0, 0, 0], target: [0, 0, 0],
+    right: [0, 0, 0], up: [0, 0, 0]};
+  private readonly shakenPose: EffectCameraPose = {eye: [0, 0, 0], target: [0, 0, 0],
+    right: [0, 0, 0], up: [0, 0, 0]};
+  private readonly webEye = new Vector3();
+  private readonly webTarget = new Vector3();
+  private readonly webUp = new Vector3();
 
   constructor(private readonly camera: Camera, private readonly random: () => number) {
     this.observer = camera.onViewMatrixChangedObservable.add(() => {
       if (!this.pose) return;
-      const web = (value: EffectVec3): Vector3 => new Vector3(-value[0], value[1], value[2]);
       const view = camera.getViewMatrix();
-      const up = web(this.pose.up);
-      if (camera.getScene().useRightHandedSystem) Matrix.LookAtRHToRef(web(this.pose.eye), web(this.pose.target), up, view);
-      else Matrix.LookAtLHToRef(web(this.pose.eye), web(this.pose.target), up, view);
+      const pose = this.pose;
+      this.webUp.set(-pose.up[0], pose.up[1], pose.up[2]);
+      this.webEye.set(-pose.eye[0], pose.eye[1], pose.eye[2]);
+      this.webTarget.set(-pose.target[0], pose.target[1], pose.target[2]);
+      if (camera.getScene().useRightHandedSystem) Matrix.LookAtRHToRef(this.webEye, this.webTarget, this.webUp, view);
+      else Matrix.LookAtLHToRef(this.webEye, this.webTarget, this.webUp, view);
     });
   }
 
@@ -28,19 +37,24 @@ export class EffectCameraShakeView {
   update(deltaSeconds: number): void {
     this.pose = undefined;
     const base = this.camera.getViewMatrix(true);
-    const inverse = Matrix.Invert(base).m;
-    const native = (value: Vector3): EffectVec3 => [-value.x, value.y, value.z].map(Math.fround) as EffectVec3;
-    const eye: EffectVec3 = [-inverse[12], inverse[13], inverse[14]].map(Math.fround) as EffectVec3;
-    const target = this.camera instanceof TargetCamera ? native(this.camera.getTarget()) :
-      native(this.camera.getForwardRay().origin.add(this.camera.getForwardRay().direction));
-    const pose: EffectCameraPose = {eye, target,
-      right: [-inverse[0], inverse[1], inverse[2]].map(Math.fround) as EffectVec3,
-      up: [-inverse[4], inverse[5], inverse[6]].map(Math.fround) as EffectVec3};
-    const result = this.state.update(deltaSeconds, pose, this.random);
-    if (result !== pose) {
-      this.pose = result;
-      this.camera.getViewMatrix(true);
+    if (!this.state.active) return;
+    base.invertToRef(this.inverse);
+    const inverse = this.inverse.m;
+    const pose = this.basePose;
+    const target = this.camera instanceof TargetCamera ? this.camera.getTarget() :
+      this.camera.getForwardRay().origin.add(this.camera.getForwardRay().direction);
+    for (let axis = 0; axis < 3; axis++) {
+      const sign = axis === 0 ? -1 : 1;
+      pose.eye[axis] = Math.fround(sign * inverse[12 + axis]);
+      pose.right[axis] = Math.fround(sign * inverse[axis]);
+      pose.up[axis] = Math.fround(sign * inverse[4 + axis]);
     }
+    pose.target[0] = Math.fround(-target.x);
+    pose.target[1] = Math.fround(target.y);
+    pose.target[2] = Math.fround(target.z);
+    this.state.updateToRef(deltaSeconds, pose, this.random, this.shakenPose);
+    this.pose = this.shakenPose;
+    this.camera.getViewMatrix(true);
   }
 
   clear(): void {

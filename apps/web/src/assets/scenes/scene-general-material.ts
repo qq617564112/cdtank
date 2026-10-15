@@ -1,4 +1,4 @@
-import {AssetContainer, Constants, PBRMaterial, ShaderMaterial} from '@babylonjs/core';
+import {AssetContainer, Constants, PBRMaterial, ShaderMaterial, type BaseTexture} from '@babylonjs/core';
 import '@babylonjs/core/Shaders/ShadersInclude/instancesDeclaration';
 import '@babylonjs/core/Shaders/ShadersInclude/instancesVertex';
 import {
@@ -32,14 +32,15 @@ export class SceneGeneralMaterial {
   private readonly replacements: {mesh: AssetContainer['meshes'][number];
     original: PBRMaterial; material: ShaderMaterial}[] = [];
 
-  register(asset: AssetContainer, model: SceneGeneralMaterialModel = 'obj05431'): void {
+  /** A supplied texture retains its caller's sampler and ownership. */
+  register(asset: AssetContainer, model: SceneGeneralMaterialModel = 'obj05431', textureOverride?: BaseTexture): void {
     const meshName = SOURCE_MESHES[model];
     const mesh = asset.meshes.find(value => value.name === meshName);
-    if (!mesh || !(mesh.material instanceof PBRMaterial) || !mesh.material.albedoTexture) {
+    if (!mesh || !(mesh.material instanceof PBRMaterial) || (!textureOverride && !mesh.material.albedoTexture)) {
       throw new Error(`原 General ${model} 模型或纹理缺失`);
     }
     const original = mesh.material;
-    const texture = original.albedoTexture!;
+    const texture = textureOverride ?? original.albedoTexture!;
     const material = new ShaderMaterial(`source-pol/${model}/${meshName}`, asset.scene, {
       vertexSource: `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
 ${SCENE_SHADOW_VERTEX_DECLARATION}
@@ -75,8 +76,10 @@ ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
     }, {attributes: ['position', 'normal', 'uv', 'color'],
       uniforms: ['world', 'viewProjection', 'sceneShadowReceiver', ...SCENE_ENVIRONMENT_UNIFORMS],
       samplers: ['sourceTexture', 'sceneShadowTexture'], needAlphaBlending: false, needAlphaTesting: false});
-    texture.wrapU = texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE;
-    texture.updateSamplingMode(Constants.TEXTURE_LINEAR_LINEAR);
+    if (!textureOverride) {
+      texture.wrapU = texture.wrapV = Constants.TEXTURE_WRAP_ADDRESSMODE;
+      texture.updateSamplingMode(Constants.TEXTURE_LINEAR_LINEAR);
+    }
     material.setTexture('sourceTexture', texture);
     bindSceneEnvironmentIfPresent(material, asset.scene);
     bindSceneShadowMaterial(material, texture);

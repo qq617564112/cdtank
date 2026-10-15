@@ -1,4 +1,4 @@
-import {AbstractMesh, BaseTexture, Constants, PBRMaterial, Scene, ShaderMaterial, Vector3, Vector4} from '@babylonjs/core';
+import {AssetContainer, BaseTexture, Constants, PBRMaterial, Scene, ShaderMaterial, Vector3, Vector4} from '@babylonjs/core';
 import '@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobalDeclaration';
 import '@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexDeclaration';
 import '@babylonjs/core/Shaders/ShadersInclude/morphTargetsVertexGlobal';
@@ -9,6 +9,7 @@ import {
   SCENE_ENVIRONMENT_UNIFORMS, SCENE_ENVIRONMENT_VERTEX_DECLARATION,
 } from '../scene-environment';
 import type {SceneActorToonBinding} from './actor-toon';
+import type {SourceMv3Material} from '../../assets/tanks/mv3-model-extras';
 import {invalidateMaterialDrawBundles} from '../webgpu-draw-cache';
 import {bindSceneShadowMaterial, sceneShadowLight, SCENE_SHADOW_VERTEX_DECLARATION, SCENE_SHADOW_VERTEX_APPLY,
   SCENE_SHADOW_FRAGMENT_DECLARATION, SCENE_SHADOW_FRAGMENT_BEGIN,
@@ -176,28 +177,79 @@ export function setMv3ActorOpacity(material: ShaderMaterial, opacity: number): v
   material.alphaMode = transparent ? Constants.ALPHA_COMBINE : Constants.ALPHA_DISABLE;
 }
 
-/** Only source-tagged MV3 imports; POL/CVD and effect-specific materials keep their paths. */
-export function applyMv3Materials(scene: Scene, meshes: readonly AbstractMesh[],
-  textureOverride?: BaseTexture, texturesBySource?: ReadonlyMap<string, BaseTexture>,
-  actorToon?: SceneActorToonBinding): ShaderMaterial[] {
-  const replacements = new Map<PBRMaterial | ShaderMaterial, ShaderMaterial>();
-  for (const mesh of meshes) {
+type Mv3MaterialFactory = (properties: readonly number[], texture: BaseTexture | undefined,
+  opacity: number) => ShaderMaterial;
+
+/** Replaced source materials are released only when the container owns them. */
+function replaceMv3Materials(assets: AssetContainer, materialFor: Mv3MaterialFactory,
+  textureOverride?: BaseTexture, texturesBySource?: ReadonlyMap<string, BaseTexture>): ShaderMaterial[] {
+  const replacements = new Map<PBRMaterial | ShaderMaterial | SourceMv3Material, ShaderMaterial>();
+  for (const mesh of assets.meshes) {
     const old = mesh.material;
-    if (!(old instanceof PBRMaterial) && !(textureOverride && old instanceof ShaderMaterial)) continue;
     const source = (old instanceof PBRMaterial ? old.metadata?.gltf?.extras?.originalMV3 :
-      old.metadata?.originalMV3) as {properties?: number[]; textures?: string[]; opacity?: number} | undefined;
+      textureOverride && old instanceof ShaderMaterial ? old.metadata?.originalMV3 :
+        !old ? mesh._internalMetadata?.originalMV3Material : undefined) as SourceMv3Material | undefined;
     if (!source?.properties || source.properties.length !== 17) continue;
     const texture = textureOverride ?? texturesBySource?.get(source.textures?.[0] ?? '')
       ?? (old instanceof PBRMaterial ? old.albedoTexture : undefined);
     if (source.textures?.[0] && !texture) continue;
-    let material = replacements.get(old);
+    const sourceKey = old instanceof PBRMaterial || old instanceof ShaderMaterial ? old : source;
+    let material = replacements.get(sourceKey);
     if (!material) {
-      material = createMv3Material(scene, source.properties, texture ?? undefined, source.opacity, actorToon);
-      replacements.set(old, material);
+      material = materialFor(source.properties, texture ?? undefined, source.opacity ?? 1);
+      replacements.set(sourceKey, material);
     }
     mesh.material = material;
   }
-  // Replaced objects no longer render; source and actor textures are borrowed resources.
-  for (const old of replacements.keys()) old.dispose(false, false);
-  return [...replacements.values()];
+  for (const old of replacements.keys()) {
+    if (!(old instanceof PBRMaterial) && !(old instanceof ShaderMaterial)) continue;
+    const index = assets.materials.indexOf(old);
+    if (index < 0) continue;
+    assets.materials.splice(index, 1);
+    old.dispose(false, false);
+  }
+  return [...new Set(replacements.values())];
+}
+
+/** Only source-tagged MV3 imports; POL/CVD and effect-specific materials keep their paths. */
+export function applyMv3Materials(scene: Scene, assets: AssetContainer,
+  textureOverride?: BaseTexture, texturesBySource?: ReadonlyMap<string, BaseTexture>,
+  actorToon?: SceneActorToonBinding): ShaderMaterial[] {
+  const materials = replaceMv3Materials(assets,
+    (properties, texture, opacity) => createMv3Material(scene, properties, texture, opacity, actorToon),
+    textureOverride, texturesBySource);
+  assets.materials.push(...materials);
+  return materials;
+}
+
+interface SharedMv3Material {
+  readonly properties: readonly number[];
+  readonly texture: BaseTexture | undefined;
+  readonly opacity: number;
+  readonly material: ShaderMaterial;
+}
+
+/** One actor component owns matching materials across its action containers. */
+export class Mv3MaterialResources {
+  private readonly entries: SharedMv3Material[] = [];
+
+  constructor(private readonly scene: Scene, private readonly actorToon?: SceneActorToonBinding) {}
+
+  apply(assets: AssetContainer, textureOverride?: BaseTexture,
+    texturesBySource?: ReadonlyMap<string, BaseTexture>): ShaderMaterial[] {
+    return replaceMv3Materials(assets, (properties, texture, opacity) => {
+      for (const entry of this.entries) {
+        if (entry.texture === texture && entry.opacity === opacity
+          && entry.properties.every((value, index) => value === properties[index])) return entry.material;
+      }
+      const material = createMv3Material(this.scene, properties, texture, opacity, this.actorToon);
+      this.entries.push({properties, texture, opacity, material});
+      return material;
+    }, textureOverride, texturesBySource);
+  }
+
+  dispose(): void {
+    for (const entry of this.entries) entry.material.dispose(false, false);
+    this.entries.length = 0;
+  }
 }

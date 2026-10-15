@@ -75,7 +75,13 @@ try{
     if(path==='/__tank.html'){res.setHeader('Content-Type','text/html');res.end('<html><body style="margin:0"><canvas></canvas><script type="module" src="/__tank.js"></script></body></html>');return;}
     if(path==='/__tank.js'){res.setHeader('Content-Type','text/javascript');res.end(await s.transformRequest('/__tank-module.js').then(r=>r.code));return;}
     if(path==='/content/index.json'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify(contentIndex));return;}
-    if(path.startsWith('/content/')){res.setHeader('Content-Type','application/json');res.end(await readFile(workspace+'/apps/shared/content/definitions/'+path.slice(9)));return;}
+    if(path.startsWith('/content/')){
+     const {readContentAsset}=await s.ssrLoadModule('/apps/web/content-assets.ts');
+     const asset=readContentAsset(workspace+'/apps/shared/content/definitions',path.slice(9));
+     if(!asset){next();return;}
+     res.setHeader('Content-Type',asset.path.endsWith('.bin')?'application/octet-stream':'application/json');
+     res.end(asset.source);return;
+    }
     if(path.startsWith('/__source/')){res.setHeader('Content-Type','image/png');res.end(await readFile(workspace+'/art/original/tank-textures/role/'+role+'/'+path.slice(10)));return;}
     if(path.startsWith('/__api/')){res.setHeader('Content-Type','image/png');res.end(await readFile(runtime+'/'+path.slice(7)));return;}
    }catch(e){res.statusCode=500;res.end(String(e));return;}next();

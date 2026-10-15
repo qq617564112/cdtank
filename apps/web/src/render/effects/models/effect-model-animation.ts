@@ -1,13 +1,13 @@
 import {EffectNativeMatrix} from '../common/effect-native-space';
-import {EFFECT_IDENTITY} from '../common/effect-render-transform';
-import {animationMatrix, sampleAnimationVertices} from '../../../../../shared/movement/animation-sampling';
+import {ANIMATION_IDENTITY, AnimationTransformSampler, sampleAnimationVertices,
+  type AnimationTrack} from '../../../../../shared/movement/animation-sampling';
 
-export interface EffectModelTrack {mode: number; keys: number[][];}
+export type EffectModelTrack = AnimationTrack;
 export interface EffectModelAnimationNode {
-  position: EffectModelTrack;
-  rotation: EffectModelTrack;
-  scale: EffectModelTrack;
-  value: number;
+  readonly position: EffectModelTrack;
+  readonly rotation: EffectModelTrack;
+  readonly scale: EffectModelTrack;
+  readonly value: number;
 }
 
 /** gbGfxManager::GetDeltaTime preserves f64 delta below .5, otherwise returns .1. */
@@ -20,8 +20,16 @@ export class EffectModelAnimation {
   time = 0;
   loops = 0;
   rate = 1;
-  matrix: EffectNativeMatrix = [...EFFECT_IDENTITY];
-  constructor(readonly node: EffectModelAnimationNode, readonly duration: number) {}
+  readonly matrix: EffectNativeMatrix;
+  private readonly sampledMatrix?: number[];
+  private readonly sampler: AnimationTransformSampler;
+  private sampledTime?: number;
+  constructor(readonly node: EffectModelAnimationNode, readonly duration: number,
+    sampler?: AnimationTransformSampler) {
+    this.sampler = sampler ?? new AnimationTransformSampler(node);
+    this.sampledMatrix = sampler ? [...ANIMATION_IDENTITY] : undefined;
+    this.matrix = this.sampledMatrix ?? this.sampler.matrix;
+  }
 
   setTime(time: number): void {this.time = Math.fround(time); this.loops = 0;}
   setRate(rate: number): void {this.rate = Math.fround(rate);}
@@ -32,7 +40,13 @@ export class EffectModelAnimation {
       while (this.time > this.duration) {this.time -= this.duration; ++this.loops;}
     }
     const time = Math.fround(this.time);
-    this.matrix = animationMatrix(this.node, time) as EffectNativeMatrix;
+    if (this.sampledTime === time) return;
+    const sampled = this.sampler.sample(time);
+    // Another instance may sample this source at a different time before draw.
+    if (this.sampledMatrix) {
+      for (let index = 0; index < 16; index++) this.sampledMatrix[index] = sampled[index];
+    }
+    this.sampledTime = time;
   }
 }
 

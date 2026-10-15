@@ -1,3 +1,9 @@
+export interface SceneBreachSnapshot {
+  fading: boolean;
+  hidden: boolean;
+  alpha: number;
+}
+
 /** Breach playback followed by the original fade rate, independent of HP rules. */
 export class SceneBreachState {
   private fading = false;
@@ -33,7 +39,13 @@ export class SceneBreachState {
     this.playbackRemaining = 0;
   }
 
-  snapshot(): {fading: boolean; hidden: boolean; alpha: number} {
+  snapshot(): SceneBreachSnapshot {
     return {fading: this.fading, hidden: this.hidden, alpha: this.alpha};
+  }
+
+  snapshotToRef(result: SceneBreachSnapshot): void {
+    result.fading = this.fading;
+    result.hidden = this.hidden;
+    result.alpha = this.alpha;
   }
 }

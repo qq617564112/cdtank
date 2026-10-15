@@ -5,14 +5,15 @@ import {EffectAttachMaterialCache} from './effect-attach-material-sol';
 import {effectModelAmbient, EffectModelGraphicsState} from './effect-model-material';
 import {EffectModelMesh} from './effect-model-mesh';
 import {EffectModelBackend} from './effect-model-node';
-import {EFFECT_IDENTITY, multiplyEffectMatrices} from '../common/effect-render-transform';
+import {EFFECT_IDENTITY, multiplyEffectMatricesToRef} from '../common/effect-render-transform';
 import {setSceneModelPriority} from '../../scene-model-order';
-import {EffectModelVertices} from './effect-model-vertices';
+import {EffectModelVertices, type EffectModelVertexData} from './effect-model-vertices';
+import {AnimationTransformSampler} from '../../../../../shared/movement/animation-sampling';
 
 interface ModelPart {kind: number; properties: number[]; asset: string | null; indices: number[];}
 interface ModelNode {
-  fvf: number; parent?: number | null; vertices?: number[][]; colors?: number[][];
-  animation?: EffectModelAnimationNode; duration?: number; frames?: number[][][]; times?: number[];
+  fvf: number; parent?: number | null; vertexData?: EffectModelVertexData;
+  animation?: EffectModelAnimationNode; duration?: number; times?: number[];
   parts: ModelPart[];
 }
 export interface EffectModelResource {reference: string; resolution: string; nodes: ModelNode[];}
@@ -21,41 +22,67 @@ export interface EffectModelLibrary {
   graphics: EffectModelGraphicsState;
   scripts: {name: string; states: {name: string; value: string}[]}[];
 }
-interface PartDraw {node: number; part: ModelPart; material?: EffectAttachMaterialCache; script?: string; renderer?: EffectModelMesh;}
+interface PartDraw {node: number; part: ModelPart; ambient: number[]; material?: EffectAttachMaterialCache; script?: string; renderer?: EffectModelMesh;}
+
+const transformSamplers = new WeakMap<EffectModelAnimationNode, AnimationTransformSampler>();
 
 /** Type5 source geometry and gbGeomNode animation behind the production tree. */
 export class EffectModelRenderer implements EffectModelBackend {
   private readonly animations: (EffectModelAnimation | undefined)[];
   private readonly draws: PartDraw[];
   private readonly vertices: (EffectModelVertices | undefined)[] = [];
+  private readonly matrices: number[][];
+  private readonly graphics: EffectModelGraphicsState;
+  private readonly renderedMeshes: Mesh[] = [];
   constructor(private readonly scene: Scene, private readonly resource: EffectModelResource,
     private readonly library: EffectModelLibrary, private readonly textures: ReadonlyMap<string, Texture>,
     private readonly delta: () => number, private readonly sourceNode: number, private readonly name: string) {
     if (resource.resolution !== 'published') throw new Error(`Missing original model ${resource.reference}`);
-    this.animations = resource.nodes.map(node => node.animation ? new EffectModelAnimation(node.animation, node.duration!) : undefined);
-    this.draws = resource.nodes.flatMap((node, index) => node.parts.map(part => ({node: index, part})));
+    this.animations = resource.nodes.map(node => {
+      if (!node.animation) return undefined;
+      let sampler = transformSamplers.get(node.animation);
+      if (!sampler) {
+        sampler = new AnimationTransformSampler(node.animation);
+        transformSamplers.set(node.animation, sampler);
+      }
+      return new EffectModelAnimation(node.animation, node.duration!, sampler);
+    });
+    this.matrices = resource.nodes.map(() => new Array<number>(16).fill(0));
+    this.graphics = {ambient: [0, 0, 0], emissive: library.graphics.emissive};
+    this.draws = resource.nodes.flatMap((node, index) => node.parts.map(part => ({node: index, part, ambient: [0, 0, 0, 0]})));
     for (const draw of this.draws) if (!draw.part.asset) throw new Error(`Missing original model texture ${resource.reference}`);
   }
-  setTime(time: number): void {this.animations.forEach(animation => animation?.setTime(time));}
-  setRate(rate: number): void {this.animations.forEach(animation => animation?.setRate(rate));}
-  update(): void {this.animations.forEach(animation => animation?.update(this.delta()));}
+  setTime(time: number): void {
+    for (const animation of this.animations) animation?.setTime(time);
+  }
+  setRate(rate: number): void {
+    for (const animation of this.animations) animation?.setRate(rate);
+  }
+  update(): void {
+    for (const animation of this.animations) animation?.update(this.delta());
+  }
 
   draw(state: EffectModelDraw | undefined): void {
-    if (!state) {this.draws.forEach(draw => draw.renderer?.mesh.setEnabled(false)); return;}
-    const matrices = this.resource.nodes.map(() => [...EFFECT_IDENTITY]);
-    this.resource.nodes.forEach((node, index) => {
+    if (!state) {
+      for (const draw of this.draws) draw.renderer?.mesh.setEnabled(false);
+      return;
+    }
+    const matrices = this.matrices;
+    for (let index = 0; index < this.resource.nodes.length; index++) {
+      const node = this.resource.nodes[index];
       const local = this.animations[index]?.matrix ?? EFFECT_IDENTITY;
-      matrices[index] = multiplyEffectMatrices(node.parent == null ? state.matrix : matrices[node.parent], local);
-    });
-    const graphics: EffectModelGraphicsState = {
-      ambient: this.scene.ambientColor.equalsFloats(0, 0, 0)
-        ? this.library.graphics.ambient : this.scene.ambientColor.asArray(),
-      emissive: this.library.graphics.emissive,
-    };
-    for (const draw of this.draws) {
+      multiplyEffectMatricesToRef(node.parent == null ? state.matrix : matrices[node.parent], local, matrices[index]);
+    }
+    const graphics = this.graphics;
+    const ambient = graphics.ambient as number[];
+    const color = this.scene.ambientColor;
+    for (let axis = 0; axis < 3; axis++) ambient[axis] = color.equalsFloats(0, 0, 0)
+      ? this.library.graphics.ambient[axis] : axis === 0 ? color.r : axis === 1 ? color.g : color.b;
+    for (let index = 0; index < this.draws.length; index++) {
+      const draw = this.draws[index];
       const node = this.resource.nodes[draw.node];
       const vertices = this.vertices[draw.node] ??=
-        new EffectModelVertices(this.scene, node, !!node.animation);
+        new EffectModelVertices(this.scene, node.vertexData!, !!node.animation);
       vertices.setTime(this.animations[draw.node]?.time ?? 0);
       const script = (draw.material ??= new EffectAttachMaterialCache()).select(node.fvf, draw.part.kind, state.blend).script;
       if (draw.script !== script) {
@@ -77,16 +104,18 @@ export class EffectModelRenderer implements EffectModelBackend {
         }, vertices, draw.part.indices);
         draw.renderer.mesh.metadata = {originalEffect: this.name, sourceNode: this.sourceNode,
           sourceModel: this.resource.reference, sourceModelNode: draw.node};
+        this.renderedMeshes[index] = draw.renderer.mesh;
         draw.script = script;
       }
       setSceneModelPriority(draw.renderer!.mesh, state.priority);
       draw.renderer!.mesh.setEnabled(true);
-      draw.renderer!.update(matrices[draw.node], effectModelAmbient(draw.part.properties, state.alpha, graphics));
+      draw.renderer!.update(matrices[draw.node], effectModelAmbient(draw.part.properties, state.alpha, graphics, draw.ambient));
     }
   }
-  get meshes(): Mesh[] {return this.draws.flatMap(draw => draw.renderer ? [draw.renderer.mesh] : []);}
+  get meshes(): Mesh[] {return this.renderedMeshes;}
   dispose(): void {
     this.draws.forEach(draw => draw.renderer?.dispose());
     this.vertices.forEach(vertices => vertices?.dispose());
+    this.renderedMeshes.length = 0;
   }
 }
