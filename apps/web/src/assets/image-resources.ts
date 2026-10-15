@@ -11,6 +11,7 @@ export const bundledImages = import.meta.glob<string>(
 export const bundledImageUrls = Object.values(bundledImages);
 
 const decodedImages = new Map<string, Promise<HTMLImageElement>>();
+const imageDecodes = new Map<string, AbortController>();
 const readyImages = new Map<string, HTMLImageElement>();
 const croppedImages = new Map<SpriteRegion, Promise<HTMLImageElement>>();
 const needsFreshResponse = new Set<string>();
@@ -56,7 +57,7 @@ export async function decodeImage(url: string, signal?: AbortSignal): Promise<HT
   const image = new Image();
   image.src = imageResourceUrl(url);
   const loading = withResourceTimeout(image.decode(), url).then(() => image).catch(error => {
-    croppedImages.delete(region);
+    if (croppedImages.get(region) === loading) croppedImages.delete(region);
     throw error;
   });
   croppedImages.set(region, loading);
@@ -68,10 +69,13 @@ async function decodePublishedImage(url: string, signal?: AbortSignal): Promise<
   signal?.throwIfAborted();
   const key = imageResourceKey(url);
   const existing = decodedImages.get(key);
-  if (existing) return existing;
+  if (existing && !imageDecodes.get(key)?.signal.aborted) return existing;
   const fresh = needsFreshResponse.has(key);
   const image = new Image();
   const controller = new AbortController();
+  imageDecodes.set(key, controller);
+  const clearSource = () => image.removeAttribute('src');
+  controller.signal.addEventListener('abort', clearSource, {once: true});
   let abort: (() => void) | undefined;
   const loading = new Promise<HTMLImageElement>((resolve, reject) => {
     abort = () => {controller.abort(signal?.reason); image.removeAttribute('src'); reject(controller.signal.reason);};
@@ -99,22 +103,25 @@ async function decodePublishedImage(url: string, signal?: AbortSignal): Promise<
           controller.signal.throwIfAborted();
           image.src = resource.url;
           await image.decode();
+          controller.signal.throwIfAborted();
           return image;
         });
     void withResourceTimeout(ready, url).then(resolve, reject);
   }).then(image => {
+    controller.signal.throwIfAborted();
     rememberDecodedAtlas(url, image);
     readyImages.set(key, image);
-    readyImages.set(imageResourceUrl(url), image);
     return image;
   }).catch(error => {
     if (decodedImages.get(key) === loading) decodedImages.delete(key);
     image.removeAttribute('src');
-    if (signal?.aborted) throw error;
+    if (controller.signal.aborted) throw error;
     needsFreshResponse.add(key);
     throw new Error(`图片解码失败：${url}`, {cause: error});
   }).finally(() => {
+    controller.signal.removeEventListener('abort', clearSource);
     controller.abort();
+    if (imageDecodes.get(key) === controller) imageDecodes.delete(key);
     if (abort) signal?.removeEventListener('abort', abort);
   });
   decodedImages.set(key, loading);
@@ -124,12 +131,17 @@ async function decodePublishedImage(url: string, signal?: AbortSignal): Promise<
 /** A downloaded replacement must also replace the image retained in memory. */
 export function forgetDecodedImage(url: string): void {
   const key = imageResourceKey(url);
+  imageDecodes.get(key)?.abort();
+  imageDecodes.delete(key);
   decodedImages.delete(key);
-  readyImages.delete(imageResourceUrl(publishedImageUrl(url)));
+  readyImages.get(key)?.removeAttribute('src');
   readyImages.delete(key);
   needsFreshResponse.delete(key);
   forgetDecodedAtlas(url);
   for (const region of croppedImages.keys()) {
-    if (imageResourceKey(region.atlas) === key) croppedImages.delete(region);
+    if (imageResourceKey(region.atlas) !== key) continue;
+    const cropped = croppedImages.get(region)!;
+    void cropped.then(image => image.removeAttribute('src'), () => {});
+    croppedImages.delete(region);
   }
 }

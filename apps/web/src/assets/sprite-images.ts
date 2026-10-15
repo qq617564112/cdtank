@@ -22,15 +22,23 @@ export interface SpriteManifest {
   atlases: SpriteAtlas[];
   images: Record<string, SpriteRegion | StandaloneImage>;
   aliases: Record<string, string>;
+  scopes: Record<UiSpriteScope, {
+    images: Record<string, SpriteRegion | StandaloneImage>;
+    preload: string[];
+  }>;
 }
 
+export type UiSpriteScope = 'lobby' | 'mobile-battle' | 'desktop-battle';
+
 let manifest: SpriteManifest | undefined;
+let scope: UiSpriteScope = 'lobby';
 const bundledAliases = new Map<string, string>();
 const atlases = new Map<string, SpriteAtlas>();
 
 /** Match both public asset paths and Vite's published URLs for bundled artwork. */
-export function prepareSpriteImages(value: SpriteManifest | undefined, bundled: Record<string, string>): void {
+export function prepareSpriteImages(value: SpriteManifest, bundled: Record<string, string>, selected: UiSpriteScope): void {
   manifest = value;
+  scope = selected;
   bundledAliases.clear();
   atlases.clear();
   for (const atlas of value?.atlases ?? []) atlases.set(atlas.url, atlas);
@@ -43,13 +51,18 @@ export function prepareSpriteImages(value: SpriteManifest | undefined, bundled: 
   }
 }
 
+/** Page owners release the previous package before selecting the next image mapping. */
+export function selectSpriteScope(selected: UiSpriteScope): void {scope = selected;}
+
 export function spriteImage(url: string): SpriteRegion | StandaloneImage | undefined {
   if (!manifest) return undefined;
   const address = new URL(url, location.href);
   const bundled = bundledAliases.get(address.href) ?? bundledAliases.get(address.pathname);
   if (!bundled && address.origin !== location.origin) return undefined;
   const path = bundled ?? decodeURIComponent(address.pathname);
-  return manifest.images[manifest.aliases[path] ?? path];
+  const asset = manifest.aliases[path] ?? path;
+  // Rich chat can request a source image outside the active package; it loads on demand.
+  return manifest.scopes[scope].images[asset] ?? manifest.images[asset];
 }
 
 export function spriteRegion(url: string): SpriteRegion | undefined {

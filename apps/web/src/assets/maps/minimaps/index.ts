@@ -1,3 +1,6 @@
+import {activeBattleQuality} from '../../battle-artwork';
+import {isMobileDevice} from '../../../platform/device';
+
 export const mapMinimaps: Readonly<Record<number, string>> = {
   1: '/assets/minimaps/backgrounds/0001.webp',
   2: '/assets/minimaps/backgrounds/0002.webp',
@@ -26,3 +29,10 @@ export const mapMinimaps: Readonly<Record<number, string>> = {
   25: '/assets/minimaps/backgrounds/0025.webp',
   1001: '/assets/minimaps/backgrounds/1001.webp',
 };
+
+/** Mobile and nostalgic battles share the smaller authored background. */
+export function battleMinimapUrl(mapId: number): string | undefined {
+  const url = mapMinimaps[mapId];
+  return isMobileDevice() || activeBattleQuality() === 'original'
+    ? url?.replace('/backgrounds/', '/backgrounds/original/') : url;
+}

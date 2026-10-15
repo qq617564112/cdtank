@@ -4,6 +4,7 @@ import {decodeImage} from '../../assets/image-resources';
 const normalCursorUrl = '/local-images/assets/ui/normal-cursor.png';
 const inputCursorUrl = '/Data/ui/imagesets/InputCursor.png';
 const pageIconUrl = new URL('../../assets/ui/client-icon.ico', import.meta.url).href;
+export const SOURCE_PAGE_IMAGES = [normalCursorUrl, inputCursorUrl, pageIconUrl] as const;
 
 /** Attach page artwork only after its images are ready in the shared cache. */
 export async function prepareSourcePageImages(signal: AbortSignal): Promise<void> {

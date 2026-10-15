@@ -5,8 +5,8 @@ import {petThumbnails} from '../../assets/pets/thumbnails';
 import {tankThumbnails} from '../../assets/tanks/thumbnails';
 import {tankIconMarks} from '../../assets/tanks/icon-marks';
 
-/** Resolve source regions and their HD pet or tank artwork. */
-export function sourceUiImage(ui: HomeSourceUi, reference?: string) {
+/** Resolve source regions without cropping or encoding atlas pixels. */
+export function sourceUiAsset(ui: HomeSourceUi, reference?: string) {
   const match = /^set:(\S+) image:(.+)$/.exec(reference ?? '');
   const sets = ui.imagesets.filter(set => set.attributes.Name === match?.[1]);
   const set = sets.find(set => set.path.includes('imagesets_dds/')) ?? sets[0];
@@ -18,7 +18,15 @@ export function sourceUiImage(ui: HomeSourceUi, reference?: string) {
   const tankMark = tankThumbnail && tankId ? tankIconMarks[tankId] : undefined;
   const asset = thumbnail ? thumbnail.replace(/^\//, '')
     : set?.images.find(image => image.Name === match?.[2])?.asset;
-  const style: CSSProperties = asset ? imageBackgroundStyle(`/${asset}`) : {};
-  if (thumbnail) {style.backgroundSize = '100% 100%'; style.backgroundRepeat = 'no-repeat';}
-  return {asset, tankThumbnail: Boolean(tankThumbnail), petThumbnail: Boolean(petThumbnail), tankMark, style};
+  return {asset, tankThumbnail: Boolean(tankThumbnail), petThumbnail: Boolean(petThumbnail), tankMark};
+}
+
+/** CSS backgrounds require a complete image URL for the resolved region. */
+export function sourceUiImage(ui: HomeSourceUi, reference?: string) {
+  const image = sourceUiAsset(ui, reference);
+  const style: CSSProperties = image.asset ? imageBackgroundStyle(`/${image.asset}`) : {};
+  if (image.tankThumbnail || image.petThumbnail) {
+    style.backgroundSize = '100% 100%'; style.backgroundRepeat = 'no-repeat';
+  }
+  return {...image, style};
 }

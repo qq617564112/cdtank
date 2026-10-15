@@ -8,6 +8,7 @@
     "build": "npm run build:web",
     "assets:install": "node scripts/install-assets.mjs",
     "assets:compressed": "python3 scripts/generate-compressed-assets.py",
+    "assets:compressed-mobile": "python3 scripts/generate-compressed-assets.py --mobile",
     "assets:sprites": "python3 scripts/generate-sprite-assets.py",
     "assets:battle-artwork": "python3 scripts/generate-battle-artwork.py",
     "assets:publish": "python3 scripts/organize-public-assets.py",

@@ -1,5 +1,6 @@
 import type {CSSProperties} from 'react';
-import {imageResourceUrl} from './image-cache';
+import {imageResourceKey, imageResourceUrl} from './image-cache';
+import {spriteImage} from './sprite-images';
 
 /** Backgrounds retain single-image sizing, tiling and crop behavior. */
 export function imageBackgroundStyle(url: string): CSSProperties {
@@ -13,7 +14,7 @@ export function backgroundStyle(style?: CSSProperties): CSSProperties {
 }
 
 /** Static CSS artwork uses the same prepared images as component backgrounds. */
-export function bindImageBackgrounds(): void {
+export function bindImageBackgrounds(retained?: ReadonlySet<string>): void {
   const backgrounds: Record<string, string> = {
     'login-background': '/ui/login/background-4k.png',
     'scroll-thumb-middle': '/ui/home/scroll-thumb-middle.png',
@@ -22,6 +23,10 @@ export function bindImageBackgrounds(): void {
     'room-warm-footer': '/ui/room-create/panels.svg#warm-footer',
   };
   for (const [name, url] of Object.entries(backgrounds)) {
+    if (!spriteImage(url) || retained && !retained.has(imageResourceKey(url))) {
+      document.documentElement.style.removeProperty(`--image-${name}`);
+      continue;
+    }
     document.documentElement.style.setProperty(`--image-${name}`, `url("${imageResourceUrl(url)}")`);
   }
 }

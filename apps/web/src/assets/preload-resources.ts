@@ -2,6 +2,7 @@ import {cacheImageResource, imageResourceKey, prepareImageCache, type ImageAsset
 import {bundledImageUrls} from './image-resources';
 import {loadStaticResourceBlob, prepareStaticResourceCache, type StaticResourceAsset} from './static-resource-cache';
 import {withResourceTimeout} from './static-resources';
+import {isMobileDevice} from '../platform/device';
 
 interface ResourceManifest {images: ImageAsset[]; resources: StaticResourceAsset[];}
 
@@ -10,6 +11,7 @@ export interface ResourceLoadingProgress {completed: number; total: number;}
 /** Only the confirmed resource-pack action downloads every published game asset. */
 export async function preloadGameResources(onProgress: (progress: ResourceLoadingProgress) => void,
   signal: AbortSignal): Promise<void> {
+  if (isMobileDevice()) throw new Error('移动端按场景加载资源。');
   const manifest = await withResourceTimeout((async () => {
     const response = await fetch('/manifests/image-assets.json', {cache: 'no-cache', signal});
     if (!response.ok) throw new Error(`资源目录加载失败（HTTP ${response.status}）`);

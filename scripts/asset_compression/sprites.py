@@ -12,6 +12,7 @@ from PIL import Image
 
 from .encoding import WebpEncoder
 from .public_layout import organize_public, public_path, prune_empty_directories
+from .sprite_scopes import SCOPES, deferred_image, image_scopes
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -83,7 +84,8 @@ def collect(source, recipe, page_size):
     groups = defaultdict(list)
     standalone = []
     for item in recipe['images']:
-        if not item['category'].startswith('ui_') and item.get('ui_group') != '共享战斗状态图标':
+        if not item['category'].startswith('ui_') and not item['output_relative'].startswith('ui/') \
+            and item.get('ui_group') != '共享战斗状态图标':
             continue
         relative = item['output_relative']
         path = source / relative
@@ -156,8 +158,10 @@ def render_page(name, page, source, destination, encoder, work):
         images['/' + row['relative']] = {'atlas': url, 'x': x, 'y': y,
             'width': image.width, 'height': image.height}
     temporary = work / (name + '.png')
+    temporary.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(temporary)
     output = destination / name
+    output.parent.mkdir(parents=True, exist_ok=True)
     encoder.encode(temporary, output, 'atlas')
     encoder.verify(output, canvas, {}, exact=True)
     temporary.unlink()
@@ -166,11 +170,41 @@ def render_page(name, page, source, destination, encoder, work):
     return atlas, images
 
 
+def published_files(manifest):
+    files = {item['url'] for item in manifest.get('atlases', [])}
+    directories = [manifest.get('images', {}),
+        *(scope['images'] for scope in manifest.get('scopes', {}).values())]
+    files.update(item['url'] for images in directories for item in images.values() if 'url' in item)
+    return files
+
+
 def generate(source, output, recipe_path, page_size, cwebp, workers):
     recipe = json.loads(recipe_path.read_text())
-    groups, standalone = collect(source, recipe, page_size)
-    jobs = pack(groups, standalone, page_size)
-    images = {}
+    original_groups, original_standalone = collect(source, recipe, page_size)
+    rows = {row['relative']: row for group in original_groups.values() for row in group}
+    rows.update({row['relative']: row for row in original_standalone})
+    selected = image_scopes(rows, recipe, source)
+    font_assets = {glyph['asset'] for font in json.loads((source / 'ui-fonts.json').read_text())['fonts']
+        for glyph in font.get('glyphs', [])}
+    source_aliases = {item['source_relative']: item['output_relative'] for item in recipe['images']}
+    font_assets = {source_aliases.get(name, name) for name in font_assets}
+    jobs = []
+    standalone = {}
+    scoped_images = {scope: {} for scope in SCOPES}
+    for scope in SCOPES:
+        groups = defaultdict(list)
+        singles = []
+        for relative in sorted(selected[scope]):
+            row = rows[relative]
+            if row in original_standalone or deferred_image(relative):
+                singles.append(row)
+            else:
+                group = 'fonts' if relative in font_assets else 'portraits' \
+                    if relative.startswith('ui/battle/portraits/framed/') else 'ui'
+                groups[group].append(row)
+        scope_jobs = pack(groups, singles, page_size)
+        jobs.extend((scope + '/' + name, page) for name, page in scope_jobs)
+        standalone[scope] = singles
     atlases = []
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='.sprites-', dir=output) as directory:
@@ -179,21 +213,37 @@ def generate(source, output, recipe_path, page_size, cwebp, workers):
         staged.mkdir()
         encoder = WebpEncoder(cwebp, {'atlas': ['-lossless', '-q', '100', '-m', '6', '-exact']}, work)
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = [pool.submit(render_page, name, page, source, staged, encoder, work) for name, page in jobs]
+            futures = {pool.submit(render_page, name, page, source, staged, encoder, work): name.split('/')[0]
+                for name, page in jobs}
             for index, future in enumerate(as_completed(futures), 1):
                 atlas, regions = future.result()
+                atlas['scope'] = futures[future]
                 atlases.append(atlas)
-                images.update(regions)
+                scoped_images[futures[future]].update(regions)
                 print(f'Atlas {index}/{len(jobs)}: {atlas["url"]} ({atlas["images"]} images)', flush=True)
-        for row in standalone:
-            relative = 'standalone/' + row['relative']
-            target = staged / relative
+        for scope in SCOPES:
+            for row in standalone[scope]:
+                relative = 'standalone/' + scope + '/' + row['relative']
+                target = staged / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source / row['relative'], target)
+                entry = {'url': '/sprites/' + relative}
+                if row['size']:
+                    entry.update(zip(('width', 'height'), row['size']))
+                scoped_images[scope]['/' + row['relative']] = entry
+        # Installation icons retain the fixed paths referenced by the web app manifest.
+        images = {}
+        for row in original_standalone:
+            if not row['relative'].startswith('ui/app-icons/'):
+                continue
+            target = staged / 'standalone' / row['relative']
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source / row['relative'], target)
-            entry = {'url': '/sprites/' + relative}
-            if row['size']:
-                entry.update(zip(('width', 'height'), row['size']))
-            images['/' + row['relative']] = entry
+            images['/' + row['relative']] = {'url': '/sprites/standalone/' + row['relative'],
+                'width': row['size'][0], 'height': row['size'][1]}
+        for scope in SCOPES:
+            for name, entry in scoped_images[scope].items():
+                images.setdefault(name, entry)
         aliases = {'/' + row['source_relative']: '/' + row['output_relative']
             for row in recipe['images'] if '/' + row['output_relative'] in images
             and row['source_relative'] != row['output_relative']}
@@ -203,37 +253,45 @@ def generate(source, output, recipe_path, page_size, cwebp, workers):
                     aliases['/' + name] = '/' + row['replacement']
         for asset in [*images, *aliases]:
             aliases['/' + public_path('sprites/standalone/' + asset.lstrip('/'))] = aliases.get(asset, asset)
-        summary = {'images': len(images), 'packed_images': len(images) - len(standalone),
-            'atlas_pages': len(atlases), 'standalone_images': len(standalone),
+        scopes = {}
+        for scope in SCOPES:
+            scope_atlases = [atlas for atlas in atlases if atlas['scope'] == scope]
+            scope_images = dict(sorted(scoped_images[scope].items()))
+            preload = {entry.get('atlas', entry.get('url')) for name, entry in scope_images.items()
+                if not deferred_image(name.lstrip('/'))}
+            pixel_bytes = sum(atlas['width'] * atlas['height'] * 4 for atlas in scope_atlases)
+            pixel_bytes += sum(row['size'][0] * row['size'][1] * 4 for row in standalone[scope]
+                if row['size'] and not deferred_image(row['relative']))
+            scopes[scope] = {'images': scope_images, 'preload': sorted(preload), 'summary': {
+                'images': len(scope_images), 'atlas_pages': len(scope_atlases),
+                'atlas_bytes': sum(atlas['bytes'] for atlas in scope_atlases),
+                'standalone_bytes': sum(row['bytes'] for row in standalone[scope]),
+                'preload_rgba_bytes': pixel_bytes}}
+        summary = {'images': len(images), 'image_copies': sum(len(value) for value in scoped_images.values()),
+            'packed_images': sum(len(page.items) for _, page in jobs), 'atlas_pages': len(atlases),
+            'standalone_images': sum(len(value) for value in standalone.values()),
             'packed_source_bytes': sum(row['bytes'] for _, page in jobs for row, _ in page.items),
             'atlas_bytes': sum(atlas['bytes'] for atlas in atlases),
-            'standalone_bytes': sum(row['bytes'] for row in standalone), 'pixels_equal': True}
-        manifest = {'version': 1, 'page_size': page_size, 'padding': PADDING, 'extrusion': EXTRUSION,
+            'standalone_bytes': sum(row['bytes'] for values in standalone.values() for row in values),
+            'pixels_equal': True}
+        manifest = {'version': 2, 'page_size': page_size, 'padding': PADDING, 'extrusion': EXTRUSION,
             'encoder_version': encoder.version, 'atlases': sorted(atlases, key=lambda item: item['url']),
-            'images': dict(sorted(images.items())), 'aliases': dict(sorted(aliases.items())), 'summary': summary}
-        temporary_manifest = work / 'sprite-images.json'
+            'images': dict(sorted(images.items())), 'aliases': dict(sorted(aliases.items())),
+            'scopes': scopes, 'summary': summary}
         previous_path = output / 'manifests/sprite-images.json'
         previous_path.parent.mkdir(parents=True, exist_ok=True)
         previous = json.loads(previous_path.read_text()) if previous_path.exists() else {}
-        for asset, entry in previous.get('images', {}).items():
-            if not asset.startswith('/sprites/') and asset not in images and asset not in aliases and 'url' in entry \
-                and (output / entry['url'].lstrip('/')).is_file():
-                manifest['images'][asset] = entry
         for alias, asset in previous.get('aliases', {}).items():
-            if asset in manifest['images']:
+            if asset in images:
                 manifest['aliases'].setdefault(alias, asset)
-        temporary_manifest.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
         for path in sorted(staged.rglob('*')):
             if path.is_file():
                 target = output / 'sprites' / path.relative_to(staged)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 path.replace(target)
-        temporary_manifest.replace(previous_path)
-        previous_files = {item['url'] for item in previous.get('atlases', [])}
-        previous_files.update(item['url'] for item in previous.get('images', {}).values() if 'url' in item)
-        current_files = {item['url'] for item in atlases}
-        current_files.update(item['url'] for item in manifest['images'].values() if 'url' in item)
-        for url in previous_files - current_files:
+        previous_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+        current_files = {'/' + public_path(url.lstrip('/')) for url in published_files(manifest)}
+        for url in published_files(previous) - current_files:
             if url.startswith(('/sprites/', '/assets/ui/')):
                 (output / url.lstrip('/')).unlink(missing_ok=True)
     organize_public(output)
@@ -247,7 +305,8 @@ def generate(source, output, recipe_path, page_size, cwebp, workers):
         if published != entry.get('url') and Path(published).suffix in ('.png', '.webp', '.svg', '.ico'):
             (output / published.lstrip('/')).unlink(missing_ok=True)
     prune_empty_directories(output)
-    print(json.dumps(summary, ensure_ascii=False, indent=2), flush=True)
+    print(json.dumps({**summary, 'scopes': {name: value['summary'] for name, value in scopes.items()}},
+        ensure_ascii=False, indent=2), flush=True)
     return summary
 
 

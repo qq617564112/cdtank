@@ -9,6 +9,8 @@ import tempfile
 import time
 from urllib.parse import unquote
 
+from PIL import Image
+
 from .encoding import WebpEncoder
 from .package import glb_chunks, rewrite_model, rewrite_resource
 
@@ -26,7 +28,12 @@ def process_image(row, source, output, encoder):
     original = source / row['source_relative']
     destination = output / row['output_relative']
     destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.suffix.lower() in ('.svg', '.ico'):
+    keep_png = destination.suffix.lower() == '.png' and row['encoding_profile'] == 'keep-source'
+    if keep_png:
+        with Image.open(original) as image:
+            if image.format != 'PNG' or list(image.size) != row['source_size'] or list(image.size) != row['target_size']:
+                raise RuntimeError(f'PNG dimensions differ from the approved recipe: {row["source_relative"]}')
+    if destination.suffix.lower() in ('.svg', '.ico') or keep_png:
         shutil.copy2(original, destination)
         size = original.stat().st_size
         return {**row, 'source_bytes': size, 'baseline_bytes': size, 'output_bytes': size,
@@ -181,7 +188,7 @@ def generate(source, output, recipe_path, cwebp, workers):
         (output / row['texture']).unlink(missing_ok=True)
         (output / row['output_relative']).unlink(missing_ok=True)
     for row in images.values():
-        if row['source_relative'].endswith('.png'):
+        if row['source_relative'].endswith('.png') and row['source_relative'] != row['output_relative']:
             (output / row['source_relative']).unlink(missing_ok=True)
     for prefix in recipe['excluded_source_prefixes']:
         path = output / prefix
@@ -212,7 +219,7 @@ def generate_selected(source, output, recipe_path, cwebp, workers, selected):
         with ThreadPoolExecutor(max_workers=workers) as pool:
             results = list(pool.map(lambda row: process_image(row, source, output, encoder), rows))
     for row in rows:
-        if row['source_relative'].endswith('.png'):
+        if row['source_relative'].endswith('.png') and row['source_relative'] != row['output_relative']:
             (output / row['source_relative']).unlink(missing_ok=True)
     report = {'source': str(source), 'output': str(output), 'encoder_version': encoder.version,
         'image_files': len(results), 'source_image_bytes': sum(row['source_bytes'] for row in results),
@@ -227,18 +234,23 @@ def generate_selected(source, output, recipe_path, cwebp, workers, selected):
 def main():
     parser = argparse.ArgumentParser(description='Generate compressed assets directly from HD sources and the approved recipe.')
     parser.add_argument('--source', type=Path, default=REPOSITORY / 'art/hd')
-    parser.add_argument('--output', type=Path, default=REPOSITORY / 'art/compressed')
+    parser.add_argument('--output', type=Path)
+    parser.add_argument('--mobile', action='store_true', help='Generate mobile HD battle artwork at nostalgic texture dimensions')
     parser.add_argument('--recipe', type=Path, default=RECIPE)
     parser.add_argument('--image', action='append', help='Only process this recipe source or output path; repeat for multiple images')
     parser.add_argument('--cwebp', default='cwebp')
     parser.add_argument('--workers', type=int, default=6)
     args = parser.parse_args()
-    source, output = args.source.resolve(), args.output.resolve()
+    source = args.source.resolve()
+    output = (args.output or REPOSITORY / ('art/compressed-mobile' if args.mobile else 'art/compressed')).resolve()
     if output == source or source in output.parents or output in source.parents:
         parser.error('Source and output must be separate directories')
     if args.workers < 1:
         parser.error('--workers must be at least 1')
-    if args.image:
+    if args.mobile:
+        from .mobile import generate_mobile
+        generate_mobile(source, output, args.recipe.resolve(), args.cwebp, args.workers, args.image)
+    elif args.image:
         generate_selected(source, output, args.recipe.resolve(), args.cwebp, args.workers, args.image)
     else:
         generate(source, output, args.recipe.resolve(), args.cwebp, args.workers)

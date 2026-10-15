@@ -12,7 +12,7 @@
 | `art/hd/` | 高清源图与资源快照，包含最新图片、模型、音频与资源清单 |
 | `scripts/asset_compression/recipe.json` | 逐图源路径、尺寸依据、输出路径和编码方案 |
 | `art/compressed/` | 按配方生成的运行成品及报告 |
-| `apps/web/public/` | 发布目录：独立资源、UI 图集与两套战斗素材 |
+| `apps/web/public/` | 发布目录：独立资源、UI 图集及怀旧／HD 两套战斗素材 |
 | `apps/server/resources/` | 内容表、场景与预烘焙碰撞数据 |
 | `art/hd/manifest.json` | 模型贴图的原图、高清图路径及模型清单 |
 | `art/hd/tank-track-animations.json` | 坦克履带动画帧、帧间隔及颜色滤镜 |
@@ -32,10 +32,10 @@ npm run assets:battle-artwork
 | 输出 | 用途 |
 | --- | --- |
 | `assets/ui/atlases/`、`assets/ui/images/` | UI 图集与独立大图 |
-| `assets/textures/original/`、`assets/models/original/` | 原尺寸无损战斗图片与对应模型 |
+| `assets/textures/original/`、`assets/models/original/` | 原尺寸无损战斗图片与对应模型，移动端共用 |
 | `assets/textures/hd/`、`assets/models/hd/` | 使用压缩成品的战斗图片与对应模型 |
 | `manifests/sprite-images.json` | UI 图片区域与资源标识映射 |
-| `manifests/battle-artwork.json` | 两套战斗资源 URL、来源和共用素材 |
+| `manifests/battle-artwork.json` | 怀旧与 HD 两套战斗资源 URL、来源和共用素材 |
 
 其它独立贴图使用 `npm run assets:publish -- --image <compressed中的相对路径>` 发布。精灵图与战斗素材生成后自动归档；音频、字体、数据表和碰撞数据由资源安装或原客户端导出流程准备。`npm run assets:publish` 也可整理已有 public 文件，更新 JSON 和 GLB 外部引用，不重新编码图片。
 
@@ -52,9 +52,9 @@ Vite 扫描实际资源生成 `manifests/image-assets.json`；界面、Canvas �
 
 ## 原素材恢复与重新导出
 
-`npm run assets:original` 从 original 发布图片，再覆盖 HD 目录的现有图片，发布履带配置、清理无引用图片，移除已有 UI 图集与精灵图清单，并整理目录。`npm run assets:hd` 还会将高清材质安装到原始模型；这两个入口用于原来源单图恢复和素材维护，恢复后需生成当前 UI 与双画质战斗资源。
+`npm run assets:original` 从 original 发布图片，再覆盖 HD 目录的现有图片，发布履带配置、清理无引用图片，移除已有 UI 图集与精灵图清单，并整理目录。`npm run assets:hd` 还会将高清材质安装到原始模型；这两个入口用于原来源单图恢复和素材维护，恢复后需生成当前 UI 及怀旧／HD 两套战斗资源。
 
-`npm run assets:rebuild -- --reuse-verified` 重新导出模型、表和其它资源，再安装本地美术素材。需要原客户端及完整提取目录，步骤见[资源重建](recovery/reproducible-assets.md)。恢复或重建后，按当前发布流程重新生成压缩成品、UI 精灵图和战斗素材。
+`npm run assets:rebuild -- --reuse-verified` 重新导出模型、表和其它资源，再安装本地美术素材。需要原客户端及完整提取目录，步骤见[资源重建](recovery/reproducible-assets.md)。恢复或重建后，按当前发布流程重新生成压缩成品、UI 精灵图和怀旧／HD 两套战斗素材。
 
 ## 打包与部署
 
@@ -64,4 +64,4 @@ Vite 扫描实际资源生成 `manifests/image-assets.json`；界面、Canvas �
 
 解压程序包后执行 `node install.mjs`，自动下载同版本资产、安装依赖并启动。源码工作区执行 `npm run assets:install`，从两个附件安装 public 与服务端资源；本地附件分别通过 `--archive` 和 `--program` 指定，见[GitHub 发布与安装](github-publication.md)。
 
-包内保留 `manifests/ui.json`、`sprite-images.json`、`battle-artwork.json`、UI 图集、双画质资源、字体许可和现成碰撞数据。直接安装不重新生成素材；素材编辑需要另行保留完整 `art/` 源目录。
+包内保留 `manifests/ui.json`、`sprite-images.json`、`battle-artwork.json`、UI 图集、怀旧与 HD 两套战斗资源、字体许可和现成碰撞数据。直接安装不重新生成素材；素材编辑需要另行保留完整 `art/` 源目录。

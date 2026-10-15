@@ -18,15 +18,16 @@
 
 ## 发布与画质选择
 
-素材按运行资源相对路径存入 `art/hd/`，原版导出保存在 `art/original/`。从源图经 [recipe.json](../scripts/asset_compression/recipe.json) 一次缩放与编码到 `art/compressed/`，再发布 UI 图集和怀旧／HD 战斗资源；其它独立贴图、JSON 和模型按对应路径同步。
+素材按运行资源相对路径存入 `art/hd/`，原版导出保存在 `art/original/`。从源图经 [recipe.json](../scripts/asset_compression/recipe.json) 一次缩放与编码到 `art/compressed/` 与 `art/compressed-mobile/`，再发布 UI 图集和怀旧／HD 战斗资源；其它独立贴图、JSON 和模型按对应路径同步。
 
 ```bash
 npm run assets:compressed
+npm run assets:compressed-mobile
 npm run assets:sprites
 npm run assets:battle-artwork
 ```
 
-两套战斗素材通过 `battle-artwork.json` 选择。怀旧恢复原尺寸贴图，HD 使用压缩成品；UI、小地图和商城等预览保持当前素材。操作见[显示设置](display-settings.md)，尺寸与编码见[资产压缩](asset-compression.md)，目录及原素材重建入口见[运行美术资源](original-assets.md)。
+手机、平板和电脑通过 `battle-artwork.json` 选择怀旧或 HD。怀旧恢复原尺寸贴图，电脑 HD 使用 compressed，移动端 HD 使用 compressed-mobile，逐张尺寸与怀旧版一致；UI 使用既有素材，移动端小地图使用 512×512 底图，商城等预览保持 HD 美术并在移动端读取缩小成品。操作见[显示设置](display-settings.md)，尺寸与编码见[资产压缩](asset-compression.md)，目录及原素材重建入口见[运行美术资源](original-assets.md)。
 
 ## 限制
 

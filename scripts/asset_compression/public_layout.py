@@ -194,9 +194,10 @@ def organize_public(root):
         if path.name == 'battle-artwork.json':
             variants = document['variants']
             for asset, high in list(variants['hd'].items()):
-                native = variants['original'].get(asset, high)
-                variants['hd'][high] = high
-                variants['original'][high] = native
+                for quality, variant in variants.items():
+                    selected = variant.get(asset)
+                    if selected is not None:
+                        variant[high] = selected
         content = json.dumps(document, ensure_ascii=False, separators=(',', ':')) + '\n'
         if content != previous:
             path.write_text(content)

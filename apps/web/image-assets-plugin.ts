@@ -16,7 +16,8 @@ export function imageAssetsPlugin(publicDir: string, contentDir: string): Plugin
     const sprites = existsSync(spritePath)
       ? JSON.parse(readFileSync(spritePath, 'utf8')) as SpriteManifest : undefined;
     const replacedImages = new Set([...Object.keys(sprites?.images ?? {}), ...Object.keys(sprites?.aliases ?? {})]);
-    const publishedImages = new Set(Object.values(sprites?.images ?? {}).map(entry =>
+    const entries = [sprites?.images ?? {}, ...Object.values(sprites?.scopes ?? {}).map(scope => scope.images)];
+    const publishedImages = new Set(entries.flatMap(images => Object.values(images)).map(entry =>
       'atlas' in entry ? entry.atlas : entry.url));
     function visit(directory: string, prefix: string, imagesOnly = false): void {
       for (const entry of readdirSync(directory, {withFileTypes: true})) {

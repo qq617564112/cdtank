@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish original and HD battle textures without changing interface artwork."""
+"""Publish original, desktop HD and mobile HD battle textures with shared interface artwork."""
 
 from asset_compression.battle import main
 

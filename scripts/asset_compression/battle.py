@@ -44,13 +44,14 @@ def encode_original(payload, encoder):
     return encoded, size
 
 
-def publish_image(row, original, verified, compressed, staged, encoder):
+def publish_image(row, original, verified, compressed, mobile, staged, encoder):
     relative = row['output_relative']
     high = compressed / relative
     native = original_image(row['source_relative'], original, verified)
-    for quality in ('hd', 'original'):
+    for quality in ('hd', 'original', 'mobile-hd'):
         (staged / quality / relative).parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(high, staged / 'hd' / relative)
+    shutil.copy2(mobile / relative, staged / 'mobile-hd' / relative)
     low = staged / 'original' / relative
     if native:
         encoded, size = encode_original(native.read_bytes(), encoder)
@@ -61,8 +62,12 @@ def publish_image(row, original, verified, compressed, staged, encoder):
             size = list(image.size)
     with Image.open(high) as image:
         high_size = list(image.size)
+    with Image.open(mobile / relative) as image:
+        mobile_size = list(image.size)
+    if mobile_size != size or mobile_size != row['mobile_target_size']:
+        raise RuntimeError(f'Mobile texture dimensions differ from nostalgic artwork or recipe: {relative}')
     return {'asset': relative, 'source': str(native) if native else None,
-        'original_size': size, 'hd_size': high_size, 'shared': native is None}
+        'original_size': size, 'hd_size': high_size, 'mobile_hd_size': mobile_size, 'shared': native is None}
 
 
 def image_payload(document, binary, index, path):
@@ -74,12 +79,15 @@ def image_payload(document, binary, index, path):
     return binary[start:start + view['byteLength']]
 
 
-def publish_model(relative, original, compressed, staged, encoder):
+def publish_model(relative, original, compressed, mobile, staged, encoder):
     high = compressed / relative
     high_target = staged / 'hd' / relative
     low_target = staged / 'original' / relative
     high_target.parent.mkdir(parents=True, exist_ok=True)
     low_target.parent.mkdir(parents=True, exist_ok=True)
+    mobile_target = staged / 'mobile-hd' / relative
+    mobile_target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(mobile / relative, mobile_target)
     shutil.copy2(high, high_target)
     chunks = glb_chunks(high.read_bytes())
     document = json.loads(chunks[0][1])
@@ -115,7 +123,7 @@ def publish_model(relative, original, compressed, staged, encoder):
     return len(embedded)
 
 
-def generate(original, compressed, verified, output, recipe_path, cwebp, workers):
+def generate(original, compressed, mobile, verified, output, recipe_path, cwebp, workers):
     previous_path = output / 'manifests/battle-artwork.json'
     previous = json.loads(previous_path.read_text()) if previous_path.is_file() else {}
     recipe = json.loads(recipe_path.read_text())
@@ -123,7 +131,7 @@ def generate(original, compressed, verified, output, recipe_path, cwebp, workers
         if not row['category'].startswith('ui_') and row['category'] != 'minimap_keep']
     models = sorted(path.relative_to(compressed).as_posix() for path in compressed.rglob('*.glb')
         if path.relative_to(compressed).parts[0] not in ('lossy-trial', 'analysis', 'reports'))
-    variants = {'original': {}, 'hd': {}}
+    variants = {'original': {}, 'hd': {}, 'mobile-hd': {}}
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='.battle-artwork-', dir=output) as directory:
         work = Path(directory)
@@ -131,12 +139,12 @@ def generate(original, compressed, verified, output, recipe_path, cwebp, workers
         encoder = WebpEncoder(cwebp, {'baseline': ['-lossless', '-q', '75', '-m', '4', '-exact']}, work)
         rows = []
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = [pool.submit(publish_image, row, original, verified, compressed, staged, encoder) for row in images]
+            futures = [pool.submit(publish_image, row, original, verified, compressed, mobile, staged, encoder) for row in images]
             for index, future in enumerate(as_completed(futures), 1):
                 rows.append(future.result())
                 if index % 250 == 0 or index == len(futures):
                     print(f'Battle textures: {index}/{len(futures)}', flush=True)
-            futures = [pool.submit(publish_model, relative, original, compressed, staged, encoder) for relative in models]
+            futures = [pool.submit(publish_model, relative, original, compressed, mobile, staged, encoder) for relative in models]
             embedded = sum(future.result() for future in as_completed(futures))
         for quality in variants:
             for row in images:
@@ -152,7 +160,8 @@ def generate(original, compressed, verified, output, recipe_path, cwebp, workers
                     if 'uri' in image and not (path.parent / unquote(image['uri'])).is_file():
                         raise RuntimeError(f'Model texture missing: {quality}/{relative}: {image["uri"]}')
         summary = {'textures': len(images), 'original_textures': sum(not row['shared'] for row in rows),
-            'shared_textures': sum(row['shared'] for row in rows), 'models': len(models), 'embedded_original_images': embedded}
+            'shared_textures': sum(row['shared'] for row in rows), 'models': len(models),
+            'embedded_original_images': embedded, 'mobile_hd_textures': len(images)}
         manifest = {'version': 1, 'variants': variants, 'summary': summary,
             'textures': sorted(rows, key=lambda row: row['asset'])}
         temporary_manifest = work / 'battle-artwork.json'
@@ -173,9 +182,10 @@ def generate(original, compressed, verified, output, recipe_path, cwebp, workers
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Publish original and HD model/effect textures for battle settings.')
+    parser = argparse.ArgumentParser(description='Publish original, desktop HD and mobile HD battle models and textures.')
     parser.add_argument('--original', type=Path, default=REPOSITORY / 'art/original')
     parser.add_argument('--compressed', type=Path, default=REPOSITORY / 'art/compressed')
+    parser.add_argument('--compressed-mobile', type=Path, default=REPOSITORY / 'art/compressed-mobile')
     parser.add_argument('--verified', type=Path, default=REPOSITORY / 'recovery/output/verified/assets/data')
     parser.add_argument('--output', type=Path, default=REPOSITORY / os.environ.get('CDTANK_WEB_ASSETS', 'apps/web/public'))
     parser.add_argument('--recipe', type=Path, default=RECIPE)
@@ -185,8 +195,8 @@ def main():
     output = args.output.resolve()
     if args.workers < 1:
         parser.error('Workers must be positive.')
-    for source in (args.original.resolve(), args.compressed.resolve()):
+    for source in (args.original.resolve(), args.compressed.resolve(), args.compressed_mobile.resolve()):
         if output.is_relative_to(source) or source.is_relative_to(output):
             parser.error('Source and output directories must not overlap.')
-    generate(args.original.resolve(), args.compressed.resolve(), args.verified.resolve(), output,
+    generate(args.original.resolve(), args.compressed.resolve(), args.compressed_mobile.resolve(), args.verified.resolve(), output,
         args.recipe.resolve(), args.cwebp, args.workers)
