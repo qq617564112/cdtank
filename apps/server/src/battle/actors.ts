@@ -181,13 +181,13 @@ export function advanceActors<Player extends CombatActor>(room: {
           // fall instead of reading an already-grounded candidate.
           destination.y = start.position.y;
           pose = constrainTankPose(start, battleMovementPose({...player, ...destination, yaw, bodyYaw}),
-            tankObstacles(player.id, room.players.values()));
+            tankObstacles(player.id, room.players.values()), room.battlefield.navigation);
         }
-        const ground = room.battlefield.navigation.sample(pose.position.x, pose.position.z)?.height;
+        const ground = room.battlefield.navigation.groundHeightAt(pose.position.x, pose.position.z);
         const verticalState = {...(player.verticalState
-          ?? initialTankVerticalState(player.y, room.battlefield.navigation.sample(player.x, player.z)?.height))};
+          ?? initialTankVerticalState(player.y, room.battlefield.navigation.groundHeightAt(player.x, player.z)))};
         const vertical = advanceTankVertical(pose.position, room.battlefield.navigation, verticalState,
-          movementElapsed, ground === undefined ? 0 : Math.max(0, ground - start.position.y));
+          movementElapsed, ground === undefined ? 0 : Math.max(0, ground - start.position.y), ground);
         const committed = vertical.accepted ? pose : start;
         commitBattleMovement(player, {pose: committed, yaw: Math.atan2(committed.look.x, committed.look.z),
           bodyYaw: Math.atan2(committed.forward.x, committed.forward.z),

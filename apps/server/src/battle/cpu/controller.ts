@@ -24,7 +24,10 @@ import {hasFixedTurret, tankTurretYaw} from '../../../../shared/combat/tank-turr
 import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, treasureHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, roleDisguiseHotkey, turnDrinkHotkey, teamLifeHotkey, airstrikeHotkey, type TeamLifeContext} from './items';
 import {trapPlacementHotkey, trapSweepHotkey} from './traps';
 import {BOT_BEHAVIORS, randomBotDelay, type BotSkill} from './behavior';
-import {tankRouteClear, teammateAvoidancePoint, teammateInWay, teammateWaypointClear} from './teammate-avoidance';
+import {tankRouteClear, teammateAvoidancePoint, teammateEscapeClear, teammateInWay, teammateWaypointClear} from './teammate-avoidance';
+import {TacticalPlanner, type TacticalIntent} from './tactical';
+import {BotBreachPlanner} from './breaching';
+import {BotRecovery} from './recovery';
 
 export interface BotActor extends Point {
   id: string;
@@ -36,8 +39,10 @@ export interface BotActor extends Point {
   alive: boolean;
   vip: boolean;
   tank: {id?: number; speed: number; turn: number};
-  cpu?: {readonly objectiveTargetId: string | undefined; readonly teammateWaypoint?: Point};
-  autopilot?: {readonly objectiveTargetId: string | undefined; readonly teammateWaypoint?: Point};
+  cpu?: {readonly objectiveTargetId: string | undefined; readonly teammateWaypoint?: Point;
+    readonly teammateNeedsRoom?: boolean};
+  autopilot?: {readonly objectiveTargetId: string | undefined; readonly teammateWaypoint?: Point;
+    readonly teammateNeedsRoom?: boolean};
   hp?: number;
   maxHp?: number;
   fireReady?: boolean;
@@ -53,6 +58,7 @@ export interface BotActor extends Point {
   roleDisguise?: RoleDisguiseState;
   inventory?: readonly BattleItemRecord[];
   combat?: {status?: number; currentAmmoTableId?: number; selectedAmmoSlot?: number; bulletCount?: number;
+    getFlag?(index: number): number;
     roleFloatFields?: ReadonlyMap<number, number>; record?: {arrays: Map<number, Int32Array>}};
 }
 
@@ -78,9 +84,13 @@ export class BotController {
   private nextCombatMove = 0;
   private avoidancePoint?: Point;
   private nextTeammateMove = 0;
+  private steeringMove: -1 | 1 = 1;
   private readonly failedApproaches = new Map<string, number>();
   private readonly unavailableUntil = new Map<string, number>();
   private reaction?: {targetId: string; readyAt: number; lastSeenAt: number; triggerAt?: number};
+  private readonly tactical = new TacticalPlanner();
+  private readonly breaching = new BotBreachPlanner();
+  private readonly recovery = new BotRecovery();
 
   constructor(readonly skill: BotSkill = 'MEDIUM') {}
 
@@ -125,7 +135,12 @@ export class BotController {
 
   /** Reserve the position being approached without changing world movement. */
   get teammateWaypoint(): Point | undefined {
-    return this.avoidancePoint ?? this.escapePoint ?? this.combatWaypoint ?? this.goal;
+    return this.avoidancePoint ?? this.breaching.waypoint ?? this.escapePoint ?? this.combatWaypoint ?? this.goal;
+  }
+
+  /** Ask a priority owner to help when its teammate cannot clear the lane alone. */
+  get teammateNeedsRoom(): boolean {
+    return this.recovery.stalledSeconds >= 1.25;
   }
 
   input(actor: BotActor, actors: readonly BotActor[], objectives: readonly ObjectiveSnapshot[],
@@ -136,7 +151,10 @@ export class BotController {
       ? actor.movement.navigation.reachable(start, end) : field.move(start, end, 20);
     if (this.navigationRevision !== field.navigationRevision) {
       this.navigationRevision = field.navigationRevision;
-      // Pending searches consume the current NAV when resumed; keep their budget and deadline.
+      // A released gate can connect cells already closed by an older search.
+      this.planner = undefined;
+      this.failedApproaches.clear();
+      this.unavailableUntil.clear();
       let previous: Point = actor;
       if (this.path.some(point => {
         const reached = reach(previous, point);
@@ -173,6 +191,9 @@ export class BotController {
       this.escapePoint = undefined;
       this.combatWaypoint = undefined; this.nextCombatMove = 0;
       this.avoidancePoint = undefined; this.nextTeammateMove = 0;
+      this.steeringMove = 1;
+      this.breaching.reset();
+      this.recovery.reset();
       this.resetReaction();
       return input;
     }
@@ -182,12 +203,25 @@ export class BotController {
     const distance = (point: Point) => Math.hypot(point.x - actor.x, point.z - actor.z);
     const teammates = mode <= 3 ? actors.filter(other => other.alive
       && other.id !== actor.id && other.team === actor.team) : [];
+    this.recovery.observe(actor, now);
+    // Minimap contacts are global. Distance limits below apply to firing, not acquisition.
     const enemies = actors.filter(other => other.alive && other.id !== actor.id
       && (mode >= 4 || other.team !== actor.team)
       && !isHiddenFromOpponent(other, actor, mode));
-    enemies.sort((a, b) => (mode === 3 ? Number(b.vip) - Number(a.vip) : 0) || distance(a) - distance(b));
-    const claimed = new Set(actors.filter(other => other.id !== actor.id && other.alive
-      && other.team === actor.team).map(other => (other.cpu ?? other.autopilot)?.objectiveTargetId));
+    const assignments = new Map<string, number>();
+    for (const other of actors) {
+      if (other.id === actor.id || !other.alive || other.team !== actor.team) continue;
+      const id = (other.cpu ?? other.autopilot)?.objectiveTargetId;
+      if (id) assignments.set(id, (assignments.get(id) ?? 0) + 1);
+    }
+    const claimed = new Set(assignments.keys());
+    const nearestEnemy = Math.min(...enemies.map(distance));
+    const pursuitBand = (enemy: BotActor) => distance(enemy) < spacing.minimum ? 0
+      : distance(enemy) <= nearestEnemy + 160 ? 1 : 2;
+    enemies.sort((a, b) => (mode === 3 ? Number(b.vip) - Number(a.vip) : 0)
+      || pursuitBand(a) - pursuitBand(b)
+      || (mode <= 3 ? (assignments.get(a.id) ?? 0) - (assignments.get(b.id) ?? 0) : 0)
+      || distance(a) - distance(b));
     const mapId = Number(field.source.id);
     const castleTargets = mode === 2 ? objectives.filter(objective => {
       if (objective.kind !== 'CAPTURE' || objective.hp <= 0 || objective.maxHp <= 0
@@ -204,10 +238,14 @@ export class BotController {
     for (const [id, until] of this.unavailableUntil) {
       if (now >= until) this.unavailableUntil.delete(id);
     }
-    const available = targets.filter(target => !this.unavailableUntil.has(target.id));
+    const readyTargets = targets.filter(target => !this.unavailableUntil.has(target.id));
+    // Keep pursuing a map contact when every candidate has a failed approach.
+    const available = readyTargets.length ? readyTargets : targets;
     // Let an in-flight search finish for its living target rather than replacing
     // it each time two enemies exchange nearest-distance order.
     const retainTarget = this.planner || this.escapePoint || this.combatWaypoint || this.avoidancePoint
+      || this.recovery.active
+      || this.breaching.working
       || (mode === 5 && this.targetId && !claimed.has(this.targetId));
     const retained = retainTarget ? available.find(target => target.id === this.targetId) : undefined;
     // Work on a reachable firing line before committing to a route around a wall.
@@ -241,9 +279,35 @@ export class BotController {
         undefined, (actor.combat?.currentAmmoTableId ?? defaultAmmoId()) === defaultAmmoId());
       return shot.kind === 'PLAYER' && shot.targetId === target.id;
     };
+    const breach = this.breaching.advance(actor, target,
+      mode === 5 ? objectives : buildingToolRoom?.sceneObjects ?? [], field, now);
+    const targetVisible = !!target && canShoot(actor,
+      Math.atan2(target.x - actor.x, target.z - actor.z));
+    const tacticalIntent: TacticalIntent = this.tactical.decide({
+      breach: !!breach,
+      lowHealth: actor.hp !== undefined && actor.maxHp !== undefined
+        && actor.maxHp > 0 && actor.hp <= actor.maxHp * .4,
+      nearbyThreat: enemies.some(enemy => distance(enemy) <= spacing.preferred + 80),
+      blocked: Math.max(this.blockedMovementSeconds, this.recovery.stalledSeconds) >= 1.25,
+      objective: !!objectiveTarget,
+      hasTarget: !!target,
+      targetVisible,
+    });
     const finishInput = (): MsgPlayerInput => {
+      const attackTarget = breach?.aim ?? target;
+      const attackId = breach?.object.id ?? target?.id;
+      const attackSource = breach?.source ?? source;
+      if (breach) {
+        input.move = 0; input.turn = 0; input.fire = false;
+        const waypoint = breach.object.hp > 0 ? breach.path[0] : undefined;
+        if (waypoint) {
+          this.steeringMove = steerToward(actor, input, waypoint, dt, true, this.steeringMove);
+        }
+      }
       const finishItems = (): MsgPlayerInput => {
         if (actor.roleDisguise) input.fire = false;
+        if (breach && input.useItem === 0 && actor.combat?.currentAmmoTableId !== undefined
+            && actor.combat.currentAmmoTableId !== defaultAmmoId()) input.useItem = 1;
         if (input.useItem === 0) input.useItem = petInjectionHotkey(actor);
         const groundTraps = buildingToolRoom?.groundTraps;
         if (input.useItem === 0 && groundTraps) {
@@ -282,7 +346,7 @@ export class BotController {
           const turning = !!predicted && Math.abs(angle(predicted.yaw - actor.yaw)) > .000001;
           input.useItem = turnDrinkHotkey(actor, turning);
         }
-        if (input.useItem === 0) {
+        if (input.useItem === 0 && !breach) {
           input.useItem = finiteAmmoHotkey(actor, input.fire && actor.fireReady === true,
             !objectiveTarget);
         }
@@ -296,31 +360,58 @@ export class BotController {
           this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
           input.move = 0; input.turn = 0;
         } else if (Math.hypot(reached.x - this.avoidancePoint.x, reached.z - this.avoidancePoint.z) >= .01
-            || !teammateWaypointClear(this.avoidancePoint, teammates)
+            || !teammateEscapeClear(actor, this.avoidancePoint, teammates)
             || !tankRouteClear(actor, this.avoidancePoint, actors)) this.avoidancePoint = undefined;
       }
       if (!this.avoidancePoint && now >= this.nextTeammateMove) {
         const heading = actor.yaw + input.turn * parameters.turn * dt;
-        const route = this.escapePoint ?? this.combatWaypoint ?? this.path[0]
+        const route = this.breaching.waypoint ?? this.escapePoint ?? this.combatWaypoint ?? this.path[0]
           ?? (input.move !== 0 ? {x: actor.x + Math.sin(heading) * Math.sign(input.move) * 144,
             y: actor.y, z: actor.z + Math.cos(heading) * Math.sign(input.move) * 144}
             : this.planner ? this.goal : undefined);
-        if (teammateInWay(actor, route, teammates)) {
-          this.avoidancePoint = teammateAvoidancePoint(actor, route, teammates, actors, field,
-            this.combatDirection, reach, target ? point => canShoot(point,
-              Math.atan2(target.x - point.x, target.z - point.z)) : undefined);
+        if (teammateInWay(actor, route, teammates)
+            || this.blockedMovementSeconds >= 1.25 && teammates.some(other =>
+              Math.abs(other.y - actor.y) < 24 && distance(other) < 144)) {
+          this.avoidancePoint = teammateAvoidancePoint(actor, route, teammates, actors,
+            this.combatDirection, reach, attackTarget ? point => {
+              const bearing = Math.atan2(attackTarget.x - point.x, attackTarget.z - point.z);
+              return attackSource ? canShootSource(point, bearing, attackSource, field, actors, actor.id)
+                : canShoot(point, bearing);
+            } : undefined, actor.movement ? point => {
+              const command = {...input};
+              steerToward(actor, command, point, dt, true, this.steeringMove);
+              avoidBlockedArc(actor, command, point);
+              const predicted = actor.movement!.predict(command);
+              return Math.hypot(predicted.x - actor.x, predicted.z - actor.z) > .01
+                || Math.abs(angle(predicted.yaw - actor.yaw)) > .000001;
+            } : undefined);
           this.nextTeammateMove = now + 250;
         }
       }
-      if (this.avoidancePoint) steerToward(actor, input, this.avoidancePoint, dt, true);
+      if (this.avoidancePoint) {
+        this.steeringMove = steerToward(actor, input, this.avoidancePoint, dt, true, this.steeringMove);
+      }
       this.requestedMovement = Math.abs(input.move) > .1;
-      if (!target) {
+      const movementWaypoint = this.avoidancePoint ?? this.breaching.waypoint
+        ?? this.escapePoint ?? this.combatWaypoint ?? this.path[0];
+      avoidBlockedArc(actor, input, movementWaypoint);
+      const recovering = this.recovery.apply(actor, teammates, input, movementWaypoint ?? this.goal ?? target,
+        this.requestedMovement || !!target && !targetVisible && !breach,
+        now, {mapId: field.source.id, targetId: target?.id, actors,
+          searching: !!this.planner || this.breaching.searching, pathLength: this.path.length});
+      if (recovering) {
+        this.path = []; this.nextPlan = 0;
+        if (!this.planner) this.goal = undefined;
+        this.escapePoint = undefined; this.combatWaypoint = undefined; this.avoidancePoint = undefined;
+        if (input.move !== 0) this.steeringMove = input.move > 0 ? 1 : -1;
+      }
+      if (!attackTarget || !attackId || (breach && breach.object.hp <= 0)) {
         this.resetReaction();
         return finishItems();
       }
-      if (fixedTurret && input.fire && input.move === 0 && !this.path.length && !this.planner
+      if (!recovering && fixedTurret && (breach || input.fire) && input.move === 0 && !this.path.length && !this.planner
           && !this.escapePoint && !this.combatWaypoint && !this.avoidancePoint && !this.repositionDestroy) {
-        const bearing = Math.atan2(target.x - actor.x, target.z - actor.z);
+        const bearing = Math.atan2(attackTarget.x - actor.x, attackTarget.z - actor.z);
         const error = angle(bearing - (actor.bodyYaw ?? actor.yaw));
         input.turn = Math.abs(error) < aimTolerance ? 0
           : Math.max(-1, Math.min(1, error / (parameters.turn * Math.max(dt, .001))));
@@ -334,23 +425,37 @@ export class BotController {
         x: actor.x + Math.sin(yaw) * forward, y: actor.y,
         z: actor.z + Math.cos(yaw) * forward,
       }, 20));
-      const bearing = Math.atan2(target.x - position.x, target.z - position.z);
-      const visible = source ? canShootSource(position, bearing, source, field, [], actor.id)
-        : Math.hypot(target.x - position.x, target.z - position.z) < 700
-          && Math.abs(target.y - position.y) < 18
-          && !field.firstSurfaceHit({...position, y: position.y + 20}, {...target, y: target.y + 20}, 1);
-      const reacted = this.observeTarget(target.id, visible, now);
+      const bearing = Math.atan2(attackTarget.x - position.x, attackTarget.z - position.z);
+      let visible: boolean;
+      if (breach) {
+        const shot = queryShotTarget({...position, id: actor.id},
+          {x: Math.sin(bearing), y: 0, z: Math.cos(bearing)}, shotActors, field, 20, undefined, true);
+        visible = shot.kind === 'SCENE' && field.isPlacementHit(shot.targetId, breach.source.id);
+      } else if (attackSource) {
+        visible = canShootSource(position, bearing, attackSource, field, actors, actor.id);
+      } else {
+        visible = Math.hypot(attackTarget.x - position.x, attackTarget.z - position.z) < 700
+          && Math.abs(attackTarget.y - position.y) < 18
+          && !field.firstSurfaceHit({...position, y: position.y + 20}, {...attackTarget, y: attackTarget.y + 20}, 1);
+      }
+      const reacted = this.observeTarget(attackId, visible, now);
       const error = angle(bearing - tankTurretYaw(actor.tank.id, {yaw, bodyYaw, aim: actor.aim}));
       input.aim = reacted && aimStep > 0 ? Math.max(-1, Math.min(1, error / aimStep)) : 0;
       const shotAngle = tankTurretYaw(actor.tank.id, {yaw, bodyYaw, aim: actor.aim}) + input.aim * aimStep;
-      const shotDistance = Math.hypot(target.x - position.x, target.z - position.z);
+      const shotDistance = Math.hypot(attackTarget.x - position.x, attackTarget.z - position.z);
       const shotEnd = {x: position.x + Math.sin(shotAngle) * shotDistance, y: position.y + 20,
         z: position.z + Math.cos(shotAngle) * shotDistance};
       const friendly = teammates.some(other => blocksShot(position, shotEnd, other));
       const aiming = reacted && !actor.roleDisguise && Math.abs(angle(bearing - shotAngle)) < aimTolerance;
+      let clearShot = visible;
+      if (breach && aiming) {
+        const shot = queryShotTarget({...position, id: actor.id},
+          {x: Math.sin(shotAngle), y: 0, z: Math.cos(shotAngle)}, shotActors, field, 20, undefined, true);
+        clearShot = shot.kind === 'SCENE' && field.isPlacementHit(shot.targetId, breach.source.id);
+      }
       input.fire = this.confirmShot(aiming,
-        reacted && !actor.roleDisguise && actor.fireReady === true && !friendly, now);
-      if (mode === 5 && aiming && !this.repositionDestroy && !this.escapePoint) {
+        reacted && clearShot && !actor.roleDisguise && actor.fireReady === true && !friendly, now);
+      if (mode === 5 && !breach && aiming && !this.repositionDestroy && !this.escapePoint) {
         this.ineffectiveFireSeconds += dt;
       }
       return finishItems();
@@ -365,10 +470,12 @@ export class BotController {
       this.escapePoint = undefined;
       this.combatWaypoint = undefined; this.nextCombatMove = 0;
       this.avoidancePoint = undefined; this.nextTeammateMove = 0;
+      this.steeringMove = 1;
       this.resetReaction();
       this.combatDirection = actor.id.charCodeAt(actor.id.length - 1) % 2 === 0 ? 1 : -1;
     }
-    if (this.goal && !teammateWaypointClear(this.goal, teammates)) {
+    if (this.goal && !(this.escapePoint ? teammateEscapeClear(actor, this.goal, teammates)
+      : teammateWaypointClear(actor, this.goal, teammates))) {
       this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
     }
     if (this.escapePoint && distance(this.escapePoint) < 7) {
@@ -380,12 +487,28 @@ export class BotController {
     } else this.blockedMovementSeconds = 0;
     this.previousPosition = {x: actor.x, y: actor.y, z: actor.z};
     this.requestedMovement = false;
-    if (this.blockedMovementSeconds >= 2 && target) {
+    if (this.recovery.active && !this.planner) return finishInput();
+    if (tacticalIntent === 'BREACH' && breach) {
+      if (this.blockedMovementSeconds >= 2 && (breach.path.length || this.avoidancePoint)) {
+        if (breach.path.length && target) this.breaching.retry(target);
+        this.avoidancePoint = undefined; this.nextTeammateMove = 0;
+        this.combatDirection *= -1;
+        this.blockedMovementSeconds = 0;
+      }
+      this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
+      this.escapePoint = undefined; this.combatWaypoint = undefined;
+      this.repositionDestroy = false;
+      return finishInput();
+    }
+    if (this.blockedMovementSeconds >= 2 && (target || teammates.length)) {
       // A traversable route can still be blocked when steering clips a corner.
       // Retry another approach using observed movement, without bypassing collision.
-      this.failedApproaches.set(target.id, (this.failedApproaches.get(target.id) ?? 0) + 1);
+      if (target) this.failedApproaches.set(target.id, (this.failedApproaches.get(target.id) ?? 0) + 1);
+      if (target) this.breaching.request(this.goal ?? target);
       this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
       this.combatWaypoint = undefined;
+      this.avoidancePoint = undefined; this.nextTeammateMove = 0;
+      this.combatDirection *= -1;
       this.repositionDestroy = mode === 5;
       this.blockedMovementSeconds = 0;
       const escapes: Point[] = [];
@@ -395,11 +518,15 @@ export class BotController {
           z: actor.z + Math.cos(bearing) * 36};
         const reached = reach(actor, desired);
         if (Math.hypot(reached.x - desired.x, reached.z - desired.z) < .01
-            && teammateWaypointClear(reached, teammates)
+            && teammateEscapeClear(actor, reached, teammates)
             && tankRouteClear(actor, reached, actors)) escapes.push(reached);
       }
-      escapes.sort((a, b) => Math.hypot(a.x - target.x, a.z - target.z)
-        - Math.hypot(b.x - target.x, b.z - target.z));
+      const clearance = (point: Point) => Math.min(...teammates.map(other =>
+        Math.abs(other.y - point.y) >= 24 ? Infinity : Math.hypot(other.x - point.x, other.z - point.z)));
+      const crowded = clearance(actor) < 80;
+      escapes.sort((a, b) => (target && !crowded
+        ? Math.hypot(a.x - target.x, a.z - target.z) - Math.hypot(b.x - target.x, b.z - target.z)
+        : clearance(b) - clearance(a)));
       this.escapePoint = escapes[0];
     }
     let goal: Point | undefined = this.escapePoint ?? target;
@@ -409,7 +536,7 @@ export class BotController {
       const threats = enemies.filter(enemy => distance(enemy) < spacing.preferred + 80
         && Math.abs(enemy.y - actor.y) < 18
         && !field.firstSurfaceHit(origin, {...enemy, y: enemy.y + 20}, 1));
-      if (threats.some(enemy => distance(enemy) < spacing.minimum)) {
+      if (tacticalIntent === 'RETREAT' || threats.some(enemy => distance(enemy) < spacing.minimum)) {
         const retreat = combatRetreat(actor, threats, input, field, dt, this.combatDirection);
         if (retreat) {
           this.path = []; this.goal = undefined; this.planner = undefined;
@@ -445,7 +572,8 @@ export class BotController {
       if (this.repositionDestroy && this.goal && !this.planner && distance(this.goal) < 7) {
         this.repositionDestroy = false;
       }
-      const changingDestroyPosition = mode === 5 && this.repositionDestroy;
+      const changingDestroyPosition = (mode === 5 && this.repositionDestroy)
+        || tacticalIntent === 'UNSTICK';
       const engagementDistance = objectiveTarget ? 330 : spacing.preferred + 80;
       if (!this.escapePoint && visible && !friendly && distance(target) < engagementDistance
           && !changingDestroyPosition) goal = undefined;
@@ -465,7 +593,7 @@ export class BotController {
       const mobileCombat = !objectiveTarget && visible && distance(target) < engagementDistance;
       if (!this.escapePoint && !this.repositionDestroy && (friendly || mobileCombat)) {
         if (this.combatWaypoint && (distance(this.combatWaypoint) < 7
-            || !teammateWaypointClear(this.combatWaypoint, teammates)
+            || !teammateWaypointClear(actor, this.combatWaypoint, teammates)
             || !tankRouteClear(actor, this.combatWaypoint, actors)
             || !objectiveTarget && Math.abs(Math.hypot(target.x - this.combatWaypoint.x,
               target.z - this.combatWaypoint.z) - spacing.preferred) > 40
@@ -482,14 +610,15 @@ export class BotController {
         }
         if (this.combatWaypoint) {
           this.path = []; this.goal = undefined; this.planner = undefined;
-          steerToward(actor, input, this.combatWaypoint, dt, true);
+          this.steeringMove = steerToward(actor, input, this.combatWaypoint, dt, true, this.steeringMove);
           this.requestedMovement = Math.abs(input.move) > .1;
           return finishInput();
         }
       } else this.combatWaypoint = undefined;
     }
     const failed = target ? this.failedApproaches.get(target.id) ?? 0 : 0;
-    const approach = target && (mode === 5 || friendly || failed > 0 || !objectiveTarget);
+    const approach = target && (mode === 5 || tacticalIntent === 'OBJECTIVE'
+      || tacticalIntent === 'APPROACH' || friendly || failed > 0 || !objectiveTarget);
     // Destroy objects stay fixed. Keep a usable route until it is consumed;
     // movement and damage feedback already release blocked firing approaches.
     const keepDestroyRoute = mode === 5 && this.path.length > 0 && this.goal !== undefined;
@@ -507,7 +636,7 @@ export class BotController {
             const cell = field.navigation.sample(x, z);
             if (!cell?.valid) continue;
             const candidate = {x, y: cell.height, z};
-            if (!teammateWaypointClear(candidate, teammates)) continue;
+            if (!teammateWaypointClear(actor, candidate, teammates)) continue;
             if (actor.movement && !actor.movement.navigation.canTraverse(
                 {x: x - Math.sin(a) * 6, y: cell.height, z: z - Math.cos(a) * 6}, candidate)) continue;
             if (mode === 5 ? Math.abs(candidate.y + 20 - target.y) > 50
@@ -534,7 +663,13 @@ export class BotController {
         }
       } else goal = this.goal;
     }
-    if (!goal) {this.path = []; this.goal = undefined; this.planner = undefined; return finishInput();}
+    if (!goal) {
+      if (target && !canShoot(actor, Math.atan2(target.x - actor.x, target.z - actor.z))) {
+        this.breaching.request(target);
+      }
+      this.path = []; this.goal = undefined; this.planner = undefined;
+      return finishInput();
+    }
     if (!this.planner && ((now >= this.nextPlan && !keepDestroyRoute) || !this.goal || Math.hypot(goal.x - this.goal.x, goal.z - this.goal.z) > 60)) {
       this.planner = new BotPathPlanner(field, actor, goal, actor.movement?.navigation ?? 20);
       this.planStartedAt = now;
@@ -545,7 +680,9 @@ export class BotController {
       if (planned !== undefined) {
         this.path = planned; this.planner = undefined;
         this.nextPlan = now + (planned.length ? 2500 : 0);
+        if (planned.length) this.breaching.reset();
         if (!planned.length && target) {
+          this.breaching.request(goal);
           this.failedApproaches.set(target.id, failed + 1);
           if (mode === 5) this.repositionDestroy = true;
           this.goal = undefined;
@@ -555,8 +692,11 @@ export class BotController {
         // Give other targets a turn, then retry a different firing position.
         this.planner = undefined; this.goal = undefined; this.nextPlan = 0;
         this.failedApproaches.set(target.id, failed + 1);
-        this.unavailableUntil.set(target.id, now + 8000);
+        if (!this.breaching.working) this.unavailableUntil.set(target.id, now + 8000);
+        this.breaching.request(goal);
         if (mode === 5) this.repositionDestroy = true;
+      } else if (!this.path.length && now - this.planStartedAt >= 1500) {
+        this.breaching.request(goal);
       }
     }
     while (this.path.length && distance(this.path[0]) < 7) {
@@ -569,7 +709,7 @@ export class BotController {
       this.path.shift();
     }
     let waypoint = this.path[0];
-    if (!waypoint && this.planner && mode === 5 && this.goal) {
+    if (!waypoint && this.planner && this.goal) {
       // A pending full route need not keep the tank at its old search origin.
       // Follow only the prefix accepted by the authoritative collision sweep.
       const reached = reach(actor, this.goal);
@@ -582,7 +722,7 @@ export class BotController {
       }
       return finishInput();
     }
-    steerToward(actor, input, waypoint, dt, false);
+    this.steeringMove = steerToward(actor, input, waypoint, dt, !!this.escapePoint, this.steeringMove);
     this.requestedMovement = Math.abs(input.move) > .1;
     return finishInput();
   }
@@ -644,7 +784,7 @@ function combatMovementPoint(actor: BotActor, target: Point, actors: readonly Bo
       desired.y = cell.height;
       const reached = reach(actor, desired);
       if (Math.hypot(reached.x - desired.x, reached.z - desired.z) >= .01) continue;
-      if (!teammateWaypointClear(reached, teammates) || !tankRouteClear(actor, reached, actors)) continue;
+      if (!teammateWaypointClear(actor, reached, teammates) || !tankRouteClear(actor, reached, actors)) continue;
       const heading = Math.atan2(target.x - reached.x, target.z - reached.z);
       if (canShoot(reached, heading)) return reached;
     }
@@ -653,38 +793,53 @@ function combatMovementPoint(actor: BotActor, target: Point, actors: readonly Bo
 }
 
 function steerToward(actor: BotActor, input: MsgPlayerInput, waypoint: Point,
-  dt: number, allowReverse: boolean): void {
+  dt: number, allowReverse: boolean, previousMove: -1 | 1): -1 | 1 {
   const parameters = actor.movement ?? defaultMovementParameters(actor.tank);
   const distance = Math.hypot(waypoint.x - actor.x, waypoint.z - actor.z);
-  let turn = angle(Math.atan2(waypoint.x - actor.x, waypoint.z - actor.z) - actor.yaw);
-  const move = allowReverse && Math.abs(turn) > Math.PI / 2 ? -1 : 1;
+  const headingError = angle(Math.atan2(waypoint.x - actor.x, waypoint.z - actor.z) - actor.yaw);
+  let move: -1 | 1 = 1;
+  if (allowReverse) {
+    // Keep a chosen travel direction until the waypoint is clearly on the
+    // other side. This hysteresis prevents a waypoint near 90° from producing
+    // alternating forward and reverse commands on adjacent ticks.
+    const error = Math.abs(headingError);
+    move = previousMove === -1
+      ? (error < Math.PI * .4 ? 1 : -1)
+      : (error > Math.PI * .6 ? -1 : 1);
+  }
+  let turn = headingError;
   if (move < 0) turn = angle(turn + Math.PI);
-  input.turn = Math.max(-1, Math.min(1, turn / (parameters.turn * Math.max(dt, .001))));
+  // Reverse arc commands turn the heading opposite to the input turn axis.
+  input.turn = (actor.movement ? move : 1)
+    * Math.max(-1, Math.min(1, turn / (parameters.turn * Math.max(dt, .001))));
   // Native commands are discrete: analog fractions do not reduce turn speed.
   // Choose the nearest heading rather than alternating full turns forever.
   if (actor.movement && Math.abs(turn) < actor.movement.turn * dt * .5) input.turn = 0;
-  input.move = Math.abs(turn) < .25 ? move * Math.min(1, distance / (parameters.speed * dt)) : 0;
-  if (actor.movement && input.move !== 0) {
-    const predicted = actor.movement.predict(input);
-    if (Math.hypot(predicted.x - actor.x, predicted.z - actor.z) < .05) {
-      // Arc fallback may turn without translating; try ordinary straight input
-      // first, and retain observed blocking feedback if it too cannot advance.
-      const straight = actor.movement.predict({...input, turn: 0});
-      if (Math.hypot(straight.x - actor.x, straight.z - actor.z) >= .05) input.turn = 0;
+  // Commands 5–8 are the authoritative move+turn arcs. Keep both axes in the
+  // input and let the normal movement predictor reject or downgrade a blocked
+  // arc; guessing with a straight or reverse retry caused visible oscillation.
+  input.move = distance > .01 ? move * Math.min(1, distance / (parameters.speed * Math.max(dt, .001))) : 0;
+  return move;
+}
+
+/** Keep usable arcs; a rejected arc can still leave room for a stationary turn. */
+function avoidBlockedArc(actor: BotActor, input: MsgPlayerInput, waypoint?: Point): void {
+  if (!actor.movement || input.move === 0) return;
+  const predicted = actor.movement.predict(input);
+  const moving = Math.hypot(predicted.x - actor.x, predicted.z - actor.z) > .01;
+  const approaching = !waypoint || Math.hypot(waypoint.x - predicted.x, waypoint.z - predicted.z)
+    <= Math.hypot(waypoint.x - actor.x, waypoint.z - actor.z) + .01;
+  if (moving && approaching) return;
+  if (input.turn !== 0) {
+    const stationaryTurn = input.turn * Math.sign(input.move);
+    const turn = actor.movement.predict({...input, move: 0, turn: stationaryTurn});
+    if (Math.abs(angle(turn.yaw - actor.yaw)) > .000001) {
+      input.move = 0; input.turn = stationaryTurn;
+      return;
     }
   }
-  if (actor.movement && (input.move !== 0 || input.turn !== 0)) {
-    const predicted = actor.movement.predict(input);
-    if (Math.hypot(predicted.x - actor.x, predicted.z - actor.z) < .05
-        && Math.abs(angle(predicted.yaw - actor.yaw)) < .0001) {
-      // An original dynamic gate may reject both forward and turning. Request
-      // an ordinary reverse step only when the same gate/NAV preview allows it.
-      const reverse = actor.movement.predict({...input, move: -1, turn: 0});
-      if (Math.hypot(reverse.x - actor.x, reverse.z - actor.z) >= .05) {
-        input.move = -1;
-        input.turn = 0;
-      }
-    }
+  if (!moving) {
+    input.move = 0; input.turn = 0;
   }
 }
 

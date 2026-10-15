@@ -1,6 +1,7 @@
 import {performance} from 'node:perf_hooks';
 import {type Battlefield, type Point} from '../../battlefield';
-const edgeCaches = new WeakMap<Battlefield, {revision: number; edges: Map<string, Map<number, boolean>>}>();
+import type {NavigationGrid} from '../../navigation';
+const edgeCaches = new WeakMap<NavigationGrid, {revision: number; edges: Map<string, Map<number, boolean>>}>();
 const diagonalCost = Math.hypot(1, 1);
 const neighbors: readonly (readonly [number, number, number])[] = [
   [1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1],
@@ -21,17 +22,17 @@ function clear(field: Battlefield, a: Point, b: Point, radius: number): boolean 
   return Math.hypot(reached.x - b.x, reached.z - b.z) < .01;
 }
 function* searchBotPath(field: Battlefield, start: Point, goal: Point,
-  movement: number | BotNavigationPolicy = 20): Generator<void, Point[]> {
+  movement: number | BotNavigationPolicy = 20,
+  grid = field.navigation): Generator<void, Point[]> {
   const traversable = (a: Point, b: Point) => typeof movement === 'number'
     ? clear(field, a, b, movement) : movement.canTraverse(a, b);
   const policyKey = typeof movement === 'number' ? `prototype:${movement}` : movement.cacheKey;
-  if (!field.navigation.sample(goal.x, goal.z)?.valid || !field.navigation.sample(start.x, start.z)?.valid) return [];
+  if (!grid.sample(goal.x, goal.z)?.valid || !grid.sample(start.x, start.z)?.valid) return [];
   if (traversable(start, goal)) return [goal];
-  const grid = field.navigation;
-  let cache = edgeCaches.get(field);
+  let cache = edgeCaches.get(grid);
   if (!cache) {
     cache = {revision: field.navigationRevision, edges: new Map()};
-    edgeCaches.set(field, cache);
+    edgeCaches.set(grid, cache);
   }
   let edges = cache.edges.get(policyKey);
   if (!edges) {
@@ -140,8 +141,9 @@ function* searchBotPath(field: Battlefield, start: Point, goal: Point,
 /** Resumable search; CPU ticks never exhaust the complete grid synchronously. */
 export class BotPathPlanner {
   private readonly search: Generator<void, Point[]>;
-  constructor(field: Battlefield, start: Point, goal: Point, movement: number | BotNavigationPolicy = 20) {
-    this.search = searchBotPath(field, {...start}, {...goal}, movement);
+  constructor(field: Battlefield, start: Point, goal: Point, movement: number | BotNavigationPolicy = 20,
+    grid = field.navigation) {
+    this.search = searchBotPath(field, {...start}, {...goal}, movement, grid);
   }
   advance(maxExpansions = 256, budgetMs = 2): Point[] | undefined {
     const deadline = performance.now() + budgetMs;
