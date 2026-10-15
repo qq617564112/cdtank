@@ -2,7 +2,9 @@ import {Camera} from '@babylonjs/core';
 import {setCameraSpatialListener} from './spatial-listener';
 import type {EffectVec3} from '../render/effects/common/types';
 import type {SkillSoundCatalog} from './effect-skill-sound';
-import {loadStaticJson, prepareStaticResourceUrl, staticResourceUrl} from '../assets/static-resources';
+import {loadStaticJson} from '../assets/static-resources';
+import {listenForAudioInteraction} from './audio-interaction';
+import {loadAudioBuffer, releaseAudioBuffer} from './audio-resources';
 
 interface EnvironmentSoundPlacement {
   id: string;
@@ -23,8 +25,7 @@ interface EnvironmentSoundMap {
 }
 interface EnvironmentVoice {
   placement: EnvironmentSoundPlacement;
-  audio: HTMLAudioElement;
-  source: MediaElementAudioSourceNode;
+  source: AudioBufferSourceNode;
   panner: PannerNode;
   gain: GainNode;
 }
@@ -32,21 +33,27 @@ interface EnvironmentVoice {
 /** Original map Sound loops, sharing the original sound manager's context. */
 export class MapEnvironmentSound {
   private readonly voices = new Map<string, EnvironmentVoice>();
+  private readonly decodedAssets = new Set<string>();
   private master?: GainNode;
   private map?: EnvironmentSoundMap;
   private revision = 0;
   private volume?: number;
+  private attenuationX = NaN;
+  private attenuationY = NaN;
+  private attenuationZ = NaN;
+  private referenceDistance = NaN;
+  private maxDistance = NaN;
+  private rolloffFactor = NaN;
+  private readonly removeInteraction: () => void;
   private readonly resume = (): void => {
     if (!this.voices.size) return;
-    if (this.context.state === 'suspended') void this.context.resume();
-    for (const voice of this.voices.values()) {
-      if (voice.audio.paused) this.startVoice(voice);
+    if (this.context.state === 'suspended') {
+      void this.context.resume().catch(() => {});
     }
   };
 
   constructor(private readonly camera: Camera, private readonly context: AudioContext) {
-    window.addEventListener('pointerdown', this.resume);
-    window.addEventListener('keydown', this.resume);
+    this.removeInteraction = listenForAudioInteraction(this.resume);
   }
 
   async load(mapId: number): Promise<void> {
@@ -66,7 +73,9 @@ export class MapEnvironmentSound {
       assets.set(placement.id, asset);
     }
     if (!assets.size) return;
-    await Promise.all([...new Set(assets.values())].map(asset => prepareStaticResourceUrl(`/${asset}`)));
+    for (const asset of assets.values()) this.decodedAssets.add(asset);
+    const buffers = new Map(await Promise.all([...new Set(assets.values())].map(async asset =>
+      [asset, await loadAudioBuffer(`/${asset}`, this.context)] as const)));
     if (revision !== this.revision) return;
     this.map = map;
     this.master = this.context.createGain();
@@ -75,9 +84,9 @@ export class MapEnvironmentSound {
     for (const placement of map.sounds) {
       const asset = assets.get(placement.id);
       if (!asset) continue;
-      const audio = new Audio(staticResourceUrl(`/${asset}`));
-      audio.loop = placement.selector === -1;
-      const source = this.context.createMediaElementSource(audio);
+      const source = this.context.createBufferSource();
+      source.buffer = buffers.get(asset)!;
+      source.loop = placement.selector === -1;
       const panner = this.context.createPanner();
       const gain = this.context.createGain();
       panner.panningModel = 'equalpower';
@@ -91,21 +100,13 @@ export class MapEnvironmentSound {
       source.connect(panner);
       panner.connect(gain);
       gain.connect(this.master);
-      const voice: EnvironmentVoice = {placement, audio, source, panner, gain};
+      const voice: EnvironmentVoice = {placement, source, panner, gain};
       this.voices.set(placement.id, voice);
-      audio.onended = () => this.stop(placement.id);
-      audio.onerror = () => this.stop(placement.id);
-      this.update();
-      this.startVoice(voice);
+      source.onended = () => this.stop(placement.id);
+      source.start();
     }
-  }
-
-  private startVoice(voice: EnvironmentVoice): void {
-    void voice.audio.play().catch(error => {
-      if (error?.name !== 'NotAllowedError' && this.voices.get(voice.placement.id) === voice) {
-        this.stop(voice.placement.id);
-      }
-    });
+    this.update();
+    this.resume();
   }
 
   update(): void {
@@ -113,6 +114,10 @@ export class MapEnvironmentSound {
     const position = this.camera.globalPosition;
     setCameraSpatialListener(this.context.listener, this.camera);
     const {referenceDistance, maxDistance, rolloffFactor} = this.map.spatial;
+    if (position.x === this.attenuationX && position.y === this.attenuationY && position.z === this.attenuationZ &&
+        referenceDistance === this.referenceDistance && maxDistance === this.maxDistance && rolloffFactor === this.rolloffFactor) return;
+    this.attenuationX = position.x; this.attenuationY = position.y; this.attenuationZ = position.z;
+    this.referenceDistance = referenceDistance; this.maxDistance = maxDistance; this.rolloffFactor = rolloffFactor;
     for (const voice of this.voices.values()) {
       const [x, y, z] = voice.placement.position;
       const distance = Math.hypot(x + position.x, y - position.y, z - position.z);
@@ -131,11 +136,8 @@ export class MapEnvironmentSound {
     const voice = this.voices.get(id);
     if (!voice) return;
     this.voices.delete(id);
-    voice.audio.onended = null;
-    voice.audio.onerror = null;
-    voice.audio.pause();
-    voice.audio.removeAttribute('src');
-    voice.audio.load();
+    voice.source.onended = null;
+    voice.source.stop();
     voice.source.disconnect();
     voice.panner.disconnect();
     voice.gain.disconnect();
@@ -143,7 +145,10 @@ export class MapEnvironmentSound {
 
   clear(): void {
     this.revision++;
+    this.attenuationX = NaN;
     for (const id of this.voices.keys()) this.stop(id);
+    for (const asset of this.decodedAssets) releaseAudioBuffer(`/${asset}`);
+    this.decodedAssets.clear();
     this.master?.disconnect();
     this.master = undefined;
     this.map = undefined;
@@ -151,7 +156,6 @@ export class MapEnvironmentSound {
 
   dispose(): void {
     this.clear();
-    window.removeEventListener('pointerdown', this.resume);
-    window.removeEventListener('keydown', this.resume);
+    this.removeInteraction();
   }
 }

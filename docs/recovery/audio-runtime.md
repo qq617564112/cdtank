@@ -1,6 +1,6 @@
 # 原音频与战场音乐
 
-`npm run assets:audio`将原music.cpk已验证提取物的14份MP3与Data/sound的174份WAV按原字节发布到web-assets/audio，并生成audio.json。CPK与每首提取音乐的SHA256对照原提取manifest，输出保持文件哈希；地图及MusicString映射直接重读原.dat表，未从生成的Web资源倒推。仅发布WAV不代表原音效触发、空间衰减或混音已经恢复。
+`npm run assets:audio`从原music.cpk和Data/sound提取14份MP3、174份原WAV，并沿用11份补作WAV，先保存到`arts/audio/`，再按逐项配方生成`arts/compressed-audio/`，发布到`apps/web/public/assets/audio/`及`manifests/audio.json`。MP3保留原字节，WAV发布为Opus；地图及MusicString映射直接重读原.dat表，未从生成的Web资源倒推。原声音调用路径证据继续独立保存，压缩结果与验收范围见[音频提取、压缩与发布](../audio-compression.md)。
 
 原战斗初始化0x4d055e调用0x435345读取模式，0x4d056b–0x4d0587读取地图ID并经0x413d25/0x411068选模式表记录；0x4d058c读取记录+0x94，0x4d0592加0xbf，0x4d0597以-1作为播放次数传给0x4d9517。Web以原m001–m005的MusicFile+191查询MusicString，得到GAM01–GAM10。26条模式/地图记录全部有对应原音乐，田野路为MusicFile2→ID193→GAM02。MusicString中183–191为UIM01–UIM09，192–201为GAM01–GAM10；原包仅含UIM01/02/08/09及全部10首GAM，UIM03–07保留未匹配，不替换曲目。
 

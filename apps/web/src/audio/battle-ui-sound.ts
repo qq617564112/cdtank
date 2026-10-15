@@ -1,5 +1,6 @@
 import {loadStaticJson} from '../assets/static-resources';
 import {loadAudioBuffer} from './audio-resources';
+import {listenForAudioInteraction} from './audio-interaction';
 
 interface BattleUiSoundCatalog {
   defaultSoundVolume: number;
@@ -23,13 +24,14 @@ export class BattleUiSound {
   private active = false;
   private disposed = false;
   private readonly interaction = (): void => {this.resume();};
+  private readonly removeInteraction: () => void;
 
   constructor(private readonly volume?: () => number | undefined) {
+    this.context = new AudioContext();
     this.status.hidden = true;
     this.status.dataset.sourceAudio = 'battle-ui-sound';
     document.body.append(this.status);
-    window.addEventListener('pointerdown', this.interaction);
-    window.addEventListener('keydown', this.interaction);
+    this.removeInteraction = listenForAudioInteraction(this.interaction);
     this.publish();
   }
 
@@ -104,8 +106,7 @@ export class BattleUiSound {
     if (this.disposed) return;
     this.disposed = true;
     this.stop();
-    window.removeEventListener('pointerdown', this.interaction);
-    window.removeEventListener('keydown', this.interaction);
+    this.removeInteraction();
     this.respawnCountdownGain?.disconnect();
     this.gain?.disconnect();
     void this.context?.close();
@@ -122,7 +123,7 @@ export class BattleUiSound {
   }
 
   private resume(): void {
-    if (!this.active || !this.context || this.context.state !== 'suspended') return;
+    if (!this.context || this.context.state !== 'suspended') return;
     void this.context.resume().then(() => {this.publish();}).catch(() => {this.publish();});
   }
 

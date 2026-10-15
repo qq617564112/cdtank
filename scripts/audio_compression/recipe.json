@@ -1,0 +1,1224 @@
+{
+  "version": 1,
+  "encoder": {
+    "codec": "libopus",
+    "container": "ogg",
+    "sample_rate": 48000,
+    "compression_level": 10,
+    "frame_duration_ms": 20
+  },
+  "profiles": {
+    "keep-mp3": {
+      "codec": "copy",
+      "basis": "保留原 MP3 字节，避免有损再编码"
+    },
+    "opus-mono": {
+      "codec": "opus",
+      "channels": 1,
+      "bitrate_kbps": 64,
+      "basis": "单声道音效与循环环境音；保留声道，不归一化音量"
+    },
+    "opus-stereo": {
+      "codec": "opus",
+      "channels": 2,
+      "bitrate_kbps": 96,
+      "basis": "立体声音效与循环环境音；保留声道，不归一化音量"
+    }
+  },
+  "files": [
+    {
+      "source_relative": "music/GAM01.mp3",
+      "output_relative": "music/GAM01.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM02.mp3",
+      "output_relative": "music/GAM02.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM03.mp3",
+      "output_relative": "music/GAM03.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM04.mp3",
+      "output_relative": "music/GAM04.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM05.mp3",
+      "output_relative": "music/GAM05.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM06.mp3",
+      "output_relative": "music/GAM06.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM07.mp3",
+      "output_relative": "music/GAM07.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM08.mp3",
+      "output_relative": "music/GAM08.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM09.mp3",
+      "output_relative": "music/GAM09.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/GAM10.mp3",
+      "output_relative": "music/GAM10.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/UIM01.mp3",
+      "output_relative": "music/UIM01.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/UIM02.mp3",
+      "output_relative": "music/UIM02.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/UIM08.mp3",
+      "output_relative": "music/UIM08.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/UIM09.mp3",
+      "output_relative": "music/UIM09.mp3",
+      "category": "music",
+      "profile": "keep-mp3"
+    },
+    {
+      "source_relative": "music/reconstructed/BG07.wav",
+      "output_relative": "music/reconstructed/BG07.opus",
+      "category": "environment",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/BG01.wav",
+      "output_relative": "sfx/BG01.opus",
+      "category": "environment",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/BG02.wav",
+      "output_relative": "sfx/BG02.opus",
+      "category": "environment",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/BG04.wav",
+      "output_relative": "sfx/BG04.opus",
+      "category": "environment",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/BG05.wav",
+      "output_relative": "sfx/BG05.opus",
+      "category": "environment",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/BG06.wav",
+      "output_relative": "sfx/BG06.opus",
+      "category": "environment",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/BG08.wav",
+      "output_relative": "sfx/BG08.opus",
+      "category": "environment",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/BG10.wav",
+      "output_relative": "sfx/BG10.opus",
+      "category": "environment",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/BG11.wav",
+      "output_relative": "sfx/BG11.opus",
+      "category": "environment",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/BG12.wav",
+      "output_relative": "sfx/BG12.opus",
+      "category": "environment",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA01.wav",
+      "output_relative": "sfx/FA01.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA02.wav",
+      "output_relative": "sfx/FA02.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA03.wav",
+      "output_relative": "sfx/FA03.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA04.wav",
+      "output_relative": "sfx/FA04.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA05.wav",
+      "output_relative": "sfx/FA05.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA06.wav",
+      "output_relative": "sfx/FA06.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA07.wav",
+      "output_relative": "sfx/FA07.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA08.wav",
+      "output_relative": "sfx/FA08.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA09.wav",
+      "output_relative": "sfx/FA09.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA10.wav",
+      "output_relative": "sfx/FA10.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA11.wav",
+      "output_relative": "sfx/FA11.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA12.wav",
+      "output_relative": "sfx/FA12.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA13.wav",
+      "output_relative": "sfx/FA13.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA14.wav",
+      "output_relative": "sfx/FA14.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA15.wav",
+      "output_relative": "sfx/FA15.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA16.wav",
+      "output_relative": "sfx/FA16.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA17.wav",
+      "output_relative": "sfx/FA17.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA18.wav",
+      "output_relative": "sfx/FA18.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA19.wav",
+      "output_relative": "sfx/FA19.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA20.wav",
+      "output_relative": "sfx/FA20.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA21.wav",
+      "output_relative": "sfx/FA21.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA22.wav",
+      "output_relative": "sfx/FA22.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA23.wav",
+      "output_relative": "sfx/FA23.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA24.wav",
+      "output_relative": "sfx/FA24.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA25.wav",
+      "output_relative": "sfx/FA25.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA26.wav",
+      "output_relative": "sfx/FA26.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA27.wav",
+      "output_relative": "sfx/FA27.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA28.wav",
+      "output_relative": "sfx/FA28.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA29.wav",
+      "output_relative": "sfx/FA29.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/FA30.wav",
+      "output_relative": "sfx/FA30.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/GA01.wav",
+      "output_relative": "sfx/GA01.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/GA02.wav",
+      "output_relative": "sfx/GA02.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/GA03.wav",
+      "output_relative": "sfx/GA03.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA04.wav",
+      "output_relative": "sfx/GA04.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA05.wav",
+      "output_relative": "sfx/GA05.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA06.wav",
+      "output_relative": "sfx/GA06.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA07.wav",
+      "output_relative": "sfx/GA07.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA08.wav",
+      "output_relative": "sfx/GA08.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA09.wav",
+      "output_relative": "sfx/GA09.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA10.wav",
+      "output_relative": "sfx/GA10.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA11.wav",
+      "output_relative": "sfx/GA11.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA12.wav",
+      "output_relative": "sfx/GA12.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA13.wav",
+      "output_relative": "sfx/GA13.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA14.wav",
+      "output_relative": "sfx/GA14.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA15.wav",
+      "output_relative": "sfx/GA15.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA16.wav",
+      "output_relative": "sfx/GA16.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA17.wav",
+      "output_relative": "sfx/GA17.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA18.wav",
+      "output_relative": "sfx/GA18.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA20.wav",
+      "output_relative": "sfx/GA20.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA21.wav",
+      "output_relative": "sfx/GA21.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA22.wav",
+      "output_relative": "sfx/GA22.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA23.wav",
+      "output_relative": "sfx/GA23.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA24.wav",
+      "output_relative": "sfx/GA24.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA25.wav",
+      "output_relative": "sfx/GA25.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA26.wav",
+      "output_relative": "sfx/GA26.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA27.wav",
+      "output_relative": "sfx/GA27.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA28.wav",
+      "output_relative": "sfx/GA28.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA29.wav",
+      "output_relative": "sfx/GA29.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA30.wav",
+      "output_relative": "sfx/GA30.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA31.wav",
+      "output_relative": "sfx/GA31.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/GA32.wav",
+      "output_relative": "sfx/GA32.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA33.wav",
+      "output_relative": "sfx/GA33.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA35.wav",
+      "output_relative": "sfx/GA35.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA37.wav",
+      "output_relative": "sfx/GA37.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA38.wav",
+      "output_relative": "sfx/GA38.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA39.wav",
+      "output_relative": "sfx/GA39.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA40.wav",
+      "output_relative": "sfx/GA40.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA41.wav",
+      "output_relative": "sfx/GA41.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA42.wav",
+      "output_relative": "sfx/GA42.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA43.wav",
+      "output_relative": "sfx/GA43.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA44.wav",
+      "output_relative": "sfx/GA44.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA45.wav",
+      "output_relative": "sfx/GA45.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA46.wav",
+      "output_relative": "sfx/GA46.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA47.wav",
+      "output_relative": "sfx/GA47.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/GA48.wav",
+      "output_relative": "sfx/GA48.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE01.wav",
+      "output_relative": "sfx/SE01.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE02.wav",
+      "output_relative": "sfx/SE02.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE03.wav",
+      "output_relative": "sfx/SE03.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE04.wav",
+      "output_relative": "sfx/SE04.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE05.wav",
+      "output_relative": "sfx/SE05.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE06.wav",
+      "output_relative": "sfx/SE06.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE07.wav",
+      "output_relative": "sfx/SE07.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/SE08.wav",
+      "output_relative": "sfx/SE08.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE09.wav",
+      "output_relative": "sfx/SE09.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE10.wav",
+      "output_relative": "sfx/SE10.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE11.wav",
+      "output_relative": "sfx/SE11.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE12.wav",
+      "output_relative": "sfx/SE12.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE13.wav",
+      "output_relative": "sfx/SE13.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE14.wav",
+      "output_relative": "sfx/SE14.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE15.wav",
+      "output_relative": "sfx/SE15.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE16.wav",
+      "output_relative": "sfx/SE16.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE17.wav",
+      "output_relative": "sfx/SE17.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE18.wav",
+      "output_relative": "sfx/SE18.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE19.wav",
+      "output_relative": "sfx/SE19.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE20.wav",
+      "output_relative": "sfx/SE20.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE21.wav",
+      "output_relative": "sfx/SE21.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE22.wav",
+      "output_relative": "sfx/SE22.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE23.wav",
+      "output_relative": "sfx/SE23.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE24.wav",
+      "output_relative": "sfx/SE24.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE25.wav",
+      "output_relative": "sfx/SE25.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE26.wav",
+      "output_relative": "sfx/SE26.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE27.wav",
+      "output_relative": "sfx/SE27.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE28.wav",
+      "output_relative": "sfx/SE28.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/SE29.wav",
+      "output_relative": "sfx/SE29.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE30.wav",
+      "output_relative": "sfx/SE30.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE31.wav",
+      "output_relative": "sfx/SE31.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE32.wav",
+      "output_relative": "sfx/SE32.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE33.wav",
+      "output_relative": "sfx/SE33.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE34.wav",
+      "output_relative": "sfx/SE34.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE35.wav",
+      "output_relative": "sfx/SE35.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE36.wav",
+      "output_relative": "sfx/SE36.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE37.wav",
+      "output_relative": "sfx/SE37.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE38.wav",
+      "output_relative": "sfx/SE38.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE39.wav",
+      "output_relative": "sfx/SE39.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE40.wav",
+      "output_relative": "sfx/SE40.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE41.wav",
+      "output_relative": "sfx/SE41.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE42.wav",
+      "output_relative": "sfx/SE42.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE43.wav",
+      "output_relative": "sfx/SE43.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE44.wav",
+      "output_relative": "sfx/SE44.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE45.wav",
+      "output_relative": "sfx/SE45.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE46.wav",
+      "output_relative": "sfx/SE46.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE47.wav",
+      "output_relative": "sfx/SE47.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE48.wav",
+      "output_relative": "sfx/SE48.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE49.wav",
+      "output_relative": "sfx/SE49.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE50.wav",
+      "output_relative": "sfx/SE50.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/SE51.wav",
+      "output_relative": "sfx/SE51.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/UI01.wav",
+      "output_relative": "sfx/UI01.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI02.wav",
+      "output_relative": "sfx/UI02.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI03.wav",
+      "output_relative": "sfx/UI03.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI04.wav",
+      "output_relative": "sfx/UI04.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI05.wav",
+      "output_relative": "sfx/UI05.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI06.wav",
+      "output_relative": "sfx/UI06.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI07.wav",
+      "output_relative": "sfx/UI07.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI08.wav",
+      "output_relative": "sfx/UI08.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI09.wav",
+      "output_relative": "sfx/UI09.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI10.wav",
+      "output_relative": "sfx/UI10.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI11.wav",
+      "output_relative": "sfx/UI11.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI12.wav",
+      "output_relative": "sfx/UI12.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI13.wav",
+      "output_relative": "sfx/UI13.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI14.wav",
+      "output_relative": "sfx/UI14.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI15.wav",
+      "output_relative": "sfx/UI15.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI16.wav",
+      "output_relative": "sfx/UI16.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI17.wav",
+      "output_relative": "sfx/UI17.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI18.wav",
+      "output_relative": "sfx/UI18.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI19.wav",
+      "output_relative": "sfx/UI19.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI20.wav",
+      "output_relative": "sfx/UI20.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI21.wav",
+      "output_relative": "sfx/UI21.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI22.wav",
+      "output_relative": "sfx/UI22.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI23.wav",
+      "output_relative": "sfx/UI23.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI24.wav",
+      "output_relative": "sfx/UI24.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI25.wav",
+      "output_relative": "sfx/UI25.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI26.wav",
+      "output_relative": "sfx/UI26.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI27.wav",
+      "output_relative": "sfx/UI27.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI28.wav",
+      "output_relative": "sfx/UI28.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI29.wav",
+      "output_relative": "sfx/UI29.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI30.wav",
+      "output_relative": "sfx/UI30.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI31.wav",
+      "output_relative": "sfx/UI31.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI33.wav",
+      "output_relative": "sfx/UI33.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI35.wav",
+      "output_relative": "sfx/UI35.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI36.wav",
+      "output_relative": "sfx/UI36.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI37.wav",
+      "output_relative": "sfx/UI37.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI38.wav",
+      "output_relative": "sfx/UI38.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI39.wav",
+      "output_relative": "sfx/UI39.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI40.wav",
+      "output_relative": "sfx/UI40.opus",
+      "category": "sfx",
+      "profile": "opus-stereo"
+    },
+    {
+      "source_relative": "sfx/UI41.wav",
+      "output_relative": "sfx/UI41.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww051.wav",
+      "output_relative": "sfx/reconstructed/ww051.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww053.wav",
+      "output_relative": "sfx/reconstructed/ww053.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww077.wav",
+      "output_relative": "sfx/reconstructed/ww077.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww078.wav",
+      "output_relative": "sfx/reconstructed/ww078.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww079.wav",
+      "output_relative": "sfx/reconstructed/ww079.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww098.wav",
+      "output_relative": "sfx/reconstructed/ww098.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww101.wav",
+      "output_relative": "sfx/reconstructed/ww101.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww102.wav",
+      "output_relative": "sfx/reconstructed/ww102.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww137.wav",
+      "output_relative": "sfx/reconstructed/ww137.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    },
+    {
+      "source_relative": "sfx/reconstructed/ww154.wav",
+      "output_relative": "sfx/reconstructed/ww154.opus",
+      "category": "sfx",
+      "profile": "opus-mono"
+    }
+  ]
+}

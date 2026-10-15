@@ -94,6 +94,8 @@ export class EffectSound implements EffectSoundBackend<number> {
     this.shared.last = undefined;
   }
 
+  releaseResources(): void {this.generation++; this.clear(); this.sounds.clear();}
+
   dispose(): void {
     this.generation++;
     this.clear();

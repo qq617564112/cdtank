@@ -90,7 +90,7 @@ native fixture扩充为9个序列、44个逐步callback／state样本，覆盖�
 
 ## 队列生产状态对照与调度接入
 
-通知模块的`revive(roleId)`启动queue首条并在多条时注册5秒单次任务；`alternate(roleId,skillId)`停止匹配当前skill、选下一条（尾部回首）、取消旧计时并注册新计时。`advanceTimers(deltaSeconds)`按原scheduler使用float32输入与remaining，非正delta不推进；严格remaining<delta才轮换，恰好到0延后至下一次正delta。迭代取本次任务快照，回调创建的新任务从下次调用开始推进。缺角色／技能时保留queue并依照原函数条件继续计时。
+通知模块的`revive(roleId)`启动queue首条并在多条时注册5秒单次任务；`alternate(roleId,skillId)`停止匹配当前skill、选下一条（尾部回首）、取消旧计时并注册新计时。`advanceTimers(deltaSeconds)`按原scheduler使用float32输入与remaining，非正delta不推进；严格remaining<delta才轮换，恰好到0延后至下一次正delta。迭代用两个实例数组保留本次任务的角色 ID 和计时器引用，处理完成后清空；回调创建的新任务从下次调用开始推进。缺角色／技能时保留queue并依照原函数条件继续计时。
 
 `clearRole`先释放持续vector同role记录，再按原0x487edc查角色／actor并调用backend.resetRoleEffects，取消role任务，顺序停止／release全部queue record并删除分组。`clear`先清理持续vector，再按roleId升序释放各queue并取消任务；累计模拟步值不因清理重置，保持原0x48860e行为。backend的record.release对应记录释放，JS容器删除对应原vector／map释放。
 

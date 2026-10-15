@@ -1,5 +1,6 @@
 import {loadStaticJson} from '../assets/static-resources';
 import {loadAudioBuffer} from './audio-resources';
+import {listenForAudioInteraction} from './audio-interaction';
 
 interface SummarySoundCatalog {
   defaultSoundVolume: number;
@@ -43,11 +44,11 @@ export class BattleSummarySound {
       if (!this.disposed && this.awardLoop && !this.loopVoice) this.loopVoice = this.play(38, true);
     }).catch(() => {});
   };
+  private readonly removeInteraction: () => void;
 
   constructor(private readonly volume?: () => number | undefined) {
     this.gain.connect(this.context.destination);
-    window.addEventListener('pointerdown', this.interaction, true);
-    window.addEventListener('keydown', this.interaction, true);
+    this.removeInteraction = listenForAudioInteraction(this.interaction);
     this.interaction();
   }
 
@@ -107,8 +108,7 @@ export class BattleSummarySound {
     if (this.disposed) return;
     this.disposed = true;
     this.stop();
-    window.removeEventListener('pointerdown', this.interaction, true);
-    window.removeEventListener('keydown', this.interaction, true);
+    this.removeInteraction();
     this.gain.disconnect();
     void this.context.close();
   }

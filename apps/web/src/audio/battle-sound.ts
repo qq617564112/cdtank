@@ -4,6 +4,7 @@ import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 import {setSpatialListener} from './spatial-listener';
 import {loadStaticJson} from '../assets/static-resources';
 import {loadAudioBuffer} from './audio-resources';
+import {listenForAudioInteraction} from './audio-interaction';
 
 interface Position {x: number; y: number; z: number}
 interface Voice {
@@ -36,15 +37,19 @@ export class BattleSound {
   private generation = 0;
   private active = false;
   private volume?: number;
-  private listenerPosition: Position = {x: 0, y: 0, z: 0};
+  private readonly listenerPosition: Position = {x: 0, y: 0, z: 0};
+  private referenceDistance = NaN;
+  private maxDistance = NaN;
+  private rolloffFactor = NaN;
   private readonly interaction = (): void => {this.resume();};
+  private readonly removeInteraction: () => void;
 
   constructor() {
+    this.context = new AudioContext();
     this.status.hidden = true;
     this.status.dataset.sourceAudio = 'battle-sound';
     document.body.append(this.status);
-    window.addEventListener('pointerdown', this.interaction);
-    window.addEventListener('keydown', this.interaction);
+    this.removeInteraction = listenForAudioInteraction(this.interaction);
     this.publish();
   }
 
@@ -145,9 +150,16 @@ export class BattleSound {
 
   listener(position: Position, forward: Position, up: Position): void {
     if (!this.active || !this.context) return;
-    this.listenerPosition = {...position};
+    const {referenceDistance, maxDistance, rolloffFactor} = this.catalog!.battleKill.spatial;
+    const attenuationChanged = position.x !== this.listenerPosition.x || position.y !== this.listenerPosition.y ||
+      position.z !== this.listenerPosition.z || referenceDistance !== this.referenceDistance ||
+      maxDistance !== this.maxDistance || rolloffFactor !== this.rolloffFactor;
+    this.listenerPosition.x = position.x;
+    this.listenerPosition.y = position.y;
+    this.listenerPosition.z = position.z;
     setSpatialListener(this.context.listener, position, forward, up);
-    this.voices.forEach(voice => {this.attenuate(voice);});
+    this.referenceDistance = referenceDistance; this.maxDistance = maxDistance; this.rolloffFactor = rolloffFactor;
+    if (attenuationChanged) for (const voice of this.voices) this.attenuate(voice);
   }
 
   private attenuate(voice: Voice): void {
@@ -168,7 +180,7 @@ export class BattleSound {
   }
 
   private resume(): void {
-    if (!this.active || !this.context || this.context.state !== 'suspended') return;
+    if (!this.context || this.context.state !== 'suspended') return;
     void this.context.resume().then(() => {this.publish();}).catch(() => {this.publish();});
   }
 
@@ -190,8 +202,7 @@ export class BattleSound {
 
   dispose(): void {
     this.stop();
-    window.removeEventListener('pointerdown', this.interaction);
-    window.removeEventListener('keydown', this.interaction);
+    this.removeInteraction();
     this.gain?.disconnect();
     if (this.context) void this.context.close();
     this.gain = undefined;
