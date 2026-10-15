@@ -1,7 +1,7 @@
 import {battleArtworkUrl} from '../battle-artwork';
 import {Scene, ShaderMaterial, Texture} from '@babylonjs/core';
 import type {AbstractMesh} from '@babylonjs/core';
-import {loadStaticJson} from '../static-resources';
+import {loadEffectModelLibrary} from '../../render/effects/models/effect-model-resources';
 import {EffectModelRenderer, type EffectModelLibrary} from '../../render/effects/models/effect-model-renderer';
 import {orderSceneModels} from '../../render/scene-model-order';
 import type {HookPlacement} from './scene-hook';
@@ -27,7 +27,7 @@ export class SceneWaterFall {
 
   async load(path: string): Promise<void> {
     try {
-      const library = await loadStaticJson<WaterFallLibrary>(`/${path}`);
+      const library = await loadEffectModelLibrary(`/${path}`, this.scene) as WaterFallLibrary;
       if (this.disposed || this.scene.isDisposed) return;
       if (library.mapId !== '0016' || library.sourcePlacementId !== this.placement.id ||
         library.model !== this.placement.model || library.className !== this.placement.className) {
