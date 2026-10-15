@@ -344,7 +344,7 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, q
               {...controlProps} disabled={disabled || !local || !readyAvailable} data-waiting-ready="" aria-pressed={ready}
               aria-busy={requesting && !!local && readyAvailable || undefined}
               onClick={() => {void request(() => actions.ready(!ready), 'ready');}} />
-            <WaitingRoomButton ui={ui} layout={layout!} source="btnInvite" data-waiting-control="invite" aria-label="邀请大厅玩家加入房间" title="邀请大厅玩家加入房间"
+            {!snapshot.training && <WaitingRoomButton ui={ui} layout={layout!} source="btnInvite" data-waiting-control="invite" aria-label="邀请大厅玩家加入房间" title="邀请大厅玩家加入房间"
               {...controlProps} disabled={disabled || invited || snapshot.players.length >= (match.maxPlayers ?? 12)}
               aria-busy={requesting && !invited && snapshot.players.length < (match.maxPlayers ?? 12) || undefined}
               data-waiting-invite="" onClick={() => {
@@ -353,7 +353,7 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, q
                   const expiresAt = await actions.invite();
                   if (current === generation.current) setInviteUntil(expiresAt);
                 }, 'invite');
-              }} />
+              }} />}
             <WaitingRoomButton ui={ui} layout={layout!} source="btnClose" data-waiting-control="close" aria-label="退出房间" title="退出房间" {...controlProps}
               data-waiting-close="" onClick={() => {void request(() => actions.leave(), 'leave');}} />
           </SourceImageScale>}

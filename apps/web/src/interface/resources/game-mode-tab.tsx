@@ -4,13 +4,13 @@ import {useButtonInteraction} from './button-interaction';
 import {GameSurfaceTexture} from './game-surface-texture';
 import './game-mode-tab.css';
 
-export type GameMode = 1 | 2 | 3 | 4 | 5;
+export type GameMode = 1 | 2 | 3 | 4 | 5 | 6;
 
 const MODE_LABELS: Record<GameMode, string> = {
-  1: '团队模式', 2: '占领模式', 3: '擒王模式', 4: '混战模式', 5: '破坏模式',
+  1: '团队模式', 2: '占领模式', 3: '擒王模式', 4: '混战模式', 5: '破坏模式', 6: '训练模式',
 };
 const MODE_ICONS: Record<GameMode, string> = {
-  1: 'team', 2: 'conquer', 3: 'vip', 4: 'melee', 5: 'destroy',
+  1: 'team', 2: 'conquer', 3: 'vip', 4: 'melee', 5: 'destroy', 6: 'training',
 };
 
 interface GameModeTabProps extends ComponentPropsWithoutRef<'button'> {
@@ -26,6 +26,7 @@ export function GameModeTab({mode, selected, className = '', ...props}: GameMode
   const faceId = `${id}-face`;
   const active = selected || state === 'Pushed';
   const artwork = '/ui/map-selector/mode-tabs.svg';
+  const shape = mode === 6 ? 4 : mode;
   return <button {...buttonProps} ref={element} className={`game-mode-tab ${className}`}
     aria-label={props['aria-label'] ?? MODE_LABELS[mode]} aria-pressed={selected}
     data-game-mode={mode} data-mode-tab-active={active} data-source-button-state={state}>
@@ -43,8 +44,8 @@ export function GameModeTab({mode, selected, className = '', ...props}: GameMode
             <stop offset="1" stopColor="var(--mode-tab-bottom)"/>
           </linearGradient>
         </defs>
-        <use href={imageResourceUrl(`${artwork}#mode-${mode}`)} fill="#192b38" transform="translate(.6 1.7)"/>
-        <use href={imageResourceUrl(`${artwork}#mode-${mode}`)} fill={`url(#${faceId})`} stroke="#102225"
+        <use href={imageResourceUrl(`${artwork}#mode-${shape}`)} fill="#192b38" transform="translate(.6 1.7)"/>
+        <use href={imageResourceUrl(`${artwork}#mode-${shape}`)} fill={`url(#${faceId})`} stroke="#102225"
           strokeWidth="1.5" strokeLinejoin="round"/>
         <use href={imageResourceUrl(`${artwork}#pill-highlight`)} fill="#fffde6" opacity=".86"/>
         <use href={imageResourceUrl(`${artwork}#pill-bevel`)} fill="var(--mode-tab-bottom)"/>

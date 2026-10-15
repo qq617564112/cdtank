@@ -20,7 +20,7 @@ import {navigateGame, roomPath, useRouteDialog, useNavigationValue} from '../../
 import {useRoomDraft} from './use-room-draft';
 
 interface LobbyViewProps {validation?: boolean; artworkReady: boolean; chatContent?: ReactNode; playerContent?: ReactNode; headerContent?: ReactNode; battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; openInventory: () => void; openEquipment: () => void; openRoles: () => void; openShop: () => void; openHistory: () => void}
-const MODE_NAMES = ['团队', '占领', '擒王', '混战', '破坏'];
+const MODE_NAMES = ['团队', '占领', '擒王', '混战', '破坏', '训练'];
 const INITIAL_DRAFT: RoomCreateDraft = {mode: 1, mapId: 0, roomName: '一起对战', password: '', minPlayers: 1, maxPlayers: 1, friendlyFire: false};
 
 /** Lobby state owns ordinary controls and the original source layout dialogs. */
@@ -55,7 +55,8 @@ export function LobbyView({validation = false, artworkReady, chatContent, player
   const resetMap = (mode: number, mapId: number) => {
     const selected = maps.find(value => value.mode === mode && value.mapId === mapId);
     setDraft(value => ({...value, mode, mapId, minPlayers: selected?.sourceMinPlayers ?? 1,
-      maxPlayers: selected?.maxPlayers ?? 1, friendlyFire: mode <= 3 && value.friendlyFire}));
+      maxPlayers: selected?.maxPlayers ?? 1, password: mode === 6 ? '' : value.password,
+      friendlyFire: mode <= 3 && value.friendlyFire}));
   };
   useEffect(() => {
     let active = true;
@@ -139,7 +140,8 @@ export function LobbyView({validation = false, artworkReady, chatContent, player
   }), [battle, inBattle]);
 
   function startEntering() {
-    if (entering.current || inBattle) throw new Error('请先完成当前房间操作');
+    if (entering.current || inBattle || battle.inRoom || battle.isTraining) throw new Error('请先完成当前房间操作');
+    setInvitations([]);
     entering.current = true; setBusy(true); setMapOpen(false);
   }
   function finishEntering() {entering.current = false; setBusy(false);}
@@ -206,7 +208,7 @@ export function LobbyView({validation = false, artworkReady, chatContent, player
       chatContent={waiting ? undefined : chatContent} playerContent={playerContent}
       headerContent={!inBattle && !waiting ? headerContent : undefined}>
       {roomCards}
-      <RoomInvitations formal messages={invitations} ignore={id => setInvitations(current => current.filter(value => value.invitationId !== id))}
+      <RoomInvitations formal messages={inBattle || battle.isTraining ? [] : invitations} ignore={id => setInvitations(current => current.filter(value => value.invitationId !== id))}
         join={(message, password) => join(message.room.id, password)}/>
     </LobbySourcePage>}
     {validation && <div id="battle-controls" hidden={inBattle}>
@@ -271,7 +273,7 @@ export function LobbyView({validation = false, artworkReady, chatContent, player
         <button id="open-room-create-dialog" type="button" disabled={!createEnabled} onClick={() => {createOrigin.current = 'controls'; setCreateOpen(true);}}>原建房窗口</button>
         <button id="create-room" type="button" disabled={!createEnabled} onClick={() => report(createRoom(draft))}>创建并加入</button>
       </details>
-      <RoomInvitations messages={invitations} ignore={id => setInvitations(current => current.filter(value => value.invitationId !== id))}
+      <RoomInvitations messages={inBattle || battle.isTraining ? [] : invitations} ignore={id => setInvitations(current => current.filter(value => value.invitationId !== id))}
         join={(message, password) => join(message.room.id, password)}/>
     </div>}
     {validation && artworkReady && roomCards}

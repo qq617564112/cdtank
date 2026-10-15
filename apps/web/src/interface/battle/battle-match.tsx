@@ -290,7 +290,7 @@ export class BattleMatch {
     const result = snapshot.phase === 'FINISHED' ? match.result : undefined;
     const ownResult = result?.players.find(player => player.id === playerId);
     // Human account settlement is complete only when its committed receipt arrives.
-    const settlementReady = !!result && (!ownResult || ownResult.award !== undefined);
+    const settlementReady = !!result && (snapshot.training || !ownResult || ownResult.award !== undefined);
     if (result) {
       const own = result.players.find(player => player.id === playerId);
       const outcomes = {WIN: '胜利', LOSE: '失败', DRAW: '平局'};
@@ -312,7 +312,7 @@ export class BattleMatch {
     }
     // The waiting view needs room metadata and roster, never simulation coordinates.
     const waitingSnapshot: MsgRoomSnapshot | undefined = waiting ? {
-      roomId: snapshot.roomId, roomInfo: snapshot.roomInfo, mode: snapshot.mode,
+      roomId: snapshot.roomId, roomInfo: snapshot.roomInfo, mode: snapshot.mode, training: snapshot.training,
       phase: snapshot.phase, serverTime: 0, tick: 0, remaining: 0, bullets: [], teamScores: [], winnerTeam: -1,
       players: snapshot.players.map(player => ({
         id: player.id, name: player.name, team: player.team, tankId: player.tankId,

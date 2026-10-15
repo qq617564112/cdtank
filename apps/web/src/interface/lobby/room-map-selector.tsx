@@ -17,7 +17,7 @@ import {gamePageScale} from '../../platform/page-viewport';
 
 const MODES = [
   ['rdoTeamMode', 1], ['rdoConquerMode', 2], ['rdoVIPMode', 3],
-  ['rdoMeleeMode', 4], ['rdoDestroyMode', 5],
+  ['rdoMeleeMode', 4], ['rdoDestroyMode', 5], ['rdoTrainingMode', 6],
 ] as const;
 interface RoomMapSelectorProps {
   open: boolean; close(): void; maps: readonly MapOption[]; busy: boolean;
@@ -27,9 +27,11 @@ interface RoomMapSelectorProps {
 
 export function RoomMapSelector({open, close, maps, busy, initialMode, initialMapId, confirm, closeOnConfirm = true}: RoomMapSelectorProps) {
   const prefix = closeOnConfirm ? 'createMap' : 'editMap';
-  const [modeValue, setModeValue] = useNavigationChoice(`${prefix}Mode`, ['1', '2', '3', '4', '5'], String(initialMode) as '1' | '2' | '3' | '4' | '5', true);
+  const [modeValue, setModeValue] = useNavigationChoice(`${prefix}Mode`, ['1', '2', '3', '4', '5', '6'], String(initialMode) as '1' | '2' | '3' | '4' | '5' | '6', true);
   const mode = Number(modeValue);
-  const setMode = (value: number): void => setModeValue(String(value) as '1' | '2' | '3' | '4' | '5');
+  const setMode = (value: number): void => setModeValue(String(value) as '1' | '2' | '3' | '4' | '5' | '6');
+  const trainingAvailable = maps.some(map => map.mode === 6);
+  const modes = MODES.filter(([, value]) => value !== 6 || trainingAvailable);
   const [pageValue, setPage] = useNavigationNumber(`${prefix}Page`, true);
   const page = pageValue ?? Math.max(0, Math.floor(maps.filter(map => map.mode === mode).findIndex(map => map.mapId === initialMapId) / 8));
   const [status, setStatus] = useState('');
@@ -88,7 +90,9 @@ export function RoomMapSelector({open, close, maps, busy, initialMode, initialMa
           disabled={busy || state.page + 1 >= state.pages} onClick={() => setPage(state.page + 1)}/>
       </GameDialogFootbar>
       {ui && layout && icon && <>
-        {MODES.map(([name, value]) => <GameModeTab key={name} {...place(name)}
+        {modes.map(([name, value], index) => <GameModeTab key={name}
+          {...place(value === 6 ? 'rdoMeleeMode' : name)}
+          style={trainingAvailable ? {...place('rdoTeamMode').style, left: 8 + index * 109, width: 109} : place(name).style}
           className="map-selector-mode" mode={value} selected={mode === value}
           data-map-selector-mode={value} disabled={busy || !maps.some(map => map.mode === value)}
           onClick={() => {setMode(value); setPage(0); setStatus('');}}/>)}

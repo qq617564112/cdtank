@@ -358,6 +358,8 @@ export interface RoomInfoSnapshot {
 }
 
 export interface MsgRoomSnapshot {
+  /** Local training snapshots are produced by the browser worker. */
+  training?: boolean;
   roomInfo?: RoomInfoSnapshot;
   roomId: string;
   mode: number;

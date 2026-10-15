@@ -17,10 +17,11 @@ export class RoomFeed {
 
   constructor(client: WsClient<ServiceType>, private readonly callbacks: RoomFeedCallbacks) {
     client.listenMsg('RoomSnapshot', snapshot => {this.receive(snapshot);});
-    client.listenMsg('RoomEvent', event => {
-      if (event.roomId !== this.currentRoomId) return;
-      callbacks.event(event, this.currentSnapshot);
-    });
+    client.listenMsg('RoomEvent', event => {this.receiveEvent(event);});
+  }
+
+  receiveEvent(event: MsgRoomEvent): void {
+    if (event.roomId === this.currentRoomId) this.callbacks.event(event, this.currentSnapshot);
   }
 
   receive(snapshot: MsgRoomSnapshot): void {

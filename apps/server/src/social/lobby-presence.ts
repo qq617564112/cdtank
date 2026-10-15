@@ -7,7 +7,8 @@ export function registerLobbyPresenceApi(server: WsServer<ServiceType>,
   accountByConnection: ReadonlyMap<string, string>,
   sessionByConnection: ReadonlyMap<string, {roomId: string; playerId: string}>,
   displayName: (accountId: string) => string,
-  currentTitle: (accountId: string) => PlayerTitle | undefined): void {
+  currentTitle: (accountId: string) => PlayerTitle | undefined,
+  isTraining: (connectionId: string) => boolean = () => false): void {
   server.implementApi('LobbyPlayers', async call => {
     if (!accountByConnection.has(call.conn.id)) {
       return call.error('请先登录账户', {code: 'ACCOUNT_REQUIRED'});
@@ -18,7 +19,7 @@ export function registerLobbyPresenceApi(server: WsServer<ServiceType>,
     const ids = new Set<string>();
     for (const connection of server.connections) {
       const accountId = accountByConnection.get(connection.id);
-      if (accountId && !sessionByConnection.has(connection.id)) ids.add(accountId);
+      if (accountId && !sessionByConnection.has(connection.id) && !isTraining(connection.id)) ids.add(accountId);
     }
     const players = [...ids].sort().map(accountId => ({accountId,
       name: displayName(accountId), title: currentTitle(accountId)}));

@@ -30,7 +30,7 @@ interface RoomCreateDialogProps {
   submit(draft: RoomCreateDraft, passwordAction?: RoomPasswordAction): Promise<void>;
 }
 
-const MODE_NAMES = ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'];
+const MODE_NAMES = ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式', '训练模式'];
 
 export function RoomCreateDialog({open, close, initialDraft, map, submit, editing = false,
   initialPasswordAction = 'KEEP', changeMap}: RoomCreateDialogProps) {
@@ -128,7 +128,7 @@ export function RoomCreateDialog({open, close, initialDraft, map, submit, editin
             aria-label="房间名称" value={draft.roomName} disabled={pending}
             onFocus={() => {lastInput.current = 'name';}} {...nameLimit}/>
         </RoomCreateCard>
-        <RoomCreateCard shape="strip" className="room-create-field">
+        {draft.mode !== 6 && <RoomCreateCard shape="strip" className="room-create-field">
           {editing ? <select className="room-edit-password-action" aria-label="密码操作" value={passwordAction}
             disabled={pending} onChange={event => setPasswordAction(event.target.value as RoomPasswordAction)}>
             <option value="KEEP">保持密码</option><option value="REPLACE">修改密码</option><option value="CLEAR">取消密码</option>
@@ -141,7 +141,7 @@ export function RoomCreateDialog({open, close, initialDraft, map, submit, editin
             placeholder={editing ? passwordAction === 'KEEP' ? '保持当前密码'
               : passwordAction === 'CLEAR' ? '不设密码' : '请输入新密码' : undefined}
             onFocus={() => {lastInput.current = 'password';}} {...passwordLimit}/>
-        </RoomCreateCard>
+        </RoomCreateCard>}
       </RoomCreateCard>
       <RoomCreateCard shape="rules">
         <h3 className="room-create-rules-title">地图规则</h3>

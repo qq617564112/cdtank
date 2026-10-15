@@ -29,7 +29,7 @@ export function RoomEditDialog({snapshot, maps, editor, close}: RoomEditDialogPr
   const setSelecting = (value: boolean): void => setStep(value ? 'map' : 'settings');
   const [passwordAction, setPasswordAction] = useState<RoomPasswordAction>('KEEP');
   const [draft, setDraft] = useRoomDraft({
-    mode: snapshot.mode, mapId: snapshot.roomInfo!.mapId,
+    mode: snapshot.training ? 6 : snapshot.mode, mapId: snapshot.roomInfo!.mapId,
     roomName: waitingRoomCustomName(snapshot), password: '',
     minPlayers: snapshot.match!.minPlayers, maxPlayers: snapshot.match!.maxPlayers!,
     friendlyFire: !!snapshot.match!.friendlyFire,

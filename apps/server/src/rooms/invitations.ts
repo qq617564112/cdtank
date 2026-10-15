@@ -5,7 +5,8 @@ import type {RoomWorld as World} from './world-interface';
 
 /** Rebuilt untargeted recruitment: only authenticated lobby connections receive it. */
 export function registerRoomInvitations(server: WsServer<ServiceType>, world: World,
-  accounts: ReadonlyMap<string,string>, sessions: ReadonlyMap<string,{roomId:string;playerId:string}>): void {
+  accounts: ReadonlyMap<string,string>, sessions: ReadonlyMap<string,{roomId:string;playerId:string}>,
+  isTraining: (connectionId: string) => boolean = () => false): void {
   const cooldowns = new Map<string,number>();
   server.flows.postDisconnectFlow.push(input => {cooldowns.delete(input.conn.id); return input;});
   server.implementApi('RoomInvite', async call => {
@@ -22,7 +23,8 @@ export function registerRoomInvitations(server: WsServer<ServiceType>, world: Wo
     if ((cooldowns.get(call.conn.id) ?? 0) > now) {
       return call.error('请稍后再次邀请', {code:'INVITE_COOLDOWN'});
     }
-    const recipients = server.connections.filter(conn => accounts.has(conn.id) && !sessions.has(conn.id));
+    const recipients = server.connections.filter(conn => accounts.has(conn.id)
+      && !sessions.has(conn.id) && !isTraining(conn.id));
     if (!recipients.length) return call.error('当前没有可邀请的大厅玩家', {code:'INVITE_EMPTY'});
     const invitationId = randomUUID(), expiresAt = now + 30000;
     cooldowns.set(call.conn.id, expiresAt);

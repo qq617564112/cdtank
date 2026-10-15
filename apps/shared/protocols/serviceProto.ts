@@ -20,18 +20,18 @@ import { ReqChangeTeam, ResChangeTeam } from './PtlChangeTeam';
 import { ReqChannel, ResChannel } from './PtlChannel';
 import { ReqCpu, ResCpu } from './PtlCpu';
 import { ReqCreateRoom, ResCreateRoom } from './PtlCreateRoom';
-import { ReqEditRoom, ResEditRoom } from './PtlEditRoom';
-import { ReqKickRoomPlayer, ResKickRoomPlayer } from './PtlKickRoomPlayer';
 import { ReqDisplayName, ResDisplayName } from './PtlDisplayName';
+import { ReqEditRoom, ResEditRoom } from './PtlEditRoom';
 import { ReqEquipment, ResEquipment } from './PtlEquipment';
-import { ReqFriendChat, ResFriendChat } from './PtlFriendChat';
 import { ReqFamily, ResFamily } from './PtlFamily';
 import { ReqFamilyChat, ResFamilyChat } from './PtlFamilyChat';
-import { ReqGmSupport, ResGmSupport } from './PtlGmSupport';
+import { ReqFriendChat, ResFriendChat } from './PtlFriendChat';
 import { ReqFriends, ResFriends } from './PtlFriends';
+import { ReqGmSupport, ResGmSupport } from './PtlGmSupport';
 import { ReqHistory, ResHistory } from './PtlHistory';
 import { ReqInventory, ResInventory } from './PtlInventory';
 import { ReqJoin, ResJoin } from './PtlJoin';
+import { ReqKickRoomPlayer, ResKickRoomPlayer } from './PtlKickRoomPlayer';
 import { ReqKitbag, ResKitbag } from './PtlKitbag';
 import { ReqLeave, ResLeave } from './PtlLeave';
 import { ReqListMaps, ResListMaps } from './PtlListMaps';
@@ -60,9 +60,10 @@ import { ReqShop, ResShop } from './PtlShop';
 import { ReqStackItemSale, ResStackItemSale } from './PtlStackItemSale';
 import { ReqTankMaintenance, ResTankMaintenance } from './PtlTankMaintenance';
 import { ReqTankShop, ResTankShop } from './PtlTankShop';
-import { ReqTankUpgrade, ResTankUpgrade } from './PtlTankUpgrade';
 import { ReqTankTextures, ResTankTextures } from './PtlTankTextures';
+import { ReqTankUpgrade, ResTankUpgrade } from './PtlTankUpgrade';
 import { ReqTrade, ResTrade } from './PtlTrade';
+import { ReqTrainingPresence, ResTrainingPresence } from './PtlTrainingPresence';
 import { ReqValuableItemSale, ResValuableItemSale } from './PtlValuableItemSale';
 
 export interface ServiceType {
@@ -95,25 +96,17 @@ export interface ServiceType {
             req: ReqCreateRoom,
             res: ResCreateRoom
         },
-        "KickRoomPlayer": {
-            req: ReqKickRoomPlayer,
-            res: ResKickRoomPlayer
+        "DisplayName": {
+            req: ReqDisplayName,
+            res: ResDisplayName
         },
         "EditRoom": {
             req: ReqEditRoom,
             res: ResEditRoom
         },
-        "DisplayName": {
-            req: ReqDisplayName,
-            res: ResDisplayName
-        },
         "Equipment": {
             req: ReqEquipment,
             res: ResEquipment
-        },
-        "FriendChat": {
-            req: ReqFriendChat,
-            res: ResFriendChat
         },
         "Family": {
             req: ReqFamily,
@@ -123,13 +116,17 @@ export interface ServiceType {
             req: ReqFamilyChat,
             res: ResFamilyChat
         },
-        "GmSupport": {
-            req: ReqGmSupport,
-            res: ResGmSupport
+        "FriendChat": {
+            req: ReqFriendChat,
+            res: ResFriendChat
         },
         "Friends": {
             req: ReqFriends,
             res: ResFriends
+        },
+        "GmSupport": {
+            req: ReqGmSupport,
+            res: ResGmSupport
         },
         "History": {
             req: ReqHistory,
@@ -142,6 +139,10 @@ export interface ServiceType {
         "Join": {
             req: ReqJoin,
             res: ResJoin
+        },
+        "KickRoomPlayer": {
+            req: ReqKickRoomPlayer,
+            res: ResKickRoomPlayer
         },
         "Kitbag": {
             req: ReqKitbag,
@@ -255,17 +256,21 @@ export interface ServiceType {
             req: ReqTankShop,
             res: ResTankShop
         },
-        "TankUpgrade": {
-            req: ReqTankUpgrade,
-            res: ResTankUpgrade
-        },
         "TankTextures": {
             req: ReqTankTextures,
             res: ResTankTextures
         },
+        "TankUpgrade": {
+            req: ReqTankUpgrade,
+            res: ResTankUpgrade
+        },
         "Trade": {
             req: ReqTrade,
             res: ResTrade
+        },
+        "TrainingPresence": {
+            req: ReqTrainingPresence,
+            res: ResTrainingPresence
         },
         "ValuableItemSale": {
             req: ReqValuableItemSale,
@@ -291,26 +296,26 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 124,
+    "version": 125,
     "services": [
-        {
-            "id": 55,
-            "name": "KickRoomPlayer",
-            "type": "api"
-        },
-        {
-            "id": 54,
-            "name": "EditRoom",
-            "type": "api"
-        },
         {
             "id": 0,
             "name": "Chat",
             "type": "msg"
         },
         {
+            "id": 63,
+            "name": "FamilyChat",
+            "type": "msg"
+        },
+        {
             "id": 40,
             "name": "FriendChat",
+            "type": "msg"
+        },
+        {
+            "id": 60,
+            "name": "GmReply",
             "type": "msg"
         },
         {
@@ -404,8 +409,23 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "api"
         },
         {
+            "id": 54,
+            "name": "EditRoom",
+            "type": "api"
+        },
+        {
             "id": 21,
             "name": "Equipment",
+            "type": "api"
+        },
+        {
+            "id": 61,
+            "name": "Family",
+            "type": "api"
+        },
+        {
+            "id": 62,
+            "name": "FamilyChat",
             "type": "api"
         },
         {
@@ -416,6 +436,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
         {
             "id": 38,
             "name": "Friends",
+            "type": "api"
+        },
+        {
+            "id": 59,
+            "name": "GmSupport",
             "type": "api"
         },
         {
@@ -431,6 +456,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
         {
             "id": 6,
             "name": "Join",
+            "type": "api"
+        },
+        {
+            "id": 55,
+            "name": "KickRoomPlayer",
             "type": "api"
         },
         {
@@ -499,6 +529,16 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "api"
         },
         {
+            "id": 57,
+            "name": "PlayerProfile",
+            "type": "api"
+        },
+        {
+            "id": 64,
+            "name": "PlayerSearch",
+            "type": "api"
+        },
+        {
             "id": 8,
             "name": "QuickMatch",
             "type": "api"
@@ -564,18 +604,13 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "api"
         },
         {
-            "id": 56,
-            "name": "TankUpgrade",
-            "type": "api"
-        },
-        {
-            "id": 57,
-            "name": "PlayerProfile",
-            "type": "api"
-        },
-        {
             "id": 23,
             "name": "TankTextures",
+            "type": "api"
+        },
+        {
+            "id": 56,
+            "name": "TankUpgrade",
             "type": "api"
         },
         {
@@ -584,38 +619,13 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "api"
         },
         {
+            "id": 65,
+            "name": "TrainingPresence",
+            "type": "api"
+        },
+        {
             "id": 58,
             "name": "ValuableItemSale",
-            "type": "api"
-        },
-        {
-            "id": 59,
-            "name": "GmSupport",
-            "type": "api"
-        },
-        {
-            "id": 60,
-            "name": "GmReply",
-            "type": "msg"
-        },
-        {
-            "id": 61,
-            "name": "Family",
-            "type": "api"
-        },
-        {
-            "id": 62,
-            "name": "FamilyChat",
-            "type": "api"
-        },
-        {
-            "id": 63,
-            "name": "FamilyChat",
-            "type": "msg"
-        },
-        {
-            "id": 64,
-            "name": "PlayerSearch",
             "type": "api"
         }
     ],
@@ -636,62 +646,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "String"
                     }
-                }
-            ]
-        },
-        "MsgFriendChat/MsgFriendChat": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "id",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "accountId",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "senderName",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "text",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "message",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "roomId",
-                    "type": {
-                        "type": "String"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 6,
-                    "name": "round",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
                 }
             ]
         },
@@ -765,6 +719,62 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
+        "MsgFriendChat/MsgFriendChat": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "id",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "accountId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "senderName",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "text",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "message",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "roomId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 6,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
+        },
         "MsgGmReply/MsgGmReply": {
             "type": "Interface",
             "properties": [
@@ -781,6 +791,53 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Reference",
                         "target": "PtlGmSupport/GmSupportReply"
+                    }
+                }
+            ]
+        },
+        "PtlGmSupport/GmSupportReply": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "id",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "requestId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "question",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "requestedAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "text",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "repliedAt",
+                    "type": {
+                        "type": "Number"
                     }
                 }
             ]
@@ -876,6 +933,20 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "Interface",
             "properties": [
                 {
+                    "id": 4,
+                    "name": "roomId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
                     "id": 0,
                     "name": "sequence",
                     "type": {
@@ -899,20 +970,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 3,
                     "name": "clientTime",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "roomId",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "round",
                     "type": {
                         "type": "Number"
                     }
@@ -1555,6 +1612,135 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
+        "MsgRoomSnapshot/GroundItemSnapshot": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "id",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "itemTableId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "quantity",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "modelId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "texture",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "A"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "B"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "soundId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "effectId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "x",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "y",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 9,
+                    "name": "z",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 10,
+                    "name": "source",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "BREACH"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "DISCARD"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 11,
+                    "name": "ownerId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 12,
+                    "name": "createdAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
         "MsgRoomInvitation/MsgRoomInvitation": {
             "type": "Interface",
             "properties": [
@@ -1681,6 +1867,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
         "MsgRoomSnapshot/MsgRoomSnapshot": {
             "type": "Interface",
             "properties": [
+                {
+                    "id": 12,
+                    "name": "training",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
                 {
                     "id": 11,
                     "name": "roomInfo",
@@ -1996,6 +2190,65 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     }
                 },
                 {
+                    "id": 42,
+                    "name": "movement",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "speed",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "turn",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "tankType",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 3,
+                                "name": "original",
+                                "type": {
+                                    "type": "Boolean"
+                                }
+                            },
+                            {
+                                "id": 4,
+                                "name": "canMove",
+                                "type": {
+                                    "type": "Boolean"
+                                }
+                            },
+                            {
+                                "id": 5,
+                                "name": "canTurn",
+                                "type": {
+                                    "type": "Boolean"
+                                }
+                            },
+                            {
+                                "id": 6,
+                                "name": "command",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
                     "id": 9,
                     "name": "hp",
                     "type": {
@@ -2036,6 +2289,22 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Number"
                     }
+                },
+                {
+                    "id": 46,
+                    "name": "catsInfo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 47,
+                    "name": "dogsInfo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 },
                 {
                     "id": 15,
@@ -2361,6 +2630,63 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
+                    "id": 44,
+                    "name": "respawnProtection",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "skillId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "expiresAt",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 40,
+                    "name": "opticalCamouflage",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "skillId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "expiresAt",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 41,
+                    "name": "roleDisguise",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/RoleDisguiseSnapshot"
+                    },
+                    "optional": true
+                },
+                {
                     "id": 36,
                     "name": "trapRestraint",
                     "type": {
@@ -2546,127 +2872,11 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
-                    "id": 40,
-                    "name": "opticalCamouflage",
-                    "type": {
-                        "type": "Interface",
-                        "properties": [
-                            {
-                                "id": 0,
-                                "name": "skillId",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "name": "expiresAt",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            }
-                        ]
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 41,
-                    "name": "roleDisguise",
-                    "type": {
-                        "type": "Reference",
-                        "target": "MsgRoomSnapshot/RoleDisguiseSnapshot"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 42,
-                    "name": "movement",
-                    "type": {
-                        "type": "Interface",
-                        "properties": [
-                            {
-                                "id": 0,
-                                "name": "speed",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "name": "turn",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            },
-                            {
-                                "id": 2,
-                                "name": "tankType",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            },
-                            {
-                                "id": 3,
-                                "name": "original",
-                                "type": {
-                                    "type": "Boolean"
-                                }
-                            },
-                            {
-                                "id": 4,
-                                "name": "canMove",
-                                "type": {
-                                    "type": "Boolean"
-                                }
-                            },
-                            {
-                                "id": 5,
-                                "name": "canTurn",
-                                "type": {
-                                    "type": "Boolean"
-                                }
-                            },
-                            {
-                                "id": 6,
-                                "name": "command",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            }
-                        ]
-                    },
-                    "optional": true
-                },
-                {
                     "id": 43,
                     "name": "title",
                     "type": {
                         "type": "Reference",
                         "target": "MsgRoomSnapshot/PlayerTitle"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 44,
-                    "name": "respawnProtection",
-                    "type": {
-                        "type": "Interface",
-                        "properties": [
-                            {
-                                "id": 0,
-                                "name": "skillId",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "name": "expiresAt",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            }
-                        ]
                     },
                     "optional": true
                 },
@@ -2679,22 +2889,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
-                    "id": 46,
-                    "name": "catsInfo",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 47,
-                    "name": "dogsInfo",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
                     "id": 48,
                     "name": "decoration",
                     "type": {
@@ -2702,18 +2896,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "target": "MsgRoomSnapshot/TankDecorationSnapshot"
                     },
                     "optional": true
-                }
-            ]
-        },
-        "MsgRoomSnapshot/TankDecorationSnapshot": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "itemTableId",
-                    "type": {
-                        "type": "Number"
-                    }
                 }
             ]
         },
@@ -2763,6 +2945,107 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 2,
                     "name": "quantity",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/RoleDisguiseSnapshot": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "skillId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "style",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 1
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": 2
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "startedAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "expiresAt",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "x",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "y",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "z",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/PlayerTitle": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "id",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/TankDecorationSnapshot": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "itemTableId",
                     "type": {
                         "type": "Number"
                     }
@@ -2841,17 +3124,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "Interface",
             "properties": [
                 {
-                    "id": 15,
-                    "name": "loadedPlayerIds",
-                    "type": {
-                        "type": "Array",
-                        "elementType": {
-                            "type": "String"
-                        }
-                    },
-                    "optional": true
-                },
-                {
                     "id": 10,
                     "name": "friendlyFire",
                     "type": {
@@ -2875,6 +3147,17 @@ export const serviceProto: ServiceProto<ServiceType> = {
                             "type": "String"
                         }
                     }
+                },
+                {
+                    "id": 15,
+                    "name": "loadedPlayerIds",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "String"
+                        }
+                    },
+                    "optional": true
                 },
                 {
                     "id": 2,
@@ -2962,15 +3245,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
-                    "id": 18,
-                    "name": "animatedBlockers",
-                    "type": {"type": "Array", "elementType": {"type": "Interface", "properties": [
-                        {"id": 0, "name": "id", "type": {"type": "String"}},
-                        {"id": 1, "name": "cells", "type": {"type": "Array", "elementType": {"type": "Number"}}}
-                    ]}},
-                    "optional": true
-                },
-                {
                     "id": 14,
                     "name": "scenePlants",
                     "type": {
@@ -2978,6 +3252,36 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "elementType": {
                             "type": "Reference",
                             "target": "MsgRoomSnapshot/ScenePlantSnapshot"
+                        }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 18,
+                    "name": "animatedBlockers",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Interface",
+                            "properties": [
+                                {
+                                    "id": 0,
+                                    "name": "id",
+                                    "type": {
+                                        "type": "String"
+                                    }
+                                },
+                                {
+                                    "id": 1,
+                                    "name": "cells",
+                                    "type": {
+                                        "type": "Array",
+                                        "elementType": {
+                                            "type": "Number"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "optional": true
@@ -2991,23 +3295,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                             "type": "Reference",
                             "target": "MsgRoomSnapshot/GroundTrapSnapshot"
                         }
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 7,
-                    "name": "result",
-                    "type": {
-                        "type": "Reference",
-                        "target": "MsgRoomSnapshot/MatchResult"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 8,
-                    "name": "cpuManagerId",
-                    "type": {
-                        "type": "String"
                     },
                     "optional": true
                 },
@@ -3029,13 +3316,33 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Array",
                         "elementType": {
-                            "type": "Pick",
                             "target": {
                                 "type": "Reference",
                                 "target": "MsgRoomSnapshot/GroundItemSnapshot"
                             },
-                            "keys": ["modelId", "texture"]
+                            "keys": [
+                                "modelId",
+                                "texture"
+                            ],
+                            "type": "Pick"
                         }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 7,
+                    "name": "result",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/MatchResult"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 8,
+                    "name": "cpuManagerId",
+                    "type": {
+                        "type": "String"
                     },
                     "optional": true
                 }
@@ -3216,20 +3523,41 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     }
                 },
                 {
-                    "id": 9,
-                    "name": "castleAnimation",
-                    "type": {"type": "Interface", "properties": [
-                        {"id": 0, "name": "action", "type": {"type": "String"}},
-                        {"id": 1, "name": "startedAt", "type": {"type": "Number"}},
-                        {"id": 2, "name": "stopAtEnd", "type": {"type": "Boolean"}}
-                    ]},
-                    "optional": true
-                },
-                {
                     "id": 8,
                     "name": "destroyedAt",
                     "type": {
                         "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "castleAnimation",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "action",
+                                "type": {
+                                    "type": "String"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "startedAt",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "stopAtEnd",
+                                "type": {
+                                    "type": "Boolean"
+                                }
+                            }
+                        ]
                     },
                     "optional": true
                 }
@@ -3383,135 +3711,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
-        "MsgRoomSnapshot/GroundItemSnapshot": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "id",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "itemTableId",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "quantity",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "modelId",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "texture",
-                    "type": {
-                        "type": "Union",
-                        "members": [
-                            {
-                                "id": 0,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "A"
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "B"
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "soundId",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 6,
-                    "name": "effectId",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 7,
-                    "name": "x",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 8,
-                    "name": "y",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 9,
-                    "name": "z",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 10,
-                    "name": "source",
-                    "type": {
-                        "type": "Union",
-                        "members": [
-                            {
-                                "id": 0,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "BREACH"
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "DISCARD"
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "id": 11,
-                    "name": "ownerId",
-                    "type": {
-                        "type": "String"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 12,
-                    "name": "createdAt",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
         "MsgRoomSnapshot/MatchResult": {
             "type": "Interface",
             "properties": [
@@ -3604,6 +3803,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     }
                 },
                 {
+                    "id": 14,
+                    "name": "petId",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
                     "id": 2,
                     "name": "team",
                     "type": {
@@ -3630,6 +3837,22 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Number"
                     }
+                },
+                {
+                    "id": 15,
+                    "name": "catsInfo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 16,
+                    "name": "dogsInfo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 },
                 {
                     "id": 6,
@@ -3718,10 +3941,283 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         }
                     },
                     "optional": true
+                }
+            ]
+        },
+        "MsgRoomSnapshot/ResultAward": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "money",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "coin",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "originality",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "tech",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "rankPoints",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "levelBefore",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "levelAfter",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "expPercent",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "grantedTitles",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "MsgRoomSnapshot/PlayerTitle"
+                        }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "rankPointsBefore",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 10,
+                    "name": "grantedItems",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "MsgRoomSnapshot/ResultItemGrant"
+                        }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 11,
+                    "name": "grantedTanks",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "MsgRoomSnapshot/ResultTankGrant"
+                        }
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "MsgRoomSnapshot/ResultItemGrant": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "itemTableId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "iconId",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/ResultTankGrant": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "instanceId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "tankId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/RoundStats": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "shots",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "hits",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "damage",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "damageTaken",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "killCombo",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "friendlyFireDamage",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "healing",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "rearDamage",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "vipDamage",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "bunkerDamage",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 10,
+                    "name": "shotHits",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 11,
+                    "name": "missesThenKill",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 12,
+                    "name": "consecutiveShotKills",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 13,
+                    "name": "openingDeaths",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 },
                 {
                     "id": 14,
-                    "name": "petId",
+                    "name": "maxKillsAgainstOpponent",
                     "type": {
                         "type": "Number"
                     },
@@ -3729,19 +4225,142 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 },
                 {
                     "id": 15,
-                    "name": "catsInfo",
+                    "name": "killedOpponentIds",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "String"
+                        }
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 16,
+                    "name": "killedAllOpponents",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 17,
+                    "name": "oneKillBehindWinner",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 18,
+                    "name": "completedRound",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 19,
+                    "name": "maxMissesBeforeShotKill",
                     "type": {
                         "type": "Number"
                     },
                     "optional": true
                 },
                 {
-                    "id": 16,
-                    "name": "dogsInfo",
+                    "id": 20,
+                    "name": "maxConsecutiveShotKills",
                     "type": {
                         "type": "Number"
                     },
                     "optional": true
+                }
+            ]
+        },
+        "MsgRoomSnapshot/RoundAward": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "type",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/AwardType"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "score",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "MsgRoomSnapshot/AwardType": {
+            "type": "Union",
+            "members": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "perfect"
+                    }
+                },
+                {
+                    "id": 1,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "mvp"
+                    }
+                },
+                {
+                    "id": 2,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "savage"
+                    }
+                },
+                {
+                    "id": 3,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "console"
+                    }
+                },
+                {
+                    "id": 4,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "brave"
+                    }
+                },
+                {
+                    "id": 5,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "kind"
+                    }
+                },
+                {
+                    "id": 6,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "crafty"
+                    }
+                },
+                {
+                    "id": 7,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "shy"
+                    }
+                },
+                {
+                    "id": 8,
+                    "type": {
+                        "type": "Literal",
+                        "literal": "greedy"
+                    }
                 }
             ]
         },
@@ -4862,6 +5481,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
+                    "id": 5,
+                    "name": "team",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
                     "id": 4,
                     "name": "loadout",
                     "type": {
@@ -4870,14 +5497,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                             "type": "Reference",
                             "target": "PtlCpu/CpuLoadoutItem"
                         }
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 5,
-                    "name": "team",
-                    "type": {
-                        "type": "Number"
                     },
                     "optional": true
                 }
@@ -4898,126 +5517,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "playerId",
                     "type": {
                         "type": "String"
-                    }
-                }
-            ]
-        },
-        "PtlKickRoomPlayer/ReqKickRoomPlayer": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "round",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "playerId",
-                    "type": {
-                        "type": "String"
-                    }
-                }
-            ]
-        },
-        "PtlKickRoomPlayer/ResKickRoomPlayer": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "round",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "playerId",
-                    "type": {
-                        "type": "String"
-                    }
-                }
-            ]
-        },
-        "PtlEditRoom/ReqEditRoom": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "round",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "mode",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "mapId",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "roomName",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "minPlayers",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "maxPlayers",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 6,
-                    "name": "friendlyFire",
-                    "type": {
-                        "type": "Boolean"
-                    }
-                },
-                {
-                    "id": 7,
-                    "name": "password",
-                    "type": {
-                        "type": "String"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 8,
-                    "name": "timeLimitSeconds",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                }
-            ]
-        },
-        "PtlEditRoom/ResEditRoom": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "round",
-                    "type": {
-                        "type": "Number"
                     }
                 }
             ]
@@ -5248,6 +5747,88 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "name",
                     "type": {
                         "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlEditRoom/ReqEditRoom": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "mode",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "mapId",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "roomName",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "minPlayers",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "maxPlayers",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "friendlyFire",
+                    "type": {
+                        "type": "Boolean"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "timeLimitSeconds",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 7,
+                    "name": "password",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlEditRoom/ResEditRoom": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
                     }
                 }
             ]
@@ -5486,54 +6067,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
-        "PtlFriendChat/ReqFriendChat": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "text",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "roomId",
-                    "type": {
-                        "type": "String"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 2,
-                    "name": "round",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                }
-            ]
-        },
-        "PtlFriendChat/ResFriendChat": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "message",
-                    "type": {
-                        "type": "Reference",
-                        "target": "MsgFriendChat/MsgFriendChat"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "recipientCount",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
         "PtlFamily/ReqFamily": {
             "type": "Interface"
         },
@@ -5610,6 +6143,54 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Reference",
                         "target": "MsgFamilyChat/MsgFamilyChat"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "recipientCount",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "PtlFriendChat/ReqFriendChat": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "text",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "roomId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 2,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlFriendChat/ResFriendChat": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "message",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgFriendChat/MsgFriendChat"
                     }
                 },
                 {
@@ -5738,74 +6319,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
-        "PtlHistory/ReqHistory": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "offset",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 1,
-                    "name": "limit",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                }
-            ]
-        },
-        "PtlGmSupport/GmSupportReply": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "id",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "requestId",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "question",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "requestedAt",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "text",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "repliedAt",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
         "PtlGmSupport/ReqGmSupport": {
             "type": "Interface",
             "properties": [
@@ -5853,6 +6366,27 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "type": {
                         "type": "Boolean"
                     }
+                }
+            ]
+        },
+        "PtlHistory/ReqHistory": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "offset",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 1,
+                    "name": "limit",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -5995,6 +6529,44 @@ export const serviceProto: ServiceProto<ServiceType> = {
                         "type": "String"
                     },
                     "optional": true
+                }
+            ]
+        },
+        "PtlKickRoomPlayer/ReqKickRoomPlayer": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "playerId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlKickRoomPlayer/ResKickRoomPlayer": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "round",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "playerId",
+                    "type": {
+                        "type": "String"
+                    }
                 }
             ]
         },
@@ -7540,14 +8112,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
-                    "id": 5,
-                    "name": "replayed",
-                    "type": {
-                        "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
                     "id": 6,
                     "name": "confirmation",
                     "type": {
@@ -7568,6 +8132,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                                 }
                             }
                         ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 5,
+                    "name": "replayed",
+                    "type": {
+                        "type": "Boolean"
                     },
                     "optional": true
                 }
@@ -7742,6 +8314,358 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
+        "PtlPlayerProfile/ReqPlayerProfile": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "targetAccountId",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlPlayerProfile/ResPlayerProfile": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "accountId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "level",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "score",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 4,
+                    "name": "originality",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 5,
+                    "name": "tech",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 6,
+                    "name": "title",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/PlayerTitle"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 7,
+                    "name": "statistics",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlRoleProfile/AccountStatistics"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 8,
+                    "name": "awards",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlRoleProfile/AwardCounts"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "family",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "id",
+                                "type": {
+                                    "type": "String"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "name",
+                                "type": {
+                                    "type": "String"
+                                }
+                            }
+                        ]
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 10,
+                    "name": "models",
+                    "type": {
+                        "type": "Interface",
+                        "properties": [
+                            {
+                                "id": 0,
+                                "name": "tankId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "name": "petId",
+                                "type": {
+                                    "type": "Number"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "name": "textures",
+                                "type": {
+                                    "type": "Reference",
+                                    "target": "../combat/role-owned-textures/OwnedTankTextures"
+                                },
+                                "optional": true
+                            }
+                        ]
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlRoleProfile/AccountStatistics": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "wins",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "losses",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "draws",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "winStreak",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "loseStreak",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "battleSeconds",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "kills",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "deaths",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "shots",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 9,
+                    "name": "hits",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 10,
+                    "name": "damage",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 11,
+                    "name": "killCombo",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 12,
+                    "name": "spentMoney",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 13,
+                    "name": "spentTokens",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlRoleProfile/AwardCounts": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "perfect",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "mvp",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "savage",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "console",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 4,
+                    "name": "brave",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 5,
+                    "name": "kind",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 6,
+                    "name": "crafty",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 7,
+                    "name": "shy",
+                    "type": {
+                        "type": "Number"
+                    }
+                },
+                {
+                    "id": 8,
+                    "name": "greedy",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "PtlPlayerSearch/ReqPlayerSearch": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "name",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "PtlPlayerSearch/ResPlayerSearch": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "players",
+                    "type": {
+                        "type": "Array",
+                        "elementType": {
+                            "type": "Reference",
+                            "target": "PtlFriends/FriendRecord"
+                        }
+                    }
+                }
+            ]
+        },
         "PtlQuickMatch/ReqQuickMatch": {
             "type": "Interface",
             "properties": [
@@ -7784,14 +8708,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "Interface",
             "properties": [
                 {
-                    "id": 2,
-                    "name": "resourcesLoaded",
-                    "type": {
-                        "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
                     "id": 0,
                     "name": "round",
                     "type": {
@@ -7801,6 +8717,14 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 1,
                     "name": "isReady",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 2,
+                    "name": "resourcesLoaded",
                     "type": {
                         "type": "Boolean"
                     },
@@ -8003,177 +8927,79 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
-        "PtlPlayerProfile/ReqPlayerProfile": {
+        "MsgRoomSnapshot/AccountGrowth": {
             "type": "Interface",
             "properties": [
                 {
                     "id": 0,
-                    "name": "targetAccountId",
+                    "name": "rankPoints",
                     "type": {
-                        "type": "String"
-                    }
-                }
-            ]
-        },
-        "PtlPlayerProfile/ResPlayerProfile": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "accountId",
-                    "type": {
-                        "type": "String"
+                        "type": "Number"
                     }
                 },
                 {
                     "id": 1,
-                    "name": "name",
+                    "name": "level",
                     "type": {
-                        "type": "String"
+                        "type": "Number"
                     }
                 },
                 {
                     "id": 2,
-                    "name": "level",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 3,
-                    "name": "score",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 4,
                     "name": "originality",
                     "type": {
                         "type": "Number"
-                    },
-                    "optional": true
+                    }
                 },
                 {
-                    "id": 5,
+                    "id": 3,
                     "name": "tech",
                     "type": {
                         "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 6,
-                    "name": "title",
-                    "type": {
-                        "type": "Reference",
-                        "target": "MsgRoomSnapshot/PlayerTitle"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 7,
-                    "name": "statistics",
-                    "type": {
-                        "type": "Reference",
-                        "target": "PtlRoleProfile/AccountStatistics"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 8,
-                    "name": "awards",
-                    "type": {
-                        "type": "Reference",
-                        "target": "PtlRoleProfile/AwardCounts"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 9,
-                    "name": "family",
-                    "type": {
-                        "type": "Interface",
-                        "properties": [
-                            {
-                                "id": 0,
-                                "name": "id",
-                                "type": {
-                                    "type": "String"
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "name": "name",
-                                "type": {
-                                    "type": "String"
-                                }
-                            }
-                        ]
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 10,
-                    "name": "models",
-                    "type": {
-                        "type": "Interface",
-                        "properties": [
-                            {
-                                "id": 0,
-                                "name": "tankId",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "name": "petId",
-                                "type": {
-                                    "type": "Number"
-                                }
-                            },
-                            {
-                                "id": 2,
-                                "name": "textures",
-                                "type": {
-                                    "type": "Reference",
-                                    "target": "../combat/role-owned-textures/OwnedTankTextures"
-                                },
-                                "optional": true
-                            }
-                        ]
-                    },
-                    "optional": true
-                }
-            ]
-        },
-        "PtlPlayerSearch/ReqPlayerSearch": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "name",
-                    "type": {
-                        "type": "String"
                     }
                 }
             ]
         },
-        "PtlPlayerSearch/ResPlayerSearch": {
+        "PtlRoleProfile/AccountTitles": {
             "type": "Interface",
             "properties": [
                 {
                     "id": 0,
-                    "name": "players",
+                    "name": "owned",
                     "type": {
                         "type": "Array",
                         "elementType": {
                             "type": "Reference",
-                            "target": "PtlFriends/FriendRecord"
+                            "target": "PtlRoleProfile/OwnedTitle"
                         }
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "selectedTitleId",
+                    "type": {
+                        "type": "Number"
+                    }
+                }
+            ]
+        },
+        "PtlRoleProfile/OwnedTitle": {
+            "type": "Interface",
+            "extends": [
+                {
+                    "id": 0,
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/PlayerTitle"
+                    }
+                }
+            ],
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "description",
+                    "type": {
+                        "type": "String"
                     }
                 }
             ]
@@ -9468,880 +10294,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 }
             ]
         },
-        "PtlTrade/ReqTrade": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "operation",
-                    "type": {
-                        "type": "Union",
-                        "members": [
-                            {
-                                "id": 0,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "QUERY"
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "INVITE"
-                                }
-                            },
-                            {
-                                "id": 2,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "RESPOND"
-                                }
-                            },
-                            {
-                                "id": 3,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "OFFER"
-                                }
-                            },
-                            {
-                                "id": 4,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "SHOW"
-                                }
-                            },
-                            {
-                                "id": 5,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "UNSHOW"
-                                }
-                            },
-                            {
-                                "id": 6,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "CONFIRM"
-                                }
-                            },
-                            {
-                                "id": 7,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": "CANCEL"
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "targetAccountId",
-                    "type": {
-                        "type": "String"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 2,
-                    "name": "sessionId",
-                    "type": {
-                        "type": "String"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 3,
-                    "name": "accept",
-                    "type": {
-                        "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 4,
-                    "name": "offer",
-                    "type": {
-                        "type": "Reference",
-                        "target": "PtlTrade/TradeOffer"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 5,
-                    "name": "expectedRevision",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                }
-            ]
-        },
-        "MsgRoomSnapshot/PlayerTitle": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "id",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "name",
-                    "type": {
-                        "type": "String"
-                    }
-                }
-            ]
-        },
-        "PtlRoleProfile/OwnedTitle": {
-            "type": "Interface",
-            "extends": [
-                {
-                    "id": 0,
-                    "type": {
-                        "type": "Reference",
-                        "target": "MsgRoomSnapshot/PlayerTitle"
-                    }
-                }
-            ],
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "description",
-                    "type": {
-                        "type": "String"
-                    }
-                }
-            ]
-        },
-        "PtlRoleProfile/AccountTitles": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "owned",
-                    "type": {
-                        "type": "Array",
-                        "elementType": {
-                            "type": "Reference",
-                            "target": "PtlRoleProfile/OwnedTitle"
-                        }
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "selectedTitleId",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
-        "MsgRoomSnapshot/RoleDisguiseSnapshot": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "skillId",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "style",
-                    "type": {
-                        "type": "Union",
-                        "members": [
-                            {
-                                "id": 0,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 1
-                                }
-                            },
-                            {
-                                "id": 1,
-                                "type": {
-                                    "type": "Literal",
-                                    "literal": 2
-                                }
-                            }
-                        ]
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "startedAt",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "expiresAt",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "x",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "y",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 6,
-                    "name": "z",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
-        "MsgRoomSnapshot/AccountGrowth": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "rankPoints",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "level",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "originality",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "tech",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
-        "MsgRoomSnapshot/ResultItemGrant": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "instanceId",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "itemTableId",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "name",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "iconId",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
-        "MsgRoomSnapshot/ResultTankGrant": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "instanceId",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "tankId",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "name",
-                    "type": {
-                        "type": "String"
-                    }
-                }
-            ]
-        },
-        "MsgRoomSnapshot/ResultAward": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "money",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "coin",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "originality",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "tech",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "rankPoints",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "levelBefore",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 6,
-                    "name": "levelAfter",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 7,
-                    "name": "expPercent",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 8,
-                    "name": "grantedTitles",
-                    "type": {
-                        "type": "Array",
-                        "elementType": {
-                            "type": "Reference",
-                            "target": "MsgRoomSnapshot/PlayerTitle"
-                        }
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 9,
-                    "name": "rankPointsBefore",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 10,
-                    "name": "grantedItems",
-                    "type": {
-                        "type": "Array",
-                        "elementType": {
-                            "type": "Reference",
-                            "target": "MsgRoomSnapshot/ResultItemGrant"
-                        }
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 11,
-                    "name": "grantedTanks",
-                    "type": {
-                        "type": "Array",
-                        "elementType": {
-                            "type": "Reference",
-                            "target": "MsgRoomSnapshot/ResultTankGrant"
-                        }
-                    },
-                    "optional": true
-                }
-            ]
-        },
-        "MsgRoomSnapshot/AwardType": {
-            "type": "Union",
-            "members": [
-                {
-                    "id": 0,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "perfect"
-                    }
-                },
-                {
-                    "id": 1,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "mvp"
-                    }
-                },
-                {
-                    "id": 2,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "savage"
-                    }
-                },
-                {
-                    "id": 3,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "console"
-                    }
-                },
-                {
-                    "id": 4,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "brave"
-                    }
-                },
-                {
-                    "id": 5,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "kind"
-                    }
-                },
-                {
-                    "id": 6,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "crafty"
-                    }
-                },
-                {
-                    "id": 7,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "shy"
-                    }
-                },
-                {
-                    "id": 8,
-                    "type": {
-                        "type": "Literal",
-                        "literal": "greedy"
-                    }
-                }
-            ]
-        },
-        "MsgRoomSnapshot/RoundStats": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "shots",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "hits",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "damage",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "damageTaken",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "killCombo",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "friendlyFireDamage",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 6,
-                    "name": "healing",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 7,
-                    "name": "rearDamage",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 8,
-                    "name": "vipDamage",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 9,
-                    "name": "bunkerDamage",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 10,
-                    "name": "shotHits",
-                    "type": {
-                        "type": "String"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 11,
-                    "name": "missesThenKill",
-                    "type": {
-                        "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 12,
-                    "name": "consecutiveShotKills",
-                    "type": {
-                        "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 13,
-                    "name": "openingDeaths",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 14,
-                    "name": "maxKillsAgainstOpponent",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 15,
-                    "name": "killedOpponentIds",
-                    "type": {
-                        "type": "Array",
-                        "elementType": {
-                            "type": "String"
-                        }
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 16,
-                    "name": "killedAllOpponents",
-                    "type": {
-                        "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 17,
-                    "name": "oneKillBehindWinner",
-                    "type": {
-                        "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 18,
-                    "name": "completedRound",
-                    "type": {
-                        "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 19,
-                    "name": "maxMissesBeforeShotKill",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 20,
-                    "name": "maxConsecutiveShotKills",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                }
-            ]
-        },
-        "MsgRoomSnapshot/RoundAward": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "type",
-                    "type": {
-                        "type": "Reference",
-                        "target": "MsgRoomSnapshot/AwardType"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "score",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
-        "PtlRoleProfile/AccountStatistics": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "wins",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "losses",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "draws",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "winStreak",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "loseStreak",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "battleSeconds",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 6,
-                    "name": "kills",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 7,
-                    "name": "deaths",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 8,
-                    "name": "shots",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 9,
-                    "name": "hits",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 10,
-                    "name": "damage",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 11,
-                    "name": "killCombo",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 12,
-                    "name": "spentMoney",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 13,
-                    "name": "spentTokens",
-                    "type": {
-                        "type": "Number"
-                    },
-                    "optional": true
-                }
-            ]
-        },
-        "PtlRoleProfile/AwardCounts": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "perfect",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "mvp",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 2,
-                    "name": "savage",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 3,
-                    "name": "console",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 4,
-                    "name": "brave",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 5,
-                    "name": "kind",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 6,
-                    "name": "crafty",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 7,
-                    "name": "shy",
-                    "type": {
-                        "type": "Number"
-                    }
-                },
-                {
-                    "id": 8,
-                    "name": "greedy",
-                    "type": {
-                        "type": "Number"
-                    }
-                }
-            ]
-        },
         "PtlTankUpgrade/ReqTankUpgrade": {
             "type": "Interface",
             "properties": [
@@ -10457,6 +10409,15 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "optional": true
                 },
                 {
+                    "id": 6,
+                    "name": "growth",
+                    "type": {
+                        "type": "Reference",
+                        "target": "MsgRoomSnapshot/AccountGrowth"
+                    },
+                    "optional": true
+                },
+                {
                     "id": 2,
                     "name": "quotes",
                     "type": {
@@ -10490,15 +10451,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "replayed",
                     "type": {
                         "type": "Boolean"
-                    },
-                    "optional": true
-                },
-                {
-                    "id": 6,
-                    "name": "growth",
-                    "type": {
-                        "type": "Reference",
-                        "target": "MsgRoomSnapshot/AccountGrowth"
                     },
                     "optional": true
                 }
@@ -10764,6 +10716,141 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "level",
                     "type": {
                         "type": "Number"
+                    }
+                }
+            ]
+        },
+        "PtlTrade/ReqTrade": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "operation",
+                    "type": {
+                        "type": "Union",
+                        "members": [
+                            {
+                                "id": 0,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "QUERY"
+                                }
+                            },
+                            {
+                                "id": 1,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "INVITE"
+                                }
+                            },
+                            {
+                                "id": 2,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "RESPOND"
+                                }
+                            },
+                            {
+                                "id": 3,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "OFFER"
+                                }
+                            },
+                            {
+                                "id": 4,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "SHOW"
+                                }
+                            },
+                            {
+                                "id": 5,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "UNSHOW"
+                                }
+                            },
+                            {
+                                "id": 6,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "CONFIRM"
+                                }
+                            },
+                            {
+                                "id": 7,
+                                "type": {
+                                    "type": "Literal",
+                                    "literal": "CANCEL"
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "targetAccountId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 2,
+                    "name": "sessionId",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "accept",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 4,
+                    "name": "offer",
+                    "type": {
+                        "type": "Reference",
+                        "target": "PtlTrade/TradeOffer"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 5,
+                    "name": "expectedRevision",
+                    "type": {
+                        "type": "Number"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "PtlTrainingPresence/ReqTrainingPresence": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "active",
+                    "type": {
+                        "type": "Boolean"
+                    }
+                }
+            ]
+        },
+        "PtlTrainingPresence/ResTrainingPresence": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "active",
+                    "type": {
+                        "type": "Boolean"
                     }
                 }
             ]

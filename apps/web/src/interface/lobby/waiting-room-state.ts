@@ -42,7 +42,8 @@ export function waitingRoomInfo(snapshot: MsgRoomSnapshot) {
 export function waitingRoomCustomName(snapshot: MsgRoomSnapshot): string {
   const info = snapshot.roomInfo;
   if (!info) return '';
-  const mode = ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'][snapshot.mode - 1];
+  const mode = snapshot.training ? '训练模式'
+    : ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'][snapshot.mode - 1];
   const description = `${mode}·${info.mapName}`;
   const suffix = ` · ${description}`;
   return info.name === description ? '' : info.name.endsWith(suffix) ? info.name.slice(0, -suffix.length) : info.name;

@@ -26,6 +26,7 @@ export class GameConnection {
   private connectionReady?: Promise<void>;
   private transportReady?: Promise<void>;
   private identity?: ResAccount;
+  private training = false;
   private transportGeneration = 0;
   private accountContextValue: AccountContext = {generation: 0};
   private readonly accountContextListeners = new Set<() => void>();
@@ -105,6 +106,7 @@ export class GameConnection {
     });
     if (this.connectionReady !== readiness()) throw new Error('连接已取消，请重试');
     if (!account.isSucc) throw new Error(account.err.message);
+    if (this.training) await this.publishTrainingPresence(true);
     this.tokenStore.setItem('cdtank-account-token', account.res.token);
     this.publishAccountContext(account.res);
   }
@@ -119,6 +121,22 @@ export class GameConnection {
       });
     }
     return this.disconnection;
+  }
+
+  async setTraining(active: boolean): Promise<void> {
+    if (this.training === active) return;
+    this.training = active;
+    try {
+      if (this.client.isConnected) await this.publishTrainingPresence(active);
+    } catch (error) {
+      this.training = !active;
+      throw error;
+    }
+  }
+
+  private async publishTrainingPresence(active: boolean): Promise<void> {
+    const result = await this.client.callApi('TrainingPresence', {active});
+    if (!result.isSucc) throw new Error(result.err.message);
   }
 
   private publishAccountContext(identity?: ResAccount): void {

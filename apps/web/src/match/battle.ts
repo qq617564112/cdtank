@@ -85,11 +85,14 @@ import {readRoomSession, saveRoomSession} from '../navigation/session';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
 import {BattleProjectiles} from '../render/battle-projectiles';
 import {isMobileDevice} from '../platform/device';
+import {TrainingSession} from '../training/session';
+import {loadTrainingCatalog} from '../training/simulation-host';
+import type {TrainingOptions} from '../training/protocol';
 
 const EMPTY_SCENE_OBJECTS: readonly SceneObjectSnapshot[] = [];
 const NEUTRAL_MOTION: BattleMotionInput = {move: 0, turn: 0, aim: 0};
 
-/** Displays server-owned world state; no local damage or outcome calculation. */
+/** Presents snapshots and events from online rooms or the local training worker. */
 export class Battle {
   readonly originalHud = new BattleHud();
   readonly itemInventory = new BattleItemInventory(() => this.inventory());
@@ -152,10 +155,14 @@ export class Battle {
     context.active = this.active;
     context.playing = this.mapLoaded && this.loadedRound === snapshot?.match?.round
       && Boolean(local?.alive && snapshot && battleIsActive(snapshot, this.serverNow()));
-    context.connected = this.client.isConnected && !this.reconnecting;
+    context.connected = this.isConnected && !this.reconnecting;
     context.autopilot = local?.isAutopilot ?? false;
     return context;
   }, message => {
+    if (this.training) {
+      this.training.input({type: 'input', input: {...message, pose: this.localMotion.reportedPose}});
+      return;
+    }
     const useItem = message.useItem;
     void this.client.sendMsg('PlayerInput', {...message, pose: this.localMotion.reportedPose})
       .then(result => {
@@ -176,6 +183,10 @@ export class Battle {
   private readonly weaponCycle = new WeaponCycleSelection();
   private readonly localMotion = new LocalTankMotion(isMobileDevice());
   readonly chat: BattleChat = new BattleChat(async (text, channel, targetName) => {
+    if (this.training) {
+      this.chat.message(`[训练] ${text}`);
+      return;
+    }
     if (!this.active || !this.client.isConnected) throw new Error('连接已断开');
     if (channel === 4) {
       const generation = this.chat.getSnapshot().generation;
@@ -233,13 +244,15 @@ export class Battle {
     (operation, playerId, team) => this.manageCpu(operation, playerId, team), enabled => this.autopilot(enabled),
     points => this.exitRoom(points), () => this.inviteRoom(),
     (playerId, loadout) => this.configureCpuLoadout(playerId, loadout), () => this.retryBattleLoading(),
-    {listMaps: () => this.listMaps(), save: settings => this.editRoom(settings)}, playerId => this.kickRoomPlayer(playerId),
+    {listMaps: async () => this.training ? (await loadTrainingCatalog()).maps : this.rooms.listMaps(),
+      save: settings => this.editRoom(settings)}, playerId => this.kickRoomPlayer(playerId),
     () => this.soundVolume,
     {candidates: () => this.discardCandidates(), selected: () => this.discardSelectedInstance,
       setSelected: instanceId => this.setDiscardSelection(instanceId), discard: () => this.discardSelected()},
     () => this.quoteExitPenalty(), accountId => this.playerProfile(accountId));
   private readonly targets: BattleTargets;
   private readonly roomFeed: RoomFeed;
+  private training?: TrainingSession;
   private playerId?: string;
   private active = false;
   private session = 0;
@@ -363,7 +376,7 @@ export class Battle {
           }
           if (event.playerId === this.playerId && this.active && this.mapLoaded
               && this.loadedRound === snapshot?.match?.round && snapshot?.phase === 'PLAYING'
-              && this.client.isConnected && !this.reconnecting) {
+              && this.isConnected && !this.reconnecting) {
             this.battleUiSound.play(72);
           }
         }
@@ -434,6 +447,7 @@ export class Battle {
     });
     this.stopInventoryRefresh = this.itemInventory.subscribe(() => this.refreshDiscardSelection());
     this.client.flows.postDisconnectFlow.push(input => {
+      if (this.training) return input;
       this.input.clear();
       this.chat.resetSession();
       if (this.active && !this.recovery) {
@@ -457,6 +471,8 @@ export class Battle {
     this.client.listenMsg('FamilyChat', this.onFamilyChat);
     scene.onBeforeRenderObservable.add(() => {this.render();});
     scene.onDisposeObservable.addOnce(() => {
+      this.training?.dispose();
+      void this.connection.setTraining(false).catch(() => {});
       this.projectiles.dispose();
       this.stopInventoryRefresh();
       this.itemInventory.clear();
@@ -486,6 +502,7 @@ export class Battle {
   }
 
   async inventory(): Promise<ResInventory> {
+    if (this.training) return (await this.training.request({type: 'inventory'})).inventory!;
     return this.accounts.inventory();
   }
 
@@ -573,11 +590,21 @@ export class Battle {
 
   async listRooms(): Promise<RoomSummary[]> {return this.rooms.listRooms();}
 
-  async listMaps(): Promise<MapOption[]> {return this.rooms.listMaps();}
+  async listMaps(): Promise<MapOption[]> {
+    const [online, local] = await Promise.allSettled([this.rooms.listMaps(), loadTrainingCatalog()]);
+    if (online.status === 'rejected' && local.status === 'rejected') throw online.reason;
+    return [...(online.status === 'fulfilled' ? online.value : []),
+      ...(local.status === 'fulfilled' ? local.value.maps : [])];
+  }
 
   async createRoom(mode: number, mapId: number, roomName: string, name: string, tankId: number, password = '',
                    minPlayers?: number, maxPlayers?: number, friendlyFire?: boolean,
                    timeLimitSeconds?: number): Promise<void> {
+    if (mode === 6) {
+      await this.createTrainingRoom({mapId, roomName, name, tankId, minPlayers, maxPlayers, timeLimitSeconds});
+      return;
+    }
+    if (this.training) throw new Error('请先退出训练模式');
     const session = this.session;
     await this.connection.ensureConnected();
     const result = await this.rooms.create({mode, mapId, roomName, name, tankId, password,
@@ -585,6 +612,37 @@ export class Battle {
     if (session !== this.session) return;
     if (!result.isSucc) throw new Error(result.err.message);
     await this.enter(result.res, session);
+  }
+
+  private async createTrainingRoom(options: TrainingOptions): Promise<void> {
+    if (this.active || this.training) throw new Error('请先离开当前房间');
+    const session = this.session;
+    const training = new TrainingSession((snapshot, events) => {
+      if (this.training !== training || !this.active) return;
+      this.roomFeed.receive(snapshot);
+      for (const event of events) this.roomFeed.receiveEvent(event);
+    }, error => {
+      if (this.training !== training) return;
+      this.leave(false);
+      this.returnToLobby?.();
+      this.hud.value = error.message;
+      showGameMessage(error.message, 'error');
+    });
+    this.training = training;
+    try {
+      await this.connection.setTraining(true);
+      const {join} = await training.request({type: 'create', options});
+      if (session !== this.session || this.training !== training) return;
+      if (!join) throw new Error('训练房间创建失败');
+      await this.enter(join, session);
+    } catch (error) {
+      if (this.training === training) {
+        this.training = undefined;
+        training.dispose();
+        await this.connection.setTraining(false).catch(() => {});
+      }
+      throw error;
+    }
   }
 
   /** One human account and nine CPUs, with the human tank controlled by the server. */
@@ -642,6 +700,7 @@ export class Battle {
   }
 
   async join(roomId: string, name: string, tankId: number, password = ''): Promise<void> {
+    if (this.training || this.active) throw new Error('请先离开当前房间');
     const session = this.session;
     await this.connection.ensureConnected();
     const result = await this.rooms.join({roomId, name, tankId, password, clientId: ''});
@@ -688,7 +747,7 @@ export class Battle {
     this.input.resetSequence();
     this.active = true;
     const accountId = this.accountContext.identity?.accountId;
-    if (accountId) saveRoomSession({accountId, roomId: result.room.id, playerId: result.playerId});
+    if (accountId && !this.training) saveRoomSession({accountId, roomId: result.room.id, playerId: result.playerId});
     this.pageMusic?.room(result.room.phase ?? 'WAITING', result.room.mode, result.room.mapId);
     this.lobbyChat.setInRoom(true);
     this.lobbyPresence.setInRoom(true);
@@ -815,6 +874,10 @@ export class Battle {
   }
 
   private async confirmResourcesLoaded(round: number): Promise<void> {
+    if (this.training) {
+      await this.training.request({type: 'ready', request: {round, resourcesLoaded: true}});
+      return;
+    }
     if (this.reconnecting || !this.client.isConnected) return;
     await this.rooms.ready({round, resourcesLoaded: true});
   }
@@ -873,19 +936,21 @@ export class Battle {
   }
 
   get inRoom(): boolean {return this.active;}
+  get isTraining(): boolean {return !!this.training;}
   get roomId(): string | undefined {return this.roomFeed.roomId;}
 
   setRoomExitHandler(handler?: () => void): void {this.returnToLobby = handler;}
 
   onRoomInvitation(handler: (message: import('../../../shared/protocols/MsgRoomInvitation').MsgRoomInvitation) => void): () => void {
     const listener = (message: import('../../../shared/protocols/MsgRoomInvitation').MsgRoomInvitation): void => {
-      if (!this.active) handler(message);
+      if (!this.active && !this.training) handler(message);
     };
     this.client.listenMsg('RoomInvitation', listener);
     return () => {this.client.unlistenMsg('RoomInvitation', listener);};
   }
 
   private async inviteRoom(): Promise<number> {
+    if (this.training) throw new Error('训练模式不能邀请玩家');
     const snapshot = this.roomFeed.snapshot;
     if (!this.active || !snapshot?.match) throw new Error('请先加入房间');
     const result = await this.rooms.invite({roomId:snapshot.roomId,round:snapshot.match.round});
@@ -939,6 +1004,7 @@ export class Battle {
   }
 
   async quoteExitPenalty(): Promise<LeavePenalty> {
+    if (this.training) return {count: 0, points: 0};
     await this.recovery;
     const session = this.session;
     if (!this.active || !this.client.isConnected) throw new Error('连接已断开');
@@ -956,6 +1022,16 @@ export class Battle {
 
   exitRoom(confirmedPenaltyPoints = 0): Promise<void> {
     if (this.exiting) return this.exiting;
+    if (this.training) {
+      const training = this.training;
+      this.exiting = (async () => {
+        await this.connection.setTraining(false);
+        if (this.training !== training) return;
+        this.leave(false);
+        this.returnToLobby?.();
+      })().finally(() => {this.exiting = undefined;});
+      return this.exiting;
+    }
     const session = this.session;
     const expectedRoomId = this.roomFeed.snapshot?.roomId;
     const expectedRound = this.roomFeed.snapshot?.match?.round;
@@ -983,6 +1059,12 @@ export class Battle {
   }
 
   leave(disconnect = true, preserveSession = false): void {
+    if (this.training) {
+      this.training.dispose();
+      this.training = undefined;
+      disconnect = false;
+      void this.connection.setTraining(false).catch(() => {});
+    }
     if (!preserveSession) saveRoomSession();
     this.projectiles.clear();
     this.minimapRenderer.clear();
@@ -1041,7 +1123,7 @@ export class Battle {
     this.publishValuableSaleRoom();
   }
 
-  get isConnected(): boolean {return this.client.isConnected;}
+  get isConnected(): boolean {return !!this.training || this.client.isConnected;}
 
   setMusicVolume(volume: number): void {
     this.music.setVolume(volume);
@@ -1058,7 +1140,7 @@ export class Battle {
     const snapshot = this.roomFeed.snapshot;
     const local = snapshot?.players.find(player => player.id === this.playerId);
     if (!this.active || !snapshot || !battleIsActive(snapshot, this.serverNow())
-        || !this.client.isConnected || this.reconnecting || !local?.alive || local.isAutopilot) return;
+        || !this.isConnected || this.reconnecting || !local?.alive || local.isAutopilot) return;
     this.directItemSlot(slot);
     this.input.send(slot);
   };
@@ -1201,6 +1283,11 @@ export class Battle {
     const snapshot = this.roomFeed.snapshot;
     const selection = this.selectedDiscardInstance();
     if (!snapshot?.match || selection === undefined) throw new Error('当前没有可丢弃的本局堆叠道具');
+    if (this.training) {
+      this.training.input({type: 'action', action: {roomId: snapshot.roomId, round: snapshot.match.round,
+        sequence: ++this.actionSequence, action: GroundItemAction.DISCARD, value: selection, clientTime: Date.now()}});
+      return;
+    }
     if (!this.client.isConnected) throw new Error('连接已断开');
     this.client.sendMsg('PlayerAction', {roomId: snapshot.roomId, round: snapshot.match.round,
       sequence: ++this.actionSequence, action: GroundItemAction.DISCARD, value: selection,
@@ -1223,19 +1310,24 @@ export class Battle {
     if (round === undefined || this.roomFeed.snapshot?.phase !== 'WAITING') {
       throw new Error('请等待房间状态');
     }
-    await this.rooms.ready({round, isReady});
+    if (this.training) await this.training.request({type: 'ready', request: {round, isReady}});
+    else await this.rooms.ready({round, isReady});
   }
 
   private async editRoom(settings: import('../../../shared/protocols/PtlEditRoom').RoomEditSettings): Promise<void> {
     const snapshot = this.roomFeed.snapshot;
     if (!snapshot?.match || snapshot.phase !== 'WAITING') throw new Error('只能编辑当前等待房间');
-    await this.rooms.edit({...settings, round: snapshot.match.round});
+    if (this.training) {
+      if (settings.mode !== 6) throw new Error('训练房间只能选择训练地图');
+      await this.training.request({type: 'edit', request: {...settings, mode: 4, password: '', round: snapshot.match.round}});
+    } else await this.rooms.edit({...settings, round: snapshot.match.round});
   }
 
   private async kickRoomPlayer(playerId: string): Promise<void> {
     const snapshot = this.roomFeed.snapshot;
     if (!snapshot?.match || snapshot.phase !== 'WAITING') throw new Error('只能在等待房间踢出成员');
-    await this.rooms.kick({round: snapshot.match.round, playerId});
+    if (this.training) await this.training.request({type: 'kick', round: snapshot.match.round, playerId});
+    else await this.rooms.kick({round: snapshot.match.round, playerId});
   }
 
   private async changeTeam(team: number): Promise<void> {
@@ -1251,7 +1343,9 @@ export class Battle {
     if (!snapshot?.match || !this.playerId) throw new Error('请先加入房间');
     const round = snapshot.match.round;
     const tankId = Number(document.querySelector<HTMLSelectElement>('#tank')?.value ?? 1);
-    if (operation === 'ADD') {
+    if (this.training) {
+      await this.training.request({type: 'cpu', request: {round, operation, playerId, team, tankId}});
+    } else if (operation === 'ADD') {
       await this.rooms.addCpu(snapshot.roomId, {requesterPlayerId: this.playerId, round, tankId, team});
     } else {
       await this.rooms.cpu({round, operation, playerId, team, tankId});
@@ -1261,13 +1355,15 @@ export class Battle {
   private async configureCpuLoadout(playerId: string, loadout: CpuLoadoutItem[]): Promise<void> {
     const round = this.roomFeed.snapshot?.match?.round;
     if (round === undefined) throw new Error('请先加入房间');
-    await this.rooms.cpu({round, operation: 'CONFIGURE', playerId, loadout});
+    if (this.training) await this.training.request({type: 'cpu', request: {round, operation: 'CONFIGURE', playerId, loadout}});
+    else await this.rooms.cpu({round, operation: 'CONFIGURE', playerId, loadout});
   }
 
   private async autopilot(enabled: boolean): Promise<void> {
     const round = this.roomFeed.snapshot?.match?.round;
     if (round === undefined) throw new Error('请先加入房间');
-    await this.rooms.autopilot({round, enabled});
+    if (this.training) await this.training.request({type: 'autopilot', round, enabled});
+    else await this.rooms.autopilot({round, enabled});
     this.input.clear();
   }
 
@@ -1279,10 +1375,11 @@ export class Battle {
 
   private async returnToRoom(): Promise<void> {
     const round = this.roomFeed.snapshot?.match?.round;
-    if (round === undefined || this.roomFeed.snapshot?.phase !== 'FINISHED' || !this.client.isConnected) {
+    if (round === undefined || this.roomFeed.snapshot?.phase !== 'FINISHED' || !this.isConnected) {
       throw new Error('当前无法返回原房间，请等待连接恢复');
     }
-    await this.rooms.rematch({round});
+    if (this.training) await this.training.request({type: 'rematch', round});
+    else await this.rooms.rematch({round});
     this.input.clear();
   }
 
@@ -1357,7 +1454,7 @@ export class Battle {
   }
 
   private syncBattleUiSounds(snapshot: MsgRoomSnapshot): void {
-    if (snapshot.phase !== 'PLAYING' || !this.client.isConnected || this.reconnecting) return;
+    if (snapshot.phase !== 'PLAYING' || !this.isConnected || this.reconnecting) return;
     const context = `${snapshot.roomId}:${snapshot.match?.round ?? 0}`;
     const hud = this.originalHud.getSnapshot();
     if (this.battleUiSoundContext !== context || this.battleUiSoundResync) {
@@ -1383,7 +1480,7 @@ export class Battle {
     const listener = cameraSpatialPose(this.camera);
     this.sound.listener(listener.position, listener.forward, listener.up);
     const snapshot = this.roomFeed.snapshot;
-    if (!this.active || !snapshot || !this.client.isConnected || this.reconnecting) {
+    if (!this.active || !snapshot || !this.isConnected || this.reconnecting) {
       this.projectiles.clear();
       return;
     }

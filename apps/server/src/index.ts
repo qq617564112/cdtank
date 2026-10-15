@@ -21,6 +21,7 @@ import {registerRoomApis} from './rooms/api';
 import {registerRoomLeaveApi} from './rooms/leave';
 import {registerRoomKickApi} from './rooms/kick';
 import {registerRoomInvitations} from './rooms/invitations';
+import {registerTrainingPresenceApi} from './social/training-presence';
 import {registerBattleInputs} from './battle/input';
 import {accountBattleBinding, consumeAccountBattleItem} from './accounts/battle-binding';
 import {mkdirSync} from 'node:fs';
@@ -100,7 +101,8 @@ registerRoomApis(server, world, sessionByConnection, roomTankId, bindAccountStat
   });
 registerRoomLeaveApi(server, world, sessionByConnection, transport, accounts, accountByConnection);
 registerRoomKickApi(server, world, sessionByConnection, transport, reconnections);
-registerRoomInvitations(server, world, accountByConnection, sessionByConnection);
+const isTraining = registerTrainingPresenceApi(server, accountByConnection, sessionByConnection);
+registerRoomInvitations(server, world, accountByConnection, sessionByConnection, isTraining);
 
 registerBattleInputs(server, world, sessionByConnection, broadcastEvent, roomId => {
   const snapshot = world.snapshot(roomId);
@@ -120,7 +122,7 @@ registerGmSupportApi(server, accounts, accountByConnection);
 registerFamilyApi(server, accounts, accountByConnection);
 registerFamilyChatApi(server, accounts, world, accountByConnection, sessionByConnection);
 registerLobbyPresenceApi(server, accountByConnection, sessionByConnection,
-  accountId => accounts.displayName(accountId), accountId => accounts.currentTitle(accountId));
+  accountId => accounts.displayName(accountId), accountId => accounts.currentTitle(accountId), isTraining);
 const retryTimer = startWorldTicks(world, TICK_RATE, transport, () => world.publishReceipts(history.flush()));
 const shutdown = (): void => {
   clearInterval(retryTimer);
