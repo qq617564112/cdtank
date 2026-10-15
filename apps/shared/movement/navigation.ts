@@ -18,6 +18,9 @@ export interface NavigationCell {
 // CDTank.exe 0x433f92 uses this f32 constant then truncates toward zero.
 const INVERSE_SIZE = Math.fround(1 / 12);
 
+// Rooms and planning copies share terrain bytes; each grid owns its occupancy.
+const decodedLayers = new WeakMap<SourceNavigationLayer, WeakRef<DataView>>();
+
 export class NavigationGrid {
   private readonly cells: DataView;
   private readonly blockers = new Map<string, ReadonlySet<number>>();
@@ -48,8 +51,30 @@ export class NavigationGrid {
   }
 
   constructor(readonly source: SourceNavigationLayer) {
-    const bytes = Uint8Array.from(atob(source.cells), value => value.charCodeAt(0));
-    this.cells = new DataView(bytes.buffer);
+    let cells = decodedLayers.get(source)?.deref();
+    if (!cells) {
+      const bytes = Uint8Array.from(atob(source.cells), value => value.charCodeAt(0));
+      cells = new DataView(bytes.buffer);
+      decodedLayers.set(source, new WeakRef(cells));
+    }
+    this.cells = cells;
+  }
+
+  /** Planning copy with selected scene occupancy removed; the live grid stays intact. */
+  withoutBlockers(ids: ReadonlySet<string>): NavigationGrid {
+    const grid = new NavigationGrid(this.source);
+    for (const [id, cells] of this.blockers) {
+      if (!ids.has(id)) grid.setBlocker(id, cells);
+    }
+    return grid;
+  }
+
+  hasBlocker(id: string): boolean {return this.blockers.has(id);}
+
+  /** Live render-model occupancy, separate from the original NAV fields. */
+  isOccupiedCell(x: number, z: number): boolean {
+    return x >= 0 && z >= 0 && x < this.source.width && z < this.source.height
+      && this.occupied.has(z * this.source.width + x);
   }
 
   cellAt(x: number, z: number): NavigationCell | undefined {
@@ -67,6 +92,33 @@ export class NavigationGrid {
       Math.trunc((z - this.source.minimum[2]) * INVERSE_SIZE) || 0);
   }
 
+  /**
+   * Project ground height interpolates the original valid cell centers.
+   * Occupancy affects movement, not terrain height; callers check passage
+   * separately. Invalid NAV heights do not contribute to the interpolation.
+   */
+  groundHeightAt(x: number, z: number): number | undefined {
+    const column = Math.max(0, Math.min(this.source.width - 1,
+      (x - this.source.minimum[0]) / 12 - 0.5));
+    const row = Math.max(0, Math.min(this.source.height - 1,
+      (z - this.source.minimum[2]) / 12 - 0.5));
+    const left = Math.floor(column), top = Math.floor(row);
+    const dx = column - left, dz = row - top;
+    let height = 0, weight = 0;
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 2; c++) {
+        const amount = (c === 0 ? 1 - dx : dx) * (r === 0 ? 1 - dz : dz);
+        if (amount === 0) continue;
+        const offset = (Math.min(top + r, this.source.height - 1) * this.source.width
+          + Math.min(left + c, this.source.width - 1)) * 8;
+        if ((this.cells.getUint32(offset + 4, true) & 255) <= 1) continue;
+        height += this.cells.getFloat32(offset, true) * amount;
+        weight += amount;
+      }
+    }
+    return weight > 0 ? Math.fround(height / weight) : undefined;
+  }
+
   /** World-coordinate validity query without allocating a height/fields result. */
   isValidAt(x: number, z: number): boolean {
     const column = Math.trunc((x - this.source.minimum[0]) * INVERSE_SIZE) || 0;
@@ -76,13 +128,24 @@ export class NavigationGrid {
     return (this.cells.getUint32(index * 8 + 4, true) & 255) > 1 && !this.occupied.has(index);
   }
 
+  /** Stored cell height for an unblocked world position, without a cell result. */
+  validHeightAt(x: number, z: number): number | undefined {
+    const column = Math.trunc((x - this.source.minimum[0]) * INVERSE_SIZE) || 0;
+    const row = Math.trunc((z - this.source.minimum[2]) * INVERSE_SIZE) || 0;
+    if (column < 0 || row < 0 || column >= this.source.width || row >= this.source.height) return undefined;
+    const index = row * this.source.width + column;
+    if ((this.cells.getUint32(index * 8 + 4, true) & 255) <= 1 || this.occupied.has(index)) return undefined;
+    return this.cells.getFloat32(index * 8, true);
+  }
+
   positionAtCell(x: number, z: number): {x: number; y: number; z: number} | undefined {
-    const cell = this.cellAt(x, z);
-    if (!cell?.valid) {
+    if (x < 0 || z < 0 || x >= this.source.width || z >= this.source.height) {
       return undefined;
     }
+    const index = z * this.source.width + x, offset = index * 8;
+    if ((this.cells.getUint32(offset + 4, true) & 255) <= 1 || this.occupied.has(index)) return undefined;
     // CDTank.exe 0x45788c writes f32 centers and uses the stored height.
-    return {x: Math.fround(x * 12 + this.source.minimum[0] + 6), y: cell.height,
+    return {x: Math.fround(x * 12 + this.source.minimum[0] + 6), y: this.cells.getFloat32(offset, true),
       z: Math.fround(z * 12 + this.source.minimum[2] + 6)};
   }
 

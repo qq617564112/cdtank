@@ -5,10 +5,12 @@ import struct
 from pathlib import Path
 from pol import read_pol
 from nav import read_nav
+from bridge_navigation import patch_bridge_navigation
 
 root = Path('recovery/output/verified/assets/data')
 out = Path('apps/web/public')
 scenes = json.loads((out / 'scene-placements.json').read_text())
+
 fields = []
 for scene in scenes:
     identifier = scene['id']
@@ -27,15 +29,19 @@ for scene in scenes:
                     slot=slot)
                for slot in range(12)] for group in range(2)]
     navigation = read_nav(root / f'Data/scn/{identifier}/{identifier}.nav')
-    layers = [dict(minimum=layer['minimum'], maximum=layer['maximum'],
+    layers = [patch_bridge_navigation(identifier, dict(minimum=layer['minimum'], maximum=layer['maximum'],
                    width=layer['width'], height=layer['height'],
                    cells=base64.b64encode(b''.join(struct.pack('<fI', *cell)
-                       for cell in layer['cells'])).decode('ascii'))
+                       for cell in layer['cells'])).decode('ascii')), terrain)
               for layer in navigation['layers']]
     fields.append(dict(id=identifier, terrainTriangles=triangles,
         collisionBoxes=[dict(id=box['id'], matrix=box['matrix'], dimensions=box['dimensions'])
                         for box in scene['collisionBoxes']],
         respawnStamp=stamp, respawnGroups=groups, navigationLayers=layers))
-(out / 'battlefields.json').write_text(json.dumps(fields, separators=(',', ':')), encoding='utf-8')
+payload = json.dumps(fields, separators=(',', ':'))
+hd = Path('art/hd/battlefields.json')
+hd.parent.mkdir(parents=True, exist_ok=True)
+hd.write_text(payload, encoding='utf-8')
+(out / 'battlefields.json').write_text(payload, encoding='utf-8')
 print(f'{len(fields)} battlefields: {sum(len(f["terrainTriangles"]) for f in fields)} terrain triangles, '
       f'{sum(len(f["collisionBoxes"]) for f in fields)} boxes, 600 respawn slots')

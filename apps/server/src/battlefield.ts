@@ -262,8 +262,8 @@ export class Battlefield {
     const limit = invalid === undefined ? 1 : Math.max(0, invalid - 0.001);
     const candidate = {x: start.x + (end.x - start.x) * limit,
       z: start.z + (end.z - start.z) * limit};
-    const cell = this.navigation.sample(candidate.x, candidate.z);
-    const height = cell?.valid ? cell.height : undefined;
+    const height = this.navigation.isValidAt(candidate.x, candidate.z)
+      ? this.navigation.groundHeightAt(candidate.x, candidate.z) : undefined;
     if (height === undefined || Math.abs(height - start.y) > radius) {
       return start;
     }
@@ -276,7 +276,7 @@ export class Battlefield {
     const fraction = Math.max(0, hit.fraction - 0.001);
     const x = start.x + (destination.x - start.x) * fraction;
     const z = start.z + (destination.z - start.z) * fraction;
-    return {x, y: this.navigation.sample(x, z)!.height, z};
+    return {x, y: this.navigation.groundHeightAt(x, z)!, z};
   }
 
   spawnPoints(team?: number): readonly SpawnPoint[] {

@@ -20,7 +20,9 @@ function availableSpawn(field: Battlefield, spawn: TankSpawn,
   obstacles: ReturnType<typeof tankObstacles>): TankSpawn | undefined {
   const cell = field.navigation.sample(spawn.x, spawn.z);
   if (!cell?.valid) return undefined;
-  const candidate = {x: spawn.x, y: cell.height, z: spawn.z, yaw: spawn.yaw};
+  const height = field.navigation.groundHeightAt(spawn.x, spawn.z);
+  if (height === undefined) return undefined;
+  const candidate = {x: spawn.x, y: height, z: spawn.z, yaw: spawn.yaw};
   const cosine = Math.cos(spawn.yaw), sine = Math.sin(spawn.yaw);
   // Check the complete 49x52 footprint, including its boundary and center.
   for (const x of [-24.5, -12, 0, 12, 24.5]) {

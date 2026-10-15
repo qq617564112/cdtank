@@ -1,7 +1,9 @@
 import type {ObjectiveSnapshot, MsgRoomEvent, SceneObjectSnapshot} from '../../../shared/protocols';
 import type {ModeMapConfig} from '../config';
+import type {Battlefield} from '../battlefield';
+import type {TankBody} from '../../../shared/movement/tank-collision';
 import {getSceneBreakables, getSceneCastles} from '../scene-objects';
-import {advanceSceneObjects, castleSceneObjects, damageSceneObject} from '../battle/environment';
+import {advanceSceneObjects, castleSceneObjects, damageSceneObject, isSceneObjectRespawnBlocked} from '../battle/environment';
 
 type SceneTarget = ObjectiveSnapshot & {sourcePlacementId: string; sourceModel: string};
 
@@ -153,6 +155,8 @@ export function advanceObjectives(room: {
   mode: number;
   round?: number;
   map: {mapId: number; buttReborn: number; buttRebornTime: number};
+  battlefield: Battlefield;
+  players: ReadonlyMap<string, TankBody>;
   objectives: ObjectiveSnapshot[];
   sceneObjects: readonly SceneObjectSnapshot[];
 }, now: number): ObjectiveEnd | undefined {
@@ -169,7 +173,7 @@ export function advanceObjectives(room: {
     const state = states.get(objective.id) ?? (states.set(objective.id, {}), states.get(objective.id)!);
     if (objective.destroyedAt === undefined) objective.destroyedAt = now;
     state.rebornAt ??= objective.destroyedAt + room.map.buttRebornTime * 1000;
-    if (now >= state.rebornAt) {
+    if (now >= state.rebornAt && !isSceneObjectRespawnBlocked(room, objective.sourcePlacementId)) {
       objective.hp = room.map.buttReborn;
       objective.maxHp = room.map.buttReborn;
       objective.destroyedAt = undefined;

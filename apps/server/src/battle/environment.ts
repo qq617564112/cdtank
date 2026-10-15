@@ -1,4 +1,7 @@
 import type {MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot, SceneCrushSnapshot} from '../../../shared/protocols';
+import {createRoleObbFromPose} from '../../../shared/movement/movement-obb-prediction';
+import {intersectsOriginalObb} from '../../../shared/movement/obb-intersection';
+import {tankBodyPose, type TankBody} from '../../../shared/movement/tank-collision';
 import type {Battlefield} from '../battlefield';
 import {getSceneBreakables, getSceneCastles, getSceneCrushes} from '../scene-objects';
 import {recordBunkerDamage, type RoundStatsCarrier} from './round-statistics';
@@ -57,6 +60,31 @@ export function createSceneObjects(room: CastleRoom): SceneObjectSnapshot[] {
       x: source.matrix[12], y: source.matrix[13], z: source.matrix[14], hp: initialHp, maxHp: initialHp}))];
 }
 
+/** Restoration waits until every living tank clears the intact navigation footprint. */
+export function isSceneObjectRespawnBlocked(room: {
+  map: {mapId: number};
+  battlefield: Battlefield;
+  players: ReadonlyMap<string, TankBody>;
+}, sourcePlacementId: string | undefined): boolean {
+  const source = getSceneBreakables(room.map.mapId).find(source => source.id === sourcePlacementId);
+  if (!source || !source.navigationCells.length) return false;
+  const grid = room.battlefield.navigation.source;
+  const matrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const cell = {matrix, dimensions: [12, 24, 12] as const};
+  for (const player of room.players.values()) {
+    if (!player.alive) continue;
+    const body = createRoleObbFromPose(tankBodyPose(player));
+    // NAV occupancy blocks X/Z independently of height, including airborne tanks.
+    matrix[13] = body.matrix[13];
+    for (const index of source.navigationCells) {
+      matrix[12] = grid.minimum[0] + index % grid.width * 12 + 6;
+      matrix[14] = grid.minimum[2] + Math.trunc(index / grid.width) * 12 + 6;
+      if (intersectsOriginalObb(body, cell)) return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Restore ordinary mode1-4 Breaches in place. Source map values define both
  * the delay and HP; non-positive values disable automatic restoration rather
@@ -66,7 +94,9 @@ export function createSceneObjects(room: CastleRoom): SceneObjectSnapshot[] {
  */
 export function advanceSceneObjects(room: {
   mode: number;
-  map: {buttReborn: number; buttRebornTime: number};
+  map: {mapId: number; buttReborn: number; buttRebornTime: number};
+  battlefield: Battlefield;
+  players: ReadonlyMap<string, TankBody>;
   sceneObjects: readonly SceneObjectSnapshot[];
 }, now: number): void {
   if (![1, 2, 3, 4].includes(room.mode)) return;
@@ -76,6 +106,7 @@ export function advanceSceneObjects(room: {
   for (const object of room.sceneObjects) {
     if (object.id.startsWith('CASTLE:') || object.hp > 0 || object.destroyedAt === undefined) continue;
     if (now - object.destroyedAt < rebornSeconds * 1000) continue;
+    if (isSceneObjectRespawnBlocked(room, object.sourcePlacementId)) continue;
     object.hp = rebornHp;
     object.maxHp = rebornHp;
     object.destroyedAt = undefined;

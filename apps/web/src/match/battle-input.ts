@@ -9,6 +9,18 @@ export interface BattleInputContext {
   autopilot: boolean;
 }
 
+export interface BattleJoystickDirection {x: number; y: number;}
+export type BattleTouchInput = Pick<MsgPlayerInput, 'move' | 'turn' | 'aim' | 'fire'> & {
+  direction?: BattleJoystickDirection;
+  movementGesture?: number;
+};
+export type BattleMotionInput = Pick<MsgPlayerInput, 'move' | 'turn' | 'aim'> & {
+  direction?: BattleJoystickDirection;
+  movementGesture?: number;
+};
+const NEUTRAL_TOUCH: BattleTouchInput = {move: 0, turn: 0, aim: 0, fire: false};
+const SHORTCUT_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
 /** Single-press shortcut actions that are not held like motion or fire. */
 const PRESS_ACTIONS = ['useItem', 'prevWeapon', 'nextWeapon', 'prevItem', 'nextItem'] as const;
 
@@ -40,9 +52,11 @@ const NO_SHORTCUTS: BattleInputShortcuts = {
 /** Manual controls send key changes immediately and refresh held input every 50 ms. */
 export class BattleInput {
   private readonly keys = new Set<string>();
+  private touch: BattleTouchInput = {...NEUTRAL_TOUCH};
   private sequence = 0;
   private timer?: ReturnType<typeof setInterval>;
   private bindings: KeyBindings = {...DEFAULT_KEY_BINDINGS};
+  private readonly sendAxes: BattleMotionInput = {move: 0, turn: 0, aim: 0};
 
   constructor(private readonly readContext: () => BattleInputContext,
     private readonly sendMessage: (message: MsgPlayerInput) => void,
@@ -57,8 +71,7 @@ export class BattleInput {
             (event.target.closest('input, select, button, textarea') || event.target.isContentEditable))) {
         return;
       }
-      const shortcut = Array.from({length: 8}, (_, index) => index + 1)
-        .find(slot => bindingCodes(this.bindings, `slot${slot}` as InputAction).includes(event.code));
+      const shortcut = SHORTCUT_SLOTS.find(slot => bindingCodes(this.bindings, `slot${slot}` as InputAction).includes(event.code));
       if (shortcut !== undefined) {
         event.preventDefault();
         if (!event.repeat) {
@@ -105,6 +118,7 @@ export class BattleInput {
       if (this.keys.delete(event.code)) this.send();
     });
     window.addEventListener('blur', () => {this.clear();});
+    document.addEventListener('visibilitychange', () => {if (document.hidden) this.clear();});
     window.addEventListener('focusin', event => {
       if (event.target instanceof HTMLElement
           && event.target.matches('input, select, button, textarea, [contenteditable]')) {
@@ -115,8 +129,26 @@ export class BattleInput {
 
   clear(): void {
     this.shortcuts.clearIntent();
-    if (!this.keys.size) return;
+    const hadInput = this.keys.size > 0 || Object.values(this.touch).some(Boolean);
     this.keys.clear();
+    this.touch = {...NEUTRAL_TOUCH};
+    if (hadInput) this.send();
+  }
+
+  setTouch(patch: Partial<BattleTouchInput>): void {
+    const context = this.readContext();
+    if (!context.connected || !context.active || !context.playing || context.autopilot) {
+      this.touch = {...NEUTRAL_TOUCH};
+      return;
+    }
+    if (Object.entries(patch).every(([key, value]) => this.touch[key as keyof BattleTouchInput] === value)) return;
+    this.touch = {...this.touch, ...patch};
+    this.send();
+  }
+
+  clearTouch(): void {
+    if (!Object.values(this.touch).some(Boolean)) return;
+    this.touch = {...NEUTRAL_TOUCH};
     this.send();
   }
   getKeyBindings(): KeyBindings {return cloneKeyBindings(this.bindings);}
@@ -132,34 +164,50 @@ export class BattleInput {
     this.stop();
     this.timer = setInterval(() => {
       const context = this.readContext();
-      if (context.connected && context.active && context.playing) this.send();
+      if (context.connected && context.active && context.playing && !context.autopilot) this.send();
+      else this.clearTouch();
     }, 50);
   }
 
-  stop(): void {clearInterval(this.timer); this.timer = undefined; this.shortcuts.clearIntent();}
+  stop(): void {clearInterval(this.timer); this.timer = undefined; this.clear();}
 
   private held(action: InputAction): boolean {
-    return bindingCodes(this.bindings, action).some(code => this.keys.has(code));
+    const primary = this.bindings[action];
+    if (primary !== undefined && this.keys.has(primary)) return true;
+    const secondary = this.bindings.secondary?.[action];
+    return secondary !== undefined && this.keys.has(secondary);
   }
 
-  get motionAxes(): Pick<MsgPlayerInput, 'move' | 'turn' | 'aim'> {
+  get motionAxes(): BattleMotionInput {
+    return this.motionAxesToRef({move: 0, turn: 0, aim: 0});
+  }
+
+  /** The caller owns this synchronous motion workspace; no input record escapes. */
+  motionAxesToRef(result: BattleMotionInput): BattleMotionInput {
     const context = this.readContext();
     if (!context.connected || !context.active || !context.playing || context.autopilot) {
-      return {move: 0, turn: 0, aim: 0};
+      result.move = result.turn = result.aim = 0;
+      delete result.direction;
+      delete result.movementGesture;
+      return result;
     }
-    return {move: Number(this.held('forward')) - Number(this.held('backward')),
-      turn: Number(this.held('turnLeft')) - Number(this.held('turnRight')),
-      aim: Number(this.held('aimLeft')) - Number(this.held('aimRight'))};
+    result.move = Math.max(-1, Math.min(1, this.touch.move + Number(this.held('forward')) - Number(this.held('backward'))));
+    result.turn = Math.max(-1, Math.min(1, this.touch.turn + Number(this.held('turnLeft')) - Number(this.held('turnRight'))));
+    result.aim = Math.max(-1, Math.min(1, this.touch.aim + Number(this.held('aimLeft')) - Number(this.held('aimRight'))));
+    result.direction = this.touch.direction;
+    result.movementGesture = this.touch.movementGesture;
+    return result;
   }
 
   send(useItem = 0): void {
     const context = this.readContext();
     if (!context.connected || !context.active || !context.playing || context.autopilot) return;
     if (useItem > 0 && !this.shortcuts.acceptSlot(useItem)) return;
+    const axes = this.motionAxesToRef(this.sendAxes);
     this.sendMessage({
       sequence: ++this.sequence,
-      ...this.motionAxes,
-      fire: this.held('fire'), useItem, clientTime: Date.now(),
+      move: axes.move, turn: axes.turn, aim: axes.aim,
+      fire: this.touch.fire || this.held('fire'), useItem, clientTime: Date.now(),
     });
   }
 }

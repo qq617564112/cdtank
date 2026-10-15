@@ -465,7 +465,7 @@ export class World {
     // Dropping autopilot is a control change: rebuild the vertical state from
     // the current body position so a leftover descent does not carry over.
     found.player.verticalState = initialTankVerticalState(found.player.y,
-      found.room.battlefield.navigation.sample(found.player.x, found.player.z)?.height);
+      found.room.battlefield.navigation.groundHeightAt(found.player.x, found.player.z));
   }
 
   restorePlayerConnection(playerId: string, connectionId: string): void {

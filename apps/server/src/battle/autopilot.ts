@@ -16,6 +16,6 @@ export function configureBattleAutopilot(room: {phase: string; ready: Set<string
   // fall/ground state from the body's current Y and the real NAV surface so a
   // leftover descent velocity cannot carry across the switch.
   player.verticalState = initialTankVerticalState(player.y,
-    room.battlefield.navigation.sample(player.x, player.z)?.height);
+    room.battlefield.navigation.groundHeightAt(player.x, player.z));
   if (room.phase === 'WAITING') room.ready.delete(player.id);
 }

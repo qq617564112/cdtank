@@ -1,15 +1,15 @@
 import {mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
-import {getSceneCrushes, getSceneSolids, getSceneTerrain} from '../../apps/server/src/scene-objects';
-import {webAssetPath} from '../../apps/server/src/runtime/content-paths';
+import {getSceneCrushes, getSceneSolids, getSceneTerrainNavigationCells} from '../../apps/server/src/scene-objects';
+import {serverAssetPath} from '../../apps/server/src/runtime/content-paths';
 import {NavigationGrid, type SourceNavigationLayer} from '../../apps/shared/movement/navigation';
 import {navigationOccupancy} from '../../apps/shared/movement/navigation-collision';
 import type {SourceMovementField, SourceMovementSurface} from '../../apps/shared/movement/movement-field';
 
 const fields = JSON.parse(readFileSync(resolve(
-  process.env.BATTLEFIELDS ?? webAssetPath('battlefields.json')), 'utf8')) as
+  process.env.BATTLEFIELDS ?? serverAssetPath('battlefields.json')), 'utf8')) as
   {id: string; navigationLayers: SourceNavigationLayer[]}[];
-const directory = webAssetPath('movement');
+const directory = resolve(process.env.WEB_ASSETS ?? 'art/hd', 'movement');
 mkdirSync(directory, {recursive: true});
 let surfaceCount = 0;
 let cellCount = 0;
@@ -20,10 +20,10 @@ for (const field of fields) {
   if (!source) throw new Error(`缺少地图${field.id}的原 NAV`);
   const navigation = new NavigationGrid(source);
   const surfaces: SourceMovementSurface[] = [{id: 'terrain', enabled: true,
-    cells: [...navigationOccupancy(getSceneTerrain(mapId), navigation, true)].sort((a, b) => a - b)}];
+    cells: [...getSceneTerrainNavigationCells(mapId)].sort((a, b) => a - b)}];
   for (const solid of getSceneSolids(mapId)) {
     surfaces.push({id: solid.placementId, enabled: true,
-      cells: [...navigationOccupancy(solid.mesh, navigation)].sort((a, b) => a - b)});
+      cells: [...solid.navigationCells].sort((a, b) => a - b)});
   }
   // Disabled Crush placements retain their cells for later activation.
   for (const crush of getSceneCrushes(mapId)) {

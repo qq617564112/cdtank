@@ -47,7 +47,6 @@ export function createBattleMovementCollider(player: DynamicMovingParticipant): 
 interface MovementCollisionContext {
   readonly players: readonly DynamicMovingParticipant[];
   role?: RoleMovementCollider;
-  peers?: RoleMovementCollider[];
   obstacles?: RoleObb[];
 }
 
@@ -71,7 +70,7 @@ export function createBattleMovementPredictor(player: DynamicMovingParticipant, 
   };
 }
 
-/** Original movement permission is followed by a sweep against every living tank. */
+/** Actual body sweeps resolve tank contacts; static contact notifications remain. */
 export function predictControlledBattleMovement(player: DynamicMovingParticipant,
   input: MsgPlayerInput, field: Battlefield, others: Iterable<DynamicMovingParticipant>,
   elapsed: number, staticObjects?: (proposed: RoleObb) => Iterable<RoleStaticCollider>): BattleMovementResult | undefined {
@@ -85,32 +84,12 @@ function predictControlledMovement(player: DynamicMovingParticipant, input: MsgP
   staticObjects?: (proposed: RoleObb) => Iterable<RoleStaticCollider>): BattleMovementResult {
   const command = roleMovementCommand(input.move, input.turn) as RoleMovementMathInput['command'];
   const permitted = isBattleMovementAllowed(player, command);
-  let allowed = true;
-  if (command !== 0 && permitted) {
+  if (command !== 0 && permitted && staticObjects) {
     const role = context.role ??= createBattleMovementCollider(player);
-    const peers = context.peers ??= context.players.map(createBattleMovementCollider);
-    const objects = function* (): Generator<RoleStaticCollider> {
-      if (staticObjects) yield* staticObjects(role.predictObb(command, Math.fround(.3)));
-    };
-    allowed = isRoleControllerMovementAllowed(role, command, peers,
-      staticObjects ? objects() : [], true, () => {});
+    // Static contact notifications are independent of tank body separation.
+    isRoleControllerMovementAllowed(role, command, [],
+      staticObjects(role.predictObb(command, Math.fround(.3))), true, () => {});
   }
-  if (!allowed) {
-    const pose = battleMovementPose(player);
-    const ground = field.navigation.sample(pose.position.x, pose.position.z)?.height;
-    const verticalState = {...(player.verticalState
-      ?? initialTankVerticalState(player.y, ground))};
-    const vertical = advanceTankVertical(pose.position, field.navigation, verticalState, roleMovementElapsed(elapsed),
-      ground === undefined ? 0 : Math.max(0, ground - pose.position.y));
-    return {pose, yaw: player.yaw, bodyYaw: player.bodyYaw ?? player.yaw,
-      verticalState: vertical.state, command: 0};
-  }
-  // Vertical state is advanced once per tick from the pre-step value, after the
-  // horizontal candidate is clamped against other tanks. predictBattleMovement
-  // also advances vertical for its NAV-only consumers; that result is discarded
-  // here so the constrained X/Z receives the single authoritative vertical step.
-  const verticalState = {...(player.verticalState
-    ?? initialTankVerticalState(player.y, field.navigation.sample(player.x, player.z)?.height))};
   const state = predictBattleMovement(player, input, field, elapsed)!;
   const start = battleMovementPose(player);
   // Constrain the horizontal candidate; vertical motion is resolved afterwards
@@ -118,14 +97,25 @@ function predictControlledMovement(player: DynamicMovingParticipant, input: MsgP
   const horizontal = {look: state.pose.look, forward: state.pose.forward,
     position: {x: state.pose.position.x, y: start.position.y, z: state.pose.position.z}};
   const pose = constrainTankPose(start, horizontal,
-    context.obstacles ??= tankObstacles(player.id, context.players));
-  const ground = field.navigation.sample(pose.position.x, pose.position.z)?.height;
-  const vertical = advanceTankVertical(pose.position, field.navigation, verticalState,
-    roleMovementElapsed(elapsed), ground === undefined ? 0 : Math.max(0, ground - start.position.y));
-  const committed = vertical.accepted ? pose : start;
+    context.obstacles ??= tankObstacles(player.id, context.players), field.navigation);
+  let committed = pose;
+  let verticalState = state.verticalState;
+  // A refused NAV candidate still needs a vertical step at the actual X/Z.
+  if (state.verticalAccepted && pose.position.x === state.pose.position.x
+      && pose.position.z === state.pose.position.z) {
+    pose.position.y = state.pose.position.y;
+  } else {
+    const initialVertical = {...(player.verticalState
+      ?? initialTankVerticalState(player.y, field.navigation.groundHeightAt(player.x, player.z)))};
+    const ground = field.navigation.groundHeightAt(pose.position.x, pose.position.z);
+    const vertical = advanceTankVertical(pose.position, field.navigation, initialVertical,
+      roleMovementElapsed(elapsed), ground === undefined ? 0 : Math.max(0, ground - start.position.y), ground);
+    committed = vertical.accepted ? pose : start;
+    verticalState = vertical.state;
+  }
   return {pose: committed, yaw: Math.atan2(committed.look.x, committed.look.z),
     bodyYaw: Math.atan2(committed.forward.x, committed.forward.z),
-    verticalState: vertical.state,
+    verticalState,
     command: committed === start ? 0 : state.command};
 }
 

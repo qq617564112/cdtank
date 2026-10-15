@@ -94,7 +94,7 @@ export function initializeBattleParticipants<Player extends StartingParticipant>
     player.bodyYaw = undefined;
     player.movementState = undefined;
     player.verticalState = initialTankVerticalState(player.y,
-      battlefield.navigation.sample(player.x, player.z)?.height);
+      battlefield.navigation.groundHeightAt(player.x, player.z));
     player.movementCommand = 0;
     player.alive = true;
     player.combat.setStatus(2);

@@ -242,7 +242,7 @@ export function respawnPlayer(field: Battlefield, player: LifePlayer & {
   player.bodyYaw = undefined;
   player.movementState = undefined;
   player.verticalState = initialTankVerticalState(player.y,
-    field.navigation.sample(player.x, player.z)?.height);
+    field.navigation.groundHeightAt(player.x, player.z));
   player.movementCommand = 0;
   player.aim = 0;
   setBattleHealth(player, maxHp, maxHp);

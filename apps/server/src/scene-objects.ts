@@ -56,7 +56,7 @@ const colliders = new Map<number, Map<string, SceneCollider>>();
 const terrains = new Map<number, CollisionMesh>();
 const terrainNavigation = new Map<number, readonly number[]>();
 const solids = new Map<number, readonly SceneCollider[]>();
-const breakables = new Map<number, readonly SceneBreakable[]>();
+const breakables = new Map<number, readonly SceneCollider[]>();
 const castles = new Map<number, readonly (SceneBreakable & {hp: number; affiliation: number})[]>();
 const crushes = new Map<number, readonly (SceneBreakable & {enabled: boolean})[]>();
 const plants = new Map<number, readonly ScenePlant[]>();
@@ -120,7 +120,7 @@ export function getSceneSolids(mapId: number): readonly SceneCollider[] {
 }
 
 /** Intact render mesh and source instance identity. */
-export function getSceneBreakables(mapId: number): readonly SceneBreakable[] {
+export function getSceneBreakables(mapId: number): readonly SceneCollider[] {
   let values = breakables.get(mapId);
   if (!values) {
     values = collisionAt(mapId).breakables.map(id => collider(mapId, id));

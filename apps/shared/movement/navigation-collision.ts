@@ -1,5 +1,6 @@
 import {NavigationGrid, type SourceNavigationLayer} from './navigation';
 import {CollisionMesh, triangleIntersectsBounds} from './collision-mesh';
+import {TANK_MAX_STEP_HEIGHT} from './tank-vertical';
 
 const meshOccupancy = new WeakMap<SourceNavigationLayer, Map<CollisionMesh, ReadonlySet<number>>>();
 
@@ -23,6 +24,9 @@ export function navigationOccupancy(mesh: CollisionMesh, navigation: NavigationG
       if (cells.has(index)) continue;
       const cell = navigation.cellAt(x, z);
       if (!cell || (cell.fields & 255) <= 1 || cell.height + 24 < minimum[1] || cell.height + .5 > maximum[1]) continue;
+      // Terrain deck edges within the adopted step height are traversable.
+      // Solid scene objects still intersect the full standing body.
+      if (verticalOnly && maximum[1] <= cell.height + TANK_MAX_STEP_HEIGHT) continue;
       const originX = grid.minimum[0] + x * 12, originZ = grid.minimum[2] + z * 12;
       // Ground contact is allowed; raised faces intersect the 24-unit role body.
       if (triangleIntersectsBounds(vertices, [originX, cell.height + .5, originZ],

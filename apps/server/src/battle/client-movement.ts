@@ -6,7 +6,7 @@ import {hasFixedTurret} from '../../../shared/combat/tank-turret';
 import type {NavigationGrid} from '../../../shared/movement/navigation';
 import {advanceTankVertical, initialTankVerticalState} from '../../../shared/movement/tank-vertical';
 
-/** Accept manual motion up to the first occupied tank body. */
+/** Accept manual motion through the shared body-contact resolution. */
 export function acceptClientTankPose(round: number, player: PlayerState, pose: ClientTankPose,
   others: Iterable<TankBody>, navigation?: NavigationGrid): boolean {
   if (!player.alive || pose.round !== round || pose.life !== player.deaths ||
@@ -20,9 +20,9 @@ export function acceptClientTankPose(round: number, player: PlayerState, pose: C
     return true;
   }
   const start = tankBodyPose(player);
-  const accepted = constrainTankPose(start, tankBodyPose(pose), tankObstacles(player.id, others));
+  const accepted = constrainTankPose(start, tankBodyPose(pose), tankObstacles(player.id, others), navigation);
   player.verticalState ??= initialTankVerticalState(player.y,
-    navigation?.sample(player.x, player.z)?.height);
+    navigation?.groundHeightAt(player.x, player.z));
   const vertical = advanceTankVertical(accepted.position, navigation, player.verticalState, 0);
   player.verticalState = vertical.state;
   const committed = vertical.accepted ? accepted : start;

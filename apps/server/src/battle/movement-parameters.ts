@@ -1,5 +1,5 @@
 /** Final movement calibration, applied after role attributes and item effects. */
-export const TANK_MOVEMENT_ADJUSTMENT = 0.7;
+export const TANK_MOVEMENT_ADJUSTMENT = 0.9;
 
 export function adjustedMovementParameters(speed: number, turn: number): {speed: number; turn: number} {
   return {speed: speed * TANK_MOVEMENT_ADJUSTMENT, turn: turn * TANK_MOVEMENT_ADJUSTMENT};
