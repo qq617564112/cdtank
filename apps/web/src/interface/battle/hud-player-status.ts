@@ -5,9 +5,14 @@ import {SKILL_STATUS_ARTWORK} from '../../assets/skill-status-artwork';
 
 interface StatusNotification {skillId: number; effectId: number; expiresAt: number;}
 
+function compareEffectIds(left: number, right: number): number {return left - right;}
+
 /** Snapshot states persist until expiry; other notifications follow their source animation. */
 export class HudPlayerStatuses {
   private readonly notifications = new Map<string, StatusNotification[]>();
+  private readonly alivePlayers = new Set<string>();
+  private readonly effects = new Set<number>();
+  private readonly orderedEffects: number[] = [];
 
   event(event: MsgRoomEvent, now: number): void {
     if (event.type === 'destroy') this.notifications.delete(event.targetId);
@@ -50,26 +55,62 @@ export class HudPlayerStatuses {
 
   update(snapshot: MsgRoomSnapshot, now: number): void {
     if (snapshot.phase !== 'PLAYING') {this.clear(); return;}
-    const alive = new Set(snapshot.players.filter(player => player.alive).map(player => player.id));
-    for (const [id, statuses] of this.notifications) {
-      const next = alive.has(id) ? statuses.filter(status => status.expiresAt > now) : [];
-      if (next.length) this.notifications.set(id, next);
-      else this.notifications.delete(id);
+    const alive = this.alivePlayers;
+    alive.clear();
+    if (!this.notifications.size) return;
+    for (const player of snapshot.players) if (player.alive) alive.add(player.id);
+    for (const id of this.notifications.keys()) {
+      if (!alive.has(id)) {this.notifications.delete(id); continue;}
+      const statuses = this.notifications.get(id)!;
+      let count = 0;
+      for (const status of statuses) if (status.expiresAt > now) statuses[count++] = status;
+      statuses.length = count;
+      if (!count) this.notifications.delete(id);
     }
   }
 
-  current(player: PlayerSnapshot, serverNow: number): number[] {
-    if (!player.alive) return [];
-    const effects = new Set(this.notifications.get(player.id)?.map(status => status.effectId));
-    for (const state of [player.attackBoost, player.defenseBoost, player.speedBoost, player.turnBoost,
-      player.trapRestraint, player.trapTurnRestraint, player.trapFireRestraint]) {
-      if (!state || state.expiresAt <= serverNow) continue;
-      for (const effect of gameContent().skills.get(state.skillId)?.effects ?? []) {
-        if (SKILL_STATUS_ARTWORK.has(effect.effectId)) effects.add(effect.effectId);
+  /** Reuse an unchanged published list; changed results own their storage. */
+  current(player: PlayerSnapshot, serverNow: number, previous?: readonly number[]): readonly number[] {
+    const effects = this.effects;
+    effects.clear();
+    if (player.alive) {
+      const notifications = this.notifications.get(player.id);
+      if (notifications) for (const status of notifications) effects.add(status.effectId);
+      this.addSnapshotEffects(player.attackBoost, serverNow);
+      this.addSnapshotEffects(player.defenseBoost, serverNow);
+      this.addSnapshotEffects(player.speedBoost, serverNow);
+      this.addSnapshotEffects(player.turnBoost, serverNow);
+      this.addSnapshotEffects(player.trapRestraint, serverNow);
+      this.addSnapshotEffects(player.trapTurnRestraint, serverNow);
+      this.addSnapshotEffects(player.trapFireRestraint, serverNow);
+    }
+    const ordered = this.orderedEffects;
+    ordered.length = 0;
+    for (const effect of effects) ordered.push(effect);
+    ordered.sort(compareEffectIds);
+    if (previous?.length === ordered.length) {
+      let unchanged = true;
+      for (let index = 0; index < ordered.length; index++) {
+        if (previous[index] !== ordered[index]) {unchanged = false; break;}
       }
+      if (unchanged) return previous;
     }
-    return [...effects].sort((left, right) => left - right);
+    return ordered.slice();
   }
 
-  clear(): void {this.notifications.clear();}
+  private addSnapshotEffects(state: {skillId: number; expiresAt: number} | undefined, serverNow: number): void {
+    if (!state || state.expiresAt <= serverNow) return;
+    const effects = gameContent().skills.get(state.skillId)?.effects;
+    if (!effects) return;
+    for (const effect of effects) {
+      if (SKILL_STATUS_ARTWORK.has(effect.effectId)) this.effects.add(effect.effectId);
+    }
+  }
+
+  clear(): void {
+    this.notifications.clear();
+    this.alivePlayers.clear();
+    this.effects.clear();
+    this.orderedEffects.length = 0;
+  }
 }

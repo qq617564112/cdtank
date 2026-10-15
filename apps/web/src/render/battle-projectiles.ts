@@ -1,4 +1,5 @@
 import {Color3, Mesh, MeshBuilder, Quaternion, Scene, StandardMaterial, Vector3} from '@babylonjs/core';
+import type {Geometry} from '@babylonjs/core';
 import type {BulletSnapshot, MsgRoomSnapshot} from '../../../shared/protocols';
 
 const BODY_DIAMETER = 6;
@@ -14,11 +15,19 @@ interface BulletPresentation {
   vx: number;
   vy: number;
   vz: number;
+  trailVisible: boolean;
+  trailOffsetX: number;
+  trailOffsetY: number;
+  trailOffsetZ: number;
 }
 
 /** Presentation-only consumer for the authoritative special-ammo bullet stream. */
 export class BattleProjectiles {
   private readonly bullets = new Map<string, BulletPresentation>();
+  private readonly present = new Set<string>();
+  private snapshotBullets?: readonly BulletSnapshot[];
+  private bodyGeometry?: Geometry;
+  private trailGeometry?: Geometry;
   private readonly bodyMaterial: StandardMaterial;
   private readonly trailMaterial: StandardMaterial;
   private readonly localPosition = new Vector3();
@@ -60,9 +69,10 @@ export class BattleProjectiles {
       this.scopeRound = round;
     }
     this.snapshotServerTimeMs = snapshot.serverTime;
-    const present = new Set<string>();
+    if (this.snapshotBullets === snapshot.bullets) return;
+    this.present.clear();
     for (const bullet of snapshot.bullets) {
-      present.add(bullet.id);
+      this.present.add(bullet.id);
       let presentation = this.bullets.get(bullet.id);
       if (!presentation) {
         presentation = this.createPresentation(bullet.id);
@@ -70,10 +80,16 @@ export class BattleProjectiles {
       }
       this.applySnapshot(presentation, bullet);
     }
-    for (const [id, presentation] of this.bullets) {
-      if (present.has(id)) continue;
-      this.disposePresentation(presentation);
+    for (const id of this.bullets.keys()) {
+      if (this.present.has(id)) continue;
+      this.disposePresentation(this.bullets.get(id)!);
       this.bullets.delete(id);
+    }
+    this.present.clear();
+    this.snapshotBullets = snapshot.bullets;
+    if (!this.bullets.size) {
+      this.bodyGeometry = undefined;
+      this.trailGeometry = undefined;
     }
   }
 
@@ -89,6 +105,10 @@ export class BattleProjectiles {
   clear(): void {
     for (const presentation of this.bullets.values()) this.disposePresentation(presentation);
     this.bullets.clear();
+    this.present.clear();
+    this.snapshotBullets = undefined;
+    this.bodyGeometry = undefined;
+    this.trailGeometry = undefined;
     this.snapshotServerTimeMs = 0;
     this.scopeRoomId = undefined;
     this.scopeRound = undefined;
@@ -103,22 +123,33 @@ export class BattleProjectiles {
   }
 
   private createPresentation(id: string): BulletPresentation {
-    const body = MeshBuilder.CreateSphere(`battle-projectile-${id}`, {
-      diameter: BODY_DIAMETER,
-      segments: 8,
-    }, this.scene);
+    const bodyName = `battle-projectile-${id}`;
+    let body: Mesh;
+    if (this.bodyGeometry) {
+      body = new Mesh(bodyName, this.scene);
+      this.bodyGeometry.applyToMesh(body);
+    } else {
+      body = MeshBuilder.CreateSphere(bodyName, {diameter: BODY_DIAMETER, segments: 8}, this.scene);
+      this.bodyGeometry = body.geometry!;
+    }
     body.material = this.bodyMaterial;
     body.isPickable = false;
-    const trail = MeshBuilder.CreateCylinder(`battle-projectile-${id}-trail`, {
-      height: TRAIL_LENGTH,
-      diameterTop: 0.5,
-      diameterBottom: 2,
-      tessellation: 8,
-    }, this.scene);
+    const trailName = `battle-projectile-${id}-trail`;
+    let trail: Mesh;
+    if (this.trailGeometry) {
+      trail = new Mesh(trailName, this.scene);
+      this.trailGeometry.applyToMesh(trail);
+    } else {
+      trail = MeshBuilder.CreateCylinder(trailName, {
+        height: TRAIL_LENGTH, diameterTop: 0.5, diameterBottom: 2, tessellation: 8,
+      }, this.scene);
+      this.trailGeometry = trail.geometry!;
+    }
     trail.material = this.trailMaterial;
     trail.isPickable = false;
     trail.rotationQuaternion = Quaternion.Identity();
-    return {body, trail, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0};
+    return {body, trail, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0,
+      trailVisible: false, trailOffsetX: 0, trailOffsetY: 0, trailOffsetZ: 0};
   }
 
   private applySnapshot(presentation: BulletPresentation, bullet: BulletSnapshot): void {
@@ -128,18 +159,9 @@ export class BattleProjectiles {
     presentation.vx = bullet.vx;
     presentation.vy = bullet.vy;
     presentation.vz = bullet.vz;
-    this.place(presentation, 0);
-  }
-
-  private place(presentation: BulletPresentation, elapsedSeconds: number): void {
-    this.localPosition.set(
-      -(presentation.x + presentation.vx * elapsedSeconds),
-      presentation.y + presentation.vy * elapsedSeconds,
-      presentation.z + presentation.vz * elapsedSeconds,
-    );
-    presentation.body.position.copyFrom(this.localPosition);
     const webVx = -presentation.vx;
     const speedSquared = webVx * webVx + presentation.vy * presentation.vy + presentation.vz * presentation.vz;
+    presentation.trailVisible = speedSquared > 0.000001;
     if (speedSquared <= 0.000001) {
       presentation.trail.setEnabled(false);
       return;
@@ -150,10 +172,23 @@ export class BattleProjectiles {
     const rotation = presentation.trail.rotationQuaternion ?? Quaternion.Identity();
     Quaternion.FromUnitVectorsToRef(this.up, this.direction, rotation);
     presentation.trail.rotationQuaternion = rotation;
+    presentation.trailOffsetX = this.direction.x * TRAIL_LENGTH / 2;
+    presentation.trailOffsetY = this.direction.y * TRAIL_LENGTH / 2;
+    presentation.trailOffsetZ = this.direction.z * TRAIL_LENGTH / 2;
+  }
+
+  private place(presentation: BulletPresentation, elapsedSeconds: number): void {
+    this.localPosition.set(
+      -(presentation.x + presentation.vx * elapsedSeconds),
+      presentation.y + presentation.vy * elapsedSeconds,
+      presentation.z + presentation.vz * elapsedSeconds,
+    );
+    presentation.body.position.copyFrom(this.localPosition);
+    if (!presentation.trailVisible) return;
     presentation.trail.position.set(
-      this.localPosition.x - this.direction.x * TRAIL_LENGTH / 2,
-      this.localPosition.y - this.direction.y * TRAIL_LENGTH / 2,
-      this.localPosition.z - this.direction.z * TRAIL_LENGTH / 2,
+      this.localPosition.x - presentation.trailOffsetX,
+      this.localPosition.y - presentation.trailOffsetY,
+      this.localPosition.z - presentation.trailOffsetZ,
     );
   }
 

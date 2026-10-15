@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <title>模型光照 Viewer</title>
+  </head>
+  <body>
+    <header>
+      <h1>模型光照 Viewer</h1>
+      <p>游戏模型 · 原版卡通与场景光影对照</p>
+    </header>
+    <form id="controls">
+      <label>坦克<select id="tank"></select></label>
+      <label>涂装<select id="skin"><option value="default">默认</option><option value="red">红色条纹</option></select></label>
+      <label>渲染<select id="mode"><option value="shadows">场景受光＋实时阴影</option><option value="lighting">仅场景受光</option><option value="original">原版卡通</option></select></label>
+      <label>光照<select id="map"><option value="0001">白天</option><option value="0008">夜晚</option><option value="0009">室内</option><option value="0010">夕阳</option></select></label>
+      <label>地面范围<select id="extent"><option value="6000">地图尺度 · 6000</option><option value="512">模型尺度 · 512</option><option value="12000">大地图 · 12000</option></select></label>
+      <label class="check"><input id="receive" type="checkbox" checked>坦克接收阴影</label>
+      <label class="check"><input id="cast" type="checkbox" checked>坦克投射阴影</label>
+      <label class="check"><input id="obstacle" type="checkbox">外部遮挡物</label>
+      <label>车身角度<input id="yaw" type="range" min="-180" max="180" value="0"></label>
+      <label>镜头仰角<input id="elevation" type="range" min="10" max="85" value="45"></label>
+      <label>动作<select id="action"><option value="idle">待机</option><option value="move">行驶</option><option value="fire">开火</option></select></label>
+      <label class="check"><input id="playing" type="checkbox">播放动画</label>
+      <label>X位置<input id="x" type="number" step="0.1" value="0"></label>
+      <label>Z位置<input id="z" type="number" step="0.1" value="0"></label>
+      <button type="button" data-nudge="-1">左移1</button>
+      <button type="button" data-nudge="1">右移1</button>
+      <label class="check"><input id="travel" type="checkbox">往返移动</label>
+      <label class="check"><input id="follow" type="checkbox" checked>镜头跟随</label>
+      <button id="reset" type="button">复位镜头</button>
+      <button id="capture" type="button">保存截图</button>
+    </form>
+    <main><canvas id="world" tabindex="0" aria-label="模型光照预览，可拖动旋转镜头"></canvas></main>
+    <footer><output id="status" role="status">正在初始化 WebGPU…</output><span>拖动旋转 · 滚轮缩放</span></footer>
+    <script type="module" src="/src/dev/lighting-viewer.ts"></script>
+  </body>
+</html>

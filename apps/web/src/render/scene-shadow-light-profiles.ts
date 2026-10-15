@@ -18,7 +18,7 @@ const DAY: SceneShadowLightProfile = {
 };
 const NIGHT: SceneShadowLightProfile = {
   kind: 'night', direction: [0.35, -1, 0.25], colour: [0.72, 0.8, 1],
-  intensity: 0.38, ambient: 0.94, shadowStrength: 0.18, softness: 2.5,
+  intensity: 0.26, ambient: 0.48, shadowStrength: 0.18, softness: 2.5,
 };
 const INDOOR: SceneShadowLightProfile = {
   kind: 'indoor', direction: [0.035, -1, 0.025], colour: [1, 0.92, 0.8],

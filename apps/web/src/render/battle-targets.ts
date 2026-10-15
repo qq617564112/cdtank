@@ -7,23 +7,26 @@ import type {MsgRoomSnapshot} from '../../../shared/protocols';
  */
 export class BattleTargets {
   private readonly markers = new Map<string, {mesh: Mesh; material: StandardMaterial}>();
+  private readonly present = new Set<string>();
 
   constructor(private readonly scene: Scene) {}
 
   update(snapshot: MsgRoomSnapshot): void {
-    const present = new Set<string>();
-    for (const player of snapshot.players.filter(value => value.isVIP && value.alive)) {
-      const id = `VIP-${player.id}`;
-      present.add(id);
-      let marker = this.markers.get(id);
+    const present = this.present;
+    present.clear();
+    for (const player of snapshot.players) {
+      if (!player.isVIP || !player.alive) continue;
+      present.add(player.id);
+      let marker = this.markers.get(player.id);
       if (!marker) {
+        const id = `VIP-${player.id}`;
         const mesh = MeshBuilder.CreateCylinder(id, {height: 20, diameterTop: 0, diameterBottom: 16}, this.scene);
         const material = new StandardMaterial(`${id}-material`, this.scene);
         material.emissiveColor = new Color3(1, 0.85, 0.15);
         mesh.material = material;
         mesh.isPickable = false;
         marker = {mesh, material};
-        this.markers.set(id, marker);
+        this.markers.set(player.id, marker);
       }
       marker.mesh.position.set(-player.x, player.y + 75, player.z);
     }
@@ -42,5 +45,6 @@ export class BattleTargets {
       marker.material.dispose();
     }
     this.markers.clear();
+    this.present.clear();
   }
 }

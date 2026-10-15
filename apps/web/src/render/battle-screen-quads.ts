@@ -65,8 +65,14 @@ export class BattleScreenQuads {
   private positions = new Float32Array(0);
   private uvs = new Float32Array(0);
   private colours = new Float32Array(0);
+  private uploadCount = -1;
+  private positionUpload = this.positions;
+  private uvUpload = this.uvs;
+  private colourUpload = this.colours;
   private capacity = 0;
   private count = 0;
+  private readonly viewport = Vector2.Zero();
+  private readonly clip = Vector3.Zero();
 
   constructor(scene: Scene, name: string, texture: BaseTexture, order: number,
     fragmentSource = FRAGMENT, uniforms: readonly string[] = []) {
@@ -90,11 +96,13 @@ export class BattleScreenQuads {
 
   begin(width: number, height: number): void {
     this.count = 0;
-    this.material.setVector2('viewport', new Vector2(width, height));
+    this.viewport.set(width, height);
+    this.material.setVector2('viewport', this.viewport);
   }
 
   clipCircle(x: number, y: number, radius: number): void {
-    this.material.setVector3('clipCircle', new Vector3(x, y, radius));
+    this.clip.set(x, y, radius);
+    this.material.setVector3('clipCircle', this.clip);
   }
 
   quad(x: number, y: number, width: number, height: number, uv: ScreenUv,
@@ -119,9 +127,16 @@ export class BattleScreenQuads {
   end(): void {
     this.mesh.setEnabled(this.count > 0);
     if (!this.count) return;
-    this.mesh.updateVerticesData(VertexBuffer.PositionKind, this.positions);
-    this.mesh.updateVerticesData(VertexBuffer.UVKind, this.uvs);
-    this.mesh.updateVerticesData(VertexBuffer.ColorKind, this.colours);
+    const geometry = this.mesh.geometry!;
+    if (this.uploadCount !== this.count) {
+      this.positionUpload = this.positions.subarray(0, this.count * 12);
+      this.uvUpload = this.uvs.subarray(0, this.count * 8);
+      this.colourUpload = this.colours.subarray(0, this.count * 16);
+      this.uploadCount = this.count;
+    }
+    geometry.updateVerticesDataDirectly(VertexBuffer.PositionKind, this.positionUpload, 0);
+    geometry.updateVerticesDataDirectly(VertexBuffer.UVKind, this.uvUpload, 0);
+    geometry.updateVerticesDataDirectly(VertexBuffer.ColorKind, this.colourUpload, 0);
     setDynamicMeshIndexCount(this.mesh, this.count * 6);
   }
 
@@ -144,6 +159,10 @@ export class BattleScreenQuads {
     this.positions = positions;
     this.uvs = uvs;
     this.colours = colours;
+    this.uploadCount = -1;
+    this.positionUpload = positions;
+    this.uvUpload = uvs;
+    this.colourUpload = colours;
     this.capacity = capacity;
     this.mesh.setVerticesData(VertexBuffer.PositionKind, positions, true);
     this.mesh.setVerticesData(VertexBuffer.UVKind, uvs, true);

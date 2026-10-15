@@ -31,13 +31,21 @@ export interface SkillEffectNotificationBackend<Role, Effect, Sound> {
 }
 
 const SOUND_OFFSET: readonly [number, number, number] = [0, 0, -1];
+const FLOAT_BITS = new DataView(new ArrayBuffer(4));
+
+interface QueueTimer {
+  skillId: number;
+  remaining: number;
+}
 
 /** Original 488291/486b4a notifications and 48698f simulation-tick countdown updates. */
 export class SkillEffectNotifications<Role, Effect, Sound> {
   private readonly retained: SkillEffectNotificationRecord<Effect, Sound>[] = [];
   private readonly roleQueues = new Map<number, SkillEffectNotificationRecord<Effect, Sound>[]>();
   private accumulated = 0;
-  private readonly timers = new Map<number, {skillId: number; remaining: number}>();
+  private readonly timers = new Map<number, QueueTimer>();
+  private readonly timerRoles: number[] = [];
+  private readonly timerValues: QueueTimer[] = [];
   constructor(private readonly backend: SkillEffectNotificationBackend<Role, Effect, Sound>) {}
 
   get records(): readonly Readonly<SkillEffectNotificationRecord<Effect, Sound>>[] {return this.retained;}
@@ -120,11 +128,25 @@ export class SkillEffectNotifications<Role, Effect, Sound> {
   advanceTimers(deltaSeconds: number): void {
     const delta = Math.fround(deltaSeconds);
     if (delta <= 0) return;
-    for (const [roleId, timer] of [...this.timers]) {
-      if (timer.remaining < delta) {
-        this.timers.delete(roleId);
-        this.alternate(roleId, timer.skillId);
-      } else timer.remaining = Math.fround(timer.remaining - delta);
+    const roles = this.timerRoles;
+    const values = this.timerValues;
+    // Capture this frame's tasks before alternation registers their successors.
+    for (const roleId of this.timers.keys()) {
+      roles.push(roleId);
+      values.push(this.timers.get(roleId)!);
+    }
+    try {
+      for (let index = 0; index < roles.length; index++) {
+        const roleId = roles[index];
+        const timer = values[index];
+        if (timer.remaining < delta) {
+          this.timers.delete(roleId);
+          this.alternate(roleId, timer.skillId);
+        } else timer.remaining = Math.fround(timer.remaining - delta);
+      }
+    } finally {
+      roles.length = 0;
+      values.length = 0;
     }
   }
 
@@ -196,7 +218,6 @@ export class SkillEffectNotifications<Role, Effect, Sound> {
 }
 
 function floatBits(bits: number): number {
-  const data = new DataView(new ArrayBuffer(4));
-  data.setUint32(0, bits, true);
-  return data.getFloat32(0, true);
+  FLOAT_BITS.setUint32(0, bits, true);
+  return FLOAT_BITS.getFloat32(0, true);
 }

@@ -22,40 +22,60 @@ export interface HudCombatSnapshot {
 /** Item4/5/6/7/8/9/10/11 expiries only express that an effect is currently
  * valid, using the server millisecond value; they never gate a new cast.
  */
-function activeEffects(local: PlayerSnapshot): {skillId: number; expiresAt: number}[] {
+const ACTIVE_EFFECT_FIELDS = ['attackBoost', 'defenseBoost', 'speedBoost', 'turnBoost',
+  'invincibility', 'opticalCamouflage', 'roleDisguise'] as const;
+
+function activeEffects(local: PlayerSnapshot, previous?: HudCombatSnapshot['activeEffects']): HudCombatSnapshot['activeEffects'] {
+  if (previous) {
+    let index = 0;
+    let unchanged = true;
+    for (const field of ACTIVE_EFFECT_FIELDS) {
+      const state = local[field];
+      if (!state) continue;
+      const cached = previous[index++];
+      if (!cached || cached.skillId !== state.skillId || cached.expiresAt !== state.expiresAt) {
+        unchanged = false; break;
+      }
+    }
+    if (unchanged && index === previous.length) return previous;
+  }
   const effects: {skillId: number; expiresAt: number}[] = [];
-  const push = (state: {skillId: number; expiresAt: number} | undefined): void => {
+  for (const field of ACTIVE_EFFECT_FIELDS) {
+    const state = local[field];
     if (state) effects.push({skillId: state.skillId, expiresAt: state.expiresAt});
-  };
-  push(local.attackBoost);
-  push(local.defenseBoost);
-  push(local.speedBoost);
-  push(local.turnBoost);
-  push(local.invincibility);
-  push(local.opticalCamouflage);
-  push(local.roleDisguise);
+  }
   return effects;
 }
 
 export function combatState(snapshot: MsgRoomSnapshot, local: PlayerSnapshot | undefined,
-  serverNow = snapshot.serverTime): HudCombatSnapshot {
-  if (!local || !['PLAYING', 'FINISHED'].includes(snapshot.phase)) {
+  serverNow = snapshot.serverTime, previous?: HudCombatSnapshot): HudCombatSnapshot {
+  if (!local || (snapshot.phase !== 'PLAYING' && snapshot.phase !== 'FINISHED')) {
     return {visible: false, canUseShortcuts: false, alive: false, serverTime: snapshot.serverTime, ammoSlots: [], activeEffects: []};
   }
   const live = local.alive && snapshot.phase === 'PLAYING';
   const active = battleIsActive(snapshot, serverNow);
+  const canUseShortcuts = live && active && !local.isAutopilot;
+  const ammoSlots = local.ammoSlots ?? (previous?.ammoSlots.length === 0 ? previous.ammoSlots : []);
+  const reload = live ? local.reload : undefined;
+  const effects = live ? activeEffects(local, previous?.activeEffects)
+    : previous?.activeEffects.length === 0 ? previous.activeEffects : [];
+  if (previous?.visible && previous.canUseShortcuts === canUseShortcuts && previous.playerId === local.id
+    && previous.alive === local.alive && previous.serverTime === snapshot.serverTime
+    && previous.selectedAmmoSlot === local.selectedAmmoSlot && previous.ammoItemId === local.ammoItemId
+    && sameMagazine(previous.magazine, local.ammoMagazine) && sameAmmoSlots(previous.ammoSlots, ammoSlots)
+    && sameReload(previous.reload, reload) && previous.activeEffects === effects) return previous;
   return {
     visible: true,
-    canUseShortcuts: live && active && !local.isAutopilot,
+    canUseShortcuts,
     playerId: local.id,
     alive: local.alive,
     serverTime: snapshot.serverTime,
     selectedAmmoSlot: local.selectedAmmoSlot,
     ammoItemId: local.ammoItemId,
     magazine: local.ammoMagazine,
-    ammoSlots: local.ammoSlots ?? [],
-    reload: live ? local.reload : undefined,
-    activeEffects: live ? activeEffects(local) : [],
+    ammoSlots,
+    reload,
+    activeEffects: effects,
   };
 }
 
@@ -65,15 +85,24 @@ export function sameCombatState(left: HudCombatSnapshot, right: HudCombatSnapsho
       || left.playerId !== right.playerId || left.alive !== right.alive
       || left.serverTime !== right.serverTime || left.selectedAmmoSlot !== right.selectedAmmoSlot
       || left.ammoItemId !== right.ammoItemId || !sameMagazine(left.magazine, right.magazine)
-      || left.ammoSlots.length !== right.ammoSlots.length || left.activeEffects.length !== right.activeEffects.length
+      || !sameAmmoSlots(left.ammoSlots, right.ammoSlots) || left.activeEffects.length !== right.activeEffects.length
       || !sameReload(left.reload, right.reload)) return false;
-  return left.ammoSlots.every((slot, index) => {
-    const next = right.ammoSlots[index];
-    return slot.slot === next.slot && slot.itemTableId === next.itemTableId && slot.quantity === next.quantity;
-  }) && left.activeEffects.every((effect, index) => {
+  for (let index = 0; index < left.activeEffects.length; index++) {
+    const effect = left.activeEffects[index];
     const next = right.activeEffects[index];
-    return effect.skillId === next.skillId && effect.expiresAt === next.expiresAt;
-  });
+    if (effect.skillId !== next.skillId || effect.expiresAt !== next.expiresAt) return false;
+  }
+  return true;
+}
+
+function sameAmmoSlots(left: HudCombatSnapshot['ammoSlots'], right: HudCombatSnapshot['ammoSlots']): boolean {
+  if (left === right) return true;
+  if (left.length !== right.length) return false;
+  for (let index = 0; index < left.length; index++) {
+    const slot = left[index], next = right[index];
+    if (slot.slot !== next.slot || slot.itemTableId !== next.itemTableId || slot.quantity !== next.quantity) return false;
+  }
+  return true;
 }
 
 function sameMagazine(left: HudCombatSnapshot['magazine'], right: HudCombatSnapshot['magazine']): boolean {

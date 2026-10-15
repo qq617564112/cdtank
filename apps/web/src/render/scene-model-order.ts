@@ -7,7 +7,8 @@ export interface SceneOrderEntry {
 
 /** Native priorities descend; Babylon's transparent alpha indices ascend. */
 export function setSceneModelPriority(mesh: AbstractMesh, priority: number): void {
-  mesh.metadata = {...mesh.metadata, sceneModelPriority: priority};
+  mesh.metadata ??= {};
+  mesh.metadata.sceneModelPriority = priority;
   mesh.alphaIndex = -priority;
   mesh.renderingGroupId = 0;
 }

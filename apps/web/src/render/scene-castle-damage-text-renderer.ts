@@ -19,7 +19,7 @@ export interface CastleDamageTextFont {
 }
 
 interface GlyphResource {glyph: CastleDamageTextGlyph; shape: BattleVectorShape;}
-interface GlyphDraw {resource: GlyphResource; vector: BattleScreenVector;}
+interface GlyphDraw {resource: GlyphResource; vector: BattleScreenVector; width: number; height: number;}
 
 /** Original numeric images and marks with their source palettes and metrics. */
 export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
@@ -28,6 +28,9 @@ export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
   private zeroValueResource?: GlyphResource;
   private sequence = 0;
   private disposed = false;
+  private readonly screen = new Vector2();
+  private readonly rectangle: [number, number, number, number] = [0, 0, 0, 0];
+  private readonly tint: [number, number, number, number] = [1, 1, 1, 1];
 
   constructor(private readonly scene: Scene, private readonly font: CastleDamageTextFont,
               fontName: 'Damage' | 'Benefit' | 'Critical' | 'Combo' = 'Damage',
@@ -66,7 +69,7 @@ export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
     for (const resource of glyphs) {
       // Original static numeric fonts have only ten digits. Unmapped signs stay blank.
       if (!resource || this.disposed) continue;
-      draws.push({resource,
+      draws.push({resource, width: 0, height: 0,
         vector: new BattleScreenVector(this.scene, 'castle-damage-text-glyph', this.alphaIndex, 3)});
     }
     const handle = ++this.sequence;
@@ -79,18 +82,21 @@ export class SceneCastleDamageTextRenderer implements CastleDamageTextRenderer {
     if (!draws) return;
     const horizontal = viewport.width / Number(this.font.attributes.NativeHorzRes);
     const vertical = viewport.height / Number(this.font.attributes.NativeVertRes);
-    const dimensions = draws.map(({resource}) => ({
-      width: Math.fround(Math.round(resource.glyph.width * horizontal) * record.scale),
-      height: Math.fround(Math.round(resource.glyph.height * vertical) * record.scale),
-    }));
     let width = 0;
-    for (const dimension of dimensions) width = Math.fround(width + dimension.width);
+    for (const draw of draws) {
+      draw.width = Math.fround(Math.round(draw.resource.glyph.width * horizontal) * record.scale);
+      draw.height = Math.fround(Math.round(draw.resource.glyph.height * vertical) * record.scale);
+      width = Math.fround(width + draw.width);
+    }
     let x = Math.fround(record.x - width * 0.5);
-    const screen = new Vector2(viewport.width, viewport.height);
-    for (const [index, {resource, vector}] of draws.entries()) {
+    const screen = this.screen;
+    screen.set(viewport.width, viewport.height);
+    const rectangle = this.rectangle, tint = this.tint;
+    tint[3] = record.alpha;
+    for (const {resource, vector, width, height} of draws) {
       if (record.alpha <= 0) {vector.clear(); continue;}
-      const {width, height} = dimensions[index];
-      vector.draw(resource.shape, screen, [x, record.y, width, height], undefined, [1, 1, 1, record.alpha]);
+      rectangle[0] = x; rectangle[1] = record.y; rectangle[2] = width; rectangle[3] = height;
+      vector.draw(resource.shape, screen, rectangle, undefined, tint);
       x = Math.fround(x + width);
     }
   }

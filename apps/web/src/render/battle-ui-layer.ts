@@ -30,6 +30,7 @@ export class BattleUiLayer {
   private readonly images = new Map<string, ImageResource>();
   private readonly loading = new Map<string, Promise<void>>();
   private readonly batches = new Map<number, Map<ImageAtlas, BattleScreenQuads>>();
+  private readonly quadUv: [number, number, number, number] = [0, 0, 0, 0];
   private disposed = false;
 
   constructor(private readonly scene: Scene) {
@@ -68,12 +69,16 @@ export class BattleUiLayer {
       const uv = image.uv, du = uv[2] - uv[0], dv = uv[3] - uv[1];
       const order = (entry.group === 3 ? 1 : entry.order >= 10 ? 6 : 3.9) + entry.order / 1000;
       const batch = this.batch(image.atlas, order, width, height);
+      const quadUv = this.quadUv;
+      quadUv[0] = uv[0] + x0 / draw.shape.width * du;
+      quadUv[1] = uv[1] + y0 / draw.shape.height * dv;
+      quadUv[2] = uv[0] + x1 / draw.shape.width * du;
+      quadUv[3] = uv[1] + y1 / draw.shape.height * dv;
       batch.quad((left + x0 / draw.shape.width * imageWidth) * xRatio,
         (top + y0 / draw.shape.height * imageHeight) * yRatio,
         (x1 - x0) / draw.shape.width * imageWidth * xRatio,
         (y1 - y0) / draw.shape.height * imageHeight * yRatio,
-        [uv[0] + x0 / draw.shape.width * du, uv[1] + y0 / draw.shape.height * dv,
-          uv[0] + x1 / draw.shape.width * du, uv[1] + y1 / draw.shape.height * dv], draw.tint);
+        quadUv, draw.tint);
       visible = true;
     }
     for (const batches of this.batches.values()) {

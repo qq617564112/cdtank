@@ -21,9 +21,19 @@ export interface HudMinimapCamera {
   rightZ: number;
 }
 
+export interface HudMinimapLocalPosition {left: number; top: number; atEdge: boolean;}
+
 /** Out-of-range marker centres retain their bearing on the inner white border. */
 export function hudMinimapLocalPosition(camera: HudMinimapCamera, x: number,
-  z: number): {left: number; top: number; atEdge: boolean} {
+  z: number): HudMinimapLocalPosition {
+  const result = {left: 0, top: 0, atEdge: false};
+  hudMinimapLocalPositionToRef(camera, x, z, result);
+  return result;
+}
+
+/** Write one marker into caller-owned storage, preserving radial border placement. */
+export function hudMinimapLocalPositionToRef(camera: HudMinimapCamera, x: number,
+  z: number, result: HudMinimapLocalPosition): void {
   const dx = x - camera.x, dz = z - camera.z;
   const right = (dx * camera.rightX + dz * camera.rightZ) * HUD_MINIMAP_SCALE;
   const up = (dx * camera.forwardX + dz * camera.forwardZ) * HUD_MINIMAP_SCALE;
@@ -32,8 +42,9 @@ export function hudMinimapLocalPosition(camera: HudMinimapCamera, x: number,
   const borderCentreRadius = visibleRadius - .5;
   const atEdge = distance > visibleRadius;
   const factor = atEdge ? borderCentreRadius / distance : 1;
-  return {left: HUD_MINIMAP_SIZE / 2 + right * factor,
-    top: HUD_MINIMAP_SIZE / 2 - up * factor, atEdge};
+  result.left = HUD_MINIMAP_SIZE / 2 + right * factor;
+  result.top = HUD_MINIMAP_SIZE / 2 - up * factor;
+  result.atEdge = atEdge;
 }
 
 /** Original NAV and all authored RPT spawn positions, square-fitted per map. */

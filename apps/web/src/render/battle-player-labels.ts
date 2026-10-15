@@ -8,11 +8,17 @@ import {BattleScreenQuads, createBattleScreenLayer, loadBattleOverlayImage, type
 
 interface LabelEntry {
   slot: number;
-  text?: string;
-  health?: string;
+  title?: string;
+  name?: string;
+  friendly?: boolean;
+  vip?: boolean;
+  hp?: number;
+  maxHp?: number;
   vipX: number;
   view?: TankView;
   headOffset?: number;
+  textUv: ScreenUv;
+  healthUv: ScreenUv;
 }
 
 const SOURCE_WIDTH = 800;
@@ -23,7 +29,7 @@ const HEAD_OFFSET = 8;
 const FALLBACK_HEAD_Y = 55;
 const TEXT_SCALE = 4;
 const TILE_WIDTH = 512;
-const TILE_HEIGHT = 256;
+const TILE_HEIGHT = 192;
 const ATLAS_WIDTH = TILE_WIDTH * 4;
 const ATLAS_HEIGHT = TILE_HEIGHT * 4;
 const HEALTH_TILE_HEIGHT = 64;
@@ -33,10 +39,13 @@ const FONT = "'CDTank-Xiangjiao', sans-serif";
 const BAR_BACKGROUND: ScreenUv = [0, 0, 96 / 256, 4 / 32];
 const BAR_FILL: ScreenUv = [0, 8 / 32, 96 / 256, 12 / 32];
 const VIP: ScreenUv = [112 / 256, 0, 134 / 256, 12 / 32];
+const FRIENDLY_COLOUR = [.298, 1, .298, 1] as const;
+const OPPONENT_COLOUR = [1, .298, .247, 1] as const;
 
 /** GPU nameplates use the rendered tank positions and cache source-font text. */
 export class BattlePlayerLabels {
   private readonly entries = new Map<string, LabelEntry>();
+  private readonly present = new Set<string>();
   private readonly layer: UtilityLayerRenderer;
   private readonly canvas = document.createElement('canvas');
   private readonly context: CanvasRenderingContext2D;
@@ -57,6 +66,12 @@ export class BattlePlayerLabels {
   private ready = false;
   private disposed = false;
   private loading?: Promise<void>;
+  private readonly viewport = new Viewport(0, 0, 0, 0);
+  private readonly identity = Matrix.Identity();
+  private readonly planes = Frustum.GetPlanes(this.identity);
+  private readonly head = new Vector3();
+  private readonly point = new Vector3();
+  private readonly barFill: [number, number, number, number] = [...BAR_FILL];
 
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
     private readonly hiddenByDisguise: (id: string) => boolean) {
@@ -103,7 +118,11 @@ export class BattlePlayerLabels {
     this.players = players;
     this.localPlayerId = localPlayerId;
     this.mode = mode;
-    const present = new Set(players.filter(player => player.id !== localPlayerId).map(player => player.id));
+    const present = this.present;
+    present.clear();
+    for (const player of players) {
+      if (player.id !== localPlayerId) present.add(player.id);
+    }
     for (const [id, entry] of this.entries) {
       if (present.has(id)) continue;
       this.freeSlots.push(entry.slot);
@@ -113,20 +132,23 @@ export class BattlePlayerLabels {
     if (!playing) this.layer.shouldRender = false;
   }
 
-  render(views: ReadonlyMap<string, TankView>, localPlayerId: string | undefined, playing: boolean): void {
+  render(views: ReadonlyMap<string, TankView>, localPlayerId: string | undefined, playing: boolean,
+    cameraPlayerId = localPlayerId): void {
     this.localPlayerId = localPlayerId;
     this.layer.shouldRender = playing && this.ready && this.players.length > 0;
     if (!this.layer.shouldRender) return;
     const engine = this.scene.getEngine();
     const width = engine.getRenderWidth(), height = engine.getRenderHeight();
     const scale = Math.min(width / SOURCE_WIDTH, height / SOURCE_HEIGHT);
-    const viewport = new Viewport(0, 0, width, height);
+    const viewport = this.viewport;
+    viewport.width = width; viewport.height = height;
     const transformation = this.camera.getTransformationMatrix();
-    const planes = Frustum.GetPlanes(transformation);
+    const planes = this.planes;
+    Frustum.GetPlanesToRef(transformation, planes);
     const observer = this.players.find(player => player.id === localPlayerId);
-    const observerView = localPlayerId ? views.get(localPlayerId) : undefined;
-    const referenceDistance = observerView
-      ? Vector3.Distance(this.camera.globalPosition, observerView.root.position) : this.camera.radius;
+    const cameraView = cameraPlayerId ? views.get(cameraPlayerId) : undefined;
+    const referenceDistance = cameraView
+      ? Vector3.Distance(this.camera.globalPosition, cameraView.root.position) : this.camera.radius;
     this.textQuads.begin(width, height);
     this.iconQuads.begin(width, height);
     this.healthQuads.begin(width, height);
@@ -141,31 +163,31 @@ export class BattlePlayerLabels {
         entry.headOffset = Number.isFinite(bounds.max.y)
           ? bounds.max.y - view.root.position.y + HEAD_OFFSET : FALLBACK_HEAD_Y;
       }
-      const head = new Vector3(view.root.position.x,
-        view.root.position.y + entry.headOffset!, view.root.position.z);
-      if (planes.some(plane => plane.dotCoordinate(head) <= 0)) continue;
-      const point = Vector3.Project(head, Matrix.Identity(), transformation, viewport);
+      const head = this.head;
+      head.set(view.root.position.x, view.root.position.y + entry.headOffset!, view.root.position.z);
+      let outside = false;
+      for (const plane of planes) {
+        if (plane.dotCoordinate(head) <= 0) {outside = true; break;}
+      }
+      if (outside) continue;
+      const point = this.point;
+      Vector3.ProjectToRef(head, this.identity, transformation, viewport, point);
       if (point.x < 0 || point.x > width || point.y < 0 || point.y > height) continue;
       const distance = Vector3.Distance(this.camera.globalPosition, head);
       const labelScale = scale * Math.max(.82, Math.min(1.1, Math.sqrt(referenceDistance / Math.max(1, distance))));
       const labelWidth = LABEL_WIDTH * labelScale, labelHeight = LABEL_HEIGHT * labelScale;
       const x = Math.max(labelWidth / 2, Math.min(width - labelWidth / 2, point.x)) - labelWidth / 2;
       const y = Math.max(labelHeight, point.y - 5 * scale) - labelHeight;
-      const tileX = entry.slot % 4 * TILE_WIDTH, tileY = Math.floor(entry.slot / 4) * TILE_HEIGHT;
-      this.textQuads.quad(x, y, labelWidth, labelHeight,
-        [tileX / ATLAS_WIDTH, tileY / ATLAS_HEIGHT,
-          (tileX + LABEL_WIDTH * TEXT_SCALE) / ATLAS_WIDTH, (tileY + LABEL_HEIGHT * TEXT_SCALE) / ATLAS_HEIGHT]);
-      const healthY = Math.floor(entry.slot / 4) * HEALTH_TILE_HEIGHT;
-      this.healthQuads.quad(x, y + 33 * labelScale, labelWidth, 11 * labelScale,
-        [tileX / ATLAS_WIDTH, healthY / HEALTH_ATLAS_HEIGHT,
-          (tileX + LABEL_WIDTH * TEXT_SCALE) / ATLAS_WIDTH, (healthY + 11 * TEXT_SCALE) / HEALTH_ATLAS_HEIGHT]);
+      this.textQuads.quad(x, y, labelWidth, labelHeight, entry.textUv);
+      this.healthQuads.quad(x, y + 33 * labelScale, labelWidth, 11 * labelScale, entry.healthUv);
       this.iconQuads.quad(x + 8 * labelScale, y + 28 * labelScale, 96 * labelScale, 4 * labelScale, BAR_BACKGROUND);
       const fraction = player.maxHp > 0 ? Math.max(0, Math.min(1, player.hp / player.maxHp)) : 0;
       if (fraction > 0) {
         const friendly = this.isFriendly(player, observer);
+        const barFill = this.barFill;
+        barFill[2] = BAR_FILL[2] * fraction;
         this.iconQuads.quad(x + 8 * labelScale, y + 28 * labelScale, 96 * labelScale * fraction, 4 * labelScale,
-          [BAR_FILL[0], BAR_FILL[1], BAR_FILL[2] * fraction, BAR_FILL[3]],
-          friendly ? [.298, 1, .298, 1] : [1, .298, .247, 1], true);
+          barFill, friendly ? FRIENDLY_COLOUR : OPPONENT_COLOUR, true);
       }
       if (this.mode === 3 && player.isVIP) {
         this.iconQuads.quad(x + entry.vipX * labelScale,
@@ -193,6 +215,7 @@ export class BattlePlayerLabels {
     this.iconQuads.clear();
     this.healthQuads.clear();
     this.entries.clear();
+    this.present.clear();
     this.freeSlots = Array.from({length: 16}, (_, index) => 15 - index);
     this.players = [];
     this.localPlayerId = undefined;
@@ -212,6 +235,8 @@ export class BattlePlayerLabels {
     this.icons.dispose();
     this.healthAtlas.dispose();
     this.layer.dispose();
+    this.canvas.width = this.canvas.height = 0;
+    this.healthCanvas.width = this.healthCanvas.height = 0;
   }
 
   private updateTexts(): void {
@@ -221,14 +246,22 @@ export class BattlePlayerLabels {
       if (player.id === this.localPlayerId) continue;
       let entry = this.entries.get(player.id);
       if (!entry) {
-        entry = {slot: this.freeSlots.pop()!, vipX: 0};
+        const slot = this.freeSlots.pop()!;
+        const tileX = slot % 4 * TILE_WIDTH, tileY = Math.floor(slot / 4) * TILE_HEIGHT;
+        const healthY = Math.floor(slot / 4) * HEALTH_TILE_HEIGHT;
+        entry = {slot, vipX: 0,
+          textUv: [tileX / ATLAS_WIDTH, tileY / ATLAS_HEIGHT,
+            (tileX + LABEL_WIDTH * TEXT_SCALE) / ATLAS_WIDTH, (tileY + LABEL_HEIGHT * TEXT_SCALE) / ATLAS_HEIGHT],
+          healthUv: [tileX / ATLAS_WIDTH, healthY / HEALTH_ATLAS_HEIGHT,
+            (tileX + LABEL_WIDTH * TEXT_SCALE) / ATLAS_WIDTH, (healthY + 11 * TEXT_SCALE) / HEALTH_ATLAS_HEIGHT]};
         this.entries.set(player.id, entry);
       }
       const title = player.title?.name || DEFAULT_PLAYER_TITLE;
       const friendly = this.isFriendly(player, observer), vip = this.mode === 3 && player.isVIP;
-      const health = `${player.hp}/${player.maxHp}`;
-      if (health !== entry.health) {
-        entry.health = health;
+      if (player.hp !== entry.hp || player.maxHp !== entry.maxHp) {
+        entry.hp = player.hp;
+        entry.maxHp = player.maxHp;
+        const health = `${player.hp}/${player.maxHp}`;
         const context = this.healthContext;
         const x = entry.slot % 4 * TILE_WIDTH, y = Math.floor(entry.slot / 4) * HEALTH_TILE_HEIGHT;
         context.clearRect(x, y, TILE_WIDTH, HEALTH_TILE_HEIGHT);
@@ -249,9 +282,12 @@ export class BattlePlayerLabels {
         context.restore();
         this.healthDirty = true;
       }
-      const text = JSON.stringify([title, player.name, friendly, vip]);
-      if (text === entry.text) continue;
-      entry.text = text;
+      if (title === entry.title && player.name === entry.name
+          && friendly === entry.friendly && vip === entry.vip) continue;
+      entry.title = title;
+      entry.name = player.name;
+      entry.friendly = friendly;
+      entry.vip = vip;
       const context = this.context;
       const x = entry.slot % 4 * TILE_WIDTH, y = Math.floor(entry.slot / 4) * TILE_HEIGHT;
       context.clearRect(x, y, TILE_WIDTH, TILE_HEIGHT);

@@ -14,6 +14,7 @@ export class BattleTankDecoration {
   private attached = false;
   private disposed = false;
   private opacity?: number;
+  private readonly attachmentMatrix = Matrix.Identity();
   private readonly materialStates = new Map<PBRMaterial, {
     alpha: number; transparencyMode: number | null; alphaMode: number;
   }>();
@@ -33,10 +34,12 @@ export class BattleTankDecoration {
     this.anchor.setEnabled(!!native);
     if (!native) return;
     // Reflect the native matrix about X, as the converted actor coordinates do.
-    const matrix = [...native];
-    for (const index of [1, 2, 3, 4, 8, 12]) matrix[index] *= -1;
+    const matrix = this.attachmentMatrix;
+    Matrix.FromArrayToRef(native, 0, matrix);
+    matrix.multiplyAtIndex(1, -1); matrix.multiplyAtIndex(2, -1); matrix.multiplyAtIndex(3, -1);
+    matrix.multiplyAtIndex(4, -1); matrix.multiplyAtIndex(8, -1); matrix.multiplyAtIndex(12, -1);
     // Keep the attachment local; rendering updates it with the actor's current world matrix.
-    this.anchor.setPreTransformMatrix(Matrix.FromArray(matrix));
+    this.anchor.setPreTransformMatrix(matrix);
     this.anchor.markAsDirty();
   };
 
@@ -62,7 +65,15 @@ export class BattleTankDecoration {
   /** Registers each resource before the next await so a mid-load dispose leaves nothing behind. */
   async load(): Promise<boolean> {
     try {
-      const assets = await loadPreparedModel(battleArtworkUrl(this.model, this.scene), this.scene);
+      const texturePath = this.texturePath;
+      const assets = await loadPreparedModel(battleArtworkUrl(this.model, this.scene), this.scene, {
+        pluginOptions: {gltf: {onParsed: data => {
+          if (!texturePath) return;
+          for (const material of data.json.materials ?? []) {
+            if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
+          }
+        }}},
+      });
       if (this.disposed) {assets.dispose(); return false;}
       this.assets = assets;
       for (const material of assets.materials) {
@@ -70,7 +81,6 @@ export class BattleTankDecoration {
           alpha: material.alpha, transparencyMode: material.transparencyMode, alphaMode: material.alphaMode,
         });
       }
-      const texturePath = this.texturePath;
       if (texturePath) {
         const texture = await new Promise<Texture>((resolve, reject) => {
           const created = new Texture(battleArtworkUrl(texturePath, this.scene), this.scene, false, false,
@@ -81,7 +91,11 @@ export class BattleTankDecoration {
         });
         if (this.disposed) {texture.dispose(); return false;}
         for (const material of assets.materials) {
-          if (material instanceof PBRMaterial) material.albedoTexture = texture;
+          if (material instanceof PBRMaterial) {
+            material.albedoTexture = texture;
+            // The accessory MASK materials originally enable this while loading their base image.
+            material.useAlphaFromAlbedoTexture = true;
+          }
         }
       }
       assets.addAllToScene();

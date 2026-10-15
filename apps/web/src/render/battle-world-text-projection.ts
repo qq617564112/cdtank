@@ -3,13 +3,18 @@ import type {CastleDamageTextProjector} from '../assets/scenes/scene-castle-dama
 
 /** Reproject the captured Babylon world position using the current camera and viewport. */
 export function createBattleWorldTextProjector(camera: Camera): CastleDamageTextProjector {
+  const position = new Vector3(), viewPosition = new Vector3(), point = new Vector3();
+  const identity = Matrix.Identity(), screen = new Viewport(0, 0, 0, 0);
+  const result = {x: 0, y: 0, depth: 0, visible: false};
   return (origin, viewport) => {
-    const position = new Vector3(...origin);
-    const viewZ = Vector3.TransformCoordinates(position, camera.getViewMatrix()).z;
+    position.set(origin[0], origin[1], origin[2]);
+    Vector3.TransformCoordinatesToRef(position, camera.getViewMatrix(), viewPosition);
+    const viewZ = viewPosition.z;
     const depth = camera.getScene().useRightHandedSystem ? -viewZ : viewZ;
-    const point = Vector3.Project(position, Matrix.Identity(), camera.getTransformationMatrix(),
-      new Viewport(0, 0, viewport.width, viewport.height));
-    return {x: Math.trunc(point.x), y: Math.trunc(point.y), depth,
-      visible: depth >= camera.minZ && depth <= camera.maxZ};
+    screen.width = viewport.width; screen.height = viewport.height;
+    Vector3.ProjectToRef(position, identity, camera.getTransformationMatrix(), screen, point);
+    result.x = Math.trunc(point.x); result.y = Math.trunc(point.y); result.depth = depth;
+    result.visible = depth >= camera.minZ && depth <= camera.maxZ;
+    return result;
   };
 }

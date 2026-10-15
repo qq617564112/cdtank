@@ -28,15 +28,17 @@ export class GameContent {
   }
 
   item(key: string): ItemDefinition {
-    const item = [...this.items.values()].find(item => item.key === key);
-    if (!item) throw new Error(`物品定义缺失：${key}`);
-    return item;
+    for (const item of this.items.values()) {
+      if (item.key === key) return item;
+    }
+    throw new Error(`物品定义缺失：${key}`);
   }
 
   skill(key: string): SkillDefinition {
-    const skill = [...this.skills.values()].find(skill => skill.key === key);
-    if (!skill) throw new Error(`技能定义缺失：${key}`);
-    return skill;
+    for (const skill of this.skills.values()) {
+      if (skill.key === key) return skill;
+    }
+    throw new Error(`技能定义缺失：${key}`);
   }
 }
 
@@ -49,7 +51,10 @@ export function gameContent(): GameContent {
 export function contentItemId(key: string): number {return gameContent().item(key).id;}
 export function contentSkillId(key: string): number {return gameContent().skill(key).skillId;}
 export function defaultAmmoId(): number {
-  return [...gameContent().items.values()].find(item => item.runtime.defaultAmmo)!.id;
+  for (const item of gameContent().items.values()) {
+    if (item.runtime.defaultAmmo) return item.id;
+  }
+  throw new Error('默认弹药定义缺失');
 }
 export function itemUseHandler(id: number): string | undefined {return gameContent().items.get(id)?.runtime.use;}
 export function itemHitHandler(id: number | undefined): string | undefined {
@@ -59,15 +64,20 @@ export function itemTrapHandler(id: number | undefined): string | undefined {
   return id === undefined ? undefined : gameContent().items.get(id)?.runtime.trap;
 }
 export function itemForHandler(route: 'use' | 'hit' | 'trap' | 'passive', handler: string): ItemDefinition {
-  const item = [...gameContent().items.values()].find(item => item.runtime[route] === handler);
-  if (!item) throw new Error(`物品处理定义缺失：${route}/${handler}`);
-  return item;
+  for (const item of gameContent().items.values()) {
+    if (item.runtime[route] === handler) return item;
+  }
+  throw new Error(`物品处理定义缺失：${route}/${handler}`);
 }
 export function tankTextureCatalog(): {rows: TankDefinition['resources']['textureVariants']} {
   return {rows: [...gameContent().tanks.values()].flatMap(tank => tank.resources.textureVariants)};
 }
 
 export function rankedPetSkillId(baseId: number, rank: number): number | undefined {
-  const rule = [...gameContent().pets.values()].flatMap(pet => pet.skills).find(skill => skill.baseId === baseId);
-  return rule?.levels[rank - 1];
+  for (const pet of gameContent().pets.values()) {
+    for (const skill of pet.skills) {
+      if (skill.baseId === baseId) return skill.levels[rank - 1];
+    }
+  }
+  return undefined;
 }

@@ -18,7 +18,13 @@ export class QueuedPartEffects {
       this.roles.delete(roleId);
       return false;
     }
-    if (previous?.length === skills.length && previous.every((id, index) => id === skills[index])) return false;
+    if (previous?.length === skills.length) {
+      let unchanged = true;
+      for (let index = 0; index < skills.length; index++) {
+        if (previous[index] !== skills[index]) {unchanged = false; break;}
+      }
+      if (unchanged) return false;
+    }
     if (previous) this.notifications.clearQueue(roleId);
     for (const skillId of skills) this.notifications.play({skillId, effectIndex: 0, duration: 0,
       roleId, xBits: 0, zBits: 0});

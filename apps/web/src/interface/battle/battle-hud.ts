@@ -5,7 +5,7 @@ import {teamInfo} from './team-info';
 import {BattleSpectator} from '../../match/battle-spectator';
 import {BattleScoreboard} from './battle-scoreboard';
 import {HudPlayerStatuses} from './hud-player-status';
-import type {MsgRoomSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
+import type {MsgRoomSnapshot, PlayerSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import type {MsgRoomEvent} from '../../../../shared/protocols/MsgRoomEvent';
 import {PortraitState} from './portrait-state';
 import {battleRemotePortraitAsset} from './battle-portrait-bounds';
@@ -49,17 +49,20 @@ export interface HudSnapshot {
   teamCounts?: {self: string; enemy: string};
   modeInfo?: HudModeInfo;
   messages: string;
+  notice?: {id: number; text: string};
   deathCountdown?: number;
 }
 export interface HudReloadSnapshot {visible: boolean; fraction: number;}
 
 const EMPTY_COMBAT: HudCombatSnapshot = {visible: false, canUseShortcuts: false, alive: false, serverTime: 0, ammoSlots: [], activeEffects: []};
+const EMPTY_TIMER: HudSnapshot['timers'][number] = {text: ''};
+const EMPTY_TIMERS: HudSnapshot['timers'] = [EMPTY_TIMER, EMPTY_TIMER, EMPTY_TIMER, EMPTY_TIMER, EMPTY_TIMER];
 
 /** Only visible source HUD projections notify React; movement and tick fields do not. */
 export class BattleHud {
   readonly spectator = new BattleSpectator();
   readonly scoreboard = new BattleScoreboard();
-  private state: HudSnapshot = {visible: false, mode: 1, introStage: 'hidden', timers: Array.from({length: 5}, () => ({text: ''})), slots: [], messages: ''};
+  private state: HudSnapshot = {visible: false, mode: 1, introStage: 'hidden', timers: EMPTY_TIMERS, slots: [], messages: ''};
   private reload: HudReloadSnapshot = {visible: false, fraction: 1};
   private combat: HudCombatSnapshot = EMPTY_COMBAT;
   private readonly listeners = new Set<() => void>();
@@ -68,7 +71,13 @@ export class BattleHud {
   private readonly messages: string[] = [];
   private roomSnapshot?: MsgRoomSnapshot;
   private localPlayerId = '';
+  private noticeId = 0;
+  private readonly noticeQueue: string[] = [];
+  private noticeTimer?: ReturnType<typeof setTimeout>;
   private readonly portraits = new Map<string, {petId?: number; alive: boolean; state: PortraitState}>();
+  private readonly presentPlayers = new Set<string>();
+  private readonly friends: PlayerSnapshot[] = [];
+  private readonly enemies: PlayerSnapshot[] = [];
   private readonly beforeShotPending = new Set<string>();
   private readonly playerStatuses = new HudPlayerStatuses();
   private lastUpdate?: number;
@@ -98,11 +107,12 @@ export class BattleHud {
       && this.state.roomId === next.roomId && this.state.round === next.round && this.state.phase === next.phase
       && this.state.introStage === next.introStage
       && this.state.messages === next.messages
+      && this.state.notice === next.notice
       && this.state.deathCountdown === next.deathCountdown
-      && sameValues(this.state.localHealth, next.localHealth) && sameValues(this.state.teamCounts, next.teamCounts)
-      && sameValues(this.state.modeInfo, next.modeInfo)
-      && this.state.timers.every((timer, index) => sameValues(timer, next.timers[index]))
-      && this.state.slots.length === next.slots.length && this.state.slots.every((slot, index) => sameValues(slot, next.slots[index]));
+      && sameHealth(this.state.localHealth, next.localHealth) && sameTeamCounts(this.state.teamCounts, next.teamCounts)
+      && sameModeInfo(this.state.modeInfo, next.modeInfo)
+      && this.state.timers.every((timer, index) => sameTimer(timer, next.timers[index]))
+      && this.state.slots.length === next.slots.length && this.state.slots.every((slot, index) => slot === next.slots[index]);
     if (same) return;
     this.state = next;
     for (const listener of this.listeners) listener();
@@ -137,7 +147,9 @@ export class BattleHud {
     const data = this.state.data; if (!data) return;
     const seconds = this.lastUpdate === undefined ? 0 : (now - this.lastUpdate) / 1000; this.lastUpdate = now;
     this.battleInfoOpacity.advance(seconds);
-    const present = new Set(snapshot.players.map(player => player.id));
+    const present = this.presentPlayers;
+    present.clear();
+    for (const player of snapshot.players) present.add(player.id);
     for (const id of this.portraits.keys()) if (!present.has(id)) this.portraits.delete(id);
     for (const id of this.beforeShotPending) {
       const player = snapshot.players.find(value => value.id === id);
@@ -148,19 +160,14 @@ export class BattleHud {
     if (newRound) {
       this.portraits.clear();
       this.messages.length = 0;
+      this.clearNotices();
       this.playerStatuses.clear();
     }
     this.playerStatuses.update(snapshot, now);
     const mode = snapshot.mode ?? 1;
-    const timers: {text: string; colour?: string; elapsedMinutes?: number}[] = Array.from({length: 5}, (_, index) =>
-      !newRound && mode === this.state.mode && index === mode - 1 ? this.state.timers[index] : {text: ''});
     const remaining = Math.max(0, Math.trunc(snapshot.remaining));
     const battleStartsAt = snapshot.match?.battleStartsAt;
-    if (mode >= 1 && mode <= 5) timers[mode - 1] = {
-      text: `${Math.trunc(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`,
-      colour: remaining < 10 ? 'ffff0000' : remaining < 60 ? 'ffffff00' : 'ffffffff',
-      elapsedMinutes: battleStartsAt === undefined ? undefined : Math.max(0, Math.floor((serverNow - battleStartsAt) / 60000)),
-    };
+    const timers = hudTimers(this.state.timers, mode, remaining, battleStartsAt, serverNow);
     const local = snapshot.players.find(player => player.id === playerId);
     const lifecycle = `${snapshot.roomId}:${snapshot.phase}:${snapshot.match?.round ?? 0}`;
     if (lifecycle !== this.lifecycle) {
@@ -169,15 +176,29 @@ export class BattleHud {
     }
     const deathCountdown = snapshot.phase === 'PLAYING' && local?.alive === false && local.respawnAt > 0
       ? Math.max(0, Math.ceil((local.respawnAt - serverNow) / 1000)) : undefined;
-    const friends = snapshot.players.filter(player => mode <= 3 ? player.team === local?.team : player.id === playerId);
-    const localIndex = friends.findIndex(player => player.id === playerId);
-    if (localIndex > 0) [friends[0], friends[localIndex]] = [friends[localIndex], friends[0]];
-    const enemies = snapshot.players.filter(player => mode <= 3 ? player.team !== local?.team : player.id !== playerId);
-    const left = friends.slice(0, 6), right = [...enemies.slice(0, 6), ...friends.slice(6)].slice(0, 6);
-    left.push(...enemies.slice(6, 6 + 6 - left.length));
+    const friends = this.friends, enemies = this.enemies;
+    friends.length = enemies.length = 0;
+    let localIndex = -1;
+    for (const player of snapshot.players) {
+      if (mode <= 3 ? player.team === local?.team : player.id === playerId) {
+        if (player.id === playerId) localIndex = friends.length;
+        friends.push(player);
+      } else enemies.push(player);
+    }
+    if (localIndex > 0) {
+      const first = friends[0];
+      friends[0] = friends[localIndex];
+      friends[localIndex] = first;
+    }
+    const leftFriends = Math.min(6, friends.length), rightEnemies = Math.min(6, enemies.length);
     const slots: (HudPlayer | undefined)[] = [];
     for (let slot = 0; slot < 12; slot++) {
-      const player = slot < 6 ? left[slot] : right[slot - 6];
+      let player: PlayerSnapshot | undefined;
+      if (slot < 6) player = slot < leftFriends ? friends[slot] : enemies[6 + slot - leftFriends];
+      else {
+        const index = slot - 6;
+        player = index < rightEnemies ? enemies[index] : friends[6 + index - rightEnemies];
+      }
       if (!player) {slots.push(undefined); continue;}
       const portrait = data.portraits.find(portrait => portrait.petId === player.petId);
       let animation = this.portraits.get(player.id);
@@ -197,23 +218,33 @@ export class BattleHud {
       const asset = slot !== 0 ? battleRemotePortraitAsset(player.petId, expression, slot >= 6)
         : expression === 'dead' ? data.portraitDeath.local
         : expression === 'normal' ? portrait?.asset : portrait?.expressions[expression];
-      const currentStatuses = snapshot.phase === 'PLAYING' ? this.playerStatuses.current(player, serverNow) : [];
       const previous = this.state.slots[slot];
-      const statuses = previous?.id === player.id && previous.statuses.length === currentStatuses.length
-        && previous.statuses.every((status, index) => status === currentStatuses[index]) ? previous.statuses : currentStatuses;
-      slots.push({id: player.id, name: player.name, tankId: player.tankId, petId: player.petId, alive: player.alive,
-        hp: player.hp, maxHp: player.maxHp, expression, asset, isVIP: player.isVIP, title: player.title?.name, statuses});
+      const previousStatuses = previous?.id === player.id ? previous.statuses : undefined;
+      const statuses = snapshot.phase === 'PLAYING'
+        ? this.playerStatuses.current(player, serverNow, previousStatuses)
+        : previousStatuses?.length === 0 ? previousStatuses : [];
+      const title = player.title?.name;
+      if (previous?.id === player.id && previous.name === player.name && previous.tankId === player.tankId
+        && previous.petId === player.petId && previous.alive === player.alive && previous.hp === player.hp
+        && previous.maxHp === player.maxHp && previous.expression === expression && previous.asset === asset
+        && previous.isVIP === player.isVIP && previous.title === title && previous.statuses === statuses) {
+        slots.push(previous);
+      } else {
+        slots.push({id: player.id, name: player.name, tankId: player.tankId, petId: player.petId, alive: player.alive,
+          hp: player.hp, maxHp: player.maxHp, expression, asset, isVIP: player.isVIP, title, statuses});
+      }
     }
     if (round !== this.reloadRound || !local?.alive || snapshot.phase !== 'PLAYING') this.reloadProgress.reset();
     this.reloadRound = round;
     const visible = !!local?.reload && local.alive && snapshot.phase === 'PLAYING';
     const fraction = local?.reload && visible ? this.reloadProgress.update(local.reload, snapshot.serverTime, serverNow) : 1;
     this.publishReload({visible, fraction});
-    const combat = combatState(snapshot, local, serverNow);
-    this.publishCombat({...combat, canUseShortcuts: this.connected && combat.canUseShortcuts});
+    const combat = combatState(snapshot, local, serverNow, this.combat);
+    this.publishCombat(this.connected || !combat.canUseShortcuts ? combat : {...combat, canUseShortcuts: false});
     const introStage = battleIntroStage(snapshot, serverNow);
     this.publish({...this.state, visible: snapshot.phase === 'PLAYING' || snapshot.phase === 'FINISHED', mode, timers, slots,
       roomId: snapshot.roomId, round, phase: snapshot.phase, introStage, deathCountdown, messages: this.messages.join('\n'),
+      notice: newRound ? undefined : this.state.notice,
       localHealth: local ? {name: local.name, hp: local.hp, maxHp: local.maxHp} : undefined,
       teamCounts: teamInfo(snapshot, playerId), modeInfo: modeInfo(snapshot, playerId)});
   }
@@ -247,6 +278,26 @@ export class BattleHud {
     this.messages.push(...messages.map(message => `[${timestamp}] ${message}`));
     if (this.messages.length > 5) this.messages.splice(0, this.messages.length - 5);
     this.publish({...this.state, messages: this.messages.join('\n')});
+    for (const message of messages) this.announce(message);
+  }
+  announce(text: string): void {
+    if (!this.state.visible) return;
+    this.noticeQueue.push(text);
+    if (this.noticeTimer === undefined) this.nextNotice();
+  }
+  private nextNotice(): void {
+    const text = this.noticeQueue.shift();
+    this.publish({...this.state, notice: text === undefined ? undefined : {id: ++this.noticeId, text}});
+    if (text === undefined) return;
+    this.noticeTimer = setTimeout(() => {
+      this.noticeTimer = undefined;
+      this.nextNotice();
+    }, 3000);
+  }
+  private clearNotices(): void {
+    if (this.noticeTimer !== undefined) clearTimeout(this.noticeTimer);
+    this.noticeTimer = undefined;
+    this.noticeQueue.length = 0;
   }
   clear(): void {
     this.roomSnapshot = undefined;
@@ -255,7 +306,9 @@ export class BattleHud {
     this.connected = true;
     this.spectator.clear();
     ++this.loadGeneration; this.loading = undefined;
-    this.messages.length = 0; this.portraits.clear(); this.beforeShotPending.clear(); this.lastUpdate = undefined;
+    this.messages.length = 0; this.portraits.clear(); this.presentPlayers.clear(); this.beforeShotPending.clear(); this.lastUpdate = undefined;
+    this.friends.length = this.enemies.length = 0;
+    this.clearNotices();
     this.playerStatuses.clear();
     this.lifecycle = undefined;
     this.reloadProgress.reset(); this.reloadRound = undefined;
@@ -264,14 +317,53 @@ export class BattleHud {
     this.publishCombat(EMPTY_COMBAT);
     this.publish({...this.state, visible: false, slots: [], localHealth: undefined, introStage: 'hidden',
       roomId: undefined, round: undefined, phase: undefined, deathCountdown: undefined,
-      messages: '', teamCounts: undefined, modeInfo: undefined,
-      timers: this.state.timers.map(() => ({text: ''}))});
+      messages: '', notice: undefined, teamCounts: undefined, modeInfo: undefined,
+      timers: EMPTY_TIMERS});
   }
 }
 
-function sameValues(left: object | undefined, right: object | undefined): boolean {
+function hudTimers(previous: HudSnapshot['timers'], mode: number, remaining: number,
+  battleStartsAt: number | undefined, serverNow: number): HudSnapshot['timers'] {
+  if (mode < 1 || mode > 5) return EMPTY_TIMERS;
+  const active = mode - 1;
+  const text = `${Math.trunc(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
+  const colour = remaining < 10 ? 'ffff0000' : remaining < 60 ? 'ffffff00' : 'ffffffff';
+  const elapsedMinutes = battleStartsAt === undefined ? undefined
+    : Math.max(0, Math.floor((serverNow - battleStartsAt) / 60000));
+  const current = previous[active];
+  const sameActive = current.text === text && current.colour === colour && current.elapsedMinutes === elapsedMinutes;
+  let unchanged = sameActive;
+  for (let index = 0; index < 5; index++) {
+    if (index !== active && !sameTimer(previous[index], EMPTY_TIMER)) unchanged = false;
+  }
+  if (unchanged) return previous;
+  const timers = [...EMPTY_TIMERS];
+  timers[active] = sameActive ? current : {text, colour, elapsedMinutes};
+  return timers;
+}
+
+function sameHealth(left: HudSnapshot['localHealth'], right: HudSnapshot['localHealth']): boolean {
   if (left === right) return true;
   if (!left || !right) return false;
-  const entries = Object.entries(left);
-  return entries.length === Object.keys(right).length && entries.every(([key, value]) => value === (right as Record<string, unknown>)[key]);
+  return left.name === right.name && left.hp === right.hp && left.maxHp === right.maxHp;
+}
+
+function sameTeamCounts(left: HudSnapshot['teamCounts'], right: HudSnapshot['teamCounts']): boolean {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return left.self === right.self && left.enemy === right.enemy;
+}
+
+function sameModeInfo(left: HudSnapshot['modeInfo'], right: HudSnapshot['modeInfo']): boolean {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return left.mode === right.mode && left.self === right.self && left.enemy === right.enemy
+    && left.info === right.info && left.binding === right.binding && left.label === right.label
+    && left.finished === right.finished;
+}
+
+function sameTimer(left: HudSnapshot['timers'][number], right: HudSnapshot['timers'][number] | undefined): boolean {
+  if (left === right) return true;
+  return !!right && left.text === right.text && left.colour === right.colour
+    && left.elapsedMinutes === right.elapsedMinutes;
 }
