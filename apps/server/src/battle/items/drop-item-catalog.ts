@@ -1,6 +1,5 @@
-import {readFileSync} from 'node:fs';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
-import {sourceTablePath} from '../../runtime/content-paths';
+import {readSimulationTable} from '../../runtime/simulation-host';
 import {combatItems} from '../catalog';
 
 interface DropItemTable {
@@ -20,7 +19,7 @@ interface DropItemRow extends DropItemVisual {
   maximum: number;
 }
 
-const table = JSON.parse(readFileSync(sourceTablePath('dropitem'), 'utf8')) as DropItemTable;
+const table = readSimulationTable<DropItemTable>('dropitem');
 const rows: DropItemRow[] = table.rows.flatMap(row => {
   const values = row.values;
   const itemType = values.ItemType ?? '';

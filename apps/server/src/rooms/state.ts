@@ -68,8 +68,8 @@ export interface RoomState {
   departedParticipants?: Map<string, DepartedParticipantRecord>;
   creatorClientId?: string;
   creationKey?: string;
-  passwordSalt?: Buffer;
-  passwordHash?: Buffer;
+  passwordSalt?: Uint8Array;
+  passwordHash?: Uint8Array;
   tick: number;
 }
 

@@ -1,5 +1,4 @@
-import {readFileSync} from 'node:fs';
-import {sourceTablePath, serverAssetPath} from './runtime/content-paths';
+import {readSimulationAsset, readSimulationTable} from './runtime/simulation-host';
 import {content} from './content';
 import type {RoleTankBaseDefinition, RolePetBaseDefinition} from '../../shared/contracts/role-base';
 import {BATTLE_RESPAWN_SECONDS} from '../../shared/combat/battle-respawn';
@@ -70,7 +69,7 @@ interface SourceTable {
 }
 
 function readTable(name: string): Record<string, string>[] {
-  const table: SourceTable = JSON.parse(readFileSync(sourceTablePath(name), 'utf8'));
+  const table = readSimulationTable<SourceTable>(name);
   return table.rows.map(row => row.values);
 }
 
@@ -120,7 +119,7 @@ const sourceMaps: ModeMapConfig[] = [1, 2, 3, 4, 5].flatMap(mode =>
   })));
 
 export const MAPS = playableMapDirectory(sourceMaps,
-  JSON.parse(readFileSync(process.env.SCENE_PLACEMENTS ?? serverAssetPath('scene-placements.json'), 'utf8')),
+  readSimulationAsset('scene-placements.json'),
   readTable('gamestring'));
 
 MAPS.push({...MAPS.find(map => map.mode === TEST_MAP.mode && map.mapId === 2)!,

@@ -1,4 +1,4 @@
-import {randomBytes, scryptSync, timingSafeEqual} from 'node:crypto';
+import {createRoomPassword, matchesRoomPassword} from '../runtime/simulation-host';
 import {MAPS, TANKS} from '../config';
 import {selectPlayerLimits, roomMaxPlayers} from './player-limits';
 import {modeName} from './create';
@@ -47,7 +47,7 @@ export function createAndJoinRoom(rooms: Map<string, RoomState>, request: Creati
     const existing = [...previous.players.values()].find(player => player.clientId === clientId);
     if (!existing) continue;
     if (previous.creatorClientId === clientId && previous.creationKey === creationKey
-        && !!previous.passwordHash === !!password && passwordMatches(previous, password)) {
+        && !!previous.passwordHash === !!password && matchesRoomPassword(previous, password)) {
       return {playerId: existing.id, roomId: previous.roomId, mode, mapId};
     }
     throw new Error('请先离开当前房间再创建新房间');
@@ -56,10 +56,7 @@ export function createAndJoinRoom(rooms: Map<string, RoomState>, request: Creati
   const room = create(limits);
   room.creatorClientId = clientId;
   room.creationKey = creationKey;
-  if (password) {
-    room.passwordSalt = randomBytes(16);
-    room.passwordHash = scryptSync(password, room.passwordSalt, 32);
-  }
+  Object.assign(room, createRoomPassword(password));
   if (sanitizedRoomName) room.roomName = `${sanitizedRoomName} · ${modeName(mode)}·${map.name}`;
   try {
     return join(room);
@@ -78,7 +75,7 @@ export function admitRoomPlayer(room: RoomState | undefined, clientId: string, p
     return {playerId: existing.id, roomId: room.roomId, mode: room.mode, mapId: room.map.mapId};
   }
   validatePassword(password);
-  if (!passwordMatches(room, password)) throw new Error('房间密码错误');
+  if (!matchesRoomPassword(room, password)) throw new Error('房间密码错误');
   if (room.players.size >= roomMaxPlayers(room) || room.phase === 'PLAYING' || room.phase === 'LOADING') {
     throw new Error('房间已满或正在对战，请选择等待中的房间');
   }
@@ -90,7 +87,3 @@ function validatePassword(password: string): void {
   if (/[\u0000-\u001f]/.test(password)) throw new Error('房间密码不能包含控制字符');
 }
 
-function passwordMatches(room: RoomState, password: string): boolean {
-  if (!room.passwordHash || !room.passwordSalt) return true;
-  return timingSafeEqual(room.passwordHash, scryptSync(password, room.passwordSalt, 32));
-}

@@ -1,4 +1,4 @@
-import {randomBytes, scryptSync} from 'node:crypto';
+import {createRoomPassword} from '../runtime/simulation-host';
 import type {ReqEditRoom} from '../../../shared/protocols/PtlEditRoom';
 import {ROOM_NAME_MAX_CODEPOINTS, ROOM_PASSWORD_MAX_CODEPOINTS, validateRoomInputLength} from '../../../shared/room-input';
 import {MAPS} from '../config';
@@ -31,8 +31,7 @@ export function editWaitingRoom(room: RoomState, request: ReqEditRoom): void {
     room.startedAt === 0 && !room.result && room.map.mapId === map.mapId ? room.battlefield : undefined);
   let passwordSalt = room.passwordSalt, passwordHash = room.passwordHash;
   if (request.password !== undefined) {
-    passwordSalt = request.password ? randomBytes(16) : undefined;
-    passwordHash = passwordSalt ? scryptSync(request.password, passwordSalt, 32) : undefined;
+    ({passwordSalt, passwordHash} = createRoomPassword(request.password));
   }
   Object.assign(room, replacement, {
     roomName: name ? `${name} · ${modeName(request.mode)}·${map.name}` : replacement.roomName,

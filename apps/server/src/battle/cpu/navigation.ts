@@ -1,4 +1,3 @@
-import {performance} from 'node:perf_hooks';
 import {type Battlefield, type Point} from '../../battlefield';
 import type {NavigationGrid} from '../../navigation';
 const edgeCaches = new WeakMap<NavigationGrid, {revision: number; edges: Map<string, Map<number, boolean>>}>();

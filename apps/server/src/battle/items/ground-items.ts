@@ -1,5 +1,5 @@
 import {defaultAmmoId, gameContent} from '../../../../shared/content/catalog';
-import {randomUUID} from 'node:crypto';
+import {simulationItemId} from '../../runtime/simulation-host';
 import type {MsgRoomEvent, SceneObjectSnapshot} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
@@ -117,7 +117,7 @@ export interface AcquireDiscardCallbacks {
   pickupSucceeded?: (playerId: string, ground: GroundItemState, events: MsgRoomEvent[]) => void;
 }
 
-const RUN_ID = randomUUID();
+const RUN_ID = simulationItemId();
 
 const groundCounters = new Map<string, number>();
 const breachDropKeys = new Map<string, Set<string>>();

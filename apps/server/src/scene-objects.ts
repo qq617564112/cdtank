@@ -1,5 +1,4 @@
-import {readFileSync} from 'node:fs';
-import {serverAssetPath} from './runtime/content-paths';
+import {readSimulationAsset} from './runtime/simulation-host';
 import {CollisionMesh, type SerializedCollisionMesh} from './collision-mesh';
 import type {RoleObb} from '../../shared/movement/obb-intersection';
 
@@ -65,7 +64,7 @@ function collisionAt(mapId: number): SceneCollisionAsset {
   const cached = assets.get(mapId);
   if (cached) return cached;
   const id = String(mapId).padStart(4, '0');
-  const asset = JSON.parse(readFileSync(serverAssetPath(`scene-collision/${id}.json`), 'utf8')) as SceneCollisionAsset;
+  const asset = readSimulationAsset<SceneCollisionAsset>(`scene-collision/${id}.json`);
   if (asset.version !== 1 || Number(asset.id) !== mapId) {
     throw new Error(`场景碰撞资产无效：${mapId}`);
   }
