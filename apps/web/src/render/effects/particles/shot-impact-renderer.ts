@@ -1,7 +1,7 @@
 import {Camera, Scene, Texture, Vector3} from '@babylonjs/core';
 import {packEffectColor} from '../common/effect-color';
 import {EffectRenderPass, EffectSpriteMesh} from '../common/effect-sprite-mesh';
-import type {EffectVec3} from '../common/types';
+import type {EffectColor, EffectVec3} from '../common/types';
 
 export const SHOT_IMPACT_SMOKE = 'Data/effect/effect/yan1.webp?shot-impact';
 export const SHOT_IMPACT_FLASH = 'Data/effect/effect/gongji1.webp?shot-impact';
@@ -29,8 +29,14 @@ export class ShotImpactRenderer {
   private readonly flash: EffectSpriteMesh;
   private readonly bursts: ImpactBurst[] = [];
   private nextBurst = 0;
+  private readonly towardCamera = new Vector3();
+  private readonly origin: EffectVec3 = [0, 0, 0];
+  private readonly position: EffectVec3 = [0, 0, 0];
+  private readonly color: EffectColor = [1, 1, 1, 0];
+  private readonly uv = [0, 0, 1, 1] as const;
 
-  constructor(scene: Scene, private readonly camera: Camera, smoke: Texture, flash: Texture) {
+  constructor(scene: Scene, private readonly camera: Camera, smoke: Texture, flash: Texture,
+    private readonly smokePuffCount = 3) {
     this.smoke = new EffectSpriteMesh(scene, impactPass(false), smoke, true);
     this.flash = new EffectSpriteMesh(scene, impactPass(true), flash, true);
     this.clear();
@@ -60,34 +66,38 @@ export class ShotImpactRenderer {
       const lifetime = burst.damaging ? 0.42 : 0.9;
       if (burst.age >= lifetime) {this.bursts.splice(index, 1); continue;}
       // Move the billboard slightly off the contact surface to avoid clipping.
-      const towardCamera = this.camera.globalPosition.subtract(
-        new Vector3(-burst.origin[0], burst.origin[1], burst.origin[2])).normalize().scale(2);
-      const origin: EffectVec3 = [burst.origin[0] - towardCamera.x,
-        burst.origin[1] + towardCamera.y, burst.origin[2] + towardCamera.z];
+      const towardCamera = this.camera.globalPosition.subtractFromFloatsToRef(
+        -burst.origin[0], burst.origin[1], burst.origin[2], this.towardCamera).normalize().scaleInPlace(2);
+      const origin = this.origin;
+      origin[0] = burst.origin[0] - towardCamera.x;
+      origin[1] = burst.origin[1] + towardCamera.y;
+      origin[2] = burst.origin[2] + towardCamera.z;
       if (burst.damaging) {
         const progress = burst.age / lifetime;
         const pop = Math.min(1, burst.age / 0.05);
         const size = 24 + 16 * pop + 5 * progress;
         const fade = Math.max(0, burst.age - 0.09) / (lifetime - 0.09);
         const alpha = Math.min(1, burst.age / 0.018) * (1 - fade) ** 1.2 * 0.9;
-        this.flash.billboardQuad(origin, size, burst.angle, [0, 0, 1, 1],
-          packEffectColor([1, 1, 1, alpha]));
+        this.color[3] = alpha;
+        this.flash.billboardQuad(origin, size, burst.angle, this.uv, packEffectColor(this.color));
         continue;
       }
-      for (let puff = 0; puff < 3; puff++) {
+      for (let puff = 0; puff < this.smokePuffCount; puff++) {
         const age = burst.age - puff * 0.04;
         if (age < 0) continue;
         const progress = age / (lifetime - puff * 0.04);
         const expansion = 1 - (1 - progress) ** 3;
         const angle = (burst.angle + puff * 120) * Math.PI / 180;
         const spread = puff === 0 ? 0 : 6 + expansion * 10;
-        const position: EffectVec3 = [origin[0] + Math.cos(angle) * spread,
-          origin[1] + progress * 10, origin[2] + Math.sin(angle) * spread];
+        const position = this.position;
+        position[0] = origin[0] + Math.cos(angle) * spread;
+        position[1] = origin[1] + progress * 10;
+        position[2] = origin[2] + Math.sin(angle) * spread;
         const size = (puff === 0 ? 20 : 11) + expansion * (puff === 0 ? 13 : 9);
         const fade = Math.max(0, age - 0.12) / (lifetime - puff * 0.04 - 0.12);
         const alpha = Math.min(1, age / 0.04) * (1 - fade) ** 1.35 * (puff === 0 ? 0.78 : 0.4);
-        this.smoke.billboardQuad(position, size, burst.angle + puff * 53, [0, 0, 1, 1],
-          packEffectColor([1, 1, 1, alpha]));
+        this.color[3] = alpha;
+        this.smoke.billboardQuad(position, size, burst.angle + puff * 53, this.uv, packEffectColor(this.color));
       }
     }
     this.smoke.endBillboards();
@@ -98,8 +108,8 @@ export class ShotImpactRenderer {
 
   clear(): void {
     this.bursts.length = 0;
-    this.smoke.mesh.setEnabled(false);
-    this.flash.mesh.setEnabled(false);
+    this.smoke.clear();
+    this.flash.clear();
   }
 
   dispose(): void {

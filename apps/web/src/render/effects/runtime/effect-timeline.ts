@@ -31,9 +31,24 @@ export function selectEffectController(
   config: EffectTimelineConfig,
   previousIndex: number,
 ): EffectControllerSelection {
+  const result: EffectControllerSelection = {index: previousIndex, resetIndices: []};
+  selectEffectControllerToRef(elapsed, config, previousIndex, result);
+  return result;
+}
+
+/** Writes the selection into caller-owned storage, including its reset list. */
+export function selectEffectControllerToRef(
+  elapsed: number,
+  config: EffectTimelineConfig,
+  previousIndex: number,
+  result: EffectControllerSelection,
+): void {
+  const resetIndices = result.resetIndices;
+  resetIndices.length = 0;
+  result.index = previousIndex;
   const controllers = config.controllers;
   if (controllers.length === 0) {
-    return {index: previousIndex, resetIndices: []};
+    return;
   }
   if (!Number.isInteger(previousIndex) || previousIndex < -1 ||
       previousIndex >= controllers.length) {
@@ -44,7 +59,6 @@ export function selectEffectController(
   let index = local < Math.fround(controllers[0].start) ? -1 : previousIndex;
   let end = index < 0 ? controllers[0].start : controllers[index].end;
   const localStored = Math.fround(local);
-  const resetIndices: number[] = [];
   // Bounds are absolute local times. Equality retains the current controller.
   while (end > 0 && localStored > Math.fround(end)) {
     ++index;
@@ -57,5 +71,5 @@ export function selectEffectController(
     }
     end = controllers[index].end;
   }
-  return {index, resetIndices};
+  result.index = index;
 }

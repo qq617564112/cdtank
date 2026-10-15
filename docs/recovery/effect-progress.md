@@ -62,7 +62,7 @@
 
 ## ELK主挂点世界合成完成
 
-`composeEffectWorldTag`恢复三部件0x46a7a4–0x46a811与四部件0x46dd1d–0x46ddcf。三部件使用角色+0xbc车身角；四部件tag_efattack（主表index6）使用+0x34c炮塔角、+0x368/+0x370缓存枢轴，其他主挂点使用车身角。先RightMultiply旋转/枢轴矩阵，再加角色XYZ；之后原LeftMultiply +Z/180度四元数校正。原180度校正W为1.2167964413833943e-8，保留而未换成精确零。
+`EffectTagWorldComposer.composeToRef`恢复三部件0x46a7a4–0x46a811与四部件0x46dd1d–0x46ddcf。三部件使用角色+0xbc车身角；四部件tag_efattack（主表index6）使用+0x34c炮塔角、+0x368/+0x370缓存枢轴，其他主挂点使用车身角。先RightMultiply旋转/枢轴矩阵，再加角色XYZ；之后原LeftMultiply +Z/180度四元数校正。原180度校正W为1.2167964413833943e-8，保留而未换成精确零。
 
 77真实源轨道×三时刻×三姿态×三个三/四部件分支，共2079矩阵与Web逐值一致；执行原EXE变换指令及实际gbengine/CRT，外部查找/容器部分不在执行范围。世界接口接受已解析local矩阵与原角度/枢轴，共享引用由下述store维护。来源优先级已读指令：三部件只M；四部件先M，M无此tag时才查U。查询/共享引用已提供独立store，战斗动态更新仍待接入。
 

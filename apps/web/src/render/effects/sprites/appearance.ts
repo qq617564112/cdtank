@@ -16,11 +16,18 @@ export interface EffectSpriteAppearanceConfig extends EffectSpriteAppearance {
 export function initialSpriteAppearance(
   config: EffectSpriteAppearanceConfig,
 ): EffectSpriteAppearance {
-  return {
-    scale: config.scale.map(Math.fround) as EffectVec3,
-    angles: config.angles.map(Math.fround) as EffectVec3,
-    color: config.color.map(Math.fround) as EffectColor,
-  };
+  const result: EffectSpriteAppearance = {scale: [0, 0, 0], angles: [0, 0, 0], color: [0, 0, 0, 0]};
+  initialSpriteAppearanceToRef(config, result);
+  return result;
+}
+
+export function initialSpriteAppearanceToRef(config: EffectSpriteAppearanceConfig,
+  result: EffectSpriteAppearance): void {
+  for (let axis = 0; axis < 3; axis++) {
+    result.scale[axis] = Math.fround(config.scale[axis]);
+    result.angles[axis] = Math.fround(config.angles[axis]);
+  }
+  for (let channel = 0; channel < 4; channel++) result.color[channel] = Math.fround(config.color[channel]);
 }
 
 export function advanceSpriteAppearance(
@@ -28,17 +35,23 @@ export function advanceSpriteAppearance(
   config: EffectSpriteAppearanceConfig,
   deltaSeconds: number,
 ): EffectSpriteAppearance {
+  const result: EffectSpriteAppearance = {scale: [0, 0, 0], angles: [0, 0, 0], color: [0, 0, 0, 0]};
+  advanceSpriteAppearanceToRef(state, config, deltaSeconds, result);
+  return result;
+}
+
+export function advanceSpriteAppearanceToRef(state: EffectSpriteAppearance,
+  config: EffectSpriteAppearanceConfig, deltaSeconds: number, result: EffectSpriteAppearance): void {
   const delta = spriteDelta(deltaSeconds);
   // 0x422d4d stores scaled vec3 components before the caller adds them.
-  const addScaled = (value: number, rate: number): number =>
-    Math.fround(Math.fround(value) + Math.fround(Math.fround(rate) * delta));
-  return {
-    scale: state.scale.map((v, i) => addScaled(v, config.scaleRate[i])) as EffectVec3,
-    angles: state.angles.map((v, i) => addScaled(v, config.angleRate[i])) as EffectVec3,
+  for (let i = 0; i < 3; i++) {
+    result.scale[i] = Math.fround(Math.fround(state.scale[i]) + Math.fround(Math.fround(config.scaleRate[i]) * delta));
+    result.angles[i] = Math.fround(Math.fround(state.angles[i]) + Math.fround(Math.fround(config.angleRate[i]) * delta));
+  }
+  for (let i = 0; i < 4; i++) {
     // Color subtracts the unrounded product, stores f32, then clamps (0x464d7d).
-    color: state.color.map((v, i) => Math.max(0, Math.min(1,
-      Math.fround(Math.fround(v) - Math.fround(config.colorSubtractRate[i]) * delta),
-    ))) as EffectColor,
-  };
+    result.color[i] = Math.max(0, Math.min(1,
+      Math.fround(Math.fround(state.color[i]) - Math.fround(config.colorSubtractRate[i]) * delta)));
+  }
 }
 

@@ -1,17 +1,26 @@
 import {packEffectColor} from '../common/effect-color';
-import {transformEffectPosition} from '../common/effect-native-space';
+import {transformEffectPositionToRef} from '../common/effect-native-space';
 import type {EffectNativeMatrix} from '../common/effect-native-space';
-import {effectRenderMatrix} from '../common/effect-render-transform';
+import {EffectRenderTransform} from '../common/effect-render-transform';
+import {EffectQuadBuffer} from '../common/effect-quad-buffer';
 import type {EffectQuadData} from '../common/effect-sprite-mesh';
-import type {EffectVec3} from '../common/types';
 import type {EffectStripNodeState} from './effect-strip-node';
 
 /** Type7 segment order, source UVs and colors transformed to world quads. */
-export function effectStripDraw(strip: EffectStripNodeState, parent?: EffectNativeMatrix): EffectQuadData[] {
+export function effectStripDraw(strip: EffectStripNodeState, parent?: EffectNativeMatrix,
+  buffer = new EffectQuadBuffer()): EffectQuadData[] {
   const state = strip.state;
-  const matrix = effectRenderMatrix(state.position, state.orbitOffset, state.angles, state.scale, parent);
-  return strip.geometry.map(segment => ({
-    corners: segment.corners.map(corner => transformEffectPosition(matrix, corner)) as [EffectVec3, EffectVec3, EffectVec3, EffectVec3],
-    uv: segment.uv, packedColor: packEffectColor(state.color),
-  }));
+  const matrix = (buffer.transform ??= new EffectRenderTransform())
+    .update(state.position, state.orbitOffset, state.angles, state.scale, parent);
+  const quads = buffer.resize(strip.geometry.length);
+  const color = packEffectColor(state.color);
+  for (let index = 0; index < strip.geometry.length; index++) {
+    const segment = strip.geometry[index], quad = quads[index];
+    for (let corner = 0; corner < 4; corner++) {
+      transformEffectPositionToRef(matrix, segment.corners[corner], quad.corners[corner]);
+      quad.uv[corner] = segment.uv[corner];
+    }
+    quad.packedColor = color;
+  }
+  return quads;
 }

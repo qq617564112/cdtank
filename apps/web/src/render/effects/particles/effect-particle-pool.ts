@@ -6,16 +6,15 @@ export interface EffectParticleLifetime {
 /** Native packed particle array (0x47fbb1, 0x480805 and 0x480857). */
 export class EffectParticlePool<T extends EffectParticleLifetime> {
   readonly particles: T[] = [];
+  private readonly spare: T[] = [];
 
   constructor(readonly capacity: number) {}
 
-  emit(count: number, initialize: () => T): number {
+  emit(count: number, initialize: (recycled?: T) => T): number {
     let emitted = 0;
-    for (let attempt = 0; attempt < count; ++attempt) {
-      if (this.particles.length < this.capacity) {
-        this.particles.push(initialize());
-        ++emitted;
-      }
+    const available = Math.min(count, this.capacity - this.particles.length);
+    for (; emitted < available; ++emitted) {
+      this.particles.push(initialize(this.spare.pop()));
     }
     return emitted;
   }
@@ -31,6 +30,7 @@ export class EffectParticlePool<T extends EffectParticleLifetime> {
         const last = this.particles.length - 1;
         if (last > 0) this.particles[index] = this.particles[last];
         this.particles.pop();
+        this.spare.push(particle);
       } else {
         this.particles[index] = advance(particle, delta);
       }
@@ -39,5 +39,6 @@ export class EffectParticlePool<T extends EffectParticleLifetime> {
 
   clear(): void {
     this.particles.length = 0;
+    this.spare.length = 0;
   }
 }

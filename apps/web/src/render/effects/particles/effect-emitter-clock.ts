@@ -10,15 +10,15 @@ export class EffectEmitterClock {
 
   constructor(private readonly randomInclusive: (minimum: number, maximum: number) => number) {}
 
-  advance(deltaSeconds: number, config: EffectEmitterConfig): number {
+  advance(deltaSeconds: number, config: EffectEmitterConfig, density = 1): number {
     // The original draws even when a completed burst emits nothing this tick.
     const count = this.randomInclusive(...config.countRange);
     if (config.burst) {
       if (this.burstEmitted) return 0;
       this.burstEmitted = true;
-      return count;
+      return Math.ceil(count * density);
     }
-    const amount = count * Math.fround(deltaSeconds);
+    const amount = count * density * Math.fround(deltaSeconds);
     let emitted = Math.trunc(amount);
     const fraction = amount - emitted + this.fraction;
     this.fraction = Math.fround(fraction);

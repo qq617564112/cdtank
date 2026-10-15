@@ -1,22 +1,56 @@
 import {EffectModelBackend, EffectModelControl, EffectModelNodeState} from '../models/effect-model-node';
-import {EffectRuntimeStatePool} from './effect-runtime-state-pool';
+import {EffectRuntimeRetainedState, EffectRuntimeStatePool} from './effect-runtime-state-pool';
 import {EffectBoltNodeState} from '../bolts/effect-bolt-node';
 import {EffectBoltConfig} from '../bolts/effect-bolt-segments';
 import {EffectTargetProvider} from './effect-target-provider';
 import {EffectOverlayControl, EffectOverlayNodeState} from '../overlays/effect-overlay-node';
 import {EffectScreenBackend, EffectScreenConfig, EffectScreenNodeState} from './effect-screen-node';
-import {EffectNodeLifecycle} from './effect-lifecycle';
+import {EffectLifecycleHooks, EffectNodeLifecycle} from './effect-lifecycle';
 import {EffectSpriteNodeState, EffectSpriteController} from '../sprites/effect-sprite-node';
 import {EffectParticleNodeState, EffectParticleController} from '../particles/effect-particle-node';
 import {EffectStripNodeState, EffectStripController} from '../strips/effect-strip-node';
 import {EffectSoundNodeState, EffectSoundBackend, EffectSoundStore} from './effect-sound-node';
 import {EffectNativeMatrix} from '../common/effect-native-space';
+import {EFFECT_IDENTITY} from '../common/effect-render-transform';
 import {EffectTimelineConfig} from './effect-timeline';
 import {EffectVec3} from '../common/types';
-import {createEffectTree, findEffectDefinition} from './effect-tree-create';
+import {createEffectTree} from './effect-tree-create';
+
+const ignoreReleasedNode = (): void => {};
 
 export interface EffectRuntimeDefinition {index: number; id: number; type: number; children: number[]; name: string;}
 interface NodeControl {node: number;}
+const nodeControlTables = new WeakMap<readonly NodeControl[], Map<number, readonly NodeControl[]>>();
+
+/** Loaded control arrays are immutable; keep source order and the first match. */
+function controlsForNode<T extends NodeControl>(controls: readonly T[], node: number): readonly T[] {
+  let table = nodeControlTables.get(controls);
+  if (!table) {
+    const grouped = new Map<number, NodeControl[]>();
+    for (const control of controls) {
+      let rows = grouped.get(control.node);
+      if (!rows) {rows = []; grouped.set(control.node, rows);}
+      rows.push(control);
+    }
+    table = grouped;
+    nodeControlTables.set(controls, table);
+  }
+  return (table.get(node) ?? []) as readonly T[];
+}
+
+const definitionTables = new WeakMap<EffectRuntimeLibrary, Map<number, EffectRuntimeDefinition>>();
+
+function definitionsForLibrary(library: EffectRuntimeLibrary): Map<number, EffectRuntimeDefinition> {
+  let table = definitionTables.get(library);
+  if (!table) {
+    table = new Map();
+    for (const definition of library.nodes) {
+      if (definition.id !== 0 && !table.has(definition.id)) table.set(definition.id, definition);
+    }
+    definitionTables.set(library, table);
+  }
+  return table;
+}
 export interface EffectRuntimeGrid {node: number; asset: string; resolution: string; uvFrames: [number, number, number, number][];}
 export interface EffectRuntimeLibrary {
   nodes: EffectRuntimeDefinition[];
@@ -47,6 +81,92 @@ export interface EffectRuntimeNode {
   releaseState(): void;
 }
 
+/** Instance state doubles as lifecycle hooks; methods are shared across nodes. */
+class RuntimeNodeState implements EffectRuntimeNode, EffectLifecycleHooks {
+  readonly lifecycle: EffectNodeLifecycle;
+  readonly children: EffectRuntimeNode[] = [];
+  sprite?: EffectSpriteNodeState;
+  particle?: EffectParticleNodeState;
+  strip?: EffectStripNodeState;
+  sound?: EffectSoundNodeState<number>;
+  bolt?: EffectBoltNodeState;
+  overlay?: EffectOverlayNodeState;
+  screen?: EffectScreenNodeState;
+  model?: EffectModelNodeState;
+  private retained?: EffectRuntimeRetainedState;
+  private stateActive = true;
+
+  constructor(readonly definition: EffectRuntimeDefinition, timing: EffectTimelineConfig,
+    retainWhenEnded: boolean, private readonly origin: EffectVec3,
+    private readonly released: (node: number) => void, private readonly pool?: EffectRuntimeStatePool) {
+    this.lifecycle = new EffectNodeLifecycle(timing, this, retainWhenEnded);
+  }
+
+  takeRetainedState(): void {
+    this.retained = this.pool?.take(this.definition.type);
+    if (this.retained && this.strip) this.strip.scroll = this.retained.stripScroll;
+  }
+
+  start(): void {
+    this.sprite?.start(this.origin);
+    if (this.sprite && this.retained && !this.sprite.controls[0].trailEnabled) {
+      this.sprite.history.elapsed = this.retained.trailElapsed;
+    }
+    this.particle?.start(this.origin);
+    this.strip?.start(this.origin);
+    this.sound?.start();
+    this.bolt?.start(this.origin);
+    this.overlay?.start();
+    this.model?.start(this.origin);
+  }
+
+  activate(node: EffectNodeLifecycle): void {this.screen?.activate(node.timing.lifetime);}
+
+  reset(_node: EffectNodeLifecycle, index: number): void {
+    this.sprite?.reset(index);
+    this.particle?.reset(index);
+    this.strip?.reset(index);
+    this.overlay?.reset(index);
+    this.model?.reset(index);
+  }
+
+  update(node: EffectNodeLifecycle, delta: number): void {
+    this.sprite?.update(node.elapsed, delta);
+    this.particle?.update(node.elapsed, delta);
+    this.strip?.update(node.elapsed, delta);
+    this.sound?.update();
+    this.bolt?.update(delta);
+    this.overlay?.update(delta);
+    this.model?.update(node.elapsed, delta);
+  }
+
+  end(): void {
+    this.particle?.end();
+    this.sound?.end();
+    this.screen?.end();
+  }
+
+  additionalEnd(_node: EffectNodeLifecycle, ended: boolean): boolean {
+    return this.sound?.additionalEnd(ended) ?? false;
+  }
+
+  release(): void {
+    this.releaseState();
+    this.released(this.definition.index);
+  }
+
+  releaseState(): void {
+    if (!this.stateActive) return;
+    this.stateActive = false;
+    this.bolt?.target.bind();
+    if (this.retained) {
+      this.retained.trailElapsed = this.sprite?.history?.elapsed ?? this.retained.trailElapsed;
+      this.retained.stripScroll = this.strip?.scroll ?? this.retained.stripScroll;
+      this.pool!.release(this.retained);
+    }
+  }
+}
+
 /** Original source-tree composition for containers, sprites, bolts, sounds, particles, strips and overlays. */
 export class EffectRuntimeTree {
   readonly root: EffectRuntimeNode;
@@ -55,72 +175,45 @@ export class EffectRuntimeTree {
   constructor(library: EffectRuntimeLibrary, identifier: number, origin: EffectVec3,
     readonly parentMatrix: EffectNativeMatrix | undefined, random: () => number,
     soundBackend: EffectSoundBackend<number>, soundShared: EffectSoundStore<number>,
-    released: (node: number) => void = () => {}, pool?: EffectRuntimeStatePool, screenBackend?: EffectScreenBackend,
+    released: (node: number) => void = ignoreReleasedNode, pool?: EffectRuntimeStatePool, screenBackend?: EffectScreenBackend,
     modelBackend?: (definition: EffectRuntimeDefinition) => EffectModelBackend,
-    globalMatrix: EffectNativeMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-    targetProvider?: EffectTargetProvider, retain = false) {
+    globalMatrix: EffectNativeMatrix = EFFECT_IDENTITY,
+    targetProvider?: EffectTargetProvider, retain = false, visualDensity = 1) {
     this.origin = parentMatrix ? [0, 0, 0] : [...origin];
-    const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+    const definitions = definitionsForLibrary(library);
     const root = createEffectTree(identifier, retain, {
-      lookup: id => findEffectDefinition(library.nodes, id),
+      lookup: id => definitions.get(id),
       create: (definition, retainWhenEnded): EffectRuntimeNode => {
-        const timing = library.nodeTimings.find(row => row.node === definition.index)!;
-        let sprite: EffectSpriteNodeState | undefined;
-        let particle: EffectParticleNodeState | undefined;
-        let strip: EffectStripNodeState | undefined;
-        let sound: EffectSoundNodeState<number> | undefined;
-        let bolt: EffectBoltNodeState | undefined;
-        let overlay: EffectOverlayNodeState | undefined;
-        let screen: EffectScreenNodeState | undefined;
-        let model: EffectModelNodeState | undefined;
+        const timing = controlsForNode(library.nodeTimings, definition.index)[0];
+        const node = new RuntimeNodeState(definition, timing, retainWhenEnded, this.origin, released, pool);
         if (definition.type === 1) {
-          const controls = library.spriteControls.filter(row => row.node === definition.index);
-          sprite = new EffectSpriteNodeState(controls, random, identity, parentMatrix);
+          const controls = controlsForNode(library.spriteControls, definition.index);
+          node.sprite = new EffectSpriteNodeState(controls, random, EFFECT_IDENTITY, parentMatrix, false, undefined, visualDensity);
         } else if (definition.type === 6) {
-          const controls = library.particleControls.filter(row => row.node === definition.index);
-          particle = new EffectParticleNodeState(controls,
+          const controls = controlsForNode(library.particleControls, definition.index);
+          node.particle = new EffectParticleNodeState(controls,
             controls.map(() => ({position: [0, 0, 0], orbitOffset: [0, 0, 0]})),
-            controls.map(() => undefined), controls[0].capacity, random, identity, parentMatrix);
+            undefined, controls[0].capacity, random, EFFECT_IDENTITY, parentMatrix, visualDensity);
         } else if (definition.type === 7) {
-          const controls = library.stripControls.filter(row => row.node === definition.index);
-          const grid = library.textureGrids.find(row => row.node === definition.index)!;
-          strip = new EffectStripNodeState(controls, grid.uvFrames, random, identity, parentMatrix);
+          const controls = controlsForNode(library.stripControls, definition.index);
+          const grid = controlsForNode(library.textureGrids, definition.index)[0];
+          node.strip = new EffectStripNodeState(controls, grid.uvFrames, random, EFFECT_IDENTITY, parentMatrix);
         } else if (definition.type === 2) {
-          bolt = new EffectBoltNodeState(library.boltControls.find(row => row.node === definition.index)!, random, parentMatrix, targetProvider);
+          node.bolt = new EffectBoltNodeState(controlsForNode(library.boltControls, definition.index)[0], random, parentMatrix, targetProvider);
         } else if (definition.type === 8) {
-          overlay = new EffectOverlayNodeState(library.overlayControls.filter(row => row.node === definition.index), random);
+          node.overlay = new EffectOverlayNodeState(controlsForNode(library.overlayControls, definition.index), random);
         } else if ((definition.type === 10 || definition.type === 11) && screenBackend) {
-          screen = new EffectScreenNodeState(library.screenControls.find(row => row.node === definition.index)!, screenBackend);
+          node.screen = new EffectScreenNodeState(controlsForNode(library.screenControls, definition.index)[0], screenBackend);
         } else if (definition.type === 5 && modelBackend) {
-          model = new EffectModelNodeState(library.modelControls.filter(row => row.node === definition.index),
+          node.model = new EffectModelNodeState(controlsForNode(library.modelControls, definition.index),
             globalMatrix, !!parentMatrix, modelBackend(definition));
         } else if (definition.type === 4) {
-          const control = library.soundControls.find(row => row.node === definition.index)!;
-          sound = new EffectSoundNodeState(control.reference, control.parameter, control.stopPrevious, soundBackend, soundShared);
+          const control = controlsForNode(library.soundControls, definition.index)[0];
+          node.sound = new EffectSoundNodeState(control.reference, control.parameter, control.stopPrevious, soundBackend, soundShared);
         } else if (definition.type !== 0) {
           throw new Error(`Unsupported battle effect source type ${definition.type}`);
         }
-        const retained = pool?.take(definition.type);
-        let stateActive = true;
-        if (retained && strip) strip.scroll = retained.stripScroll;
-        const releaseState = (): void => {
-          if (!stateActive) return;
-          stateActive = false;
-          bolt?.target.bind();
-          if (retained) {
-            retained.trailElapsed = sprite?.history?.elapsed ?? retained.trailElapsed;
-            retained.stripScroll = strip?.scroll ?? retained.stripScroll;
-            pool!.release(retained);
-          }
-        };
-        const lifecycle = new EffectNodeLifecycle(timing, {
-          start: () => {sprite?.start(this.origin); if (sprite && retained && !sprite.controls[0].trailEnabled) sprite.history.elapsed = retained.trailElapsed; particle?.start(this.origin); strip?.start(this.origin); sound?.start(); bolt?.start(this.origin); overlay?.start(); model?.start(this.origin);},
-          activate: () => {screen?.activate(timing.lifetime);}, reset: (_, index) => {sprite?.reset(index); particle?.reset(index); strip?.reset(index); overlay?.reset(index); model?.reset(index);},
-          update: (node, delta) => {sprite?.update(node.elapsed, delta); particle?.update(node.elapsed, delta); strip?.update(node.elapsed, delta); sound?.update(); bolt?.update(delta); overlay?.update(delta); model?.update(node.elapsed, delta);},
-          end: () => {particle?.end(); sound?.end(); screen?.end();}, additionalEnd: (_, ended) => sound?.additionalEnd(ended) ?? false,
-          release: () => {releaseState(); released(definition.index);},
-        }, retainWhenEnded);
-        const node = {definition, lifecycle, sprite, particle, strip, sound, bolt, overlay, screen, model, children: [], releaseState};
+        node.takeRetainedState();
         this.nodes.push(node);
         return node;
       },
@@ -145,14 +238,17 @@ export class EffectRuntimeTree {
 
   /** Empty source containers remain native-active; reclaim their Web render resources. */
   get quiescent(): boolean {
-    return this.nodes.every(node => node.definition.type === 0 ? node.lifecycle.phase !== 1 :
-      node.lifecycle.phase === 0 || this.webExhausted025Particle(node));
+    for (const node of this.nodes) {
+      if (node.definition.type === 0) {
+        if (node.lifecycle.phase === 1) return false;
+      } else if (node.lifecycle.phase !== 0 && !this.webExhaustedParticle(node)) return false;
+    }
+    return true;
   }
 
-  /** Original online025/2807 has no future emission after its final controller becomes active. */
-  private webExhausted025Particle(node: EffectRuntimeNode): boolean {
-    if (this.root.definition.name !== '_root\\online\\025' || node.definition.index !== 2807 ||
-        node.definition.type !== 6 || node.lifecycle.phase !== 2) {
+  /** Final zero-rate or completed burst emitters cannot refill an empty particle pool. */
+  private webExhaustedParticle(node: EffectRuntimeNode): boolean {
+    if (node.definition.type !== 6 || node.lifecycle.phase !== 2) {
       return false;
     }
     const particle = node.particle;
@@ -162,6 +258,8 @@ export class EffectRuntimeTree {
         particle.controller !== controller) {
       return false;
     }
-    return controls[controller].emitter.countRange[1] <= 0 && particle.pool.particles.length === 0;
+    const emitter = controls[controller].emitter;
+    return particle.pool.particles.length === 0 &&
+      (emitter.countRange[1] <= 0 || (emitter.burst && particle.emitter.burstEmitted));
   }
 }

@@ -12,6 +12,7 @@ export class EffectOverlayNodeState {
   color: EffectColor = [0, 0, 0, 0];
   frame = 0;
   frameRemainder = 0;
+  private readonly randomFrame = (count: number): number => this.random() % count;
   constructor(readonly controls: readonly EffectOverlayControl[], private readonly random: () => number) {}
 
   start(): void {
@@ -32,12 +33,11 @@ export class EffectOverlayNodeState {
   update(deltaSeconds: number): void {
     const control = this.controls[this.controller];
     const delta = Math.fround(deltaSeconds);
-    this.color = this.color.map((value, axis) => Math.fround(value + delta * control.colorAddRate[axis])) as EffectColor;
+    for (let axis = 0; axis < 4; ++axis) {
+      this.color[axis] = Math.fround(this.color[axis] + delta * control.colorAddRate[axis]);
+    }
     // The original clamps alpha after each color component.
     this.color[3] = Math.max(0, Math.min(1, this.color[3]));
-    const frame = advanceEffectFrame({frame: this.frame, remainder: this.frameRemainder},
-      control, delta, count => this.random() % count);
-    this.frame = frame.frame;
-    this.frameRemainder = frame.remainder;
+    advanceEffectFrame(this, control, delta, this.randomFrame);
   }
 }

@@ -27,7 +27,6 @@ export function initialEffectStripGeometry(config: EffectStripGeometryConfig,
   let inner: EffectVec3 = [0, 0, innerRadius];
   const bytes = color.map(value => Math.trunc(value * 255) & 255);
   const packed = ((bytes[3] << 24) | (bytes[0] << 16) | (bytes[1] << 8) | bytes[2]) >>> 0;
-  const uvs = advanceEffectStripUv(0, 0, 0, frame, config.segments, config.textureLength).uvs;
   const result: EffectStripSegment[] = [];
   for (let index = 0; index < config.segments; ++index) {
     angle = f(angle + step);
@@ -41,9 +40,10 @@ export function initialEffectStripGeometry(config: EffectStripGeometryConfig,
     const innerAt = index % 2 === 0 ? innerRadius - config.alternatingWidth[1] : innerRadius;
     const nextOuter: EffectVec3 = [f(sine * outerAt), outerHeight, f(cosine * outerAt)];
     const nextInner: EffectVec3 = [f(sine * innerAt), innerHeight, f(cosine * innerAt)];
-    result.push({corners: [inner, nextInner, nextOuter, outer], uv: uvs[index], color: packed});
+    result.push({corners: [inner, nextInner, nextOuter, outer], uv: [0, 0, 0, 0], color: packed});
     inner = nextInner;
     outer = nextOuter;
   }
+  advanceEffectStripUv(0, 0, 0, frame, config.segments, config.textureLength, result);
   return result;
 }

@@ -1,4 +1,4 @@
-import {effectOrbitOffset} from '../common/orbit';
+import {effectOrbitOffsetToRef} from '../common/orbit';
 import {advanceEffectFrame, EffectFrameConfig} from '../common/effect-frame-clock';
 import {EffectNativeMatrix} from '../common/effect-native-space';
 import {EffectSpriteState} from '../sprites/effect-sprite-reset';
@@ -20,18 +20,24 @@ export function advanceEffectStripState(state: EffectStripState, control: Effect
   elapsed: number, deltaSeconds: number, globalRotation: EffectNativeMatrix, hasParent: boolean,
   randomFrame: (count: number) => number): EffectStripState {
   const delta = Math.fround(deltaSeconds);
-  const addRate = (value: number, rate: number): number => Math.fround(value + Math.fround(rate * delta));
   // The original computes global RotateIn into a temporary but integrates local acceleration.
-  const velocity = state.velocity.map((value, axis) => addRate(value, control.motion.acceleration[axis])) as EffectVec3;
-  const position = state.position.map((value, axis) => addRate(value, velocity[axis])) as EffectVec3;
-  const orbitOffset = control.orbit.angularRate !== 0 ?
-    effectOrbitOffset(control.orbit, elapsed, control.baseStart) : [...state.orbitOffset] as EffectVec3;
-  const angles = state.angles.map((value, axis) => addRate(value, control.angleRate[axis])) as EffectVec3;
-  const scale = state.scale.map((value, axis) => Math.max(0,
-    Math.fround(value + delta * control.scaleRate[axis] * control.scale[axis]))) as EffectVec3;
-  const color = state.color.map((value, axis) => Math.fround(value + delta * control.colorAddRate[axis])) as EffectColor;
+  const {velocity, position, angles, scale, color} = state;
+  for (let axis = 0; axis < 3; ++axis) {
+    velocity[axis] = Math.fround(velocity[axis] + Math.fround(control.motion.acceleration[axis] * delta));
+    position[axis] = Math.fround(position[axis] + Math.fround(velocity[axis] * delta));
+  }
+  if (control.orbit.angularRate !== 0) {
+    effectOrbitOffsetToRef(control.orbit, elapsed, control.baseStart, state.orbitOffset);
+  }
+  for (let axis = 0; axis < 3; ++axis) {
+    angles[axis] = Math.fround(angles[axis] + Math.fround(control.angleRate[axis] * delta));
+    scale[axis] = Math.max(0, Math.fround(scale[axis] + delta * control.scaleRate[axis] * control.scale[axis]));
+  }
+  for (let axis = 0; axis < 4; ++axis) {
+    color[axis] = Math.fround(color[axis] + delta * control.colorAddRate[axis]);
+  }
   // Native clamps alpha four times; RGB components retain their computed values.
   color[3] = Math.max(0, Math.min(1, color[3]));
-  const frame = advanceEffectFrame({frame: state.frame, remainder: state.frameRemainder}, control, delta, randomFrame);
-  return {position, velocity, orbitOffset, angles, scale, color, frame: frame.frame, frameRemainder: frame.remainder};
+  advanceEffectFrame(state, control, delta, randomFrame);
+  return state;
 }

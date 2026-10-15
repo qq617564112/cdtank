@@ -1,12 +1,17 @@
 import {Constants, Material, Mesh, Scene, ShaderMaterial, Texture, Vector2, VertexData, VertexBuffer} from '@babylonjs/core';
-import {effectOverlayVertices, EffectOverlayRectangle} from './effect-overlay-draw';
+import type {EffectOverlayRectangle} from './effect-overlay-draw';
 import {EffectRenderPass} from '../common/effect-sprite-mesh';
-import {unpackEffectColor} from '../common/effect-color';
+
+const CORNERS = [0, 1, 2, 2, 1, 3] as const;
 
 /** Original textured UI rectangle in XYZRHW screen pixels. */
 export class EffectOverlayMesh {
   readonly mesh: Mesh;
   readonly material: ShaderMaterial;
+  private readonly positions = new Float32Array(18);
+  private readonly uvs = new Float32Array(12);
+  private readonly colors = new Float32Array(24);
+  private readonly viewport = new Vector2();
 
   constructor(private readonly scene: Scene, pass: EffectRenderPass, texture: Texture) {
     const states = new Map(pass.states.map(state => [state.name, state.value]));
@@ -67,20 +72,36 @@ void main(){gl_FragColor=texture2D(effectTexture,vUV)*vColor;}`,
   update(draw?: EffectOverlayRectangle): void {
     this.mesh.setEnabled(!!draw);
     if (!draw) return;
-    const vertices = effectOverlayVertices(draw);
-    const data = new VertexData();
-    data.positions = vertices.flatMap(vertex => vertex.position);
-    data.uvs = vertices.flatMap(vertex => vertex.uv);
-    data.colors = vertices.flatMap(vertex => unpackEffectColor(vertex.color));
-    data.indices = vertices.map((_, index) => index);
-    if (!this.mesh.isVerticesDataPresent(VertexBuffer.PositionKind)) data.applyToMesh(this.mesh, true);
-    else {
-      this.mesh.updateVerticesData(VertexBuffer.PositionKind, data.positions);
-      this.mesh.updateVerticesData(VertexBuffer.UVKind, data.uvs);
-      this.mesh.updateVerticesData(VertexBuffer.ColorKind, data.colors);
+    const [left, bottom, right, top, u0, v0, u1, v1] = draw.rectangle;
+    const red = ((draw.color >>> 16) & 255) / 255, green = ((draw.color >>> 8) & 255) / 255;
+    const blue = (draw.color & 255) / 255, alpha = (draw.color >>> 24) / 255;
+    for (let vertex = 0; vertex < CORNERS.length; vertex++) {
+      const corner = CORNERS[vertex];
+      this.positions[vertex * 3] = corner & 1 ? right : left;
+      this.positions[vertex * 3 + 1] = corner & 2 ? top : bottom;
+      this.positions[vertex * 3 + 2] = draw.z;
+      this.uvs[vertex * 2] = corner & 1 ? u1 : u0;
+      this.uvs[vertex * 2 + 1] = corner & 2 ? v1 : v0;
+      this.colors[vertex * 4] = red;
+      this.colors[vertex * 4 + 1] = green;
+      this.colors[vertex * 4 + 2] = blue;
+      this.colors[vertex * 4 + 3] = alpha;
+    }
+    if (!this.mesh.isVerticesDataPresent(VertexBuffer.PositionKind)) {
+      const data = new VertexData();
+      data.positions = this.positions;
+      data.uvs = this.uvs;
+      data.colors = this.colors;
+      data.indices = [0, 1, 2, 3, 4, 5];
+      data.applyToMesh(this.mesh, true);
+    } else {
+      this.mesh.updateVerticesData(VertexBuffer.PositionKind, this.positions);
+      this.mesh.updateVerticesData(VertexBuffer.UVKind, this.uvs);
+      this.mesh.updateVerticesData(VertexBuffer.ColorKind, this.colors);
     }
     const engine = this.scene.getEngine();
-    this.material.setVector2('viewport', new Vector2(engine.getRenderWidth(), engine.getRenderHeight()));
+    this.viewport.set(engine.getRenderWidth(), engine.getRenderHeight());
+    this.material.setVector2('viewport', this.viewport);
   }
 
   dispose(): void {this.mesh.dispose(); this.material.dispose(false, false);}

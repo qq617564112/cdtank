@@ -21,6 +21,9 @@ export interface EffectOverlayRectangle {
 /** Type8 screen rectangle, UV retention and original diffuse packing. */
 export class EffectOverlayDrawState {
   private uv: readonly [number, number, number, number] = [0, 0, 1, 1];
+  private readonly rectangle: [number, number, number, number, number, number, number, number]
+    = [0, 0, 0, 0, 0, 0, 1, 1];
+  private readonly result: EffectOverlayRectangle = {rectangle: this.rectangle, z: 0, color: 0};
 
   constructor(private width: number, private height: number) {}
 
@@ -29,13 +32,14 @@ export class EffectOverlayDrawState {
     this.height = height;
   }
 
+  /** The mesh consumes this instance-owned rectangle before the next draw. */
   draw(color: EffectColor, textured: boolean,
     frameUv: readonly [number, number, number, number]): EffectOverlayRectangle {
     if (textured) this.uv = frameUv;
-    return {
-      rectangle: [0, Math.fround(this.height), Math.fround(this.width), 0, ...this.uv],
-      z: 0,
-      color: packEffectColor(color),
-    };
+    this.rectangle[1] = Math.fround(this.height);
+    this.rectangle[2] = Math.fround(this.width);
+    for (let axis = 0; axis < 4; axis++) this.rectangle[4 + axis] = this.uv[axis];
+    this.result.color = packEffectColor(color);
+    return this.result;
   }
 }

@@ -4,12 +4,14 @@ Type1的node/reset/space/atlas/trail五个模块归render/effects/sprites，Type
 
 EffectRuntime的Type1历史到四边形计算提取到sprite-draw，Type7段到世界四边形计算提取到strip-draw。两个函数返回原EffectQuadData，直接交给现有共用EffectSpriteMesh；资源/材质选择、跨族deviceStates、实例/绘制顺序及释放仍由EffectRuntime组装。
 
-| 绘制模块 | 保持的原行为 |
+| 绘制模块 | 绘制行为 |
 |---|---|
-| sprite-draw | 历史反向提交，使用entry0颜色和逐项trail alpha，float32位置加轨道，billboard位选择/相机反射/父矩阵，定向角/尺寸和原UV帧 |
+| sprite-draw | 历史反向提交，使用entry0颜色和逐项trail alpha，float32位置加轨道，billboard位选择/相机反射/父矩阵，定向角/尺寸和原UV帧；全零父矩阵不提交四边形 |
 | strip-draw | 原位置/轨道/角/尺寸/父矩阵组成世界矩阵，段和角顺序、UV、packed颜色保持 |
 
 跨模型/粒子/sprite/strip使用的共用数学、颜色、相机和quad backend保持单一实现；未为每族建立独立deviceStates，GBF状态仍在统一有序流中传递。
+
+Type1绑定的动作挂点失效时暂停绘制，矩阵恢复有效后按当前状态继续；节点时钟与寿命仍正常推进。普通2001的Effect4黄色火光节点2431寿命为0.5秒，长于tank105的03/attack1到动作结束约0.23秒的间隔。回到不含tag_efattack的01/02动作后，共用挂点矩阵全零，此时火光不生成地图原点的billboard。已发射粒子保留自己的世界位置，远处命中特效继续使用独立命中端点。
 
 ## 验收入口
 
@@ -34,3 +36,5 @@ EffectRuntime的Type1历史到四边形计算提取到sprite-draw，Type7段到�
 ## 范围
 
 直接绘制链检查NullEngine实际几何提交，像素证明来自所列WebGL夹具；两者范围分别记录。诊断的GBF继承状态使用明确夹具，原D3D全部继承状态、全部sprite/strip资产/技能资格及全内容高清实战仍按M项恢复。
+
+动作挂点失效后的Type1隐藏分支按当前生产代码与资源完成静态检查，近柱射击场景的运行复验待完成。

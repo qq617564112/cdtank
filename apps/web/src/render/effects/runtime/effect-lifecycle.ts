@@ -1,5 +1,5 @@
-import {EffectTimelineConfig, effectHasStarted, effectLifetimeEnded,
-  selectEffectController} from './effect-timeline';
+import {EffectControllerSelection, EffectTimelineConfig, effectHasStarted, effectLifetimeEnded,
+  selectEffectControllerToRef} from './effect-timeline';
 
 export interface EffectLifecycleHooks {
   start(node: EffectNodeLifecycle): void;
@@ -18,6 +18,7 @@ export class EffectNodeLifecycle {
   controller = 0;
   readonly children: EffectNodeLifecycle[] = [];
   parent?: EffectNodeLifecycle;
+  private readonly selection: EffectControllerSelection = {index: 0, resetIndices: []};
 
   constructor(readonly timing: EffectTimelineConfig,
     private readonly hooks: EffectLifecycleHooks, readonly retainWhenEnded = false) {}
@@ -65,7 +66,8 @@ export class EffectNodeLifecycle {
   }
 
   private tickActive(delta: number): void {
-    const selection = selectEffectController(this.elapsed, this.timing, this.controller);
+    const selection = this.selection;
+    selectEffectControllerToRef(this.elapsed, this.timing, this.controller, selection);
     for (const controller of selection.resetIndices) {
       this.controller = controller;
       this.hooks.reset(this, controller);

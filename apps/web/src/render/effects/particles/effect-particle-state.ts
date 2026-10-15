@@ -1,5 +1,4 @@
 import {advanceEffectFrame, EffectFrameConfig} from '../common/effect-frame-clock';
-import {normalizeEffectVector} from '../common/effect-native-space';
 import {EffectColor, EffectVec3} from '../common/types';
 
 export interface EffectParticleState {
@@ -34,24 +33,36 @@ export function advanceEffectParticle(state: EffectParticleState, config: Effect
   const delta = Math.fround(deltaSeconds);
   const {acceleration, velocity, position, angles, color} = state;
   if ((mode === 1 || mode === 2) && resolvedTarget) {
-    const difference = resolvedTarget.map((value, index) => Math.fround(value - state.position[index])) as EffectVec3;
+    let dx = Math.fround(resolvedTarget[0] - position[0]);
+    let dy = Math.fround(resolvedTarget[1] - position[1]);
+    let dz = Math.fround(resolvedTarget[2] - position[2]);
+    if (mode === 2) {
+      dx = Math.fround(-dx - velocity[0]);
+      dy = Math.fround(-dy - velocity[1]);
+      dz = Math.fround(-dz - velocity[2]);
+    }
+    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const magnitude = Math.fround(length);
+    if (length < Math.fround(.005)) {
+      dx = 0; dy = 1; dz = 0;
+    } else {
+      const inverse = 1 / magnitude;
+      dx = Math.fround(dx * inverse);
+      dy = Math.fround(dy * inverse);
+      dz = Math.fround(dz * inverse);
+    }
     if (mode === 1) {
-      const direction = normalizeEffectVector(difference);
       const [x, y, z] = state.velocity;
       const speed = Math.sqrt(x * x + y * y + z * z) * (state.age / state.lifetime);
       for (let index = 0; index < 3; index++) {
-        const rate = direction[index] * speed;
+        const rate = (index === 0 ? dx : index === 1 ? dy : dz) * speed;
         // X retains the rate in x87; Y stores rate, Z also stores rate × delta.
         const product = index === 0 ? rate * delta : Math.fround(rate) * delta;
         position[index] = Math.fround(position[index] + (index === 2 ? Math.fround(product) : product));
       }
     } else {
-      const force = difference.map((value, index) => Math.fround(-value - state.velocity[index])) as EffectVec3;
-      const [x, y, z] = force;
-      const magnitude = Math.fround(Math.sqrt(x * x + y * y + z * z));
-      const direction = normalizeEffectVector(force);
       for (let index = 0; index < 3; index++) {
-        acceleration[index] = Math.fround(direction[index] * magnitude);
+        acceleration[index] = Math.fround((index === 0 ? dx : index === 1 ? dy : dz) * magnitude);
         velocity[index] = Math.fround(velocity[index] + Math.fround(Math.fround(acceleration[index]) * delta));
         position[index] = Math.fround(position[index] + Math.fround(Math.fround(velocity[index]) * delta));
       }
@@ -69,14 +80,11 @@ export function advanceEffectParticle(state: EffectParticleState, config: Effect
   for (let index = 0; index < 3; index++) {
     angles[index] = Math.fround(angles[index] + Math.fround(Math.fround(state.angleRate[index]) * delta));
   }
-  const frame = advanceEffectFrame({frame: state.frame, remainder: state.frameRemainder},
-    config.frame, delta, randomFrame);
+  advanceEffectFrame(state, config.frame, delta, randomFrame);
   if (config.alphaMode === 1 || config.alphaMode === 2) {
     const step = delta / Math.fround(state.lifetime);
     color[3] = Math.max(0, Math.min(1, Math.fround(state.color[3] +
       (config.alphaMode === 1 ? -step : step))));
   }
-  state.frame = frame.frame;
-  state.frameRemainder = frame.remainder;
   return state;
 }
