@@ -21,11 +21,20 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install release assets
+        run: node scripts/install-assets.mjs
+
+      - name: Import assets image
+        run: bash deployment/import-assets.sh "cdtank-assets:${CDTANK_IMAGE_TAG}"
+
       - name: Build image
-        run: docker build --tag "cdtank:${CDTANK_IMAGE_TAG}" --tag cdtank:latest .
+        run: >-
+          docker build
+          --build-arg "CDTANK_ASSETS_IMAGE=cdtank-assets:${CDTANK_IMAGE_TAG}"
+          --tag "cdtank:${CDTANK_IMAGE_TAG}" --tag cdtank:latest .
 
       - name: Deploy
         run: docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
 
       - name: Deployment URL
-        run: echo 'CDTank is available at http://192.168.10.140:61002/'
+        run: echo 'CDTank is available at https://tank.cloyd.fun/'

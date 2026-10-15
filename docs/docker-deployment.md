@@ -12,7 +12,7 @@ Docker 部署使用完整运行资源：先导入本地资源镜像，再从源�
 
 | 目录 | 内容 |
 | --- | --- |
-| `apps/web/public/` | 完整 assets、data、manifests，包含 UI 图集、双画质战斗素材、模型、音频、字体和许可 |
+| `apps/web/public/` | 完整 assets、data、manifests，包含 UI 图集、怀旧／HD／mobile 战斗素材、模型、音频、字体和许可 |
 | `apps/server/resources/` | tables、场景配置和预烘焙碰撞数据 |
 
 已有配套运行目录可直接使用。使用 Release 安装资源时，在宿主机安装 Node.js 24.16 或更高版本，然后执行：
@@ -29,15 +29,15 @@ npm run assets:install
 将资源导入用于构建应用的同一个 Docker 引擎：
 
 ```sh
-bash deployment/import-assets.sh
+bash deployment/import-assets.sh cdtank-assets:1.0.2
 ```
 
-脚本补入仓库字体，将两个运行资源目录导入 Dockerfile 的 `assets` 阶段所引用的本地镜像。该资源镜像使用构建配置中的固定标签；每次更新素材后重新导入，应用镜像标签单独记录版本。资源导入不会包含创作源图或账户存档。
+脚本补入仓库字体，将两个运行资源目录导入指定标签的本地镜像，供 Dockerfile 的 `assets` 阶段使用。构建时通过 `CDTANK_ASSETS_IMAGE` 指定相同标签；每次更新素材后重新导入。省略导入标签和构建参数时，两者均使用 `cdtank-assets:local`。资源导入不会包含创作源图或账户存档。
 
 构建应用镜像并启动 Compose：
 
 ```sh
-docker build --tag cdtank:1.0.2 .
+docker build --build-arg CDTANK_ASSETS_IMAGE=cdtank-assets:1.0.2 --tag cdtank:1.0.2 .
 CDTANK_IMAGE_TAG=1.0.2 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
 ```
 
@@ -148,4 +148,3 @@ environment:
 ```
 
 随后执行上述 Compose 启动命令。原库和备份保留，后续备份源路径使用当前 `ACCOUNT_DB_PATH`；数据库恢复不包含正在进行的房间或浏览器本地设置。完整存档规则见[运行与账户存档](../deployment/operations.md)。
-

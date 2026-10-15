@@ -9,7 +9,7 @@
 | 附件 | 内容 |
 | --- | --- |
 | `cdtank-1.0.2.tar.gz` | 编译服务端、前端构建文件、服务端内容表与碰撞数据、依赖锁文件、安装与启动入口、存档工具和许可声明 |
-| `cdtank-assets-1.0.2.tar.gz` | 完整 `apps/web/public/`，包含模型、贴图、音频、UI 图集、两套战斗素材、字体及许可、数据与清单 |
+| `cdtank-assets-1.0.2.tar.gz` | 完整 `apps/web/public/`，包含模型、贴图、音频、UI 图集、怀旧与 HD 两套战斗素材、字体及许可、数据与清单 |
 
 程序包解压后是 `cdtank-1.0.2/`，资产包顶层是 `public/`：
 
@@ -33,6 +33,8 @@ public/
   data/                         运行数据
   manifests/                    UI、战斗素材及其它资源清单
 ```
+
+资产包包含 `assets/models/{original,hd}/`、`assets/textures/{original,hd}/` 和 `battle-artwork.json` 的 `original`、`hd` 映射；发布入口与安装器要求两套资源齐全，本地组装入口还检查前端构建产物中的对应目录。手机与平板共用怀旧资源。素材生成在发布前完成，发布与安装复用成品。
 
 拆包按 public 的具体文件路径排除素材，保留 Vite 在 `assets/` 中生成的 JS、WASM 等文件和 `manifests/image-assets.json`。安装时把资产包的 `public/` 内容合并到程序包的 `web/`。目录规则见[public 资源目录](public-assets.md)，素材生成见[运行美术资源](original-assets.md)。
 
@@ -91,7 +93,7 @@ npm ci
 npm run assets:install
 ```
 
-安装脚本按根 `package.json` 的版本下载两个附件，将资产包的 `public/` 安装到 `apps/web/public/`，仅从程序包取出 `content/` 安装到 `apps/server/resources/`。现成的 UI 图集、双画质战斗素材、字体和碰撞数据直接使用，运行和开发无需原客户端或 Python。
+安装脚本按根 `package.json` 的版本下载两个附件，将资产包的 `public/` 安装到 `apps/web/public/`，仅从程序包取出 `content/` 安装到 `apps/server/resources/`。现成的 UI 图集、怀旧与 HD 两套战斗素材、字体和碰撞数据直接使用，运行和开发无需原客户端或 Python。
 
 指定本地同版本附件：
 
@@ -134,7 +136,9 @@ npm run release:github
 npm run release:github -- --notes /path/to/release-notes.md
 ```
 
-脚本从干净的 HEAD 构建，记录源码提交并生成两个附件，随后创建对应 Git 标签、推送标签到 origin、创建 GitHub 草稿、上传两个附件，全部成功后公开 Release。推送标签同时上传该提交的源码；GitHub 分支更新按项目 Git 流程单独处理，Forgejo 自动部署流程见[部署说明](../deployment/forgejo.md)。
+脚本从干净的 HEAD 构建，记录源码提交并生成两个附件，随后创建对应 Git 标签、推送标签到 origin、创建 GitHub 草稿、上传两个附件，全部成功后公开 Release。推送标签同时上传该提交的源码；GitHub 分支更新按项目 Git 流程单独处理。
+
+需要部署到 Forgejo 时，先完成该版本的 GitHub Release，再推送源码到 Forgejo 的 `main`。流水线按根 `package.json` 的版本安装两个附件、导入带本次提交 SHA 标签的资源镜像，再构建应用和部署；附件尚未公开时资源安装步骤失败，需完成发布后重新运行流水线。沿用已发布版本的代码更新复用该版本附件，资源变化使用新版本。完整配置见[Forgejo 自动部署](../deployment/forgejo.md)。
 
 已有同标签草稿可重跑脚本，附件会在草稿中重新上传；已公开版本与指向其它提交的标签会被拒绝，修订使用新版本号。上传中断时保留草稿，恢复前两个附件不会作为已完成版本公开。
 

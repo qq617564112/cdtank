@@ -37,7 +37,7 @@ node /srv/cdtank/start.mjs
 
 服务端默认监听 3001 端口，通过 `PORT` 修改；本机入口为 `http://localhost:3001/`，远程入口由 HTTPS 反向代理提供。页面、模型、音频和 WebSocket 均由同一 Node.js 进程提供。静态响应包含正确的 MIME、ETag 和 Last-Modified；文本资源支持压缩，音频支持 Range 分段下载。Vite 生成的带版本文件名资源缓存一年，其余资源和 HTML 每次访问重新验证缓存。
 
-如需单独部署网页，包内保留 `nginx.conf.example`：根目录设为 `/srv/cdtank/web`，将 `/game` 转发至服务端，标准配置包含 `include /etc/nginx/mime.types;`。浏览器和服务端分别部署时须配置同一 WebSocket 接入路径。
+如需单独部署网页，包内保留 `nginx.conf.example`：根目录设为 `/srv/cdtank/web`，将 `/game` WebSocket 和 `/game/api/` HTTP 接口通过同一入口转发至服务端，去掉 `/game` 前缀并保留后续路径，标准配置包含 `include /etc/nginx/mime.types;`。浏览器和服务端分别部署时须保持接口同源。
 
 服务端也可使用 `server.env.example` 中的环境变量覆盖默认值：
 

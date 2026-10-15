@@ -1,4 +1,5 @@
-FROM cdtank-assets:1.0.0-runtime-directories AS assets
+ARG CDTANK_ASSETS_IMAGE=cdtank-assets:local
+FROM ${CDTANK_ASSETS_IMAGE} AS assets
 
 FROM node:24.16.0-bookworm-slim AS build
 WORKDIR /workspace

@@ -35,6 +35,7 @@ If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is 
 - `release.json` 记录版本、标签、仓库、源码提交和资产附件名。安装入口为 `node install.mjs`：下载固定同版本资产、解压、安装依赖、启动服务、服务就绪后打开浏览器；不使用 latest 资产，不修改玩家存档。
 - `npm run release:build` 仅构建并生成本地附件；`npm run release:github` 构建后推送对应 Git 标签，创建草稿、上传两个附件，全部成功后公开。附件须小于 GitHub 的 2 GiB 上限。原有 `release:package` 默认保留完整运行资源，继续用于本地组装和 Docker。
 - 创作源图、原客户端、恢复中间产物、开发依赖、本地配置、账户数据库和备份不进入发行附件。资产按既有美术流程准备，发布不重新生成或降级素材；字体及第三方素材声明随包保留。
+- Forgejo 部署先公开同版本 GitHub Release 的两个附件，再推送源码到 `main`。流水线按根 `package.json` 版本安装运行资源，每次导入 `cdtank-assets:<提交 SHA>`，通过 Docker 构建参数 `CDTANK_ASSETS_IMAGE` 使用同一镜像；资源下载或导入失败时停止部署。资源更新使用新版本附件，沿用已发布版本的代码更新复用该版本资源。手动导入默认使用 `cdtank-assets:local`；指定标签时构建参数必须一致，完整流程见[Forgejo 自动部署](deployment/forgejo.md)。
 - 文档以当前版本及后续相同流程为准，README 的运行方式依次为：Release 解压运行、本地构建运行、本地开发服务器。域名和局域网部署要求 HTTPS 与 `/game` WebSocket 转发，本机 HTTP localhost 可使用 WebGPU。
 - 仅编写流程、脚本或文档时，不执行构建、创建标签、推送或 GitHub 发布；实际发布需用户明确要求。完整参数、分包结构和安装命令见[GitHub 发布与安装](docs/github-publication.md)。
 

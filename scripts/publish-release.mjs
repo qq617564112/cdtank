@@ -53,10 +53,16 @@ function publishRelease() {
     throw new Error(`${tag} 已指向其它提交，请使用新的版本号。`);
   }
   for (var filename of ['apps/web/public/assets', 'apps/web/public/data',
+    'apps/web/public/assets/models/original', 'apps/web/public/assets/textures/original',
+    'apps/web/public/assets/models/hd', 'apps/web/public/assets/textures/hd',
     'apps/web/public/manifests/sprite-images.json', 'apps/web/public/manifests/battle-artwork.json',
     'apps/web/public/manifests/ui.json', 'apps/server/resources/tables',
     'apps/server/resources/assets/scene-collision']) {
     if (!existsSync(resolve(workspace, filename))) throw new Error(`缺少配套发布资源：${filename}`);
+  }
+  var artwork = JSON.parse(readFileSync(resolve(workspace, 'apps/web/public/manifests/battle-artwork.json'), 'utf8'));
+  if (!artwork.variants.original || !artwork.variants.hd || !artwork.summary.models || !artwork.summary.textures) {
+    throw new Error('缺少怀旧或 HD 战斗素材映射，请先执行 assets:compressed 和 assets:battle-artwork。');
   }
   if (notesFile && !existsSync(notesFile)) throw new Error(`发布说明不存在：${notesFile}`);
   var customNotes = notesFile ? readFileSync(notesFile, 'utf8') : undefined;

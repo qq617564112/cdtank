@@ -83,6 +83,14 @@ async function installRelease() {
       for (var filename of ['sprite-images.json', 'battle-artwork.json', 'ui.json']) {
         if (!existsSync(resolve(web, 'manifests', filename))) throw new Error(`资产包缺少 manifests/${filename}`);
       }
+      var artwork = JSON.parse(readFileSync(resolve(web, 'manifests/battle-artwork.json'), 'utf8'));
+      if (!artwork.variants.original || !artwork.variants.hd
+          || !existsSync(resolve(web, 'assets/models/original'))
+          || !existsSync(resolve(web, 'assets/textures/original'))
+          || !existsSync(resolve(web, 'assets/models/hd'))
+          || !existsSync(resolve(web, 'assets/textures/hd'))) {
+        throw new Error('资产包缺少怀旧或 HD 战斗素材，请使用同版本完整资产包。');
+      }
       writeFileSync(assetsMarker, metadata.version + '\n');
     } finally {
       await rm(temporary, {recursive: true, force: true});

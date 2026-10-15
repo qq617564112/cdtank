@@ -10,6 +10,8 @@ if (!destination || existsSync(destination) || process.argv.length > 4
   throw new Error('Usage: npm run release:package -- <new-directory> [--without-public]');
 }
 for (const filename of ['dist/server/server/src/index.js', 'dist/web/index.html',
+  'dist/web/assets/models/original', 'dist/web/assets/textures/original',
+  'dist/web/assets/models/hd', 'dist/web/assets/textures/hd',
   'apps/server/resources/tables', 'apps/server/resources/assets', 'deployment/server-package-lock.json']) {
   if (!existsSync(resolve(workspace, filename))) throw new Error(`Missing release input: ${filename}`);
 }

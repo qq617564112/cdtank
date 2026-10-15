@@ -36,8 +36,15 @@ async function installAssets() {
     extract(['-xzf', assets, '-C', temporary]);
     extract(['-xzf', program, '-C', resources, '--strip-components=2', `cdtank-${version}/content`]);
     for (var filename of ['public/manifests/sprite-images.json', 'public/manifests/battle-artwork.json',
+      'public/assets/models/original', 'public/assets/textures/original',
+      'public/assets/models/hd', 'public/assets/textures/hd',
+      'public/assets/models/mobile-hd', 'public/assets/textures/mobile-hd',
       'public/manifests/ui.json', 'resources/tables', 'resources/assets/scene-collision']) {
       if (!existsSync(join(temporary, filename))) throw new Error(`缺少同版本运行资源：${filename}`);
+    }
+    var artwork = JSON.parse(readFileSync(join(temporary, 'public/manifests/battle-artwork.json'), 'utf8'));
+    if (!artwork.variants.original || !artwork.variants.hd || !artwork.variants['mobile-hd']) {
+      throw new Error('同版本资产包缺少怀旧、电脑 HD 或移动端 HD 战斗素材映射。');
     }
     for (var [source, destination] of [['public', 'apps/web/public'], ['resources', 'apps/server/resources']]) {
       var target = resolve(workspace, destination);
