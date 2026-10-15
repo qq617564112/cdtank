@@ -1,6 +1,6 @@
 import {defaultAmmoId, gameContent} from '../../../../shared/content/catalog';
 import {randomUUID} from 'node:crypto';
-import type {MsgRoomEvent} from '../../../../shared/protocols';
+import type {MsgRoomEvent, SceneObjectSnapshot} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
 import {isTreasureItem} from '../../../../shared/combat/treasure-items';
@@ -55,6 +55,7 @@ export interface GroundItemRoom {
   round: number;
   phase: string;
   groundItems: GroundItemState[];
+  sceneObjects: readonly SceneObjectSnapshot[];
   players: ReadonlyMap<string, GroundItemRoomPlayer>;
 }
 
@@ -296,7 +297,8 @@ function acquireLocally(player: GroundItemRoomPlayer, ground: GroundItemState):
 /**
  * One real Breach destruction creates at most one ground item. The source
  * placement, not the attacker, owns the position. A single uniform roll both
- * gates at the configured chance and selects one equally likely pool entry.
+ * gates at the configured chance and selects one equally likely entry from
+ * the pool supported by the current mode and scene.
  */
 export function createBreachDrop(room: GroundItemRoom, source: BreachDropSource,
     ownerId: string, now: number, random: () => number,
@@ -319,7 +321,16 @@ export function createBreachDrop(room: GroundItemRoom, source: BreachDropSource,
   const chance = rules.chance;
   const quantity = rules.quantity >>> 0;
   if (!(chance > 0 && chance <= 1) || !(roll >= 0 && roll < 1) || roll >= chance || !quantity) return undefined;
-  const pool = [...combatItems.values()].filter(item => item.runtime.values.breachDropOrder > 0)
+  const pool = [...combatItems.values()].filter(item => {
+    if (!(item.runtime.values.breachDropOrder > 0)) return false;
+    if (item.runtime.use === 'teamLife') return room.mode === 1;
+    if (item.runtime.use === 'building') {
+      return (room.mode === 1 || room.mode === 2)
+        && room.sceneObjects.some(object => object.id.startsWith('CASTLE:')
+          && object.hp > 0 && object.maxHp > 0);
+    }
+    return true;
+  })
     .sort((a, b) => a.runtime.values.breachDropOrder - b.runtime.values.breachDropOrder).map(item => item.itemTableId);
   if (!pool.length) return undefined;
   const poolIndex = Math.min(pool.length - 1, Math.floor(roll / chance * pool.length));

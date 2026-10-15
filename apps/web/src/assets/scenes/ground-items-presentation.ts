@@ -9,16 +9,14 @@ type GroundItemRuntime = Pick<EffectRuntime, 'spawnSceneEffect' | 'releaseSceneE
 
 interface VisualEntry {
   visual: GroundItemVisual;
-  loaded: Promise<void>;
+  loaded?: Promise<void>;
   effectHandle?: number;
 }
 
 interface SourceRecord {
-  modelId: string;
-  texture: 'A' | 'B';
   soundId: string;
-  effectId: string;
   position: EffectVec3;
+  missingAt?: number;
 }
 
 /**
@@ -29,11 +27,13 @@ interface SourceRecord {
 export class GroundItemsPresentation {
   private readonly visuals = new Map<string, VisualEntry>();
   private readonly sources = new Map<string, SourceRecord>();
+  private readonly present = new Set<string>();
   private scope?: string;
 
   constructor(private readonly scene: Scene, private readonly runtime: GroundItemRuntime) {}
 
-  async reconcile(sources: readonly GroundItemSnapshot[], scope: string, playing: boolean): Promise<void> {
+  async reconcile(sources: readonly GroundItemSnapshot[], scope: string, playing: boolean,
+    tick: number): Promise<void> {
     if (this.scope !== scope) {
       this.clear();
       this.scope = scope;
@@ -42,17 +42,26 @@ export class GroundItemsPresentation {
       this.disposeVisuals();
       return;
     }
-    const present = new Set(sources.map(source => source.id));
+    const present = this.present;
+    present.clear();
+    for (const source of sources) present.add(source.id);
+    // Snapshot removal precedes pickup events. Keep the first missing tick's
+    // cue, then release it on a newer snapshot if its event was missed offline.
+    for (const id of this.sources.keys()) {
+      const record = this.sources.get(id)!;
+      if (present.has(id)) record.missingAt = undefined;
+      else if (record.missingAt === undefined) record.missingAt = tick;
+      else if (tick > record.missingAt) this.sources.delete(id);
+    }
     for (const id of this.visuals.keys()) if (!present.has(id)) this.removeVisual(id);
     for (const source of sources) {
-      // Retain the authoritative pose/model so a same-tick pickup event that
+      // Retain the authoritative cue so a same-tick pickup event that
       // follows the snapshot removal can still start the original cue.
-      this.sources.set(source.id, {modelId: source.modelId, texture: source.texture,
-        soundId: source.soundId, effectId: source.effectId, position: [source.x, source.y, source.z]});
+      this.rememberSource(source);
       if (this.visuals.has(source.id)) continue;
       const visual = new GroundItemVisual(this.scene, source.id, source.modelId, source.texture,
         source.x, source.y, source.z);
-      const entry: VisualEntry = {visual, loaded: Promise.resolve()};
+      const entry: VisualEntry = {visual};
       this.visuals.set(source.id, entry);
       entry.loaded = visual.load().then(async () => {
         if (this.visuals.get(source.id) !== entry || !source.effectId) return;
@@ -63,26 +72,43 @@ export class GroundItemsPresentation {
           return;
         }
         entry.effectHandle = handle;
-      }).catch(error => {
+      }).then(() => {entry.loaded = undefined;}).catch(error => {
         if (this.visuals.get(source.id) === entry) this.removeVisual(source.id);
         throw error;
       });
     }
-    await Promise.all([...this.visuals.values()].map(entry => entry.loaded));
+    let loading: Promise<void>[] | undefined;
+    for (const entry of this.visuals.values()) {
+      if (entry.loaded) (loading ??= []).push(entry.loaded);
+    }
+    if (loading) await Promise.all(loading);
+  }
+
+  private rememberSource(source: GroundItemSnapshot): void {
+    const record = this.sources.get(source.id);
+    if (record) {
+      record.soundId = source.soundId;
+      record.missingAt = undefined;
+      record.position[0] = source.x;
+      record.position[1] = source.y;
+      record.position[2] = source.z;
+    } else {
+      this.sources.set(source.id, {soundId: source.soundId, position: [source.x, source.y, source.z],
+        missingAt: undefined});
+    }
   }
 
   /**
    * Scene removal for a successful pickup or explicit delete. The source pose
-   * and effect identity are consumed from the owned record; the local GA cue
+   * and sound identity are consumed from the owned record; the local GA cue
    * fires once only for the local picker's own message.
    */
   event(event: MsgRoomEvent, localPlayerId: string | undefined): void {
     const dropped = event.groundItemDropped;
     if (dropped) {
-      // The snapshot owns the model and particles; retain the pose for a pickup
+      // The snapshot owns the model and particles; retain the cue for a pickup
       // that arrives before the next snapshot creates the visual.
-      this.sources.set(dropped.id, {modelId: dropped.modelId, texture: dropped.texture,
-        soundId: dropped.soundId, effectId: dropped.effectId, position: [dropped.x, dropped.y, dropped.z]});
+      this.rememberSource(dropped);
       return;
     }
     const pickup = event.groundItemPickedUp;
@@ -94,15 +120,15 @@ export class GroundItemsPresentation {
     if (!record) return;
     this.sources.delete(id);
     if (!pickup) return;
-    const origin: EffectVec3 = [...record.position];
     if (localPlayerId !== undefined && pickup.playerId === localPlayerId && record.soundId) {
-      this.runtime.playSceneSound(record.soundId, origin);
+      this.runtime.playSceneSound(record.soundId, record.position);
     }
   }
 
   clear(): void {
     this.disposeVisuals();
     this.sources.clear();
+    this.present.clear();
     this.scope = undefined;
   }
 

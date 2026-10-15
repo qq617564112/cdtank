@@ -111,8 +111,10 @@ Every real placement destruction rolls once, deduplicated by
 `placement + destroyedAt`, across all five modes. Modes 1-4 use the current map's
 original Breach placements as destructible `sceneObjects` (mode2 included); mode5 uses
 its single Breach `objectives` entity. The unified roll uses the former mode5 50% chance
-and maps a success onto the `runtime.values.breachDropOrder` pool
-`[1, 2, 2010, 20001, 20002]`, one unit each. Castle keeps its original mode1/mode2 rule;
+and maps a success onto the `runtime.values.breachDropOrder` candidates after filtering
+by the mode and scene: item501 only in mode1, item502 only in mode1/mode2 with a living
+Castle. Eligible entries remain equally likely, one unit each; the full candidate list
+and eligibility rules are in `mode-ground-drops-runtime.md`. Castle keeps its original mode1/mode2 rule;
 Castle, Plant, and Crush never enter this producer, and mode5 still produces the drop
 before the end-of-round objective check. A later genuine respawn creates a new
 destruction timestamp, so it can roll again while the old timestamp cannot replay a

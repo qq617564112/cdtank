@@ -71,7 +71,9 @@ SQL、不保存 connection map、不把 receipt 写入库存；持久层在成�
 - Breach 掉落：真实 HP 归零事件每次只调用一次。五模式统一用原先 mode5 的 50% 概率，
   参数取 `shared/content/definitions/index.json` 的 `rules.groundDrops`（`chance 0.5`、
   `quantity 1`、`lifetimeSeconds 30`）；一次 `[0,1)` 权威均匀值 `<0.5` 才掉落，同一个成功
-  值再映射 `runtime.values.breachDropOrder` 五项池 `{1,2,2010,20001,20002}`，等概率各 1 份。
+  值再映射 `runtime.values.breachDropOrder` 十二项候选池，抽取前过滤模式与场景资格：
+  501 仅 mode1，502 仅 mode1/2 且有存活碉堡。过滤后等概率各 1 份，完整候选与资格
+  见 `mode-ground-drops-runtime.md`。
   每次只生成 quantity 1；目标重生建立新 `destroyedAt`，新击毁可再次掷骰，
   旧同值/已领取实体不重放。原服务端按模式的概率与数量来源仍缺，属采用规则。
 - 身份：`GROUND` counter 属于服务端进程随机 UUID 加 `roomId/round`，

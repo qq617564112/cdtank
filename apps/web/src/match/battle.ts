@@ -748,7 +748,7 @@ export class Battle {
         const scope = `${snapshot.roomId}:${round}`;
         await Promise.all([
           this.groundTraps.reconcile(snapshot.phase === 'PLAYING' ? snapshot.match?.groundTraps ?? [] : [], scope),
-          this.groundItems.reconcile(snapshot.match?.groundItems ?? [], scope, snapshot.phase === 'PLAYING'),
+          this.groundItems.reconcile(snapshot.match?.groundItems ?? [], scope, snapshot.phase === 'PLAYING', snapshot.tick),
         ]);
         if (!current()) return;
         if (this.players.loadingError) throw new Error(this.players.loadingError);
@@ -1246,7 +1246,7 @@ export class Battle {
     });
     if (this.active) {
       const scope = `${snapshot.roomId}:${snapshot.match?.round ?? 0}`;
-      void this.groundItems.reconcile(snapshot.match?.groundItems ?? [], scope, snapshot.phase === 'PLAYING')
+      void this.groundItems.reconcile(snapshot.match?.groundItems ?? [], scope, snapshot.phase === 'PLAYING', snapshot.tick)
         .catch(error => {
           if (session === this.session && this.active) this.groundItemError = String(error);
         });
