@@ -19,6 +19,7 @@ import type {ReqPetShop} from '../../../shared/protocols/PtlPetShop';
 import type {CpuLoadoutItem} from '../../../shared/protocols/PtlCpu';
 import {configureBattleCamera} from '../render/battle-camera';
 import {BattlePlayers} from '../render/battle-players';
+import {battleUiLayer} from '../render/battle-ui-layer';
 import {battleInfoText} from '../interface/battle/battle-info-messages';
 import {battleMinimapUrl} from '../assets/maps/minimaps';
 import {BattleMinimapRenderer, type MobileMinimapBounds} from '../render/battle-minimap-renderer';
@@ -81,12 +82,11 @@ import type {KeyBindings} from './input-bindings';
 import type {QuickChatPreferences} from '../interface/settings/quick-chat-preferences';
 import {battleIsActive} from '../../../shared/combat/battle-start';
 import {GroundItemAction} from '../../../shared/protocols/MsgPlayerAction';
-import {readRoomSession, saveRoomSession} from '../navigation/session';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
 import {BattleProjectiles} from '../render/battle-projectiles';
 import {isMobileDevice} from '../platform/device';
 import {TrainingSession} from '../training/session';
-import {loadTrainingCatalog} from '../training/simulation-host';
+import {loadTrainingMaps} from '../training/simulation-host';
 import type {TrainingOptions} from '../training/protocol';
 
 const EMPTY_SCENE_OBJECTS: readonly SceneObjectSnapshot[] = [];
@@ -244,7 +244,7 @@ export class Battle {
     (operation, playerId, team) => this.manageCpu(operation, playerId, team), enabled => this.autopilot(enabled),
     points => this.exitRoom(points), () => this.inviteRoom(),
     (playerId, loadout) => this.configureCpuLoadout(playerId, loadout), () => this.retryBattleLoading(),
-    {listMaps: async () => this.training ? (await loadTrainingCatalog()).maps : this.rooms.listMaps(),
+    {listMaps: async () => this.training ? loadTrainingMaps() : this.rooms.listMaps(),
       save: settings => this.editRoom(settings)}, playerId => this.kickRoomPlayer(playerId),
     () => this.soundVolume,
     {candidates: () => this.discardCandidates(), selected: () => this.discardSelectedInstance,
@@ -591,10 +591,10 @@ export class Battle {
   async listRooms(): Promise<RoomSummary[]> {return this.rooms.listRooms();}
 
   async listMaps(): Promise<MapOption[]> {
-    const [online, local] = await Promise.allSettled([this.rooms.listMaps(), loadTrainingCatalog()]);
+    const [online, local] = await Promise.allSettled([this.rooms.listMaps(), loadTrainingMaps()]);
     if (online.status === 'rejected' && local.status === 'rejected') throw online.reason;
     return [...(online.status === 'fulfilled' ? online.value : []),
-      ...(local.status === 'fulfilled' ? local.value.maps : [])];
+      ...(local.status === 'fulfilled' ? local.value : [])];
   }
 
   async createRoom(mode: number, mapId: number, roomName: string, name: string, tankId: number, password = '',
@@ -645,13 +645,13 @@ export class Battle {
     }
   }
 
-  /** One human account and nine CPUs, with the human tank controlled by the server. */
-  async startQuickMatch(mapId: 2 | 5, tankId: number): Promise<void> {
+  /** Fill a normal team match and let the server control the account’s tank. */
+  async startQuickMatch(mapId: 2 | 5 | 8, tankId: number, players: 10 | 12 = 10): Promise<void> {
     if (!this.active) await this.resumeSavedRoom();
     if (this.active) await this.exitRoom();
     const session = this.session;
     this.hud.value = '创建自动托管对局…';
-    await this.createRoom(1, mapId, '自动托管对局', '坦克手', tankId, '', 10, 10);
+    await this.createRoom(1, mapId, '自动托管对局', '坦克手', tankId, '', players, players);
     const waitFor = async (ready: () => boolean): Promise<boolean> => {
       const deadline = performance.now() + 60000;
       while (!ready()) {
@@ -663,11 +663,11 @@ export class Battle {
     };
     if (!await waitFor(() => this.roomFeed.snapshot?.match?.round !== undefined)) return;
     const round = this.roomFeed.snapshot!.match!.round;
-    for (let count = 0; count < 9; count++) {
+    for (let count = 0; count < players - 1; count++) {
       await this.rooms.cpu({round, operation: 'ADD', tankId});
       if (session !== this.session || !this.active) return;
     }
-    if (!await waitFor(() => this.roomFeed.snapshot?.players.length === 10)) return;
+    if (!await waitFor(() => this.roomFeed.snapshot?.players.length === players)) return;
     await this.autopilot(true);
     if (!await waitFor(() => this.roomFeed.snapshot?.players
       .some(player => player.id === this.playerId && player.isAutopilot) === true)) return;
@@ -714,23 +714,18 @@ export class Battle {
   }
 
   async resumeSavedRoom(): Promise<boolean> {
-    const saved = readRoomSession();
-    if (!saved) return false;
-    if (saved.accountId !== this.accountContext.identity?.accountId) {
-      saveRoomSession();
-      return false;
-    }
     const session = this.session;
-    const result = await this.rooms.resume({roomId: saved.roomId, playerId: saved.playerId});
+    await this.connection.ensureConnected();
+    if (session !== this.session) return false;
+    const result = await this.rooms.resume({});
     if (session !== this.session) return false;
     if (!result.isSucc) {
-      saveRoomSession();
-      this.hud.value = result.err.message;
+      if (result.err.code !== 'ROOM_RESUME_REJECTED') throw new Error(result.err.message);
       return false;
     }
     const snapshot = result.res.snapshot;
     if (!snapshot.roomInfo) throw new Error('房间信息不可用，请重试');
-    await this.enter({playerId: saved.playerId, serverTime: snapshot.serverTime,
+    await this.enter({playerId: result.res.playerId, serverTime: snapshot.serverTime,
       room: {id: snapshot.roomId, name: snapshot.roomInfo?.name ?? '', mode: snapshot.mode,
         mapId: snapshot.roomInfo.mapId, players: snapshot.players, round: snapshot.match?.round ?? 0, phase: snapshot.phase}}, session);
     this.input.resetSequence(result.res.inputSequence);
@@ -746,13 +741,11 @@ export class Battle {
     this.mapId = result.room.mapId;
     this.input.resetSequence();
     this.active = true;
-    const accountId = this.accountContext.identity?.accountId;
-    if (accountId && !this.training) saveRoomSession({accountId, roomId: result.room.id, playerId: result.playerId});
     this.pageMusic?.room(result.room.phase ?? 'WAITING', result.room.mode, result.room.mapId);
     this.lobbyChat.setInRoom(true);
     this.lobbyPresence.setInRoom(true);
     this.hud.value = '等待房间快照…';
-    this.chat.show();
+    if (!this.training) this.chat.show();
     this.input.start();
     this.publishValuableSaleRoom();
   }
@@ -922,6 +915,7 @@ export class Battle {
     this.localMotion.clear();
     this.effects.clear();
     this.battlefield.clear();
+    battleUiLayer(this.scene).clear();
     this.sceneClock.objects = EMPTY_SCENE_OBJECTS;
     this.sceneObjects.length = 0;
     this.clearWorldStateCache();
@@ -971,7 +965,10 @@ export class Battle {
         if (session !== this.session || !this.active) return;
         const result = await this.rooms.resume({roomId, playerId});
         if (session !== this.session || !this.active) return;
-        if (!result.isSucc) break;
+        if (!result.isSucc) {
+          if (result.err.code === 'ROOM_RESUME_REJECTED') break;
+          throw new Error(result.err.message);
+        }
         this.input.clear();
         this.input.resetSequence(result.res.inputSequence);
         this.roomFeed.receive(result.res.snapshot);
@@ -1058,14 +1055,13 @@ export class Battle {
     return this.exiting;
   }
 
-  leave(disconnect = true, preserveSession = false): void {
+  leave(disconnect = true): void {
     if (this.training) {
       this.training.dispose();
       this.training = undefined;
       disconnect = false;
       void this.connection.setTraining(false).catch(() => {});
     }
-    if (!preserveSession) saveRoomSession();
     this.projectiles.clear();
     this.minimapRenderer.clear();
     this.resourceRevision++;
@@ -1104,6 +1100,7 @@ export class Battle {
     this.localMotion.clear();
     this.effects.clear();
     this.battlefield.clear();
+    battleUiLayer(this.scene).clear();
     this.sceneClock.objects = EMPTY_SCENE_OBJECTS;
     this.sceneObjects.length = 0;
     this.clearWorldStateCache();

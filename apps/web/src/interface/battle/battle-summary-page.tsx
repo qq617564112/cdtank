@@ -92,8 +92,9 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
   const individual = props.mode > 3;
   const ranked = [...props.results].sort((a, b) => a.rank - b.rank);
   const [viewport, setViewport] = useState(gamePageBounds);
-  const rowsPerColumn = mobile ? Math.max(1, Math.min(6, Math.floor((viewport.height - 170) / 70))) : 6;
-  const pageCount = individual ? Math.max(1, Math.ceil(ranked.length / (rowsPerColumn * 2)))
+  const rowsPerColumn = mobile ? Math.max(1, individual ? Math.ceil(ranked.length / 2)
+    : Math.max(...[0, 1].map(team => ranked.filter(player => player.team === team).length))) : 6;
+  const pageCount = mobile ? 1 : individual ? Math.max(1, Math.ceil(ranked.length / (rowsPerColumn * 2)))
     : Math.max(...[0, 1].map(team => Math.ceil(ranked.filter(p => p.team === team).length / rowsPerColumn)), 1);
   const currentPage = Math.min(page, pageCount - 1);
   const scale = mobile ? 1 : Math.min(viewport.width / 800, viewport.height / 600);
@@ -118,7 +119,7 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
   const award = own?.award;
   const awarded = SUMMARY_AWARDS.filter(award => props.results.some(player =>
     player.awards?.some(entry => entry.type === award.type)));
-  const rowCount = individual ? Math.min(6, ranked.length)
+  const rowCount = mobile ? Math.min(rowsPerColumn, ranked.length) : individual ? Math.min(6, ranked.length)
     : Math.min(6, Math.max(...[0, 1].map(team => ranked.filter(player => player.team === team).length)));
   const sequence = useSummarySequence(props.round, !!ui, rowCount, awarded.length, award);
   useEffect(() => {setTitleIndex(0); setEquipmentIndex(0); setPage(0); setFadedRound(undefined);}, [props.round]);
@@ -167,17 +168,16 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
       {ui && <>
         {mobile ? <MobileSummarySheet key={props.round} ui={ui} layout={layout!} results={ranked}
           playerId={props.playerId} mode={props.mode} title={props.title} size={viewport}
-          rowsPerColumn={rowsPerColumn} page={currentPage} portraitFrame={portraitFrame}
+          rowsPerColumn={rowsPerColumn} portraitFrame={portraitFrame}
           sequence={sequence} revealedAwards={revealedAwards} currentAward={currentAward?.type}
           footer={<>
             <div className="mobile-summary-growth">
               {award && <>
                 <span className="mobile-summary-growth-caption">经验 · 积分 {award.rankPoints}</span>
-                <SummaryPlate kind="medallion" style={{left: 4, top: 18, width: 40, height: 36}}/>
+                <SummaryPlate kind="medallion" style={{left: 4, top: 8, width: 36, height: 32}}/>
                 <SummaryGrowth ui={ui} layout={layout!} award={award} elapsed={sequence.growthElapsed}/>
               </>}
             </div>
-            {pagination}
             {continueButton}
           </>}/>
           : <BattleScoreSheet key={props.round} ui={ui} layout={layout!} columns={SUMMARY_SCORE_COLUMNS}

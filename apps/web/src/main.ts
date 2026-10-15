@@ -10,7 +10,6 @@ import {prepareSourcePageImages} from './interface/resources/source-page-images'
 import {disableTabDefault} from './interface/resources/tab-key-default';
 import {reserveFullscreenKeys} from './interface/resources/fullscreen-keys';
 import {readGameRoute, reserveBrowserNavigation} from './navigation/route';
-import {readRoomSession} from './navigation/session';
 import {readQuickStart} from './navigation/quick-start';
 import {enforceMobileLandscape} from './platform/mobile-orientation';
 import {installGamePageViewport} from './platform/page-viewport';
@@ -38,7 +37,7 @@ let disposeGame: (()=>void) | undefined;
 const screen=new ImageLoadingScreen(root,()=>{
   if (moduleImportFailed) window.location.reload();
   else void enterGame();
-},battleEntry||readQuickStart()||readRoomSession()?0.1:1);
+},battleEntry||readQuickStart()||readGameRoute().roomId?0.1:1);
 
 async function enterGame(): Promise<void> {
   if (loading || controller.signal.aborted) return;

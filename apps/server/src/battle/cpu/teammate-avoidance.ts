@@ -83,17 +83,16 @@ export function teammateAvoidancePoint(actor: BotActor, route: Point | undefined
   canShoot?: (position: Point) => boolean,
   canApproach?: (position: Point) => boolean): Point | undefined {
   const yieldingTo = teammates.filter(other => Math.abs(other.y - actor.y) < 24
-    && Math.hypot(other.x - actor.x, other.z - actor.z) < TEAMMATE_SPACING)
+    && Math.hypot(other.x - actor.x, other.z - actor.z) < TEAMMATE_SPACING
+    && (!hasPriority(actor, other) || (other.cpu ?? other.autopilot)?.teammateNeedsRoom))
     .sort((a, b) => Math.hypot(a.x - actor.x, a.z - actor.z)
       - Math.hypot(b.x - actor.x, b.z - actor.z))[0];
-  const bearing = yieldingTo
-    ? (Math.hypot(yieldingTo.x - actor.x, yieldingTo.z - actor.z) > .01
-      ? Math.atan2(actor.x - yieldingTo.x, actor.z - yieldingTo.z) : actor.yaw + Math.PI)
-    : route ? Math.atan2(route.x - actor.x, route.z - actor.z) : actor.yaw;
+  const bearing = route ? Math.atan2(route.x - actor.x, route.z - actor.z) : actor.yaw;
+  const away = yieldingTo ? Math.atan2(actor.x - yieldingTo.x, actor.z - yieldingTo.z) - bearing : Math.PI;
+  // Both directions of traffic pass on their own right. Leave the lane before
+  // backing along it; the priority owner only yields to a trapped teammate.
   const offsets = yieldingTo
-    ? [0, direction * Math.PI / 4, -direction * Math.PI / 4,
-      direction * Math.PI / 2, -direction * Math.PI / 2,
-      direction * Math.PI * .75, -direction * Math.PI * .75, Math.PI]
+    ? [Math.PI / 2, -Math.PI / 2, away, Math.PI * .75, -Math.PI * .75, Math.PI]
     : [direction * Math.PI / 2, -direction * Math.PI / 2,
       direction * Math.PI / 4, -direction * Math.PI / 4,
       direction * Math.PI * .75, -direction * Math.PI * .75, Math.PI];

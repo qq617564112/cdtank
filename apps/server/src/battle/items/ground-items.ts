@@ -1,6 +1,6 @@
 import {defaultAmmoId, gameContent} from '../../../../shared/content/catalog';
 import {simulationItemId} from '../../runtime/simulation-host';
-import type {MsgRoomEvent, SceneObjectSnapshot} from '../../../../shared/protocols';
+import type {MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot} from '../../../../shared/protocols';
 import type {InventoryWireRecord} from '../../../../shared/protocols/PtlInventory';
 import {classifyInventoryCategory} from '../../../../shared/combat/inventory-query';
 import {isTreasureItem} from '../../../../shared/combat/treasure-items';
@@ -56,6 +56,7 @@ export interface GroundItemRoom {
   phase: string;
   groundItems: GroundItemState[];
   sceneObjects: readonly SceneObjectSnapshot[];
+  objectives: readonly ObjectiveSnapshot[];
   players: ReadonlyMap<string, GroundItemRoomPlayer>;
 }
 
@@ -323,6 +324,12 @@ export function createBreachDrop(room: GroundItemRoom, source: BreachDropSource,
   if (!(chance > 0 && chance <= 1) || !(roll >= 0 && roll < 1) || roll >= chance || !quantity) return undefined;
   const pool = [...combatItems.values()].filter(item => {
     if (!(item.runtime.values.breachDropOrder > 0)) return false;
+    if (item.runtime.use === 'disguise') {
+      const model = item.resources.disguise?.name;
+      // Map membership includes destroyed placements, including this drop's source.
+      return model !== undefined && (room.sceneObjects.some(object => object.sourceModel === model)
+        || room.objectives.some(object => object.sourceModel === model));
+    }
     if (item.runtime.use === 'teamLife') return room.mode === 1;
     if (item.runtime.use === 'building') {
       return (room.mode === 1 || room.mode === 2)

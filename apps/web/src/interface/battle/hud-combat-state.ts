@@ -95,6 +95,15 @@ export function sameCombatState(left: HudCombatSnapshot, right: HudCombatSnapsho
   return true;
 }
 
+/** Item artwork changes on confirmed bindings; its clock is consumed by the cooldown leaf. */
+export function sameItemCombatState(left: HudCombatSnapshot, right: HudCombatSnapshot): boolean {
+  return left === right || left.visible === right.visible && left.canUseShortcuts === right.canUseShortcuts
+    && left.playerId === right.playerId && left.alive === right.alive
+    && left.selectedAmmoSlot === right.selectedAmmoSlot && left.ammoItemId === right.ammoItemId
+    && sameAmmoSlots(left.ammoSlots, right.ammoSlots) && left.activeEffects === right.activeEffects
+    && left.reload?.duration === right.reload?.duration && left.reload?.startedAt === right.reload?.startedAt;
+}
+
 function sameAmmoSlots(left: HudCombatSnapshot['ammoSlots'], right: HudCombatSnapshot['ammoSlots']): boolean {
   if (left === right) return true;
   if (left.length !== right.length) return false;

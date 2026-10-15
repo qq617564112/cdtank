@@ -1,5 +1,5 @@
 import {AssetContainer, BaseTexture, Mesh, MorphTargetManager, type Effect, type LoadAssetContainerOptions, type MorphTarget,
-  type Scene} from '@babylonjs/core';
+  type Observer, type Scene} from '@babylonjs/core';
 import type {IGLTFLoaderData} from '@babylonjs/loaders/glTF';
 import {battleArtworkUrl} from '../battle-artwork';
 import {loadPreparedModel} from '../model-resources';
@@ -26,48 +26,25 @@ interface Mv3Timeline {node: number; frames: Float64Array;}
 interface Mv3Template {assets: AssetContainer; timelines: readonly Mv3Timeline[]; extras: Mv3ModelExtras | undefined;}
 interface SharedModel {references: number; loading: Promise<Mv3Template>;}
 
-/** Exported accessor bounds prove every position and normal delta is zero. */
-function omitStaticMorphTargets(document: Mv3Document): void {
-  const isZero = (index: number): boolean => {
-    const accessor = document.accessors[index];
-    return accessor.componentType === 5126 && accessor.type === 'VEC3'
-      && accessor.min?.length === 3 && accessor.max?.length === 3
-      && accessor.min.every(value => value === 0) && accessor.max.every(value => value === 0);
-  };
-  const staticMeshes = new Set<number>();
-  for (const [index, mesh] of (document.meshes ?? []).entries()) {
-    if (!mesh.primitives.every(primitive => primitive.targets?.length
-      && primitive.targets.every(target => Object.keys(target).length === 2
-        && target.POSITION !== undefined && target.NORMAL !== undefined
-        && isZero(target.POSITION) && isZero(target.NORMAL)))) continue;
-    staticMeshes.add(index);
-    for (const primitive of mesh.primitives) delete primitive.targets;
-    delete mesh.weights;
-  }
-  if (!staticMeshes.size) return;
-  for (const node of document.nodes ?? []) {
-    if (node.mesh !== undefined && staticMeshes.has(node.mesh)) delete node.weights;
-  }
-  for (const animation of document.animations ?? []) {
-    animation.channels = animation.channels.filter(channel => {
-      const mesh = document.nodes?.[channel.target.node]?.mesh;
-      return channel.target.path !== 'weights' || mesh === undefined || !staticMeshes.has(mesh);
-    });
-  }
-}
-
 const sceneModels = new WeakMap<Scene, Map<string, SharedModel>>();
 const assetSamplers = new WeakMap<AssetContainer, (milliseconds: number) => void>();
 const assetExtras = new WeakMap<AssetContainer, Mv3ModelExtras>();
 
 /** Drop the borrow callback after disposal, including on long-lived scenes. */
 class SharedMv3Assets extends AssetContainer {
-  constructor(scene: Scene, private releaseModel?: () => void) {super(scene);}
+  private readonly sceneDisposeObserver: Observer<Scene>;
+
+  constructor(scene: Scene, private releaseModel?: () => void) {
+    super(scene);
+    // AssetContainer synchronously appends its own scene-disposal observer.
+    this.sceneDisposeObserver = scene.onDisposeObservable.observers.at(-1)!;
+  }
 
   override dispose(): void {
     const release = this.releaseModel;
     if (!release) return;
     this.releaseModel = undefined;
+    this.scene.onDisposeObservable.remove(this.sceneDisposeObserver);
     super.dispose();
     this.rootNodes.length = 0;
     assetSamplers.delete(this);
@@ -211,7 +188,10 @@ async function loadTemplate(url: string, scene: Scene,
     ...options,
     pluginOptions: {...options.pluginOptions, gltf: {...gltf, onMeshLoaded: mesh => {
       gltf?.onMeshLoaded?.(mesh);
-      if (mesh instanceof Mesh && mesh.morphTargetManager) prepareMv3MorphTargets(mesh.morphTargetManager, scene);
+      if (!(mesh instanceof Mesh) || !mesh.morphTargetManager) return;
+      const layers = mesh._internalMetadata?.cdtankMorphLayers as readonly number[] | undefined;
+      if (!layers) throw new Error('MV3 模型缺少预计算姿态映射');
+      prepareMv3MorphTargets(mesh.morphTargetManager, scene, layers);
     }, onParsed: loaderData => {
       gltf?.onParsed?.(loaderData);
       const document = loaderData.json as Mv3Document;
@@ -235,7 +215,6 @@ async function loadTemplate(url: string, scene: Scene,
       }
       extras = compactMv3Extras(document.extras, attachmentNames);
       delete document.extras;
-      omitStaticMorphTargets(document);
       const animations = document.animations ?? [];
       delete document.animations;
       const loading = Promise.all([readTimelines(loaderData, animations, fps),

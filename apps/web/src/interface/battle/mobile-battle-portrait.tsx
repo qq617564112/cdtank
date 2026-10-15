@@ -1,4 +1,5 @@
-import {imageResourceUrl} from '../../assets/image-cache';
+import {memo} from 'react';
+import {SvgImageArtwork} from '../resources/image-artwork';
 
 /** Expressions share their pet's source-pixel scale; offsets only place the artwork. */
 const PET_VIEWPORT_SIZES: Readonly<Record<string, number>> = {
@@ -68,7 +69,7 @@ const PORTRAIT_CENTRES: Readonly<Record<string, readonly [number, number]>> = {
   'ui/regions/77/15.webp': [324, 408],
 };
 
-export function MobileBattlePortrait({asset}: {asset: string}) {
+export const MobileBattlePortrait = memo(function MobileBattlePortrait({asset}: {asset: string}) {
   const path = asset.replace(/^\//, '');
   const petId = /^ui\/battle\/portraits\/pet-(\d+)-/.exec(path)?.[1];
   const [centreX, centreY] = PORTRAIT_CENTRES[path];
@@ -77,6 +78,6 @@ export function MobileBattlePortrait({asset}: {asset: string}) {
   const height = petId ? 420 : 680;
   return <svg viewBox={`${centreX - size / 2} ${centreY - size / 2} ${size} ${size}`}
     preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
-    <image href={imageResourceUrl(asset)} width={width} height={height} preserveAspectRatio="xMidYMid meet"/>
+    <SvgImageArtwork asset={asset} width={width} height={height}/>
   </svg>;
-}
+});

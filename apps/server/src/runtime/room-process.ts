@@ -2,10 +2,13 @@ import {World} from '../world';
 import {callRoomService} from './room-services';
 import type {RoomInit, RoomMessage, RoomRequest, RoomStatePublication} from './room-protocol';
 import type {RoomCommand} from '../rooms/world-interface';
+import {CpuTraceRecorder} from './cpu-trace';
 
 let world: World;
 let roomId: string;
 let timer: ReturnType<typeof setInterval> | undefined;
+let cpuTrace: CpuTraceRecorder | undefined;
+let stopping = false;
 const identities = new Map<string, string>();
 const outgoing: RoomMessage[] = [];
 let sending = false;
@@ -38,8 +41,10 @@ function flush(): void {
 }
 
 function stop(): void {
+  if (stopping) return;
+  stopping = true;
   if (timer) clearInterval(timer);
-  process.exit(0);
+  void (cpuTrace?.close() ?? Promise.resolve()).finally(() => process.exit(0));
 }
 
 function state(): RoomStatePublication {
@@ -47,7 +52,10 @@ function state(): RoomStatePublication {
 }
 
 process.on('disconnect', stop);
+process.on('SIGTERM', stop);
+process.on('SIGINT', stop);
 process.on('message', (message: RoomInit | RoomRequest) => {
+  if (stopping) return;
   if (message.type === 'init') {
     roomId = message.roomId;
     process.title = `cdtank-room-${roomId}`;
@@ -65,8 +73,11 @@ process.on('message', (message: RoomInit | RoomRequest) => {
       onInventoryRecord: (accountId, record) => callRoomService('inventoryRecord', accountId, record),
     });
     const deltaMs = 1000 / message.tickRate;
+    cpuTrace = new CpuTraceRecorder(roomId, deltaMs);
     timer = setInterval(() => {
+      const tickAt = performance.now();
       const result = world.step(deltaMs);
+      cpuTrace!.record(tickAt, performance.now() - tickAt, () => world.cpuTrace(roomId));
       if (result.snapshots.length) {
         send({type: 'tick', state: {snapshot: result.snapshots[0], summary: world.listRooms()[0]},
           events: result.events});

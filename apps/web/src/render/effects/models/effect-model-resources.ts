@@ -21,9 +21,15 @@ interface AnimationDocument {
 }
 interface ResourceDocument extends Omit<EffectModelResource, 'nodes'> {
   binary: string;
+  geometryLayout: 1;
   nodes: (Omit<EffectModelResource['nodes'][number], 'vertexData' | 'animation'> & {
     animation?: AnimationDocument;
-    vertexData?: {offset: number; vertexCount: number; frameCount: number; colorOffset?: number};
+    vertexData?: {
+      vertexCount: number; frameCount: number; positionOffset: number; uvOffset: number;
+      minimum: number[]; maximum: number[]; colorOffset?: number;
+      frames?: {width: number; height: number; pixelOffset: number; vOffset: number;
+        idOffset: number; indexOffset: number};
+    };
   })[];
 }
 interface ModelLibraryResources {
@@ -68,13 +74,23 @@ export async function loadEffectModelLibrary(path: string, scene: Scene,
       let loading = models.get(row.asset);
       if (!loading) {
         loading = loadStaticJson<ResourceDocument>(row.asset, false).then(async document => {
+          if (document.geometryLayout !== 1) throw new Error('CVD 模型缺少预计算几何数据');
           const buffer = await loadStaticBinary(document.binary);
           return {...document, nodes: document.nodes.map(node => {
             const data = node.vertexData;
             return {...node, animation: node.animation ? loadAnimation(node.animation, buffer) : undefined,
               vertexData: data ? {
                 vertexCount: data.vertexCount, frameCount: data.frameCount,
-                values: new Float32Array(buffer, data.offset, data.vertexCount * data.frameCount * 5),
+                positions: new Float32Array(buffer, data.positionOffset, data.vertexCount * 3),
+                uvs: new Float32Array(buffer, data.uvOffset, data.vertexCount * 2),
+                minimum: data.minimum, maximum: data.maximum,
+                frames: data.frames ? {
+                  width: data.frames.width, height: data.frames.height,
+                  pixels: new Float32Array(buffer, data.frames.pixelOffset, data.frames.width * data.frames.height * 4),
+                  vs: new Float32Array(buffer, data.frames.vOffset, data.frames.width * data.frames.height),
+                  vertexIds: new Float32Array(buffer, data.frames.idOffset, data.vertexCount),
+                  indices: new Uint32Array(buffer, data.frames.indexOffset, data.frameCount),
+                } : undefined,
                 colors: data.colorOffset === undefined ? undefined
                   : new Float32Array(buffer, data.colorOffset, data.vertexCount * 4),
                 times: node.times,

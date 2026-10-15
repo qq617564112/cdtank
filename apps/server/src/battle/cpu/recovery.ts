@@ -9,7 +9,11 @@ interface RecoveryContext {
   searching: boolean;
   pathLength: number;
   actors: readonly BotActor[];
+  pursuing: boolean;
+  travelDirection: -1 | 1;
 }
+
+export type RecoveryReason = 'RECOVERY_TIMEOUT' | 'BLOCKED_RECOVERY' | 'NO_EXIT' | 'LOCAL_LOOP';
 
 const DRIVE_COMMANDS: readonly DriveCommand[] = [
   {move: 1, turn: 0}, {move: 1, turn: 1}, {move: 1, turn: -1},
@@ -23,6 +27,15 @@ export class BotRecovery {
   private observedAt = 0;
   private tracking = false;
   private held?: {command: DriveCommand; until: number};
+  private attempt?: {origin: Point; startedAt: number};
+  private routeOrigin?: Point;
+  private routeProgressAt = 0;
+  private retryAt = 0;
+  private pendingReplan?: RecoveryReason;
+  private lastCommand?: DriveCommand;
+  private visits: {point: Point; at: number}[] = [];
+  private replans = 0;
+  private lastReason?: RecoveryReason;
   private nextReportAt = 0;
 
   get stalledSeconds(): number {
@@ -31,14 +44,48 @@ export class BotRecovery {
 
   get active(): boolean {return !!this.held && this.observedAt < this.held.until;}
 
+  get replanCount(): number {return this.replans;}
+  get replanReason(): RecoveryReason | undefined {return this.lastReason;}
+  get routeStalledSeconds(): number {
+    return this.routeOrigin ? Math.max(0, this.observedAt - this.routeProgressAt) / 1000 : 0;
+  }
+
+  takeReplan(): RecoveryReason | undefined {
+    const reason = this.pendingReplan;
+    this.pendingReplan = undefined;
+    return reason;
+  }
+
+  private replan(reason: RecoveryReason, now: number): void {
+    this.held = undefined;
+    this.attempt = undefined;
+    this.retryAt = now + 2500;
+    this.pendingReplan = reason;
+    this.lastReason = reason;
+    this.replans++;
+  }
+
   reset(): void {
     this.origin = undefined;
     this.tracking = false;
     this.held = undefined;
+    this.attempt = undefined;
+    this.routeOrigin = undefined;
+    this.retryAt = 0;
+    this.pendingReplan = undefined;
+    this.lastCommand = undefined;
+    this.lastReason = undefined;
+    this.visits = [];
     this.nextReportAt = 0;
   }
 
   observe(actor: BotActor, now: number): void {
+    if (actor.combat?.getFlag?.(9) === 0) {
+      this.reset();
+      this.observedAt = now;
+      return;
+    }
+    if (now - this.observedAt > 1000) this.reset();
     const threshold = Math.max(2, Math.min(12, (actor.movement?.speed ?? 48) * .25));
     if (!this.origin || !this.tracking || now - this.observedAt > 1000
         || Math.hypot(actor.x - this.origin.x, actor.z - this.origin.z) >= threshold) {
@@ -47,21 +94,62 @@ export class BotRecovery {
       if (now - this.observedAt > 1000) this.held = undefined;
     }
     this.observedAt = now;
+    this.visits = this.visits.filter(visit => now - visit.at < 4000);
+    if (!this.visits.length || now - this.visits[this.visits.length - 1].at >= 150) {
+      this.visits.push({point: {x: actor.x, y: actor.y, z: actor.z}, at: now});
+    }
+    if (this.attempt) {
+      if (Math.hypot(actor.x - this.attempt.origin.x, actor.z - this.attempt.origin.z) >= 36) {
+        this.attempt = undefined;
+        this.held = undefined;
+        this.retryAt = now + 750;
+      } else if (now - this.attempt.startedAt >= 1500) this.replan('RECOVERY_TIMEOUT', now);
+    }
   }
 
   apply(actor: BotActor, teammates: readonly BotActor[], input: MsgPlayerInput,
     waypoint: Point | undefined, needsMovement: boolean, now: number,
     context: RecoveryContext): boolean {
+    // A trap can forbid translation while ordinary aiming and turning remain
+    // useful. Resume pursuit from the actual pose after that permission returns.
+    if (actor.combat?.getFlag?.(9) === 0) return false;
     const crowded = teammates.filter(other => Math.abs(other.y - actor.y) < 24
       && Math.hypot(other.x - actor.x, other.z - actor.z) < 96);
+    let aligning = false;
+    if (waypoint && actor.movement && input.move === 0 && input.turn !== 0) {
+      const bearing = Math.atan2(waypoint.x - actor.x, waypoint.z - actor.z);
+      const offset = context.travelDirection < 0 ? Math.PI : 0;
+      const next = actor.movement.predict(input);
+      aligning = Math.abs(turnDelta(next.yaw + offset, bearing))
+        < Math.abs(turnDelta(actor.yaw + offset, bearing)) - .000001;
+    }
     const tracking = !actor.roleDisguise
       && (this.active || needsMovement || crowded.length > 0 || input.move !== 0);
+    if (context.pursuing && tracking) {
+      if (!this.routeOrigin || Math.hypot(actor.x - this.routeOrigin.x, actor.z - this.routeOrigin.z) >= 96) {
+        this.routeOrigin = {x: actor.x, y: actor.y, z: actor.z};
+        this.routeProgressAt = now;
+      } else if (aligning) this.routeProgressAt = now;
+      else if (now - this.routeProgressAt >= 8000 && now >= this.retryAt && !this.pendingReplan) {
+        this.replan('LOCAL_LOOP', now);
+      }
+    } else this.routeOrigin = undefined;
     if (!this.tracking || !tracking) {
       this.origin = {x: actor.x, y: actor.y, z: actor.z};
       this.progressAt = now;
     }
     this.tracking = tracking;
-    if (!tracking || !actor.movement) {this.held = undefined; return false;}
+    if (!tracking || !actor.movement) {
+      this.held = undefined; this.attempt = undefined;
+      return false;
+    }
+    // Slow chassis can need several seconds to face a clear route. Keep the
+    // physical stall measurement, but let a legal, converging turn finish.
+    if (aligning) {
+      this.held = undefined; this.attempt = undefined;
+      return false;
+    }
+    if (this.pendingReplan || now < this.retryAt) return false;
     const predict = (command: DriveCommand) => actor.movement!.predict({...input, ...command});
     const moves = (point: Point) => Math.hypot(point.x - actor.x, point.z - actor.z) > .01;
     if (this.held && now < this.held.until) {
@@ -71,9 +159,14 @@ export class BotRecovery {
         Object.assign(input, this.held.command);
         return true;
       }
+      // A blocked held command ends the attempt; reversing immediately can
+      // alternate between two valid poses on every simulation tick.
+      this.replan('BLOCKED_RECOVERY', now);
+      return false;
     }
     this.held = undefined;
     if (this.stalledSeconds < (crowded.length ? .75 : 1.5)) return false;
+    this.attempt ??= {origin: {x: actor.x, y: actor.y, z: actor.z}, startedAt: now};
 
     // Immediate OBB/NAV permission remains authoritative. A full passing point
     // is unnecessary when several neighbours leave only a short usable step.
@@ -105,15 +198,19 @@ export class BotRecovery {
       if (!moves(next)) continue;
       available++;
       const relief = currentPressure - pressure(next);
-      const progress = (next.x - actor.x) * direction.x + (next.z - actor.z) * direction.z;
+      const revisiting = this.visits.some(visit => now - visit.at >= 300
+        && Math.hypot(next.x - visit.point.x, next.z - visit.point.z) < 3);
+      const reversing = this.lastCommand && command.move !== this.lastCommand.move;
+      const progress = (next.x - actor.x) * direction.x + (next.z - actor.z) * direction.z
+        - (revisiting ? 8 : 0) - (reversing ? 4 : 0);
       if (!chosen || relief > bestRelief + .01
           || Math.abs(relief - bestRelief) <= .01 && progress > bestProgress) {
         chosen = command; bestRelief = relief; bestProgress = progress;
       }
     }
-    if (!chosen) {
+    if (!chosen || bestRelief <= .01 && bestProgress < 0) {
       const bearing = Math.atan2(direction.x, direction.z);
-      let bestTurn = -Infinity;
+      let bestTurn = 0;
       for (const turn of [1, -1]) {
         const next = predict({move: 0, turn});
         if (Math.abs(turnDelta(actor.yaw, next.yaw)) <= .000001) continue;
@@ -127,7 +224,9 @@ export class BotRecovery {
       console.warn('CPU movement stalled', {mapId: context.mapId, playerId: actor.id,
         targetId: context.targetId, x: actor.x, y: actor.y, z: actor.z,
         seconds: Math.round(this.stalledSeconds), searching: context.searching,
-        pathLength: context.pathLength, waypoint, availableMoves: available,
+        pathLength: context.pathLength,
+        waypoint: waypoint ? {x: waypoint.x, y: waypoint.y, z: waypoint.z} : undefined,
+        availableMoves: available,
         command: chosen, status: actor.combat?.status,
         movementFlags: [8, 9, 10].map(index => actor.combat?.getFlag?.(index)),
         neighbours: context.actors.filter(other => other.alive && other.id !== actor.id
@@ -135,8 +234,13 @@ export class BotRecovery {
           && Math.hypot(other.x - actor.x, other.z - actor.z) < 144)
           .map(other => ({id: other.id, team: other.team, x: other.x, z: other.z}))});
     }
-    if (!chosen) {input.move = 0; input.turn = 0; return false;}
+    if (!chosen) {
+      this.replan('NO_EXIT', now);
+      input.move = 0; input.turn = 0;
+      return false;
+    }
     this.held = {command: chosen, until: now + (chosen.move === 0 ? 250 : 600)};
+    this.lastCommand = chosen;
     Object.assign(input, chosen);
     return true;
   }

@@ -72112,6 +72112,23 @@
       "encoding_profile": "near80"
     },
     {
+      "output_relative": "ui/map-selector/mode-icons/training.webp",
+      "source_size": [
+        1024,
+        1024
+      ],
+      "target_size": [
+        88,
+        88
+      ],
+      "category": "ui_image",
+      "category_label": "UI 图片",
+      "ui_group": "HTML 界面装饰",
+      "basis": "game-mode-tab.css: 20x22 CSS pixels at 4x UI density; square aspect retained within 88x88",
+      "source_relative": "ui/map-selector/mode-icons/training.png",
+      "encoding_profile": "near80"
+    },
+    {
       "output_relative": "ui/map-selector/mode-icons/vip.webp",
       "source_size": [
         256,

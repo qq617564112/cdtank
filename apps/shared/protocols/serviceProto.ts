@@ -296,7 +296,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 125,
+    "version": 126,
     "services": [
         {
             "id": 0,
@@ -8776,14 +8776,16 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "roomId",
                     "type": {
                         "type": "String"
-                    }
+                    },
+                    "optional": true
                 },
                 {
                     "id": 1,
                     "name": "playerId",
                     "type": {
                         "type": "String"
-                    }
+                    },
+                    "optional": true
                 }
             ]
         },
@@ -8803,6 +8805,13 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "inputSequence",
                     "type": {
                         "type": "Number"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "playerId",
+                    "type": {
+                        "type": "String"
                     }
                 }
             ]

@@ -14,7 +14,7 @@ export function registerRoomInvitations(server: WsServer<ServiceType>, world: Wo
     const snapshot = session && world.snapshot(session.roomId);
     const player = snapshot?.players.find(value => value.id === session?.playerId);
     const room = world.listRooms().find(value => value.id === session?.roomId);
-    if (!accounts.has(call.conn.id) || !session || !snapshot || !room || !player || player.isCpu
+    if (!accounts.has(call.conn.id) || isTraining(call.conn.id) || !session || !snapshot || !room || !player || player.isCpu
         || call.req.roomId !== session.roomId || call.req.round !== snapshot.match?.round
         || snapshot.phase !== 'WAITING' || room.playerCount >= room.maxPlayers) {
       return call.error('当前房间不能发送邀请', {code:'INVITE_REJECTED'});

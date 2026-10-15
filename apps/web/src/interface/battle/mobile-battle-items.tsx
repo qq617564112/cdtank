@@ -1,20 +1,20 @@
-import {useEffect, useRef, useState, useSyncExternalStore, type ComponentPropsWithoutRef} from 'react';
+import {memo, useEffect, useRef, useState, useSyncExternalStore, type ComponentPropsWithoutRef} from 'react';
 import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
 import type {BattleHud, SourceUi} from './battle-hud';
 import type {HudItemInventoryStore} from './battle-hud-view';
-import {hudItemSlots} from './hud-item-slots';
+import {hudItemSlots, sameHudItemSlot, type HudItemSlot} from './hud-item-slots';
 import {sourceAsset} from './hud-source-controls';
 import {ImageArtwork} from '../resources/image-artwork';
 import {GameMessage} from '../resources/game-message';
 import {useButtonInteraction} from '../resources/button-interaction';
+import {HudItemCooldown} from './hud-item-cooldown';
 
-export function MobileBattleItems({hud, data, items, disabled, onUseSlot}: {
+export const MobileBattleItems = memo(function MobileBattleItems({hud, data, items, disabled, onUseSlot}: {
   hud: BattleHud; data: SourceUi; items: HudItemInventoryStore; disabled: boolean;
   onUseSlot: (slot: number) => void;
 }) {
-  const combat = useSyncExternalStore(hud.subscribeCombat, hud.getCombatSnapshot);
-  const reload = useSyncExternalStore(hud.subscribeReload, hud.getReloadSnapshot);
+  const combat = useSyncExternalStore(hud.subscribeCombat, hud.getItemCombatSnapshot);
   const inventory = useSyncExternalStore(items.subscribe, items.getSnapshot);
   const [catalog, setCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const [error, setError] = useState('');
@@ -25,39 +25,40 @@ export function MobileBattleItems({hud, data, items, disabled, onUseSlot}: {
     return () => {active = false;};
   }, []);
   const slots = catalog ? hudItemSlots(combat, catalog, inventory.inventory,
-    inventory.selectedItemSlot, reload.fraction) : [];
+    inventory.selectedItemSlot, 1) : [];
   return <>
     <div className="mobile-battle-item-bank" role="group" aria-label="战斗道具栏">
       <div className="mobile-battle-item-grid">
-        {slots.map(binding => {
-          const asset = binding.item?.iconId === undefined ? undefined : sourceAsset(data,
-            `set:daoju0 image:data\\ui\\daoju\\${String(binding.item.iconId).padStart(5, '0')}.tga`);
-          const selected = binding.ammoSelected || binding.itemCursor;
-          return <MobileBattleItemButton key={binding.slot} type="button" className="mobile-battle-item"
-            data-item-slot={binding.slot} data-item-selected={selected || undefined}
-            data-item-quantity={binding.quantity} aria-pressed={selected}
-            aria-label={`${binding.slot <= 4 ? '选择弹药' : '立即使用'} ${binding.item?.name ?? `槽位${binding.slot}`}`}
-            disabled={disabled || binding.itemTableId === undefined}
-            onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}
-            onUse={() => onUseSlot(binding.slot)}>
-            {asset && <ImageArtwork className="mobile-battle-item-icon" asset={`/${asset}`} fit="contain"/>}
-            <span className="mobile-battle-item-number">{binding.slot}</span>
-            {(binding.infinite || binding.quantity !== undefined) && <span className="mobile-battle-item-quantity">
-              {binding.infinite ? '∞' : binding.quantity}
-            </span>}
-            {binding.cooldownFraction !== undefined && <span className="mobile-battle-item-cooldown"
-              data-item-cooldown-binding={binding.cooldownBinding}
-              style={{clipPath: `inset(${(1 - binding.cooldownFraction) * 100}% 0 0 0)`}}/>}
-            {binding.remainingSeconds !== undefined && <span className="mobile-battle-item-remaining">
-              {Math.ceil(binding.remainingSeconds)}
-            </span>}
-          </MobileBattleItemButton>;
-        })}
+        {slots.map(binding => <MobileBattleItemSlot key={binding.slot} data={data} hud={hud} binding={binding}
+          disabled={disabled} onUseSlot={onUseSlot}/>)}
       </div>
     </div>
     <GameMessage text={error} tone="error"/>
   </>;
-}
+});
+
+const MobileBattleItemSlot = memo(function MobileBattleItemSlot({data, hud, binding, disabled, onUseSlot}: {
+  data: SourceUi; hud: BattleHud; binding: HudItemSlot; disabled: boolean; onUseSlot: (slot: number) => void;
+}) {
+  const asset = binding.item?.iconId === undefined ? undefined : sourceAsset(data,
+    `set:daoju0 image:data\\ui\\daoju\\${String(binding.item.iconId).padStart(5, '0')}.tga`);
+  const selected = binding.ammoSelected || binding.itemCursor;
+  return <MobileBattleItemButton type="button" className="mobile-battle-item"
+    data-item-slot={binding.slot} data-item-selected={selected || undefined}
+    data-item-quantity={binding.quantity} aria-pressed={selected}
+    aria-label={`${binding.slot <= 4 ? '选择弹药' : '立即使用'} ${binding.item?.name ?? `槽位${binding.slot}`}`}
+    disabled={disabled || binding.itemTableId === undefined}
+    onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}
+    onUse={() => onUseSlot(binding.slot)}>
+    {asset && <ImageArtwork className="mobile-battle-item-icon" asset={`/${asset}`} fit="contain"/>}
+    <span className="mobile-battle-item-number">{binding.slot}</span>
+    {(binding.infinite || binding.quantity !== undefined) && <span className="mobile-battle-item-quantity">
+      {binding.infinite ? '∞' : binding.quantity}
+    </span>}
+    <HudItemCooldown hud={hud} binding={binding} mobile/>
+  </MobileBattleItemButton>;
+}, (previous, next) => previous.data === next.data && previous.hud === next.hud && previous.disabled === next.disabled
+  && previous.onUseSlot === next.onUseSlot && sameHudItemSlot(previous.binding, next.binding));
 
 function MobileBattleItemButton({onUse, disabled, ...props}:
   Omit<ComponentPropsWithoutRef<'button'>, 'onClick'> & {onUse: () => void}) {

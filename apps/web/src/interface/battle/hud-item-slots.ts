@@ -17,6 +17,15 @@ export interface HudItemSlot {
   remainingSeconds?: number;
 }
 
+/** Continuous reload progress only invalidates the shortcut whose display changes. */
+export function sameHudItemSlot(left: HudItemSlot, right: HudItemSlot): boolean {
+  return left === right || left.slot === right.slot && left.itemTableId === right.itemTableId
+    && left.instanceId === right.instanceId && left.item === right.item && left.quantity === right.quantity
+    && left.infinite === right.infinite && left.ammoSelected === right.ammoSelected
+    && left.itemCursor === right.itemCursor && left.cooldownFraction === right.cooldownFraction
+    && left.cooldownBinding === right.cooldownBinding && left.remainingSeconds === right.remainingSeconds;
+}
+
 /** Shared confirmed bindings for vector graphics and the shortcut interaction layer. */
 export function hudItemSlots(combat: HudCombatSnapshot, catalog: CombatCatalog, inventory: ResInventory | undefined,
   selectedItemSlot: number | undefined, reloadFraction: number, serverNow = combat.serverTime): HudItemSlot[] {
@@ -40,22 +49,21 @@ export function hudItemSlots(combat: HudCombatSnapshot, catalog: CombatCatalog, 
       itemCursor: slot >= 5 && slot === selectedItemSlot && !!record
         && (record.ownedQuantity >>> 0) > 0 && (record.battleQuantity >>> 0) > 0,
     };
-    if (slot <= 4 && state.ammoSelected && combat.alive && combat.reload
-        && combat.reload.duration > 0 && combat.reload.startedAt > 0) {
-      const remaining = combat.reload.duration * (1 - reloadFraction);
-      if (remaining > 0) {
-        state.remainingSeconds = remaining;
-        state.cooldownFraction = 1 - reloadFraction;
-        state.cooldownBinding = 'reload-timing';
-      }
-    } else if (slot >= 5 && combat.alive) {
-      const effect = combat.activeEffects.find(value => item?.skillIds.includes(value.skillId) && value.expiresAt > serverNow);
-      if (effect) {
-        state.remainingSeconds = (effect.expiresAt - serverNow) / 1000;
-        state.cooldownFraction = 1;
-        state.cooldownBinding = 'effect-expiry';
-      }
-    }
-    return state;
+    return Object.assign(state, hudItemCooldown(combat, slot, item, state.ammoSelected, reloadFraction, serverNow));
   });
+}
+
+export function hudItemCooldown(combat: HudCombatSnapshot, slot: number, item: CombatItemDefinition | undefined,
+  ammoSelected: boolean, reloadFraction: number, serverNow = combat.serverTime):
+    Pick<HudItemSlot, 'remainingSeconds' | 'cooldownFraction' | 'cooldownBinding'> | undefined {
+  if (slot <= 4 && ammoSelected && combat.alive && combat.reload
+      && combat.reload.duration > 0 && combat.reload.startedAt > 0) {
+    const remainingSeconds = combat.reload.duration * (1 - reloadFraction);
+    if (remainingSeconds > 0) return {remainingSeconds, cooldownFraction: 1 - reloadFraction,
+      cooldownBinding: 'reload-timing'};
+  } else if (slot >= 5 && combat.alive) {
+    const effect = combat.activeEffects.find(value => item?.skillIds.includes(value.skillId) && value.expiresAt > serverNow);
+    if (effect) return {remainingSeconds: (effect.expiresAt - serverNow) / 1000,
+      cooldownFraction: 1, cooldownBinding: 'effect-expiry'};
+  }
 }

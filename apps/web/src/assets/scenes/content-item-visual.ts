@@ -1,3 +1,4 @@
+import type {IGLTF} from '@babylonjs/loaders/glTF/2.0/glTFLoaderInterfaces';
 import {battleArtworkUrl} from '../battle-artwork';
 import {AssetContainer, Constants, Matrix, PBRMaterial, Quaternion,
   Scene, Texture, TransformNode, Vector3} from '@babylonjs/core';
@@ -31,7 +32,7 @@ export class ContentItemVisual {
     const asset = await loadPreparedModel(`/${resources.model}`, this.scene, {
       pluginOptions: {gltf: {onParsed: data => {
         if (!resources.texturePath) return;
-        for (const material of data.json.materials ?? []) {
+        for (const material of (data.json as IGLTF).materials ?? []) {
           if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
         }
       }}},

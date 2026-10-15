@@ -1,4 +1,4 @@
-import {AbstractMesh, ArcRotateCamera, BaseTexture, Camera, Color3, Color4, Constants, DirectionalLight, Frustum, HemisphericLight, Matrix, Scene, ShaderMaterial, ShadowGenerator,
+import {AbstractMesh, ArcRotateCamera, BaseTexture, Camera, Color3, DirectionalLight, Frustum, HemisphericLight, Matrix, Scene, ShaderMaterial, ShadowGenerator,
   TransformNode, UniformBuffer, Vector3} from '@babylonjs/core';
 import {sceneShadowLightProfile} from './scene-shadow-light-profiles';
 
@@ -6,6 +6,7 @@ interface ShadowRoot {
   readonly root: TransformNode;
   readonly dynamic: boolean;
   readonly softShadows: boolean;
+  readonly receiveShadows: boolean;
   readonly meshes?: () => readonly AbstractMesh[];
   readonly staticMeshes?: readonly AbstractMesh[];
 }
@@ -16,6 +17,20 @@ interface ShadowMeshNames {
   terrainTexture: string;
   texture: string;
   excluded: boolean;
+}
+
+interface ShadowProjectionInputs {
+  readonly view: Float64Array;
+  projection: Matrix;
+  eyeX: number;
+  eyeZ: number;
+  forwardX: number;
+  forwardZ: number;
+  distance: number;
+  tangent: number;
+  groundY: number;
+  reverse: boolean;
+  halfZ: boolean;
 }
 
 const owners = new WeakMap<Scene, SceneShadowLight>();
@@ -37,17 +52,19 @@ export const SCENE_SHADOW_VERTEX_APPLY = `
   sceneShadowWorldNormal = worldNormal;
 #endif`;
 
-export const SCENE_SHADOW_FRAGMENT_DECLARATION = `
-#ifndef SCENE_SHADOWS_DISABLED
-uniform SceneShadowLight {
+export const SCENE_SHADOW_LIGHT_UNIFORM_DECLARATION = `uniform SceneShadowLight {
   vec4 sceneShadowDirection;
   vec4 sceneShadowColour;
   vec4 sceneShadowSettings;
   vec4 sceneShadowDepth;
   vec4 sceneShadowView;
   mat4 sceneShadowMatrix;
-};
-uniform sampler2D sceneShadowTexture;
+};`;
+
+export const SCENE_SHADOW_FRAGMENT_DECLARATION = `
+#ifndef SCENE_SHADOWS_DISABLED
+${SCENE_SHADOW_LIGHT_UNIFORM_DECLARATION}
+uniform sampler2DShadow sceneShadowTexture;
 uniform float sceneShadowReceiver;
 uniform float sceneShadowOcclusion;
 uniform float sceneShadowSoftness;
@@ -56,7 +73,7 @@ varying vec3 sceneShadowWorldNormal;
 vec3 sceneShadowCoordinates(mat4 matrix, vec3 offset) {
   vec4 projected = matrix * vec4(sceneShadowWorldPosition + offset, 1.0);
   vec3 clip = projected.xyz / projected.w;
-  float depth = (sceneShadowDepth.z * clip.z + sceneShadowDepth.x) / sceneShadowDepth.y;
+  float depth = sceneShadowDepth.x * clip.z + sceneShadowDepth.y;
   return vec3(clip.xy * 0.5 + 0.5, depth);
 }
 vec2 sceneShadowDepthSlope(vec3 coordinates) {
@@ -68,13 +85,11 @@ vec2 sceneShadowDepthSlope(vec3 coordinates) {
 }
 float sceneShadowSample(vec2 uv, float depth, vec2 slope, vec2 offset) {
   vec2 mapSize = vec2(textureSize(sceneShadowTexture, 0).xy);
-  ivec2 texel = ivec2(clamp(floor((uv + offset) * mapSize), vec2(0.0), mapSize - vec2(1.0)));
-  vec2 sampleUv = (vec2(texel) + 0.5) / mapSize;
-  // Cover the full receiver-plane footprint, including faces nearly parallel to the light.
-  float slopeBias = dot(abs(slope), vec2(0.5) / mapSize);
-  float receiverDepth = depth + dot(slope, sampleUv - uv) - sceneShadowDepth.w - slopeBias;
-  float stored = texelFetch(sceneShadowTexture, texel, 0).r;
-  return step(receiverDepth, stored);
+  // A linear comparison can reach both neighbouring texel centres on each axis.
+  float slopeBias = dot(abs(slope), vec2(1.0) / mapSize);
+  float receiverDepth = depth + dot(slope, offset) - sceneShadowDepth.z * (sceneShadowDepth.w + slopeBias);
+  // Explicit LOD keeps comparison sampling valid after alpha discard and coverage branches.
+  return textureLod(sceneShadowTexture, vec3(uv + offset, receiverDepth), 0.0);
 }
 float sceneShadowVisibility(vec3 coordinates, vec2 slope) {
   vec2 uv = coordinates.xy;
@@ -85,7 +100,7 @@ float sceneShadowVisibility(vec3 coordinates, vec2 slope) {
   float coverage = smoothstep(0.0, 0.08, edge)
     * (1.0 - smoothstep(0.8 * sceneShadowView.w, sceneShadowView.w, distance));
   if (sceneShadowSoftness < 0.5) return mix(1.0, sceneShadowSample(uv, depth, slope, vec2(0.0)), coverage);
-  // Four nearby comparisons soften scene receivers without blurring tank surfaces.
+  // Compact receivers use one lookup; soft receivers use a wider four-lookup kernel.
   vec2 stepUv = vec2(0.5 * sceneShadowSettings.y);
   float visibility = 0.25 * (sceneShadowSample(uv, depth, slope, -stepUv)
     + sceneShadowSample(uv, depth, slope, vec2(stepUv.x, -stepUv.y))
@@ -118,11 +133,17 @@ export const SCENE_SHADOW_FRAGMENT_BEGIN = `
   vec3 sceneShadowGeometric = cross(dFdx(sceneShadowWorldPosition), dFdy(sceneShadowWorldPosition));
   sceneShadowGeometric /= max(length(sceneShadowGeometric), 1.0e-8);
   vec3 sceneShadowNormal = sceneShadowSurfaceNormal(sceneShadowGeometric);
-  if (dot(sceneShadowGeometric, sceneShadowNormal) < 0.0) sceneShadowGeometric = -sceneShadowGeometric;
-  float sceneShadowIncidence = max(dot(sceneShadowGeometric, -sceneShadowDirection.xyz), 0.0);
-  vec3 sceneShadowOffset = 0.35 * sqrt(max(0.0, 1.0 - sceneShadowIncidence * sceneShadowIncidence)) * sceneShadowGeometric;
-  vec3 sceneShadowCoordinatesAtPixel = sceneShadowCoordinates(sceneShadowMatrix, sceneShadowOffset);
-  vec2 sceneShadowSlope = sceneShadowDepthSlope(sceneShadowCoordinatesAtPixel);
+  float sceneShadowIncidence = 0.0;
+  vec3 sceneShadowCoordinatesAtPixel = vec3(0.0);
+  vec2 sceneShadowSlope = vec2(0.0);
+  // Occlusion is uniform per material; lighting-only surfaces skip shadow projection work.
+  if (sceneShadowOcclusion > 0.5) {
+    if (dot(sceneShadowGeometric, sceneShadowNormal) < 0.0) sceneShadowGeometric = -sceneShadowGeometric;
+    sceneShadowIncidence = max(dot(sceneShadowGeometric, -sceneShadowDirection.xyz), 0.0);
+    vec3 sceneShadowOffset = 0.35 * sqrt(max(0.0, 1.0 - sceneShadowIncidence * sceneShadowIncidence)) * sceneShadowGeometric;
+    sceneShadowCoordinatesAtPixel = sceneShadowCoordinates(sceneShadowMatrix, sceneShadowOffset);
+    sceneShadowSlope = sceneShadowDepthSlope(sceneShadowCoordinatesAtPixel);
+  }
 #endif`;
 
 export const SCENE_SHADOW_FRAGMENT_APPLY = `
@@ -165,11 +186,14 @@ export class SceneShadowLight {
   private readonly roots = new Set<ShadowRoot>();
   private readonly receivers = new Set<AbstractMesh>();
   private readonly casters = new Set<AbstractMesh>();
+  private readonly brokenMeshes = new Set<AbstractMesh>();
   private readonly meshNames = new WeakMap<AbstractMesh, ShadowMeshNames>();
   private readonly planes = Frustum.GetPlanes(Matrix.Identity());
   private readonly projectionCentre = Vector3.Zero();
   private readonly projectionForward = Vector3.Zero();
   private readonly projectionPoint = Vector3.Zero();
+  private projectionInputs?: ShadowProjectionInputs;
+  private projectionChanged = true;
   private coverageDistance = 512;
   private coverageTangent = 1;
   private coverageGroundY = 0;
@@ -177,6 +201,10 @@ export class SceneShadowLight {
   private receiversChanged = false;
   private terrain: readonly AbstractMesh[] = [];
   private readonly updateFrame = (): void => {this.update();};
+  private readonly removeMesh = (mesh: AbstractMesh): void => {
+    if (this.receivers.delete(mesh)) this.receiversChanged = true;
+    this.brokenMeshes.delete(mesh);
+  };
 
   constructor(private readonly scene: Scene) {
     owners.set(scene, this);
@@ -207,6 +235,19 @@ export class SceneShadowLight {
       this.coverageDistance = distance;
       this.coverageTangent = tangent;
       this.coverageGroundY = target.y;
+      const engine = scene.getEngine();
+      const reverse = engine.useReverseDepthBuffer, halfZ = engine.isNDCHalfZRange;
+      const eyeX = camera.globalPosition.x, eyeZ = camera.globalPosition.z;
+      let inputs = this.projectionInputs;
+      let unchanged = inputs !== undefined && inputs.projection === projection
+        && Object.is(inputs.eyeX, eyeX) && Object.is(inputs.eyeZ, eyeZ)
+        && Object.is(inputs.forwardX, forward.x) && Object.is(inputs.forwardZ, forward.z)
+        && Object.is(inputs.distance, distance) && Object.is(inputs.tangent, tangent)
+        && Object.is(inputs.groundY, target.y) && inputs.reverse === reverse && inputs.halfZ === halfZ;
+      for (let index = 0; unchanged && index < 16; index++) {
+        unchanged = Object.is(inputs!.view[index], view.m[index]);
+      }
+      if (unchanged) return;
       const centre = this.projectionCentre;
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
       let minZ = Infinity, maxZ = -Infinity;
@@ -231,9 +272,21 @@ export class SceneShadowLight {
       const x = Math.round((minX + maxX) / (2 * texelX)) * texelX;
       const y = Math.round((minY + maxY) / (2 * texelY)) * texelY;
       const near = minZ - 128, far = maxZ + 128;
-      const reverse = scene.getEngine().useReverseDepthBuffer;
       Matrix.OrthoOffCenterLHToRef(x - width / 2, x + width / 2, y - height / 2, y + height / 2,
-        reverse ? far : near, reverse ? near : far, projection, scene.getEngine().isNDCHalfZRange);
+        reverse ? far : near, reverse ? near : far, projection, halfZ);
+      if (!inputs) {
+        inputs = {view: new Float64Array(16), projection, eyeX, eyeZ, forwardX: forward.x, forwardZ: forward.z,
+          distance, tangent, groundY: target.y, reverse, halfZ};
+        this.projectionInputs = inputs;
+      } else {
+        inputs.projection = projection;
+        inputs.eyeX = eyeX; inputs.eyeZ = eyeZ;
+        inputs.forwardX = forward.x; inputs.forwardZ = forward.z;
+        inputs.distance = distance; inputs.tangent = tangent; inputs.groundY = target.y;
+        inputs.reverse = reverse; inputs.halfZ = halfZ;
+      }
+      inputs.view.set(view.m);
+      this.projectionChanged = true;
     };
     // Source shading normals need not match the geometric faces used by depth comparisons.
     this.generator.normalBias = 0;
@@ -251,27 +304,19 @@ export class SceneShadowLight {
     this.buffer.updateFloat4('sceneShadowColour', 1, 1, 1, 0);
     this.buffer.updateFloat4('sceneShadowSettings', 0, 0, 0, 0);
     this.buffer.updateFloat4('sceneShadowView', 0, 1, 0, 512);
-    const near = this.light.getDepthMinZ(scene.activeCamera!);
-    const far = this.light.getDepthMaxZ(scene.activeCamera!);
-    const receiverBias = this.generator.getShadowMap()!.textureType === Constants.TEXTURETYPE_HALF_FLOAT
-      ? this.generator.bias + 0.00025 : this.generator.bias;
-    this.buffer.updateFloat4('sceneShadowDepth', near, near + far,
-      scene.getEngine().useReverseDepthBuffer ? -1 : 1, receiverBias);
+    // Comparison depth stores clip depth directly, without the colour-depth encoding.
+    const engine = scene.getEngine();
+    this.buffer.updateFloat4('sceneShadowDepth', engine.isNDCHalfZRange ? 1 : 0.5,
+      engine.isNDCHalfZRange ? 0 : 0.5, engine.useReverseDepthBuffer ? -1 : 1, this.generator.bias);
     this.buffer.updateMatrix('sceneShadowMatrix', Matrix.Identity());
     this.buffer.update();
     // Babylon updates the light projection before receiver uniforms are synchronized.
     this.generator.getShadowMap()!.onBeforeRenderObservable.add(() => {
       this.updateProjection();
-      // Source shaders read float depth; PBR receivers use the comparison depth texture.
-      scene.getEngine().setColorWrite(true);
     });
-    // Both custom and PBR receivers need their depth attachments cleared each frame.
-    const shadowMap = this.generator.getShadowMap()!;
-    const emptyDepth = new Color4(1, 1, 1, 1);
-    shadowMap.onClearObservable.clear();
-    shadowMap.onClearObservable.add(engine => {engine.clear(emptyDepth, true, true, false);});
     // Battle movement and camera follow finish in onBeforeRender before caster culling.
     scene.onBeforeCameraRenderObservable.add(this.updateFrame);
+    scene.onMeshRemovedObservable.add(this.removeMesh);
     scene.onDisposeObservable.addOnce(() => {this.dispose();});
   }
 
@@ -280,11 +325,14 @@ export class SceneShadowLight {
     material.setFloat('sceneShadowReceiver', 0);
     material.setFloat('sceneShadowOcclusion', 1);
     material.setFloat('sceneShadowSoftness', 1);
-    material.setTexture('sceneShadowTexture', this.generator.getShadowMap()!);
+    material.setInternalTexture('sceneShadowTexture', this.generator.getShadowMap()!.depthStencilTexture!);
   }
 
   /** Prepare each fragment model's shadow shader during map loading. */
   async prepareMeshes(meshes: readonly AbstractMesh[]): Promise<void> {
+    for (const mesh of meshes) {
+      if (mesh.metadata?.sourceBreachBroken && this.eligible(mesh)) this.brokenMeshes.add(mesh);
+    }
     const pending = meshes.filter(mesh => this.eligible(mesh)).flatMap(mesh => mesh.subMeshes);
     const deadline = performance.now() + 30_000;
     while (pending.length && !this.scene.isDisposed) {
@@ -336,11 +384,13 @@ export class SceneShadowLight {
     this.light.setEnabled(true);
   }
 
-  addRoot(root: TransformNode, options: {dynamic?: boolean; softShadows?: boolean;
+  addRoot(root: TransformNode, options: {dynamic?: boolean; softShadows?: boolean; receiveShadows?: boolean;
     meshes?: () => readonly AbstractMesh[]} = {}): () => void {
     const entry = {root, dynamic: options.dynamic ?? false,
       softShadows: options.softShadows ?? true, meshes: options.meshes,
-      staticMeshes: !options.dynamic && !options.meshes ? root.getChildMeshes() : undefined};
+      receiveShadows: options.receiveShadows ?? true,
+      staticMeshes: !options.dynamic && !options.meshes
+        ? root.getChildMeshes().filter(mesh => this.eligible(mesh)) : undefined};
     this.roots.add(entry);
     return () => {this.roots.delete(entry);};
   }
@@ -353,6 +403,7 @@ export class SceneShadowLight {
     }
     this.receivers.clear();
     this.casters.clear();
+    this.brokenMeshes.clear();
     this.receiversChanged = false;
     this.terrain = [];
     this.light.includedOnlyMeshes = [];
@@ -380,23 +431,27 @@ export class SceneShadowLight {
     for (const mesh of this.terrain) casters.add(mesh);
     for (const entry of this.roots) {
       if (entry.root.isDisposed()) {this.roots.delete(entry); continue;}
+      if (!entry.root.isEnabled()) continue;
       for (const mesh of entry.meshes?.() ?? entry.staticMeshes ?? entry.root.getChildMeshes()) {
-        if (!this.eligible(mesh)) continue;
-        this.receive(mesh, entry.softShadows);
-        if (entry.root.isEnabled() && mesh.isEnabled() && mesh.isVisible && mesh.visibility > 0) {
-          casters.add(mesh);
-        }
+        if (!mesh.isEnabled() || !mesh.isVisible || mesh.visibility <= 0) continue;
+        if (mesh.isDisposed() || !entry.staticMeshes && !this.eligible(mesh)) continue;
+        this.receive(mesh, entry.softShadows, entry.receiveShadows);
+        casters.add(mesh);
       }
     }
     // Destruction CVDs have no placement root and retain the map's lifetime.
-    for (const mesh of this.scene.meshes) {
-      if (!mesh.metadata?.sourceBreachBroken || !this.eligible(mesh)) continue;
+    for (const mesh of this.brokenMeshes) {
+      if (!mesh.isEnabled() || !mesh.isVisible || mesh.visibility <= 0) continue;
       this.receive(mesh);
-      if (mesh.isEnabled() && mesh.isVisible && mesh.visibility > 0) casters.add(mesh);
+      casters.add(mesh);
     }
     this.syncReceivers();
     const map = this.generator.getShadowMap()!;
-    Frustum.GetPlanesToRef(this.generator.getTransformMatrix(), this.planes);
+    const transform = this.generator.getTransformMatrix();
+    if (this.projectionChanged) {
+      Frustum.GetPlanesToRef(transform, this.planes);
+      this.projectionChanged = false;
+    }
     const visible = map.renderList ?? (map.renderList = []);
     let visibleCount = 0;
     const eye = this.scene.activeCamera!.globalPosition;
@@ -426,23 +481,19 @@ export class SceneShadowLight {
   }
 
   private syncReceivers(): void {
-    for (const mesh of this.receivers) {
-      if (!mesh.isDisposed()) continue;
-      this.receivers.delete(mesh);
-      this.receiversChanged = true;
-    }
     if (!this.receiversChanged) return;
     this.light.includedOnlyMeshes = [...this.receivers];
     this.receiversChanged = false;
   }
 
-  private receive(mesh: AbstractMesh, softShadows = true): void {
+  private receive(mesh: AbstractMesh, softShadows = true, receiveShadows = true): void {
     if (this.receivers.has(mesh)) return;
     this.receivers.add(mesh);
     this.receiversChanged = true;
-    mesh.receiveShadows = true;
+    mesh.receiveShadows = receiveShadows;
     if (mesh.material instanceof ShaderMaterial) {
       mesh.material.setFloat('sceneShadowReceiver', 1);
+      mesh.material.setFloat('sceneShadowOcclusion', receiveShadows ? 1 : 0);
       mesh.material.setFloat('sceneShadowSoftness', softShadows ? 1 : 0);
     }
   }
@@ -477,6 +528,7 @@ export class SceneShadowLight {
     this.clear();
     this.roots.clear();
     this.scene.onBeforeCameraRenderObservable.removeCallback(this.updateFrame);
+    this.scene.onMeshRemovedObservable.removeCallback(this.removeMesh);
     this.generator.dispose();
     this.light.dispose();
     this.buffer.dispose();

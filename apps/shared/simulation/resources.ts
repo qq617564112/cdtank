@@ -1,3 +1,5 @@
+import type {MapOption} from '../protocols/PtlListMaps';
+
 /** Static inputs shared by the server simulation and the browser training host. */
 export interface SimulationCatalog {
   content: Record<string, unknown>;
@@ -15,5 +17,4 @@ export interface RoomPassword {
   passwordSalt?: Uint8Array;
   passwordHash?: Uint8Array;
 }
-import type {MapOption} from '../protocols/PtlListMaps';
 

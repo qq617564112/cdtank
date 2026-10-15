@@ -1,6 +1,6 @@
 # Active room reconnection
 
-A temporary transport loss preserves the authenticated participant in the existing PLAYING room for thirty seconds. The world clock continues. Disconnect releases movement, turn, aim, fire and item input, and disables voluntary autopilot. Other participants still see the same role, life, inventory, skills and room state.
+A temporary transport loss preserves the authenticated participant in the existing room for thirty seconds, including waiting and loading rooms. The world clock continues. Disconnect releases movement, turn, aim, fire and item input, and disables voluntary autopilot. Other participants still see the same role, life, inventory, skills and room state.
 
 This is a Web reconstruction. The original service's reconnect, grace and interruption rules remain unresolved.
 
@@ -8,11 +8,15 @@ This is a Web reconstruction. The original service's reconnect, grace and interr
 
 The server retains the old connection's account and room binding so ordinary settlement can still identify the participant. Re-authentication with that account atomically replaces its connection identity, including the room creator identity, while retaining the existing PlayerState. Account records are not rebound and preparation is not rerun.
 
-ResumeRoom checks the authenticated room/player membership and returns the current authoritative snapshot and last accepted manual input sequence. It cannot join a different participant or bypass PLAYING admission. Expiry uses the existing world.leave outcome, event, room and collision cleanup before removing account bindings. An explicit Leave removes membership immediately and does not create a reservation.
+ResumeRoom resolves the authenticated connection's room/player membership and returns its player identity, current authoritative snapshot and last accepted manual input sequence. Optional roomId/playerId fields constrain recovery to the expected participant when reconnecting a live page. It cannot join a different participant or bypass PLAYING admission. An invalid retained membership is removed before rejection. Expiry uses the existing world.leave outcome, event, room and collision cleanup before removing account bindings. An explicit Leave removes membership immediately and does not create a reservation.
+
+After a page refresh, Account restores the retained membership before ResumeRoom queries it without local room identifiers. The server binding owns room recovery; sessionStorage does not hold a second room membership record. The lobby and its member polling mount after recovery completes. ROOM_RESUME_REJECTED returns the page to the lobby; transport and other request failures retain the login/channel retry flow. Live-page reconnection retries temporary ResumeRoom failures within the existing recovery window.
 
 The formal browser retains its current scene, presentation owners and room feed during recovery. Its input cadence stops, keys clear, and successful recovery resumes above the accepted server input sequence. Current snapshots reconcile normal round and state transitions. A failed or expired recovery returns to the lobby. Transient events missed during transport loss are not replayed.
 
 ## Verification
+
+The refresh recovery changes use protocol version126, retaining request field identifiers0/1 and response identifiers0/1, and adding playerId as response field2. They have received source review only; no tests, browser acceptance, build or type checking have been run for these changes. The evidence below covers the earlier active-page reconnection implementation.
 
 `room-reconnect-network-2026-10-05T18-50-37-653Z.json` passes four authenticated ordinary participants on Map02 mode1 using a lawful saved purchase checkpoint. Ordinary movement and repeated firing stop after disconnect. Same-account recovery keeps role identity, position, life, skill sources and account records; sequence7 resumes with8 and ordinary movement works. Wrong-account and wrong-room requests are rejected. A different participant stays disconnected for the real thirty-second window, is removed, and cannot resume. Normal Leave clears the remaining room. The actual runner exits0 and port3603 is empty.
 

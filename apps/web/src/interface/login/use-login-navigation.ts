@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from 'react';
 import type {Battle} from '../../match/battle';
 import type {ResChannel} from '../../../../shared/protocols/PtlChannel';
 import {navigateGame, readGameRoute, useGameRoute} from '../../navigation/route';
-import {readLoginSession, saveLoginSession, saveRoomSession} from '../../navigation/session';
+import {readLoginSession, saveLoginSession} from '../../navigation/session';
 import {readQuickStart} from '../../navigation/quick-start';
 import {useChannelPing} from './use-channel-ping';
 
@@ -111,7 +111,7 @@ export function useLoginNavigation(battle: Battle, validation: boolean) {
   function back(): void {
     void perform(async () => {
       await battle.disconnectAccount();
-      saveLoginSession(); saveRoomSession();
+      saveLoginSession();
       setChannels([]); setSelectedId(''); setPhase('login');
       navigateGame('/login', false, true);
     });
@@ -119,7 +119,7 @@ export function useLoginNavigation(battle: Battle, validation: boolean) {
   function exit(): void {
     void perform(async () => {
       await battle.disconnectAccount();
-      saveLoginSession(); saveRoomSession();
+      saveLoginSession();
       setChannels([]); setSelectedId(''); setPhase('closed');
       navigateGame('/closed', false, true);
     });

@@ -10,6 +10,7 @@ import {createWebGpuEngine} from './webgpu-engine';
 import {selectEnabledMeshCandidates} from './scene-mesh-candidates';
 import {webGpuFrameStats} from './webgpu-frame-stats';
 import {SceneShadowLight} from './scene-shadow-light';
+import {initializeCartoonOutlineRenderer} from './materials/cartoon-outline-renderer';
 
 /** Babylon owns its frame loop and resources independently of React. */
 export async function createSceneRuntime(canvas: HTMLCanvasElement) {
@@ -17,7 +18,12 @@ export async function createSceneRuntime(canvas: HTMLCanvasElement) {
   installModelImageLoader();
   const mobile=isMobileDevice();
   const engine=await createWebGpuEngine(canvas);
+  if (mobile) {
+    engine.adaptToDeviceRatio=true;
+    engine.setHardwareScalingLevel(1/(window.devicePixelRatio || 1));
+  }
   const scene=new Scene(engine);
+  initializeCartoonOutlineRenderer(scene);
   selectEnabledMeshCandidates(scene);
   const battleUi=battleUiLayer(scene);
   scene.ambientColor=Color3.White();scene.clearColor=new Color4(.25,.36,.44,1);
@@ -37,17 +43,21 @@ export async function createSceneRuntime(canvas: HTMLCanvasElement) {
     if (!timingChanged && renderScale === nextRenderScale && msaa4x === preferences.msaa4x
       && motionBlurEnabled === preferences.motionBlur) return;
     engine.enableGPUTimingMeasurements=gpuTiming;
-    if (mobile && renderScale !== nextRenderScale) engine.setHardwareScalingLevel(1/nextRenderScale);
     renderScale=nextRenderScale;msaa4x=preferences.msaa4x;motionBlurEnabled=preferences.motionBlur;
     motionBlur?.dispose();
     motionBlur=undefined;
     worldPass?.dispose(camera);
+    worldPass=undefined;
     // Render targets acquire their own GPU counter when they are created.
-    // Desktop scales the world camera; mobile scales the entire framebuffer.
+    // Resolution scales the world camera; the framebuffer follows device pixels.
     // Utility layers draw player labels, minimap and HUD after this pass.
-    worldPass=new PassPostProcess('battle-world-resolution',mobile ? 1 : renderScale,camera,Texture.BILINEAR_SAMPLINGMODE);
-    worldPass.samples=msaa4x ? 4 : 1;
-    if (motionBlurEnabled) motionBlur=new BattleMotionBlur(scene,camera,mobile ? 1 : renderScale);
+    if (motionBlurEnabled) {
+      motionBlur=new BattleMotionBlur(scene,camera,renderScale);
+      motionBlur.postProcess.samples=msaa4x ? 4 : 1;
+    } else {
+      worldPass=new PassPostProcess('battle-world-resolution',renderScale,camera,Texture.BILINEAR_SAMPLINGMODE);
+      worldPass.samples=msaa4x ? 4 : 1;
+    }
   };
   applyDisplay();
   const unsubscribeDisplay=subscribeDisplayPreferences(applyDisplay);
@@ -56,10 +66,15 @@ export async function createSceneRuntime(canvas: HTMLCanvasElement) {
   if (!mobile) new SceneShadowLight(scene);
   const resize=(): void=>{engine.resize();applyDisplay();motionBlur?.resize();};
   window.addEventListener('resize',resize);
-  const frameStats=webGpuFrameStats(canvas,scene,engine,()=>worldPass);
+  const frameStats=webGpuFrameStats(canvas,scene,engine,()=>motionBlur?.postProcess ?? worldPass);
   engine.runRenderLoop(()=>{
     const startedAt=performance.now();
     frameStats.beginFrame(startedAt);
+    const output=motionBlur?.postProcess ?? worldPass;
+    const clearWithOutput=scene.postProcessesEnabled && Boolean(output?.isReady());
+    engine.setScreenPassDepthEnabled(!clearWithOutput);
+    scene.autoClear=!clearWithOutput;
+    scene.autoClearDepthAndStencil=!clearWithOutput;
     scene.render();
     const worldFinishedAt=performance.now();
     battleUi.render();frameStats.recordFrame(startedAt,worldFinishedAt);

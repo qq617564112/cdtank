@@ -1,3 +1,4 @@
+import type {IGLTF} from '@babylonjs/loaders/glTF/2.0/glTFLoaderInterfaces';
 import {battleArtworkUrl} from '../battle-artwork';
 import {gameContent} from '../../../../shared/content/catalog';
 import {AssetContainer, Constants, PBRMaterial, Scene, Texture, TransformNode} from '@babylonjs/core';
@@ -37,7 +38,7 @@ export class RoleDisguiseVisual {
     const asset = await loadPreparedModel(`/${resources.model}`, this.scene, {
       pluginOptions: {gltf: {onParsed: data => {
         if (!texturePath) return;
-        for (const material of data.json.materials ?? []) {
+        for (const material of (data.json as IGLTF).materials ?? []) {
           if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
         }
       }}},

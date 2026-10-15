@@ -1,6 +1,6 @@
 # CDTank · 阿猫阿狗大作战复刻
 
-当前版本：**1.0.2** · [GitHub Releases](https://github.com/qq617564112/cdtank/releases) · [当前状态与文档](docs/README.md) · [更新日志](CHANGELOG.md)
+当前版本：**1.0.3** · [GitHub Releases](https://github.com/qq617564112/cdtank/releases) · [当前状态与文档](docs/README.md) · [更新日志](CHANGELOG.md)
 
 ![阿猫阿狗大作战 Online 高清标志](docs/assets/logo-hd.webp)
 
@@ -14,12 +14,14 @@
 
 客户端使用 **WebGPU**，界面采用手绘卡通风格，保留涂鸦小地图。战斗素材支持怀旧／HD 切换，渲染分辨率、抗锯齿和卡通描边可分别调整。每个房间由独立 Node.js 进程运行权威模拟，账户与连接由主进程管理。
 
-本版主要变化和专题入口见[当前状态与文档](docs/README.md)。
+1.0.3 新增移动端触控与本地训练，更新 CPU 战术、模型预计算、HUD 和 WebGPU 资源管理，并将移动端准星放大 50%。主要变化和专题入口见[当前状态与文档](docs/README.md)与[更新日志](CHANGELOG.md#103--2026-10-16)。
 
 ## 当前内容
 
 - **联机对战**：创建和加入房间、密码房、换队、准备、战斗、结算及再战。
+- **手机与平板**：横屏页面、触控双摇杆、开火与道具操作、移动端 HUD 和结算页，支持添加到主屏幕；准星逻辑尺寸为 54×42。[移动端操作](docs/mobile-battle-ui.md)
 - **五种模式**：团队、占领、擒王、混战、破坏；保留原表 26 组规则参数，房间目录覆盖 25 张原场景和测试地图，按场景内容提供对应模式。
+- **本地训练**：模式签页新增训练入口，沿用混战规则；碰撞、AI、机器人配置与战斗在浏览器中计算，支持单人练习。[训练模式](docs/training-mode.md)
 - **战车与场景**：21 种原版战车、323 套有效主题皮肤、履带动画，以及宠物、部件、音乐和音效；高清贴图保留原模型几何、UV 与动画。
 - **账户与角色**：注册登录、我的家、库存与装备、商城及社交功能，保存角色成长、称号与账户资料。
 - **成长与交易**：战车火力／装甲改造、宠物技能学习确认、装饰部件购买、贵重品数量出售与维修计时。
@@ -29,7 +31,7 @@
 - **房间与恢复**：房间独立进程、房主转交、页面与弹窗 URL，以及刷新后的账户、频道和原房间恢复。
 - **资源工具**：CPK、MV3、POL、CVD 和数据表的提取与转换工具，以及素材制作所需的模型渲染入口。
 - **显示与加载**：电脑与移动端均可选怀旧／HD，移动端 HD 采用怀旧贴图尺寸，支持全局横屏；五档渲染分辨率、4× MSAA、FPS 显示、亮度／饱和度／对比度；UI 预加载、模型与音频缓存，以及电脑登录页可选的全资源预下载。
-- **战场画面**：GPU HUD、模型动画与粒子绘制，按地图配置的方向光和实时软阴影。
+- **战场画面**：GPU HUD、模型动画与粒子绘制；电脑按地图配置方向光和实时软阴影，手机与平板关闭实时阴影并降低特效密度。
 - **交付流程**：高清源图、逐图压缩配方、WebP 成品、UI 精灵图与怀旧／HD 战斗资源；GitHub 程序／资产分包与自动安装，以及 Forgejo / Docker 自动部署。
 
 项目仍在持续还原中。完整原版规则、全部技能道具、界面表现和高清多人性能的完成情况，以[任务清单](docs/recovery/tasklist.md)和各专题证据为准。
@@ -58,10 +60,10 @@
 
 ### 1. 直接使用 Release 运行
 
-安装 [Node.js](https://nodejs.org/en/download) **24.16 或更高版本**，从 [GitHub Releases](https://github.com/qq617564112/cdtank/releases) 下载程序包 `cdtank-1.0.2.tar.gz` 并解压。在解压目录运行：
+安装 [Node.js](https://nodejs.org/en/download) **24.16 或更高版本**，从 [GitHub Releases](https://github.com/qq617564112/cdtank/releases) 下载程序包 `cdtank-1.0.3.tar.gz` 并解压。在解压目录运行：
 
 ```bash
-cd /path/to/cdtank-1.0.2
+cd /path/to/cdtank-1.0.3
 node install.mjs
 ```
 
@@ -119,8 +121,8 @@ npm run dev
 
 ```bash
 bash deployment/import-assets.sh
-docker build --tag cdtank:1.0.2 .
-CDTANK_IMAGE_TAG=1.0.2 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
+docker build --tag cdtank:1.0.3 .
+CDTANK_IMAGE_TAG=1.0.3 docker compose -f deployment/compose.yml up --detach --wait --wait-timeout 180
 ```
 
 本机入口为 [http://localhost:61002](http://localhost:61002)，账户保存在 `cdtank-accounts` 持久卷中。资源准备、HTTPS 反代、镜像更新及存档备份恢复见[Docker 部署](docs/docker-deployment.md)。

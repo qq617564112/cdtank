@@ -194,6 +194,10 @@ def generate(source, output, recipe_path, cwebp, workers):
         path = output / prefix
         if path.exists():
             shutil.rmtree(path)
+    from .geometry import preprocess_geometry
+    preprocess_geometry(output)
+    for row in model_rows:
+        row['output_bytes'] = (output / row['model']).stat().st_size
     verify_references(output, resources, model_paths, recipe['ui_replacements'])
     recipe['source'] = source
     results.sort(key=lambda row: row['output_relative'])

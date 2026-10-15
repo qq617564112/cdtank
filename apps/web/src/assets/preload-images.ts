@@ -9,6 +9,7 @@ import {prepareSpriteImages, selectSpriteScope, type SpriteManifest, type UiSpri
 import {bindImageBackgrounds} from './image-artwork';
 import {prepareStaticResourceCache, type StaticResourceAsset} from './static-resource-cache';
 import {prepareArtworkManifest} from './battle-artwork';
+import {prepareBattlePanelImages} from './battle-hud-images';
 import {isMobileDevice} from '../platform/device';
 
 export interface ImageLoadingProgress {
@@ -199,6 +200,7 @@ export class ImagePreloader {
     signal.throwIfAborted();
     await prepareSourcePageImages(signal);
     await prepareSourceUi(selected === 'lobby' ? STARTUP_UI_LAYOUTS : battleUiLayouts(isMobileDevice()), signal);
+    if (selected === 'desktop-battle') await prepareBattlePanelImages(signal);
     signal.throwIfAborted();
     if (this.scope !== selected) throw new DOMException('界面已切换', 'AbortError');
     bindImageBackgrounds(preload);

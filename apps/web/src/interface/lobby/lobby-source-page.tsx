@@ -21,10 +21,11 @@ interface LobbySourcePageProps {
   status: string;
   room?: boolean;
   roomName?: string;
+  showSidebar?: boolean;
 }
 
 /** The directory composes shared textured panels around the live room and chat controls. */
-export function LobbySourcePage({visible, children, chatContent, playerContent, headerContent, status, room = false, roomName = ''}: LobbySourcePageProps) {
+export function LobbySourcePage({visible, children, chatContent, playerContent, headerContent, status, room = false, roomName = '', showSidebar = true}: LobbySourcePageProps) {
   const {ui, error, retry: retryResources} = useSourceUi(visible, ['default.xml', 'roomlist.xml', 'playerlist.xml', 'chat.xml']);
   const retry = useRef<HTMLButtonElement>(null);
   const mobile = isMobileDevice();
@@ -59,7 +60,7 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
               <ImageArtwork asset={lobbyBannerUrl} role="img" aria-label="欢迎回来"/>
             </div>}
             {!room && headerContent && <div className="lobby-source-header" data-lobby-header="">{headerContent}</div>}
-            <div className="lobby-source-sidebar">
+            {showSidebar && <div className="lobby-source-sidebar">
               {room ? ['房间', roomName].map((text, index) => {
                 const plaque = sourceProps(ui, players, 'playerlist.xml', 'datingmingchengditu');
                 return <div key={index} {...plaque} className="lobby-sidebar-title" data-room-plaque={index === 0 ? 'label' : 'name'}
@@ -77,7 +78,7 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
               </>}
               <GameSurfacePanel shape="social" className="lobby-player-panel"
                 style={{left: 610, top: 97}} aria-hidden="true"/>
-            </div>
+            </div>}
             <div className="lobby-source-main">
               {!room && !mobile && <>
                 <div {...sourceProps(ui, chat, 'chat.xml', 'paomadengditu')}
@@ -94,7 +95,7 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
             </div>
           </>}
           <div className="lobby-source-main">{chatContent}{children}</div>
-          <div className="lobby-source-sidebar">{playerContent}</div>
+          {showSidebar && <div className="lobby-source-sidebar">{playerContent}</div>}
         </SourceImageScale>
       </div>
     </div>

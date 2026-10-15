@@ -6,6 +6,8 @@
 
 音频使用独立的 `arts/audio/` → `arts/compressed-audio/` → public 流程，入口为 `npm run assets:audio`；原 WAV 编为 Opus，MP3 保留，逐文件更新与参数见[音频提取、压缩与发布](audio-compression.md)。
 
+模型描边法线、MV3 姿态去重和 CVD 几何布局通过离线 WebAssembly 内核预计算，生成与发布入口自动接入；已有资产可执行 `npm run assets:geometry` 增量更新。依赖、数据格式及目录规模见[几何数据离线预计算](geometry-preprocessing.md)。
+
 ## 执行流程
 
 安装下述依赖后，在仓库根目录执行：

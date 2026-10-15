@@ -19,8 +19,8 @@ export const DEFAULT_DISPLAY_PREFERENCES: Readonly<DisplayPreferences> = Object.
 
 export const DISPLAY_PREFERENCES_STORAGE_KEY = 'cdtank.display-settings.v1';
 
-export function getDefaultDisplayPreferences(mobile = false): DisplayPreferences {
-  return {...DEFAULT_DISPLAY_PREFERENCES, renderScale: mobile ? 1.5 : 1};
+export function getDefaultDisplayPreferences(): DisplayPreferences {
+  return {...DEFAULT_DISPLAY_PREFERENCES};
 }
 
 const listeners = new Set<() => void>();
@@ -41,9 +41,9 @@ export function validateDisplayPreferences(value: unknown): DisplayPreferences |
     msaa4x, motionBlur, showFps};
 }
 
-export function readDisplayPreferences(storage: Pick<Storage, 'getItem'>, mobile = false):
+export function readDisplayPreferences(storage: Pick<Storage, 'getItem'>):
     {preferences: DisplayPreferences; storageAvailable: boolean; loadMessage: string} {
-  const defaults = getDefaultDisplayPreferences(mobile);
+  const defaults = getDefaultDisplayPreferences();
   let raw: string | null;
   try {
     raw = storage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY);

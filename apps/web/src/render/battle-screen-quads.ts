@@ -71,8 +71,12 @@ export class BattleScreenQuads {
   private colourUpload = this.colours;
   private capacity = 0;
   private count = 0;
+  private positionsChanged = false;
+  private uvsChanged = false;
+  private coloursChanged = false;
   private readonly viewport = Vector2.Zero();
   private readonly clip = Vector3.Zero();
+  private readonly contextRestoredObserver;
 
   constructor(scene: Scene, name: string, texture: BaseTexture, order: number,
     fragmentSource = FRAGMENT, uniforms: readonly string[] = []) {
@@ -84,7 +88,8 @@ export class BattleScreenQuads {
     this.material.disableDepthWrite = true;
     this.material.depthFunction = Constants.ALWAYS;
     this.material.setTexture('image', texture);
-    this.material.setVector3('clipCircle', Vector3.Zero());
+    this.material.setVector3('clipCircle', this.clip);
+    this.material.setVector2('viewport', this.viewport);
     this.mesh = new Mesh(name, scene);
     this.mesh.material = this.material;
     this.mesh.alphaIndex = order;
@@ -92,34 +97,61 @@ export class BattleScreenQuads {
     this.mesh.alwaysSelectAsActiveMesh = true;
     this.mesh.doNotSyncBoundingInfo = true;
     this.mesh.setEnabled(false);
+    this.contextRestoredObserver = scene.getEngine().onContextRestoredObservable.add(() => {
+      if (!this.capacity) return;
+      // Prefix uploads retain shorter views; restore the original capacity as well.
+      this.mesh.setVerticesData(VertexBuffer.PositionKind, this.positions, true);
+      this.mesh.setVerticesData(VertexBuffer.UVKind, this.uvs, true);
+      this.mesh.setVerticesData(VertexBuffer.ColorKind, this.colours, true);
+      setDynamicMeshIndexCount(this.mesh, this.count * 6);
+    });
   }
 
   begin(width: number, height: number): void {
     this.count = 0;
+    this.positionsChanged = this.uvsChanged = this.coloursChanged = false;
     this.viewport.set(width, height);
-    this.material.setVector2('viewport', this.viewport);
   }
 
   clipCircle(x: number, y: number, radius: number): void {
     this.clip.set(x, y, radius);
-    this.material.setVector3('clipCircle', this.clip);
   }
 
   quad(x: number, y: number, width: number, height: number, uv: ScreenUv,
     colour: ScreenColour = WHITE, mask = false, angle = 0): void {
     this.reserve(this.count + 1);
     const cosine = Math.cos(angle), sine = Math.sin(angle);
+    const u0 = Math.fround(uv[0]), v0 = Math.fround(uv[1]);
+    const u1 = Math.fround(uv[2]), v1 = Math.fround(uv[3]);
+    const red = Math.fround(colour[0]), green = Math.fround(colour[1]);
+    const blue = Math.fround(colour[2]), alpha = Math.fround(colour[3]);
+    const maskValue = mask ? 1 : 0;
     for (let corner = 0; corner < 4; corner++) {
       const right = corner === 1 || corner === 2;
       const bottom = corner >= 2;
       const dx = (right ? .5 : -.5) * width, dy = (bottom ? .5 : -.5) * height;
       const vertex = this.count * 4 + corner;
-      this.positions[vertex * 3] = x + width / 2 + dx * cosine - dy * sine;
-      this.positions[vertex * 3 + 1] = y + height / 2 + dx * sine + dy * cosine;
-      this.positions[vertex * 3 + 2] = mask ? 1 : 0;
-      this.uvs[vertex * 2] = uv[right ? 2 : 0];
-      this.uvs[vertex * 2 + 1] = uv[bottom ? 3 : 1];
-      for (let channel = 0; channel < 4; channel++) this.colours[vertex * 4 + channel] = colour[channel];
+      const px = Math.fround(x + width / 2 + dx * cosine - dy * sine);
+      const py = Math.fround(y + height / 2 + dx * sine + dy * cosine);
+      const u = right ? u1 : u0, v = bottom ? v1 : v0;
+      if (!this.positionsChanged && (!Object.is(this.positions[vertex * 3], px)
+        || !Object.is(this.positions[vertex * 3 + 1], py)
+        || this.positions[vertex * 3 + 2] !== maskValue)) this.positionsChanged = true;
+      if (!this.uvsChanged && (!Object.is(this.uvs[vertex * 2], u)
+        || !Object.is(this.uvs[vertex * 2 + 1], v))) this.uvsChanged = true;
+      if (!this.coloursChanged && (!Object.is(this.colours[vertex * 4], red)
+        || !Object.is(this.colours[vertex * 4 + 1], green)
+        || !Object.is(this.colours[vertex * 4 + 2], blue)
+        || !Object.is(this.colours[vertex * 4 + 3], alpha))) this.coloursChanged = true;
+      this.positions[vertex * 3] = px;
+      this.positions[vertex * 3 + 1] = py;
+      this.positions[vertex * 3 + 2] = maskValue;
+      this.uvs[vertex * 2] = u;
+      this.uvs[vertex * 2 + 1] = v;
+      this.colours[vertex * 4] = red;
+      this.colours[vertex * 4 + 1] = green;
+      this.colours[vertex * 4 + 2] = blue;
+      this.colours[vertex * 4 + 3] = alpha;
     }
     this.count++;
   }
@@ -134,15 +166,16 @@ export class BattleScreenQuads {
       this.colourUpload = this.colours.subarray(0, this.count * 16);
       this.uploadCount = this.count;
     }
-    geometry.updateVerticesDataDirectly(VertexBuffer.PositionKind, this.positionUpload, 0);
-    geometry.updateVerticesDataDirectly(VertexBuffer.UVKind, this.uvUpload, 0);
-    geometry.updateVerticesDataDirectly(VertexBuffer.ColorKind, this.colourUpload, 0);
+    if (this.positionsChanged) geometry.updateVerticesDataDirectly(VertexBuffer.PositionKind, this.positionUpload, 0);
+    if (this.uvsChanged) geometry.updateVerticesDataDirectly(VertexBuffer.UVKind, this.uvUpload, 0);
+    if (this.coloursChanged) geometry.updateVerticesDataDirectly(VertexBuffer.ColorKind, this.colourUpload, 0);
     setDynamicMeshIndexCount(this.mesh, this.count * 6);
   }
 
   clear(): void {this.mesh.setEnabled(false);}
 
   dispose(): void {
+    this.mesh.getScene().getEngine().onContextRestoredObservable.remove(this.contextRestoredObserver);
     this.mesh.dispose();
     this.material.dispose();
   }
@@ -164,6 +197,7 @@ export class BattleScreenQuads {
     this.uvUpload = uvs;
     this.colourUpload = colours;
     this.capacity = capacity;
+    this.positionsChanged = this.uvsChanged = this.coloursChanged = true;
     this.mesh.setVerticesData(VertexBuffer.PositionKind, positions, true);
     this.mesh.setVerticesData(VertexBuffer.UVKind, uvs, true);
     this.mesh.setVerticesData(VertexBuffer.ColorKind, colours, true);

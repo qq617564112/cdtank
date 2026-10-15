@@ -63,7 +63,7 @@ function close(actual: ArrayLike<number>, expected: readonly number[], label: st
       `${label}/${index}: ${actual[index]} != ${value}`);
   });
 }
-function transform(matrix: EffectNativeMatrix, point: EffectVec3): EffectVec3 {
+function transform(matrix: EffectNativeMatrix, point: Readonly<EffectVec3>): EffectVec3 {
   const result = Vector3.TransformCoordinates(Vector3.FromArray(point), Matrix.FromArray([...matrix]));
   return [result.x, result.y, result.z];
 }

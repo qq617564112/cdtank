@@ -28,7 +28,7 @@ function readSessionState(): NavigationState | undefined {
 function urlPath(url: URL): string {return url.pathname + url.search + url.hash;}
 
 function publicParameter(url: URL, key: string): boolean {
-  return key === 'dialogs' || (url.pathname.replace(/\/$/, '') === '/quick-start'
+  return key === 'dialogs' || (/^\/quick-start(?:\/team-12)?$/.test(url.pathname.replace(/\/$/, ''))
     && (key === 'map' || key === 'tank'));
 }
 
@@ -112,7 +112,7 @@ export function readGameRoute(): GameRoute {
   const room = /^\/rooms\/([^/]+)(?:\/(battle|results))?$/.exec(path);
   if (room) return {page: room[2] === 'battle' ? 'battle' : room[2] === 'results' ? 'results' : 'room', roomId: room[1]};
   if (path === '/channels') return {page: 'channels'};
-  if (path === '/lobby' || path === '/quick-start' || path === '/validation.html') return {page: 'lobby'};
+  if (path === '/lobby' || path === '/quick-start' || path === '/quick-start/team-12' || path === '/validation.html') return {page: 'lobby'};
   if (path === '/closed') return {page: 'closed'};
   return {page: 'login'};
 }

@@ -41,6 +41,8 @@ export function RoomMapSelector({open, close, maps, busy, initialMode, initialMa
   const desktopScale = useSourceScale(800, 600, 0, 0, .25, Infinity).viewport.width / 800;
   const mobile = isMobileDevice();
   const uiScale = mobile ? gamePageScale(720, 405) : desktopScale;
+  const width = mobile ? 720 : trainingAvailable ? 754 : 674;
+  const mapOffset = mobile ? 0 : (width - 674) / 2;
   useEffect(() => {
     const element = dialog.current;
     if (open && ui && !busy && element?.open && (document.activeElement === document.body || document.activeElement === element)) {
@@ -59,7 +61,7 @@ export function RoomMapSelector({open, close, maps, busy, initialMode, initialMa
     ? sourceProps(ui, layout, 'selectgamemode.xml', 'SheetWindow').style : undefined;
   const place = (name: string) => sourceProps(ui!, layout!, 'selectgamemode.xml', name,
     undefined, -Number(origin!.left), -Number(origin!.top));
-  return <GameDialog ref={dialog} width={mobile ? 720 : 674} height={mobile ? 405 : 435} uiScale={uiScale}
+  return <GameDialog ref={dialog} width={width} height={mobile ? 405 : 435} uiScale={uiScale}
     stageClassName="map-selector-stage" data-room-map-selector="" aria-label="选择模式与地图"
     aria-busy={busy || !ui} onCancel={event => {
     event.preventDefault(); close();
@@ -90,19 +92,24 @@ export function RoomMapSelector({open, close, maps, busy, initialMode, initialMa
           disabled={busy || state.page + 1 >= state.pages} onClick={() => setPage(state.page + 1)}/>
       </GameDialogFootbar>
       {ui && layout && icon && <>
-        {modes.map(([name, value], index) => <GameModeTab key={name}
-          {...place(value === 6 ? 'rdoMeleeMode' : name)}
-          style={trainingAvailable ? {...place('rdoTeamMode').style, left: 8 + index * 109, width: 109} : place(name).style}
-          className="map-selector-mode" mode={value} selected={mode === value}
-          data-map-selector-mode={value} disabled={busy || !maps.some(map => map.mode === value)}
-          onClick={() => {setMode(value); setPage(0); setStatus('');}}/>)}
-        {state.maps.map((map, index) => <GameMapCard key={map.mapId} {...place(`picMap${index}`)}
-          className="map-selector-card" name={map.name} data-map-selector-map={map.mapId}
-          aria-label={`${map.name} ${map.sourceMinPlayers}–${map.maxPlayers}人`}
-          disabled={busy} onClick={() => accept(map.mapId)}
-          thumbnail={<SourceStaticImage ui={ui} layout={icon} suffix="selectgamemode_icon.xml"
-            name="picMapImage" offsetX={-7} offsetY={-12}
-            reference={roomMapPreviewReference(map.mapId)} aria-hidden="true"/>}/>)}
+        <div className="map-selector-modes">
+          {modes.map(([name, value]) => <GameModeTab key={name}
+            data-source-control={name}
+            className="map-selector-mode" mode={value} selected={mode === value}
+            data-map-selector-mode={value} disabled={busy || !maps.some(map => map.mode === value)}
+            onClick={() => {setMode(value); setPage(0); setStatus('');}}/>)}
+        </div>
+        {state.maps.map((map, index) => {
+          const position = place(`picMap${index}`);
+          return <GameMapCard key={map.mapId} {...position}
+            style={{...position.style, left: Number(position.style.left) + mapOffset}}
+            className="map-selector-card" name={map.name} data-map-selector-map={map.mapId}
+            aria-label={`${map.name} ${map.sourceMinPlayers}–${map.maxPlayers}人`}
+            disabled={busy} onClick={() => accept(map.mapId)}
+            thumbnail={<SourceStaticImage ui={ui} layout={icon} suffix="selectgamemode_icon.xml"
+              name="picMapImage" offsetX={-7} offsetY={-12}
+              reference={roomMapPreviewReference(map.mapId)} aria-hidden="true"/>}/>;
+        })}
       </>}
     </SourceImageScale>
     <GameMessage text={!open ? '' : error ? `地图选择资源载入失败：${error}；关闭后可重试` : status} tone="error"/>

@@ -110,6 +110,9 @@ export class BattleMinimapRenderer {
     this.markers = new BattleScreenQuads(this.layer.utilityLayerScene, 'minimap-markers', this.icons, 2);
     this.terrain = new BattleScreenQuads(this.layer.utilityLayerScene, 'minimap-terrain', this.icons, 0, TERRAIN_FRAGMENT,
       ['cameraCentre', 'cameraAxes', 'mapBounds', 'worldSize', 'hasMap']);
+    this.terrain.material.setVector2('cameraCentre', this.cameraCentre);
+    this.terrain.material.setVector4('cameraAxes', this.cameraAxes);
+    this.terrain.material.setVector4('mapBounds', this.mapBounds);
     this.terrain.material.setFloat('worldSize', HUD_MINIMAP_SIZE / HUD_MINIMAP_SCALE);
     this.frameTexture = new DynamicTexture('minimap-frame', {width: this.frameTextureSize, height: this.frameTextureSize},
       this.layer.utilityLayerScene, false, Texture.BILINEAR_SAMPLINGMODE);
@@ -241,9 +244,6 @@ export class BattleMinimapRenderer {
     this.cameraCentre.set(axes.x, axes.z);
     this.cameraAxes.set(axes.rightX, axes.rightZ, axes.forwardX, axes.forwardZ);
     this.mapBounds.set(bounds.minX, bounds.maxX, bounds.minZ, bounds.maxZ);
-    this.terrain.material.setVector2('cameraCentre', this.cameraCentre);
-    this.terrain.material.setVector4('cameraAxes', this.cameraAxes);
-    this.terrain.material.setVector4('mapBounds', this.mapBounds);
     this.terrain.material.setFloat('hasMap', this.image?.isReady() ? 1 : 0);
     this.terrain.quad(x, y, HUD_MINIMAP_SIZE * scale, HUD_MINIMAP_SIZE * scale, FULL_UV);
     this.terrain.end();

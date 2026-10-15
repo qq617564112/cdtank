@@ -113,7 +113,10 @@ original Breach placements as destructible `sceneObjects` (mode2 included); mode
 its single Breach `objectives` entity. The unified roll uses the former mode5 50% chance
 and maps a success onto the `runtime.values.breachDropOrder` candidates after filtering
 by the mode and scene: item501 only in mode1, item502 only in mode1/mode2 with a living
-Castle. Eligible entries remain equally likely, one unit each; the full candidate list
+Castle. Disguise items10/11 require their `resources.disguise.name` model (`obj05428`
+pumpkin / `obj05422` barrel) among the current map's `sceneObjects` or mode5 `objectives`.
+Destroyed placements still count as map members, including the current drop source.
+Eligible entries remain equally likely, one unit each; the full candidate list
 and eligibility rules are in `mode-ground-drops-runtime.md`. Castle keeps its original mode1/mode2 rule;
 Castle, Plant, and Crush never enter this producer, and mode5 still produces the drop
 before the end-of-round objective check. A later genuine respawn creates a new

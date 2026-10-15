@@ -139,6 +139,8 @@ A 变体是 `obj05014A.png`，不存在 `obj05008A.png`；`obj05006` A/B 为
   原 mode1/mode2 规则，Castle、Plant、Crush 都不走该掉落池。
 - 概率与池：五模式统一采用原先 mode5 的 50% 概率，`runtime.values.breachDropOrder` 构成
   十二项候选池；501 只在 mode1 掉落，502 只在 mode1/2 且当前存在存活碉堡时掉落。
+  10/11 分别要求地图实例包含 `resources.disguise.name` 对应的南瓜 `obj05428` / 木桶
+  `obj05422`；普通场景物件和破坏模式目标都参与模型匹配，已被击毁的放置仍计入地图归属。
   过滤后的池内等概率各 1 份，完整候选与资格见 `mode-ground-drops-runtime.md`。
   原服务端按模式的概率与数量来源仍缺，参数取 `shared/content/definitions/index.json` 的 `rules.groundDrops`
   （`chance 0.5`、`quantity 1`、`lifetimeSeconds 30`），不冒称已证原行为。

@@ -4,17 +4,17 @@
 
 ## 发行附件
 
-以 1.0.2 为例：
+以 1.0.3 为例：
 
 | 附件 | 内容 |
 | --- | --- |
-| `cdtank-1.0.2.tar.gz` | 编译服务端、前端构建文件、服务端内容表与碰撞数据、依赖锁文件、安装与启动入口、存档工具和许可声明 |
-| `cdtank-assets-1.0.2.tar.gz` | 完整 `apps/web/public/`，包含模型、贴图、音频、UI 图集、怀旧与 HD 两套战斗素材、字体及许可、数据与清单 |
+| `cdtank-1.0.3.tar.gz` | 编译服务端、前端构建文件、服务端内容表与碰撞数据、依赖锁文件、安装与启动入口、存档工具和许可声明 |
+| `cdtank-assets-1.0.3.tar.gz` | 完整 `apps/web/public/`，包含模型、贴图、音频、UI 图集、怀旧与 HD 两套战斗素材、字体及许可、数据与清单 |
 
-程序包解压后是 `cdtank-1.0.2/`，资产包顶层是 `public/`：
+程序包解压后是 `cdtank-1.0.3/`，资产包顶层是 `public/`：
 
 ```text
-cdtank-1.0.2/
+cdtank-1.0.3/
   install.mjs                   自动安装、启动并打开浏览器
   start.mjs                     已安装后的直接启动入口
   release.json                  版本、标签、仓库、源码提交与资产附件名
@@ -34,7 +34,9 @@ public/
   manifests/                    UI、战斗素材及其它资源清单
 ```
 
-资产包包含 `assets/models/{original,hd}/`、`assets/textures/{original,hd}/` 和 `battle-artwork.json` 的 `original`、`hd` 映射；发布入口与安装器要求两套资源齐全，本地组装入口还检查前端构建产物中的对应目录。手机与平板共用怀旧资源。素材生成在发布前完成，发布与安装复用成品。
+资产包包含 `assets/models/{original,hd,mobile-hd}/`、`assets/textures/{original,hd,mobile-hd}/` 和 `battle-artwork.json` 的 `original`、`hd`、`mobile-hd` 映射。手机与平板按设置选择怀旧或移动端 HD，后者使用与怀旧版一致的贴图尺寸；电脑使用怀旧或完整 HD。发布入口与安装器要求怀旧与 HD 资源齐全，本地组装入口还检查前端构建产物中的对应目录。
+
+1.0.3 资产包含模型几何预计算结果、按页面拆分的 UI 图集、训练模式图标与压缩音频；CVD 客户端直接读取预计算布局，代码与资产必须使用同一版本。训练模拟数据由 Web 构建输出到程序包的 `web/content/training/`，服务端内容表、场景与碰撞数据保留在程序包的 `content/`。素材生成在发布前完成，发布与安装复用成品。
 
 拆包按 public 的具体文件路径排除素材，保留 Vite 在 `assets/` 中生成的 JS、WASM 等文件和 `manifests/image-assets.json`。安装时把资产包的 `public/` 内容合并到程序包的 `web/`。目录规则见[public 资源目录](public-assets.md)，素材生成见[运行美术资源](original-assets.md)。
 
@@ -47,7 +49,7 @@ public/
 从 [GitHub Releases](https://github.com/qq617564112/cdtank/releases) 下载程序包并解压，进入目录：
 
 ```bash
-cd /path/to/cdtank-1.0.2
+cd /path/to/cdtank-1.0.3
 node install.mjs
 ```
 
@@ -58,7 +60,7 @@ node install.mjs
 使用已下载的同版本资产附件：
 
 ```bash
-node install.mjs --archive /path/to/cdtank-assets-1.0.2.tar.gz
+node install.mjs --archive /path/to/cdtank-assets-1.0.3.tar.gz
 ```
 
 在无桌面的服务器上关闭浏览器自动打开：
@@ -99,8 +101,8 @@ npm run assets:install
 
 ```bash
 npm run assets:install -- \
-  --archive /path/to/cdtank-assets-1.0.2.tar.gz \
-  --program /path/to/cdtank-1.0.2.tar.gz
+  --archive /path/to/cdtank-assets-1.0.3.tar.gz \
+  --program /path/to/cdtank-1.0.3.tar.gz
 ```
 
 安装器先在临时目录解压并确认目录内容，再替换上述两个运行资源目录。素材编辑在 `art/` 中完成；已有配套运行目录可跳过安装。两端构建和开发服务器命令见[根 README](../README.md)与[开发指南](development.md)。
@@ -118,7 +120,7 @@ npm run assets:install -- \
 npm run release:build
 ```
 
-该命令按锁文件执行 `npm ci`，依次构建 Web 和服务端，组装程序目录，生成两个 `.tar.gz` 附件和发布说明，输出到 `dist/github/v1.0.2/`。它不会创建 Git 标签、推送或调用 GitHub 发布。
+该命令按锁文件执行 `npm ci`，依次构建 Web 和服务端，组装程序目录，生成两个 `.tar.gz` 附件和发布说明，输出到 `dist/github/v1.0.3/`。它不会创建 Git 标签、推送或调用 GitHub 发布。
 
 原有 `npm run release:package -- <新目录>` 继续组装包含所有资源的完整运行目录，供本地部署与 Docker 使用；GitHub 脚本使用其 `--without-public` 选项拆分素材。完整目录不携带 GitHub 安装元数据，安装包内服务端依赖后直接运行 `start.mjs`。
 

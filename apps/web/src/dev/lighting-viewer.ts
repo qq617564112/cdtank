@@ -36,7 +36,7 @@ interface ViewerSettings {
 }
 
 const defaults: ViewerSettings = {tankId: 1, skin: 'red', mode: 'shadows', mapId: '0001',
-  extent: 6000, receive: true, cast: true, obstacle: false, yaw: 0, elevation: 45,
+  extent: 6000, receive: false, cast: true, obstacle: false, yaw: 0, elevation: 45,
   action: 'idle', playing: false, x: 0, z: 0, travel: false, follow: true};
 const canvas = document.querySelector<HTMLCanvasElement>('#world')!;
 const status = document.querySelector<HTMLOutputElement>('#status')!;
@@ -148,7 +148,7 @@ class LightingViewer {
       const bounds = tank.root.getHierarchyBoundingVectors(true);
       this.fittedTarget = bounds.min.add(bounds.max).scale(.5);
       this.fittedRadius = Math.max(120, Vector3.Distance(bounds.min, bounds.max) * 1.5);
-      this.shadows?.addRoot(tank.root, {dynamic: true, softShadows: false,
+      this.shadows?.addRoot(tank.root, {dynamic: true, softShadows: false, receiveShadows: this.settings.receive,
         meshes: () => tank.root.getChildMeshes().filter(mesh => mesh.isEnabled())});
       scene.onBeforeCameraRenderObservable.add(() => {
         if (!this.tank) return;

@@ -1,5 +1,5 @@
 import {battleArtworkUrl} from '../../../assets/battle-artwork';
-import {gameContent} from '../../../../../shared/content/catalog';
+import {gameContent, rankedPetSkillId} from '../../../../../shared/content/catalog';
 import {roleAmmoActionEffectName, roleAmmoEffectName} from '../../../assets/tanks/role-ammo-visual';
 import {isSkillStatusAsset} from '../../../assets/skill-status-artwork';
 import {Camera, Frustum, Observer, Plane, Scene, Texture, Vector3} from '@babylonjs/core';
@@ -91,6 +91,7 @@ function disposeWorldDraw(renderers: WorldDrawRenderers): void {
 export class EffectRuntime {
   private readonly mobile = isMobileDevice();
   private library?: Library;
+  private readonly definitionsByName = new Map<string, EffectRuntimeLibrary['nodes'][number]>();
   private modelLibrary?: EffectModelLibrary;
   private readonly modelBackends = new WeakMap<EffectModelNodeState, EffectModelRenderer>();
   private deltaSeconds = 0;
@@ -104,6 +105,8 @@ export class EffectRuntime {
   private readonly sound = new EffectSound();
   private readonly statePool = new EffectRuntimeStatePool();
   private readonly instances: Instance[] = [];
+  private readonly retainedInstancesByHandle = new Map<number, Instance>();
+  private readonly movementInstances = new Map<TankView, Instance>();
   private readonly subscriptions = new Map<TankView, Observer<TankActionMessage>>();
   private readonly movementSubscriptions = new Map<TankView, Observer<readonly [number, number, number]>>();
   private readonly deviceStates = new Map<string, string>([['CullMode', 'CCW']]);
@@ -184,6 +187,10 @@ export class EffectRuntime {
     ]);
     if (this.scene.isDisposed || revision !== this.sceneRevision) return;
     this.library = library;
+    this.definitionsByName.clear();
+    for (const definition of library.nodes) {
+      if (!this.definitionsByName.has(definition.name)) this.definitionsByName.set(definition.name, definition);
+    }
     this.links = links;
     this.audio = audio;
     this.modelLibrary = models;
@@ -195,7 +202,7 @@ export class EffectRuntime {
     await Promise.all([SHOT_IMPACT_SMOKE, SHOT_IMPACT_FLASH].map(asset => this.loadTexture(asset, true)));
     if (this.scene.isDisposed || revision !== this.sceneRevision) return;
     this.shotImpact = new ShotImpactRenderer(this.scene, this.camera,
-      this.textures.get(SHOT_IMPACT_SMOKE)!, this.textures.get(SHOT_IMPACT_FLASH)!);
+      this.textures.get(SHOT_IMPACT_SMOKE)!, this.textures.get(SHOT_IMPACT_FLASH)!, this.mobile ? 1 : 3);
     await this.shotImpact.prepare();
     if (this.scene.isDisposed || revision !== this.sceneRevision) return;
     if (this.mobile) await this.prepareMobileRenderers(library, revision);
@@ -226,6 +233,11 @@ export class EffectRuntime {
       for (const player of scope.snapshot.players) {
         for (const ids of [player.roleSkillSources?.currentSkillIds, player.roleSkillSources?.selectedSkillIds,
           player.queuedPartSkillIds]) for (const id of ids ?? []) skillIds.add(id);
+        // Hit, kill and death skills become selected only when their event fires.
+        for (const learned of player.roleSkillSources?.equipmentSkills ?? []) {
+          const id = rankedPetSkillId(learned.baseId, learned.rank);
+          if (id !== undefined) skillIds.add(id);
+        }
         const petType = player.petId ? content.pets.get(player.petId)?.petType : undefined;
         if (petType === 1 || petType === 2) names.add(roleAmmoEffectName(petType === 1 ? 119 : 120));
         if (!player.roleSkillSources && player.petId) {
@@ -262,7 +274,7 @@ export class EffectRuntime {
       indices.add(node.index);
       node.children.forEach(id => {const child = library.nodes.find(row => row.id === id); if (child) collect(child);});
     };
-    for (const name of names) {const node = library.nodes.find(row => row.name === name); if (node) collect(node);}
+    for (const name of names) {const node = this.definitionsByName.get(name); if (node) collect(node);}
     const soundReferences = new Set(library.soundControls.filter(control => indices.has(control.node))
       .map(control => control.reference.toLowerCase()));
     for (const item of content.items.values()) {
@@ -296,7 +308,7 @@ export class EffectRuntime {
 
   /** Compile the shared smoke/flash shader before the short source004 trail starts. */
   private async prepareShotRenderer(library: Library): Promise<void> {
-    const definition = library.nodes.find(node => node.name === '_root\\online\\004\\7034b')!;
+    const definition = this.definitionsByName.get('_root\\online\\004\\7034b')!;
     const control = library.spriteControls.find(row => row.node === definition.index && row.modifier === 0)!;
     const selection = library.rendering.spriteSelections.find(row => row.node === definition.index && row.modifier === 0)!;
     const pass = library.rendering.scripts.find(row => row.index === selection.selector)!.techniques[0].passes[0];
@@ -335,10 +347,10 @@ export class EffectRuntime {
         library.stripControls.find(row => row.node === definition.index && row.modifier === 0)!.renderFlags, false) :
         selectors.find(row => row.node === definition.index && row.modifier === 0)!.selector;
       const sourcePass = library.rendering.scripts.find(row => row.index === selector)!.techniques[0].passes[0];
-      const quadCount = definition.type === 6 ? library.particleControls.find(row => row.node === definition.index)!.capacity :
+      const quadCount = definition.type === 6 ? Math.ceil(library.particleControls.find(row => row.node === definition.index)!.capacity * .5) :
         definition.type === 7 ? library.stripControls.find(row => row.node === definition.index)!.geometry.segments :
         Math.max(1, ...library.spriteControls.filter(row => row.node === definition.index)
-          .map(row => row.trailEnabled ? row.trailLimit : 1));
+          .map(row => row.trailEnabled ? Math.ceil(row.trailLimit * .5) : 1));
       for (const cull of sourcePass.states.some(row => row.name === 'CullMode') ? ['CCW'] : ['CCW', 'NONE']) {
         if (this.scene.isDisposed || revision !== this.sceneRevision) return;
         const states = new Map<string, string>([['CullMode', cull]]);
@@ -407,7 +419,7 @@ export class EffectRuntime {
   async playWorldEffect(view: TankView, name: string, origin: EffectVec3): Promise<void> {
     await this.load();
     if (this.scene.isDisposed) return;
-    const definition = this.library!.nodes.find(node => node.name === name);
+    const definition = this.definitionsByName.get(name);
     if (!definition) throw new Error(`Missing original effect ${name}`);
     const tree = this.createTree(definition.id, origin);
     try {
@@ -427,7 +439,7 @@ export class EffectRuntime {
     if (!this.running || !this.library) return 0;
     this.clippingPosition.set(-origin[0], origin[1], origin[2]);
     if (this.clipped(this.clippingPosition)) return 0;
-    const definition = this.library.nodes.find(node => node.name === name);
+    const definition = this.definitionsByName.get(name);
     return definition ? this.addInstance(undefined, this.createTree(definition.id, origin)) : 0;
   }
 
@@ -441,7 +453,7 @@ export class EffectRuntime {
   /** Castle45d16f starts unclipped effects on live matrices; activeHandles drops each released tree. */
   spawnCastleEffect(name: '039' | '040' | '041', matrix: EffectNativeMatrix, activeHandles?: Set<number>): number {
     if (!this.running || !this.library) return 0;
-    const definition = this.library.nodes.find(node => node.name === `_root\\online\\${name}`);
+    const definition = this.definitionsByName.get(`_root\\online\\${name}`);
     return definition ? this.addInstance(undefined, this.createTree(definition.id, [0, 0, 0], matrix),
       false, undefined, true, false, activeHandles) : 0;
   }
@@ -458,13 +470,14 @@ export class EffectRuntime {
 
   /** The source parent is the dereferenced live transform, not the inline reference pair. */
   startCrushEffect(handle: number): void {
-    const instance = this.instances.find(row => row.handle === handle && row.crushRetained);
-    if (this.running && instance) instance.tree.start();
+    const instance = this.retainedInstancesByHandle.get(handle);
+    if (this.running && instance?.crushRetained) instance.tree.start();
   }
 
   /** Stop the old051 on round reset while its map owner keeps the retained tree. */
   stopCrushEffect(handle: number): void {
-    this.instances.find(row => row.handle === handle && row.crushRetained)?.tree.stop();
+    const instance = this.retainedInstancesByHandle.get(handle);
+    if (instance?.crushRetained) instance.tree.stop();
   }
 
   private async prepareSceneEffect(name: string, matrix: EffectNativeMatrix,
@@ -472,7 +485,7 @@ export class EffectRuntime {
     const revision = this.sceneRevision;
     await this.load();
     if (this.scene.isDisposed || revision !== this.sceneRevision) return 0;
-    const definition = this.library!.nodes.find(node => node.name === name);
+    const definition = this.definitionsByName.get(name);
     if (!definition) throw new Error(`Missing original scene effect ${name}`);
     const tree = this.createTree(definition.id, [0, 0, 0], matrix, true);
     try {
@@ -504,7 +517,7 @@ export class EffectRuntime {
     if (!tag) return 0;
     const parent = view.primaryTag(tag);
     if (!parent) return 0;
-    const definition = this.library.nodes.find(node => node.name === `_root\\online\\${String(effectId).padStart(3, '0')}`);
+    const definition = this.definitionsByName.get(`_root\\online\\${String(effectId).padStart(3, '0')}`);
     // The oneShot argument controls clipping; native manager creation retains no nodes.
     return definition ? this.addInstance(view, this.createTree(definition.id, [0, 0, 0], parent),
       false, undefined, true, view === localView) : 0;
@@ -570,7 +583,7 @@ export class EffectRuntime {
           this.modelLibrary!, this.textures, () => effectModelEngineDelta(this.deltaSeconds), definition.index, definition.name);
         (models ??= new Map()).set(definition.index, backend);
         return backend;
-      }, undefined, undefined, retain);
+      }, undefined, undefined, retain, this.mobile ? .5 : 1);
     for (const node of tree.nodes) {
       if (node.model) this.modelBackends.set(node.model, models!.get(node.definition.index)!);
     }
@@ -579,20 +592,23 @@ export class EffectRuntime {
 
   /** Original model load retains001 before its movement-period world starts. */
   retainMovementEffect(view: TankView): number {
-    const retained = this.instances.find(instance => instance.owner === view && instance.movementRetained);
+    const retained = this.movementInstances.get(view);
     if (retained) return retained.handle;
     if (!this.library || this.scene.isDisposed) return 0;
-    const definition = this.library.nodes.find(node => node.name === '_root\\online\\001');
+    const definition = this.definitionsByName.get('_root\\online\\001');
     if (!definition) throw new Error('Missing original movement effect001');
     const handle = this.addInstance(view, this.createTree(definition.id, [0, 0, 0], undefined, true), false, undefined, false);
-    this.instances.find(instance => instance.handle === handle)!.movementRetained = true;
+    const instance = this.instances.find(row => row.handle === handle)!;
+    instance.movementRetained = true;
+    this.movementInstances.set(view, instance);
+    this.retainedInstancesByHandle.set(handle, instance);
     return handle;
   }
 
   /** Original virtual38 restarts the same retained tree at the soot world point. */
   startMovementEffect(handle: number, position: readonly [number, number, number]): void {
-    const instance = this.instances.find(row => row.handle === handle && row.movementRetained);
-    if (!this.running || !instance) return;
+    const instance = this.retainedInstancesByHandle.get(handle);
+    if (!this.running || !instance?.movementRetained) return;
     for (let axis = 0; axis < 3; ++axis) instance.tree.origin[axis] = Math.fround(position[axis]);
     instance.tree.start();
   }
@@ -610,9 +626,16 @@ export class EffectRuntime {
     this.deltaSeconds = this.scene.getEngine().getDeltaTime() / 1000;
     if (startImmediately) tree.start();
     const handle = ++this.nextInstance;
-    this.instances.push({handle, owner: view, hideStatusArtwork, scenePlacement, sourceScenePlacementId,
-      crushRetained: scenePlacement && !startImmediately, tree, activeHandles, draws: tree.nodes.filter(node => node.sprite || node.particle || node.strip || node.bolt || node.overlay || node.model)
-      .map(node => ({node, controller: -1, model: node.model ? this.modelBackends.get(node.model) : undefined}))});
+    const draws: Draw[] = [];
+    for (const node of tree.nodes) {
+      if (node.sprite || node.particle || node.strip || node.bolt || node.overlay || node.model) {
+        draws.push({node, controller: -1, model: node.model ? this.modelBackends.get(node.model) : undefined});
+      }
+    }
+    const instance: Instance = {handle, owner: view, hideStatusArtwork, scenePlacement, sourceScenePlacementId,
+      crushRetained: scenePlacement && !startImmediately, tree, activeHandles, draws};
+    this.instances.push(instance);
+    if (instance.crushRetained) this.retainedInstancesByHandle.set(handle, instance);
     activeHandles?.add(handle);
     return handle;
   }
@@ -644,12 +667,16 @@ export class EffectRuntime {
   private message(view: TankView, message: TankActionMessage): void {
     if (!this.running || !this.links || !this.library) return;
     const actionId = this.links.actionKeys.find(key => key.name === message.action)?.id;
+    if (actionId === undefined) return;
     const event = this.links.actionKeys.find(key => key.id === message.identifier)?.name;
-    const records = this.links.files.find(file => file.tankCode === String(view.tankId).padStart(3, '0'))
-      ?.groups.find(group => group.key === actionId)?.actions.find(action => action.name === event)?.records ?? [];
+    if (event === undefined) return;
+    const tankCode = String(view.tankId).padStart(3, '0');
+    const records = this.links.files.find(file => file.tankCode === tankCode)
+      ?.groups.find(group => group.key === actionId)?.actions.find(action => action.name === event)?.records;
+    if (!records) return;
     for (const record of records) {
-      const name = roleAmmoActionEffectName(message.action, event ?? '', record.field04String, view.ammoAttackEffectName);
-      const definition = this.library.nodes.find(node => node.name === name);
+      const name = roleAmmoActionEffectName(message.action, event, record.field04String, view.ammoAttackEffectName);
+      const definition = this.definitionsByName.get(name);
       if (!definition) continue;
       const parent = record.bindingMode === 3 ? view.primaryTag(record.field148String) : undefined;
       this.addInstance(view, this.createTree(definition.id, [0, 0, 0], parent));
@@ -666,7 +693,7 @@ export class EffectRuntime {
     for (let index = this.instances.length - 1; index >= 0; --index) {
       const instance = this.instances[index];
       instance.tree.update(deltaSeconds);
-      if (instance.tree.quiescent && !instance.crushRetained && !instance.movementRetained) this.remove(index);
+      if (!instance.crushRetained && !instance.movementRetained && instance.tree.quiescent) this.remove(index);
     }
     let drawOrder = 0;
     for (const instance of this.instances) {
@@ -824,6 +851,10 @@ export class EffectRuntime {
     this.instances[index].tree.dispose();
     this.instances[index].draws.forEach(draw => {this.releaseDraw(draw); draw.model?.dispose();});
     this.instances[index].activeHandles?.delete(this.instances[index].handle);
+    if (this.instances[index].crushRetained || this.instances[index].movementRetained) {
+      this.retainedInstancesByHandle.delete(this.instances[index].handle);
+    }
+    if (this.instances[index].movementRetained) this.movementInstances.delete(this.instances[index].owner!);
     this.instances.splice(index, 1);
   }
 
@@ -846,6 +877,7 @@ export class EffectRuntime {
     releaseModelLibraries(this.scene, '/data/effects/');
     this.modelLibrary = undefined;
     this.library = undefined;
+    this.definitionsByName.clear();
     this.links = undefined;
     this.audio = undefined;
     this.resourcesLoaded = false;

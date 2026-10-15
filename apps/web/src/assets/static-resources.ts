@@ -41,10 +41,33 @@ export function loadStaticJson<T>(url: string, retain = true): Promise<T> {
   return loading;
 }
 
-/** Image decoding and FontFace loading do not accept an AbortSignal. */
+/** Browser decoders may wait until visible; limit foreground loading time. */
 export function withResourceTimeout<T>(loading: Promise<T>, resource: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`资源载入超时，请重试：${resource}`)), RESOURCE_TIMEOUT_MS);
-    void loading.then(value => {clearTimeout(timer); resolve(value);}, error => {clearTimeout(timer); reject(error);});
+    let remaining = RESOURCE_TIMEOUT_MS;
+    let started: number | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const pause = () => {
+      clearTimeout(timer);
+      timer = undefined;
+      if (started !== undefined) remaining -= performance.now() - started;
+      started = undefined;
+    };
+    const cleanup = () => {
+      pause();
+      document.removeEventListener('visibilitychange', update);
+    };
+    const update = () => {
+      pause();
+      if (document.hidden) return;
+      started = performance.now();
+      timer = setTimeout(() => {
+        cleanup();
+        reject(new Error(`资源载入超时，请重试：${resource}`));
+      }, Math.max(0, remaining));
+    };
+    document.addEventListener('visibilitychange', update);
+    update();
+    void loading.then(value => {cleanup(); resolve(value);}, error => {cleanup(); reject(error);});
   });
 }

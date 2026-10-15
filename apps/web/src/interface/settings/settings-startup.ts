@@ -7,13 +7,12 @@ import {applyBrightness, readBrightness} from './brightness-preferences';
 import {applySaturation, readSaturation} from './saturation-preferences';
 import {applyContrast, readContrast} from './contrast-preferences';
 import {readBattleArtworkQuality} from './battle-artwork-preferences';
-import {isMobileDevice} from '../../platform/device';
 
 export const KEY_BINDINGS_STORAGE_KEY = 'cdtank.key-bindings.v1';
 
 /** Restore consumers before React can expose room entry or playback controls. */
 export function initializeSettings(battle: Pick<Battle, 'setKeyBindings' | 'setQuickChats' | 'setMusicVolume' | 'setSoundVolume'>,
-  display = readDisplayPreferences({getItem: key => window.localStorage.getItem(key)}, isMobileDevice())) {
+  display = readDisplayPreferences({getItem: key => window.localStorage.getItem(key)})) {
   const storage = {getItem: (key: string) => window.localStorage.getItem(key)};
   applyBrightness(readBrightness(storage));
   applySaturation(readSaturation(storage));

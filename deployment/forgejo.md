@@ -31,8 +31,8 @@ git push forgejo HEAD:main
 自动部署每次从固定版本的 Release 安装资源并导入镜像。手动部署可在包含已安装运行资源的源码目录中指定资源镜像标签：
 
 ```sh
-bash deployment/import-assets.sh cdtank-assets:1.0.2
-docker build --build-arg CDTANK_ASSETS_IMAGE=cdtank-assets:1.0.2 --tag cdtank:1.0.2 .
+bash deployment/import-assets.sh cdtank-assets:1.0.3
+docker build --build-arg CDTANK_ASSETS_IMAGE=cdtank-assets:1.0.3 --tag cdtank:1.0.3 .
 ```
 
 脚本补入上述字体，只打包 `apps/web/public/` 和 `apps/server/resources/`，包含服务端数据表和碰撞数据。导入前按[美术发布流程](../docs/original-assets.md)准备图集、两套战斗素材和清单，或从同版本 Release 安装。省略标签时导入 `cdtank-assets:local`，与 Dockerfile 的默认值一致；指定标签时将同一值传入构建参数 `CDTANK_ASSETS_IMAGE`。资源更新需发布新版本附件，随后推送该版本源码触发自动同步。

@@ -78,7 +78,7 @@ export function MobileBattleJoystick({disabled, onInput, kind, scale}: TouchCont
       const travel = drag.radius / drag.scale;
       const deadZone = travel * TURRET_DEAD_ZONE;
       const reach = Math.max(0, Math.min(1, (distance - deadZone) / (travel - deadZone)));
-      const speed = reach * reach;
+      const speed = reach ** 1.4;
       setPosition({x: speed ? Math.max(-1, Math.min(1, x)) * 30 : 0, y: 0});
       onInput({aim: -Math.sign(offset) * speed});
       return;

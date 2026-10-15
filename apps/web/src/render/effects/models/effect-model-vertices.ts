@@ -1,10 +1,21 @@
-import {BoundingInfo, Constants, Geometry, Mesh, RawTexture, Scene, ShaderMaterial, Texture,
+import {Constants, Geometry, Mesh, RawTexture, Scene, ShaderMaterial, Texture,
   Vector2, Vector3, Vector4, VertexData} from '@babylonjs/core';
 
 export interface EffectModelVertexData {
   readonly vertexCount: number;
   readonly frameCount: number;
-  readonly values: Float32Array;
+  readonly positions: Float32Array;
+  readonly uvs: Float32Array;
+  readonly minimum: readonly number[];
+  readonly maximum: readonly number[];
+  readonly frames?: {
+    readonly width: number;
+    readonly height: number;
+    readonly pixels: Float32Array;
+    readonly vs: Float32Array;
+    readonly vertexIds: Float32Array;
+    readonly indices: Uint32Array;
+  };
   readonly colors?: Float32Array;
   readonly times?: readonly number[];
 }
@@ -14,54 +25,26 @@ class EffectModelGeometry {
   readonly positions: Float32Array;
   readonly uvs: Float32Array;
   readonly vertexIds?: Float32Array;
-  readonly minimum = new Vector3(Infinity, Infinity, Infinity);
-  readonly maximum = new Vector3(-Infinity, -Infinity, -Infinity);
+  readonly minimum: Vector3;
+  readonly maximum: Vector3;
   readonly texture?: RawTexture;
   readonly vTexture?: RawTexture;
   readonly geometries = new Map<readonly number[], Geometry>();
   references = 0;
 
   constructor(readonly scene: Scene, readonly data: EffectModelVertexData, readonly animated: boolean) {
-    const count = data.vertexCount;
-    this.positions = new Float32Array(count * 3);
-    this.uvs = new Float32Array(count * 2);
-    const width = Math.min(scene.getEngine().getCaps().maxTextureSize, Math.max(1, count));
-    const height = Math.ceil(count * data.frameCount / width);
-    const pixels = animated && data.frameCount > 1 ? new Float32Array(width * height * 4) : undefined;
-    const vPixels = pixels ? new Float32Array(width * height) : undefined;
-    for (let frame = 0; frame < data.frameCount; frame++) {
-      for (let index = 0; index < count; index++) {
-        const offset = (frame * count + index) * 5;
-        const x = data.values[offset], y = data.values[offset + 1], z = data.values[offset + 2];
-        const u = data.values[offset + 3], v = data.values[offset + 4];
-        this.minimum.x = Math.min(this.minimum.x, -x);
-        this.minimum.y = Math.min(this.minimum.y, y);
-        this.minimum.z = Math.min(this.minimum.z, z);
-        this.maximum.x = Math.max(this.maximum.x, -x);
-        this.maximum.y = Math.max(this.maximum.y, y);
-        this.maximum.z = Math.max(this.maximum.z, z);
-        if (frame === 0) {
-          this.positions[index * 3] = -x;
-          this.positions[index * 3 + 1] = y;
-          this.positions[index * 3 + 2] = z;
-          this.uvs[index * 2] = u;
-          this.uvs[index * 2 + 1] = v;
-        }
-        if (pixels) {
-          const vertex = frame * count + index;
-          const target = vertex * 4;
-          pixels[target] = x; pixels[target + 1] = y; pixels[target + 2] = z;
-          pixels[target + 3] = u; vPixels![vertex] = v;
-        }
-      }
-    }
-    if (pixels) {
-      this.vertexIds = Float32Array.from({length: count}, (_, index) => index);
-      this.texture = RawTexture.CreateRGBATexture(pixels, width, height, scene,
+    this.positions = data.positions;
+    this.uvs = data.uvs;
+    this.minimum = Vector3.FromArray(data.minimum);
+    this.maximum = Vector3.FromArray(data.maximum);
+    const frames = animated ? data.frames : undefined;
+    if (frames) {
+      this.vertexIds = frames.vertexIds;
+      this.texture = RawTexture.CreateRGBATexture(frames.pixels, frames.width, frames.height, scene,
         false, false, Texture.NEAREST_SAMPLINGMODE, Constants.TEXTURETYPE_FLOAT);
       this.texture.name = 'source-cvd-frames';
       this.texture.wrapU = this.texture.wrapV = Texture.CLAMP_ADDRESSMODE;
-      this.vTexture = RawTexture.CreateRTexture(vPixels!, width, height, scene,
+      this.vTexture = RawTexture.CreateRTexture(frames.vs, frames.width, frames.height, scene,
         false, false, Texture.NEAREST_SAMPLINGMODE, Constants.TEXTURETYPE_FLOAT);
       this.vTexture.name = 'source-cvd-frame-v';
       this.vTexture.wrapU = this.vTexture.wrapV = Texture.CLAMP_ADDRESSMODE;
@@ -116,7 +99,12 @@ export class EffectModelVertices {
 
   get colors(): Float32Array | undefined {return this.data.colors;}
   get usesFrameTexture(): boolean {return !!this.shared.texture;}
-  apply(mesh: Mesh, indices: readonly number[]): void {this.shared.apply(mesh, indices);}
+  apply(mesh: Mesh, indices: readonly number[]): void {
+    this.shared.apply(mesh, indices);
+    // Expand the native per-mesh bounds to every animation frame. Its global
+    // submesh reads these same bounds instead of keeping a second object tree.
+    mesh.getBoundingInfo().reConstruct(this.shared.minimum, this.shared.maximum);
+  }
 
   bind(material: ShaderMaterial): void {
     if (!this.animated) return;
@@ -132,9 +120,10 @@ export class EffectModelVertices {
     if (!this.animated || this.lastTime === time) return;
     this.lastTime = time;
     const times = this.data.times!;
+    const frames = this.data.frames?.indices;
     const local = Math.fround(time);
     if (times.length < 2 || local >= times[times.length - 1]) {
-      const offset = (this.data.frameCount - 1) * this.data.vertexCount;
+      const offset = (frames?.[this.data.frameCount - 1] ?? 0) * this.data.vertexCount;
       this.sample.set(offset, offset, 0, 1);
     } else {
       let index = 0, high = times.length - 2;
@@ -144,12 +133,11 @@ export class EffectModelVertices {
         else high = middle - 1;
       }
       const fraction = Math.fround((local - times[index]) / (times[index + 1] - times[index]));
-      this.sample.set(index * this.data.vertexCount, (index + 1) * this.data.vertexCount,
+      this.sample.set((frames?.[index] ?? 0) * this.data.vertexCount, (frames?.[index + 1] ?? 0) * this.data.vertexCount,
         fraction, Math.fround(1 - fraction));
     }
   }
 
-  bounds(): BoundingInfo {return new BoundingInfo(this.shared.minimum, this.shared.maximum);}
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;

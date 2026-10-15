@@ -15,6 +15,7 @@ import {advanceTankVertical, initialTankVerticalState, TankVerticalWorkspace,
   type TankVerticalState} from '../../../shared/movement/tank-vertical';
 
 const DIMENSIONS = {width: 49, depth: 52};
+const MOBILE_AIM_RAMP_SECONDS = .04;
 const direction = (yaw: number) => ({x: Math.fround(Math.sin(yaw)), y: 0, z: Math.fround(Math.cos(yaw))});
 const poseFromPlayer = (player: PlayerSnapshot): RoleMovementPose => ({
   position: {x: player.x, y: player.y, z: player.z},
@@ -39,6 +40,7 @@ export class LocalTankMotion {
   private bodyYaw = 0;
   private aim = 0;
   private cameraYaw = 0;
+  private mobileAim = 0;
   private mobileDrive?: {gesture: number; move: 1 | -1};
   private round = 0;
   private command: RoleMovementMathInput['command'] = 0;
@@ -55,7 +57,10 @@ export class LocalTankMotion {
   /** Shared server-clock gate; false during the round intro before the battle start. */
   setActive(active: boolean): void {
     this.active = active;
-    if (!active) this.mobileDrive = undefined;
+    if (!active) {
+      this.mobileDrive = undefined;
+      this.mobileAim = 0;
+    }
   }
 
   resetPrediction(): void {
@@ -64,6 +69,7 @@ export class LocalTankMotion {
     this.command = 0;
     this.active = false;
     this.mobileDrive = undefined;
+    this.mobileAim = 0;
     this.verticalState = {velocity: 0, airborne: false};
   }
 
@@ -75,6 +81,7 @@ export class LocalTankMotion {
       this.pose = undefined;
       this.moving = false;
       this.mobileDrive = undefined;
+      this.mobileAim = 0;
     } else if (!this.pose || round !== this.round || !player.alive
         || snapshot.phase !== 'PLAYING' || player.alive &&
         (!previous?.alive || previous.isAutopilot || previous.deaths !== player.deaths || previous.tankId !== player.tankId
@@ -91,6 +98,7 @@ export class LocalTankMotion {
           || !previous?.alive || previous.isAutopilot || previous.deaths !== player.deaths
           || previous.tankId !== player.tankId || player.roleDisguise?.startedAt !== previous.roleDisguise?.startedAt) {
         this.mobileDrive = undefined;
+        this.mobileAim = 0;
       }
       this.command = 0;
       this.verticalState = initialTankVerticalState(player.y,
@@ -215,15 +223,25 @@ export class LocalTankMotion {
   }
 
   private advanceTurret(aimInput: number, dt: number, bodyTurn: number): void {
+    if (this.mobile && !hasFixedTurret(this.player!.tankId)) {
+      const target = Math.max(-1, Math.min(1, aimInput));
+      if (target === 0 || target * this.mobileAim < 0) this.mobileAim = 0;
+      const step = dt / MOBILE_AIM_RAMP_SECONDS;
+      this.mobileAim += Math.max(-step, Math.min(step, target - this.mobileAim));
+      const maximumTurn = this.player!.movement!.turn * dt;
+      // Blend world-heading compensation into manual turning within the PC-relative limit.
+      const desiredTurn = maximumTurn * this.mobileAim - bodyTurn * (1 - Math.abs(this.mobileAim));
+      const relativeTurn = Math.max(-maximumTurn, Math.min(maximumTurn, desiredTurn));
+      const angle = this.cameraYaw + bodyTurn + relativeTurn;
+      this.cameraYaw = Math.atan2(Math.sin(angle), Math.cos(angle));
+      const aim = this.cameraYaw - this.yaw;
+      this.aim = Math.atan2(Math.sin(aim), Math.cos(aim));
+      return;
+    }
     if (this.mobile) {
       const angle = this.cameraYaw + (aimInput === 0 ? 0 : bodyTurn)
         + this.player!.movement!.turn * aimInput * dt;
       this.cameraYaw = Math.atan2(Math.sin(angle), Math.cos(angle));
-      if (!hasFixedTurret(this.player!.tankId)) {
-        const aim = this.cameraYaw - this.yaw;
-        this.aim = Math.atan2(Math.sin(aim), Math.cos(aim));
-        return;
-      }
     }
     if (hasFixedTurret(this.player!.tankId)) {
       const aim = this.bodyYaw - this.yaw;
@@ -245,6 +263,7 @@ export class LocalTankMotion {
     this.playing = false;
     this.active = false;
     this.mobileDrive = undefined;
+    this.mobileAim = 0;
     this.command = 0;
     this.verticalState = {velocity: 0, airborne: false};
   }

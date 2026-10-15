@@ -136,9 +136,14 @@ export class EffectSpriteMesh {
   private uvUpload = this.uvs;
   private colourUpload = this.colors;
   private shapeUpload = this.shapes;
+  private positionsChanged = false;
+  private uvsChanged = false;
+  private colorsChanged = false;
+  private shapesChanged = false;
   private readonly minimum = new Vector3();
   private readonly maximum = new Vector3();
   private readonly bounds = new BoundingInfo(Vector3.Zero(), Vector3.Zero());
+  private readonly contextRestoredObserver;
 
   constructor(scene: Scene, pass: EffectRenderPass, texture: Texture, private readonly billboard = false) {
     this.sharedMaterial = acquireEffectMaterial(scene, pass, texture, billboard);
@@ -149,6 +154,20 @@ export class EffectSpriteMesh {
     // Scene surfaces finish first; source depth testing still occludes world effects.
     scene.setRenderingAutoClearDepthStencil(1, false);
     this.mesh.renderingGroupId = 1;
+    this.contextRestoredObserver = scene.getEngine().onContextRestoredObservable.add(() => {
+      if (!this.capacity) return;
+      // Prefix uploads may have restored less than the retained CPU capacity.
+      this.mesh.setVerticesData(VertexBuffer.PositionKind, this.positions, true);
+      this.mesh.setVerticesData(VertexBuffer.UVKind, this.uvs, true);
+      this.mesh.setVerticesData(VertexBuffer.ColorKind, this.colors, true);
+      if (this.billboard) this.mesh.setVerticesData('particleShape', this.shapes, true, 2);
+      this.positionsChanged = this.uvsChanged = false;
+      this.colorsChanged = this.shapesChanged = false;
+      const indexCount = this.topology === 'quads' ? this.count / 4 * 6 : Math.max(0, this.count - 2) * 3;
+      if (indexCount) this.bounds.reConstruct(this.minimum, this.maximum, this.mesh.getWorldMatrix());
+      this.mesh.setBoundingInfo(this.bounds);
+      setDynamicMeshIndexCount(this.mesh, indexCount);
+    });
   }
 
   update(corners: readonly [EffectVec3, EffectVec3, EffectVec3, EffectVec3],
@@ -205,17 +224,10 @@ export class EffectSpriteMesh {
     const radians = Math.fround(angle) * Math.fround(0.01745329238474369);
     for (let corner = 0; corner < 4; corner++) {
       const index = this.count++;
-      this.positions[index * 3] = x;
-      this.positions[index * 3 + 1] = y;
-      this.positions[index * 3 + 2] = z;
-      this.uvs[index * 2] = uv[corner === 1 || corner === 2 ? 0 : 2];
-      this.uvs[index * 2 + 1] = uv[corner >= 2 ? 3 : 1];
-      this.colors[index * 4] = red;
-      this.colors[index * 4 + 1] = green;
-      this.colors[index * 4 + 2] = blue;
-      this.colors[index * 4 + 3] = alpha;
-      this.shapes[index * 2] = size;
-      this.shapes[index * 2 + 1] = radians;
+      this.writePosition(index, x, y, z);
+      this.writeUv(index, uv[corner === 1 || corner === 2 ? 0 : 2], uv[corner >= 2 ? 3 : 1]);
+      this.writeColor(index, red, green, blue, alpha);
+      this.writeShape(index, size, radians);
     }
     const radius = Math.abs(size) * Math.SQRT2;
     this.include(x - radius, y - radius, z - radius);
@@ -238,13 +250,61 @@ export class EffectSpriteMesh {
 
   private vertex(x: number, y: number, z: number, u: number, v: number, color: number): void {
     const index = this.count++;
-    this.positions[index * 3] = x; this.positions[index * 3 + 1] = y; this.positions[index * 3 + 2] = z;
-    this.uvs[index * 2] = u; this.uvs[index * 2 + 1] = v;
-    this.colors[index * 4] = ((color >>> 16) & 255) / 255;
-    this.colors[index * 4 + 1] = ((color >>> 8) & 255) / 255;
-    this.colors[index * 4 + 2] = (color & 255) / 255;
-    this.colors[index * 4 + 3] = (color >>> 24) / 255;
+    this.writePosition(index, x, y, z);
+    this.writeUv(index, u, v);
+    this.writeColor(index, ((color >>> 16) & 255) / 255, ((color >>> 8) & 255) / 255,
+      (color & 255) / 255, (color >>> 24) / 255);
     this.include(x, y, z);
+  }
+
+  private writePosition(index: number, x: number, y: number, z: number): void {
+    const offset = index * 3;
+    if (this.positionsChanged) {
+      this.positions[offset] = x; this.positions[offset + 1] = y; this.positions[offset + 2] = z;
+      return;
+    }
+    const previousX = this.positions[offset], previousY = this.positions[offset + 1], previousZ = this.positions[offset + 2];
+    this.positions[offset] = x; this.positions[offset + 1] = y; this.positions[offset + 2] = z;
+    this.positionsChanged = !Object.is(previousX, this.positions[offset]) || !Object.is(previousY, this.positions[offset + 1])
+      || !Object.is(previousZ, this.positions[offset + 2]);
+  }
+
+  private writeUv(index: number, u: number, v: number): void {
+    const offset = index * 2;
+    if (this.uvsChanged) {
+      this.uvs[offset] = u; this.uvs[offset + 1] = v;
+      return;
+    }
+    const previousU = this.uvs[offset], previousV = this.uvs[offset + 1];
+    this.uvs[offset] = u; this.uvs[offset + 1] = v;
+    // Compare the stored Float32 values, including the sign of zero.
+    this.uvsChanged = !Object.is(previousU, this.uvs[offset]) || !Object.is(previousV, this.uvs[offset + 1]);
+  }
+
+  private writeColor(index: number, red: number, green: number, blue: number, alpha: number): void {
+    const offset = index * 4;
+    if (this.colorsChanged) {
+      this.colors[offset] = red; this.colors[offset + 1] = green;
+      this.colors[offset + 2] = blue; this.colors[offset + 3] = alpha;
+      return;
+    }
+    const previousRed = this.colors[offset], previousGreen = this.colors[offset + 1];
+    const previousBlue = this.colors[offset + 2], previousAlpha = this.colors[offset + 3];
+    this.colors[offset] = red; this.colors[offset + 1] = green;
+    this.colors[offset + 2] = blue; this.colors[offset + 3] = alpha;
+    this.colorsChanged = !Object.is(previousRed, this.colors[offset]) || !Object.is(previousGreen, this.colors[offset + 1])
+      || !Object.is(previousBlue, this.colors[offset + 2]) || !Object.is(previousAlpha, this.colors[offset + 3]);
+  }
+
+  private writeShape(index: number, size: number, angle: number): void {
+    const offset = index * 2;
+    if (this.shapesChanged) {
+      this.shapes[offset] = size; this.shapes[offset + 1] = angle;
+      return;
+    }
+    const previousSize = this.shapes[offset], previousAngle = this.shapes[offset + 1];
+    this.shapes[offset] = size; this.shapes[offset + 1] = angle;
+    this.shapesChanged = !Object.is(previousSize, this.shapes[offset]) || !Object.is(previousAngle, this.shapes[offset + 1]);
   }
 
   private end(indexCount: number): void {
@@ -258,10 +318,23 @@ export class EffectSpriteMesh {
       if (this.billboard) this.shapeUpload = this.shapes.subarray(0, this.count * 2);
       this.uploadCount = this.count;
     }
-    geometry.updateVerticesDataDirectly(VertexBuffer.PositionKind, this.positionUpload, 0);
-    geometry.updateVerticesDataDirectly(VertexBuffer.UVKind, this.uvUpload, 0);
-    geometry.updateVerticesDataDirectly(VertexBuffer.ColorKind, this.colourUpload, 0);
-    if (this.billboard) geometry.updateVerticesDataDirectly('particleShape', this.shapeUpload, 0);
+    // Value updates keep the same layout and GPU buffers; reserve/restore rebuild them.
+    if (this.positionsChanged) {
+      geometry.getVertexBuffer(VertexBuffer.PositionKind)!.updateDirectly(this.positionUpload, 0);
+      this.positionsChanged = false;
+    }
+    if (this.uvsChanged) {
+      geometry.getVertexBuffer(VertexBuffer.UVKind)!.updateDirectly(this.uvUpload, 0);
+      this.uvsChanged = false;
+    }
+    if (this.colorsChanged) {
+      geometry.getVertexBuffer(VertexBuffer.ColorKind)!.updateDirectly(this.colourUpload, 0);
+      this.colorsChanged = false;
+    }
+    if (this.billboard && this.shapesChanged) {
+      geometry.getVertexBuffer('particleShape')!.updateDirectly(this.shapeUpload, 0);
+      this.shapesChanged = false;
+    }
     this.bounds.reConstruct(this.minimum, this.maximum, this.mesh.getWorldMatrix());
     this.mesh.setBoundingInfo(this.bounds);
     setDynamicMeshIndexCount(this.mesh, indexCount);
@@ -278,6 +351,8 @@ export class EffectSpriteMesh {
     this.uploadCount = -1;
     this.positionUpload = positions; this.uvUpload = uvs; this.colourUpload = colors;
     this.capacity = capacity; this.topology = topology;
+    this.positionsChanged = this.uvsChanged = true;
+    this.colorsChanged = this.shapesChanged = true;
     const indices = new Uint32Array(topology === 'quads' ? capacity / 4 * 6 : (capacity - 2) * 3);
     if (topology === 'quads') {
       for (let vertex = 0; vertex < capacity; vertex += 4) {
@@ -314,6 +389,7 @@ export class EffectSpriteMesh {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.mesh.getScene().getEngine().onContextRestoredObservable.remove(this.contextRestoredObserver);
     this.mesh.dispose();
     releaseEffectMaterial(this.sharedMaterial); // caller owns the texture
   }

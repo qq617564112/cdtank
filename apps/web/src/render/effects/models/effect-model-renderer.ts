@@ -1,9 +1,9 @@
 import {Mesh, Scene, Texture} from '@babylonjs/core';
 import {EffectModelAnimation, EffectModelAnimationNode} from './effect-model-animation';
 import {EffectModelDraw} from './effect-model-draw';
-import {EffectAttachMaterialCache} from './effect-attach-material-sol';
-import {effectModelAmbient, EffectModelGraphicsState} from './effect-model-material';
-import {EffectModelMesh} from './effect-model-mesh';
+import {effectModelMaterialSelection} from './effect-material-combo-sol';
+import {effectModelAmbientColor, EffectModelGraphicsState} from './effect-model-material';
+import {EffectModelMesh, type EffectModelDeviceState} from './effect-model-mesh';
 import {EffectModelBackend} from './effect-model-node';
 import {EFFECT_IDENTITY, multiplyEffectMatricesToRef} from '../common/effect-render-transform';
 import {setSceneModelPriority} from '../../scene-model-order';
@@ -22,9 +22,42 @@ export interface EffectModelLibrary {
   graphics: EffectModelGraphicsState;
   scripts: {name: string; states: {name: string; value: string}[]}[];
 }
-interface PartDraw {node: number; part: ModelPart; ambient: number[]; material?: EffectAttachMaterialCache; script?: string; renderer?: EffectModelMesh;}
+interface PartDraw {node: number; part: ModelPart; ambient: number[]; script?: string; renderer?: EffectModelMesh;}
 
 const transformSamplers = new WeakMap<EffectModelAnimationNode, AnimationTransformSampler>();
+const modelDeviceStates = new WeakMap<EffectModelLibrary['scripts'], Map<string, Readonly<EffectModelDeviceState>>>();
+
+/** Shared source scripts resolve fixed state; materials retain their own uniforms. */
+function modelDeviceState(scripts: EffectModelLibrary['scripts'], script: string): Readonly<EffectModelDeviceState> {
+  let variants = modelDeviceStates.get(scripts);
+  if (!variants) {
+    variants = new Map();
+    modelDeviceStates.set(scripts, variants);
+  }
+  const cached = variants.get(script);
+  if (cached) return cached;
+  const resolved: EffectModelDeviceState = {cull: 'CW', depthWrite: true, depthTest: true, blend: false, alphaTest: false};
+  // default.gbf supplies inherited values; the selected GBF overrides only its keys.
+  for (let pass = 0; pass < 2; pass++) {
+    const name = pass === 0 ? 'default' : script;
+    let definition: EffectModelLibrary['scripts'][number] | undefined;
+    for (const candidate of scripts) {
+      if (candidate.name === name) {definition = candidate; break;}
+    }
+    for (const state of definition!.states) {
+      const value = state.value;
+      switch (state.name) {
+        case 'CullMode': resolved.cull = value === 'CW' || value === 'CCW' || value === 'NONE' ? value : 'CW'; break;
+        case 'ZWriteEnable': resolved.depthWrite = value === 'TRUE'; break;
+        case 'ZEnable': resolved.depthTest = value === 'TRUE'; break;
+        case 'AlphaBlendEnable': resolved.blend = value === 'TRUE'; break;
+        case 'AlphaTestEnable': resolved.alphaTest = value === 'TRUE'; break;
+      }
+    }
+  }
+  variants.set(script, resolved);
+  return resolved;
+}
 
 /** Type5 source geometry and gbGeomNode animation behind the production tree. */
 export class EffectModelRenderer implements EffectModelBackend {
@@ -48,7 +81,8 @@ export class EffectModelRenderer implements EffectModelBackend {
       return new EffectModelAnimation(node.animation, node.duration!, sampler);
     });
     this.matrices = resource.nodes.map(() => new Array<number>(16).fill(0));
-    this.graphics = {ambient: [0, 0, 0], emissive: library.graphics.emissive};
+    // Empty components ensure the first draw computes every part's RGB.
+    this.graphics = {ambient: [], emissive: library.graphics.emissive};
     this.draws = resource.nodes.flatMap((node, index) => node.parts.map(part => ({node: index, part, ambient: [0, 0, 0, 0]})));
     for (const draw of this.draws) if (!draw.part.asset) throw new Error(`Missing original model texture ${resource.reference}`);
   }
@@ -76,40 +110,38 @@ export class EffectModelRenderer implements EffectModelBackend {
     const graphics = this.graphics;
     const ambient = graphics.ambient as number[];
     const color = this.scene.ambientColor;
-    for (let axis = 0; axis < 3; axis++) ambient[axis] = color.equalsFloats(0, 0, 0)
-      ? this.library.graphics.ambient[axis] : axis === 0 ? color.r : axis === 1 ? color.g : color.b;
+    const sourceAmbient = color.equalsFloats(0, 0, 0);
+    let ambientChanged = false;
+    for (let axis = 0; axis < 3; axis++) {
+      const value = sourceAmbient ? this.library.graphics.ambient[axis]
+        : axis === 0 ? color.r : axis === 1 ? color.g : color.b;
+      ambientChanged ||= !Object.is(ambient[axis], value);
+      ambient[axis] = value;
+    }
+    // Finish all RGB updates before mesh creation, which can fail and retry.
+    if (ambientChanged) {
+      for (const draw of this.draws) effectModelAmbientColor(draw.part.properties, graphics, draw.ambient);
+    }
     for (let index = 0; index < this.draws.length; index++) {
       const draw = this.draws[index];
       const node = this.resource.nodes[draw.node];
       const vertices = this.vertices[draw.node] ??=
         new EffectModelVertices(this.scene, node.vertexData!, !!node.animation);
       vertices.setTime(this.animations[draw.node]?.time ?? 0);
-      const script = (draw.material ??= new EffectAttachMaterialCache()).select(node.fvf, draw.part.kind, state.blend).script;
-      if (draw.script !== script) {
-        draw.renderer?.dispose();
-        const states = new Map<string, string>();
-        for (const name of ['default', script]) this.library.scripts.find(row => row.name === name)!.states
-          .forEach(row => states.set(row.name, row.value));
+      // AttachSelf retains its first choice, including when material creation must retry.
+      const script = draw.script ??= effectModelMaterialSelection(node.fvf, draw.part.kind, state.blend).script;
+      if (!draw.renderer) {
+        const deviceState = modelDeviceState(this.library.scripts, script);
         const texture = this.textures.get(draw.part.asset!)!;
-        // Original device state inheritance: default.gbf is the baseline and
-        // the selected section GBF only overrides the keys it names. Missing
-        // keys therefore keep the baseline instead of a material-local guess.
-        const cullState = states.get('CullMode');
-        draw.renderer = new EffectModelMesh(this.scene, texture, {
-          cull: cullState === 'CW' || cullState === 'CCW' || cullState === 'NONE' ? cullState : 'CW',
-          depthWrite: states.has('ZWriteEnable') ? states.get('ZWriteEnable') === 'TRUE' : true,
-          depthTest: states.has('ZEnable') ? states.get('ZEnable') === 'TRUE' : true,
-          blend: states.get('AlphaBlendEnable') === 'TRUE',
-          alphaTest: states.get('AlphaTestEnable') === 'TRUE',
-        }, vertices, draw.part.indices);
+        draw.renderer = new EffectModelMesh(this.scene, texture, deviceState, vertices, draw.part.indices);
         draw.renderer.mesh.metadata = {originalEffect: this.name, sourceNode: this.sourceNode,
           sourceModel: this.resource.reference, sourceModelNode: draw.node};
         this.renderedMeshes[index] = draw.renderer.mesh;
-        draw.script = script;
       }
       setSceneModelPriority(draw.renderer!.mesh, state.priority);
       draw.renderer!.mesh.setEnabled(true);
-      draw.renderer!.update(matrices[draw.node], effectModelAmbient(draw.part.properties, state.alpha, graphics, draw.ambient));
+      draw.ambient[3] = Math.fround(Math.fround(state.alpha) * draw.part.properties[3]);
+      draw.renderer!.update(matrices[draw.node], draw.ambient);
     }
   }
   get meshes(): Mesh[] {return this.renderedMeshes;}

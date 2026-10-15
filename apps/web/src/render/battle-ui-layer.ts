@@ -1,6 +1,8 @@
-import {DynamicTexture, Texture} from '@babylonjs/core';
+import {Texture} from '@babylonjs/core';
 import type {Scene} from '@babylonjs/core';
-import {decodeImageRegion, type ImageRegion} from '../assets/image-resources';
+import {imageResourceKey} from '../assets/image-cache';
+import {decodeImageRegion} from '../assets/image-resources';
+import {withResourceTimeout} from '../assets/static-resources';
 import {BattleScreenQuads, createBattleScreenLayer, type ScreenUv} from './battle-screen-quads';
 import type {BattleVectorShape, VectorRectangle} from './battle-screen-vectors';
 
@@ -18,7 +20,7 @@ export interface BattleImageEntry {
   draw?: BattleImageDraw;
 }
 
-interface ImageAtlas {texture: DynamicTexture; width: number; height: number;}
+interface ImageAtlas {texture: Texture; width: number; height: number;}
 interface ImageResource {atlas: ImageAtlas; uv: ScreenUv;}
 const layers = new WeakMap<Scene, BattleUiLayer>();
 
@@ -26,11 +28,12 @@ const layers = new WeakMap<Scene, BattleUiLayer>();
 export class BattleUiLayer {
   private readonly layer;
   private readonly entries = new Set<BattleImageEntry>();
-  private readonly atlases = new Map<ImageRegion['image'], ImageAtlas>();
+  private readonly atlases = new Map<string, Promise<ImageAtlas>>();
   private readonly images = new Map<string, ImageResource>();
   private readonly loading = new Map<string, Promise<void>>();
   private readonly batches = new Map<number, Map<ImageAtlas, BattleScreenQuads>>();
   private readonly quadUv: [number, number, number, number] = [0, 0, 0, 0];
+  private revision = 0;
   private disposed = false;
 
   constructor(private readonly scene: Scene) {
@@ -43,6 +46,16 @@ export class BattleUiLayer {
 
   prepare(shapes: readonly BattleVectorShape[]): Promise<void> {
     return Promise.all(shapes.map(shape => this.loadImage(shape.asset))).then(() => {});
+  }
+
+  /** Release a battle's resources after its text owners have been disposed. */
+  clear(): void {
+    this.revision++;
+    for (const batches of this.batches.values()) {
+      for (const batch of batches.values()) batch.dispose();
+    }
+    for (const loading of this.atlases.values()) void loading.then(atlas => atlas.texture.dispose(), () => {});
+    this.entries.clear(); this.batches.clear(); this.images.clear(); this.atlases.clear(); this.loading.clear();
   }
 
   /** Called after the world, minimap and world-space nameplates have rendered. */
@@ -103,35 +116,49 @@ export class BattleUiLayer {
     if (this.images.has(asset) || this.disposed) return Promise.resolve();
     const pending = this.loading.get(asset);
     if (pending) return pending;
-    const loading = decodeImageRegion(`/${asset}`).then(region => {
-      if (this.disposed) return;
-      let atlas = this.atlases.get(region.image);
-      if (!atlas) {
-        const width = region.image.width, height = region.image.height;
-        const texture = new DynamicTexture(`battle-images-${this.atlases.size}`, {width, height},
-          this.layer.utilityLayerScene, false, Texture.BILINEAR_SAMPLINGMODE);
-        texture.hasAlpha = true;
-        texture.wrapU = texture.wrapV = Texture.CLAMP_ADDRESSMODE;
-        texture.getContext().drawImage(region.image, 0, 0);
-        texture.update(false);
-        atlas = {texture, width, height};
-        this.atlases.set(region.image, atlas);
+    const revision = this.revision;
+    const loading = decodeImageRegion(`/${asset}`).then(async region => {
+      if (this.disposed || revision !== this.revision) return;
+      const key = imageResourceKey(`/${asset}`);
+      let atlasLoading = this.atlases.get(key);
+      if (!atlasLoading) {
+        const pending = this.loadAtlas(key, revision).catch(error => {
+          if (this.atlases.get(key) === pending) this.atlases.delete(key);
+          throw error;
+        });
+        this.atlases.set(key, pending);
+        atlasLoading = pending;
       }
+      const atlas = await atlasLoading;
+      if (this.disposed || revision !== this.revision) return;
       this.images.set(asset, {atlas, uv: [region.x / atlas.width, region.y / atlas.height,
         (region.x + region.width) / atlas.width, (region.y + region.height) / atlas.height]});
-    }).finally(() => {this.loading.delete(asset);});
+    }).finally(() => {if (this.loading.get(asset) === loading) this.loading.delete(asset);});
     this.loading.set(asset, loading);
     return loading;
   }
 
+  /** Static source sheets restore from their published URL without a canvas copy. */
+  private loadAtlas(url: string, revision: number): Promise<ImageAtlas> {
+    let abandoned = false;
+    const loading = new Promise<ImageAtlas>((resolve, reject) => {
+      // Keep native callbacks alive until upload finishes, including after timeout or scene disposal.
+      const created = new Texture(url, this.scene.getEngine(), true, false, Texture.BILINEAR_SAMPLINGMODE,
+        () => {
+          const {width, height} = created.getSize();
+          if (abandoned || this.disposed || revision !== this.revision) created.dispose();
+          resolve({texture: created, width, height});
+        }, (message, error) => {created.dispose(); reject(error ?? new Error(message));});
+      created.hasAlpha = true;
+      created.wrapU = created.wrapV = Texture.CLAMP_ADDRESSMODE;
+    });
+    return withResourceTimeout(loading, url).catch(error => {abandoned = true; throw error;});
+  }
+
   private dispose(): void {
     this.disposed = true;
-    for (const batches of this.batches.values()) {
-      for (const batch of batches.values()) batch.dispose();
-    }
-    for (const atlas of this.atlases.values()) atlas.texture.dispose();
+    this.clear();
     this.layer.dispose();
-    this.entries.clear(); this.batches.clear(); this.images.clear(); this.atlases.clear(); this.loading.clear();
   }
 }
 

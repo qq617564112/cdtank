@@ -35,7 +35,7 @@ import {SceneBreachMaterial, sceneBreachMaterialModel} from './scene-breach-mate
 import {sceneBreachLibrary, type SceneBreachDestruction} from './scene-breach-resources';
 import {sceneEnvironmentFor} from '../../../../shared/maps/scene-environment';
 import {applySceneEnvironment, resetSceneShaderEnvironment} from '../../render/scene-environment';
-import {orderSceneModels} from '../../render/scene-model-order';
+import {orderSceneModels, setSceneModelPriority} from '../../render/scene-model-order';
 import {castleResourceFile} from '../../../../shared/maps/castle-resources';
 import type {AbstractMesh} from '@babylonjs/core';
 import {sceneShadowLight} from '../../render/scene-shadow-light';
@@ -502,11 +502,12 @@ export class ScenePreview {
     // Original queue priority is a per-object band; opaque draws before
     // transparent within each band, independent of the previous scene's
     // leftover alphaIndex.
-    orderSceneModels(this.scene, placements.flatMap(placement => {
+    for (const placement of placements) {
       const root = this.scene.getTransformNodeByName(`placement-${placement.id}`);
-      if (!root) return [];
-      return root.getChildMeshes().map(mesh => ({mesh, priority: 0}));
-    }));
+      if (!root) continue;
+      for (const mesh of root.getChildMeshes()) setSceneModelPriority(mesh, 0);
+    }
+    orderSceneModels(this.scene);
     terrain.rootNodes.forEach(node => {node.setEnabled(true);});
     const shadows = sceneShadowLight(this.scene);
     if (shadows) {

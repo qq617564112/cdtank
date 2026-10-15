@@ -1,8 +1,9 @@
-import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties} from 'react';
+import {HudReloadControl} from './hud-reload-control';
+import {memo, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties} from 'react';
 import type {Battle} from '../../match/battle';
-import type {HudSnapshot, SourceUi} from './battle-hud';
+import type {BattleHud, HudLayoutSnapshot, SourceUi} from './battle-hud';
 import {ImageArtwork} from '../resources/image-artwork';
-import {BattleCrosshair, BattleModeIntro} from './battle-hud-artwork';
+import {BattleModeIntro} from './battle-hud-artwork';
 import {MobileBattleJoystick, MobileBattleFire} from './mobile-battle-controls';
 import {MobileBattleItems} from './mobile-battle-items';
 import {MobileBattlePortrait} from './mobile-battle-portrait';
@@ -16,16 +17,20 @@ export function MobileBattleHud({battle, scoreboardOpen, onScoreboard}: {
   battle: Battle; scoreboardOpen: boolean; onScoreboard: () => void;
 }) {
   const hud = battle.originalHud;
-  const state = useSyncExternalStore(hud.subscribe, hud.getSnapshot);
-  const combat = useSyncExternalStore(hud.subscribeCombat, hud.getCombatSnapshot);
-  const reload = useSyncExternalStore(hud.subscribeReload, hud.getReloadSnapshot);
-  const chat = useSyncExternalStore(battle.chat.subscribe, battle.chat.getSnapshot);
-  const match = useSyncExternalStore(battle.matchPanel.subscribe, battle.matchPanel.getSnapshot);
+  const state = useSyncExternalStore(hud.subscribe, hud.getLayoutSnapshot);
+  const canUseShortcuts = useSyncExternalStore(hud.subscribeCombat,
+    useCallback(() => hud.getCombatSnapshot().canUseShortcuts, [hud]));
+  const chatVisible = useSyncExternalStore(battle.chat.subscribe,
+    useCallback(() => battle.chat.getSnapshot().visible, [battle]));
+  const chatEditing = useSyncExternalStore(battle.chat.subscribe,
+    useCallback(() => battle.chat.getSnapshot().editing, [battle]));
+  const loaded = useSyncExternalStore(battle.matchPanel.subscribe,
+    useCallback(() => battle.matchPanel.getSnapshot()?.loading.progress === 1, [battle]));
   const root = useRef<HTMLDivElement>(null), minimap = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [modal, setModal] = useState(false);
-  const visible = state.visible && match?.loading.progress === 1;
-  const disabled = !visible || !combat.canUseShortcuts || scoreboardOpen || chat.editing || modal;
+  const visible = state.visible && loaded;
+  const disabled = !visible || !canUseShortcuts || scoreboardOpen || chatEditing || modal;
   useLayoutEffect(() => {
     if (!visible) return;
     const resize = () => {
@@ -64,64 +69,31 @@ export function MobileBattleHud({battle, scoreboardOpen, onScoreboard}: {
     if (disabled) battle.clearTouchInput();
     return () => battle.clearTouchInput();
   }, [battle, disabled, state.roomId, state.round]);
-  const player = state.slots.find(player => player?.id === combat.playerId);
-  const health = state.localHealth;
-  const fraction = health ? Math.max(0, Math.min(1, health.hp / health.maxHp)) : 0;
-  const magazine = combat.magazine;
   return <div ref={root} id="mobile-battle-hud" hidden={!visible} data-mode={state.mode}
     data-hud-renderer="mobile" style={{'--mobile-scale': scale} as CSSProperties}>
     {(['movement', 'turret'] as const).map(kind => <MobileBattleJoystick
       key={`${state.roomId}:${state.round}:${kind}`} kind={kind} disabled={disabled}
       scale={scale} onInput={battle.setTouchInput}/>)}
-    <div className="mobile-battle-player mobile-battle-sized">
-      <div className="mobile-battle-portrait" role="img" aria-label={`${health?.name ?? ''}宠物头像`}>
-        <div className="mobile-battle-portrait-image">
-          {player?.asset && <MobileBattlePortrait asset={`/${player.asset}`}/>}
-        </div>
-        <ImageArtwork className="mobile-battle-portrait-frame" asset="/ui/battle/mobile/portrait-frame.webp"/>
-      </div>
-      <div className="mobile-battle-health" role="progressbar" aria-label={`${health?.name ?? ''}生命`}
-        aria-valuemin={0} aria-valuemax={health?.maxHp ?? 1} aria-valuenow={health?.hp ?? 0}
-        data-health-band={fraction < .3 ? 'low' : fraction < .6 ? 'medium' : 'full'}>
-        <span className="mobile-battle-health-fill" style={{width: `${fraction * 100}%`}}/>
-        <span className="mobile-battle-health-value">{health ? `${Math.ceil(health.hp)}/${Math.ceil(health.maxHp)}` : ''}</span>
-      </div>
-      {magazine && <div className="mobile-battle-magazine" aria-label={`弹匣 ${magazine.remaining}/${magazine.capacity}`}>
-        <div className="mobile-battle-shells" aria-hidden="true">
-          {Array.from({length: magazine.capacity}, (_, index) => <i key={index} data-filled={index < magazine.remaining || undefined}/>)}
-        </div>
-        <span data-bullet-remaining={magazine.remaining} data-bullet-capacity={magazine.capacity}>
-          {magazine.remaining}/{magazine.capacity}
-        </span>
-      </div>}
-      <div className="mobile-battle-statuses" aria-label="战斗状态">
-        {player?.statuses.map(effectId => {
-          const status = SKILL_STATUS_ARTWORK.get(effectId)!;
-          return <ImageArtwork key={effectId} asset={`/${status.asset}`} fit="contain"
-            role="img" aria-label={status.label} data-status-effect={effectId}/>;
-        })}
-      </div>
-    </div>
-    <MobileBattleScore state={state}/>
+    <MobileBattlePlayer hud={hud}/>
+    <MobileBattleScore mode={state.mode} info={state.modeInfo} teamCounts={state.teamCounts}
+      timer={state.timers[state.mode - 1]}/>
     <div ref={minimap} className="mobile-battle-minimap mobile-battle-sized" aria-label="实时小地图"/>
     <button type="button" className="mobile-battle-scoreboard mobile-battle-art-button mobile-battle-sized"
       data-battle-button-sound=""
       aria-label="打开计分板" aria-expanded={scoreboardOpen} onClick={onScoreboard}>
       <ImageArtwork asset="/ui/battle/mobile/scoreboard-normal.webp"/>
     </button>
-    <button type="button" className="mobile-battle-chat-button mobile-battle-art-button mobile-battle-sized"
+    {chatVisible && <button type="button" className="mobile-battle-chat-button mobile-battle-art-button mobile-battle-sized"
       data-battle-button-sound=""
       aria-label="打开聊天" disabled={scoreboardOpen || modal} onClick={() => {
         battle.clearTouchInput(); battle.chat.releaseInputKeys(); battle.chat.openEditor();
-      }}><ImageArtwork asset="/ui/battle/mobile/chat-normal.webp"/></button>
+      }}><ImageArtwork asset="/ui/battle/mobile/chat-normal.webp"/></button>}
     <div className="mobile-battle-controls mobile-battle-sized">
       <MobileBattleFire disabled={disabled} onInput={battle.setTouchInput}/>
       {state.data && <MobileBattleItems hud={hud} data={state.data} items={battle.itemInventory}
         disabled={disabled} onUseSlot={battle.useHudSlot}/>}
     </div>
-    <div className="mobile-battle-crosshair mobile-battle-sized" aria-label={reload.visible ? '装填中' : '准星'}>
-      <BattleCrosshair fraction={reload.visible ? reload.fraction : 1}/>
-    </div>
+    <MobileBattleCrosshair hud={hud}/>
     {state.data && state.notice && <MobileBattleNotice key={state.notice.id} ui={state.data} text={state.notice.text}/>}
     {state.deathCountdown !== undefined && <p className="mobile-battle-respawn mobile-battle-sized" role="timer">
       等待复活 · {state.deathCountdown}秒
@@ -132,22 +104,68 @@ export function MobileBattleHud({battle, scoreboardOpen, onScoreboard}: {
   </div>;
 }
 
-function MobileBattleScore({state}: {state: HudSnapshot}) {
-  const info = state.modeInfo;
-  const individual = state.mode > 3;
-  const timer = state.timers[state.mode - 1];
+const MobileBattlePlayer = memo(function MobileBattlePlayer({hud}: {hud: BattleHud}) {
+  const player = useSyncExternalStore(hud.subscribe,
+    useCallback(() => hud.getSnapshot().slots[0], [hud]));
+  const health = useSyncExternalStore(hud.subscribe, hud.getLocalHealthSnapshot);
+  const remaining = useSyncExternalStore(hud.subscribeCombat,
+    useCallback(() => hud.getCombatSnapshot().magazine?.remaining, [hud]));
+  const capacity = useSyncExternalStore(hud.subscribeCombat,
+    useCallback(() => hud.getCombatSnapshot().magazine?.capacity, [hud]));
+  const fraction = health ? Math.max(0, Math.min(1, health.hp / health.maxHp)) : 0;
+  const magazine = capacity === undefined || remaining === undefined ? undefined : {capacity, remaining};
+  return <div className="mobile-battle-player mobile-battle-sized">
+    <div className="mobile-battle-portrait" role="img" aria-label={`${health?.name ?? ''}宠物头像`}>
+      <div className="mobile-battle-portrait-image">
+        {player?.asset && <MobileBattlePortrait asset={`/${player.asset}`}/>}
+      </div>
+      <ImageArtwork className="mobile-battle-portrait-frame" asset="/ui/battle/mobile/portrait-frame.webp"/>
+    </div>
+    <div className="mobile-battle-health" role="progressbar" aria-label={`${health?.name ?? ''}生命`}
+      aria-valuemin={0} aria-valuemax={health?.maxHp ?? 1} aria-valuenow={health?.hp ?? 0}
+      data-health-band={fraction < .3 ? 'low' : fraction < .6 ? 'medium' : 'full'}>
+      <span className="mobile-battle-health-fill" style={{width: `${fraction * 100}%`}}/>
+      <span className="mobile-battle-health-value">{health ? `${Math.ceil(health.hp)}/${Math.ceil(health.maxHp)}` : ''}</span>
+    </div>
+    {magazine && <div className="mobile-battle-magazine" aria-label={`弹匣 ${magazine.remaining}/${magazine.capacity}`}>
+      <div className="mobile-battle-shells" aria-hidden="true">
+        {Array.from({length: magazine.capacity}, (_, index) => <i key={index} data-filled={index < magazine.remaining || undefined}/>)}
+      </div>
+      <span data-bullet-remaining={magazine.remaining} data-bullet-capacity={magazine.capacity}>
+        {magazine.remaining}/{magazine.capacity}
+      </span>
+    </div>}
+    <div className="mobile-battle-statuses" aria-label="战斗状态">
+      {player?.statuses.map(effectId => {
+        const status = SKILL_STATUS_ARTWORK.get(effectId)!;
+        return <ImageArtwork key={effectId} asset={`/${status.asset}`} fit="contain"
+          role="img" aria-label={status.label} data-status-effect={effectId}/>;
+      })}
+    </div>
+  </div>;
+});
+
+function MobileBattleCrosshair({hud}: {hud: BattleHud}) {
+  return <HudReloadControl hud={hud} mobile/>;
+}
+
+const MobileBattleScore = memo(function MobileBattleScore({mode, info, teamCounts, timer}: {
+  mode: number; info: HudLayoutSnapshot['modeInfo']; teamCounts: HudLayoutSnapshot['teamCounts'];
+  timer: HudLayoutSnapshot['timers'][number] | undefined;
+}) {
+  const individual = mode > 3;
   return <div className="mobile-battle-score mobile-battle-sized" aria-label={info?.label ?? '战斗比分'}>
     <ImageArtwork className="mobile-battle-score-plank" asset="/ui/battle/mobile/score-timer-board.webp"/>
     <div className="mobile-battle-score-line" data-individual={individual || undefined}>
-      {!individual && <MobileBattleTeamScore side="self" value={info?.self ?? state.teamCounts?.self}/>}
+      {!individual && <MobileBattleTeamScore side="self" value={info?.self ?? teamCounts?.self}/>}
       <span className="mobile-battle-timer" role="timer" aria-label={timer?.text}
         data-urgency={timer?.colour === 'ffff0000' ? 'critical' : undefined}>{timer?.text}</span>
       {individual ? <span className="mobile-battle-individual-score" aria-label={`${info?.label ?? '数量'} ${info?.info ?? '未知'}`}>
         {info?.label} × {info?.info ?? '—'}
-      </span> : <MobileBattleTeamScore side="enemy" value={info?.enemy ?? state.teamCounts?.enemy}/>}
+      </span> : <MobileBattleTeamScore side="enemy" value={info?.enemy ?? teamCounts?.enemy}/>}
     </div>
   </div>;
-}
+});
 
 function MobileBattleTeamScore({side, value}: {side: 'self' | 'enemy'; value?: string}) {
   const text = value?.padStart(2, '0') ?? '—';

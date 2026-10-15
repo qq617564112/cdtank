@@ -27,3 +27,22 @@ export function ImageArtwork({asset, fit = 'stretch', repeat, style, ...props}: 
         objectFit: fit === 'contain' ? 'contain' : 'fill'}}/>}
   </span>;
 }
+
+/** SVG consumers retain their placement while reading directly from the shared atlas. */
+export function SvgImageArtwork({asset, x, y, width, height,
+  preserveAspectRatio = 'xMidYMid meet'}: {
+  asset: string; x?: number; y?: number; width: number; height: number; preserveAspectRatio?: string;
+}) {
+  const region = spriteRegion(asset);
+  const atlas = region ? spriteAtlas(region.atlas) : undefined;
+  if (region && atlas) return <svg x={x} y={y} width={width} height={height}
+    viewBox={`0 0 ${region.width} ${region.height}`}
+    preserveAspectRatio={preserveAspectRatio} overflow="hidden">
+    <svg viewBox={`${region.x} ${region.y} ${region.width} ${region.height}`}
+      width={region.width} height={region.height} preserveAspectRatio="none" overflow="hidden">
+      <image href={imageResourceUrl(region.atlas)} width={atlas.width} height={atlas.height}/>
+    </svg>
+  </svg>;
+  return <image href={imageResourceUrl(asset)} x={x} y={y} width={width} height={height}
+    preserveAspectRatio={preserveAspectRatio}/>;
+}

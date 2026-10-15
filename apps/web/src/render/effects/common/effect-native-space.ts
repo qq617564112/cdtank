@@ -46,7 +46,7 @@ export function transformEffectPosition(matrix: EffectNativeMatrix, input: Effec
 }
 
 /** Output may reuse input storage; components are read before any writes. */
-export function transformEffectPositionToRef(matrix: EffectNativeMatrix, input: EffectVec3,
+export function transformEffectPositionToRef(matrix: EffectNativeMatrix, input: Readonly<EffectVec3>,
   result: EffectVec3): void {
   const x = Math.fround(input[0]), y = Math.fround(input[1]), z = Math.fround(input[2]);
   const m0 = Math.fround(matrix[0]), m4 = Math.fround(matrix[4]), m8 = Math.fround(matrix[8]);

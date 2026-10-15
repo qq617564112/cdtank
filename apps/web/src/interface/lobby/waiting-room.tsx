@@ -227,7 +227,8 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, q
     <SourceImage key={name} ui={ui} name={name} hidden={!shown} text={text} />;
   const layout = ui ? new HomeSourceLayout(ui, 'room_main.xml') : undefined;
   const previewAsset = ui && snapshot.roomInfo ? sourceAsset(ui, roomMapPreviewReference(snapshot.roomInfo.mapId)) : undefined;
-  const modeName = ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'][snapshot.mode - 1];
+  const modeName = snapshot.training ? '训练模式'
+    : ['团队模式', '占领模式', '擒王模式', '混战模式', '破坏模式'][snapshot.mode - 1];
   const controlProps = {disabled, onFocus: (event: SyntheticEvent<HTMLButtonElement>) => {
     focusedControl.current = event.currentTarget.dataset.waitingControl;
   }};

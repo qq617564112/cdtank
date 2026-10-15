@@ -1,13 +1,20 @@
 import type {RoomPassword, SimulationCatalog, SimulationMap} from '../../../shared/simulation/resources';
+import type {MapOption} from '../../../shared/protocols';
 
 let catalog: SimulationCatalog | undefined;
 let catalogLoading: Promise<SimulationCatalog> | undefined;
+let mapsLoading: Promise<MapOption[]> | undefined;
 const assets = new Map<string, unknown>([['battlefields.json', []]]);
 
 async function readJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`训练数据载入失败：${url} (${response.status})`);
   return response.json() as Promise<T>;
+}
+
+export function loadTrainingMaps(): Promise<MapOption[]> {
+  return mapsLoading ??= readJson<MapOption[]>('/content/training/maps.json')
+    .catch(error => {mapsLoading = undefined; throw error;});
 }
 
 export async function loadTrainingCatalog(): Promise<SimulationCatalog> {

@@ -9,10 +9,12 @@ export interface EffectTagSource {
   read(part: 'M' | 'U', name: EffectPrimaryTag): EffectNativeMatrix | undefined;
 }
 
-/** Primary tag references remain stable while original per-frame values change. */
+/** Requested tag references remain stable and update with every original pose. */
 export class EffectPrimaryTagMatrices {
   private readonly matrices = new Map<EffectPrimaryTag, number[]>();
   private readonly composer = new EffectTagWorldComposer();
+  private source?: EffectTagSource;
+  private pose?: EffectTagWorldPose;
 
   constructor(readonly fourPart: boolean) {}
 
@@ -21,17 +23,24 @@ export class EffectPrimaryTagMatrices {
     if (!matrix) {
       matrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
       this.matrices.set(name, matrix);
+      if (this.source && this.pose) this.updateMatrix(name, matrix, this.source, this.pose);
     }
     return matrix;
   }
 
   update(source: EffectTagSource, pose: EffectTagWorldPose): void {
-    for (const name of EFFECT_PRIMARY_TAGS) {
-      let local = source.read('M', name);
-      if (local === undefined && this.fourPart) local = source.read('U', name);
-      const matrix = this.get(name) as number[];
-      if (local === undefined) matrix.fill(0);
-      else this.composer.composeToRef(local, pose, this.fourPart && name === 'tag_efattack', matrix);
-    }
+    this.source = source;
+    this.pose = pose;
+    // Effects retain these arrays; every requested tag continues updating even
+    // when its caller does not fetch the reference again.
+    for (const [name, matrix] of this.matrices) this.updateMatrix(name, matrix, source, pose);
+  }
+
+  private updateMatrix(name: EffectPrimaryTag, matrix: number[],
+    source: EffectTagSource, pose: EffectTagWorldPose): void {
+    let local = source.read('M', name);
+    if (local === undefined && this.fourPart) local = source.read('U', name);
+    if (local === undefined) matrix.fill(0);
+    else this.composer.composeToRef(local, pose, this.fourPart && name === 'tag_efattack', matrix);
   }
 }

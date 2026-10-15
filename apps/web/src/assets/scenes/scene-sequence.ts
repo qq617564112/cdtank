@@ -1,3 +1,4 @@
+import type {IGLTF} from '@babylonjs/loaders/glTF/2.0/glTFLoaderInterfaces';
 import {loadPreparedModel} from '../model-resources';
 import {battleArtworkUrl} from '../battle-artwork';
 import {
@@ -68,7 +69,7 @@ export class SceneSequence {
       this.baseMaterial.register(base, 'obj05023');
       const screen = await loadPreparedModel(battleArtworkUrl(`/${library.screen.asset}`, this.scene), this.scene, {
         pluginOptions: {gltf: {useSRGBBuffers: false, onParsed: data => {
-          for (const material of data.json.materials ?? []) {
+          for (const material of (data.json as IGLTF).materials ?? []) {
             if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
           }
         }}},

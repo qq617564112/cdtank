@@ -7,7 +7,7 @@ import {
 } from '../../render/scene-environment';
 import {applyDeviceState, resolveDeviceState} from '../../render/scene-device-state';
 import {bindSceneShadowMaterial, SCENE_SHADOW_VERTEX_DECLARATION, SCENE_SHADOW_VERTEX_APPLY,
-  SCENE_SHADOW_FRAGMENT_DECLARATION, SCENE_SHADOW_FRAGMENT_BEGIN,
+  SCENE_SHADOW_FRAGMENT_DECLARATION, SCENE_SHADOW_LIGHT_UNIFORM_DECLARATION,
   SCENE_SHADOW_FRAGMENT_APPLY} from '../../render/scene-shadow-light';
 
 interface TerrainPart {
@@ -24,6 +24,12 @@ export function hasSceneTerrainMaterial(mapId: string): boolean {
 
 const VERTEX = `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
 ${SCENE_SHADOW_VERTEX_DECLARATION}
+#ifndef SCENE_SHADOWS_DISABLED
+${SCENE_SHADOW_LIGHT_UNIFORM_DECLARATION}
+varying vec3 terrainShadowCoordinates;
+varying float terrainShadowIncidence;
+varying vec2 terrainShadowSlope;
+#endif
 attribute vec3 position;
 attribute vec3 normal;
 attribute vec2 uv;
@@ -38,6 +44,24 @@ void main() {
   vec4 worldPosition = world * vec4(position, 1.0);
   vec3 worldNormal = normalize(mat3(world) * normal);
 ${SCENE_SHADOW_VERTEX_APPLY}
+#ifndef SCENE_SHADOWS_DISABLED
+  // Terrain normals are constant per face; incidence and normal bias are too.
+  terrainShadowIncidence = max(dot(worldNormal, -sceneShadowDirection.xyz), 0.0);
+  vec3 offset = 0.35 * sqrt(max(0.0, 1.0 - terrainShadowIncidence * terrainShadowIncidence)) * worldNormal;
+  // The directional light uses an orthographic projection with homogeneous w=1.
+  vec3 clip = (sceneShadowMatrix * vec4(worldPosition.xyz + offset, 1.0)).xyz;
+  terrainShadowCoordinates = vec3(clip.xy * 0.5 + 0.5, sceneShadowDepth.x * clip.z + sceneShadowDepth.y);
+  // The projected face plane gives dz/du and dz/dv without fragment derivatives.
+  mat3 projectedAxes = mat3(sceneShadowMatrix);
+  vec3 scales = vec3(0.5, 0.5, sceneShadowDepth.x);
+  projectedAxes[0] *= scales;
+  projectedAxes[1] *= scales;
+  projectedAxes[2] *= scales;
+  mat3 cofactors = mat3(cross(projectedAxes[1], projectedAxes[2]), cross(projectedAxes[2], projectedAxes[0]), cross(projectedAxes[0], projectedAxes[1]));
+  vec3 projectedNormal = cofactors * worldNormal;
+  // Back faces never sample the shadow map; their projected plane can be parallel.
+  terrainShadowSlope = terrainShadowIncidence >= 0.001 ? -projectedNormal.xy / projectedNormal.z : vec2(0.0);
+#endif
   // Keep the original texture × packed diffuse before the scene shadow pass.
   sceneLitColor = vec3(1.0);
   sceneFogFactor = sceneFog(worldPosition.xyz);
@@ -46,6 +70,11 @@ ${SCENE_SHADOW_VERTEX_APPLY}
 
 const FRAGMENT = `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
 ${SCENE_SHADOW_FRAGMENT_DECLARATION}
+#ifndef SCENE_SHADOWS_DISABLED
+varying vec3 terrainShadowCoordinates;
+varying float terrainShadowIncidence;
+varying vec2 terrainShadowSlope;
+#endif
 #ifdef SOURCE_TEXTURE
 uniform sampler2D sourceTexture;
 #endif
@@ -53,7 +82,12 @@ uniform float sourceAlphaRef;
 varying vec2 sourceUv;
 varying vec4 sourceDiffuse;
 void main() {
-${SCENE_SHADOW_FRAGMENT_BEGIN}
+#ifndef SCENE_SHADOWS_DISABLED
+  vec3 sceneShadowNormal = sceneShadowWorldNormal;
+  float sceneShadowIncidence = terrainShadowIncidence;
+  vec3 sceneShadowCoordinatesAtPixel = terrainShadowCoordinates;
+  vec2 sceneShadowSlope = terrainShadowSlope;
+#endif
 #ifdef SOURCE_TEXTURE
   vec4 result = texture2D(sourceTexture, sourceUv) * sourceDiffuse;
 #else

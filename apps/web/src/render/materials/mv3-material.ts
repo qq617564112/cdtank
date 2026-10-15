@@ -25,17 +25,20 @@ export function mv3Ambient(properties: readonly number[], opacity = 1,
   )).concat(Math.fround(Math.fround(opacity) * properties[7]));
 }
 
-/**
- * newgeom/geom_t COLOR=ambient, stage0 TEXTURE*CURRENT. The original selector
- * swaps to the geom_1L/geom_2L and geom_f1/geom_F2/geom_f3 families when the
- * scene has selected lights or fog; this single shader supplies the same
- * registers so no GBF combination is copied per material.
- */
-export function createMv3Material(scene: Scene, properties: readonly number[], texture?: BaseTexture,
-  opacity = 1, actorToon?: SceneActorToonBinding): ShaderMaterial {
-  const transparent = properties[3] < 1 || opacity < 1;
-  const sceneShadows = Boolean(sceneShadowLight(scene));
-  const originalToon = sceneShadows ? undefined : actorToon;
+interface Mv3ShaderSources {
+  readonly vertexSource: string;
+  readonly fragmentSource: string;
+}
+
+// Only source conditions enter this cache; actor uniforms and owners stay private.
+const mv3ShaderSources = new Map<number, Mv3ShaderSources>();
+
+function mv3Shaders(texture: boolean, transparent: boolean, sceneShadows: boolean,
+  originalToon: boolean): Mv3ShaderSources {
+  const key = Number(texture) | (Number(transparent) << 1)
+    | (Number(sceneShadows) << 2) | (Number(originalToon) << 3);
+  const cached = mv3ShaderSources.get(key);
+  if (cached) return cached;
   const actorToonVertex = originalToon ? `
 uniform float actorToonEnabled;
 uniform vec3 actorToonLightDirection;
@@ -44,7 +47,7 @@ varying float actorToonLight;` : '';
 uniform sampler2D actorToonTexture;
 uniform float actorToonEnabled;
 varying float actorToonLight;` : '';
-  const material = new ShaderMaterial('original-mv3-material', scene, {
+  const sources = {
     vertexSource: `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
 ${sceneShadows ? SCENE_SHADOW_VERTEX_DECLARATION : ''}
 ${actorToonVertex}
@@ -96,14 +99,35 @@ gl_FragColor=color;
 ${sceneShadows ? SCENE_SHADOW_FRAGMENT_APPLY : ''}
 ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}
 }`,
-  }, {attributes: ['position', 'normal', 'uv'], defines: ['NORMAL'],
-    uniforms: ['world', 'worldViewProjection', 'sourceAmbient', 'actorOpacity', 'sourceColorFilter',
-      ...(sceneShadows ? ['sceneShadowReceiver'] : []),
-      ...(originalToon ? ['actorToonEnabled', 'actorToonLightDirection'] : []),
-      ...SCENE_ENVIRONMENT_UNIFORMS],
-    samplers: [...(texture ? ['sourceTexture'] : []), ...(originalToon ? ['actorToonTexture'] : []),
-      ...(sceneShadows ? ['sceneShadowTexture'] : [])],
-    needAlphaBlending: transparent});
+  };
+  mv3ShaderSources.set(key, sources);
+  return sources;
+}
+
+/**
+ * newgeom/geom_t COLOR=ambient, stage0 TEXTURE*CURRENT. The original selector
+ * swaps to the geom_1L/geom_2L and geom_f1/geom_F2/geom_f3 families when the
+ * scene has selected lights or fog; this single shader supplies the same
+ * registers so no GBF combination is copied per material.
+ */
+export function createMv3Material(scene: Scene, properties: readonly number[], texture?: BaseTexture,
+  opacity = 1, actorToon?: SceneActorToonBinding): ShaderMaterial {
+  const transparent = properties[3] < 1 || opacity < 1;
+  const sceneShadows = Boolean(sceneShadowLight(scene));
+  const originalToon = sceneShadows ? undefined : actorToon;
+  const shaders = mv3Shaders(Boolean(texture), transparent, sceneShadows, Boolean(originalToon));
+  // Babylon may extend these lists during binding and compilation.
+  const uniforms = ['world', 'worldViewProjection', 'sourceAmbient', 'actorOpacity', 'sourceColorFilter'];
+  if (sceneShadows) uniforms.push('sceneShadowReceiver');
+  if (originalToon) uniforms.push('actorToonEnabled', 'actorToonLightDirection');
+  uniforms.push(...SCENE_ENVIRONMENT_UNIFORMS);
+  const samplers: string[] = [];
+  if (texture) samplers.push('sourceTexture');
+  if (originalToon) samplers.push('actorToonTexture');
+  if (sceneShadows) samplers.push('sceneShadowTexture');
+  const material = new ShaderMaterial('original-mv3-material', scene, shaders,
+    {attributes: ['position', 'normal', 'uv'], defines: ['NORMAL'], uniforms, samplers,
+      needAlphaBlending: transparent});
   const ambientColor = new Vector4();
   let red = NaN, green = NaN, blue = NaN;
   const updateAmbient = (): void => {

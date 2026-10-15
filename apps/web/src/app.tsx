@@ -88,7 +88,7 @@ function GamePages({battle,canvas,hud,settings,loadingScreen,validation=false}: 
   useEffect(() => {
     if (validation || login.restoring || login.phase !== 'lobby' || !quickStart || quickStartRequested.current) return;
     quickStartRequested.current = true;
-    void battle.startQuickMatch(quickStart.mapId, quickStart.tankId).catch(error => {
+    void battle.startQuickMatch(quickStart.mapId, quickStart.tankId, quickStart.players).catch(error => {
       hud.value = error instanceof Error ? error.message : String(error);
       showGameMessage(hud.value, 'error');
     }).finally(() => {setQuickStart(undefined);});

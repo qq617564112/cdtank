@@ -1,3 +1,4 @@
+import type {IGLTF} from '@babylonjs/loaders/glTF/2.0/glTFLoaderInterfaces';
 import {loadPreparedModel} from '../assets/model-resources';
 import {AssetContainer, Constants, Matrix, PBRMaterial, Scene,
   Texture, TransformNode} from '@babylonjs/core';
@@ -69,7 +70,7 @@ export class BattleTankDecoration {
       const assets = await loadPreparedModel(battleArtworkUrl(this.model, this.scene), this.scene, {
         pluginOptions: {gltf: {onParsed: data => {
           if (!texturePath) return;
-          for (const material of data.json.materials ?? []) {
+          for (const material of (data.json as IGLTF).materials ?? []) {
             if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
           }
         }}},

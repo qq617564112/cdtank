@@ -20,6 +20,7 @@ export function newbornBattleSources(tank: TankDefinition, pet: PetDefinition,
   }
   const equipmentFields = new Map<number, number>();
   for (let offset = 0x1c; offset <= 0x6c; offset += 4) equipmentFields.set(offset, 0);
+  // CPU item configuration reserves instance IDs 2 through 8.
   for (const [offset, value] of [[0x1c, 9], [0x24, tank.id],
     [0x28, textures.U], [0x2c, textures.M], [0x30, textures.XY],
     [0x3c, tank.attributes.attack], [0x40, tank.attributes.attackBonus],

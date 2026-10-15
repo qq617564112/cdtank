@@ -203,7 +203,7 @@ export function LobbyView({validation = false, artworkReady, chatContent, player
         else {createAfterMap.current = true; setMapOpen(true);}
       }} select={setSelectedId} activate={activateRoom} changeSort={changeSort} previous={previous} next={next} refresh={() => {void refresh();}} join={() => validation ? report(join(page.selectedId, joinPassword)) : activateRoom(page.selectedId)}/>;
   return <>
-    {!validation && artworkReady && (!inBattle || waiting) && <LobbySourcePage visible room={waiting}
+    {!validation && artworkReady && (!inBattle || waiting) && <LobbySourcePage visible room={waiting} showSidebar={!battle.isTraining}
       roomName={match?.waiting ? waitingRoomInfo(match.waiting).name : ''} status={waiting ? '' : status}
       chatContent={waiting ? undefined : chatContent} playerContent={playerContent}
       headerContent={!inBattle && !waiting ? headerContent : undefined}>

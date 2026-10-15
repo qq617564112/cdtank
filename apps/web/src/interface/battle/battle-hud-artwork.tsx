@@ -1,19 +1,20 @@
-import {useId, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode} from 'react';
+import {memo, useId, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode, type Ref} from 'react';
 import {useButtonInteraction} from '../resources/button-interaction';
 import {GameSurfaceTexture} from '../resources/game-surface-texture';
-import {ImageArtwork} from '../resources/image-artwork';
+import {ImageArtwork, SvgImageArtwork} from '../resources/image-artwork';
 import {imageResourceUrl} from '../../assets/image-cache';
+import {BATTLE_WOOD_PANEL_ARTWORK} from '../../assets/battle-hud-images';
 import {lifeProgress} from './life-progress';
 import {BATTLE_REMOTE_PORTRAITS} from './battle-portrait-bounds';
 
 /** Character and frame share one bitmap; expression overflow does not affect placement. */
-export function BattleRemotePortrait({asset, enemy}: {asset: string; enemy: boolean}) {
+export const BattleRemotePortrait = memo(function BattleRemotePortrait({asset, enemy}: {asset: string; enemy: boolean}) {
   const placement = BATTLE_REMOTE_PORTRAITS[enemy ? 'enemy' : 'friend'];
   return <svg className="hud-portrait-image" viewBox="0 0 65 53" preserveAspectRatio="none"
     overflow="visible" aria-hidden="true" focusable="false" data-source-asset={asset.replace(/^\//, '')}>
-    <image href={imageResourceUrl(asset)} {...placement} preserveAspectRatio="none"/>
+    <SvgImageArtwork asset={asset} {...placement} preserveAspectRatio="none"/>
   </svg>;
-}
+});
 
 const MODE_INTROS = [
   {label: '团队模式', instruction: '将敌队的坦克通通消灭！', left: 206, width: 381},
@@ -36,25 +37,19 @@ export function BattleModeIntro({mode}: {mode: number}) {
   </div>;
 }
 
-const WOOD_PANEL_ARTWORK = {
-  spectator: '/ui/battle/spectator-board-v2.png',
-  score: '/ui/lobby/hall-plaque.png',
-  timer: '/ui/lobby/room-name-plaque.png',
-};
-
 /** Decorative wood is separate from live HTML content. */
 export function BattleWoodPanel({kind, children, className = '', ...props}:
   ComponentPropsWithoutRef<'div'> & {kind: 'information' | 'spectator' | 'score' | 'timer'}) {
   return <div {...props} className={`battle-wood-panel ${className}`} data-wood-panel={kind}>
     {kind === 'information' ? <BattleInformationPanelArtwork/>
-      : <img src={imageResourceUrl(WOOD_PANEL_ARTWORK[kind])}
+      : <img src={imageResourceUrl(BATTLE_WOOD_PANEL_ARTWORK[kind])}
         alt="" aria-hidden="true" draggable={false}/>}
     {children}
   </div>;
 }
 
 /** The information panel shares the MDF grain and recessed olive frame of lobby cards. */
-function BattleInformationPanelArtwork() {
+const BattleInformationPanelArtwork = memo(function BattleInformationPanelArtwork() {
   const id = useId();
   const face = 'M6 5L257 5.3L256.7 88L6.3 87.7Z';
   return <svg className="battle-information-artwork" viewBox="0 0 263 93" preserveAspectRatio="none"
@@ -86,7 +81,7 @@ function BattleInformationPanelArtwork() {
     <path d="M6.3 87.7L256.7 88L257 5.3" fill="none" stroke="#e1d6af"
       strokeOpacity=".35" strokeWidth=".6"/>
   </svg>;
-}
+});
 
 export function BattleHealthBar({hp, maxHp, name, vertical = false, mirrored = false, scale,
   className = '', ...props}: ComponentPropsWithoutRef<'div'> & {
@@ -140,7 +135,7 @@ export function BattleMagazine({capacity, remaining}: {capacity: number; remaini
 }
 
 /** Original 50×37 slanted brackets and center mark reveal upwards while reloading. */
-export function BattleCrosshair({fraction}: {fraction: number}) {
+export function BattleCrosshair({fraction, clipRef}: {fraction: number; clipRef?: Ref<SVGRectElement>}) {
   const id = useId();
   const bracket = 'M14.354 5.5H19.615L9.678 32.5H4.377Z';
   const fill = 'M13.562 6H19.951L10.521 32H4.14Z';
@@ -148,7 +143,7 @@ export function BattleCrosshair({fraction}: {fraction: number}) {
     aria-hidden="true" focusable="false">
     <defs>
       <clipPath id={id}>
-        <rect x="0" y={37 * (1 - fraction)} width="50" height={37 * fraction}/>
+        <rect ref={clipRef} x="0" y={37 * (1 - fraction)} width="50" height={37 * fraction}/>
       </clipPath>
     </defs>
     <g fill="none" stroke="#545554" strokeWidth="1.3" strokeLinejoin="miter">

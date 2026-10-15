@@ -1,4 +1,5 @@
-import {Mesh, ShaderStore, SubMesh, VertexBuffer} from '@babylonjs/core';
+import {Material, ShaderStore, SubMesh, VertexBuffer, type Mesh, type Scene} from '@babylonjs/core';
+import type {_InstancesBatch} from '@babylonjs/core/Meshes/mesh';
 import {OutlineRenderer} from '@babylonjs/core/Rendering/outlineRenderer';
 import {AddClipPlaneUniforms, PrepareStringDefinesForClipPlanes} from '@babylonjs/core/Materials/clipPlaneMaterialHelper';
 import {PushAttributesForInstances} from '@babylonjs/core/Materials/materialHelper.functions';
@@ -8,7 +9,14 @@ import {outlineVertexShaderWGSL} from '@babylonjs/core/ShadersWGSL/outline.verte
 import '@babylonjs/core/ShadersWGSL/outline.fragment';
 
 const OUTLINE_NORMAL = 'outlineNormal';
-const POSITION_PRECISION = 10000;
+const ALPHA_TEST = 1;
+const UV1 = 1 << 1;
+const UV2 = 1 << 2;
+const LOGARITHMIC_DEPTH = 1 << 3;
+const CLIP_PLANE_BIT_OFFSET = 4;
+const INSTANCES = 1 << 10;
+const THIN_INSTANCES = 1 << 11;
+const CLIP_PLANE_FIELDS = ['clipPlane', 'clipPlane2', 'clipPlane3', 'clipPlane4', 'clipPlane5', 'clipPlane6'] as const;
 
 ShaderStore.ShadersStore.cartoonOutlineVertexShader = outlineVertexShader.shader
   .replace('attribute vec3 normal;', `attribute vec3 normal;attribute vec3 ${OUTLINE_NORMAL};`)
@@ -19,31 +27,70 @@ ShaderStore.ShadersStoreWGSL.cartoonOutlineVertexShader = outlineVertexShaderWGS
 
 /** Static hard edges share extrusion directions while retaining their lighting normals. */
 class CartoonOutlineRenderer extends OutlineRenderer {
+  private readonly definesByFlags = new Map<number, string>();
+
+  constructor(scene: Scene) {
+    super(scene);
+    // Extrusion supplies the silhouette depth. A negative screen-space bias can
+    // cover adjacent actor parts as their projected size decreases.
+    this.zOffset = 0;
+    this.zOffsetUnits = 0;
+  }
+
+  override render(subMesh: SubMesh, batch: _InstancesBatch, useOverlay = false, renderPassId?: number): void {
+    const material = subMesh.getMaterial();
+    if (!material) return;
+    const owner = subMesh.getMesh();
+    const renderingMesh = subMesh.getRenderingMesh();
+    const effectiveMesh = owner._internalAbstractMeshDataInfo._actAsRegularMesh ? owner : renderingMesh;
+    let reverseSide = material._getEffectiveOrientation(renderingMesh) === Material.ClockWiseSideOrientation;
+    if (effectiveMesh._getWorldMatrixDeterminant() < 0) reverseSide = !reverseSide;
+    // The color outline runs before Mesh.render binds this material's culling
+    // state. Double-sided accessories must not inherit the preceding actor's cull.
+    this.scene.getEngine().setState(material.backFaceCulling, 0, false, reverseSide,
+      this.scene._mirroredCameraPosition ? !material.cullBackFaces : material.cullBackFaces, material.stencil, 0);
+    super.render(subMesh, batch, useOverlay, renderPassId);
+  }
+
   override isReady(subMesh: SubMesh, useInstances: boolean, renderPassId?: number): boolean {
     const mesh = subMesh.getRenderingMesh();
     if (!mesh.isVerticesDataPresent(OUTLINE_NORMAL)) return super.isReady(subMesh, useInstances, renderPassId);
     const material = subMesh.getMaterial();
     if (!material) return false;
-    const attributes = [VertexBuffer.PositionKind, VertexBuffer.NormalKind, OUTLINE_NORMAL];
-    const defines = ['#define CARTOON_OUTLINE', '#define NUM_BONE_INFLUENCERS 0'];
+    let flags = 0;
     if (material.needAlphaTestingForMesh(subMesh.getMesh())) {
-      defines.push('#define ALPHATEST');
-      for (const [kind, define] of [[VertexBuffer.UVKind, 'UV1'], [VertexBuffer.UV2Kind, 'UV2']]) {
-        if (!mesh.isVerticesDataPresent(kind)) continue;
-        attributes.push(kind);
-        defines.push(`#define ${define}`);
-      }
+      flags |= ALPHA_TEST;
+      if (mesh.isVerticesDataPresent(VertexBuffer.UVKind)) flags |= UV1;
+      if (mesh.isVerticesDataPresent(VertexBuffer.UV2Kind)) flags |= UV2;
     }
-    if (material.useLogarithmicDepth) defines.push('#define LOGARITHMICDEPTH');
-    PrepareStringDefinesForClipPlanes(material, this.scene, defines);
+    if (material.useLogarithmicDepth) flags |= LOGARITHMIC_DEPTH;
+    for (let index = 0; index < CLIP_PLANE_FIELDS.length; index++) {
+      const field = CLIP_PLANE_FIELDS[index];
+      if (material[field] ?? this.scene[field]) flags |= 1 << (CLIP_PLANE_BIT_OFFSET + index);
+    }
     if (useInstances) {
-      defines.push('#define INSTANCES');
-      PushAttributesForInstances(attributes);
-      if (mesh.hasThinInstances) defines.push('#define THIN_INSTANCES');
+      flags |= INSTANCES;
+      if (mesh.hasThinInstances) flags |= THIN_INSTANCES;
+    }
+    let joined = this.definesByFlags.get(flags);
+    if (joined === undefined) {
+      const defines = ['#define CARTOON_OUTLINE', '#define NUM_BONE_INFLUENCERS 0'];
+      if (flags & ALPHA_TEST) defines.push('#define ALPHATEST');
+      if (flags & UV1) defines.push('#define UV1');
+      if (flags & UV2) defines.push('#define UV2');
+      if (flags & LOGARITHMIC_DEPTH) defines.push('#define LOGARITHMICDEPTH');
+      PrepareStringDefinesForClipPlanes(material, this.scene, defines);
+      if (flags & INSTANCES) defines.push('#define INSTANCES');
+      if (flags & THIN_INSTANCES) defines.push('#define THIN_INSTANCES');
+      joined = defines.join('\n');
+      this.definesByFlags.set(flags, joined);
     }
     const drawWrapper = subMesh._getDrawWrapper(renderPassId, true)!;
-    const joined = defines.join('\n');
     if (drawWrapper.defines !== joined) {
+      const attributes = [VertexBuffer.PositionKind, VertexBuffer.NormalKind, OUTLINE_NORMAL];
+      if (flags & UV1) attributes.push(VertexBuffer.UVKind);
+      if (flags & UV2) attributes.push(VertexBuffer.UV2Kind);
+      if (flags & INSTANCES) PushAttributesForInstances(attributes);
       const uniforms = ['world', 'viewProjection', 'diffuseMatrix', 'offset', 'color', 'logarithmicDepthConstant'];
       AddClipPlaneUniforms(uniforms);
       drawWrapper.setEffect(this.scene.getEngine().createEffect({vertex: 'cartoonOutline', fragment: 'outline'}, {
@@ -54,39 +101,23 @@ class CartoonOutlineRenderer extends OutlineRenderer {
     }
     return drawWrapper.effect?.isReady() ?? false;
   }
+
+  override dispose(): void {
+    this.definesByFlags.clear();
+    super.dispose();
+  }
 }
 
-/** One shared vertex stream per static geometry; instances use the same outline draw passes. */
-export function prepareCartoonOutlineMesh(mesh: Mesh): void {
-  const scene = mesh.getScene();
+/** Install before render targets can lazily create Babylon's default renderer. */
+export function initializeCartoonOutlineRenderer(scene: Scene): void {
   if (!scene._outlineRenderer) scene._outlineRenderer = new CartoonOutlineRenderer(scene);
+}
+
+/** Eligible static meshes upload the asset's shared precomputed extrusion stream. */
+export function prepareCartoonOutlineMesh(mesh: Mesh): void {
+  initializeCartoonOutlineRenderer(mesh.getScene());
   if (mesh.morphTargetManager || mesh.skeleton || mesh.bakedVertexAnimationManager?.isEnabled
     || mesh.isVerticesDataPresent(OUTLINE_NORMAL)) return;
-  const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
-  const normals = mesh.getVerticesData(VertexBuffer.NormalKind);
-  if (!positions || !normals) return;
-  const groups = new Map<string, {x: number; y: number; z: number}>();
-  const keys: string[] = [];
-  for (let index = 0; index < positions.length; index += 3) {
-    const key = [0, 1, 2].map(axis => Math.round(positions[index + axis] * POSITION_PRECISION)).join(',');
-    keys.push(key);
-    let group = groups.get(key);
-    if (!group) {
-      group = {x: 0, y: 0, z: 0};
-      groups.set(key, group);
-    }
-    group.x += normals[index];
-    group.y += normals[index + 1];
-    group.z += normals[index + 2];
-  }
-  const outlineNormals = new Float32Array(normals.length);
-  for (let vertex = 0; vertex < keys.length; vertex++) {
-    const group = groups.get(keys[vertex])!;
-    const length = Math.hypot(group.x, group.y, group.z);
-    if (!length) continue;
-    outlineNormals[vertex * 3] = group.x / length;
-    outlineNormals[vertex * 3 + 1] = group.y / length;
-    outlineNormals[vertex * 3 + 2] = group.z / length;
-  }
-  mesh.setVerticesData(OUTLINE_NORMAL, outlineNormals, false, 3);
+  const normals = mesh._internalMetadata?.cdtankOutlineNormals as Float32Array | undefined;
+  if (normals) mesh.setVerticesData(OUTLINE_NORMAL, normals, false, 3);
 }

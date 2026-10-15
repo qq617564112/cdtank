@@ -47,6 +47,7 @@ uniform sampler2D effectTexture;
 void main(){gl_FragColor=texture2D(effectTexture,vUV)*vColor;}`,
       }, {attributes: ['position', 'uv', 'color'], uniforms: ['viewport'], samplers: ['effectTexture'], needAlphaBlending: true});
       material.setTexture('effectTexture', texture);
+      material.setVector2('viewport', this.viewport);
       material.backFaceCulling = cull !== 'NONE';
       // GBF names the culled winding; Babylon names the retained front face.
       material.sideOrientation = cull === 'CCW' ? Material.ClockWiseSideOrientation : Material.CounterClockWiseSideOrientation;
@@ -72,20 +73,38 @@ void main(){gl_FragColor=texture2D(effectTexture,vUV)*vColor;}`,
   update(draw?: EffectOverlayRectangle): void {
     this.mesh.setEnabled(!!draw);
     if (!draw) return;
-    const [left, bottom, right, top, u0, v0, u1, v1] = draw.rectangle;
-    const red = ((draw.color >>> 16) & 255) / 255, green = ((draw.color >>> 8) & 255) / 255;
-    const blue = (draw.color & 255) / 255, alpha = (draw.color >>> 24) / 255;
+    const rectangle = draw.rectangle;
+    const left = Math.fround(rectangle[0]), bottom = Math.fround(rectangle[1]);
+    const right = Math.fround(rectangle[2]), top = Math.fround(rectangle[3]);
+    const u0 = Math.fround(rectangle[4]), v0 = Math.fround(rectangle[5]);
+    const u1 = Math.fround(rectangle[6]), v1 = Math.fround(rectangle[7]);
+    const z = Math.fround(draw.z);
+    const red = Math.fround(((draw.color >>> 16) & 255) / 255);
+    const green = Math.fround(((draw.color >>> 8) & 255) / 255);
+    const blue = Math.fround((draw.color & 255) / 255), alpha = Math.fround((draw.color >>> 24) / 255);
+    const positionsChanged = !Object.is(this.positions[0], left) || !Object.is(this.positions[1], bottom)
+      || !Object.is(this.positions[2], z) || !Object.is(this.positions[3], right) || !Object.is(this.positions[7], top);
+    const uvsChanged = !Object.is(this.uvs[0], u0) || !Object.is(this.uvs[1], v0)
+      || !Object.is(this.uvs[2], u1) || !Object.is(this.uvs[5], v1);
+    const colorsChanged = !Object.is(this.colors[0], red) || !Object.is(this.colors[1], green)
+      || !Object.is(this.colors[2], blue) || !Object.is(this.colors[3], alpha);
     for (let vertex = 0; vertex < CORNERS.length; vertex++) {
       const corner = CORNERS[vertex];
-      this.positions[vertex * 3] = corner & 1 ? right : left;
-      this.positions[vertex * 3 + 1] = corner & 2 ? top : bottom;
-      this.positions[vertex * 3 + 2] = draw.z;
-      this.uvs[vertex * 2] = corner & 1 ? u1 : u0;
-      this.uvs[vertex * 2 + 1] = corner & 2 ? v1 : v0;
-      this.colors[vertex * 4] = red;
-      this.colors[vertex * 4 + 1] = green;
-      this.colors[vertex * 4 + 2] = blue;
-      this.colors[vertex * 4 + 3] = alpha;
+      if (positionsChanged) {
+        this.positions[vertex * 3] = corner & 1 ? right : left;
+        this.positions[vertex * 3 + 1] = corner & 2 ? top : bottom;
+        this.positions[vertex * 3 + 2] = z;
+      }
+      if (uvsChanged) {
+        this.uvs[vertex * 2] = corner & 1 ? u1 : u0;
+        this.uvs[vertex * 2 + 1] = corner & 2 ? v1 : v0;
+      }
+      if (colorsChanged) {
+        this.colors[vertex * 4] = red;
+        this.colors[vertex * 4 + 1] = green;
+        this.colors[vertex * 4 + 2] = blue;
+        this.colors[vertex * 4 + 3] = alpha;
+      }
     }
     if (!this.mesh.isVerticesDataPresent(VertexBuffer.PositionKind)) {
       const data = new VertexData();
@@ -95,13 +114,12 @@ void main(){gl_FragColor=texture2D(effectTexture,vUV)*vColor;}`,
       data.indices = [0, 1, 2, 3, 4, 5];
       data.applyToMesh(this.mesh, true);
     } else {
-      this.mesh.updateVerticesData(VertexBuffer.PositionKind, this.positions);
-      this.mesh.updateVerticesData(VertexBuffer.UVKind, this.uvs);
-      this.mesh.updateVerticesData(VertexBuffer.ColorKind, this.colors);
+      if (positionsChanged) this.mesh.updateVerticesData(VertexBuffer.PositionKind, this.positions);
+      if (uvsChanged) this.mesh.updateVerticesData(VertexBuffer.UVKind, this.uvs);
+      if (colorsChanged) this.mesh.updateVerticesData(VertexBuffer.ColorKind, this.colors);
     }
     const engine = this.scene.getEngine();
     this.viewport.set(engine.getRenderWidth(), engine.getRenderHeight());
-    this.material.setVector2('viewport', this.viewport);
   }
 
   dispose(): void {this.mesh.dispose(); this.material.dispose(false, false);}

@@ -315,8 +315,8 @@ export class BattleMatch {
       roomId: snapshot.roomId, roomInfo: snapshot.roomInfo, mode: snapshot.mode, training: snapshot.training,
       phase: snapshot.phase, serverTime: 0, tick: 0, remaining: 0, bullets: [], teamScores: [], winnerTeam: -1,
       players: snapshot.players.map(player => ({
-        id: player.id, name: player.name, team: player.team, tankId: player.tankId,
-        petId: player.petId, title: player.title,
+        id: player.id, accountId: player.accountId, name: player.name, team: player.team,
+        tankId: player.tankId, petId: player.petId, title: player.title,
         x: 0, y: 0, z: 0, yaw: 0, aim: 0, hp: 0, maxHp: 0, alive: true,
         score: 0, kills: 0, deaths: 0, respawnAt: 0, isVIP: false,
         isCpu: player.isCpu, isAutopilot: player.isAutopilot,

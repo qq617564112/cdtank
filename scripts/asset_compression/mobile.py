@@ -58,6 +58,11 @@ def generate_mobile(source, output, recipe_path, cwebp, workers, selected=None):
                         mapping, embedded, encoder))
                 for future in as_completed(futures):
                     models.append(future.result())
+    if not selected:
+        from .geometry import preprocess_geometry
+        preprocess_geometry(output)
+        for row in models:
+            row['output_bytes'] = (output / row['model']).stat().st_size
     report = {'source': str(source), 'output': str(output), 'encoder_version': encoder.version,
         'image_files': len(images), 'model_files': len(models),
         'source_image_bytes': sum(row['source_bytes'] for row in images),

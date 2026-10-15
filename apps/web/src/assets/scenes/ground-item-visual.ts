@@ -1,3 +1,4 @@
+import type {IGLTF} from '@babylonjs/loaders/glTF/2.0/glTFLoaderInterfaces';
 import {battleArtworkUrl} from '../battle-artwork';
 import {AbstractMesh, AssetContainer, Constants, Matrix,
   Observer, PBRMaterial, Scene, Texture, TransformNode, Vector3} from '@babylonjs/core';
@@ -80,7 +81,7 @@ export class GroundItemVisual {
         tracks = source.extras?.attachmentTracks ?? [];
         // Ground drops move through source node tracks; their vertex deltas are zero.
         delete source.animations;
-        for (const material of data.json.materials ?? []) {
+        for (const material of (data.json as IGLTF).materials ?? []) {
           if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
         }
       }}},

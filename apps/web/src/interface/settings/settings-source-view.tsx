@@ -180,7 +180,7 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
     setBindings(next);
     changeAudio('music', .5);
     changeAudio('sound', .5);
-    changeDisplay(getDefaultDisplayPreferences(isMobileDevice()));
+    changeDisplay(getDefaultDisplayPreferences());
     setFullscreen(false);
     setArtworkQuality(DEFAULT_BATTLE_ARTWORK_QUALITY);
     setCapture(undefined);

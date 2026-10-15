@@ -130,7 +130,9 @@ export class TankView {
   private base = '01';
   private transientAction: string | undefined;
   readonly actionMessages = new Observable<TankActionMessage>();
+  /** Position is borrowed for synchronous observers and reused by the next notification. */
   readonly movementDustPositions = new Observable<readonly [number, number, number]>();
+  private movementDustPosition?: [number, number, number];
   private readonly animationMessages: TankActionMessage[] = [];
   private readonly actionIdentifiers: number[] = [];
   private readonly animate = (): void => {
@@ -197,7 +199,7 @@ export class TankView {
       // and are released after the actor returns to a retained action.
       await view.action('02');
       view.sceneShadowRegistration = sceneShadowLight(scene)?.addRoot(view.root,
-        {dynamic: true, softShadows: false, meshes: () => view.currentMeshes});
+        {dynamic: true, softShadows: false, receiveShadows: false, meshes: () => view.currentMeshes});
       return view;
     } catch (error) {
       view.dispose();
@@ -494,7 +496,9 @@ export class TankView {
       if (view.hasSoot) {
         for (let index = 0; index < matrix.length; index++) {
           if (matrix[index] === EFFECT_IDENTITY[index]) continue;
-          this.movementDustPositions.notifyObservers([matrix[12], matrix[13], matrix[14]]);
+          const position = this.movementDustPosition ??= [0, 0, 0];
+          position[0] = matrix[12]; position[1] = matrix[13]; position[2] = matrix[14];
+          this.movementDustPositions.notifyObservers(position);
           break;
         }
       }

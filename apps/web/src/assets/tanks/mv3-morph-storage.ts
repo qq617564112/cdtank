@@ -13,27 +13,9 @@ export function mv3MorphTextureLayers(manager: MorphTargetManager): Uint16Array 
   return textureLayers.get(manager);
 }
 
-function morphWords(values: ArrayLike<number> | null): Uint32Array {
-  if (!(values instanceof Float32Array)) throw new Error('MV3 形变目标必须保留位置和法线浮点缓冲');
-  return new Uint32Array(values.buffer, values.byteOffset, values.length);
-}
-
-function equalWords(first: Uint32Array, second: Uint32Array): boolean {
-  if (first.length !== second.length) return false;
-  for (let index = 0; index < first.length; index++) if (first[index] !== second[index]) return false;
-  return true;
-}
-
-/** Transient load-time buckets avoid an all-pairs comparison of large pose buffers. */
-function poseBucket(position: Uint32Array, normal: Uint32Array): string {
-  let positionHash = 2166136261, normalHash = 2166136261;
-  for (const word of position) positionHash = Math.imul(positionHash ^ word, 16777619);
-  for (const word of normal) normalHash = Math.imul(normalHash ^ word, 16777619);
-  return `${position.length}:${positionHash >>> 0}:${normalHash >>> 0}`;
-}
-
-/** Install while the glTF loader still has its target updates frozen. */
-export function prepareMv3MorphTargets(manager: MorphTargetManager, scene: Scene): void {
+/** Read offline layer assignments while the native glTF target updates are frozen. */
+export function prepareMv3MorphTargets(manager: MorphTargetManager, scene: Scene, sourceLayers: readonly number[]): void {
+  const layers = Uint16Array.from(sourceLayers);
   const synchronize = manager.synchronize;
   manager.synchronize = () => {
     if (!manager.isUsingTextureForTargets || manager.numTargets === 0
@@ -43,29 +25,8 @@ export function prepareMv3MorphTargets(manager: MorphTargetManager, scene: Scene
     }
     const targets = Reflect.get(manager, '_targets') as MorphTarget[];
     const unique: MorphTarget[] = [];
-    const buckets = new Map<string, number[]>();
-    const layers = new Uint16Array(targets.length);
     for (let index = 0; index < targets.length; index++) {
-      const target = targets[index];
-      const position = morphWords(target.getPositions()), normal = morphWords(target.getNormals());
-      const bucket = poseBucket(position, normal);
-      const candidates = buckets.get(bucket) ?? [];
-      let layer = -1;
-      for (const candidate of candidates) {
-        const existing = unique[candidate];
-        if (equalWords(position, morphWords(existing.getPositions()))
-          && equalWords(normal, morphWords(existing.getNormals()))) {
-          layer = candidate;
-          break;
-        }
-      }
-      if (layer < 0) {
-        layer = unique.length;
-        unique.push(target);
-        candidates.push(layer);
-        buckets.set(bucket, candidates);
-      }
-      layers[index] = layer;
+      if (!unique[layers[index]]) unique[layers[index]] = targets[index];
     }
     if (unique.length === targets.length) {
       synchronize.call(manager);
@@ -130,8 +91,10 @@ export function compactMv3MorphTargets(manager: MorphTargetManager, scene: Scene
   // The source poses never change; synchronizing must not repack or replace their shared texture.
   manager.synchronize = retainMorphTexture;
   for (const target of targets) manager.removeTarget(target);
+  // Only instances change weights; immutable template targets need no change observers.
+  const compactTargets = Reflect.get(manager, '_targets') as MorphTarget[];
   for (const [index, target] of targets.entries()) {
-    manager.addTarget(new TextureMv3Target(target, pixels, layers?.[index] ?? index, scene));
+    compactTargets.push(new TextureMv3Target(target, pixels, layers?.[index] ?? index, scene));
   }
   manager.areUpdatesFrozen = false;
 }

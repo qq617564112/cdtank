@@ -18,10 +18,17 @@ export class EffectNodeLifecycle {
   controller = 0;
   readonly children: EffectNodeLifecycle[] = [];
   parent?: EffectNodeLifecycle;
-  private readonly selection: EffectControllerSelection = {index: 0, resetIndices: []};
+  private readonly selection?: EffectControllerSelection;
 
   constructor(readonly timing: EffectTimelineConfig,
-    private readonly hooks: EffectLifecycleHooks, readonly retainWhenEnded = false) {}
+    private readonly hooks: EffectLifecycleHooks, readonly retainWhenEnded = false) {
+    const controllers = timing.controllers;
+    // A sole zero-start controller stays at index 0 after activation.
+    if (controllers.length > 1 ||
+        (controllers.length === 1 && Math.fround(controllers[0].start) !== 0)) {
+      this.selection = {index: 0, resetIndices: []};
+    }
+  }
 
   attach(child: EffectNodeLifecycle): void {
     this.children.push(child);
@@ -67,12 +74,14 @@ export class EffectNodeLifecycle {
 
   private tickActive(delta: number): void {
     const selection = this.selection;
-    selectEffectControllerToRef(this.elapsed, this.timing, this.controller, selection);
-    for (const controller of selection.resetIndices) {
-      this.controller = controller;
-      this.hooks.reset(this, controller);
+    if (selection) {
+      selectEffectControllerToRef(this.elapsed, this.timing, this.controller, selection);
+      for (const controller of selection.resetIndices) {
+        this.controller = controller;
+        this.hooks.reset(this, controller);
+      }
+      this.controller = selection.index;
     }
-    this.controller = selection.index;
     if (this.controller >= 0) {
       const lifetimeEnded = effectLifetimeEnded(this.elapsed, this.timing.delay, this.timing.lifetime);
       const additionalEnded = this.hooks.additionalEnd(this, lifetimeEnded);

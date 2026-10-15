@@ -1,4 +1,4 @@
-import type {PassPostProcess, Scene, WebGPUEngine} from '@babylonjs/core';
+import type {PostProcess, Scene, WebGPUEngine} from '@babylonjs/core';
 import type {WebGPURenderTargetWrapper} from '@babylonjs/core/Engines/WebGPU/webgpuRenderTargetWrapper';
 import {WebGPUCacheBindGroups} from '@babylonjs/core/Engines/WebGPU/webgpuCacheBindGroups';
 import {getDisplayPreferences, subscribeDisplayPreferences} from '../interface/settings/display-preferences';
@@ -6,7 +6,7 @@ import './fps-display.css';
 
 /** Frame counters and the FPS readout share a one-second sample. */
 export function webGpuFrameStats(canvas: HTMLCanvasElement, scene: Scene, engine: WebGPUEngine,
-  worldPass: () => PassPostProcess | undefined) {
+  worldPass: () => PostProcess | undefined) {
   const fpsDisplay = document.createElement('output');
   fpsDisplay.className = 'game-fps';
   fpsDisplay.dataset.gameFps = '';

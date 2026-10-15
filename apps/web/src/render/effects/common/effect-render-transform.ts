@@ -9,6 +9,12 @@ export class EffectRenderTransform {
   private readonly first = [...EFFECT_IDENTITY];
   private readonly second = [...EFFECT_IDENTITY];
   private readonly operation = [...EFFECT_IDENTITY];
+  private readonly rotations = new Float32Array(9);
+
+  constructor() {
+    // Each axis starts with angle zero, diagonal one and off-diagonal zero.
+    this.rotations[1] = this.rotations[4] = this.rotations[7] = 1;
+  }
 
   update(position: EffectVec3, orbit: EffectVec3, angles: EffectVec3,
     scale: EffectVec3, parent?: EffectNativeMatrix, global: EffectNativeMatrix = EFFECT_IDENTITY): number[] {
@@ -20,9 +26,15 @@ export class EffectRenderTransform {
     for (let axis = 0; axis < 3; ++axis) operation[12 + axis] = Math.fround(position[axis] + orbit[axis]);
     matrix = this.multiply(matrix, operation);
     for (let axis = 0; axis < 3; ++axis) {
-      const half = Math.fround(angles[axis]) * Math.fround(.01745329238474369) * .5;
-      const sine = Math.fround(Math.sin(Math.fround(half))), cosine = Math.fround(Math.cos(half));
-      const diagonal = Math.fround(1 - 2 * sine * sine), offDiagonal = Math.fround(2 * sine * cosine);
+      const offset = axis * 3, angle = Math.fround(angles[axis]);
+      if (!Object.is(this.rotations[offset], angle)) {
+        const half = angle * Math.fround(.01745329238474369) * .5;
+        const sine = Math.fround(Math.sin(Math.fround(half))), cosine = Math.fround(Math.cos(half));
+        this.rotations[offset] = angle;
+        this.rotations[offset + 1] = Math.fround(1 - 2 * sine * sine);
+        this.rotations[offset + 2] = Math.fround(2 * sine * cosine);
+      }
+      const diagonal = this.rotations[offset + 1], offDiagonal = this.rotations[offset + 2];
       this.resetOperation();
       const first = (axis + 1) % 3, second = (axis + 2) % 3;
       operation[first * 4 + first] = diagonal; operation[second * 4 + second] = diagonal;

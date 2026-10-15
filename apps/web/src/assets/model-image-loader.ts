@@ -1,6 +1,8 @@
 import {AbstractEngine, SceneLoader} from '@babylonjs/core';
 import {GLTFFileLoader} from '@babylonjs/loaders/glTF';
 import {imageResourceKey, loadImageResourceBlob} from './image-cache';
+import {installModelContainerDisposal} from './model-container-lifecycle';
+import {installModelGeometryLoader} from './model-geometry-loader';
 
 let installed = false;
 
@@ -8,8 +10,10 @@ let installed = false;
 export function installModelImageLoader(): void {
   if (installed) return;
   installed = true;
+  installModelGeometryLoader();
   SceneLoader.OnPluginActivatedObservable.add(plugin => {
     if (plugin instanceof GLTFFileLoader) {
+      installModelContainerDisposal(plugin);
       const preprocess = plugin.preprocessUrlAsync;
       const images = new Map<string, Promise<string>>();
       const urls: string[] = [];

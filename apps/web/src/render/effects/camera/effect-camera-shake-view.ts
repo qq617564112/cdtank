@@ -35,8 +35,9 @@ export class EffectCameraShakeView {
 
   /** Original camera update precedes effect-manager update, sharing its random stream. */
   update(deltaSeconds: number): void {
+    const force = this.state.active || this.pose !== undefined;
     this.pose = undefined;
-    const base = this.camera.getViewMatrix(true);
+    const base = this.camera.getViewMatrix(force);
     if (!this.state.active) return;
     base.invertToRef(this.inverse);
     const inverse = this.inverse.m;

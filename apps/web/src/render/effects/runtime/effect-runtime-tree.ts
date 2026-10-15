@@ -21,6 +21,18 @@ const ignoreReleasedNode = (): void => {};
 export interface EffectRuntimeDefinition {index: number; id: number; type: number; children: number[]; name: string;}
 interface NodeControl {node: number;}
 const nodeControlTables = new WeakMap<readonly NodeControl[], Map<number, readonly NodeControl[]>>();
+const firstNodeControlTables = new WeakMap<readonly NodeControl[], Map<number, NodeControl>>();
+
+/** Single-record consumers retain the first source row without a grouping array. */
+function firstControlForNode<T extends NodeControl>(controls: readonly T[], node: number): T {
+  let table = firstNodeControlTables.get(controls);
+  if (!table) {
+    table = new Map();
+    for (const control of controls) if (!table.has(control.node)) table.set(control.node, control);
+    firstNodeControlTables.set(controls, table);
+  }
+  return table.get(node) as T;
+}
 
 /** Loaded control arrays are immutable; keep source order and the first match. */
 function controlsForNode<T extends NodeControl>(controls: readonly T[], node: number): readonly T[] {
@@ -77,14 +89,12 @@ export interface EffectRuntimeNode {
   overlay?: EffectOverlayNodeState;
   screen?: EffectScreenNodeState;
   model?: EffectModelNodeState;
-  children: EffectRuntimeNode[];
   releaseState(): void;
 }
 
 /** Instance state doubles as lifecycle hooks; methods are shared across nodes. */
 class RuntimeNodeState implements EffectRuntimeNode, EffectLifecycleHooks {
   readonly lifecycle: EffectNodeLifecycle;
-  readonly children: EffectRuntimeNode[] = [];
   sprite?: EffectSpriteNodeState;
   particle?: EffectParticleNodeState;
   strip?: EffectStripNodeState;
@@ -184,7 +194,7 @@ export class EffectRuntimeTree {
     const root = createEffectTree(identifier, retain, {
       lookup: id => definitions.get(id),
       create: (definition, retainWhenEnded): EffectRuntimeNode => {
-        const timing = controlsForNode(library.nodeTimings, definition.index)[0];
+        const timing = firstControlForNode(library.nodeTimings, definition.index);
         const node = new RuntimeNodeState(definition, timing, retainWhenEnded, this.origin, released, pool);
         if (definition.type === 1) {
           const controls = controlsForNode(library.spriteControls, definition.index);
@@ -196,19 +206,19 @@ export class EffectRuntimeTree {
             undefined, controls[0].capacity, random, EFFECT_IDENTITY, parentMatrix, visualDensity);
         } else if (definition.type === 7) {
           const controls = controlsForNode(library.stripControls, definition.index);
-          const grid = controlsForNode(library.textureGrids, definition.index)[0];
+          const grid = firstControlForNode(library.textureGrids, definition.index);
           node.strip = new EffectStripNodeState(controls, grid.uvFrames, random, EFFECT_IDENTITY, parentMatrix);
         } else if (definition.type === 2) {
-          node.bolt = new EffectBoltNodeState(controlsForNode(library.boltControls, definition.index)[0], random, parentMatrix, targetProvider);
+          node.bolt = new EffectBoltNodeState(firstControlForNode(library.boltControls, definition.index), random, parentMatrix, targetProvider);
         } else if (definition.type === 8) {
           node.overlay = new EffectOverlayNodeState(controlsForNode(library.overlayControls, definition.index), random);
         } else if ((definition.type === 10 || definition.type === 11) && screenBackend) {
-          node.screen = new EffectScreenNodeState(controlsForNode(library.screenControls, definition.index)[0], screenBackend);
+          node.screen = new EffectScreenNodeState(firstControlForNode(library.screenControls, definition.index), screenBackend);
         } else if (definition.type === 5 && modelBackend) {
           node.model = new EffectModelNodeState(controlsForNode(library.modelControls, definition.index),
             globalMatrix, !!parentMatrix, modelBackend(definition));
         } else if (definition.type === 4) {
-          const control = controlsForNode(library.soundControls, definition.index)[0];
+          const control = firstControlForNode(library.soundControls, definition.index);
           node.sound = new EffectSoundNodeState(control.reference, control.parameter, control.stopPrevious, soundBackend, soundShared);
         } else if (definition.type !== 0) {
           throw new Error(`Unsupported battle effect source type ${definition.type}`);
@@ -217,7 +227,7 @@ export class EffectRuntimeTree {
         this.nodes.push(node);
         return node;
       },
-      attach: (parent, child) => {parent.children.push(child); parent.lifecycle.attach(child.lifecycle);},
+      attach: (parent, child) => parent.lifecycle.attach(child.lifecycle),
     });
     if (!root) throw new Error(`Missing original battle effect ${identifier}`);
     this.root = root;

@@ -1,3 +1,4 @@
+import {HudReloadControl} from './hud-reload-control';
 import {imageResourceUrl} from '../../assets/image-cache';
 import {GameMessage} from '../resources/game-message';
 import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
@@ -6,14 +7,14 @@ import {HudItemSourceView} from './hud-item-source-view';
 import {HudSpectatorView} from './hud-spectator-view';
 import {HudBattleInfoView} from './hud-battle-info-view';
 import {HudCountValue, HudTimeValue} from './hud-score-value';
-import {BattleMagazine, BattleCrosshair, BattleHealthBar, BattleModeIntro, BattleRemotePortrait, BattleWoodPanel} from './battle-hud-artwork';
+import {BattleMagazine, BattleHealthBar, BattleModeIntro, BattleRemotePortrait, BattleWoodPanel} from './battle-hud-artwork';
 import {absoluteRect, sourcePicture} from './hud-source-controls';
 import {ImageArtwork} from '../resources/image-artwork';
 import {SKILL_STATUS_ARTWORK} from '../../assets/skill-status-artwork';
 import type {ResInventory} from '../../../../shared/protocols/PtlInventory';
 import type {CombatCatalog} from '../../../../shared/combat/catalog';
-import {useEffect, useState, useSyncExternalStore, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode} from 'react';
-import type {BattleHud, HudSnapshot, SourceLayout, SourceUi} from './battle-hud';
+import {memo, useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode} from 'react';
+import type {BattleHud, HudLayoutSnapshot, SourceLayout, SourceUi, SourceWindow} from './battle-hud';
 
 export interface HudItemInventoryStore {
   getSnapshot(): {inventory?: ResInventory; selectedWeaponSlot?: number; selectedItemSlot?: number};
@@ -23,6 +24,8 @@ const DEFAULT_PLAYER_TITLE = '嗷嗷待哺';
 const EMPTY_ITEM_INVENTORY: {inventory?: ResInventory; selectedWeaponSlot?: number; selectedItemSlot?: number} = {};
 const emptyItemSnapshot = () => EMPTY_ITEM_INVENTORY;
 const emptyItemSubscribe = () => () => {};
+const HudPortraitArtwork = memo(ImageArtwork);
+const MODE_LAYOUTS = ['team', 'conquer', 'vip', 'melee', 'destroy'];
 const MODE_CONTROLS = ['picTeamMode', 'picConquerMode', 'picVIPMode', 'picMeleeMode', 'picDestroyMode'];
 const MODE_SCORE_BOUNDS: Record<string, CSSProperties> = {
   picSelfIcon: {left: 12, top: 10, width: 26, height: 26},
@@ -41,7 +44,7 @@ const MODE_SCORE_BOUNDS: Record<string, CSSProperties> = {
 export function BattleHudView({hud, items, onUseSlot}: {
   hud: BattleHud; items?: HudItemInventoryStore; onUseSlot: (slot: number) => void;
 }) {
-  const state = useSyncExternalStore(hud.subscribe, hud.getSnapshot);
+  const state = useSyncExternalStore(hud.subscribe, hud.getLayoutSnapshot);
   const spectator = useSyncExternalStore(hud.spectator.subscribe, hud.spectator.getSnapshot);
   const [size, setSize] = useState(() => ({width: innerWidth, height: innerHeight}));
   useEffect(() => {
@@ -62,9 +65,9 @@ export function BattleHudView({hud, items, onUseSlot}: {
         data={data} state={state} hud={hud} scale={scale}/>
       <HudItemPanel data={data} hud={hud} items={items} onUseSlot={onUseSlot}/>
       <HudSpectatorView hud={hud}/>
-      {['team', 'conquer', 'vip', 'melee', 'destroy'].map((name, index) => <HudLayout key={name}
-        source={data.layouts.find(layout => layout.path === `ui/layouts/game_main_info_${name}.xml`)!}
-        data={data} state={state} hud={hud} mode={index + 1} scale={scale}/>)}
+      {MODE_LAYOUTS[state.mode - 1] && <HudLayout key={state.mode}
+        source={data.layouts.find(layout => layout.path === `ui/layouts/game_main_info_${MODE_LAYOUTS[state.mode - 1]}.xml`)!}
+        data={data} state={state} hud={hud} mode={state.mode} scale={scale}/>}
       {state.introStage === 'mode' && <BattleModeIntro mode={state.mode}/>}
       {state.introStage === 'fight' && <HudFightIntro data={data}/>}
     </>}
@@ -79,11 +82,10 @@ function HudFightIntro({data}: {data: SourceUi}) {
     style={{...absoluteRect(control), ...sourcePicture(data, control.properties.Image)}}/>;
 }
 
-function HudItemPanel({data, hud, items, onUseSlot}: {
+const HudItemPanel = memo(function HudItemPanel({data, hud, items, onUseSlot}: {
   data: SourceUi; hud: BattleHud; items?: HudItemInventoryStore; onUseSlot: (slot: number) => void;
 }) {
-  const combat = useSyncExternalStore(hud.subscribeCombat, hud.getCombatSnapshot);
-  const reload = useSyncExternalStore(hud.subscribeReload, hud.getReloadSnapshot);
+  const combat = useSyncExternalStore(hud.subscribeCombat, hud.getItemCombatSnapshot);
   const inventory = useSyncExternalStore(items?.subscribe ?? emptyItemSubscribe, items?.getSnapshot ?? emptyItemSnapshot);
   const [catalog, setCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const [error, setError] = useState('');
@@ -94,18 +96,14 @@ function HudItemPanel({data, hud, items, onUseSlot}: {
     return () => {active = false;};
   }, []);
   return <>
-    {catalog && <HudItemSourceView data={data} combat={combat} catalog={catalog}
+    {catalog && <HudItemSourceView data={data} hud={hud} combat={combat} catalog={catalog}
       inventory={inventory.inventory} selectedWeaponSlot={inventory.selectedWeaponSlot}
-      selectedItemSlot={inventory.selectedItemSlot} reloadFraction={reload.fraction} onUseSlot={onUseSlot}/>}
+      selectedItemSlot={inventory.selectedItemSlot} onUseSlot={onUseSlot}/>}
     <GameMessage text={error} tone="error"/>
   </>;
-}
+});
 
-function HudLayout({source, data, state, hud, mode, scale}: {
-  source: SourceLayout; data: SourceUi; state: HudSnapshot; hud: BattleHud; mode?: number; scale: number;
-}) {
-  const scoreContext = `${state.roomId}:${state.round ?? 0}:${state.mode}`;
-  const scoreActive = state.phase === 'PLAYING' && state.mode === mode;
+function hudLayoutControls(source: SourceLayout, mode: number | undefined) {
   const excluded = new Set(mode ? [] : ['daojulan', 'btnExit', 'picMiniMap', 'picMiniMapBound',
     'picFight', 'picModeSplash', ...MODE_CONTROLS]);
   for (const control of source.windows) {
@@ -114,13 +112,28 @@ function HudLayout({source, data, state, hud, mode, scale}: {
   const controls = source.windows.filter(control => !excluded.has(control.name)
     && !/^prgPlayerLife\d+$/.test(control.name));
   const names = new Set(controls.map(control => control.name));
-  const tree = (parent: string | null): ReactNode => controls.filter(control => parent === null
-    ? !control.parent || !names.has(control.parent) : control.parent === parent).map(control => {
-    const name = control.name, slot = Number(/\d+$/.exec(name)?.[0]);
-    const player = state.slots[slot];
-    const anchor = mode && name === 'SheetWindow' ? 'right'
-      : /^picPlayer\d+$/.test(name) ? slot < 6 ? 'left' : 'right'
-      : name === 'prgBullet' ? 'left' : undefined;
+  const byParent = new Map<string | null, SourceWindow[]>();
+  for (const control of controls) {
+    const parent = control.parent && names.has(control.parent) ? control.parent : null;
+    const siblings = byParent.get(parent);
+    if (siblings) siblings.push(control);
+    else byParent.set(parent, [control]);
+  }
+  return byParent;
+}
+
+const HudLayout = memo(function HudLayout({source, data, state, hud, mode, scale}: {
+  source: SourceLayout; data: SourceUi; state: HudLayoutSnapshot; hud: BattleHud; mode?: number; scale: number;
+}) {
+  const scoreContext = `${state.roomId}:${state.round ?? 0}:${state.mode}`;
+  const scoreActive = state.phase === 'PLAYING' && state.mode === mode;
+  const controls = useMemo(() => hudLayoutControls(source, mode), [source, mode]);
+  const tree = (parent: string | null): ReactNode => (controls.get(parent) ?? []).map(control => {
+    const name = control.name;
+    if (/^picPlayer\d+$/.test(name)) return <HudPlayerLayout key={name} root={control}
+      source={source} controls={controls} hud={hud}
+      slot={Number(/\d+$/.exec(name)![0])} mode={state.mode}/>;
+    const anchor = mode && name === 'SheetWindow' ? 'right' : name === 'prgBullet' ? 'left' : undefined;
     const props = {'data-source-control': name, 'data-source-layout': source.path, 'data-hud-anchor': anchor};
     const style: CSSProperties = {...absoluteRect(control),
       opacity: control.properties.Alpha ? Number(control.properties.Alpha) : undefined};
@@ -135,43 +148,6 @@ function HudLayout({source, data, state, hud, mode, scale}: {
         <BattleWoodPanel kind="timer" className="hud-score-plaque" data-score-plaque="time"/>
       </>;
     }
-    if (/^picPlayer\d+$/.test(name)) {
-      hidden = !player;
-      extra = {'data-player-id': player?.id, 'data-alive': player ? String(player.alive) : undefined};
-    }
-    if (/^picPlayerPanel\d+$/.test(name)) {
-      className += ' hud-player-panel';
-      extra = {'data-player-tone': slot === 0 ? 'local' : slot < 6 ? 'friend' : 'enemy'};
-      content = player && player.statuses.length > 0 && <div className="hud-player-statuses"
-        role="group" aria-label={`${player.name}状态`}>
-        {player.statuses.map(effectId => {
-          const status = SKILL_STATUS_ARTWORK.get(effectId)!;
-          return <ImageArtwork key={effectId} asset={`/${status.asset}`} fit="contain"
-            className="hud-player-status-artwork" data-status-effect={effectId}
-            role="img" aria-label={status.label} title={status.label}/>;
-        })}
-      </div>;
-    }
-    if (/^picPlayerIconBg\d+$/.test(name)) {
-      hidden = slot !== 0;
-      content = slot === 0 && <img className="hud-portrait-frame" src={imageResourceUrl('/ui/battle/portrait-local.png')} alt="" aria-hidden="true" draggable={false}/>;
-    }
-    if (/^picPlayerIcon\d+$/.test(name)) {
-      hidden = !player?.asset;
-      style.zIndex = 4;
-      content = player?.asset && (slot === 0
-        ? <ImageArtwork asset={`/${player.asset}`} className="hud-portrait-image"/>
-        : <BattleRemotePortrait asset={`/${player.asset}`} enemy={slot >= 6}/>);
-      extra = {'data-tank-id': player?.tankId, 'data-pet-id': player?.petId, 'data-expression': player?.expression,
-        role: player ? 'img' : undefined, 'aria-label': player ? `${player.name}宠物头像` : undefined};
-    }
-    if (/^txtPlayerName\d+$/.test(name)) content = player?.name ?? '';
-    if (/^txtPlayerTitle\d+$/.test(name)) {
-      if (name === 'txtPlayerTitle7') style.left = 11;
-      content = player ? player.title || DEFAULT_PLAYER_TITLE : '';
-      extra = {'data-source-title-binding': player ? player.title ? 'confirmed-title' : 'default-title-1' : undefined};
-    }
-    if (/^picVIP\d+$/.test(name)) {hidden = state.mode !== 3 || !player?.isVIP; content = <span className="hud-vip-mark">VIP</span>;}
     if (name === 'edtBattleInfo') {
       content = <HudBattleInfoView ui={data} text={state.messages}/>;
       extra = {onMouseEnter: () => hud.battleInfoHover(true), onMouseLeave: () => hud.battleInfoHover(false)};
@@ -230,18 +206,83 @@ function HudLayout({source, data, state, hud, mode, scale}: {
       style.left = '50%'; style.transform = 'translateX(-50%)';
       return <BattleInfoPanel key={name} {...props} style={style} hud={hud}>{tree(name)}</BattleInfoPanel>;
     }
-    if (control.type.endsWith('/ProgressBar')) {
-      const health = name === 'prgLife' ? state.localHealth : player;
-      return <BattleHealthBar key={name} {...props} style={style} className="source-control"
-        hidden={!health}
-        hp={health?.hp ?? 0} maxHp={health?.maxHp ?? 1} name={health?.name ?? ''}
-        scale={scale} vertical={control.properties.ProgressFormat === 'Vertical'}
-        mirrored={control.properties.BackgroundImage?.includes('xiaoxuecao2.tga')}/>;
-    }
+    if (name === 'prgLife') return <HudLocalHealth key={name} hud={hud} control={control}
+      layoutPath={source.path} scale={scale}/>;
     return <div key={name} {...props} {...extra} className={className} style={style} hidden={hidden}>{content}{tree(name)}</div>;
   });
   return <>{tree(null)}</>;
-}
+});
+
+const HudPlayerLayout = memo(function HudPlayerLayout({root, source, controls, hud, slot, mode}: {
+  root: SourceWindow; source: SourceLayout; controls: ReadonlyMap<string | null, SourceWindow[]>;
+  hud: BattleHud; slot: number; mode: number;
+}) {
+  const getPlayer = useCallback(() => hud.getSnapshot().slots[slot], [hud, slot]);
+  const player = useSyncExternalStore(hud.subscribe, getPlayer);
+  const tree = (control: SourceWindow): ReactNode => {
+    const name = control.name;
+    const props = {'data-source-control': name, 'data-source-layout': source.path,
+      'data-hud-anchor': control === root ? slot < 6 ? 'left' : 'right' : undefined};
+    const style: CSSProperties = {...absoluteRect(control),
+      opacity: control.properties.Alpha ? Number(control.properties.Alpha) : undefined};
+    let hidden: boolean | undefined, content: ReactNode, extra: Record<string, unknown> = {};
+    let className = 'source-control';
+    if (control === root) {
+      hidden = !player;
+      extra = {'data-player-id': player?.id, 'data-alive': player ? String(player.alive) : undefined};
+    }
+    if (/^picPlayerPanel\d+$/.test(name)) {
+      className += ' hud-player-panel';
+      extra = {'data-player-tone': slot === 0 ? 'local' : slot < 6 ? 'friend' : 'enemy'};
+      content = player && player.statuses.length > 0 && <div className="hud-player-statuses"
+        role="group" aria-label={`${player.name}状态`}>
+        {player.statuses.map(effectId => {
+          const status = SKILL_STATUS_ARTWORK.get(effectId)!;
+          return <ImageArtwork key={effectId} asset={`/${status.asset}`} fit="contain"
+            className="hud-player-status-artwork" data-status-effect={effectId}
+            role="img" aria-label={status.label} title={status.label}/>;
+        })}
+      </div>;
+    }
+    if (/^picPlayerIconBg\d+$/.test(name)) {
+      hidden = slot !== 0;
+      content = slot === 0 && <img className="hud-portrait-frame" src={imageResourceUrl('/ui/battle/portrait-local.png')}
+        alt="" aria-hidden="true" draggable={false}/>;
+    }
+    if (/^picPlayerIcon\d+$/.test(name)) {
+      hidden = !player?.asset;
+      style.zIndex = 4;
+      content = player?.asset && (slot === 0
+        ? <HudPortraitArtwork asset={`/${player.asset}`} className="hud-portrait-image"/>
+        : <BattleRemotePortrait asset={`/${player.asset}`} enemy={slot >= 6}/>);
+      extra = {'data-tank-id': player?.tankId, 'data-pet-id': player?.petId, 'data-expression': player?.expression,
+        role: player ? 'img' : undefined, 'aria-label': player ? `${player.name}宠物头像` : undefined};
+    }
+    if (/^txtPlayerName\d+$/.test(name)) content = player?.name ?? '';
+    if (/^txtPlayerTitle\d+$/.test(name)) {
+      if (name === 'txtPlayerTitle7') style.left = 11;
+      content = player ? player.title || DEFAULT_PLAYER_TITLE : '';
+      extra = {'data-source-title-binding': player ? player.title ? 'confirmed-title' : 'default-title-1' : undefined};
+    }
+    if (/^picVIP\d+$/.test(name)) {hidden = mode !== 3 || !player?.isVIP; content = <span className="hud-vip-mark">VIP</span>;}
+    return <div key={name} {...props} {...extra} className={className} style={style} hidden={hidden}>
+      {content}{controls.get(name)?.map(tree)}
+    </div>;
+  };
+  return tree(root);
+});
+
+const HudLocalHealth = memo(function HudLocalHealth({hud, control, layoutPath, scale}: {
+  hud: BattleHud; control: SourceWindow; layoutPath: string; scale: number;
+}) {
+  const health = useSyncExternalStore(hud.subscribe, hud.getLocalHealthSnapshot);
+  return <BattleHealthBar data-source-control={control.name} data-source-layout={layoutPath}
+    style={{...absoluteRect(control), opacity: control.properties.Alpha ? Number(control.properties.Alpha) : undefined}}
+    className="source-control" hidden={!health}
+    hp={health?.hp ?? 0} maxHp={health?.maxHp ?? 1} name={health?.name ?? ''}
+    scale={scale} vertical={control.properties.ProgressFormat === 'Vertical'}
+    mirrored={control.properties.BackgroundImage?.includes('xiaoxuecao2.tga')}/>;
+});
 
 function BattleInfoPanel({hud, ...props}: ComponentPropsWithoutRef<'div'> & {hud: BattleHud}) {
   const opacity = useSyncExternalStore(hud.subscribeBattleInfoOpacity, hud.getBattleInfoOpacity);
@@ -249,22 +290,21 @@ function BattleInfoPanel({hud, ...props}: ComponentPropsWithoutRef<'div'> & {hud
     style={{...props.style, opacity}}/>;
 }
 
-function ReloadControl({hud, ...props}: ComponentPropsWithoutRef<'div'> & {hud: BattleHud}) {
-  const state = useSyncExternalStore(hud.subscribeReload, hud.getReloadSnapshot);
-  return <div {...props} className="source-control hud-reload-control" hidden={!state.visible} role="progressbar"
-    aria-label="装填" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(state.fraction * 100)}>
-    <BattleCrosshair fraction={state.fraction}/>
-  </div>;
-}
+const ReloadControl = HudReloadControl;
 
 function BulletControl({hud, ...props}: ComponentPropsWithoutRef<'div'> & {hud: BattleHud}) {
-  const combat = useSyncExternalStore(hud.subscribeCombat, hud.getCombatSnapshot);
-  const magazine = combat.magazine;
-  return <div {...props} className="source-control hud-bullet-control" hidden={!combat.visible || !magazine}
-    style={{...props.style, width: magazine ? magazine.capacity * 15 : 0}}
+  const visible = useSyncExternalStore(hud.subscribeCombat,
+    useCallback(() => hud.getCombatSnapshot().visible, [hud]));
+  const capacity = useSyncExternalStore(hud.subscribeCombat,
+    useCallback(() => hud.getCombatSnapshot().magazine?.capacity, [hud]));
+  const remaining = useSyncExternalStore(hud.subscribeCombat,
+    useCallback(() => hud.getCombatSnapshot().magazine?.remaining, [hud]));
+  const hasMagazine = capacity !== undefined && remaining !== undefined;
+  return <div {...props} className="source-control hud-bullet-control" hidden={!visible || !hasMagazine}
+    style={{...props.style, width: capacity === undefined ? 0 : capacity * 15}}
     role="progressbar" aria-label="弹匣余弹" aria-valuemin={0}
-    aria-valuemax={magazine?.capacity} aria-valuenow={magazine?.remaining}
-    data-bullet-remaining={magazine?.remaining} data-bullet-capacity={magazine?.capacity}>
-    {magazine && <BattleMagazine capacity={magazine.capacity} remaining={magazine.remaining}/>}
+    aria-valuemax={capacity} aria-valuenow={remaining}
+    data-bullet-remaining={remaining} data-bullet-capacity={capacity}>
+    {hasMagazine && <BattleMagazine capacity={capacity} remaining={remaining}/>}
   </div>;
 }

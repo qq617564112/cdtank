@@ -8,18 +8,23 @@ export const CARTOON_INK = 0.65;
 interface OutlineRegistration {
   scene: Scene;
   meshObserver: Observer<Node>;
-  sceneObserver: Observer<Scene>;
   cloneObserver?: Observer<Node>;
 }
+interface OutlineSceneRegistration {observer: Observer<Scene>; meshCount: number;}
 
 const registrations = new Map<Mesh, OutlineRegistration>();
+const sceneRegistrations = new Map<Scene, OutlineSceneRegistration>();
 let unsubscribePreferences: (() => void) | undefined;
 
 function removeRegistration(mesh: Mesh): void {
   const registration = registrations.get(mesh);
   if (!registration) return;
   mesh.onDisposeObservable.remove(registration.meshObserver);
-  registration.scene.onDisposeObservable.remove(registration.sceneObserver);
+  const sceneRegistration = sceneRegistrations.get(registration.scene)!;
+  if (--sceneRegistration.meshCount === 0) {
+    registration.scene.onDisposeObservable.remove(sceneRegistration.observer);
+    sceneRegistrations.delete(registration.scene);
+  }
   if (registration.cloneObserver) mesh.onClonedObservable.remove(registration.cloneObserver);
   registrations.delete(mesh);
   if (!registrations.size && unsubscribePreferences) {
@@ -29,8 +34,8 @@ function removeRegistration(mesh: Mesh): void {
 }
 
 function removeScene(scene: Scene): void {
-  for (const [mesh, registration] of [...registrations]) {
-    if (registration.scene === scene) removeRegistration(mesh);
+  for (const mesh of registrations.keys()) {
+    if (mesh.getScene() === scene) removeRegistration(mesh);
   }
 }
 
@@ -48,21 +53,7 @@ function eligibleSource(mesh: Mesh): boolean {
   if (!(mesh instanceof Mesh) || mesh instanceof InstancedMesh
     || !mesh.isVerticesDataPresent(VertexBuffer.NormalKind)) return false;
   if (mesh.material?.needAlphaBlendingForMesh(mesh)) return false;
-  if (mesh.material?.needAlphaTestingForMesh(mesh)) {
-    const positions = mesh.getVerticesData(VertexBuffer.PositionKind);
-    const normals = mesh.getVerticesData(VertexBuffer.NormalKind);
-    if (!positions || !normals || positions.length < 3) return false;
-    const distance = positions[0] * normals[0] + positions[1] * normals[1] + positions[2] * normals[2];
-    let planar = true;
-    for (let index = 3; index < positions.length; index += 3) {
-      if (Math.abs(positions[index] * normals[0] + positions[index + 1] * normals[1]
-        + positions[index + 2] * normals[2] - distance) > 0.001) {
-        planar = false;
-        break;
-      }
-    }
-    if (planar) return false;
-  }
+  if (mesh.material?.needAlphaTestingForMesh(mesh) && mesh._internalMetadata?.cdtankOutlinePlanar) return false;
   return true;
 }
 
@@ -76,8 +67,13 @@ function registerOutlineSource(mesh: Mesh): void {
   const registration: OutlineRegistration = {
     scene,
     meshObserver: mesh.onDisposeObservable.add(() => removeRegistration(mesh)),
-    sceneObserver: scene.onDisposeObservable.add(() => removeScene(scene)),
   };
+  let sceneRegistration = sceneRegistrations.get(scene);
+  if (!sceneRegistration) {
+    sceneRegistration = {observer: scene.onDisposeObservable.add(() => removeScene(scene)), meshCount: 0};
+    sceneRegistrations.set(scene, sceneRegistration);
+  }
+  sceneRegistration.meshCount++;
   registration.cloneObserver = mesh.onClonedObservable.add(clone => {
     if (clone instanceof Mesh && eligibleSource(clone)) registerOutlineSource(clone);
   });

@@ -8,6 +8,7 @@ const TICK_MS = 50;
 let world: World | undefined;
 let roomId = '';
 let playerId = '';
+let nextInstanceId = 10;
 let timer: ReturnType<typeof setInterval> | undefined;
 
 function send(message: TrainingPublication): void {self.postMessage(message);}
@@ -16,7 +17,15 @@ function publish(events: MsgRoomEvent[] = []): void {
   const snapshot = world?.snapshot(roomId);
   if (!snapshot) return;
   snapshot.training = true;
-  if (snapshot.roomInfo) snapshot.roomInfo.name = snapshot.roomInfo.name.replace('混战模式', '训练模式');
+  if (snapshot.roomInfo) {
+    const info = snapshot.roomInfo;
+    const description = `混战模式·${info.mapName}`;
+    const suffix = ` · ${description}`;
+    if (info.name === description) info.name = `训练模式·${info.mapName}`;
+    else if (info.name.endsWith(suffix)) {
+      info.name = `${info.name.slice(0, -suffix.length)} · 训练模式·${info.mapName}`;
+    }
+  }
   send({type: 'state', snapshot, events});
 }
 
@@ -29,7 +38,22 @@ async function execute(command: TrainingCommand): Promise<TrainingReply> {
       import('../../../server/src/world'), import('../../../server/src/content'),
     ]);
     roomId = `TRAINING-${Date.now().toString(36)}`;
-    world = new Simulation(Date.now, {minPlayers: 1, allocateRoomId: () => roomId});
+    world = new Simulation(Date.now, {
+      allocateRoomId: () => roomId,
+      resolveAccount: connectionId => connectionId === 'TRAINING' ? 'TRAINING' : undefined,
+      acquireOwnedItem: (_accountId, context) => {
+        const item = world!.inventory(playerId).records.find(record => record.itemTableId === context.itemTableId);
+        return item ? {...item, ownedQuantity: item.ownedQuantity + context.quantity}
+          : {instanceId: nextInstanceId++, itemTableId: context.itemTableId, ownedQuantity: context.quantity,
+            battleQuantity: 0, state: 0, field8: 0, float24Bits: 0, float28Bits: 0, float2cBits: 0};
+      },
+      discardOwnedItem: (_accountId, context) => {
+        const item = world!.inventory(playerId).records.find(record => record.instanceId === context.instanceId);
+        if (!item || item.itemTableId !== context.itemTableId || item.ownedQuantity !== context.expectedOwned) return;
+        return item.ownedQuantity === 1 ? {deleted: true}
+          : {deleted: false, remaining: {...item, ownedQuantity: item.ownedQuantity - 1}};
+      },
+    });
     const joined = world.createAndJoin('TRAINING', 4, options.mapId, options.roomName,
       options.name, options.tankId, '', options.minPlayers ?? 1, options.maxPlayers, false, options.timeLimitSeconds);
     playerId = joined.playerId;
@@ -53,7 +77,11 @@ async function execute(command: TrainingCommand): Promise<TrainingReply> {
   }
   if (!world) throw new Error('训练尚未创建');
   switch (command.type) {
-    case 'input': publish(world.updateInput(playerId, command.input)); return {};
+    case 'input': {
+      const events = world.updateInput(playerId, command.input);
+      if (events.length) publish(events);
+      return {};
+    }
     case 'action': publish(world.useAction(playerId, command.action)?.events); return {};
     case 'inventory': return {inventory: world.inventory(playerId)};
     case 'ready': {

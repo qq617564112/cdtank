@@ -164,33 +164,22 @@ html[data-mobile-device] .map-selector-panel {
 
 html[data-mobile-device] .map-selector-close {
   top: 4px;
-  left: 676px;
+  right: 10px;
 }
 
-html[data-mobile-device] .map-selector-mode {
-  top: 0 !important;
-  width: 126px !important;
-  height: 58px !important;
+html[data-mobile-device] .map-selector-modes {
+  height: 58px;
 }
 
-html[data-mobile-device] [data-map-selector-mode='5'] {
-  left: 4px !important;
+html[data-mobile-device] .map-selector-mode .game-mode-tab-label {
+  left: 25px;
+  width: calc(100% - 30px);
+  font-size: 18px;
 }
 
-html[data-mobile-device] [data-map-selector-mode='4'] {
-  left: 136px !important;
-}
-
-html[data-mobile-device] [data-map-selector-mode='1'] {
-  left: 268px !important;
-}
-
-html[data-mobile-device] [data-map-selector-mode='2'] {
-  left: 400px !important;
-}
-
-html[data-mobile-device] [data-map-selector-mode='3'] {
-  left: 532px !important;
+html[data-mobile-device] .map-selector-mode[data-mode-tab-active='true'] .game-mode-tab-label {
+  left: 4px;
+  width: calc(100% - 8px);
 }
 
 html[data-mobile-device] .map-selector-card {

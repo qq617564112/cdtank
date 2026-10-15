@@ -428,8 +428,8 @@
 .mobile-battle-crosshair {
   left: 50%;
   top: 50%;
-  width: 36px;
-  height: 28px;
+  width: 54px;
+  height: 42px;
   transform: translate(-50%, -50%);
 }
 

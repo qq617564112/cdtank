@@ -7,9 +7,10 @@ export const MOBILE_ACCOUNT_PAGE = {width: 720, height: 405} as const;
 const viewportListeners = new Set<() => void>();
 
 function gameViewportBounds() {
-  const viewport = isMobileDevice() ? window.visualViewport : undefined;
-  return {width: viewport?.width ?? innerWidth, height: viewport?.height ?? innerHeight,
-    left: viewport?.offsetLeft ?? 0, top: viewport?.offsetTop ?? 0};
+  // Keep artwork at its layout size while the keyboard shrinks and pans the visual viewport.
+  const root = document.documentElement;
+  return {width: isMobileDevice() ? root.clientWidth : innerWidth,
+    height: isMobileDevice() ? root.clientHeight : innerHeight, left: 0, top: 0};
 }
 
 /** Pages use the safe landscape area, from 16:9 through 21:9. */
@@ -26,7 +27,7 @@ export function gamePageBounds() {
     top: viewport.top + top + (availableHeight - height) / 2};
 }
 
-export function mobilePageSize(height = MOBILE_PAGE.height) {
+export function mobilePageSize(height: number = MOBILE_PAGE.height) {
   const bounds = gamePageBounds();
   return {width: height * bounds.width / bounds.height, height};
 }
@@ -76,19 +77,14 @@ export function installGamePageViewport(): () => void {
     for (const listener of viewportListeners) listener();
   };
   const schedule = () => {frame ??= requestAnimationFrame(update);};
-  const viewport = isMobileDevice() ? window.visualViewport : undefined;
   update();
   window.addEventListener('resize', schedule);
   screen.orientation?.addEventListener('change', schedule);
   document.addEventListener('fullscreenchange', schedule);
-  viewport?.addEventListener('resize', schedule);
-  viewport?.addEventListener('scroll', schedule);
   return () => {
     if (frame !== undefined) cancelAnimationFrame(frame);
     window.removeEventListener('resize', schedule);
     screen.orientation?.removeEventListener('change', schedule);
     document.removeEventListener('fullscreenchange', schedule);
-    viewport?.removeEventListener('resize', schedule);
-    viewport?.removeEventListener('scroll', schedule);
   };
 }

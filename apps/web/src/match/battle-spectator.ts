@@ -22,20 +22,39 @@ export class BattleSpectator {
 
   update(snapshot: MsgRoomSnapshot, localPlayerId: string, serverNow = snapshot.serverTime): void {
     const context = `${snapshot.roomId}:${snapshot.match?.round ?? 0}:${localPlayerId}`;
-    const local = snapshot.players.find(player => player.id === localPlayerId);
+    let local: MsgRoomSnapshot['players'][number] | undefined;
+    for (const player of snapshot.players) {
+      if (player.id === localPlayerId) {local = player; break;}
+    }
     const dead = snapshot.phase === 'PLAYING' && local?.alive === false;
-    const deathStartedAt = dead && local.respawnAt > 0
+    const deathStartedAt = dead && local && local.respawnAt > 0
       ? local.respawnAt - BATTLE_RESPAWN_SECONDS * 1000 : undefined;
     const watchingWreck = deathStartedAt !== undefined
       && serverNow < deathStartedAt + DEATH_WRECK_VIEW_SECONDS * 1000;
     const active = dead && !watchingWreck;
-    const players = active && local && snapshot.mode <= 3
-      ? snapshot.players.filter(player => player.id !== localPlayerId
-        && player.alive && player.team === local.team).map(({id, name}) => ({id, name})) : [];
     const previousId = context === this.context ? this.state.playerId : undefined;
-    const playerId = players.some(player => player.id === previousId) ? previousId : players[0]?.id;
+    const previousPlayers = this.state.players;
+    let updatedPlayers: SpectatorSnapshot['players'][number][] | undefined;
+    let count = 0, firstId: string | undefined, selectionPresent = false;
+    if (active && local && snapshot.mode <= 3) {
+      for (const player of snapshot.players) {
+        if (player.id === localPlayerId || !player.alive || player.team !== local.team) continue;
+        const previous = previousPlayers[count];
+        const same = previous?.id === player.id && previous.name === player.name;
+        if (!same && !updatedPlayers) updatedPlayers = previousPlayers.slice(0, count);
+        if (updatedPlayers) updatedPlayers.push(same ? previous : {id: player.id, name: player.name});
+        if (count === 0) firstId = player.id;
+        if (player.id === previousId) selectionPresent = true;
+        count++;
+      }
+    }
+    const players = updatedPlayers ?? (count === previousPlayers.length ? previousPlayers : previousPlayers.slice(0, count));
+    const playerId = selectionPresent ? previousId : firstId;
+    const wreckStartedAt = watchingWreck ? deathStartedAt : undefined;
     this.context = context;
-    this.publish({active, players, playerId, wreckStartedAt: watchingWreck ? deathStartedAt : undefined});
+    if (this.state.active === active && this.state.players === players && this.state.playerId === playerId
+      && this.state.wreckStartedAt === wreckStartedAt) return;
+    this.publish({active, players, playerId, wreckStartedAt});
   }
 
   readonly switchPlayer = (direction: -1 | 1): void => {

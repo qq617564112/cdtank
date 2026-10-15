@@ -129,8 +129,9 @@ export class GameConnection {
     try {
       if (this.client.isConnected) await this.publishTrainingPresence(active);
     } catch (error) {
-      this.training = !active;
-      throw error;
+      this.training = false;
+      await this.disconnect();
+      if (active) throw error;
     }
   }
 

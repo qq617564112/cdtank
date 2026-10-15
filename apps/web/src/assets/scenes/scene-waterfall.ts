@@ -3,7 +3,7 @@ import {Scene, ShaderMaterial, Texture} from '@babylonjs/core';
 import type {AbstractMesh} from '@babylonjs/core';
 import {loadEffectModelLibrary} from '../../render/effects/models/effect-model-resources';
 import {EffectModelRenderer, type EffectModelLibrary} from '../../render/effects/models/effect-model-renderer';
-import {orderSceneModels} from '../../render/scene-model-order';
+import {orderSceneModels, setSceneModelPriority} from '../../render/scene-model-order';
 import type {HookPlacement} from './scene-hook';
 
 interface WaterFallLibrary extends EffectModelLibrary {
@@ -43,11 +43,12 @@ export class SceneWaterFall {
       this.renderer = new EffectModelRenderer(this.scene, resource, library,
         new Map([[library.frames[0], this.textures[0]]]), () => 0, -1, resource.reference);
       this.renderer.draw(this.placement.enabled ? {matrix: this.matrix, alpha: 1, blend: 0, priority: 0} : undefined);
-      this.renderer.meshes.forEach(mesh => {
+      for (const mesh of this.renderer.meshes) {
         mesh.metadata = {...mesh.metadata, sourcePlacementId: this.placement.id,
           sourceClass: this.placement.className, sourceWaterFall: true};
-      });
-      orderSceneModels(this.scene, this.renderer.meshes.map(mesh => ({mesh, priority: 0})));
+        setSceneModelPriority(mesh, 0);
+      }
+      orderSceneModels(this.scene);
       this.setAnimationTime(0);
     } catch (error) {this.dispose(); throw error;}
   }

@@ -1,8 +1,11 @@
 /// <reference types="vite/client" />
-import {WebGPUEngine} from '@babylonjs/core';
 import {WebGPUCacheBindGroups} from '@babylonjs/core/Engines/WebGPU/webgpuCacheBindGroups';
 import {getDisplayPreferences} from '../interface/settings/display-preferences';
 import {isMobileDevice} from '../platform/device';
+import {installWebGpuGeometryRebuild} from './webgpu-geometry-rebuild';
+import {installWebGpuInstancedBuffers} from './webgpu-instanced-buffers';
+import {installWebGpuTextureUploads} from './webgpu-texture-uploads';
+import {ResourceWebGpuEngine} from './webgpu-resource-engine';
 import glslangScript from '@babylonjs/core/assets/glslang/glslang.js?url';
 import glslangWasm from '@babylonjs/core/assets/glslang/glslang.wasm?url';
 import twgslScript from '@babylonjs/core/assets/twgsl/twgsl.js?url';
@@ -11,11 +14,11 @@ import twgslWasm from '@babylonjs/core/assets/twgsl/twgsl.wasm?url';
 const BIND_GROUP_CACHE_LIMIT = 4096;
 
 /** All viewports require WebGPU and load shader compilers from the application. */
-export async function createWebGpuEngine(canvas: HTMLCanvasElement, transparent = false): Promise<WebGPUEngine> {
+export async function createWebGpuEngine(canvas: HTMLCanvasElement, transparent = false): Promise<ResourceWebGpuEngine> {
   if (!('gpu' in navigator)) {
     throw new Error('当前浏览器无法使用 WebGPU，请使用支持 WebGPU 的浏览器，并通过 HTTPS 或 localhost 打开游戏。');
   }
-  const engine = new WebGPUEngine(canvas, {
+  const engine = new ResourceWebGpuEngine(canvas, {
     antialias: getDisplayPreferences().msaa4x, stencil: true, adaptToDeviceRatio: !isMobileDevice(),
     premultipliedAlpha: transparent, powerPreference: 'high-performance',
     deviceDescriptor: {requiredFeatures: ['timestamp-query', 'float32-filterable']},
@@ -26,6 +29,9 @@ export async function createWebGpuEngine(canvas: HTMLCanvasElement, transparent 
     await engine.initAsync();
     // Rebind buffers each frame as scene instances grow during loading.
     engine.compatibilityMode = true;
+    installWebGpuGeometryRebuild();
+    installWebGpuInstancedBuffers();
+    installWebGpuTextureUploads(engine);
     // Babylon's global lookup retains bindings of disposed meshes and textures.
     // Live draw contexts keep their own bindings when this lookup is cleared.
     engine.onEndFrameObservable.add(() => {

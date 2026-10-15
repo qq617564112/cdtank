@@ -55,10 +55,14 @@ export class ScenePlant05413MaterialOwner {
     mesh.instancedBuffers.plantSway = new Vector2(phase, height);
     const extent = Math.max(Math.abs(entry.minimum.y), Math.abs(entry.maximum.y));
     const displacement = 0.15 / height * extent * extent;
-    const minimum = entry.minimum.clone(), maximum = entry.maximum.clone();
-    minimum.x -= displacement; maximum.x += displacement;
-    mesh.setBoundingInfo(new BoundingInfo(minimum, maximum));
-    for (const subMesh of mesh.subMeshes) subMesh.setBoundingInfo(new BoundingInfo(minimum, maximum));
+    // Instances already own bounds. Preserve the source's original tree for
+    // disposal; each full global submesh reads its owning mesh's bounds.
+    const bounds = mesh === source ? new BoundingInfo(entry.minimum, entry.maximum) : mesh.getBoundingInfo();
+    bounds.minimum.copyFrom(entry.minimum);
+    bounds.maximum.copyFrom(entry.maximum);
+    bounds.minimum.x -= displacement; bounds.maximum.x += displacement;
+    bounds.reConstruct(bounds.minimum, bounds.maximum);
+    if (mesh === source) mesh.setBoundingInfo(bounds);
     mesh.computeWorldMatrix(true);
   }
 

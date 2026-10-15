@@ -21,14 +21,16 @@ export function registerRoomApis(
 ): void {
   server.implementApi('ResumeRoom', async call => {
     const session = sessionByConnection.get(call.conn.id);
-    if (!session || session.roomId !== call.req.roomId || session.playerId !== call.req.playerId) {
+    if (!session || (call.req.roomId !== undefined && session.roomId !== call.req.roomId)
+        || (call.req.playerId !== undefined && session.playerId !== call.req.playerId)) {
       return call.error('原房间保留已结束，请重新加入', {code: 'ROOM_RESUME_REJECTED'});
     }
     const snapshot = world.snapshot(session.roomId);
     if (!snapshot || !snapshot.players.some(player => player.id === session.playerId)) {
+      sessionByConnection.delete(call.conn.id);
       return call.error('原房间保留已结束，请重新加入', {code: 'ROOM_RESUME_REJECTED'});
     }
-    await call.succ({snapshot, inputSequence: await world.playerInputSequence(session.playerId)});
+    await call.succ({snapshot, inputSequence: await world.playerInputSequence(session.playerId), playerId: session.playerId});
     broadcastRoomState(session.roomId);
   });
 

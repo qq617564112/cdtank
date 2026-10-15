@@ -1,4 +1,5 @@
 import {itemHitHandler, gameContent} from '../../shared/content/catalog';
+import {collectCpuTrace} from './battle/cpu/trace';
 import {defaultAmmoId} from '../../shared/content/catalog';
 import {confirmAcceptedAmmoSelection} from './battle/items/ammo-confirmation';
 import {resetTrapFireRestraint} from './battle/items/trap-fire-restraint';
@@ -922,6 +923,14 @@ export class World {
   snapshot(roomId: string): MsgRoomSnapshot | undefined {
     const room = this.rooms.get(roomId);
     return room ? this.snapshotRoom(room, this.now()) : undefined;
+  }
+
+  cpuTrace(roomId: string) {
+    const room = this.rooms.get(roomId);
+    const now = this.now();
+    if (!room || room.phase !== 'PLAYING' || now < room.startedAt
+        || ![...room.players.values()].some(player => player.cpu || player.autopilot)) return undefined;
+    return collectCpuTrace(room, now);
   }
 
   private createRoom(mode: number, mapId?: number, minPlayers?: number, maxPlayers?: number,

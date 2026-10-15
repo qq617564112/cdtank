@@ -6,9 +6,10 @@ import {
   SCENE_ENVIRONMENT_FRAGMENT_DECLARATION, SCENE_ENVIRONMENT_UNIFORMS,
   SCENE_ENVIRONMENT_VERTEX_DECLARATION,
 } from '../../render/scene-environment';
-import {bindSceneShadowMaterial, SCENE_SHADOW_VERTEX_DECLARATION, SCENE_SHADOW_VERTEX_APPLY,
-  SCENE_SHADOW_FRAGMENT_DECLARATION, SCENE_SHADOW_FRAGMENT_BEGIN,
-  SCENE_SHADOW_FRAGMENT_APPLY} from '../../render/scene-shadow-light';
+import {bindSceneShadowMaterial, SCENE_SHADOW_FRAGMENT_APPLY} from '../../render/scene-shadow-light';
+import {SCENE_FLAT_SHADOW_VERTEX_DECLARATION, SCENE_FLAT_SHADOW_VERTEX_APPLY,
+  SCENE_FLAT_SHADOW_FRAGMENT_DECLARATION,
+  SCENE_FLAT_SHADOW_FRAGMENT_BEGIN} from '../../render/scene-flat-shadow';
 
 /** Native POL mesh/part names; each listed part is FVF21, kind0. */
 const SOURCE_MESHES = {
@@ -43,7 +44,7 @@ export class SceneGeneralMaterial {
     const texture = textureOverride ?? original.albedoTexture!;
     const material = new ShaderMaterial(`source-pol/${model}/${meshName}`, asset.scene, {
       vertexSource: `${SCENE_ENVIRONMENT_VERTEX_DECLARATION}
-${SCENE_SHADOW_VERTEX_DECLARATION}
+${SCENE_FLAT_SHADOW_VERTEX_DECLARATION}
 attribute vec3 position;
 attribute vec3 normal;
 attribute vec2 uv;
@@ -57,18 +58,18 @@ void main() {
   sourceUv = uv; sourceDiffuse = color;
   vec4 worldPosition = finalWorld * vec4(position, 1.0);
   vec3 worldNormal = normalize(mat3(finalWorld) * normal);
-${SCENE_SHADOW_VERTEX_APPLY}
+${SCENE_FLAT_SHADOW_VERTEX_APPLY}
   sceneLitColor = vec3(1.0);
   sceneFogFactor = sceneFog(worldPosition.xyz);
   gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
 }`,
       fragmentSource: `${SCENE_ENVIRONMENT_FRAGMENT_DECLARATION}
-${SCENE_SHADOW_FRAGMENT_DECLARATION}
+${SCENE_FLAT_SHADOW_FRAGMENT_DECLARATION}
 uniform sampler2D sourceTexture;
 varying vec2 sourceUv;
 varying vec4 sourceDiffuse;
 void main() {
-${SCENE_SHADOW_FRAGMENT_BEGIN}
+${SCENE_FLAT_SHADOW_FRAGMENT_BEGIN}
   gl_FragColor = texture2D(sourceTexture, sourceUv) * sourceDiffuse;
 ${SCENE_SHADOW_FRAGMENT_APPLY}
 ${SCENE_ENVIRONMENT_FRAGMENT_APPLY}

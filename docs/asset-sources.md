@@ -14,7 +14,8 @@
 | `apps/server/resources/assets/` | 场景、战场及碰撞数据 |
 | `apps/web/public/ui/fonts/SIMSUN.ttf`、`SIMSUN-password.ttf` | 原客户端界面字体与密码字体 |
 | `deployment/assets/ui/fonts/xiangjiao-brush.ttf` | 维护者提供的 `XiangJiaoKuanMaoShuaLingGanTi-2.ttf`，用于动态界面文字 |
-| `deployment/assets/ui/fonts/Silkscreen-Regular.ttf` | Silkscreen 字体，用于运行时显示；许可随字体提供 |
+| `apps/web/public/assets/ui/fonts/HappyZcool-2016.ttf` | HappyZcool-2016 字体，内嵌版权为 LuiBingKe 2016，用于卡通界面文字 |
+| `deployment/assets/ui/fonts/Silkscreen-Regular.ttf` | Silkscreen 字体，用于运行时显示；SIL OFL 1.1 许可保存在同目录的 `Silkscreen-OFL.txt`，并随资产包发布到 `assets/ui/fonts/` |
 
 素材生产与发布见[运行美术资源](original-assets.md)和[资产压缩与精灵图](asset-compression.md)。GitHub 已发布资源包和当前主线的兼容范围见[发布说明](github-publication.md)。
 
