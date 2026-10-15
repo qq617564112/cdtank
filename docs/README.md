@@ -10,10 +10,10 @@
 | 房间服务 | 每房间独立子进程推进权威模拟；主进程管理连接、账户事务及消息转发 | [房间进程决策](room-processes.md) |
 | UI 与文字 | 手绘界面、卡通控件、图片艺术字与 glyph，动态正文使用随仓库提供的字体 | [UI 文字](ui-text-rendering.md) |
 | 高清素材 | 21 辆战车、323 套有效皮肤、履带动画及地图物件高清贴图；保留几何、UV 和动画 | [高清素材](hd-assets.md) · [战车素材](tank-hd.md) |
-| 资源生产 | `art/hd` → 逐图配方 → `art/compressed` → public；WebP 成品、UI 无损合图、双画质战斗资源 | [压缩与发布](asset-compression.md) |
-| 加载 | UI 预加载，模型和声音按需缓存；登录页可选全资源预下载，入场前准备动态道具与掉落物 | [资源加载](resource-loading.md) |
+| 资源生产 | HD 源图经配方生成 compressed，再发布怀旧与 HD 两套战斗资源；UI 无损合图 | [压缩与发布](asset-compression.md) |
+| 加载 | UI 预加载，模型和声音按需缓存；电脑登录页可选全资源预下载，入场前准备动态道具与掉落物 | [资源加载](resource-loading.md) |
 | 入场进度 | 地图配置、模型解析、地形和场景实例化进度汇入战斗加载界面 | [更新日志](../CHANGELOG.md) |
-| 显示 | 怀旧／HD、五档渲染分辨率、4× MSAA、卡通描边、FPS、亮度／饱和度／对比度 | [显示设置](display-settings.md) |
+| 显示 | 电脑与移动端怀旧／HD 选择、移动端 HD 采用怀旧尺寸与全局横屏；五档渲染分辨率、4× MSAA、卡通描边、FPS、亮度／饱和度／对比度 | [显示设置](display-settings.md) |
 | 场景光照 | 白天、夜景、室内、夕阳方向光和实时软阴影，跟随模型动作、隐藏与破坏 | [场景光照与阴影](recovery/ground-contact-shadows.md) |
 | 会话 | URL 记录页面与弹窗，刷新恢复账户、频道和原房间；房主退出后转交权限 | [路由与恢复](navigation.md) |
 | 部署 | 正式资源迁入 apps 目录，Forgejo Actions 构建 Docker 镜像，持久卷保存账户 | [自动部署](../deployment/forgejo.md) |
@@ -28,6 +28,7 @@
 | 工程职责、命令和环境变量 | [开发指南](development.md) |
 | 页面、弹窗和刷新恢复 | [路由与会话恢复](navigation.md) |
 | 显示选项、默认值与保存行为 | [显示设置](display-settings.md) |
+| 手机与平板的页面布局、16:9 至 21:9 比例及触摸操作 | [移动端页面 UI](mobile-pages-ui.md) · [移动端战斗 UI](mobile-battle-ui.md) |
 | 静态目录、预加载与浏览器缓存 | [public 目录](public-assets.md) · [资源加载](resource-loading.md) |
 | 原场景、模式组合与自定义场景 | [可玩地图](playable-maps.md) · [测试地图](test-map.md) · [出生规则](spawn-rules.md) |
 | 消息显示 | [游戏消息](game-messages.md) |
@@ -41,7 +42,7 @@
 | 内容 | 文档 |
 | --- | --- |
 | 原版、HD、压缩成品与发布目录 | [运行美术资源](original-assets.md) |
-| 尺寸依据、编码方案、合图和双画质输出 | [高清资产压缩与精灵图](asset-compression.md) |
+| 尺寸依据、编码方案、合图和怀旧与 HD 两套战斗素材输出 | [高清资产压缩与精灵图](asset-compression.md) |
 | 战车与地图物件高清化 | [高清素材](hd-assets.md) · [战车素材](tank-hd.md) |
 | 涂鸦小地图与文字 | [小地图风格](minimap-cartoon-style.md) · [UI 文字](ui-text-rendering.md) |
 | WebGPU、HUD、场景动画与运行计数 | [渲染实现](webgpu-rendering.md) |

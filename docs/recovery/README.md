@@ -22,10 +22,11 @@
 ## 画面与声音
 
 - [显示设置](../display-settings.md)与[资源加载](../resource-loading.md)：素材选择、渲染配置、预加载与缓存。
-- [高清素材](../hd-assets.md)与[资产压缩](../asset-compression.md)：源图、配方、WebP、UI 合图和双画质发布。
+- [高清素材](../hd-assets.md)与[资产压缩](../asset-compression.md)：源图、配方、WebP、UI 合图和怀旧／HD／mobile 发布。
 - [WebGPU 渲染](../webgpu-rendering.md)与[场景光照和软阴影](ground-contact-shadows.md)：GPU 绘制与地图光照。
 - [界面资源](ui-runtime.md)：布局、图块和字体来源。
 - [音频](audio-runtime.md)：原音乐、声音 ID 与事件接线。
+- [按钮点击音](button-sound-source.md)：原 UI01 调用点、全局按钮接线与音效音量。
 - [特效运行](effect-runtime.md)与[特效状态](effect-progress.md)：效果格式、运行和还原覆盖。
 - [战斗相机](battle-camera.md)：原相机参数与网页接线。
 

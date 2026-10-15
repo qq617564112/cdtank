@@ -28,9 +28,9 @@
 - **CPU 对手**：可在等待房间添加 CPU，通过同一套战斗输入和规则参与对局。
 - **房间与恢复**：房间独立进程、房主转交、页面与弹窗 URL，以及刷新后的账户、频道和原房间恢复。
 - **资源工具**：CPK、MV3、POL、CVD 和数据表的提取与转换工具，以及素材制作所需的模型渲染入口。
-- **显示与加载**：怀旧／HD 战斗素材、五档渲染分辨率、4× MSAA、FPS 显示、亮度／饱和度／对比度；UI 预加载、模型与音频缓存，以及登录页可选的全资源预下载。
+- **显示与加载**：电脑与移动端均可选怀旧／HD，移动端 HD 采用怀旧贴图尺寸，支持全局横屏；五档渲染分辨率、4× MSAA、FPS 显示、亮度／饱和度／对比度；UI 预加载、模型与音频缓存，以及电脑登录页可选的全资源预下载。
 - **战场画面**：GPU HUD、模型动画与粒子绘制，按地图配置的方向光和实时软阴影。
-- **交付流程**：高清源图、逐图压缩配方、WebP 成品、UI 精灵图与双画质战斗资源；GitHub 程序／资产分包与自动安装，以及 Forgejo / Docker 自动部署。
+- **交付流程**：高清源图、逐图压缩配方、WebP 成品、UI 精灵图与怀旧／HD 战斗资源；GitHub 程序／资产分包与自动安装，以及 Forgejo / Docker 自动部署。
 
 项目仍在持续还原中。完整原版规则、全部技能道具、界面表现和高清多人性能的完成情况，以[任务清单](docs/recovery/tasklist.md)和各专题证据为准。
 
@@ -83,7 +83,7 @@ npm ci
 npm run assets:install
 ```
 
-已有配套 `apps/web/public/` 和 `apps/server/resources/` 时可跳过安装。public 按 `assets/`、`data/`、`manifests/` 分类，见[目录规则](docs/public-assets.md)。离线安装可指定两个本地附件，见[发布说明](docs/github-publication.md)。运行资源包含 UI 图集、双画质战斗素材、模型、音频、字体、数据表和碰撞数据，无需原客户端或 Python。修改素材时需要另行保留完整的 `art/hd/`、`art/original/` 及[资产压缩依赖](docs/asset-compression.md)。
+已有配套 `apps/web/public/` 和 `apps/server/resources/` 时可跳过安装。public 按 `assets/`、`data/`、`manifests/` 分类，见[目录规则](docs/public-assets.md)。离线安装可指定两个本地附件，见[发布说明](docs/github-publication.md)。运行资源包含 UI 图集、怀旧与 HD 两套战斗素材、模型、音频、字体、数据表和碰撞数据，无需原客户端或 Python。修改素材时需要另行保留完整的 `art/hd/`、`art/original/` 及[资产压缩依赖](docs/asset-compression.md)。
 
 构建网页和服务端后启动：
 

@@ -38,16 +38,16 @@
 
 ## 运行资源
 
-运行资源使用当前 UI 精灵图，并提供原版、HD 两套战斗模型和特效贴图；小地图保持当前素材。已有配套运行目录可直接开发，或执行 `npm run assets:install` 从同版本 Release 安装 public、服务端表和碰撞数据。指定本地程序／资产附件见[发布与安装](github-publication.md)。素材生成还需完整的 `art/hd/`、`art/original/` 及[压缩依赖](asset-compression.md)，这些源目录不包含在运行包中。
+运行资源使用当前 UI 精灵图，并提供怀旧与 HD 两档战斗模型和特效贴图；小地图保持当前素材。手机与平板同样提供怀旧／HD 选择，HD 使用按怀旧尺寸生成的 mobile-hd 资源。已有配套运行目录可直接开发，或执行 `npm run assets:install` 从同版本 Release 安装 public、服务端表和碰撞数据。指定本地程序／资产附件见[发布与安装](github-publication.md)。素材生成还需完整的 `art/hd/`、`art/original/` 及[压缩依赖](asset-compression.md)，这些源目录不包含在运行包中。
 
-图片按最终发布地址复用缓存，模型、JSON 和音频也保存完整文件；启动只预加载 UI，完整预下载由登录页确认操作触发。主要目录为：
+图片按最终发布地址复用缓存，模型、JSON 和音频也保存完整文件；启动只预加载 UI，完整预下载由电脑登录页确认操作触发，移动端隐藏该入口。主要目录为：
 
 | 目录 | 内容 |
 | --- | --- |
 | `art/original/` | 原版图片与模型，保留导出尺寸及文件内容，由 Git 忽略 |
 | `art/hd/` | 高清源图与资源快照，包含模型贴图、UI 和 minimap，由 Git 忽略 |
 | `art/compressed/` | 高清资产压缩脚本的输出，由 Git 忽略 |
-| `apps/web/public/` | 基础资源及生成的 UI 图集、双画质战斗素材、字体与清单，由 Git 忽略 |
+| `apps/web/public/` | 基础资源及生成的 UI 图集、怀旧与 HD 两套战斗素材、字体与清单，由 Git 忽略 |
 | `apps/server/resources/assets/` | 服务端场景目录、战场配置与预烘焙碰撞数据，由 Git 忽略 |
 | `apps/server/resources/tables/` | 安装脚本下载的解码内容表，包含 JSON 和 CSV，由 Git 忽略 |
 | `state/accounts.sqlite` | 开发环境默认账户数据库，由运行时创建并由 Git 忽略 |
@@ -56,7 +56,7 @@
 
 资源重新提取和转换是可选的维护流程，才需要将原客户端放在 `CDTank/` 并安装 Python 依赖，步骤见[从原客户端重建资源](recovery/reproducible-assets.md)。运行中账户数据库通过备份命令保存。
 
-从已有 `art/hd/` 生成压缩资产，以及从压缩成品生成 public 精灵图和双画质战斗素材，见[高清资产压缩与精灵图](asset-compression.md)。该文档记录依赖、逐图配方、最终尺寸、WebP 编码参数和生成顺序。其它独立图片通过 `assets:publish -- --image <compressed中的相对路径>` 发布。public 分类和逻辑资源标识见[public 资源目录](public-assets.md)。
+从已有 `art/hd/` 生成 compressed，以及从压缩成品生成 public 精灵图和怀旧／HD 两套战斗素材，见[高清资产压缩与精灵图](asset-compression.md)。该文档记录依赖、逐图配方、最终尺寸、WebP 编码参数和生成顺序。其它独立图片通过 `assets:publish -- --image <compressed中的相对路径>` 发布。public 分类和逻辑资源标识见[public 资源目录](public-assets.md)。
 
 ## 常用命令
 
@@ -74,7 +74,7 @@
 | `npm run assets:compressed` | 按逐图配方从 `art/hd/` 生成 `art/compressed/`，保留高清源文件 |
 | `npm run assets:compressed -- --image <源路径或输出路径>` | 增量生成指定独立图片，可重复指定 `--image` |
 | `npm run assets:sprites` | 从已有 `art/compressed/` 生成 UI 精灵图和清单到 `apps/web/public/` |
-| `npm run assets:battle-artwork` | 从原版素材与压缩成品发布怀旧、HD两套战斗模型和特效贴图 |
+| `npm run assets:battle-artwork` | 从原版素材与 compressed 成品发布怀旧、HD 战斗模型和特效贴图 |
 | `npm run assets:publish` | 整理已有 public 为 assets、data、manifests，不重新编码 |
 | `npm run assets:publish -- --image <compressed中的相对路径>` | 发布指定独立压缩图片，可重复指定 `--image` |
 | `npm run dev:server` | 启动开发服务端 |
@@ -91,7 +91,7 @@
 
 ## 本地配置
 
-Web 开发服务器将同源 `/game` WebSocket 转发到游戏服务端。
+Web 开发服务器将同源 `/game` WebSocket 与 `/game/api/` HTTP 请求转发到游戏服务端，去掉 `/game` 前缀并保留后续路径；新增电脑接口见[等待房间操作与CPU管理](recovery/waiting-room-operations-and-cpu.md)。
 
 客户端要求 WebGPU，通过 HTTPS 或 localhost 访问。引擎异步初始化和 HUD/场景优化见 [WebGPU 客户端渲染](webgpu-rendering.md)。
 
