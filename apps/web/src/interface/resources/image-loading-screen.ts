@@ -1,6 +1,6 @@
-import {createElement} from 'react';
+import {createElement, Fragment, type ReactNode} from 'react';
 import type {Root} from 'react-dom/client';
-import {getLoadingArtwork, LoadingPage} from './loading-page';
+import {getLoadingArtwork, LoadingPage, type LoadingPageProps} from './loading-page';
 import {decodeImageRegion} from '../../assets/image-resources';
 import {DialogButton} from './dialog-button';
 
@@ -12,8 +12,28 @@ export class ImageLoadingScreen {
   private status = '正在准备图片资源…';
   private details = '';
   private failed = false;
+  private game?: ReactNode;
+  private gamePage?: Omit<LoadingPageProps, 'background'>;
+  private inGame = false;
+  private startupContinues = true;
 
-  constructor(private readonly root: Root, private readonly onRetry: () => void) {
+  constructor(private readonly root: Root, private readonly onRetry: () => void,
+    private readonly startupProgressLimit = 1) {
+    this.render();
+  }
+
+  /** Keep the loading page mounted while the game takes over resource preparation. */
+  showGame(game: ReactNode): void {
+    this.game = game;
+    this.render();
+  }
+
+  setGameLoading(page?: Omit<LoadingPageProps, 'background'>): void {
+    this.inGame = true;
+    if (!page) this.startupContinues = false;
+    const offset = this.startupContinues ? this.startupProgressLimit : 0;
+    this.gamePage = page ? {...page, progress: page.progress === undefined ? this.progress
+      : offset + page.progress * (1 - offset)} : undefined;
     this.render();
   }
 
@@ -37,7 +57,7 @@ export class ImageLoadingScreen {
   }
 
   update(progress: number, status?: string): void {
-    this.progress = progress;
+    this.progress = progress * this.startupProgressLimit;
     if (status !== undefined) this.status = status;
     this.render();
   }
@@ -50,7 +70,7 @@ export class ImageLoadingScreen {
   }
 
   private render(): void {
-    this.root.render(createElement(LoadingPage, {
+    const page = this.inGame ? this.gamePage && {...this.gamePage, background: this.background} : {
       className: 'image-loading-screen',
       'aria-label': '游戏资源加载',
       'aria-busy': !this.failed,
@@ -63,6 +83,7 @@ export class ImageLoadingScreen {
       actions: this.failed ? createElement(DialogButton, {
         type: 'button', autoFocus: true, onClick: this.onRetry,
       }, '重新载入') : undefined,
-    }));
+    };
+    this.root.render(createElement(Fragment, null, page ? createElement(LoadingPage, page) : null, this.game));
   }
 }

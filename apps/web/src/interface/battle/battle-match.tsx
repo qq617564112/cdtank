@@ -7,7 +7,6 @@ import {WaitingRoomView} from '../lobby/waiting-room';
 import type {CpuLoadoutItem} from '../../../../shared/protocols/PtlCpu';
 import {BattlePlayPage} from './battle-play-page';
 import {BattleSummaryPage} from './battle-summary-page';
-import {BattleLoadingPage} from './battle-loading-page';
 import {BattleEndPage} from './battle-end-page';
 import type {WaitingRoomActions, WaitingRoomViewProps} from '../lobby/waiting-room';
 import type {RoomEditor} from '../lobby/room-edit-dialog';
@@ -419,13 +418,12 @@ export class BattleMatch {
   }
 }
 
-export function BattleMatchView({panel, validation = false}: {panel: BattleMatch; validation?: boolean}) {
+export function BattleMatchView({panel, validation = false, exitRequest}: {
+  panel: BattleMatch; validation?: boolean; exitRequest?: number;
+}) {
   const state = useSyncExternalStore(panel.subscribe, panel.getSnapshot, panel.getSnapshot);
   if (!state) return null;
-  if (state.phase === 'LOADING' || (state.phase === 'PLAYING' && state.loading.progress < 1)) return <BattleLoadingPage key={state.round} round={state.round} progress={state.loading.progress}
-    status={state.loading.status} error={state.loading.error} loadedPlayers={state.loadedPlayers}
-    totalPlayers={state.loadingPlayers} retry={panel.retryLoading}
-    pending={state.pending} feedback={state.status}/>;
+  if (state.phase === 'LOADING' || (state.phase === 'PLAYING' && state.loading.progress < 1)) return null;
   const waiting = state.phase === 'WAITING';
   const finished = state.phase === 'FINISHED';
   if (finished && !validation && !state.summaryReady) return <BattleEndPage
@@ -448,6 +446,7 @@ export function BattleMatchView({panel, validation = false}: {panel: BattleMatch
       addRobot={panel.supportsCpu && state.canManageCpu ? team => panel.addRobot(team) : undefined}/>} 
   </section>;
   if (state.phase === 'PLAYING' && !validation) return <BattlePlayPage key={`${state.roomId}:${state.round}`} roomId={state.roomId} round={state.round}
+    exitRequest={exitRequest}
     busy={state.pending} canLeave={state.hasLocalPlayer}
     quote={() => panel.quoteExitPenalty()} leave={points => panel.leaveRoom(points)}
     feedback={state.boosts.map(boost => <p key={boost.kind}

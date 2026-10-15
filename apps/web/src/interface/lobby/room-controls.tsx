@@ -19,12 +19,12 @@ import {waitingRoomInfo} from './waiting-room-state';
 import {navigateGame, roomPath, useRouteDialog, useNavigationValue} from '../../navigation/route';
 import {useRoomDraft} from './use-room-draft';
 
-interface LobbyViewProps {validation?: boolean; chatContent?: ReactNode; playerContent?: ReactNode; headerContent?: ReactNode; battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; openInventory: () => void; openEquipment: () => void; openRoles: () => void; openShop: () => void; openHistory: () => void}
+interface LobbyViewProps {validation?: boolean; artworkReady: boolean; chatContent?: ReactNode; playerContent?: ReactNode; headerContent?: ReactNode; battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; openInventory: () => void; openEquipment: () => void; openRoles: () => void; openShop: () => void; openHistory: () => void}
 const MODE_NAMES = ['团队', '占领', '擒王', '混战', '破坏'];
 const INITIAL_DRAFT: RoomCreateDraft = {mode: 1, mapId: 0, roomName: '一起对战', password: '', minPlayers: 1, maxPlayers: 1, friendlyFire: false};
 
 /** Lobby state owns ordinary controls and the original source layout dialogs. */
-export function LobbyView({validation = false, chatContent, playerContent, headerContent, battle, canvas, hud, openInventory, openEquipment, openRoles, openShop, openHistory}: LobbyViewProps) {
+export function LobbyView({validation = false, artworkReady, chatContent, playerContent, headerContent, battle, canvas, hud, openInventory, openEquipment, openRoles, openShop, openHistory}: LobbyViewProps) {
   const match = useSyncExternalStore(battle.matchPanel.subscribe, battle.matchPanel.getSnapshot, battle.matchPanel.getSnapshot);
   const waiting = match?.phase === 'WAITING';
   const [playerName, setPlayerName] = useState('坦克手'), [tankId, setTankId] = useState(() => preparedTankCatalog()?.[0]?.id ?? 0);
@@ -201,7 +201,7 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
         else {createAfterMap.current = true; setMapOpen(true);}
       }} select={setSelectedId} activate={activateRoom} changeSort={changeSort} previous={previous} next={next} refresh={() => {void refresh();}} join={() => validation ? report(join(page.selectedId, joinPassword)) : activateRoom(page.selectedId)}/>;
   return <>
-    {!validation && <LobbySourcePage visible={!inBattle || waiting} room={waiting}
+    {!validation && artworkReady && (!inBattle || waiting) && <LobbySourcePage visible room={waiting}
       roomName={match?.waiting ? waitingRoomInfo(match.waiting).name : ''} status={waiting ? '' : status}
       chatContent={waiting ? undefined : chatContent} playerContent={playerContent}
       headerContent={!inBattle && !waiting ? headerContent : undefined}>
@@ -274,14 +274,14 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
       <RoomInvitations messages={invitations} ignore={id => setInvitations(current => current.filter(value => value.invitationId !== id))}
         join={(message, password) => join(message.room.id, password)}/>
     </div>}
-    {validation && roomCards}
+    {validation && artworkReady && roomCards}
     <button id="leave" type="button" hidden={!inBattle || !validation} disabled={leaving} onClick={() => {
       setLeaving(true); void battle.exitRoom().catch(error => {hud.value = String(error);showGameMessage(hud.value, 'error');}).finally(() => setLeaving(false));
     }}>返回</button>
-    {passwordRoom && <RoomPasswordDialog key={passwordRoom} roomId={passwordRoom} close={() => {
+    {artworkReady && passwordRoom && <RoomPasswordDialog key={passwordRoom} roomId={passwordRoom} close={() => {
       setPasswordRoom(''); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-room-card-id="${passwordRoom}"]`)?.focus());
     }} submit={password => join(passwordRoom, password)}/>}
-    {mapOpen && <RoomMapSelector open close={() => {
+    {artworkReady && mapOpen && <RoomMapSelector open close={() => {
       document.querySelector<HTMLDialogElement>('[data-room-map-selector]')?.close();
       document.querySelector<HTMLButtonElement>(validation ? '#open-room-map-selector' : '[data-room-card-create]')?.focus();
       setMapOpen(false);
@@ -293,7 +293,7 @@ export function LobbyView({validation = false, chatContent, playerContent, heade
         if (createAfterMap.current) setCreateOpen(true);
         return true;
       }}/>} 
-    {createOpen && !mapOpen && <RoomCreateDialog open close={() => {
+    {artworkReady && createOpen && !mapOpen && <RoomCreateDialog open close={() => {
       document.querySelector<HTMLDialogElement>('[data-room-create-dialog]')?.close();
       document.querySelector<HTMLButtonElement>(createOrigin.current === 'cards' ? '[data-room-card-create]' : '#open-room-create-dialog')?.focus();
       setCreateOpen(false);

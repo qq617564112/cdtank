@@ -23,12 +23,12 @@ function sourceChatResources(ui: HomeSourceUi): SourceChatResources {
     channels: new ChatSourceLayout(ui, 'game_main_channellist.xml'), emotes: new ChatSourceLayout(ui, 'game_main_emotelist.xml')};
 }
 
-export function BattleChatView({chat, formal = false}: {chat: BattleChat; formal?: boolean}) {
+export function BattleChatView({chat, formal = false, mobile = false}: {chat: BattleChat; formal?: boolean; mobile?: boolean}) {
   const snapshot = useSyncExternalStore(chat.subscribe, chat.getSnapshot);
-  return snapshot.visible ? <BattleChatSession key={snapshot.generation} chat={chat} formal={formal} /> : null;
+  return snapshot.visible ? <BattleChatSession key={snapshot.generation} chat={chat} formal={formal} mobile={mobile}/> : null;
 }
 
-function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) {
+function BattleChatSession({chat, formal, mobile}: {chat: BattleChat; formal: boolean; mobile: boolean}) {
   const state = useSyncExternalStore(chat.subscribe, chat.getSnapshot);
   const family = useSyncExternalStore(chat.family.subscribe, chat.family.getSnapshot);
   const root = useRef<HTMLElement>(null), input = useRef<HTMLInputElement>(null), log = useRef<HTMLOListElement>(null);
@@ -45,7 +45,8 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
   // Validation keeps the reconstructed always-on panel; the formal page engages the
   // source editor only on Enter/send, otherwise the PLAYING/FINISHED frame is idle.
   const interactive = active && (state.editing || !formal);
-  const notice = active && !interactive && state.noticePhase !== 'hidden';
+  const mobileBattle = mobile && state.sourceActive;
+  const notice = active && !interactive && state.noticePhase !== 'hidden' && !mobileBattle;
   const present = !formal || waiting || interactive || notice;
   const presentationKind = notice ? 'notice' : interactive ? 'editor' : waiting ? 'waiting' : 'legacy';
   const editorVisible = presentationKind !== 'notice';
@@ -219,12 +220,15 @@ function BattleChatSession({chat, formal}: {chat: BattleChat; formal: boolean}) 
       {waiting && resources && <WaitingChatHistoryScrollbar list={log} ui={resources.layout.ui}/>}
   </>;
   return <section ref={root} data-chat-presentation={presentationKind}
+    data-mobile-chat={mobileBattle || undefined}
     className={`battle-chat${active ? ' source-battle-chat' : waiting ? ' source-waiting-chat' : ''}`} aria-label="房间聊天"
     hidden={!present} data-chat-notice={notice ? state.noticePhase : undefined}
     style={source ? {left: waiting ? (size.width - 800 * scale) / 2 : 0, top: (size.height - 600 * scale) / 2 + (waiting ? 402 : 435) * scale,
       width: (waiting ? 615 : 301) * scale, height: (waiting ? 198 : 164) * scale} : undefined}>
     {waiting && resources ? <WaitingChatSourceView ui={resources.layout.ui} scale={scale} {...presentation}>{content}</WaitingChatSourceView>
       : <SourceBattleChat resources={resources} active={interactive} {...presentation}>{content}</SourceBattleChat>}
+    {mobileBattle && interactive && <button type="button" className="mobile-battle-chat-close" aria-label="收起聊天"
+      onClick={() => {chat.closeEditor(); input.current?.blur();}}>×</button>}
   </section>;
 }
 

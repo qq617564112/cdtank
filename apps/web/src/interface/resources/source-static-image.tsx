@@ -1,8 +1,9 @@
-import {backgroundStyle, imageBackgroundStyle} from '../../assets/image-artwork';
+import {imageBackgroundStyle} from '../../assets/image-artwork';
 import './source-static-image.css';
 import {createContext, useContext, type CSSProperties, type ComponentPropsWithoutRef} from 'react';
 import type {HomeSourceUi, HomeSourceLayout} from './source-ui-layout';
 import {sourceProps} from './source-ui-props';
+import {sourceUiAsset} from './source-ui-image';
 import {sourceTextArtwork, SourceTextArtwork} from './source-text-artwork';
 import {ImageArtwork} from './image-artwork';
 import {TankIconMark} from './tank-icon-mark';
@@ -25,7 +26,12 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
   const scale = useContext(SourceImageScale);
   const properties = layout.control(name).properties;
   const imageReference = reference ?? properties.Image;
-  const props = sourceProps(ui, layout, suffix, name, imageReference, offsetX, offsetY);
+  const image = sourceUiAsset(ui, imageReference);
+  const thumbnail = image.tankThumbnail || image.petThumbnail;
+  const props = {...sourceProps(ui, layout, suffix, name, undefined, offsetX, offsetY),
+    'data-source-asset': image.asset, 'data-tank-icon-mark': image.tankMark,
+    'data-pet-thumbnail': image.petThumbnail ? '' : undefined};
+  const background = image.asset && !thumbnail ? imageBackgroundStyle(`/${image.asset}`) : {};
   const frame = properties.FrameEnabled !== 'False';
   const pieces = ['Top', 'Bottom', 'Left', 'Right', 'TopLeft', 'TopRight', 'BottomLeft', 'BottomRight']
     .map(position => ({position, image: frame ? region(ui, properties[`${position}FrameImage`]) : undefined}));
@@ -44,13 +50,12 @@ export function SourceStaticImage({ui, layout, name, reference, suffix, offsetX 
   const bottom = size('Bottom', 'Height');
   const textAsset = props['data-source-asset'];
   const text = sourceTextArtwork(textAsset);
-  const thumbnail = props['data-tank-icon-mark'] !== undefined || props['data-pet-thumbnail'] !== undefined;
   return <span {...props} {...attributes} className={`source-static-image ${className}`}
     style={{...props.style, ...attributes.style, backgroundImage: undefined, filter: undefined}}>
     {props['data-source-asset'] && <i data-source-image="" data-source-horz-format="HorzStretched" data-source-vert-format="VertStretched"
       data-source-offset="0,0" data-source-clip="inner-rectangle" data-source-asset={props['data-source-asset']}
       data-source-button-label={text ? 'external' : undefined}
-      style={{inset: `${top}px ${right}px ${bottom}px ${left}px`, ...backgroundStyle(props.style),
+      style={{inset: `${top}px ${right}px ${bottom}px ${left}px`, ...background,
         ...(thumbnail ? {backgroundImage: 'none'} : {})}}>
       {thumbnail && <ImageArtwork asset={`/${textAsset}`} fit="contain"
         style={{position: 'absolute', inset: 0}} aria-hidden="true"/>}

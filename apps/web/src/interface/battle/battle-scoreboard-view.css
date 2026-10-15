@@ -77,3 +77,32 @@
   opacity: .5;
   cursor: default;
 }
+
+.battle-scoreboard-viewport[data-mobile-scoreboard] {
+  pointer-events: auto;
+  background: rgb(19 32 28 / 35%);
+  touch-action: manipulation;
+}
+
+.battle-scoreboard-mobile-actions {
+  position: absolute;
+  left: 50%;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  width: 300px;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  pointer-events: auto;
+}
+
+.battle-scoreboard-mobile-actions button {
+  min-height: 44px;
+  padding: 4px 16px;
+  border: 2px solid #36432b;
+  border-radius: 8px;
+  background: #66844c;
+  color: #fff5ce;
+  font-family: 'HappyZcool-2016', sans-serif;
+  font-size: 16px;
+}

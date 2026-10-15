@@ -41,6 +41,36 @@
   transform-origin: top left;
 }
 
+.battle-chat[data-mobile-chat] {
+  left: max(12px, env(safe-area-inset-left)) !important;
+  top: auto !important;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: 301px !important;
+  height: 164px !important;
+  z-index: 14;
+}
+
+.battle-chat[data-mobile-chat] .source-chat-stage {
+  transform: none !important;
+}
+
+.battle-chat[data-mobile-chat] .mobile-battle-chat-close {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 2px solid #344838;
+  border-radius: 50%;
+  background: #6d9655;
+  color: #fff8da;
+  font-size: 28px;
+  line-height: 32px;
+  touch-action: manipulation;
+}
+
 .battle-chat-frame {
   position: absolute;
   left: 0;

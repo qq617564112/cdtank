@@ -1,10 +1,12 @@
+import {accountPageScale, subscribeGamePageViewport} from '../../platform/page-viewport';
+import {isMobileDevice} from '../../platform/device';
 import {GameMessage} from '../resources/game-message';
 import './source-confirm.css';
 import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import {DialogButton} from '../resources/dialog-button';
 import {GameConfirmFrame} from '../resources/game-confirm-frame';
 
-const viewportScale = () => Math.min(innerWidth / 800, innerHeight / 600);
+const viewportScale = () => accountPageScale();
 
 /** Native confirmation controls share the shop's two-panel SVG frame. */
 export function SourceConfirmView({message, pending, disabled, status, confirm, cancel, label = '房间邀请', binding = 'web-room-invitation',
@@ -17,6 +19,8 @@ export function SourceConfirmView({message, pending, disabled, status, confirm, 
   const messageId = useId();
   const escapePending = useRef(false);
   const [scale, setScale] = useState(viewportScale);
+  const mobile = isMobileDevice();
+  const width = mobile ? 480 : 315, height = mobile ? 200 : 108;
   useLayoutEffect(() => {
     const element = dialog.current!;
     const origin = document.activeElement;
@@ -33,8 +37,7 @@ export function SourceConfirmView({message, pending, disabled, status, confirm, 
   }, []);
   useEffect(() => {
     const resize = () => setScale(viewportScale());
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    return subscribeGamePageViewport(resize);
   }, []);
   useLayoutEffect(() => {
     if (!pending && (document.activeElement === document.body || document.activeElement === dialog.current)) {
@@ -43,7 +46,7 @@ export function SourceConfirmView({message, pending, disabled, status, confirm, 
   }, [pending]);
   const requestCancel = () => {if (!pending) cancel();};
   return <dialog ref={dialog} className="game-confirm-dialog" data-source-confirm="" data-confirm-binding={binding}
-    aria-label={label} aria-describedby={messageId} aria-busy={pending} style={{width: 315 * scale, height: 108 * scale}}
+    aria-label={label} aria-describedby={messageId} aria-busy={pending} style={{width: width * scale, height: height * scale}}
     onCancel={event => {event.preventDefault(); requestCancel();}}
     onKeyDown={event => {
       event.stopPropagation();
@@ -59,7 +62,7 @@ export function SourceConfirmView({message, pending, disabled, status, confirm, 
       }
     }}>
     <div className="source-confirm-stage" style={{transform: `scale(${scale})`}}>
-      <GameConfirmFrame width={315} height={108} headerHeight={56}/>
+      <GameConfirmFrame width={width} height={height} headerHeight={mobile ? 112 : 56}/>
       <div id={messageId} data-source-control="txtMessage" data-source-layout="ui/layouts/confirm_dialog.xml"
         role="document" aria-label={messageLabel}>{message}</div>
       <DialogButton data-source-control="btnOK" data-source-layout="ui/layouts/confirm_dialog.xml" data-source-confirm-ok=""

@@ -1,3 +1,4 @@
+import {pageImages} from '../assets/preload-images';
 import {showGameMessage} from '../interface/resources/game-message-store';
 import {itemHitHandler, gameContent} from '../../../shared/content/catalog';
 import {loadCombatCatalog} from '../content';
@@ -19,8 +20,8 @@ import type {CpuLoadoutItem} from '../../../shared/protocols/PtlCpu';
 import {configureBattleCamera} from '../render/battle-camera';
 import {BattlePlayers} from '../render/battle-players';
 import {battleInfoText} from '../interface/battle/battle-info-messages';
-import {mapMinimaps} from '../assets/maps/minimaps';
-import {BattleMinimapRenderer} from '../render/battle-minimap-renderer';
+import {battleMinimapUrl} from '../assets/maps/minimaps';
+import {BattleMinimapRenderer, type MobileMinimapBounds} from '../render/battle-minimap-renderer';
 import {GameConnection} from '../network/game-connection';
 import type {AccountContext} from '../network/accounts';
 import {LobbyChat} from '../network/lobby-chat';
@@ -28,8 +29,8 @@ import {Family} from '../network/family';
 import {Friends} from '../network/friends';
 import {GmSupportInbox} from '../network/gm-support';
 import {LobbyPresence} from '../network/lobby-presence';
-import {ArcRotateCamera, Scene, Vector3} from '@babylonjs/core';
-import type {MsgRoomSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
+import {ArcRotateCamera, Scene} from '@babylonjs/core';
+import type {MsgRoomSnapshot, ObjectiveSnapshot, PlayerSnapshot, SceneObjectSnapshot} from '../../../shared/protocols/MsgRoomSnapshot';
 import type {MsgFamilyChat} from '../../../shared/protocols/MsgFamilyChat';
 import type {MapOption, ResJoin, RoomSummary} from '../../../shared/protocols';
 import {ScenePreview} from '../assets/scenes/scene-preview';
@@ -39,7 +40,9 @@ import {BattleHud} from '../interface/battle/battle-hud';
 import {BattleMusic} from '../audio/battle-music';
 import {PageMusic} from './page-music';
 import {BattleSound} from '../audio/battle-sound';
+import {cameraSpatialPose} from '../audio/spatial-listener';
 import {BattleUiSound} from '../audio/battle-ui-sound';
+import {setButtonSoundVolume} from '../audio/button-sound';
 import {prepareBattleSummarySounds} from '../audio/battle-summary-sound';
 import {MapEnvironmentSound} from '../audio/map-environment-sound';
 import {BattleMatch} from '../interface/battle/battle-match';
@@ -68,7 +71,8 @@ import {TankShotItemResult} from '../assets/tanks/shot-item-result';
 import {AmmoBurnPresentation} from '../assets/tanks/ammo-burn-presentation';
 import {TankPetDeathPresentation} from '../assets/tanks/tank-pet-death-presentation';
 import {RoomFeed} from './room-feed';
-import {BattleInput} from './battle-input';
+import {BattleInput, type BattleInputContext, type BattleMotionInput, type BattleTouchInput} from './battle-input';
+import type {ClientTankPose} from '../../../shared/protocols/MsgPlayerInput';
 import {LocalTankMotion} from './local-tank-motion';
 import {BattleItemInventory} from './battle-item-inventory';
 import {stepCandidate, WeaponCycleSelection, weaponCandidateSlots}
@@ -80,6 +84,10 @@ import {GroundItemAction} from '../../../shared/protocols/MsgPlayerAction';
 import {readRoomSession, saveRoomSession} from '../navigation/session';
 import {classifyInventoryCategory} from '../../../shared/combat/inventory-query';
 import {BattleProjectiles} from '../render/battle-projectiles';
+import {isMobileDevice} from '../platform/device';
+
+const EMPTY_SCENE_OBJECTS: readonly SceneObjectSnapshot[] = [];
+const NEUTRAL_MOTION: BattleMotionInput = {move: 0, turn: 0, aim: 0};
 
 /** Displays server-owned world state; no local damage or outcome calculation. */
 export class Battle {
@@ -129,16 +137,24 @@ export class Battle {
     this.lobbyPresence.stop();
     return this.connection.disconnect();
   }
+  private readonly inputContext: BattleInputContext = {active: false, playing: false, connected: false, autopilot: false};
+  private readonly motionAxes: BattleMotionInput = {move: 0, turn: 0, aim: 0};
+  private readonly localPose: ClientTankPose = {round: 0, life: 0, x: 0, y: 0, z: 0, yaw: 0, bodyYaw: 0, aim: 0, command: 0};
   private readonly input = new BattleInput(() => {
     const snapshot = this.roomFeed.snapshot;
-    const local = snapshot?.players.find(player => player.id === this.playerId);
-    return {
-      active: this.active,
-      playing: this.mapLoaded && this.loadedRound === snapshot?.match?.round
-        && Boolean(local?.alive && snapshot && battleIsActive(snapshot, this.serverNow())),
-      connected: this.client.isConnected && !this.reconnecting,
-      autopilot: local?.isAutopilot ?? false,
-    };
+    let local: PlayerSnapshot | undefined;
+    if (snapshot) {
+      for (const player of snapshot.players) {
+        if (player.id === this.playerId) {local = player; break;}
+      }
+    }
+    const context = this.inputContext;
+    context.active = this.active;
+    context.playing = this.mapLoaded && this.loadedRound === snapshot?.match?.round
+      && Boolean(local?.alive && snapshot && battleIsActive(snapshot, this.serverNow()));
+    context.connected = this.client.isConnected && !this.reconnecting;
+    context.autopilot = local?.isAutopilot ?? false;
+    return context;
   }, message => {
     const useItem = message.useItem;
     void this.client.sendMsg('PlayerInput', {...message, pose: this.localMotion.reportedPose})
@@ -158,7 +174,7 @@ export class Battle {
     clearIntent: () => this.weaponCycle.returnToConfirmed(),
   });
   private readonly weaponCycle = new WeaponCycleSelection();
-  private readonly localMotion = new LocalTankMotion();
+  private readonly localMotion = new LocalTankMotion(isMobileDevice());
   readonly chat: BattleChat = new BattleChat(async (text, channel, targetName) => {
     if (!this.active || !this.client.isConnected) throw new Error('连接已断开');
     if (channel === 4) {
@@ -188,10 +204,13 @@ export class Battle {
       if (!snapshot?.match) throw new Error('请先加入房间');
       await this.rooms.whisper({text, targetName: targetName ?? '', roomId: snapshot.roomId, round: snapshot.match.round});
     } else await this.rooms.chat(text, channel);
-  }, () => {this.input.clear();}, this.family, listener => this.connection.subscribeAccountContext(listener));
+  }, () => {this.input.clear();}, this.family, listener => this.connection.subscribeAccountContext(listener),
+    text => this.originalHud.announce(text));
   private readonly players: BattlePlayers;
   private readonly projectiles: BattleProjectiles;
   private readonly battlefield: ScenePreview;
+  private readonly sceneClock = {now: 0, battleStartsAt: 0, objects: EMPTY_SCENE_OBJECTS};
+  private readonly sceneObjects: (ObjectiveSnapshot | SceneObjectSnapshot)[] = [];
   private readonly minimapRenderer: BattleMinimapRenderer;
   private readonly groundTraps: GroundTrapsPresentation;
   private groundTrapError?: string;
@@ -229,6 +248,13 @@ export class Battle {
   private loadingRound?: number;
   private loadedRound?: number;
   private resourceRevision = 0;
+  private snapshotRevision = 0;
+  private readonly worldStateInterval = isMobileDevice() ? 100 : 0;
+  private worldStatePublishedAt = -Infinity;
+  private worldStateSnapshotJson?: string;
+  private worldStateIdentityJson = '';
+  private worldStateActionsJson = '';
+  private worldStateRenderedPlayers = -1;
   private resultMusicRound?: number;
   private playingMusicRound?: number;
   private returnToLobby?: () => void;
@@ -313,7 +339,7 @@ export class Battle {
         // cycle resumes from the real confirmed selection.
         if (event.type === 'itemRejected' && event.playerId === this.playerId
             && event.skillId !== undefined) this.weaponCycle.reject();
-        if (event.type === 'chat') this.chat.message(event.message);
+        if (event.type === 'chat') this.chat.message(event.message, false);
         if (snapshot && this.playerId) this.sound.event(event, snapshot, this.playerId);
         if (event.groundItemDropped || event.groundItemPickedUp || event.groundItemRemoved) {
           this.groundItems.event(event, this.playerId);
@@ -588,6 +614,7 @@ export class Battle {
     if (!await waitFor(() => this.roomFeed.snapshot?.players
       .some(player => player.id === this.playerId && player.isAutopilot) === true)) return;
     await this.ready(true);
+    await waitFor(() => this.roomFeed.snapshot?.phase !== 'WAITING');
   }
 
   async startCpuMatch(name: string, tankId: number): Promise<void> {
@@ -680,9 +707,10 @@ export class Battle {
       if (current()) this.matchPanel.setLoading(value, status);
     };
     try {
-      progress(0, '正在载入战斗资源…');
+      progress(0, '正在载入战斗音效和特效…');
       if (!this.mapLoaded) {
-        const [, , catalog] = await Promise.all([this.originalHud.load(), this.effects.load(),
+        const snapshot = this.roomFeed.snapshot!;
+        const [, , catalog] = await Promise.all([this.originalHud.load(), this.effects.load({snapshot, mapId: this.mapId!}),
           loadCombatCatalog()]);
         if (!current()) return;
         progress(0.15, '正在载入地图…');
@@ -725,6 +753,7 @@ export class Battle {
             ...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? []),
           ], snapshot.match?.round ?? 0, snapshot.serverTime);
         }
+        progress(0.65, '正在准备开火、战车声音和战场音乐…');
         await Promise.all([
           this.sound.start(),
           this.battleUiSound.load(),
@@ -733,6 +762,9 @@ export class Battle {
         ]);
         if (!current()) return;
         this.mapLoaded = true;
+      } else {
+        await this.effects.load({snapshot: this.roomFeed.snapshot!, mapId: this.mapId!});
+        if (!current()) return;
       }
       progress(0.7, '正在载入道具、陷阱和掉落物…');
       await prepareBattleDynamicResources(this.roomFeed.snapshot!, fraction =>
@@ -756,11 +788,14 @@ export class Battle {
         if (performance.now() > deadline) throw new Error('等待战车资源超时，请重试');
         await new Promise(resolve => setTimeout(resolve, 50));
       }
-      progress(0.95, '正在准备画面…');
+      progress(0.95, '正在准备战斗界面…');
+      await pageImages.waitForBattleUi();
+      if (!current()) return;
+      progress(0.96, '正在准备画面…');
       await Promise.all([this.players.loadLabels(), this.minimapRenderer.load(this.originalHud.getSnapshot().data!)]);
       if (!current()) return;
       if (!this.minimapRenderer.hasMap(this.mapId!)) {
-        const imageUrl = mapMinimaps[this.mapId!];
+        const imageUrl = battleMinimapUrl(this.mapId!);
         if (!imageUrl) throw new Error(`地图 ${this.mapId} 小地图资源缺失`);
         await this.minimapRenderer.setMap(this.mapId!, imageUrl);
         if (!current()) return;
@@ -786,9 +821,10 @@ export class Battle {
 
   private retryBattleLoading(): void {
     const snapshot = this.roomFeed.snapshot;
-    if (!snapshot?.match || snapshot.phase !== 'LOADING') return;
+    if (!snapshot?.match || (snapshot.phase !== 'LOADING' && snapshot.phase !== 'PLAYING')) return;
     if (this.loadedRound === snapshot.match.round) {
-      this.matchPanel.setLoading(1, '载入完成，等待其他玩家…');
+      this.matchPanel.setLoading(1, snapshot.phase === 'LOADING' ? '载入完成，等待其他玩家…' : '载入完成');
+      if (snapshot.phase !== 'LOADING') return;
       void this.confirmResourcesLoaded(snapshot.match.round).catch(error => {
         if (this.active && this.roomFeed.snapshot?.phase === 'LOADING') {
           this.matchPanel.setLoading(1, '载入完成，等待确认', error instanceof Error ? error.message : String(error));
@@ -823,6 +859,9 @@ export class Battle {
     this.localMotion.clear();
     this.effects.clear();
     this.battlefield.clear();
+    this.sceneClock.objects = EMPTY_SCENE_OBJECTS;
+    this.sceneObjects.length = 0;
+    this.clearWorldStateCache();
     this.groundTraps.clear();
     this.groundTrapError = undefined;
     this.groundItems.clear();
@@ -983,6 +1022,9 @@ export class Battle {
     this.localMotion.clear();
     this.effects.clear();
     this.battlefield.clear();
+    this.sceneClock.objects = EMPTY_SCENE_OBJECTS;
+    this.sceneObjects.length = 0;
+    this.clearWorldStateCache();
     this.groundTraps.clear();
     this.groundTrapError = undefined;
     this.groundItems.clear();
@@ -995,6 +1037,7 @@ export class Battle {
     this.targets.clear();
     this.hud.value = '';
     delete this.hud.dataset.world;
+    this.worldStatePublishedAt = -Infinity;
     this.publishValuableSaleRoom();
   }
 
@@ -1006,6 +1049,11 @@ export class Battle {
 
   getKeyBindings(): KeyBindings {return this.input.getKeyBindings();}
   setKeyBindings(bindings: KeyBindings): void {this.input.setKeyBindings(bindings);}
+  readonly setTouchInput = (patch: Partial<BattleTouchInput>): void => {this.input.setTouch(patch);};
+  readonly clearTouchInput = (): void => {this.input.clearTouch();};
+  readonly setMobileMinimapBounds = (bounds: MobileMinimapBounds | undefined): void => {
+    this.minimapRenderer.setMobileBounds(bounds);
+  };
   readonly useHudSlot = (slot: number): void => {
     const snapshot = this.roomFeed.snapshot;
     const local = snapshot?.players.find(player => player.id === this.playerId);
@@ -1164,6 +1212,7 @@ export class Battle {
     if (!Number.isFinite(volume)) return;
     const clamped = Math.max(0, Math.min(1, volume));
     this.soundVolume = clamped;
+    setButtonSoundVolume(clamped);
     this.sound.setVolume(clamped);
     this.effects.setVolume(clamped);
     this.environmentSound?.setVolume(clamped);
@@ -1238,6 +1287,8 @@ export class Battle {
   }
 
   private reconcile(snapshot: MsgRoomSnapshot): void {
+    const snapshotRevision = ++this.snapshotRevision;
+    this.worldStateSnapshotJson = undefined;
     const mapId = snapshot.roomInfo?.mapId;
     if (mapId !== undefined && mapId !== this.mapId) {
       if (this.loadingRound !== undefined || this.mapLoaded) this.clearCancelledLoading();
@@ -1245,9 +1296,14 @@ export class Battle {
     }
     this.localMotion.synchronize(snapshot, this.playerId);
     const session = this.session;
+    const resourceRevision = this.resourceRevision;
     void this.groundTraps.reconcile(snapshot.phase === 'PLAYING' ? snapshot.match?.groundTraps ?? [] : [],
-      `${snapshot.roomId}:${snapshot.match?.round ?? 0}`).catch(error => {
-      if (session === this.session && this.active) this.groundTrapError = String(error);
+      `${snapshot.roomId}:${snapshot.match?.round ?? 0}`).then(() => {
+      if (session === this.session && resourceRevision === this.resourceRevision
+          && snapshotRevision === this.snapshotRevision && this.active) this.groundTrapError = undefined;
+    }).catch(error => {
+      if (session === this.session && resourceRevision === this.resourceRevision
+          && snapshotRevision === this.snapshotRevision && this.active) this.groundTrapError = String(error);
     });
     if (this.active) {
       const scope = `${snapshot.roomId}:${snapshot.match?.round ?? 0}`;
@@ -1297,13 +1353,7 @@ export class Battle {
     }
     if ((snapshot.phase === 'PLAYING' || snapshot.phase === 'FINISHED')
         && this.loadedRound === snapshot.match?.round) this.targets.update(snapshot);
-    this.hud.dataset.world = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,
-      mapId: this.mapId, mapLoaded: this.mapLoaded,
-      phase: snapshot.phase, mode: snapshot.mode, remaining: snapshot.remaining,
-      match: snapshot.match, teamScores: snapshot.teamScores,
-      tick: snapshot.tick, players: snapshot.players, bullets: snapshot.bullets.length,
-      renderedPlayers: this.players.size,
-      renderedActions: this.players.actions});
+    this.publishWorldState(snapshot);
   }
 
   private syncBattleUiSounds(snapshot: MsgRoomSnapshot): void {
@@ -1330,11 +1380,8 @@ export class Battle {
 
   private render(): void {
     this.environmentSound?.update();
-    const position = this.camera.globalPosition;
-    const forward = this.camera.getForwardRay().direction;
-    const up = this.camera.getDirection(Vector3.Up());
-    this.sound.listener({x: -position.x, y: position.y, z: position.z},
-      {x: -forward.x, y: forward.y, z: forward.z}, {x: -up.x, y: up.y, z: up.z});
+    const listener = cameraSpatialPose(this.camera);
+    this.sound.listener(listener.position, listener.forward, listener.up);
     const snapshot = this.roomFeed.snapshot;
     if (!this.active || !snapshot || !this.client.isConnected || this.reconnecting) {
       this.projectiles.clear();
@@ -1354,7 +1401,7 @@ export class Battle {
     const active = battleIsActive(snapshot, now);
     this.localMotion.field.reconcile(snapshot, now);
     this.localMotion.setActive(active);
-    this.localMotion.advance(active ? this.input.motionAxes : {move: 0, turn: 0, aim: 0},
+    this.localMotion.advance(active ? this.input.motionAxesToRef(this.motionAxes) : NEUTRAL_MOTION,
       this.scene.getEngine().getDeltaTime() / 1000, snapshot.players);
     if (this.playerId) {
       this.originalHud.update(snapshot, this.playerId, performance.now(), now);
@@ -1362,27 +1409,59 @@ export class Battle {
     }
     const spectator = this.originalHud.spectator.getSnapshot();
     this.players.render(alpha, this.playerId, snapshot.phase === 'PLAYING',
-      this.localMotion.renderedPose, this.localMotion.moving,
+      this.localMotion.renderedPoseToRef(this.localPose), this.localMotion.moving,
       spectator.playerId ?? this.playerId, spectator.wreckStartedAt === undefined
         ? undefined : Math.max(0, (now - spectator.wreckStartedAt) / 1000),
-      this.localMotion.field.navigation);
+      this.localMotion.field.navigation, this.localMotion.mobileCameraYaw);
     if (this.playerId) this.minimapRenderer.render(snapshot, this.playerId);
     this.skillEffects?.frame(this.scene.getEngine().getDeltaTime() / 1000);
-    this.battlefield.advance(this.scene.getEngine().getDeltaTime() / 1000, {
-      now: snapshot.phase === 'FINISHED' ? snapshot.match?.result?.endedAt ?? now : now,
-      battleStartsAt: snapshot.match?.battleStartsAt ?? now, objects: snapshot.match?.sceneObjects ?? []});
-    this.battlefield.updateObjects([...(snapshot.match?.objectives ?? []), ...(snapshot.match?.sceneObjects ?? [])], snapshot.match?.round ?? 0,
+    const match = snapshot.match;
+    const clock = this.sceneClock;
+    clock.now = snapshot.phase === 'FINISHED' ? match?.result?.endedAt ?? now : now;
+    clock.battleStartsAt = match?.battleStartsAt ?? now;
+    clock.objects = match?.sceneObjects ?? EMPTY_SCENE_OBJECTS;
+    this.battlefield.advance(this.scene.getEngine().getDeltaTime() / 1000, clock);
+    const objects = this.sceneObjects;
+    let objectIndex = 0;
+    if (match?.objectives) {
+      for (const object of match.objectives) objects[objectIndex++] = object;
+    }
+    for (const object of clock.objects) objects[objectIndex++] = object;
+    objects.length = objectIndex;
+    this.battlefield.updateObjects(objects, match?.round ?? 0,
       snapshot.serverTime, this.scene.getEngine().getDeltaTime() / 1000);
     const resourceError = this.groundTrapError || this.groundItemError || this.players.loadingError || '';
     if (resourceError && resourceError !== this.hud.value) showGameMessage(resourceError, 'error');
     this.hud.value = resourceError;
-    // DOM world state supports HUD accessibility and browser integration verification.
-    this.hud.dataset.world = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,
-      mapId: this.mapId, mapLoaded: this.mapLoaded,
+    this.publishWorldState(snapshot);
+  }
+
+  /** Publish diagnostic state independently of the simulation's frame rate. */
+  private publishWorldState(snapshot: MsgRoomSnapshot): void {
+    const now = performance.now();
+    if (now - this.worldStatePublishedAt < this.worldStateInterval) return;
+    this.worldStatePublishedAt = now;
+    const identityJson = JSON.stringify({roomId: this.roomFeed.roomId, playerId: this.playerId,
+      mapId: this.mapId, mapLoaded: this.mapLoaded});
+    const snapshotChanged = this.worldStateSnapshotJson === undefined;
+    const snapshotJson = this.worldStateSnapshotJson ??= JSON.stringify({
       phase: snapshot.phase, mode: snapshot.mode, remaining: snapshot.remaining,
       match: snapshot.match, teamScores: snapshot.teamScores,
-      tick: snapshot.tick, players: snapshot.players, bullets: snapshot.bullets.length,
-      renderedPlayers: this.players.size,
-      renderedActions: this.players.actions});
+      tick: snapshot.tick, players: snapshot.players, bullets: snapshot.bullets.length}).slice(1, -1);
+    const renderedPlayers = this.players.size;
+    const actionsJson = this.players.actionsJson;
+    if (!snapshotChanged && identityJson === this.worldStateIdentityJson
+        && renderedPlayers === this.worldStateRenderedPlayers && actionsJson === this.worldStateActionsJson) return;
+    this.hud.dataset.world = `${identityJson.slice(0, -1)},${snapshotJson},"renderedPlayers":${renderedPlayers},"renderedActions":${actionsJson}}`;
+    this.worldStateIdentityJson = identityJson;
+    this.worldStateRenderedPlayers = renderedPlayers;
+    this.worldStateActionsJson = actionsJson;
+  }
+
+  private clearWorldStateCache(): void {
+    this.worldStateSnapshotJson = undefined;
+    this.worldStateIdentityJson = '';
+    this.worldStateActionsJson = '';
+    this.worldStateRenderedPlayers = -1;
   }
 }

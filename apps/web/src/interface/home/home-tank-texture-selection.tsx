@@ -1,3 +1,4 @@
+import {sourceDialogScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import {GameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {loadTankTextureCatalog, preparedTankTextureCatalog} from '../../content';
@@ -81,15 +82,15 @@ export function HomeTankTextureSelectionView({battle, record, profile, ui, close
     !current || !preparedTankTextureCatalog() || !preparedTankCatalog()?.some(tank => tank.id === tankId));
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState('');
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => sourceDialogScale(647, 405));
 
   useEffect(() => {
     const element = dialog.current!, previousFocus = document.activeElement;
     element.showModal();
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
+    const resize = () => setScale(sourceDialogScale(647, 405));
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     return () => {
-      window.removeEventListener('resize', resize);
+      unsubscribeViewport();
       if (element.open) element.close();
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };

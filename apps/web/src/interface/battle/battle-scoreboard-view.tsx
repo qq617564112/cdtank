@@ -15,12 +15,17 @@ const SCOREBOARD_COLUMNS = {
   last: {left: 346, width: 38},
 } as const;
 
-export function BattleScoreboardView({hud, bindings}: {hud: BattleHud; bindings: KeyBindings}) {
+export function BattleScoreboardView({hud, bindings, open, onClose, onLeave}: {
+  hud: BattleHud; bindings: KeyBindings; open?: boolean; onClose?: () => void; onLeave?: () => void;
+}) {
   const state = useSyncExternalStore(hud.scoreboard.subscribe, hud.scoreboard.getSnapshot);
-  return state ? <Scoreboard key={`${state.roomId}:${state.round}`} state={state} bindings={bindings}/> : null;
+  return state ? <Scoreboard key={`${state.roomId}:${state.round}`} state={state} bindings={bindings}
+    open={open} onClose={onClose} onLeave={onLeave}/> : null;
 }
 
-function Scoreboard({state, bindings}: {state: ScoreboardSnapshot; bindings: KeyBindings}) {
+function Scoreboard({state, bindings, open, onClose, onLeave}: {
+  state: ScoreboardSnapshot; bindings: KeyBindings; open?: boolean; onClose?: () => void; onLeave?: () => void;
+}) {
   const [held, setHeld] = useState(false);
   const [page, setPage] = useState(0);
   const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
@@ -72,9 +77,9 @@ function Scoreboard({state, bindings}: {state: ScoreboardSnapshot; bindings: Key
   const layout = ui ? new HomeSourceLayout(ui, SUFFIX) : undefined;
   const stats = (player: ScoreboardPlayer) =>
     `击毁 ${player.kills} · 死亡 ${player.deaths}${state.mode === 5 ? ` · 目标 ${player.objectivesDestroyed}` : ''}`;
-  if (!held) return null;
+  if (!(open ?? held)) return null;
   return <section className="battle-scoreboard-viewport" aria-label="战斗计分板" data-battle-scoreboard=""
-    data-scoreboard-round={state.round} data-scoreboard-mode={state.mode}>
+    data-scoreboard-round={state.round} data-scoreboard-mode={state.mode} data-mobile-scoreboard={open !== undefined || undefined}>
     <div className="battle-scoreboard-stage battle-score-sheet-stage" style={{zoom: scale}} aria-busy={!ui}>
       {ui && <BattleScoreSheet ui={ui} layout={layout!} columns={SCOREBOARD_COLUMNS}
         individual={individual} headers={{
@@ -104,7 +109,7 @@ function Scoreboard({state, bindings}: {state: ScoreboardSnapshot; bindings: Key
       <h1 className="battle-scoreboard-title">{individual ? '个人计分板' : '战斗计分板'}</h1>
       <p className="battle-scoreboard-subtitle">第 <span className="battle-pixel-number">{state.round}</span> 局 · 实时战况</p>
       <p className="battle-scoreboard-hint">{error || (!ui ? '正在载入计分板…'
-        : `按住 ${bindingCodes(bindings, 'scoreboard').map(keyLabel).join(' / ')} 查看 · 松开返回战斗`)}</p>
+        : open !== undefined ? '' : `按住 ${bindingCodes(bindings, 'scoreboard').map(keyLabel).join(' / ')} 查看 · 松开返回战斗`)}</p>
       {pages > 1 && <nav className="battle-scoreboard-pagination" aria-label="计分板分页"
         onPointerDown={event => event.preventDefault()}>
         <button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>上一页</button>
@@ -112,5 +117,9 @@ function Scoreboard({state, bindings}: {state: ScoreboardSnapshot; bindings: Key
         <button type="button" disabled={currentPage + 1 === pages} onClick={() => setPage(currentPage + 1)}>下一页</button>
       </nav>}
     </div>
+    {open !== undefined && <nav className="battle-scoreboard-mobile-actions" aria-label="计分板操作">
+      <button type="button" onClick={onClose}>返回战斗</button>
+      {onLeave && <button type="button" onClick={onLeave}>退出房间</button>}
+    </nav>}
   </section>;
 }

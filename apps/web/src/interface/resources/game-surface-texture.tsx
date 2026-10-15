@@ -1,4 +1,5 @@
 import {imageResourceUrl} from '../../assets/image-cache';
+import {imageRegion} from '../../assets/image-resources';
 export type GameSurfaceTone = 'rose' | 'peach' | 'sand' | 'coral' | 'terracotta' | 'walnut' | 'clay'
   | 'salmon' | 'parchment' | 'ochre' | 'room-canvas' | 'room-edge' | 'player-paper'
   | 'tab-ochre' | 'panel-gold' | 'input-cream' | 'waiting-canvas' | 'roster-sage' | 'map-description';
@@ -44,7 +45,8 @@ export function GameSurfaceTexture({id, tone, size}: {
     </filter>
     <pattern id={id} patternUnits="userSpaceOnUse" width={width} height={height}>
       <rect width={width} height={height} fill={palette.color}/>
-      <image href={imageResourceUrl('/ui/cards/mdf-texture.webp')} width={width} height={height}
+      <image href={imageRegion('/ui/cards/mdf-texture.webp') ? imageResourceUrl('/ui/cards/mdf-texture.webp') : undefined}
+        width={width} height={height}
         preserveAspectRatio="xMidYMid slice" filter={`url(#${colorId})`}/>
     </pattern>
   </defs>;

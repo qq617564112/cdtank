@@ -107,7 +107,7 @@
   background: rgb(28 19 12 / 62%);
 }
 
-.waiting-room-slot-actions:hover > .waiting-room-slot-mask,
+.waiting-room-slot-actions[data-waiting-slot-hovered='true'] > .waiting-room-slot-mask,
 .waiting-room-slot-actions:focus-within > .waiting-room-slot-mask {
   visibility: visible;
 }

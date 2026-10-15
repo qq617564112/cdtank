@@ -32,6 +32,11 @@
   pointer-events: none;
 }
 
+.home-tank-upgrade-stage .home-painted-label:is([data-source-control='jinqian'], [data-source-control='huofeijinengdian']) {
+  font-size: 16px;
+  -webkit-text-stroke: 2px #131b13;
+}
+
 .home-tank-upgrade-picture[data-source-control='kuang'] > [data-source-image] {
   margin: -1px;
 }
@@ -60,6 +65,10 @@
 
 .home-tank-upgrade-stage button:disabled {
   cursor: default;
+}
+
+.home-tank-upgrade-stage [data-tank-upgrade-submit]:disabled {
+  filter: grayscale(1);
 }
 
 .home-tank-upgrade-entry-level {

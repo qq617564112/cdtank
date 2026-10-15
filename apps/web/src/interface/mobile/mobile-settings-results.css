@@ -1,0 +1,262 @@
+html[data-mobile-device] #source-settings {
+  width: var(--mobile-page-width) !important;
+  height: 540px !important;
+}
+
+html[data-mobile-device] .game-dialog-stage.settings-source-stage {
+  width: 100%;
+  height: 540px;
+  font-size: 24px;
+}
+
+html[data-mobile-device] .settings-source-stage > .game-dialog-topbar {
+  left: 16px !important;
+  top: 0 !important;
+  width: calc(100% - 32px) !important;
+}
+
+html[data-mobile-device] .settings-source-stage > .game-dialog-topbar .game-dialog-title {
+  left: 28px;
+  top: 44px;
+  font-size: 34px;
+}
+
+html[data-mobile-device] .settings-source-stage > .game-dialog-panel {
+  left: 16px !important;
+  top: 35px !important;
+  width: calc(100% - 32px) !important;
+  height: 470px !important;
+}
+
+html[data-mobile-device] .settings-source-stage > .settings-source-panel {
+  display: none;
+}
+
+html[data-mobile-device] .settings-source-stage > .game-dialog-footbar {
+  left: 16px !important;
+  top: 472px !important;
+  width: calc(100% - 32px) !important;
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+}
+
+html[data-mobile-device] .settings-source-stage [data-settings-close] {
+  left: auto !important;
+  right: 12px;
+  top: 0 !important;
+}
+
+html[data-mobile-device] .settings-source-stage .game-dialog-footbar > .settings-source-button {
+  top: 0 !important;
+  width: 160px !important;
+  height: 60px !important;
+  min-width: 160px;
+  max-width: 160px;
+  min-height: 60px;
+  max-height: 60px;
+}
+
+html[data-mobile-device] .settings-source-stage [data-settings-default] {
+  left: 20px !important;
+}
+
+html[data-mobile-device] .settings-source-stage [data-settings-confirm] {
+  left: auto !important;
+  right: 204px;
+}
+
+html[data-mobile-device] .settings-source-stage [data-settings-cancel] {
+  left: auto !important;
+  right: 24px;
+}
+
+html[data-mobile-device] .settings-source-stage .game-dialog-button-label {
+  font-size: 28px;
+}
+
+html[data-mobile-device] .mobile-settings-tabs {
+  left: 256px;
+  top: 48px;
+  display: flex;
+  gap: 16px;
+}
+
+html[data-mobile-device] .mobile-settings-tabs > .game-button {
+  position: relative;
+  width: 192px !important;
+  height: 54px !important;
+  --cartoon-label-size: 26px;
+}
+
+html[data-mobile-device] .mobile-settings-tabs > [aria-pressed='true'] {
+  --cartoon-button-face: #ffe653;
+  --cartoon-label-fill: #fff794;
+}
+
+html[data-mobile-device] [data-mobile-settings-tab='display'] :is(.settings-key-headings, .settings-key-list),
+html[data-mobile-device] [data-mobile-settings-tab='keys'] :is(.settings-adjustments, .settings-option, .settings-battle-artwork) {
+  display: none;
+}
+
+html[data-mobile-device] .settings-adjustments {
+  left: 40px;
+  top: 124px;
+  width: calc(100% - 312px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, 84px);
+  gap: 12px 24px;
+}
+
+html[data-mobile-device] .settings-adjustment-label {
+  position: absolute;
+  left: 58px;
+  top: 8px;
+  display: block;
+  color: #fff794;
+  font-size: 24px;
+  line-height: 30px;
+  -webkit-text-stroke: 1px #7b0800;
+  paint-order: stroke fill;
+}
+
+html[data-mobile-device] .settings-adjustment-icon {
+  top: 4px;
+  width: 48px;
+  height: 48px;
+}
+
+html[data-mobile-device] .settings-adjustment:nth-child(n + 3) .settings-adjustment-icon {
+  transform: none;
+}
+
+html[data-mobile-device] .settings-volume {
+  left: 0;
+  top: 42px;
+  width: calc(100% - 70px);
+  height: 50px;
+  touch-action: pan-y;
+}
+
+html[data-mobile-device] .settings-volume::-webkit-slider-thumb {
+  width: 42px;
+  height: 36px;
+  margin-top: -13px;
+}
+
+html[data-mobile-device] .settings-volume::-moz-range-thumb {
+  width: 42px;
+  height: 36px;
+}
+
+html[data-mobile-device] .settings-adjustment-value {
+  top: 55px;
+  width: 64px;
+  font-size: 22px;
+  line-height: 28px;
+  transform: none;
+}
+
+html[data-mobile-device] .settings-source-stage > .settings-option {
+  left: calc(100% - 250px) !important;
+  width: 210px !important;
+  height: 52px !important;
+}
+
+html[data-mobile-device] [data-settings-display-mode='window'] {
+  top: 126px !important;
+}
+
+html[data-mobile-device] [data-settings-display-mode='fullscreen'] {
+  top: 180px !important;
+}
+
+html[data-mobile-device] [data-settings-display-setting='showFps'] {
+  top: 242px !important;
+}
+
+html[data-mobile-device] [data-settings-display-setting='silhouette'] {
+  top: 296px !important;
+}
+
+html[data-mobile-device] [data-settings-display-setting='msaa4x'] {
+  top: 350px !important;
+}
+
+html[data-mobile-device] [data-settings-display-setting='motionBlur'] {
+  top: 404px !important;
+}
+
+html[data-mobile-device] .settings-option-label {
+  left: 36px;
+  font-size: 26px;
+  line-height: 34px;
+}
+
+html[data-mobile-device] .settings-option-checkbox .settings-option-label {
+  left: 42px;
+}
+
+html[data-mobile-device] .settings-option-mark {
+  width: 26px;
+  height: 26px;
+}
+
+html[data-mobile-device] .settings-option-checkbox .settings-option-mark {
+  width: 30px;
+  height: 22px;
+}
+
+html[data-mobile-device] .settings-battle-artwork {
+  left: 40px !important;
+  top: 412px !important;
+  width: calc(100% - 312px);
+  height: 42px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+html[data-mobile-device] .settings-battle-artwork .settings-option {
+  width: 100%;
+  height: 42px;
+}
+
+html[data-mobile-device] .settings-battle-artwork .settings-option-label {
+  font-size: 26px;
+}
+
+html[data-mobile-device] .settings-key-headings {
+  display: none;
+}
+
+html[data-mobile-device] .settings-key-list {
+  left: 40px;
+  top: 126px;
+  width: calc(100% - 80px);
+  height: 326px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(7, 40px);
+  grid-auto-flow: column;
+  gap: 6px 24px;
+  overflow: auto;
+}
+
+html[data-mobile-device] .settings-key-row {
+  grid-template-columns: 164px repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+html[data-mobile-device] .settings-key-label {
+  font-size: 22px;
+  line-height: 30px;
+}
+
+html[data-mobile-device] .settings-key-field {
+  height: 40px;
+}
+
+html[data-mobile-device] .settings-key,
+html[data-mobile-device] .settings-key[data-settings-unset] {
+  font-size: 22px;
+  line-height: 30px;
+}

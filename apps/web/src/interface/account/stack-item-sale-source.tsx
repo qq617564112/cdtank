@@ -1,5 +1,8 @@
+import {accountPageScale, subscribeGamePageViewport} from '../../platform/page-viewport';
+import {isMobileDevice} from '../../platform/device';
 import {GameMessage} from '../resources/game-message';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {playButtonSound} from '../../audio/button-sound';
 import {createRequestId} from '../../network/request-id';
 import {createPortal} from 'react-dom';
 import type {ReqStackItemSale, ResStackItemSale} from '../../../../shared/protocols/PtlStackItemSale';
@@ -108,19 +111,27 @@ export function InventorySaleQuantityDialog({ui, quantity, change, busy, disable
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const layout = new HomeSourceLayout(ui, suffix);
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => accountPageScale());
+  const mobile = isMobileDevice();
+  const width = mobile ? 480 : 307, height = mobile ? 240 : 120;
   useLayoutEffect(() => {
     const element = dialog.current!, previous = document.activeElement;
     element.showModal(); element.querySelector<HTMLInputElement>('input')?.focus();
     return () => {if (element.open) element.close(); if (previous instanceof HTMLElement && previous.isConnected) previous.focus();};
   }, []);
   useEffect(() => {
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize); return () => window.removeEventListener('resize', resize);
+    const resize = () => setScale(accountPageScale());
+    return subscribeGamePageViewport(resize);
   }, []);
   return createPortal(<dialog ref={dialog} className="stack-sale-dialog" {...{[dataAttribute]: ''}} aria-label={label} aria-busy={busy}
-    style={{width: 307 * scale, height: 120 * scale}} onCancel={event => {event.preventDefault(); if (!busy) cancel();}}
-    onKeyDown={event => {event.stopPropagation(); if (event.key === 'Enter') {event.preventDefault(); if (!busy && !disabled) confirm();}}}
+    style={{width: width * scale, height: height * scale}} onCancel={event => {event.preventDefault(); if (!busy) cancel();}}
+    onKeyDown={event => {
+      event.stopPropagation();
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (!busy && !disabled) {playButtonSound(); confirm();}
+      }
+    }}
     onKeyUp={event => event.stopPropagation()}>
     <div className="stack-sale-stage" style={{transform: `scale(${scale})`}}>
       <SourceImageScale value={scale}>

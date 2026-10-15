@@ -1,4 +1,5 @@
 import {imageResourceUrl} from '../../assets/image-cache';
+import {playButtonSound} from '../../audio/button-sound';
 import {getResourcePackBytes} from '../../assets/static-resource-cache';
 import {useCallback, useRef, useState} from 'react';
 import {CartoonButton, CartoonCheckbox, CartoonInput} from '../resources/cartoon-controls';
@@ -9,6 +10,7 @@ import {SourceEntrySheet} from './source-entry-sheet';
 import {LoginArtwork} from './login-artwork';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
 import {ResourcePackLoading} from './resource-pack-loading';
+import {isMobileDevice} from '../../platform/device';
 
 export interface LoginSourceViewProps {
   busy: boolean;
@@ -30,6 +32,7 @@ export function LoginSourceView(props: LoginSourceViewProps) {
   const [account, setAccount] = useState(props.savedAccount), [password, setPassword] = useState('');
   const [confirmResources, setConfirmResources] = useState(false);
   const [loadingResources, setLoadingResources] = useState(false);
+  const mobile = isMobileDevice();
   const finishLoadingResources = useCallback(() => setLoadingResources(false), []);
   const accountInput = useRef<HTMLInputElement>(null), passwordInput = useRef<HTMLInputElement>(null);
   const composing = useRef(false);
@@ -51,6 +54,7 @@ export function LoginSourceView(props: LoginSourceViewProps) {
         if (event.key === 'Enter' && event.target instanceof HTMLInputElement && event.target.type !== 'checkbox') {
           if (composing.current || event.nativeEvent.isComposing || event.keyCode === 229) return;
           event.preventDefault();
+          if (canLogin) playButtonSound();
           login();
         }
       }}>
@@ -76,22 +80,22 @@ export function LoginSourceView(props: LoginSourceViewProps) {
         }}>注册</CartoonButton>
       <CartoonButton {...sourceProps(ui, layout, 'login.xml', 'btnExit')} width={249}
         disabled={props.busy} onClick={props.onExit}>离开游戏</CartoonButton>
-      <a className="login-wood-button login-wood-home" href="https://github.com/qq617564112/cdtank"
+      <a className="login-wood-button login-wood-home" data-button-sound="" href="https://github.com/qq617564112/cdtank"
         target="_blank" rel="noopener noreferrer">
         <img src={imageResourceUrl('/ui/login/wood-home.png')} alt="" aria-hidden="true" draggable={false}/>
         <span>项目主页</span>
       </a>
-      <button type="button" className="login-wood-button login-wood-resources"
+      {!mobile && <button type="button" className="login-wood-button login-wood-resources"
         disabled={props.busy} onClick={() => setConfirmResources(true)}>
         <img src={imageResourceUrl('/ui/login/wood-currency.png')} alt="" aria-hidden="true" draggable={false}/>
         <span>加载资源包</span>
-      </button>
+      </button>}
       <button type="button" className="login-wood-button login-wood-settings"
         disabled={props.busy} onClick={props.onSettings}>
         <img src={imageResourceUrl('/ui/login/wood-settings.png')} alt="" aria-hidden="true" draggable={false}/>
         <span>系统设定</span>
       </button>
-      <a className="login-wood-button login-wood-intro"
+      <a className="login-wood-button login-wood-intro" data-button-sound=""
         href="https://baike.baidu.com/item/%E9%98%BF%E7%8C%AB%E9%98%BF%E7%8B%97%E5%A4%A7%E4%BD%9C%E6%88%98/1715847"
         target="_blank" rel="noopener noreferrer">
         <img src={imageResourceUrl('/ui/login/wood-intro.png')} alt="" aria-hidden="true" draggable={false}/>
@@ -104,7 +108,7 @@ export function LoginSourceView(props: LoginSourceViewProps) {
         target="_blank" rel="noopener noreferrer">源码公开，仅供非商业研究，禁止商用</a></p>
     </footer>
   </SourceEntrySheet>
-    {confirmResources && <SourceConfirmView label="加载资源包" binding="web-resource-pack"
+    {!mobile && confirmResources && <SourceConfirmView label="加载资源包" binding="web-resource-pack"
       message={`将一次性加载并缓存所有游戏静态资源。\n资源包约 ${(getResourcePackBytes() / 1_000_000_000).toFixed(1)} GB，确认后进入加载界面。`}
       pending={false} disabled={props.busy} status="" cancel={() => setConfirmResources(false)}
       confirm={() => {setConfirmResources(false); setLoadingResources(true);}}/>}

@@ -21,6 +21,7 @@ import {RoleShopListScrollbar} from './role-shop-list-scrollbar';
 import {preparedTankCatalog, tankCatalog, type TankEntry} from '../../assets/tanks/tank-view';
 import {loadStaticJson} from '../../assets/static-resources';
 import {ShopTankAttributes, ShopTankParameters} from './shop-tank-stat-row';
+import {isMobileDevice} from '../../platform/device';
 
 interface TextureRow {
   recordId: number; tankId: number; part: 'U' | 'M' | 'XY'; name: string;
@@ -150,8 +151,10 @@ export function TankShopTextureView({ui, source, owner, scale, onBusy, onBuy}: {
   }
   return <>
     <TankShopSourceRegions ui={ui} tab="rdoTexture"/>
-    <ShopTankAttributes ui={ui} owned/>
-    <ShopTankParameters ui={ui} owned/>
+    {!isMobileDevice() && <>
+      <ShopTankAttributes ui={ui} owned/>
+      <ShopTankParameters ui={ui} owned/>
+    </>}
     <ShopSourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoBuy" aria-label="购买战车商品"
       disabled={busy} aria-busy={busy} onClick={onBuy} data-tank-shop-buy-tab="" />
     <ShopSourceButton ui={ui} layout={layout} suffix="shop_tankpage.xml" source="rdoTexture" selected aria-pressed="true"

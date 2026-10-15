@@ -1,4 +1,4 @@
-import type {SyntheticEvent} from 'react';
+import {useState, type SyntheticEvent} from 'react';
 import type {PlayerSnapshot} from '../../../../shared/protocols/MsgRoomSnapshot';
 import {GameRoomActionButton} from '../resources/game-room-action-button';
 import {sourceProps} from '../resources/source-ui-props';
@@ -18,9 +18,16 @@ interface WaitingRoomSlotActionsProps {
 }
 
 export function WaitingRoomSlotActions({ui, layout, index, player, disabled, pending, canKick, details, kick, onFocus}: WaitingRoomSlotActionsProps) {
+  const [hovered, setHovered] = useState(false);
   return <div {...sourceProps(ui, layout, 'room_main.xml', `PlayerPanel${index}`)}
     className="waiting-room-slot-actions" role="group" aria-label={`${player.name}的操作`} tabIndex={0}
-    data-waiting-slot-actions={player.id}>
+    data-waiting-slot-actions={player.id} data-waiting-slot-hovered={hovered || undefined}
+    onPointerMove={event => {if (event.pointerType !== 'touch') setHovered(true);}}
+    onPointerUp={event => {
+      if (event.pointerType === 'touch' && !(event.target as HTMLElement).closest('button')) setHovered(value => !value);
+    }}
+    onPointerLeave={event => {if (event.pointerType !== 'touch') setHovered(false);}}
+    onPointerCancel={() => setHovered(false)}>
     <div className="waiting-room-slot-mask">
       {!player.isCpu && <GameRoomActionButton variant="details" disabled={disabled} onFocus={onFocus}
         aria-busy={pending || undefined}

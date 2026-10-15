@@ -1,9 +1,11 @@
 import {backgroundStyle} from '../../assets/image-artwork';
+import {playButtonSound} from '../../audio/button-sound';
 import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import type {ShopItem} from '../../../../shared/protocols/PtlShop';
 import {sourceShopOfferedQuantity, sourceShopPrice, sourceShopOwnedPrice} from './shop-item-display';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {useRef} from 'react';
+import {useTouchItemDescription} from '../resources/use-touch-item-description';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {ShopListScrollbar} from './shop-list-scrollbar';
@@ -24,6 +26,7 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
   describe?: (id: number, anchor: HTMLButtonElement) => void; dismissDescription?: () => void; described?: number;
 }) {
   const root = useRef<HTMLDivElement>(null);
+  const touchDescription = useTouchItemDescription(describe);
   const layout = new HomeSourceLayout(ui, 'shop_itempage.xml');
   function move(index: number) {
     const entry = entries[Math.max(0, Math.min(entries.length - 1, index))];
@@ -44,18 +47,20 @@ export function ShopItemSourceList({ui, source, entries, selected, busy, select,
       const icon = sourceProps(ui, layout, 'shop_itempage.xml', source,
         `set:daoju0 image:data\\ui\\daoju\\${String(entry.iconId).padStart(5, '0')}.tga`);
       return <button key={entry.id} type="button" role="option" aria-selected={entry.id === selected}
-        disabled={busy} data-shop-list-id={entry.id}
+        disabled={busy} data-shop-list-id={entry.id} data-touch-double-click={activate ? '' : undefined}
         aria-describedby={described === entry.id ? 'shop-item-description' : undefined}
+        {...touchDescription(entry.id)}
         {...(ownedItemRow ? {'data-shop-source-owned-item-row': ''} : source === 'lstShopItem' ? {'data-shop-source-product-row': ''} : {})}
         {...(source === 'lstShopItem' ? {'data-shop-product-id': entry.id} : {'data-shop-owned-instance': entry.id})}
         tabIndex={entry.id === selected || selected === undefined && index === 0 ? 0 : -1}
         data-stack-sale-available={source === 'lstMyItem' && Boolean(activate && canActivate?.(entry.id))}
-        onMouseEnter={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
-        onFocus={event => {if (!busy) describe?.(entry.id, event.currentTarget);}}
+        onPointerEnter={event => {if (!busy && event.pointerType !== 'touch') describe?.(entry.id, event.currentTarget);}}
+        onFocus={event => {if (!busy && event.currentTarget.matches(':focus-visible')) describe?.(entry.id, event.currentTarget);}}
+        onContextMenu={event => {event.preventDefault(); if (!busy) describe?.(entry.id, event.currentTarget);}}
         onDoubleClick={event => {if (!busy && canActivate?.(entry.id)) activate?.(entry.id, event.currentTarget);}}
         onClick={() => select(entry.id)} onKeyDown={event => {
           if (event.key === 'Enter' && !event.nativeEvent.isComposing && activate && canActivate?.(entry.id)) {
-            event.preventDefault(); activate(entry.id, event.currentTarget); return;
+            event.preventDefault(); playButtonSound(); activate(entry.id, event.currentTarget); return;
           }
           const target = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
             : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;

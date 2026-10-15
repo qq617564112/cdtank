@@ -1,3 +1,4 @@
+import {accountPageScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import {showGameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
@@ -101,16 +102,16 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
   const [resourceError, setResourceError] = useState<string>();
   const [status, setStatus] = useState('载入部件…');
   const [description, setDescription] = useState<HomeItemDescription>();
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => accountPageScale());
 
   useEffect(() => {
     const element = dialog.current!;
     const previousFocus = document.activeElement;
     element.showModal();
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
+    const resize = () => setScale(accountPageScale());
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     return () => {
-      window.removeEventListener('resize', resize);
+      unsubscribeViewport();
       if (element.open) element.close();
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected
           && (document.activeElement === document.body || element.contains(document.activeElement))) previousFocus.focus();
@@ -198,14 +199,17 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
       slot: target === 'PART' ? slot : undefined, instanceId: remove ? undefined : itemInstanceId,
       tankInstanceId: equipment.tankInstanceId};
     focusAfterCommit.current = button;
+    revision.current++;
     current.pending = true; setBusy(true); setStatus('保存部件…');
     try {
       const confirmed = await battle.equipment(request);
-      if (!current.active) return;
+      if (!current.active || session.current !== current) return;
       setEquipment(confirmed); setCandidate(undefined); setStatus('装备已保存');
-      const [refreshedInventory, refreshedOwned] = await Promise.all([battle.inventory(), battle.ownedRoles()]);
-      if (!current.active) return;
-      setInventory(refreshedInventory); setOwned(refreshedOwned);
+      const affected = new Set([...equipment.slots, equipment.decorationInstanceId, equipment.markInstanceId,
+        ...confirmed.slots, confirmed.decorationInstanceId, confirmed.markInstanceId]);
+      const installed = new Set(confirmed.bindings.map(binding => binding.instanceId));
+      setInventory(previous => previous ? {...previous, records: previous.records.map(record =>
+        affected.has(record.instanceId) ? {...record, state: installed.has(record.instanceId) ? 2 : 0} : record)} : previous);
     } catch (error) {
       if (current.active) {setStatus(String(error)); showGameMessage(error instanceof Error ? error.message : String(error), 'error');}
     } finally {
@@ -220,18 +224,17 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
       const [confirmedEquipment, confirmedProfile] = await Promise.all([
         battle.equipment({operation: 'QUERY', tankInstanceId: target}), battle.roleProfile(),
       ]);
-      if (!owner.active || session.current !== owner || confirmedEquipment.tankInstanceId !== target) return;
+      if (!owner.active || session.current !== owner || revision.current !== requestRevision
+          || confirmedEquipment.tankInstanceId !== target) return;
       setEquipment(confirmedEquipment);
       setCurrentTankInstanceId(confirmedProfile.profile
         ? new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0xa8, true) : undefined);
-      if (revision.current === requestRevision) {
-        if (confirmedProfile.profile) {
-          setMoney(new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0x70, true));
-        }
-        setOriginality(confirmedProfile.growth?.originality ?? confirmedProfile.playerSummary?.originality);
+      if (confirmedProfile.profile) {
+        setMoney(new DataView(Uint8Array.from(confirmedProfile.profile.bytes).buffer).getUint32(0x70, true));
       }
+      setOriginality(confirmedProfile.growth?.originality ?? confirmedProfile.playerSummary?.originality);
     } catch (error) {
-      if (owner.active && session.current === owner) {
+      if (owner.active && session.current === owner && revision.current === requestRevision) {
         setStatus(`装备资料刷新失败：${error instanceof Error ? error.message : String(error)}`);
       }
     }
@@ -242,12 +245,15 @@ function EquipmentSession({close, battle, onPlayerPage, onRolePage, tankInstance
     if (!current.active || current.pending || busy || !equipment || alreadyUsed) return;
     const target = equipment.tankInstanceId;
     focusAfterCommit.current = button;
+    revision.current++;
     current.pending = true; setBusy(true); setStatus('保存战车选择…');
     try {
-      await battle.selectRole({kind: 'tank', instanceId: target});
+      const confirmed = await battle.selectRole({kind: 'tank', instanceId: target});
       if (!current.active || session.current !== current) return;
+      const profile = new DataView(Uint8Array.from(confirmed.profile.bytes).buffer);
+      setCurrentTankInstanceId(profile.getUint32(0xa8, true));
+      setCurrentPetInstanceId(profile.getUint32(0xa4, true));
       setStatus('战车选择已保存');
-      await refreshTarget(current, target);
     } catch (error) {
       if (current.active && session.current === current) {
         setStatus(String(error)); showGameMessage(error instanceof Error ? error.message : String(error), 'error');

@@ -7,6 +7,8 @@ import {useEffect, useRef, useState, type KeyboardEvent} from 'react';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {loadUiFont} from '../resources/source-ui-fonts';
 import {sourceProps, useSourceUi} from './source-react';
+import {playButtonSound} from '../../audio/button-sound';
+import {isMobileDevice} from '../../platform/device';
 
 interface LobbyPlayerListProps {
   players: readonly {accountId: string; name: string}[];
@@ -34,7 +36,11 @@ export function LobbyPlayerListView({players, status, chooseTarget, openPlayer}:
   const props = layout ? sourceProps(ui!, layout, 'playerlist.xml', 'PlayerList') : undefined;
   function move(event: KeyboardEvent<HTMLButtonElement>, index: number): void {
     if (event.key === 'F10' && event.shiftKey) {event.preventDefault(); event.stopPropagation(); openPlayer?.(players[index]); return;}
-    if (event.key === 'Enter') {event.preventDefault(); event.stopPropagation(); chooseTarget?.(players[index]); return;}
+    if (event.key === 'Enter') {
+      event.preventDefault(); event.stopPropagation();
+      if (chooseTarget) {playButtonSound(); chooseTarget(players[index]);}
+      return;
+    }
     const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
       : event.key === 'Home' ? 0 : event.key === 'End' ? players.length - 1 : -1;
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
@@ -54,8 +60,10 @@ export function LobbyPlayerListView({players, status, chooseTarget, openPlayer}:
     {players.map((player, index) => <li key={player.accountId} role="presentation">
       <button type="button" role="option" data-lobby-player-account={player.accountId} data-lobby-player-index={index}
         aria-selected={selectedId === player.accountId} title={player.name}
+        data-touch-double-click={chooseTarget && !isMobileDevice() ? '' : undefined}
         onContextMenu={event => {event.preventDefault(); setSelected(player.accountId); openPlayer?.(player);}}
-        onClick={() => setSelected(player.accountId)} onDoubleClick={() => chooseTarget?.(player)} onKeyDown={event => move(event, index)}
+        onClick={() => {setSelected(player.accountId); if (isMobileDevice()) openPlayer?.(player);}}
+        onDoubleClick={() => {if (!isMobileDevice()) chooseTarget?.(player);}} onKeyDown={event => move(event, index)}
         onKeyUp={event => {
           if (['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter'].includes(event.key) || event.key === 'F10' && event.shiftKey) event.stopPropagation();
         }}>

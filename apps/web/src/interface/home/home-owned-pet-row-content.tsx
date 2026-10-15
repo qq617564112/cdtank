@@ -1,7 +1,7 @@
 import {ImageArtwork} from '../resources/image-artwork';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
-import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
-import {sourceProps} from '../resources/source-ui-props';
+import type {HomeSourceUi} from '../resources/source-ui-layout';
+import {sourceUiAsset} from '../resources/source-ui-image';
 import {sourcePetKind} from '../account/pet-shop-row-display';
 import {HomeRoleRowStatusBadge} from './home-role-row-status-badge';
 import './home-owned-pet-row-content.css';
@@ -11,14 +11,13 @@ export function HomeOwnedPetRowContent({ui, name, petId, petType, petSize, curre
   ui: HomeSourceUi; name: string; petId?: number; petType?: number; petSize?: number;
   current?: boolean;
 }) {
-  const layout = new HomeSourceLayout(ui, 'myhome_petpage.xml');
-  const icon = petId === undefined ? undefined : sourceProps(ui, layout, 'myhome_petpage.xml', 'lstPet',
+  const icon = petId === undefined ? undefined : sourceUiAsset(ui,
     `set:gy0 image:data\\ui\\gy\\maogou_${petId}.tga`);
   return <>
     <span className="home-owned-pet-row-icon" data-home-owned-pet-icon="" aria-hidden="true"
-      data-pet-thumbnail={icon?.['data-pet-thumbnail']}
-      data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: 'none'}}>
-      {icon?.['data-source-asset'] && <ImageArtwork asset={`/${icon['data-source-asset']}`} fit="contain"
+      data-pet-thumbnail={icon?.petThumbnail ? '' : undefined}
+      data-source-asset={icon?.asset} style={{backgroundImage: 'none'}}>
+      {icon?.asset && <ImageArtwork asset={`/${icon.asset}`} fit="contain"
         style={{width: '100%', height: '100%'}} aria-hidden="true"/>}
     </span>
     {current && <HomeRoleRowStatusBadge ui={ui} status="current"/>}

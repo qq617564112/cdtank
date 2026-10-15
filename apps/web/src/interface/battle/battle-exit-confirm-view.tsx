@@ -1,3 +1,4 @@
+import {accountPageScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import {GameMessage} from '../resources/game-message';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {GameDialog, GameDialogFootbar, GameDialogPanel, GameDialogTopbar} from '../resources/game-dialog';
@@ -11,7 +12,7 @@ export function BattleExitConfirmView({message, pending, disabled, status, confi
   confirm(): void; cancel(): void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => accountPageScale());
   useLayoutEffect(() => {
     const element = dialog.current!;
     element.showModal();
@@ -22,9 +23,8 @@ export function BattleExitConfirmView({message, pending, disabled, status, confi
     };
   }, []);
   useEffect(() => {
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    const resize = () => setScale(accountPageScale());
+    return subscribeGamePageViewport(resize);
   }, []);
   return <GameDialog ref={dialog} width={420} height={248} uiScale={scale}
     data-source-confirm="" data-confirm-binding={binding} className="battle-exit-confirm"

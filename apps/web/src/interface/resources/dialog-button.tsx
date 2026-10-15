@@ -11,6 +11,7 @@ export function dialogButtonPreset(reference?: string): {kind: DialogButtonKind;
   if (name === 'xiaoquxiaoanniu2.tga') return {kind: 'close'};
   if (name === 'queding2.tga') return {kind: 'action', label: '确定'};
   if (name === 'quxiao2.tga') return {kind: 'action', label: '取消'};
+  if (name === 'gaizhuang2.tga') return {kind: 'action', label: '改装'};
   if (name === 'yushezhi_2.tga') return {kind: 'action', label: '预设值'};
   return undefined;
 }

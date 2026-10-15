@@ -1,3 +1,4 @@
+import {sourceDialogScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import {GameMessage} from '../resources/game-message';
 import './player-info.css';
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
@@ -49,7 +50,7 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
   const requestedFocus = useRef<'friend' | 'blacklist' | null>(null);
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => sourceDialogScale(405, 416));
   const [profile, setProfile] = useState<ResPlayerProfile>();
   const [profilePending, setProfilePending] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -60,10 +61,10 @@ function PlayerInfoSession({player, pending, status, onAddFriend, onRemoveFriend
     const element = dialog.current!;
     const origin = document.activeElement;
     element.showModal();
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
+    const resize = () => setScale(sourceDialogScale(405, 416));
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     return () => {
-      window.removeEventListener('resize', resize);
+      unsubscribeViewport();
       if (element.open) element.close();
       if (origin instanceof HTMLElement && origin.isConnected) origin.focus();
     };

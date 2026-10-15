@@ -12,6 +12,8 @@ import {GameModeTab} from '../resources/game-mode-tab';
 import {GameMapCard} from '../resources/game-map-card';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {useNavigationChoice, useNavigationNumber} from '../../navigation/route';
+import {isMobileDevice} from '../../platform/device';
+import {gamePageScale} from '../../platform/page-viewport';
 
 const MODES = [
   ['rdoTeamMode', 1], ['rdoConquerMode', 2], ['rdoVIPMode', 3],
@@ -34,7 +36,9 @@ export function RoomMapSelector({open, close, maps, busy, initialMode, initialMa
   const escapePending = useRef(false);
   const {ui, error} = useSourceUi(open, ['selectgamemode.xml', 'selectgamemode_icon.xml']);
   const dialog = useSourceDialog(open);
-  const uiScale = useSourceScale(800, 600, 0, 0, .25, Infinity).viewport.width / 800;
+  const desktopScale = useSourceScale(800, 600, 0, 0, .25, Infinity).viewport.width / 800;
+  const mobile = isMobileDevice();
+  const uiScale = mobile ? gamePageScale(720, 405) : desktopScale;
   useEffect(() => {
     const element = dialog.current;
     if (open && ui && !busy && element?.open && (document.activeElement === document.body || document.activeElement === element)) {
@@ -53,7 +57,7 @@ export function RoomMapSelector({open, close, maps, busy, initialMode, initialMa
     ? sourceProps(ui, layout, 'selectgamemode.xml', 'SheetWindow').style : undefined;
   const place = (name: string) => sourceProps(ui!, layout!, 'selectgamemode.xml', name,
     undefined, -Number(origin!.left), -Number(origin!.top));
-  return <GameDialog ref={dialog} width={674} height={435} uiScale={uiScale}
+  return <GameDialog ref={dialog} width={mobile ? 720 : 674} height={mobile ? 405 : 435} uiScale={uiScale}
     stageClassName="map-selector-stage" data-room-map-selector="" aria-label="选择模式与地图"
     aria-busy={busy || !ui} onCancel={event => {
     event.preventDefault(); close();

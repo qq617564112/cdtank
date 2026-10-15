@@ -4,6 +4,7 @@ import {gameContent} from '../../../../shared/content/catalog';
 import {HomeEquipmentCommonRowContent} from './home-equipment-common-row-content';
 import {isAppearanceEffectItem} from '../../../../shared/combat/equipment-target';
 import {useRef} from 'react';
+import {useTouchItemDescription} from '../resources/use-touch-item-description';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeEquipmentListScrollbar} from './home-equipment-list-scrollbar';
@@ -24,6 +25,7 @@ export function HomeEquipmentSourceList({ui, entries, selected, busy, select, dr
   dismissDescription?(): void; described?: number;
 }) {
   const list = useRef<HTMLDivElement>(null);
+  const touchDescription = useTouchItemDescription(describe);
   const layout = new HomeSourceLayout(ui, 'myhome_panzerpage.xml');
   const control = layout.control('lstEquip');
   return <div {...sourceProps(ui, layout, 'myhome_panzerpage.xml', 'lstEquip')}
@@ -51,8 +53,10 @@ export function HomeEquipmentSourceList({ui, entries, selected, busy, select, dr
           data-equipment-item={entry.instanceId} data-home-equipment-common-row={common ? entry.instanceId : undefined} data-home-equipment-hat-mark-row={hat || balloon || mark ? entry.instanceId : undefined} aria-selected={selected === entry.instanceId}
           aria-pressed={selected === entry.instanceId}
           aria-describedby={described === entry.instanceId ? 'home-item-description' : undefined}
-          onMouseEnter={event => describe?.(entry, event.currentTarget)}
-          onFocus={event => describe?.(entry, event.currentTarget)}
+          {...touchDescription(entry)}
+          onPointerEnter={event => {if (event.pointerType !== 'touch') describe?.(entry, event.currentTarget);}}
+          onFocus={event => {if (event.currentTarget.matches(':focus-visible')) describe?.(entry, event.currentTarget);}}
+          onContextMenu={event => {event.preventDefault(); describe?.(entry, event.currentTarget);}}
           onClick={() => select(entry.instanceId)} onKeyDown={event => {
             const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
               : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;

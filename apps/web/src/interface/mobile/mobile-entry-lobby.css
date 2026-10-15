@@ -1,0 +1,503 @@
+html[data-mobile-device] .source-entry[data-entry-page='login'] .login-logo {
+  left: 24px;
+  top: 28px;
+  width: 440px;
+  transform: none;
+}
+
+html[data-mobile-device] .source-entry[data-entry-page='login'] .login-edition {
+  left: 250px;
+  top: 236px;
+  font-size: 30px;
+}
+
+html[data-mobile-device] .login-burst {
+  left: calc(50% + 28px);
+  top: 76px;
+  width: 250px;
+  height: 300px;
+}
+
+html[data-mobile-device] .login-paper {
+  left: calc(50% + 12px);
+  top: 68px;
+  width: 420px;
+  height: 410px;
+}
+
+html[data-mobile-device] .login-field-label {
+  left: calc(50% + 48px);
+  font-size: 30px;
+  line-height: 44px;
+}
+
+html[data-mobile-device] .login-account-label {
+  top: 128px;
+}
+
+html[data-mobile-device] .login-password-label {
+  top: 198px;
+}
+
+html[data-mobile-device] .source-entry-form > .cartoon-input:has([data-source-control='edtAccount']) {
+  left: calc(50% + 126px) !important;
+  top: 128px !important;
+  width: 264px !important;
+  height: 48px !important;
+}
+
+html[data-mobile-device] .source-entry-form > .cartoon-input:has([data-source-control='edtPassword']) {
+  left: calc(50% + 126px) !important;
+  top: 198px !important;
+  width: 264px !important;
+  height: 48px !important;
+}
+
+html[data-mobile-device] .source-entry-form .cartoon-input-value {
+  inset: 8px 16px !important;
+  width: calc(100% - 32px) !important;
+  height: 32px !important;
+  font-size: 28px;
+  line-height: 32px;
+}
+
+html[data-mobile-device] .source-entry-form > .cartoon-checkbox:has([data-source-control='chkSaveAccount']) {
+  left: calc(50% + 52px) !important;
+  top: 266px !important;
+  width: 190px !important;
+  height: 44px !important;
+}
+
+html[data-mobile-device] .source-entry[data-entry-page='login'] .cartoon-checkbox .cartoon-control-label {
+  font-size: 26px;
+}
+
+html[data-mobile-device] .source-entry-form > [data-source-control='btnRegister'] {
+  left: calc(50% + 264px) !important;
+  top: 262px !important;
+  width: 126px !important;
+  height: 52px !important;
+}
+
+html[data-mobile-device] .source-entry-form > [data-source-control='btnLogin'] {
+  left: calc(50% + 48px) !important;
+  top: 330px !important;
+  width: 342px !important;
+  height: 64px !important;
+}
+
+html[data-mobile-device] .source-entry-form > [data-source-control='btnExit'] {
+  left: calc(50% + 48px) !important;
+  top: 404px !important;
+  width: 342px !important;
+  height: 52px !important;
+}
+
+html[data-mobile-device] .source-entry[data-entry-page='login'] .cartoon-button > .cartoon-control-label {
+  font-size: 30px;
+}
+
+html[data-mobile-device] .login-wood-pole {
+  left: 84px;
+  top: 316px;
+  height: 190px;
+}
+
+html[data-mobile-device] .login-wood-home {
+  left: 52px;
+  top: 316px;
+  width: 220px;
+  height: 64px;
+}
+
+html[data-mobile-device] .login-wood-settings {
+  left: 52px;
+  top: 408px;
+  width: 220px;
+  height: 64px;
+}
+
+html[data-mobile-device] .login-wood-intro {
+  left: 310px;
+  right: auto;
+  top: 294px;
+  width: 132px;
+  height: 194px;
+}
+
+html[data-mobile-device] .login-wood-button span {
+  font-size: 28px;
+}
+
+html[data-mobile-device] .login-wood-intro span {
+  font-size: 24px;
+}
+
+html[data-mobile-device] .login-copyright {
+  bottom: 6px;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+html[data-mobile-device] .source-entry[data-entry-page='login'] .source-entry-stage > .game-message {
+  top: 8px;
+}
+
+html[data-mobile-device] .source-entry-stage > .channel-topbar {
+  left: 16px !important;
+  top: 0 !important;
+  width: calc(100% - 32px) !important;
+}
+
+html[data-mobile-device] .channel-topbar .game-dialog-title {
+  left: 28px;
+  top: 44px;
+  font-size: 32px;
+}
+
+html[data-mobile-device] .source-entry-stage > .channel-panel {
+  left: 16px !important;
+  top: 35px !important;
+  width: calc(100% - 32px) !important;
+  height: 492px !important;
+}
+
+html[data-mobile-device] .source-entry-stage > .channel-location {
+  left: 268px;
+  top: 48px;
+  width: calc(100% - 310px) !important;
+  height: 40px !important;
+  font-size: 23px;
+}
+
+html[data-mobile-device] .source-entry-stage > .channel-card {
+  left: 32px !important;
+  top: 102px !important;
+  width: calc(100% - 64px) !important;
+  height: 344px !important;
+}
+
+html[data-mobile-device] .channel-columns {
+  left: 48px;
+  top: 116px;
+  width: calc(100% - 96px);
+  height: 34px;
+  font-size: 25px;
+  line-height: 34px;
+}
+
+html[data-mobile-device] .source-channel-list.channel-list {
+  left: 48px !important;
+  top: 158px !important;
+  width: calc(100% - 96px) !important;
+  height: 268px !important;
+}
+
+html[data-mobile-device] .source-channel-list.channel-list > button {
+  height: 68px;
+  margin: 0;
+}
+
+html[data-mobile-device] .channel-cell {
+  font-size: 25px;
+  line-height: 36px;
+}
+
+html[data-mobile-device] .source-entry-stage > .channel-back {
+  left: calc(50% - 238px);
+  top: 466px;
+  width: 220px;
+  height: 54px;
+}
+
+html[data-mobile-device] .channel-enter {
+  position: absolute;
+  left: calc(50% + 18px);
+  top: 466px;
+  width: 220px;
+  height: 54px;
+}
+
+html[data-mobile-device] :is(.channel-back, .channel-enter) .game-dialog-button-label {
+  font-size: 28px;
+}
+
+html[data-mobile-device] .lobby-source-main,
+html[data-mobile-device] .lobby-source-sidebar,
+html[data-mobile-device] .lobby-source-header {
+  width: 100%;
+  height: 540px;
+}
+
+html[data-mobile-device] .lobby-game-banner {
+  left: 16px;
+  top: 8px;
+  width: calc(100% - 278px);
+  height: 68px;
+}
+
+html[data-mobile-device] .lobby-source-main > .lobby-room-panel {
+  left: 12px !important;
+  top: 90px !important;
+  width: calc(100% - 274px) !important;
+  height: 382px !important;
+}
+
+html[data-mobile-device] [data-room-cards-embedded] {
+  left: 12px;
+  top: 90px;
+  width: calc(100% - 274px);
+  height: 438px;
+}
+
+html[data-mobile-device] [data-room-cards-embedded] :is(.room-card-viewport, .room-card-stage) {
+  width: 100% !important;
+  height: 438px !important;
+}
+
+html[data-mobile-device] .room-card-grid {
+  inset: 4px 6px auto;
+  height: 364px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 180px);
+  align-items: center;
+}
+
+html[data-mobile-device] .room-card-slot {
+  width: min(100%, 212px);
+  height: 180px;
+}
+
+html[data-mobile-device] .room-card-content {
+  --room-card-info-width: 100%;
+  left: 21%;
+  top: 31px;
+  width: 59%;
+  gap: 4px;
+}
+
+html[data-mobile-device] .room-card-heading {
+  height: 24px;
+}
+
+html[data-mobile-device] :is(.room-card-name, .room-card-map, .room-card-text) {
+  font-size: 19px;
+  line-height: 24px;
+}
+
+html[data-mobile-device] .room-card-map {
+  height: 24px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] .room-card-name-track {
+  max-width: 100%;
+  animation: none;
+}
+
+html[data-mobile-device] .room-card-name-track > span {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-mobile-device] .room-card-name-track > span + span,
+html[data-mobile-device] .room-card-status {
+  display: none;
+}
+
+html[data-mobile-device] .room-card-content .room-card-mode-badge {
+  height: 26px;
+  transform: none;
+}
+
+html[data-mobile-device] .room-card-mode-label {
+  inset: 0 2px 0 25px;
+  font-size: 17px;
+}
+
+html[data-mobile-device] .room-card-faction-row {
+  height: 24px;
+  padding: 0 2px;
+}
+
+html[data-mobile-device] .room-source-card .room-card-text {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+html[data-mobile-device] .room-source-card .room-card-faction-portrait {
+  width: 26px;
+  height: 22px;
+}
+
+html[data-mobile-device] .room-card-pagination {
+  left: 0;
+  top: 376px;
+  width: 100%;
+  height: 60px;
+}
+
+html[data-mobile-device] .room-card-pagination > .lobby-room-footbar {
+  inset: 0 !important;
+  width: 100% !important;
+  height: 60px !important;
+  min-height: 60px;
+  max-height: 60px;
+}
+
+html[data-mobile-device] .room-card-pagination > .room-source-page-button {
+  top: 4px !important;
+  width: calc((100% - 140px) / 4) !important;
+  height: 54px !important;
+}
+
+html[data-mobile-device] .room-card-pagination > [data-room-card-home] {
+  left: 0 !important;
+}
+
+html[data-mobile-device] .room-card-pagination > [data-room-card-shop] {
+  left: calc((100% - 140px) / 4) !important;
+}
+
+html[data-mobile-device] .room-card-pagination > [data-room-card-create] {
+  left: calc((100% - 140px) / 2) !important;
+}
+
+html[data-mobile-device] .room-card-pagination > [data-room-card-express] {
+  display: none;
+}
+
+html[data-mobile-device] .room-card-pagination > [data-room-card-sort] {
+  left: calc((100% - 140px) * 3 / 4) !important;
+}
+
+html[data-mobile-device] .room-card-pagination > .cartoon-button.game-button {
+  --cartoon-label-size: 23px;
+}
+
+html[data-mobile-device] .room-card-pagination [data-room-card-shop] .cartoon-control-label {
+  padding-left: 0;
+  letter-spacing: 0;
+}
+
+html[data-mobile-device] .room-card-page-controls {
+  right: 4px !important;
+  top: 3px !important;
+  gap: 0;
+  height: 54px;
+}
+
+html[data-mobile-device] .room-card-page-controls > .game-button {
+  top: 0 !important;
+  width: 38px !important;
+  height: 54px !important;
+}
+
+html[data-mobile-device] .room-card-page-controls > output {
+  min-width: 48px;
+  font-size: 22px;
+}
+
+html[data-mobile-device] .lobby-source-sidebar > .lobby-sidebar-title {
+  left: calc(100% - 248px) !important;
+  top: 4px !important;
+  width: 232px !important;
+  height: 64px !important;
+}
+
+html[data-mobile-device] .lobby-sidebar-title :is(h1, h2) {
+  font-size: 30px;
+}
+
+html[data-mobile-device] .lobby-source-sidebar > .lobby-player-panel {
+  left: calc(100% - 254px) !important;
+  top: 90px !important;
+  width: 246px !important;
+  height: 380px !important;
+}
+
+html[data-mobile-device] .lobby-source-tab {
+  top: 96px !important;
+  width: 108px !important;
+  height: 48px !important;
+  --cartoon-label-size: 25px;
+}
+
+html[data-mobile-device] [data-lobby-player-tab] {
+  left: calc(100% - 244px) !important;
+}
+
+html[data-mobile-device] [data-lobby-friend-tab] {
+  left: calc(100% - 130px) !important;
+}
+
+html[data-mobile-device] .lobby-player-scroll-shell {
+  left: calc(100% - 238px) !important;
+  top: 154px !important;
+  width: 216px !important;
+  height: 302px !important;
+}
+
+html[data-mobile-device] .lobby-player-list {
+  padding-right: 0 !important;
+}
+
+html[data-mobile-device] .lobby-player-list button {
+  min-height: 52px;
+  padding: 8px;
+  font-size: 24px;
+  line-height: 34px;
+}
+
+html[data-mobile-device] .lobby-player-list button > .source-feedback-text {
+  font-size: inherit;
+  line-height: 34px;
+}
+
+html[data-mobile-device] .lobby-player-search-launcher {
+  left: calc(100% - 246px) !important;
+  top: 470px !important;
+  width: 230px !important;
+  height: 54px !important;
+}
+
+html[data-mobile-device] .lobby-source-header {
+  left: 0;
+  top: 0;
+}
+
+html[data-mobile-device] .tutorial-settings-bar {
+  left: calc(100% - 578px) !important;
+  top: 12px !important;
+  width: 318px !important;
+  height: 64px !important;
+}
+
+html[data-mobile-device] .tutorial-settings-bar > .tutorial-settings-button {
+  top: 0 !important;
+  width: 124px !important;
+  height: 58px !important;
+}
+
+html[data-mobile-device] .tutorial-settings-bar > [data-tutorial-first] {
+  left: 0 !important;
+}
+
+html[data-mobile-device] .tutorial-settings-bar > [aria-label='系统设定'] {
+  left: 128px !important;
+}
+
+html[data-mobile-device] .tutorial-settings-bar > [aria-label='返回登录'] {
+  left: 258px !important;
+  width: 52px !important;
+}
+
+html[data-mobile-device] [data-lobby-status] {
+  font-size: 24px;
+}
+
+html[data-mobile-device] [data-lobby-room] .lobby-source-sidebar {
+  display: none;
+}

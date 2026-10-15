@@ -1,5 +1,7 @@
 import {useId, useLayoutEffect, useRef, type ReactNode} from 'react';
 import {useSourceScale} from '../lobby/source-react';
+import {isMobileDevice} from '../../platform/device';
+import {sourceDialogScale} from '../../platform/page-viewport';
 import {GameDialog, GameDialogFootbar, GameDialogPanel, GameDialogTopbar} from './game-dialog';
 import './loading-error-dialog.css';
 
@@ -10,13 +12,14 @@ export function LoadingErrorDialog({message, details, actions}: {
   const dialog = useRef<HTMLDialogElement>(null);
   const id = useId();
   const {viewport} = useSourceScale(800, 600, 0, 0, 0.1, Infinity);
-  const scale = viewport.width / 800;
+  const mobile = isMobileDevice();
+  const scale = mobile ? sourceDialogScale(520, 405) : viewport.width / 800;
   useLayoutEffect(() => {
     const element = dialog.current!;
     element.showModal();
     return () => {if (element.open) element.close();};
   }, []);
-  return <GameDialog ref={dialog} width={480} uiScale={scale} className="loading-error-dialog"
+  return <GameDialog ref={dialog} width={mobile ? 520 : 480} uiScale={scale} className="loading-error-dialog"
     data-loading-error-dialog="" role="alertdialog" aria-labelledby={`${id}-title`}
     aria-describedby={`${id}-message${details ? ` ${id}-details` : ''}`}
     onCancel={event => event.preventDefault()}

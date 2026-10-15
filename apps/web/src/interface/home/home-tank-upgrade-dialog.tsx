@@ -1,3 +1,5 @@
+import {accountPageScale, sourceDialogScale, subscribeGamePageViewport} from '../../platform/page-viewport';
+import {isMobileDevice} from '../../platform/device';
 import {GameMessage} from '../resources/game-message';
 import './home-tank-upgrade.css';
 import {createPortal} from 'react-dom';
@@ -13,7 +15,7 @@ import {HomeSourceSurface as SourceStaticImage} from './home-surface';
 import {HomeStaticText as SourceStaticText} from './home-text';
 
 const suffix = 'myhome_panzerpage_modify.xml';
-const viewportScale = () => Math.min(innerWidth / 800, innerHeight / 599);
+const viewportScale = () => isMobileDevice() ? accountPageScale() : sourceDialogScale(800, 599);
 
 type UpgradeAction = 1 | 2;
 type PendingAttempt = {instanceId: number; action: UpgradeAction; requestId: string; completed: boolean};
@@ -80,6 +82,7 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
   const [resourcesReady, setResourcesReady] = useState(false);
   const [status, setStatus] = useState('');
   const [scale, setScale] = useState(viewportScale);
+  const mobile = isMobileDevice();
   const layout = new HomeSourceLayout(ui, suffix);
   const fields = response ? new Map(response.owned.equipment.find(record => new Map(record.fields).get(0x1c) === instanceId)?.fields) : undefined;
   const quote = response?.quotes.find(value => value.instanceId === instanceId && value.action === action);
@@ -160,9 +163,9 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
     element.showModal();
     element.querySelector<HTMLButtonElement>('[data-tank-upgrade-close]')?.focus();
     const resize = () => setScale(viewportScale());
-    window.addEventListener('resize', resize);
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     return () => {
-      window.removeEventListener('resize', resize);
+      unsubscribeViewport();
       const restore = document.activeElement === document.body || element.contains(document.activeElement);
       if (element.open) element.close();
       if (restore && origin instanceof HTMLElement && origin.isConnected) origin.focus();
@@ -186,7 +189,7 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
   const resourceRetry = !!resourceError && !resourcesReady && !resourcePending;
   return createPortal(<dialog ref={dialog} data-home-tank-upgrade-dialog=""
     data-tank-upgrade-instance={instanceId} data-tank-upgrade-action={action} aria-label={action === 1 ? '火力改装' : '装甲改装'}
-    aria-busy={pending || resourcePending} style={{width: 800 * scale, height: 599 * scale}}
+    aria-busy={pending || resourcePending} style={{width: (mobile ? 320 : 800) * scale, height: (mobile ? 405 : 599) * scale}}
     onCancel={event => {event.preventDefault(); if (!composing.current) close();}}
     onKeyDown={event => {
       event.stopPropagation();
@@ -202,6 +205,7 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
       }
     }}>
     <div className="home-tank-upgrade-stage" style={{transform: `scale(${scale})`}}>
+      <div className="compact-source-dialog-art">
       <SourceImageScale value={scale}>
         {['all', 'kuang', 'tiao', 'huofeijinengdian', 'jinengtubiao', 'tiao2', 'jinqiantubiao', 'jinqian'].map(name =>
           <SourceStaticImage key={name} ui={ui} layout={layout} suffix={suffix} name={name}
@@ -245,6 +249,7 @@ export function HomeTankUpgradeDialog({ui, battle, instanceId, action, close, on
           : error ? `改装信息读取失败：${error}。点击确认按钮重试` : status}
           tone={resourceError || error ? 'error' : pending ? 'pending' : 'info'}/>
       </SourceImageScale>
+      </div>
     </div>
   </dialog>, document.body);
 }

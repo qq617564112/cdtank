@@ -1,3 +1,4 @@
+import {sourceDialogScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import {GameMessage} from '../resources/game-message';
 import {backgroundStyle} from '../../assets/image-artwork';
 import {GameSelectionHighlight} from '../resources/game-selection-highlight';
@@ -83,7 +84,7 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
   const [draft, setDraft] = useState<TradeOffer>({money: 0, originality: 0, skillPoints: 0, records: []});
   const [amounts, setAmounts] = useState({money: '0', originality: '0', skillPoints: '0'});
   const [detail, setDetail] = useState<TradeRecordView>();
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => sourceDialogScale(615, 485));
   const dialog = useRef<HTMLDialogElement>(null);
   const retryFocus = useRef(false);
   const open = session?.phase === 'OPEN' && !!own;
@@ -135,10 +136,10 @@ export function TradeSourcePage({state, pending, status, act, close}: TradeSourc
   useLayoutEffect(() => {
     const element = dialog.current!, previous = document.activeElement;
     element.showModal();
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
+    const resize = () => setScale(sourceDialogScale(615, 485));
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     return () => {
-      window.removeEventListener('resize', resize);
+      unsubscribeViewport();
       if (element.open) element.close();
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
     };

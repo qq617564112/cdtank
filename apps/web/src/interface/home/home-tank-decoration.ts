@@ -11,16 +11,19 @@ import {applyCartoonOutlines} from '../../render/materials/cartoon-outline';
 export class HomeTankDecoration {
   private texture?: Texture;
   private disposed = false;
+  private readonly attachmentMatrix = Matrix.Identity();
   private readonly anchor: TransformNode;
   private readonly update = (): void => {
     const native = this.view.decorationTag(this.tag);
     this.anchor.setEnabled(!!native);
     if (!native) return;
     // Reflect the native matrix about X, as the converted actor coordinates do.
-    const matrix = [...native];
-    for (const index of [1, 2, 3, 4, 8, 12]) matrix[index] *= -1;
+    const matrix = this.attachmentMatrix;
+    Matrix.FromArrayToRef(native, 0, matrix);
+    matrix.multiplyAtIndex(1, -1); matrix.multiplyAtIndex(2, -1); matrix.multiplyAtIndex(3, -1);
+    matrix.multiplyAtIndex(4, -1); matrix.multiplyAtIndex(8, -1); matrix.multiplyAtIndex(12, -1);
     // Keep the attachment local; rendering updates it with the actor's current world matrix.
-    this.anchor.setPreTransformMatrix(Matrix.FromArray(matrix));
+    this.anchor.setPreTransformMatrix(matrix);
     this.anchor.markAsDirty();
   };
 
@@ -36,7 +39,14 @@ export class HomeTankDecoration {
     if (!tag || !view.decorationTag(tag)) throw new Error(`缺少饰品挂点 ${item.itemTableId}`);
     const resources = gameContent().items.get(item.itemTableId)?.resources;
     if (!resources?.model) throw new Error(`饰品模型定义缺失：${item.itemTableId}`);
-    const assets = await loadPreparedModel(`/${resources.model}`, scene);
+    const assets = await loadPreparedModel(`/${resources.model}`, scene, {
+      pluginOptions: {gltf: {onParsed: data => {
+        if (!resources.texturePath) return;
+        for (const material of data.json.materials ?? []) {
+          if (material.pbrMetallicRoughness) delete material.pbrMetallicRoughness.baseColorTexture;
+        }
+      }}},
+    });
     const decoration = new HomeTankDecoration(scene, view, tag, assets);
     try {
       if (resources.texturePath) {
@@ -46,7 +56,11 @@ export class HomeTankDecoration {
             (_message, error) => {texture.dispose(); reject(error ?? new Error('饰品贴图载入失败'));});
         });
         for (const material of assets.materials) {
-          if (material instanceof PBRMaterial) material.albedoTexture = decoration.texture;
+          if (material instanceof PBRMaterial) {
+            material.albedoTexture = decoration.texture;
+            // Preserve the accessory MASK material's original alpha-source setting.
+            material.useAlphaFromAlbedoTexture = true;
+          }
         }
       }
       assets.addAllToScene();

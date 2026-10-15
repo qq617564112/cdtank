@@ -1,4 +1,6 @@
+import {accountPageScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import {GameMessage} from '../resources/game-message';
+import {playButtonSound} from '../../audio/button-sound';
 import './home-name-source-dialog.css';
 import {createPortal} from 'react-dom';
 import {useEffect, useRef, useState} from 'react';
@@ -18,19 +20,19 @@ export function HomeNameSourceDialog({ui, battle, close, saved}: {
   const owner = useRef({active: false, pending: false}), composing = useRef(false);
   const escapePending = useRef(false);
   const [draft, setDraft] = useState(''), [pending, setPending] = useState(true), [status, setStatus] = useState('');
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => accountPageScale());
   const layout = new HomeSourceLayout(ui, 'userinput_dialog.xml');
   useEffect(() => {
     const element = dialog.current!, origin = document.activeElement;
     const current = {active: true, pending: true};owner.current = current;
     element.showModal();
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
+    const resize = () => setScale(accountPageScale());
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     void battle.displayName().then(name => {if (current.active) {setDraft(name);setStatus('');}})
       .catch(error => {if (current.active) setStatus(error instanceof Error ? error.message : String(error));})
       .finally(() => {if(current.active){current.pending = false;setPending(false);requestAnimationFrame(()=>input.current?.focus());}});
     return () => {
-      current.active = false;window.removeEventListener('resize', resize);
+      current.active = false;unsubscribeViewport();
       if(element.open)element.close();
       if(origin instanceof HTMLElement&&origin.isConnected&&(document.activeElement===document.body||element.contains(document.activeElement)))origin.focus();
     };
@@ -62,7 +64,8 @@ export function HomeNameSourceDialog({ui, battle, close, saved}: {
           value={draft} onChange={event=>setDraft(event.currentTarget.value)}
           onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}}
           onKeyDown={event=>{if(event.key==='Enter'){
-            event.preventDefault();if(!composing.current&&!event.nativeEvent.isComposing&&event.keyCode!==229)void confirm();
+            event.preventDefault();
+            if(!pending&&!composing.current&&!event.nativeEvent.isComposing&&event.keyCode!==229){playButtonSound();void confirm();}
           }}}/>
         <SourceButton ui={ui} layout={layout} suffix="userinput_dialog.xml" source="btnOK" data-home-name-confirm=""
           aria-label="确认昵称" disabled={pending} onClick={()=>{void confirm();}}/>

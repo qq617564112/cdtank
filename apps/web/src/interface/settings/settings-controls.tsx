@@ -29,7 +29,7 @@ export function SettingsChoice({kind, checked = false, className = '', children,
 export function SettingsKeyField({style, className = '', active, ...props}:
   ComponentPropsWithoutRef<'input'> & {active: boolean}) {
   return <span className="settings-key-field" style={style} data-settings-capturing={active ? '' : undefined}>
-    <input {...props} readOnly type="text" className={`settings-key ${className}`}/>
+    <input {...props} readOnly type="text" data-button-sound="" className={`settings-key ${className}`}/>
   </span>;
 }
 
@@ -50,6 +50,7 @@ export function SettingsAdjustment({icon, label, min = 0, max = 1, step, value, 
   className = '', onKeyDown, ...props}: SettingsAdjustmentProps) {
   const text = valueText ?? `${Math.round(value * 100)}%`;
   return <label className="settings-adjustment">
+    <span className="settings-adjustment-label">{label}</span>
     <img className="settings-adjustment-icon" src={imageResourceUrl(icon)} alt="" aria-hidden="true" draggable={false}/>
     <input {...props} type="range" min={min} max={max} step={step ?? 'any'} value={value}
       className={`settings-volume ${className}`} aria-label={label}

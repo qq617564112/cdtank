@@ -1,3 +1,5 @@
+import {accountPageScale, MOBILE_ACCOUNT_PAGE, subscribeGamePageViewport} from '../../platform/page-viewport';
+import {isMobileDevice} from '../../platform/device';
 import {GameMessage, showGameMessage} from '../resources/game-message';
 import {loadCombatCatalog, preparedCombatCatalog} from '../../content';
 import {StackItemSaleSource, type StackSaleOwner} from './stack-item-sale-source';
@@ -67,7 +69,7 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
   const [partBusy, setPartBusy] = useState(false);
   const [mendBusy, setMendBusy] = useState(false);
   const [ui, setUi] = useState<HomeSourceUi | undefined>(() => cachedSourceUi());
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => accountPageScale());
   const [confirmed, setConfirmed] = useState<ResShop>();
   const [catalog, setCatalog] = useState<CombatCatalog | undefined>(preparedCombatCatalog);
   const [inventory, setInventory] = useState<ResInventory>();
@@ -108,10 +110,10 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     const element = dialog.current!;
     const previousFocus = document.activeElement;
     element.showModal();
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
+    const resize = () => setScale(accountPageScale());
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     return () => {
-      window.removeEventListener('resize', resize);
+      unsubscribeViewport();
       if (element.open) element.close();
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };
@@ -242,7 +244,8 @@ function ShopSession({close, source, owner, initialTextureInstance, onEquipmentP
     }
   }
 
-  return <GameDialog ref={dialog} id="account-shop" width={625} height={404} uiScale={scale} stageClassName="shop-dialog-stage"
+  return <GameDialog ref={dialog} id="account-shop" width={isMobileDevice() ? MOBILE_ACCOUNT_PAGE.width : 625}
+    height={isMobileDevice() ? MOBILE_ACCOUNT_PAGE.height : 404} uiScale={scale} stageClassName="shop-dialog-stage"
     aria-labelledby="account-shop-title" aria-busy={activePageBusy}
     data-purchased-instance={purchasedInstance === undefined ? undefined : String(purchasedInstance)}
     onCancel={event => {event.preventDefault(); requestClose();}}

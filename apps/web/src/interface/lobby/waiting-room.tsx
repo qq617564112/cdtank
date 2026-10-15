@@ -10,7 +10,7 @@ import {ImageArtwork} from '../resources/image-artwork';
 import {GameRoomActionButton} from '../resources/game-room-action-button';
 import {GameArtworkButton} from '../resources/game-artwork-button';
 import {sourceProps} from '../resources/source-ui-props';
-import {sourceUiImage} from '../resources/source-ui-image';
+import {sourceUiAsset} from '../resources/source-ui-image';
 import {cachedSourceUi, loadSourceUi} from '../resources/source-ui-resources';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import type {HomeSourceUi} from '../resources/source-ui-layout';
@@ -26,6 +26,8 @@ import type {MapOption} from '../../../../shared/protocols/PtlListMaps';
 import {useRouteDialog, useNavigationValue} from '../../navigation/route';
 import {WaitingRoomSlotActions} from './waiting-room-slot-actions';
 import {PlayerInfoView, type PlayerInfoViewProps} from './player-info';
+import {isMobileDevice} from '../../platform/device';
+import {accountPageScale, fullPageScale, gamePageBounds, subscribeGamePageViewport} from '../../platform/page-viewport';
 
 const READY_STAMPS = {
   left: new URL('../../assets/ui/ready-stamps/left.png', import.meta.url).href,
@@ -53,7 +55,7 @@ export interface WaitingRoomViewProps {
 }
 
 function sourceAsset(ui: HomeSourceUi, reference: string | undefined): string | undefined {
-  return sourceUiImage(ui, reference).asset;
+  return sourceUiAsset(ui, reference).asset;
 }
 
 
@@ -77,7 +79,7 @@ function SourceImage({ui, name, reference, text, ...props}: SourceImageProps) {
 }
 
 function waitingScale(formal = false): number {
-  if (formal) return Math.max(.25, Math.min(innerWidth / 800, innerHeight / 600));
+  if (formal) return isMobileDevice() ? accountPageScale() : fullPageScale();
   return Math.max(.25, Math.min((innerWidth - 64) / 615, (innerHeight - 180) / 391, 2));
 }
 
@@ -137,9 +139,9 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, q
 
   useEffect(() => {
     const resize = () => setScale(waitingScale(formal));
-    window.addEventListener('resize', resize);
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     return () => {
-      window.removeEventListener('resize', resize);
+      unsubscribeViewport();
       generation.current++;
     };
   }, []);
@@ -232,7 +234,7 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, q
   const statusState = loadError ? 'error' : !ui ? 'loading' : error ? 'error' : requesting ? 'pending'
     : invited ? 'confirmation' : 'normal';
   const statusText = loadError || (!ui ? '' : error || (requesting
-    ? '' : invited ? '邀请已发送给大厅玩家，30秒后可再次邀请'
+    ? (operation === 'addRobot' ? '正在新增机器人…' : '') : invited ? '邀请已发送给大厅玩家，30秒后可再次邀请'
     : `${snapshot.roomId} · 已准备 ${match?.readyPlayerIds.length ?? 0}/${snapshot.players.length}`));
   const status = <GameMessage text={!open || !available || statusState === 'normal' ? '' : statusText}
     tone={statusState === 'error' ? 'error' : statusState === 'confirmation' ? 'success' : 'pending'}
@@ -256,8 +258,12 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, q
       onKeyDown={isolateKeyboard} onKeyUp={isolateKeyboard}
       onMouseDown={event => event.stopPropagation()} onMouseUp={event => event.stopPropagation()}
       onClick={event => event.stopPropagation()} onWheel={event => event.stopPropagation()}>
-      <div className="waiting-room-viewport" style={{width: (formal ? 800 : 615) * scale, height: (formal ? 600 : 400) * scale}}>
-        <div data-waiting-room-stage="" className="waiting-room-stage" style={{transform: `scale(${scale})`}}>
+      <div className="waiting-room-viewport" style={formal && isMobileDevice() ? {
+        width: gamePageBounds().width, height: gamePageBounds().height,
+      } : {width: (formal ? 800 : 615) * scale, height: (formal ? 600 : 400) * scale}}>
+        <div data-waiting-room-stage="" className="waiting-room-stage" style={formal && isMobileDevice() ? {
+          left: (gamePageBounds().width - 615 * scale) / 2, transform: `scale(${scale})`,
+        } : {transform: `scale(${scale})`}}>
           {!ui && loadError && <WaitingRoomResourceFeedback error={loadError} pending={disabled}
             leave={() => {void request(() => actions.leave(), 'leave');}} />}
           {open && ui && match && available && <SourceImageScale value={scale}>
@@ -319,7 +325,7 @@ function WaitingRoomSession({formal = false, addRobot, roomEditor, kickPlayer, q
                     data-waiting-ready-side={side} role="img" aria-label={`${player.name}已准备`}
                     style={{left: readyCenterX - 92 / 2,
                       top: Number(portrait.top) + (Number(portrait.height) - 40) / 2, width: 92, height: 40}}/>}
-                  <WaitingRoomSlotActions ui={ui} layout={layout!} index={index} player={player} disabled={disabled}
+                  <WaitingRoomSlotActions key={player.id} ui={ui} layout={layout!} index={index} player={player} disabled={disabled}
                     pending={requesting}
                     canKick={!!kickPlayer && player.id !== playerId && readyAvailable} onFocus={controlProps.onFocus}
                     details={() => setDetailsId(player.id)} kick={() => {void request(() => kickPlayer!(player.id), 'kickPlayer');}}/>

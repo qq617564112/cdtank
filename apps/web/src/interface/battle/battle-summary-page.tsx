@@ -1,3 +1,5 @@
+import {gamePageBounds, subscribeGamePageViewport} from '../../platform/page-viewport';
+import {isMobileDevice} from '../../platform/device';
 import {GameMessage} from '../resources/game-message';
 import './battle-summary-page.css';
 import {useEffect, useRef, useState} from 'react';
@@ -15,6 +17,7 @@ import {sourceProps} from '../resources/source-ui-props';
 import {loadSourceUi} from '../resources/source-ui-resources';
 import {decodeImage} from '../../assets/image-resources';
 import {imageResourceUrl} from '../../assets/image-cache';
+import {MobileSummarySheet} from './mobile-summary-sheet';
 
 export interface BattleSummaryPageProps {
   results: readonly ResultPlayer[];
@@ -75,6 +78,7 @@ function SummaryGrowth({ui, layout, award, elapsed}: {
 
 /** Original two-team sheet consumes frozen result and committed account receipts. */
 export function BattleSummaryPage(props: BattleSummaryPageProps) {
+  const mobile = isMobileDevice();
   const stage = useRef<HTMLDivElement>(null);
   const audio = useSummaryAudio(props.soundVolume);
   const [resources, setUi] = useState<HomeSourceUi | undefined>(() => preparedSummaryUi);
@@ -87,11 +91,15 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
   const [portraitFrame, setPortraitFrame] = useState(1);
   const individual = props.mode > 3;
   const ranked = [...props.results].sort((a, b) => a.rank - b.rank);
-  const pageCount = individual ? Math.ceil(ranked.length / 12) : Math.max(...[0, 1].map(team => Math.ceil(ranked.filter(p => p.team === team).length / 6)), 1);
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [viewport, setViewport] = useState(gamePageBounds);
+  const rowsPerColumn = mobile ? Math.max(1, Math.min(6, Math.floor((viewport.height - 170) / 70))) : 6;
+  const pageCount = individual ? Math.max(1, Math.ceil(ranked.length / (rowsPerColumn * 2)))
+    : Math.max(...[0, 1].map(team => Math.ceil(ranked.filter(p => p.team === team).length / rowsPerColumn)), 1);
+  const currentPage = Math.min(page, pageCount - 1);
+  const scale = mobile ? 1 : Math.min(viewport.width / 800, viewport.height / 600);
   useEffect(() => {
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
+    const resize = () => setViewport(gamePageBounds());
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     let live = true;
     void Promise.all([loadSourceUi(),
       Promise.all(SUMMARY_IMAGES.map(name => decodeImage(`${SUMMARY_ART}/${name}`))),
@@ -103,7 +111,7 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
       preparedSummaryUi = resources;
       if (live) setUi(resources);
     }).catch(reason => {if (live) setError(String(reason));});
-    return () => {live = false; window.removeEventListener('resize', resize);};
+    return () => {live = false; unsubscribeViewport();};
   }, []);
   const layout = ui ? new HomeSourceLayout(ui, SUFFIX) : undefined;
   const own = props.results.find(player => player.id === props.playerId);
@@ -141,13 +149,38 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
   }, [fading, props.round]);
   const place = (source: string) => sourceProps(ui!, layout!, SUFFIX, source);
   const rowPlace = (source: string, row: string) => battleScoreRowProps(ui!, layout!, source, row);
+  const pagination = pageCount > 1 && <nav className="battle-summary-pagination" aria-label="结算名单分页">
+    <button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>上一页</button>
+    <span className="battle-pixel-number">{currentPage + 1}/{pageCount}</span>
+    <button type="button" disabled={currentPage + 1 >= pageCount} onClick={() => setPage(currentPage + 1)}>下一页</button>
+  </nav>;
+  const continueButton = ui ? <SummaryContinueButton {...place('btnClose')} disabled={props.pending || !props.hasLocalPlayer}
+    aria-label="继续，返回原房间" data-summary-continue="" onClick={props.returnToRoom}/>
+    : <button type="button" className="battle-summary-loading-continue"
+      disabled={props.pending || !props.hasLocalPlayer} onClick={props.returnToRoom}>继续，返回原房间</button>;
   return <section className="battle-summary-viewport" aria-label="对局结算"
     onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}>
-    <div ref={stage} className="battle-summary-stage battle-score-sheet-stage" style={{zoom: scale}}
+    <div ref={stage} className="battle-summary-stage battle-score-sheet-stage"
+      style={mobile ? {width: viewport.width, height: viewport.height} : {zoom: scale}}
       data-battle-summary-page="" data-summary-round={props.round}
       data-summary-stage={fadedRound === props.round ? 'done' : sequence.stage} aria-busy={!ui}>
       {ui && <>
-        <BattleScoreSheet key={props.round} ui={ui} layout={layout!} columns={SUMMARY_SCORE_COLUMNS}
+        {mobile ? <MobileSummarySheet key={props.round} ui={ui} layout={layout!} results={ranked}
+          playerId={props.playerId} mode={props.mode} title={props.title} size={viewport}
+          rowsPerColumn={rowsPerColumn} page={currentPage} portraitFrame={portraitFrame}
+          sequence={sequence} revealedAwards={revealedAwards} currentAward={currentAward?.type}
+          footer={<>
+            <div className="mobile-summary-growth">
+              {award && <>
+                <span className="mobile-summary-growth-caption">经验 · 积分 {award.rankPoints}</span>
+                <SummaryPlate kind="medallion" style={{left: 4, top: 18, width: 40, height: 36}}/>
+                <SummaryGrowth ui={ui} layout={layout!} award={award} elapsed={sequence.growthElapsed}/>
+              </>}
+            </div>
+            {pagination}
+            {continueButton}
+          </>}/>
+          : <BattleScoreSheet key={props.round} ui={ui} layout={layout!} columns={SUMMARY_SCORE_COLUMNS}
           individual={individual} headers={{metric: summaryMetricHeading(props.mode), last: '得奖'}}
           footer={<>
             <SummaryPlate kind="medallion" style={place('jiejitubiaoditu').style}/>
@@ -155,7 +188,7 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
           </>}>
           {sequence.outcomeVisible && <SummaryOutcome key={`${props.round}:outcome`} ui={ui} layout={layout!} outcome={own?.outcome} />}
           {(['Cat', 'Dog'] as const).flatMap((teamName, team) => {
-            const players = individual ? ranked.slice(page * 12 + team * 6, page * 12 + team * 6 + 6) : ranked.filter(player => player.team === team).slice(page * 6, page * 6 + 6);
+            const players = individual ? ranked.slice(currentPage * 12 + team * 6, currentPage * 12 + team * 6 + 6) : ranked.filter(player => player.team === team).slice(currentPage * 6, currentPage * 6 + 6);
             return Array.from({length: 6}, (_, row) => {
               const name = `${teamName}Player${row}`, player = players[row];
               const rowAwards = SUMMARY_AWARDS.filter(award => revealedAwards.has(award.type)
@@ -189,28 +222,22 @@ export function BattleSummaryPage(props: BattleSummaryPageProps) {
               </BattleScorePlayerRow>;
             });
           })}
-        </BattleScoreSheet>
+        </BattleScoreSheet>}
         {currentAward && <SummaryCeremony key={currentAward.type} ui={ui} layout={layout!}
           type={currentAward.type} players={props.results} />}
         {award && (sequence.stage === 'rewards' || sequence.stage === 'notices') && fadedRound !== props.round
           && <div className={`battle-summary-reward-layer${fading ? ' battle-summary-reward-fade' : ''}`}>
             <BattleSummaryAwardPage ui={ui} award={award} />
           </div>}
-        <SummaryContinueButton {...place('btnClose')} disabled={props.pending || !props.hasLocalPlayer}
-          aria-label="继续，返回原房间" data-summary-continue="" onClick={props.returnToRoom}/>
+        {!mobile && continueButton}
       </>}
-      <h1 className={`battle-summary-title${own ? ' battle-summary-accessible' : ''}`}>{props.title}</h1>
-      {individual && <span className="battle-summary-individual">个人排名</span>}
-      {pageCount > 1 && <nav className="battle-summary-pagination" aria-label="结算名单分页">
-        <button type="button" disabled={page === 0} onClick={() => setPage(page - 1)}>上一页</button>
-        <span className="battle-pixel-number">{page + 1}/{pageCount}</span>
-        <button type="button" disabled={page + 1 >= pageCount} onClick={() => setPage(page + 1)}>下一页</button>
-      </nav>}
+      {(!mobile || !ui) && <h1 className={`battle-summary-title${own ? ' battle-summary-accessible' : ''}`}>{props.title}</h1>}
+      {!mobile && individual && <span className="battle-summary-individual">个人排名</span>}
+      {!mobile && pagination}
       <p className="battle-summary-objective battle-summary-accessible">{props.objective}</p>
       <GameMessage text={error || audio.error || props.status}
         tone={error || audio.error ? 'error' : props.pending ? 'pending' : 'info'}/>
-      {!ui && <button type="button" className="battle-summary-loading-continue"
-        disabled={props.pending || !props.hasLocalPlayer} onClick={props.returnToRoom}>继续，返回原房间</button>}
+      {!ui && continueButton}
     </div>
     {ui && currentTitle && <BattleSummaryTitlePage key={`${props.round}:${titleIndex}`} ui={ui}
         title={currentTitle} scale={scale} close={() => setTitleIndex(index => index + 1)}

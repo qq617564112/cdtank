@@ -1,0 +1,551 @@
+@import '../resources/happy-zcool.css';
+
+#mobile-battle-hud {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  overflow: hidden;
+  color: #fff8da;
+  font-family: 'HappyZcool-2016', sans-serif;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-text-stroke: 1px #25332b;
+  paint-order: stroke fill;
+}
+
+.mobile-battle-active #world {
+  touch-action: none;
+}
+
+.mobile-battle-joystick-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+
+.mobile-battle-joystick-zone-movement {
+  left: 0;
+}
+
+.mobile-battle-joystick-zone-turret {
+  right: 0;
+}
+
+.mobile-battle-sized {
+  position: absolute;
+  zoom: var(--mobile-scale);
+}
+
+#mobile-battle-hud button {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#mobile-battle-hud button:focus-visible {
+  outline: 2px solid #fff1a2 !important;
+  outline-offset: 3px;
+}
+
+#mobile-battle-hud .mobile-battle-joystick-zone:disabled {
+  pointer-events: none;
+}
+
+.mobile-battle-player {
+  left: 16px;
+  top: 12px;
+  width: 252px;
+  height: 108px;
+}
+
+.mobile-battle-portrait {
+  position: absolute;
+  z-index: 2;
+  width: 76px;
+  height: 76px;
+}
+
+.mobile-battle-portrait-image {
+  position: absolute;
+  inset: 8%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #fff4d6;
+}
+
+.mobile-battle-portrait-image > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-battle-portrait-frame {
+  position: absolute;
+  inset: 0;
+}
+
+.mobile-battle-health {
+  position: absolute;
+  left: 64px;
+  top: 22px;
+  width: 164px;
+  height: 32px;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 2px solid #253c28;
+  border-radius: 6px 24px 24px 6px;
+  background: #24432d;
+  box-shadow: 0 2px 0 #182c22, inset 0 2px 2px #162c24;
+}
+
+.mobile-battle-health-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(#b4ee77 0 8%, #70d831 15%, #59c921 62%, #39a91d 88%, #76dd3a);
+  box-shadow: inset 0 1px 0 #f1ffd0, inset 0 -3px 0 rgb(35 97 22 / 30%);
+  transition: width 120ms linear;
+}
+
+.mobile-battle-health[data-health-band='medium'] .mobile-battle-health-fill {
+  background: linear-gradient(#fffba1, #f4d335 20%, #d4ac1d 88%, #f0d25a);
+}
+
+.mobile-battle-health[data-health-band='low'] .mobile-battle-health-fill {
+  background: linear-gradient(#ffbd98, #f46745 20%, #cd342c 88%, #e36844);
+}
+
+.mobile-battle-health-value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.mobile-battle-magazine {
+  position: absolute;
+  left: 72px;
+  top: 65px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgb(19 38 33 / 42%);
+  font-size: 18px;
+}
+
+.mobile-battle-shells {
+  display: flex;
+  gap: 2px;
+}
+
+.mobile-battle-shells i {
+  display: block;
+  width: 5px;
+  height: 17px;
+  box-sizing: border-box;
+  border: 1px solid #eff3d7;
+  border-radius: 50% 50% 1px 1px;
+  background: #dbe8e1;
+}
+
+.mobile-battle-shells i[data-filled] {
+  border-color: #431f17;
+  background: linear-gradient(90deg, #9e251d, #ffead3 35%, #ed4e36 65%, #b32116);
+}
+
+.mobile-battle-statuses {
+  position: absolute;
+  left: 72px;
+  top: 96px;
+  display: flex;
+  gap: 4px;
+}
+
+.mobile-battle-statuses > span {
+  width: 24px;
+  height: 24px;
+}
+
+.mobile-battle-score {
+  left: 50%;
+  top: 8px;
+  width: 336px;
+  height: 60px;
+  transform: translateX(-50%);
+}
+
+.mobile-battle-score-plank {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-battle-score-line {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr);
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 16px 4px;
+}
+
+.mobile-battle-score-line[data-individual] {
+  grid-template-columns: 104px minmax(0, 1fr);
+  column-gap: 8px;
+}
+
+.mobile-battle-team-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.mobile-battle-team-score[data-side='self'] {
+  color: #b5eaff;
+}
+
+.mobile-battle-team-score[data-side='enemy'] {
+  color: #ffc0aa;
+}
+
+.mobile-battle-team-score > [data-image-artwork] {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.mobile-battle-team-score strong {
+  font-size: 30px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  -webkit-text-stroke: 2px #352d1a;
+}
+
+.mobile-battle-individual-score {
+  font-size: 20px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mobile-battle-timer {
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+  -webkit-text-stroke: 1.5px #352d1a;
+}
+
+.mobile-battle-timer[data-urgency='critical'] {
+  color: #ff9180;
+}
+
+.mobile-battle-minimap {
+  right: 14px;
+  top: 10px;
+  width: 144px;
+  height: 144px;
+}
+
+.mobile-battle-scoreboard {
+  right: 174px;
+  top: 18px;
+  width: 48px;
+  height: 48px;
+}
+
+.mobile-battle-chat-button {
+  left: 18px;
+  top: 110px;
+  width: 40px;
+  height: 40px;
+}
+
+.mobile-battle-art-button > [data-image-artwork] {
+  width: 100%;
+  height: 100%;
+  transition: transform 80ms ease-out, filter 80ms ease-out;
+}
+
+.mobile-battle-art-button:active > span,
+.mobile-battle-art-button[data-pressed] > span {
+  transform: scale(.92);
+  filter: brightness(.9);
+}
+
+.mobile-battle-controls {
+  inset: auto 16px 12px;
+  height: 124px;
+}
+
+.mobile-battle-stick,
+.mobile-battle-fire,
+.mobile-battle-item-bank {
+  opacity: .5;
+  transition: opacity 100ms ease-out;
+}
+
+.mobile-battle-stick[data-pressed],
+.mobile-battle-fire[data-pressed],
+.mobile-battle-item-bank:has(.mobile-battle-item[data-pressed]) {
+  opacity: 1;
+}
+
+.mobile-battle-stick {
+  position: absolute;
+  width: 144px;
+  height: 144px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(var(--mobile-scale));
+  pointer-events: none;
+}
+
+.mobile-battle-stick-base {
+  position: absolute;
+  inset: 0;
+}
+
+.mobile-battle-stick-thumb {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  transform: translate(-50%, -50%);
+}
+
+.mobile-battle-fire {
+  position: absolute;
+  right: 0;
+  bottom: 8px;
+  width: 115.2px;
+  height: 115.2px;
+  border-radius: 50%;
+}
+
+.mobile-battle-fire:disabled {
+  opacity: .42;
+}
+
+.mobile-battle-item-bank {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  box-sizing: border-box;
+  width: min(442px, 100%);
+  height: 64px;
+  padding: 6px;
+  border: 2px solid #3e5a3b;
+  border-radius: 12px;
+  background: linear-gradient(#7d9b61, #42674c 20%, #355441 90%);
+  box-shadow: inset 0 1px 2px #d0e7a0, 0 2px 2px rgb(18 39 30 / 50%);
+  transform: translateX(-50%);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mobile-battle-item-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  height: 100%;
+}
+
+.mobile-battle-item {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 2px #80995f, inset 0 0 0 4px #456744;
+  background: rgb(24 49 42 / 60%) !important;
+}
+
+.mobile-battle-item[data-item-selected] {
+  box-shadow: inset 0 0 0 2px #fff064;
+  background: linear-gradient(135deg, rgb(255 237 106 / 85%), rgb(211 162 29 / 70%)) !important;
+}
+
+.mobile-battle-item-icon {
+  position: absolute;
+  inset: 4px;
+}
+
+.mobile-battle-item:disabled .mobile-battle-item-icon {
+  opacity: .45;
+}
+
+.mobile-battle-item-number,
+.mobile-battle-item-quantity,
+.mobile-battle-item-remaining {
+  position: absolute;
+  z-index: 2;
+  font-size: 15px;
+  line-height: 18px;
+  -webkit-text-stroke: 1.5px #162822;
+  paint-order: stroke fill;
+}
+
+.mobile-battle-item-number {
+  left: 3px;
+  top: 1px;
+  font-size: 11px;
+  color: #d4e5c5;
+}
+
+.mobile-battle-item-quantity {
+  right: 3px;
+  bottom: 1px;
+}
+
+.mobile-battle-item-remaining {
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.mobile-battle-item-cooldown {
+  position: absolute;
+  inset: 0;
+  background: rgb(12 29 25 / 62%);
+}
+
+.mobile-battle-crosshair {
+  left: 50%;
+  top: 50%;
+  width: 36px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+}
+
+.mobile-battle-crosshair .battle-crosshair {
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-battle-notice {
+  left: 50%;
+  bottom: 84px;
+  max-width: 70%;
+  overflow: hidden;
+  transform: translateX(-50%);
+  font-size: 16px;
+  line-height: 24px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  animation: mobile-battle-notice 3s ease forwards;
+  -webkit-text-stroke: 1.5px #213731;
+}
+
+.mobile-battle-notice [data-image-artwork] {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+@keyframes mobile-battle-notice {
+  0% {opacity: 0;}
+  5%, 75% {opacity: 1;}
+  100% {opacity: 0;}
+}
+
+.mobile-battle-respawn {
+  left: 50%;
+  top: 130px;
+  margin: 0;
+  transform: translateX(-50%);
+  font-size: 20px;
+}
+
+.mobile-battle-spectator {
+  left: 50%;
+  bottom: 124px;
+  width: 296px;
+  height: 76px;
+  transform: translateX(-50%);
+}
+
+.mobile-battle-spectator .hud-spectator {
+  bottom: 0;
+}
+
+.mobile-battle-intro {
+  position: absolute;
+  inset: 0;
+}
+
+.mobile-battle-intro .hud-mode-intro {
+  inset: auto;
+  left: 50%;
+  top: 40%;
+  width: 800px;
+  height: 350px;
+  transform: translate(-50%, -50%) scale(var(--mobile-scale));
+}
+
+.mobile-battle-fight {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  font-size: 54px;
+  color: #ffe459;
+  -webkit-text-stroke: 3px #352b18;
+}
+
+@media (orientation: portrait) {
+  .mobile-battle-score {
+    top: 164px;
+  }
+
+  .mobile-battle-scoreboard {
+    right: 174px;
+    top: 82px;
+  }
+
+  .mobile-battle-fire {
+    bottom: 116px;
+  }
+
+  .mobile-battle-respawn {
+    top: 264px;
+    width: max-content;
+  }
+
+  .mobile-battle-spectator {
+    bottom: 170px;
+  }
+
+  .mobile-battle-notice {
+    max-width: 92%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-battle-health-fill,
+  .mobile-battle-stick,
+  .mobile-battle-fire,
+  .mobile-battle-item-bank {
+    transition: none;
+  }
+
+  .mobile-battle-notice {
+    animation-timing-function: step-end;
+  }
+}

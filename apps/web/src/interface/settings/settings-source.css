@@ -196,6 +196,10 @@
   min-width: 0;
 }
 
+.settings-adjustment-label {
+  display: none;
+}
+
 .settings-adjustment-icon {
   position: absolute;
   left: 0;

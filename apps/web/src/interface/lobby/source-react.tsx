@@ -2,6 +2,7 @@ import {useCallback, useEffect, useRef, useState, type ComponentPropsWithoutRef}
 import type {HomeSourceLayout, HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {preparedSourceUi, prepareSourceUi} from '../resources/source-ui-resources';
+import {gamePageBounds, subscribeGamePageViewport} from '../../platform/page-viewport';
 
 export {sourceProps} from '../resources/source-ui-props';
 
@@ -52,12 +53,15 @@ export function useSourceDialog(open: boolean) {
 }
 
 export function useSourceScale(width: number, height: number, marginX: number, marginY: number, min: number, max: number) {
-  const calculate = () => Math.max(min, Math.min((innerWidth - marginX) / width, (innerHeight - marginY) / height, max));
+  const calculate = () => {
+    const bounds = gamePageBounds();
+    return Math.min(bounds.width / width, bounds.height / height,
+      Math.max(min, Math.min((bounds.width - marginX) / width, (bounds.height - marginY) / height, max)));
+  };
   const [scale, setScale] = useState(calculate);
   useEffect(() => {
     const resize = () => setScale(calculate());
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    return subscribeGamePageViewport(resize);
   }, [width, height, marginX, marginY, min, max]);
   return {viewport: {width: width * scale, height: height * scale}, stage: {transform: `scale(${scale})`}};
 }

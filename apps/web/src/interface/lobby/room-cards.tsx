@@ -14,6 +14,7 @@ import {GameRoomCard, type GameRoomCardAnimal} from '../resources/game-room-card
 import {RoomCardFactionPortrait, RoomCardModeBadge, roomCardModeName} from './room-card-artwork';
 import {sourceProps, useSourceDialog, useSourceScale, useSourceUi} from './source-react';
 import {LOBBY_MAIN_BOUNDS, LOBBY_ROOM_FOOTBAR} from './lobby-source-geometry';
+import {isMobileDevice} from '../../platform/device';
 
 interface RoomCardsProps {
   embedded?: boolean;
@@ -100,10 +101,13 @@ function RoomCard({room, index, ui, selected, busy, select, activate}: {
   };
   return <div className="room-card-slot" data-source-control={`picRoomIcon${index}`}>
     <GameRoomCard animal={index % 2 === 0 ? 'cat' : 'dog'} className="room-source-card"
-      data-room-card-id={room.id} aria-pressed={selected}
+      data-room-card-id={room.id} data-touch-double-click={isMobileDevice() ? undefined : ''} aria-pressed={selected}
       aria-label={`${roomName} ${modeName}模式 ${mapName} ${room.playerCount}/${room.maxPlayers} ${room.phase}${room.hasPassword ? ' 密码房' : ''}`}
       title={`${roomName} · ${modeName}模式 · ${mapName} · ${room.playerCount}/${room.maxPlayers}${status ? ` · ${status}` : ''}`}
-      disabled={busy || !canJoinRoom(room)} onClick={() => select(room.id)} onDoubleClick={() => activate(room.id)}>
+      disabled={busy || !canJoinRoom(room)} onClick={() => {
+        select(room.id);
+        if (isMobileDevice()) activate(room.id);
+      }} onDoubleClick={() => {if (!isMobileDevice()) activate(room.id);}}>
       <span className="room-card-content">
         <span className="room-card-heading">
           {room.hasPassword && <SourceStaticImage ui={ui} layout={layout} suffix="roomlist_icon.xml" name="picLock"

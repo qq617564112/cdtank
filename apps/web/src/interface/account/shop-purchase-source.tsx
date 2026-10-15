@@ -1,3 +1,6 @@
+import {accountPageScale, subscribeGamePageViewport} from '../../platform/page-viewport';
+import {isMobileDevice} from '../../platform/device';
+import {playButtonSound} from '../../audio/button-sound';
 import {useEffect, useId, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {ShopCurrency} from '../../../../shared/protocols/PtlShop';
@@ -8,7 +11,7 @@ import {sourceProps} from '../resources/source-ui-props';
 import './shop-purchase-source.css';
 
 const suffix = 'userinput_dialog.xml';
-const viewportScale = () => Math.min(innerWidth / 800, innerHeight / 600);
+const viewportScale = () => accountPageScale();
 
 /** Shop decisions use an SVG frame around native input and payment controls. */
 export function ShopPurchaseSource({ui, name, moneyPrice, tokenPrice, moneyAvailable = true, quantity, changeQuantity,
@@ -22,6 +25,8 @@ export function ShopPurchaseSource({ui, name, moneyPrice, tokenPrice, moneyAvail
   const messageId = useId();
   const [step, setStep] = useState<'Quantity' | 'Payment'>(quantity === undefined ? 'Payment' : 'Quantity');
   const [scale, setScale] = useState(viewportScale);
+  const mobile = isMobileDevice();
+  const width = mobile ? 480 : 307, height = mobile ? 240 : 120;
   const layout = new HomeSourceLayout(ui, suffix);
   const count = quantity === undefined ? 1 : Number(quantity);
   const validQuantity = Number.isInteger(count) && count >= 1 && count <= 10;
@@ -45,8 +50,7 @@ export function ShopPurchaseSource({ui, name, moneyPrice, tokenPrice, moneyAvail
   }, [step]);
   useEffect(() => {
     const resize = () => setScale(viewportScale());
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    return subscribeGamePageViewport(resize);
   }, []);
   function accept() {
     if (pending || disabled) return;
@@ -58,17 +62,18 @@ export function ShopPurchaseSource({ui, name, moneyPrice, tokenPrice, moneyAvail
   const input = sourceProps(ui, layout, suffix, 'edtInput');
   return createPortal(<dialog ref={dialog} className="game-confirm-dialog shop-purchase-dialog" data-shop-purchase-confirm=""
     data-shop-purchase-step={step} aria-label={`购买${name}`} aria-describedby={messageId} aria-busy={pending}
-    style={{width: 307 * scale, height: 120 * scale}}
+    style={{width: width * scale, height: height * scale}}
     onCancel={event => {event.preventDefault(); event.stopPropagation(); if (!pending) cancel();}}
     onKeyDown={event => {
       event.stopPropagation();
       if (event.key === 'Enter' && !event.nativeEvent.isComposing
           && (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) {
-        event.preventDefault(); accept();
+        event.preventDefault();
+        if (!pending && !disabled) {playButtonSound(); accept();}
       }
     }} onKeyUp={event => event.stopPropagation()}>
     <div className="shop-purchase-stage" style={{transform: `scale(${scale})`}}>
-      <GameConfirmFrame width={307} height={120} headerHeight={42}/>
+      <GameConfirmFrame width={width} height={height} headerHeight={mobile ? 100 : 42}/>
       <div {...text} id={messageId} style={{...text.style, top: 6, height: 30}}
         role={status ? 'alert' : 'document'}>{message}</div>
       <div {...field} className="shop-purchase-field">

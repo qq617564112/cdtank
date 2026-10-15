@@ -6,9 +6,11 @@ import {GameCard} from '../resources/game-card';
 import {GameInsetCard} from '../resources/game-inset-card';
 import {GameSelectionHighlight} from '../resources/game-selection-highlight';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
+import {playButtonSound} from '../../audio/button-sound';
 import {sourceProps, useSourceUi} from '../lobby/source-react';
 import {SourceEntrySheet} from './source-entry-sheet';
 import './channel-source.css';
+import {isMobileDevice} from '../../platform/device';
 
 export interface SourceChannel {
   id: string;
@@ -73,7 +75,7 @@ export function ChannelSourceView(props: ChannelSourceViewProps) {
         style={{...place('lstLobbyServer').style, top: 136, width: 680, height: 367}}
         role="listbox" aria-label="大厅" aria-busy={props.busy}>
         {props.channels.map((channel, index) => <button key={channel.id} type="button" role="option"
-          data-channel-id={channel.id} aria-selected={props.selectedId === channel.id}
+          data-channel-id={channel.id} data-touch-double-click="" aria-selected={props.selectedId === channel.id}
           tabIndex={channel.id === focusId ? 0 : -1}
           title={`${channel.name} · ${channel.levelLabel} · ${channel.available ? '可进入' : '不可进入'} · Ping ${pingLabel}`}
           disabled={props.busy || !channel.available} onClick={() => props.onSelect(channel.id)}
@@ -87,6 +89,7 @@ export function ChannelSourceView(props: ChannelSourceViewProps) {
             if (next !== undefined) {event.preventDefault(); focusChannel(next);}
             if (event.key === 'Enter') {
               event.preventDefault();
+              playButtonSound();
               if (props.selectedId === channel.id) props.onEnter();
               else props.onSelect(channel.id);
             }
@@ -99,6 +102,8 @@ export function ChannelSourceView(props: ChannelSourceViewProps) {
       </div>
       <DialogButton kind="back" className="channel-back" aria-label="回上页，返回登录"
         disabled={props.busy} onClick={props.onBack}>回上页</DialogButton>
+      {isMobileDevice() && <DialogButton className="channel-enter" aria-label="进入所选大厅"
+        disabled={props.busy || !selected?.available} onClick={props.onEnter}>进入大厅</DialogButton>}
     </>}
   </SourceEntrySheet>;
 }

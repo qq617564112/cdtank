@@ -1,10 +1,13 @@
 import {GameMessage} from '../resources/game-message';
-import {useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
+import {isMobileDevice} from '../../platform/device';
+import {accountPageScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import {SourceButton} from '../resources/source-button';
 import {SourceImageScale, SourceStaticImage} from '../resources/source-static-image';
 import {SourceStaticText} from '../resources/source-static-text';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
 import {sourceProps, useSourceDialog, useSourceScale, useSourceUi} from './source-react';
+import {HomeStaticText} from '../home/home-text';
 import {useRoomInputLimit} from './room-input-limit';
 import {ROOM_PASSWORD_MAX_CODEPOINTS} from '../../../../shared/room-input';
 
@@ -15,6 +18,15 @@ export function RoomPasswordDialog({roomId, close, submit}: {
   const {ui, error} = useSourceUi(true, ['userinput_dialog.xml']);
   const layout = ui ? new HomeSourceLayout(ui, 'userinput_dialog.xml') : undefined;
   const dialog = useSourceDialog(true), scale = useSourceScale(307, 120, 48, 80, .25, 2);
+  const mobile = isMobileDevice();
+  const [mobileScale, setMobileScale] = useState(accountPageScale);
+  useEffect(() => {
+    const resize = () => setMobileScale(accountPageScale());
+    return subscribeGamePageViewport(resize);
+  }, []);
+  const sheet = mobile ? {viewport: {width: 480 * mobileScale, height: 240 * mobileScale},
+    stage: {transform: `scale(${mobileScale})`}} : scale;
+  const Message = mobile ? HomeStaticText : SourceStaticText;
   const input = useRef<HTMLInputElement>(null);
   const composing = useRef(false);
   const escapePending = useRef(false);
@@ -42,11 +54,11 @@ export function RoomPasswordDialog({roomId, close, submit}: {
       if (!pending && !composing.current && !event.nativeEvent.isComposing) close();
     }
   }}>
-    <div style={scale.viewport}><div className="room-password-stage" style={scale.stage}>
-      {ui && layout && <SourceImageScale value={scale.viewport.width / 307}>
+    <div style={sheet.viewport}><div className="room-password-stage" style={sheet.stage}>
+      {ui && layout && <SourceImageScale value={mobile ? mobileScale : scale.viewport.width / 307}>
         {['shangkuang', 'shufukuangditu', 'xiakuang'].map(name => <SourceStaticImage key={name}
           ui={ui} layout={layout} suffix="userinput_dialog.xml" name={name}/>) }
-        <SourceStaticText ui={ui} layout={layout} suffix="userinput_dialog.xml" name="txtMessage" text={`${roomId} 房间密码`}/>
+        <Message ui={ui} layout={layout} suffix="userinput_dialog.xml" name="txtMessage" text={`${roomId} 房间密码`}/>
         <form onSubmit={event => {event.preventDefault(); if (!composing.current) void confirm();}}>
           <input ref={input} {...sourceProps(ui, layout, 'userinput_dialog.xml', 'edtInput')}
             data-room-password-input="" type="password" autoComplete="off" autoFocus disabled={pending}

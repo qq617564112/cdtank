@@ -1,10 +1,11 @@
 import {DialogButton} from '../resources/dialog-button';
 import {GameMessage} from '../resources/game-message';
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useRef} from 'react';
 import {SourceImageScale} from '../resources/source-static-image';
 import {loadUiFont} from '../resources/source-ui-fonts';
 import {useSourceUi} from '../lobby/source-react';
 import {HistoryIntroSourcePage} from './history-intro-source-page';
+import {usePageLayout} from '../resources/use-page-layout';
 import './history-intro-source-view.css';
 
 export function HistoryIntroSourceView({open, close}: {open: boolean; close: () => void}) {
@@ -16,8 +17,7 @@ function HistoryIntroSession({close}: {close: () => void}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
   const {ui, error} = useSourceUi(true, ['history.xml']);
-  const calculate = () => Math.min(innerWidth / 800, innerHeight / 600);
-  const [scale, setScale] = useState(calculate);
+  const {viewport, scale} = usePageLayout();
   useLayoutEffect(() => {
     const element = dialog.current!;
     const origin = document.activeElement;
@@ -29,16 +29,13 @@ function HistoryIntroSession({close}: {close: () => void}) {
     };
   }, []);
   useEffect(() => {
-    const resize = () => setScale(calculate());
-    window.addEventListener('resize', resize);
     void loadUiFont().catch(() => {});
-    return () => window.removeEventListener('resize', resize);
   }, []);
   useLayoutEffect(() => {
     if (ui) dialog.current?.querySelector<HTMLButtonElement>('[data-history-intro-tab]')?.focus();
   }, [ui]);
   return <dialog ref={dialog} data-history-intro-dialog="" aria-label="阿猫阿狗介绍"
-    style={{width: 800 * scale, height: 600 * scale}}
+    style={viewport}
     onCancel={event => {event.preventDefault(); close();}}
     onKeyDown={event => {
       event.stopPropagation();

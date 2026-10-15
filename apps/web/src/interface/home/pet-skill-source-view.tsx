@@ -1,3 +1,5 @@
+import {accountPageScale, sourceDialogScale, subscribeGamePageViewport} from '../../platform/page-viewport';
+import {isMobileDevice} from '../../platform/device';
 import {GameMessage} from '../resources/game-message';
 import type {PetLearningQuote} from '../../../../shared/contracts/pet-learning';
 import './pet-skill-source.css';
@@ -12,7 +14,7 @@ import {HomeStaticText as SourceStaticText} from './home-text';
 import {sourceProps} from '../resources/source-ui-props';
 
 const suffix = 'myhome_petpage_skill.xml';
-const viewportScale = () => Math.min(innerWidth / 800, innerHeight / 600);
+const viewportScale = () => isMobileDevice() ? accountPageScale() : sourceDialogScale(800, 599);
 
 /** Source skill sheet reads confirmed ownership and exact skill-table metadata. */
 export function PetSkillSourceView({ui, skill, level, close, quote, nextSkill, busy = false, status, learn, binding = 'web-confirmed-owned-skill'}: {
@@ -22,6 +24,7 @@ export function PetSkillSourceView({ui, skill, level, close, quote, nextSkill, b
   const dialog = useRef<HTMLDialogElement>(null);
   const escapePending = useRef(false);
   const [scale, setScale] = useState(viewportScale);
+  const mobile = isMobileDevice();
   const layout = new HomeSourceLayout(ui, suffix);
   useLayoutEffect(() => {
     const element = dialog.current!;
@@ -36,13 +39,12 @@ export function PetSkillSourceView({ui, skill, level, close, quote, nextSkill, b
   }, []);
   useEffect(() => {
     const resize = () => setScale(viewportScale());
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    return subscribeGamePageViewport(resize);
   }, []);
   return createPortal(<dialog ref={dialog} data-pet-skill-dialog="" data-skill-id={skill.skillId}
     data-skill-binding={binding} aria-busy={busy} data-pet-skill-instance={quote?.instanceId}
     data-pet-skill-slot={quote?.slot} data-pet-skill-rank-cap={quote?.rankCap} data-pet-skill-quote={quote?.kind} aria-label={`宠物技能：${skill.name}`}
-    style={{width: 800 * scale, height: 599 * scale}}
+    style={{width: (mobile ? 320 : 800) * scale, height: (mobile ? 405 : 599) * scale}}
     onCancel={event => {event.preventDefault(); close();}}
     onKeyDown={event => {
       event.stopPropagation();
@@ -60,6 +62,7 @@ export function PetSkillSourceView({ui, skill, level, close, quote, nextSkill, b
       }
     }}>
     <div className="pet-skill-source-stage" style={{transform: `scale(${scale})`}}>
+      <div className="compact-source-dialog-art">
       <SourceImageScale value={scale}>
         {['all', 'kuang', 'tiao', 'huofeijinengdian', 'jinengtubiao'].map(name =>
           <SourceStaticImage key={name} ui={ui} layout={layout} suffix={suffix} name={name}
@@ -79,6 +82,7 @@ export function PetSkillSourceView({ui, skill, level, close, quote, nextSkill, b
         <SourceButton ui={ui} layout={layout} suffix={suffix} source="btnClose" data-pet-skill-close=""
           aria-label="关闭技能介绍" onClick={close} />
       </SourceImageScale>
+      </div>
       <GameMessage data-pet-skill-status="" text={status || (quote?.kind === 'rankLimit' ? '技能等级已达上限' : quote?.kind === 'insufficientPoints' ? '技能点不足' : '')}
         tone={busy ? 'pending' : 'info'}/>
     </div>

@@ -6,11 +6,13 @@ import {createSceneRuntime} from './render/scene-runtime';
 import {initializeSettings} from './interface/settings/settings-startup';
 import {applyDisplayPreferences, readDisplayPreferences} from './interface/settings/display-preferences';
 import {prepareBattleArtwork} from './assets/battle-artwork';
+import {isMobileDevice} from './platform/device';
+import type {ImageLoadingScreen} from './interface/resources/image-loading-screen';
 
 /** Create the scene and page only after startup images are ready. */
 export async function startGame(canvas: HTMLCanvasElement, root: Root, signal: AbortSignal,
-  onReady: () => void): Promise<() => void> {
-  const display = readDisplayPreferences({getItem: key => window.localStorage.getItem(key)});
+  onReady: () => void, loadingScreen: ImageLoadingScreen): Promise<() => void> {
+  const display = readDisplayPreferences({getItem: key => window.localStorage.getItem(key)}, isMobileDevice());
   applyDisplayPreferences(display.preferences);
   const runtime = await createSceneRuntime(canvas);
   if (signal.aborted) {runtime.dispose(); signal.throwIfAborted();}
@@ -28,6 +30,7 @@ export async function startGame(canvas: HTMLCanvasElement, root: Root, signal: A
   if (location.pathname !== '/validation.html') battle.startPageMusic();
   const settings = initializeSettings(battle, display);
   onReady();
-  root.render(createElement(App, {battle, canvas, hud, settings, validation: location.pathname === '/validation.html'}));
+  loadingScreen.showGame(createElement(App, {battle, canvas, hud, settings, loadingScreen,
+    validation: location.pathname === '/validation.html'}));
   return () => {battle.leave(true, true); root.unmount(); runtime.dispose();};
 }

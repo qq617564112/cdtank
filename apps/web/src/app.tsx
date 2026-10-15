@@ -1,4 +1,5 @@
-import {useEffect, useRef, useState, useSyncExternalStore} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore} from 'react';
+import {setButtonSoundBattleActive} from './audio/button-sound';
 import type {Battle} from './match/battle';
 import {LobbyView} from './interface/lobby/room-controls';
 import {LobbyChatView} from './interface/lobby/lobby-chat-view';
@@ -6,6 +7,8 @@ import {LobbySocialView} from './interface/lobby/lobby-social-view';
 import {BattleMatchView} from './interface/battle/battle-match';
 import {BattleChatView} from './interface/battle/battle-chat-view';
 import {BattleHudView} from './interface/battle/battle-hud-view';
+import {MobileBattleHud} from './interface/battle/mobile-battle-hud';
+import {isMobileDevice} from './platform/device';
 import {BattleScoreboardView} from './interface/battle/battle-scoreboard-view';
 import {VolumeSettingsView} from './interface/settings/volume-settings';
 import {KeySettingsView, KeyBindingsHint} from './interface/settings/key-settings';
@@ -25,15 +28,19 @@ import {useLoginNavigation} from './interface/login/use-login-navigation';
 import {navigateGame, roomPath, useGameRoute, useNavigationChoice, useRouteDialog, useNavigationNumber} from './navigation/route';
 import {readQuickStart} from './navigation/quick-start';
 import {GameMessageHost, showGameMessage} from './interface/resources/game-message';
+import type {ImageLoadingScreen} from './interface/resources/image-loading-screen';
+import {DialogButton} from './interface/resources/dialog-button';
+import {usePageImages} from './interface/resources/use-page-images';
 
-interface AppProps {battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; settings: InitialSettings; validation?: boolean;}
+interface AppProps {battle: Battle; canvas: HTMLCanvasElement; hud: HTMLOutputElement; settings: InitialSettings;
+  loadingScreen: ImageLoadingScreen; validation?: boolean;}
 
 /** One page root; scene and transport remain independent of React render cycles. */
 export function App(props: AppProps) {
   return <><GameMessageHost/><GamePages {...props}/></>;
 }
 
-function GamePages({battle,canvas,hud,settings,validation=false}: AppProps) {
+function GamePages({battle,canvas,hud,settings,loadingScreen,validation=false}: AppProps) {
   const login = useLoginNavigation(battle, validation);
   const route = useGameRoute();
   const [inventoryOpen, setInventoryOpen] = useRouteDialog('inventory');
@@ -49,17 +56,43 @@ function GamePages({battle,canvas,hud,settings,validation=false}: AppProps) {
   const [keysOpen, setKeysOpen] = useRouteDialog('keys');
   const [quickChatOpen, setQuickChatOpen] = useRouteDialog('settings');
   const [keyBindings, setKeyBindings] = useState(settings.keys.bindings);
+  const [quickStart, setQuickStart] = useState(readQuickStart);
+  const quickStartRequested = useRef(false);
+  const startingQuickMatch = !validation && login.phase === 'lobby' && !!quickStart;
   const match = useSyncExternalStore(battle.matchPanel.subscribe, battle.matchPanel.getSnapshot, battle.matchPanel.getSnapshot);
-  const quickStart = useRef(readQuickStart());
+  useLayoutEffect(() => {
+    setButtonSoundBattleActive(match?.phase === 'PLAYING');
+    return () => {setButtonSoundBattleActive(false);};
+  }, [match?.phase]);
+  const battleActive = !!match && match.phase !== 'WAITING'
+    || login.restoring && (route.page === 'battle' || route.page === 'results');
+  const matchLoading = match?.phase === 'LOADING'
+    || match?.phase === 'PLAYING' && match.loading.progress < 1;
+  const pageArtwork = usePageImages(battleActive, login.restoring || startingQuickMatch || matchLoading);
+  const retryBattleAfterArtwork = useRef(false);
   useEffect(() => {
-    if (validation || login.restoring || login.phase !== 'lobby' || !quickStart.current) return;
-    const options = quickStart.current;
-    quickStart.current = undefined;
-    void battle.startQuickMatch(options.mapId, options.tankId).catch(error => {
+    if (!pageArtwork.ready || !retryBattleAfterArtwork.current) return;
+    retryBattleAfterArtwork.current = false;
+    battle.matchPanel.retryLoading?.();
+  }, [battle, pageArtwork.ready]);
+  function retryBattleLoading(): void {
+    if (pageArtwork.error) {
+      retryBattleAfterArtwork.current = true;
+      pageArtwork.retry();
+    } else battle.matchPanel.retryLoading?.();
+  }
+  const [mobile] = useState(isMobileDevice);
+  const [scoreboardOpen, setScoreboardOpen] = useState(false);
+  const [exitRequest, setExitRequest] = useState(0);
+  useEffect(() => {setScoreboardOpen(false);}, [match?.roomId, match?.round, match?.phase]);
+  useEffect(() => {
+    if (validation || login.restoring || login.phase !== 'lobby' || !quickStart || quickStartRequested.current) return;
+    quickStartRequested.current = true;
+    void battle.startQuickMatch(quickStart.mapId, quickStart.tankId).catch(error => {
       hud.value = error instanceof Error ? error.message : String(error);
       showGameMessage(hud.value, 'error');
-    });
-  }, [battle, hud, validation, login.restoring, login.phase]);
+    }).finally(() => {setQuickStart(undefined);});
+  }, [battle, hud, validation, login.restoring, login.phase, quickStart]);
   useEffect(() => {
     if (validation || login.restoring || login.phase !== 'lobby') return;
     if (battle.inRoom && match) navigateGame(roomPath(match.roomId, match.phase), true);
@@ -132,7 +165,37 @@ function GamePages({battle,canvas,hud,settings,validation=false}: AppProps) {
     if (origin?.isConnected && !origin.disabled) origin.focus();
     else document.querySelector<HTMLButtonElement>('#open-home')?.focus();
   }
-  if (!validation && login.phase !== 'lobby') return <>
+  useEffect(() => {
+    if (!battleActive) return;
+    settingsOrigin.current = null;
+    shopOrigin.current = null;
+    inventoryOrigin.current = null;
+  }, [battleActive]);
+  const restoringArtwork = !pageArtwork.ready;
+  const restoringSession = !validation && login.restoring;
+  const artworkProgress = pageArtwork.ready ? 1 : pageArtwork.progress
+    ? (pageArtwork.progress.completed + pageArtwork.progress.decoded)
+      / Math.max(1, pageArtwork.progress.total + pageArtwork.progress.decodeTotal) : 0;
+  const loadingError = pageArtwork.error || (matchLoading ? match?.loading.error : undefined);
+  const loadingStatus = restoringSession ? '正在恢复游戏会话…'
+    : startingQuickMatch ? '正在创建自动托管对局…' : matchLoading && match
+    ? match.status || `${match.loading.status}${match.loading.progress === 1
+      ? `（${match.loadedPlayers}/${match.loadingPlayers} 人）` : ''}` : '正在准备界面…';
+  const loadingProgress = restoringSession || startingQuickMatch ? undefined : matchLoading && match
+    ? artworkProgress * 0.1 + match.loading.progress * 0.9 : artworkProgress;
+  const loadingPage = restoringSession || startingQuickMatch || restoringArtwork || matchLoading ? {
+    progress: loadingProgress, status: loadingStatus, error: loadingError || undefined,
+    'aria-label': matchLoading ? '正在载入对局' : loadingStatus, 'aria-busy': !loadingError,
+    className: matchLoading ? 'battle-loading-page' : undefined,
+    'data-match-panel': matchLoading ? '' : undefined, 'data-phase': matchLoading ? 'LOADING' : undefined,
+    'data-round': matchLoading ? match?.round : undefined, 'data-battle-loading': matchLoading ? '' : undefined,
+    'data-session-restoring': restoringSession ? '' : undefined, 'data-ui-restoring': restoringArtwork ? '' : undefined,
+    actions: loadingError && <DialogButton type="button" disabled={!!match?.pending || restoringArtwork && !pageArtwork.error}
+      onClick={matchLoading ? retryBattleLoading : pageArtwork.retry}>重新载入</DialogButton>,
+  } : undefined;
+  useLayoutEffect(() => {loadingScreen.setGameLoading(loadingPage);}, [loadingScreen, loadingPage]);
+  return <>
+    {!restoringSession && !restoringArtwork && !validation && login.phase !== 'lobby' && <>
     {login.phase === 'login' && <LoginSourceView busy={login.busy} status={login.status}
       savedAccount={login.savedAccount} hasSavedIdentity={login.hasSavedIdentity}
       saveAccount={login.saveAccount} onSaveAccount={login.setSaveAccount}
@@ -141,14 +204,14 @@ function GamePages({battle,canvas,hud,settings,validation=false}: AppProps) {
     {login.phase === 'channel' && <ChannelSourceView busy={login.busy} status={login.status}
       channels={login.channels} ping={login.ping} selectedId={login.selectedId} onSelect={login.setSelectedId}
       onEnter={login.enter} onBack={login.back}/>}
-    {login.phase === 'closed' && <main aria-label="已退出游戏"><button type="button" onClick={login.reopen}>返回登录</button></main>}
+    {login.phase === 'closed' && <main className="game-closed-page" aria-label="已退出游戏"><button type="button" onClick={login.reopen}>返回登录</button></main>}
     <HistoryIntroSourceView open={historyIntroOpen} close={()=>setHistoryIntroOpen(false)}/>
     <SettingsSourceView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings} onKeysSaved={setKeyBindings}/>
-  </>;
-  return <>
-    <LobbyView battle={battle} canvas={canvas} hud={hud} validation={validation}
+    </>}
+    {!restoringSession && (validation || login.phase === 'lobby') && <>
+    <LobbyView battle={battle} canvas={canvas} hud={hud} validation={validation} artworkReady={!battleActive && pageArtwork.ready}
       headerContent={<TutorialSettingsBar onSettings={openSettingsFromHeader} onExit={login.back}/>}
-      chatContent={<LobbyChatView chat={battle.lobbyChat} presence={battle.lobbyPresence}/>} playerContent={<LobbySocialView battle={battle}/>} openInventory={openInventory}
+      chatContent={mobile ? undefined : <LobbyChatView chat={battle.lobbyChat} presence={battle.lobbyPresence}/>} playerContent={<LobbySocialView battle={battle}/>} openInventory={openInventory}
       openEquipment={()=>{setEquipmentTankInstance(undefined);setEquipmentOpen(true);}} openRoles={()=>setRolesOpen(true)}
       openShop={openShop} openHistory={()=>setHistoryOpen(true)}/>
     {validation && <aside className="controls">
@@ -164,10 +227,17 @@ function GamePages({battle,canvas,hud,settings,validation=false}: AppProps) {
       <KeyBindingsHint bindings={keyBindings}/>
     </aside>}
     {!validation && <div className="game-status" hidden ref={element=>{if(element && hud.parentElement!==element)element.append(hud);}}/>}
-    <BattleMatchView validation={validation} panel={battle.matchPanel}/>
-    <BattleChatView chat={battle.chat} formal={!validation}/>
-    <BattleHudView hud={battle.originalHud} items={battle.itemInventory} onUseSlot={battle.useHudSlot}/>
-    <BattleScoreboardView hud={battle.originalHud} bindings={keyBindings}/>
+    {!restoringArtwork && <BattleMatchView validation={validation} panel={battle.matchPanel} exitRequest={exitRequest}/>}
+    {!restoringArtwork && <BattleChatView chat={battle.chat} formal={!validation} mobile={mobile}/>}
+    {battleActive && pageArtwork.ready && (mobile ? <MobileBattleHud battle={battle} scoreboardOpen={scoreboardOpen} onScoreboard={() => {
+      battle.clearTouchInput(); battle.chat.closeEditor(); setScoreboardOpen(value => !value);
+    }}/> : <BattleHudView hud={battle.originalHud} items={battle.itemInventory} onUseSlot={battle.useHudSlot}/>)}
+    {battleActive && pageArtwork.ready && <BattleScoreboardView hud={battle.originalHud} bindings={keyBindings}
+      open={mobile ? scoreboardOpen : undefined} onClose={() => setScoreboardOpen(false)}
+      onLeave={mobile && match?.phase === 'PLAYING' ? () => {
+        setScoreboardOpen(false); setExitRequest(value => value + 1);
+      } : undefined}/>}
+    {!battleActive && pageArtwork.ready && <>
     <HomeInventoryView onRolePage={kind => {setRolesKind(kind);setRoleInstance(undefined);setTextureOriginInstance(undefined);closeInventory();setRolesOpen(true);}} battle={battle} open={inventoryOpen} close={closeInventory}/>
     <HomeEquipmentView battle={battle} open={equipmentOpen} close={closeEquipment} tankInstanceId={equipmentTankInstance}
       onPlayerPage={() => {closeEquipment();openInventory();}}
@@ -185,5 +255,7 @@ function GamePages({battle,canvas,hud,settings,validation=false}: AppProps) {
     <KeySettingsView battle={battle} open={keysOpen} close={closeKeys} initial={settings.keys} onSaved={setKeyBindings}/>
     {validation ? <QuickChatSettingsView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings.quickChat}/>
       : <SettingsSourceView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings} onKeysSaved={setKeyBindings}/>}
+    </>}
+    </>}
   </>;
 }

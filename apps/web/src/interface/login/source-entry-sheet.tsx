@@ -5,21 +5,21 @@ import {SourceFeedbackText} from '../resources/source-feedback-text';
 import {GameDialogBackdrop} from '../resources/game-dialog';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
-import {useSourceScale} from '../lobby/source-react';
+import {usePageLayout} from '../resources/use-page-layout';
 import './source-entry.css';
 
 export function SourceEntrySheet({page, ui, error, busy, status, children}: {
   page: 'login' | 'channel'; ui?: HomeSourceUi; error: string; busy: boolean;
   status: string; children: ReactNode;
 }) {
-  const scale = useSourceScale(800, 600, 0, 0, 0, Infinity);
+  const scale = usePageLayout();
   const feedback = error ? '界面资源载入失败，请重新打开页面。' : status;
   return <main className="source-entry" data-entry-page={page} aria-label={page === 'login' ? '登录' : '频道选择'} aria-busy={busy || !ui && !error}>
     {page === 'channel' && <GameDialogBackdrop/>}
     <div className="source-entry-viewport" style={scale.viewport}>
       <div className="source-entry-stage" style={{...scale.stage,
-        '--source-entry-scale': scale.viewport.width / 800} as CSSProperties}>
-        <SourceImageScale value={scale.viewport.width / 800}>{children}</SourceImageScale>
+        '--source-entry-scale': scale.scale} as CSSProperties}>
+        <SourceImageScale value={scale.scale}>{children}</SourceImageScale>
         <GameMessage text={feedback} tone={error ? 'error' : busy ? 'pending' : 'info'}/>
       </div>
     </div>

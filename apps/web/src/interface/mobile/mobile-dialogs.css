@@ -1,0 +1,701 @@
+html[data-mobile-device] [data-waiting-room-formal] .waiting-room-stage {
+  top: 0;
+  width: 615px;
+  height: 400px;
+}
+
+html[data-mobile-device] [data-waiting-room-formal] .waiting-room-console {
+  left: 0 !important;
+  top: auto !important;
+  bottom: 0;
+  width: 100%;
+  max-height: 80px;
+  padding: 0;
+  pointer-events: none;
+}
+
+html[data-mobile-device] [data-waiting-room-formal] [data-waiting-close] {
+  top: 4px !important;
+}
+
+html[data-mobile-device] [data-waiting-room-formal] [data-add-cpu] .source-feedback-text {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+html[data-mobile-device] .waiting-room-stage :is(.home-font-text, .waiting-room-description) {
+  font-size: 16px;
+  line-height: 20px;
+}
+
+html[data-mobile-device] .waiting-room-slot-mask > button {
+  width: 78px;
+  height: 37px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] .room-create-stage {
+  --room-create-font-size: 21px;
+  grid-template-rows: 48px minmax(0, 1fr) 60px;
+}
+
+html[data-mobile-device] .room-create-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+html[data-mobile-device] .room-create-card-metadata {
+  width: 100%;
+  height: 260px;
+  padding-top: 12px;
+}
+
+html[data-mobile-device] .room-create-card-rules {
+  width: 100%;
+  height: 260px;
+  padding-top: 8px;
+}
+
+html[data-mobile-device] .room-create-map-heading {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  height: 96px;
+  padding: 0 14px;
+  gap: 6px;
+}
+
+html[data-mobile-device] .room-create-map-name {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+html[data-mobile-device] .room-create-map-change {
+  width: 120px !important;
+  height: 44px !important;
+}
+
+html[data-mobile-device] .room-create-card-strip {
+  width: calc(100% - 12px);
+  height: 54px;
+  margin: 6px;
+  grid-template-columns: 76px minmax(0, 1fr);
+  padding: 0 4px;
+}
+
+html[data-mobile-device] .room-create-field .room-create-input {
+  width: 100% !important;
+  height: 46px !important;
+}
+
+html[data-mobile-device] .room-create-input .cartoon-input-value {
+  top: 8px;
+  height: 30px;
+  font-size: 22px;
+  line-height: 30px;
+}
+
+html[data-mobile-device] .room-create-rules-title {
+  height: 36px;
+  font-size: 24px;
+  line-height: 36px;
+}
+
+html[data-mobile-device] .room-player-bound {
+  grid-template-columns: 36px 26px 36px;
+  width: 98px;
+}
+
+html[data-mobile-device] .room-adjustment-button {
+  width: 36px;
+  height: 44px;
+}
+
+html[data-mobile-device] .room-time-adjustment {
+  grid-template-columns: 40px 110px 40px;
+}
+
+html[data-mobile-device] .room-create-rule-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 0 10px;
+}
+
+html[data-mobile-device] .room-create-rule-grid > .room-rule-button {
+  width: 100%;
+  height: 50px;
+}
+
+html[data-mobile-device] .room-create-footer {
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
+  justify-content: center;
+  gap: 48px;
+}
+
+html[data-mobile-device] .room-create-footer .game-dialog-button {
+  width: 130px;
+  height: 56px;
+  min-width: 130px;
+  max-width: 130px;
+  min-height: 56px;
+  max-height: 56px;
+}
+
+html[data-mobile-device] .room-edit-password-action {
+  width: 76px;
+  height: 44px;
+  font-size: 16px;
+}
+
+html[data-mobile-device] .map-selector-topbar,
+html[data-mobile-device] .map-selector-panel {
+  width: 718px;
+}
+
+html[data-mobile-device] .map-selector-panel {
+  height: 350px;
+}
+
+html[data-mobile-device] .map-selector-close {
+  top: 4px;
+  left: 676px;
+}
+
+html[data-mobile-device] .map-selector-mode {
+  top: 0 !important;
+  width: 126px !important;
+  height: 58px !important;
+}
+
+html[data-mobile-device] [data-map-selector-mode='5'] {
+  left: 4px !important;
+}
+
+html[data-mobile-device] [data-map-selector-mode='4'] {
+  left: 136px !important;
+}
+
+html[data-mobile-device] [data-map-selector-mode='1'] {
+  left: 268px !important;
+}
+
+html[data-mobile-device] [data-map-selector-mode='2'] {
+  left: 400px !important;
+}
+
+html[data-mobile-device] [data-map-selector-mode='3'] {
+  left: 532px !important;
+}
+
+html[data-mobile-device] .map-selector-card {
+  top: 62px !important;
+  width: 164px !important;
+  height: 136px !important;
+}
+
+html[data-mobile-device] .map-selector-card:is([data-source-control='picMap4'],
+  [data-source-control='picMap5'], [data-source-control='picMap6'], [data-source-control='picMap7']) {
+  top: 206px !important;
+}
+
+html[data-mobile-device] .map-selector-card[data-source-control='picMap0'],
+html[data-mobile-device] .map-selector-card[data-source-control='picMap4'] {
+  left: 12px !important;
+}
+
+html[data-mobile-device] .map-selector-card[data-source-control='picMap1'],
+html[data-mobile-device] .map-selector-card[data-source-control='picMap5'] {
+  left: 190px !important;
+}
+
+html[data-mobile-device] .map-selector-card[data-source-control='picMap2'],
+html[data-mobile-device] .map-selector-card[data-source-control='picMap6'] {
+  left: 368px !important;
+}
+
+html[data-mobile-device] .map-selector-card[data-source-control='picMap3'],
+html[data-mobile-device] .map-selector-card[data-source-control='picMap7'] {
+  left: 546px !important;
+}
+
+html[data-mobile-device] .map-selector-card .game-map-card-content {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+html[data-mobile-device] .map-selector-card .game-map-card-thumbnail > .source-static-image {
+  left: 12px !important;
+  top: 8px !important;
+  width: 140px !important;
+  height: 94px !important;
+}
+
+html[data-mobile-device] .map-selector-card .game-map-card-name {
+  left: 6px;
+  top: 104px;
+  width: calc(100% - 12px);
+  height: 28px;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+html[data-mobile-device] .map-selector-footer {
+  left: 192px;
+  top: 350px;
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+}
+
+html[data-mobile-device] .map-selector-footer > .game-button {
+  width: 48px !important;
+  height: 48px !important;
+  top: 2px !important;
+}
+
+html[data-mobile-device] .map-selector-footer > output {
+  font-size: 22px;
+}
+
+html[data-mobile-device] .source-confirm-stage {
+  width: 480px;
+  height: 200px;
+}
+
+html[data-mobile-device] :is(.shop-purchase-stage, .stack-sale-stage,
+  .home-name-source-stage, .room-password-stage) {
+  width: 480px;
+  height: 240px;
+}
+
+html[data-mobile-device] :is(.source-confirm-stage, .shop-purchase-stage, .stack-sale-stage,
+  .home-name-source-stage, .room-password-stage) [data-source-control='txtMessage'] {
+  left: 20px !important;
+  top: 14px !important;
+  width: 440px !important;
+  height: 72px !important;
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
+  overflow: auto;
+  font-size: 22px !important;
+  line-height: 30px !important;
+  text-align: center;
+}
+
+html[data-mobile-device] :is(.stack-sale-stage, .home-name-source-stage, .room-password-stage)
+  [data-source-control='xiakuang'] {
+  inset: 0 auto auto 0 !important;
+  width: 480px !important;
+  height: 100px !important;
+}
+
+html[data-mobile-device] :is(.stack-sale-stage, .home-name-source-stage, .room-password-stage)
+  [data-source-control='shangkuang'] {
+  left: 0 !important;
+  top: 100px !important;
+  width: 480px !important;
+  height: 140px !important;
+}
+
+html[data-mobile-device] :is(.stack-sale-stage, .home-name-source-stage, .room-password-stage)
+  [data-source-control='shufukuangditu'],
+html[data-mobile-device] .shop-purchase-field {
+  left: 48px !important;
+  top: 108px !important;
+  width: 384px !important;
+  height: 46px !important;
+}
+
+html[data-mobile-device] :is(.stack-sale-stage, .home-name-source-stage, .room-password-stage)
+  [data-source-control='edtInput'] {
+  left: 56px !important;
+  top: 112px !important;
+  width: 366px !important;
+  height: 38px !important;
+}
+
+html[data-mobile-device] :is(.shop-purchase-stage, .stack-sale-stage, .home-name-source-stage,
+  .room-password-stage) :is(input, select) {
+  font-size: 22px !important;
+  line-height: 30px;
+}
+
+html[data-mobile-device] .shop-purchase-select-arrow {
+  top: 18px;
+}
+
+html[data-mobile-device] :is(.source-confirm-stage, .shop-purchase-stage, .stack-sale-stage,
+  .home-name-source-stage, .room-password-stage) :is([data-source-control='btnOK'],
+  [data-source-control='btnCancel']) {
+  top: 172px !important;
+  width: 128px !important;
+  height: 58px !important;
+}
+
+html[data-mobile-device] :is(.source-confirm-stage, .shop-purchase-stage, .stack-sale-stage,
+  .home-name-source-stage, .room-password-stage) [data-source-control='btnOK'] {
+  left: 62px !important;
+}
+
+html[data-mobile-device] :is(.source-confirm-stage, .shop-purchase-stage, .stack-sale-stage,
+  .home-name-source-stage, .room-password-stage) [data-source-control='btnCancel'] {
+  left: 290px !important;
+}
+
+html[data-mobile-device] .source-confirm-stage :is([data-source-control='btnOK'],
+  [data-source-control='btnCancel']) {
+  top: 128px !important;
+}
+
+html[data-mobile-device] :is(.source-confirm-stage, .shop-purchase-stage) .game-dialog-button-label {
+  font-size: 24px;
+  line-height: 30px;
+}
+
+html[data-mobile-device] .player-info-stage {
+  font-size: 18px;
+}
+
+html[data-mobile-device] .player-info-stage :is(.home-font-text, .player-info-level) {
+  font-size: 17px;
+}
+
+html[data-mobile-device] :is(.home-tank-upgrade-stage, .pet-skill-source-stage) {
+  width: 320px;
+  height: 405px;
+  overflow: hidden;
+}
+
+html[data-mobile-device] .compact-source-dialog-art {
+  position: absolute;
+  width: 800px;
+  height: 599px;
+  transform: translate(-323px, -146px) scale(1.4);
+  transform-origin: top left;
+}
+
+html[data-mobile-device] .compact-source-dialog-art [data-source-control='all'] {
+  display: none;
+}
+
+html[data-mobile-device] .compact-source-dialog-art .source-static-text {
+  font-size: 13px;
+  line-height: 15px;
+}
+
+html[data-mobile-device] .compact-source-dialog-art [data-source-control^='edt'] {
+  font-size: 14px;
+  line-height: 18px;
+  touch-action: pan-y;
+}
+
+html[data-mobile-device] .trade-source-candidates,
+html[data-mobile-device] .trade-source-stage input {
+  font-size: 18px;
+}
+
+html[data-mobile-device] .trade-source-candidate-row {
+  width: 184px;
+  height: 72px;
+  background-size: 100% 68px;
+}
+
+html[data-mobile-device] .trade-source-candidate {
+  width: 184px;
+}
+
+html[data-mobile-device] .trade-source-candidate-row .source-feedback-text {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+html[data-mobile-device] .trade-source-candidate-row
+  :is(.home-item-row-icon, .home-owned-tank-row-icon, .home-owned-pet-row-icon,
+  .home-equipment-common-row-icon) {
+  left: 4px;
+  top: 10px;
+  width: 34px;
+  height: 34px;
+  background-size: contain;
+}
+
+html[data-mobile-device] .trade-source-candidate-row
+  :is(.home-item-row-name, .home-owned-tank-row-name, .home-owned-pet-row-name,
+  .home-equipment-common-row-name) {
+  left: 42px;
+  top: 6px;
+  width: 138px;
+  height: 24px;
+  overflow: hidden;
+  font-size: 18px;
+  line-height: 24px;
+  text-overflow: ellipsis;
+}
+
+html[data-mobile-device] .trade-source-candidate-row
+  :is(.home-item-row-type, .home-owned-tank-row-type, .home-owned-pet-row-secondary,
+  .home-equipment-common-row-kind) {
+  left: 42px;
+  top: 32px;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+html[data-mobile-device] .trade-source-candidate-row
+  :is(.home-item-row-quantity, .home-owned-tank-row-days, .home-equipment-common-row-days) {
+  left: 42px;
+  top: 54px;
+  font-size: 16px;
+  line-height: 18px;
+}
+
+html[data-mobile-device] .trade-source-stage > .source-static-text {
+  height: 20px !important;
+  font-size: 17px !important;
+  line-height: 20px !important;
+}
+
+html[data-mobile-device] .trade-source-stage [data-trade-amount] {
+  height: 20px !important;
+  margin-top: -4px;
+  line-height: 20px;
+}
+
+html[data-mobile-device] .trade-source-stage [data-trade-close] {
+  top: 4px !important;
+  width: 44px !important;
+  height: 44px !important;
+}
+
+html[data-mobile-device] .trade-source-candidate-actions {
+  width: 184px;
+  min-height: 40px;
+}
+
+html[data-mobile-device] .trade-source-candidate-actions > :is(button, input) {
+  min-height: 36px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] .trade-source-detail-source .source-static-text {
+  min-height: 18px;
+  font-size: 16px !important;
+  line-height: 18px !important;
+}
+
+html[data-mobile-device] .trade-source-description {
+  font-size: 18px;
+  line-height: 24px;
+  touch-action: pan-y;
+}
+
+html[data-mobile-device] [data-trade-detail-close] {
+  min-height: 44px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] .player-search-results button {
+  min-height: 52px;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+html[data-mobile-device] .game-dialog-stage.player-search-stage {
+  grid-template-rows: 43px minmax(0, 1fr) 58px;
+  font-size: 20px;
+}
+
+html[data-mobile-device] .game-dialog[data-player-search] {
+  max-height: none;
+}
+
+html[data-mobile-device] .player-search-panel {
+  padding: 8px 16px;
+}
+
+html[data-mobile-device] .player-search-content {
+  height: 100%;
+  max-height: none;
+  gap: 8px;
+}
+
+html[data-mobile-device] .player-search-form {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  height: 44px;
+}
+
+html[data-mobile-device] .player-search-input {
+  height: 44px !important;
+}
+
+html[data-mobile-device] .player-search-input .cartoon-input-value {
+  top: 6px !important;
+  height: 32px !important;
+  font-size: 22px;
+  line-height: 32px;
+}
+
+html[data-mobile-device] .player-search-results-region {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+}
+
+html[data-mobile-device] .player-search-results li {
+  flex-basis: 54px;
+}
+
+html[data-mobile-device] .player-search-pagination {
+  height: 44px;
+}
+
+html[data-mobile-device] .player-search-pagination > output {
+  font-size: 18px;
+}
+
+html[data-mobile-device] .player-search-pagination > .game-button {
+  width: 44px;
+  height: 44px;
+}
+
+html[data-mobile-device] .player-search-footbar {
+  height: 58px;
+  min-height: 58px;
+  max-height: 58px;
+}
+
+html[data-mobile-device] .player-search-footbar > .game-dialog-button {
+  width: 128px;
+  height: 54px;
+  min-width: 128px;
+  max-width: 128px;
+  min-height: 54px;
+  max-height: 54px;
+}
+
+html[data-mobile-device] .player-search-footbar .game-dialog-button-label {
+  font-size: 22px;
+}
+
+html[data-mobile-device] .player-search-result-title {
+  font-size: 16px;
+  line-height: 22px;
+}
+
+html[data-mobile-device] .loading-error-content {
+  font-size: 22px;
+  line-height: 30px;
+}
+
+html[data-mobile-device] .loading-error-details {
+  max-height: 140px;
+  overflow: auto;
+  font-size: 18px;
+}
+
+html[data-mobile-device] .loading-error-dialog .game-dialog-stage {
+  grid-template-rows: 43px minmax(0, 1fr) 64px;
+}
+
+html[data-mobile-device] .loading-error-actions {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+}
+
+html[data-mobile-device] .loading-error-actions .game-dialog-button {
+  width: 128px;
+  min-width: 128px;
+  max-width: 128px;
+  height: 54px;
+  min-height: 54px;
+  max-height: 54px;
+}
+
+html[data-mobile-device] .loading-error-actions .game-dialog-button-label {
+  font-size: 22px;
+}
+
+html[data-mobile-device] [data-gm-support-dialog] {
+  width: calc(var(--game-page-width) - 24px) !important;
+  max-height: calc(var(--game-page-height) - 16px) !important;
+  padding: 16px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] [data-gm-support-dialog][open] {
+  display: flex;
+  flex-direction: column;
+  height: calc(var(--game-page-height) - 16px);
+  overflow: hidden;
+}
+
+html[data-mobile-device] [data-gm-support-dialog]
+  :is(.gm-support-header, .gm-support-status, .gm-support-error) {
+  flex-shrink: 0;
+}
+
+html[data-mobile-device] .gm-support-header h2 {
+  font-size: 24px;
+}
+
+html[data-mobile-device] .gm-support-list {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  touch-action: pan-y;
+}
+
+html[data-mobile-device] [data-gm-support-dialog] button {
+  min-height: 44px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] :is(#key-settings, #quick-chat-settings) {
+  width: calc(var(--game-page-width) - 24px);
+  max-height: calc(var(--game-page-height) - 16px);
+  margin: auto;
+  padding: 12px 16px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] :is(#key-settings, #quick-chat-settings) h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+
+html[data-mobile-device] :is(#key-settings, #quick-chat-settings) :is(button, input) {
+  min-height: 44px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] :is(.key-settings-actions, .quick-chat-settings-actions) {
+  position: sticky;
+  bottom: -12px;
+  padding: 12px 0;
+  background: #263b49;
+}
+
+html[data-mobile-device] .cpu-loadout {
+  font-size: 18px;
+}
+
+html[data-mobile-device] .cpu-loadout :is(summary, button, input, select) {
+  min-height: 44px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] .cpu-loadout-slots {
+  max-height: 240px;
+  touch-action: pan-y;
+}

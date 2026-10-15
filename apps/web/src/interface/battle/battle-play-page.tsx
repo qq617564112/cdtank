@@ -5,14 +5,21 @@ import type {LeavePenalty} from '../../../../shared/protocols/PtlLeave';
 import {useBattleExitConfirm} from './battle-exit-confirm';
 
 /** Escape opens the server-quoted departure confirmation during battle. */
-export function BattlePlayPage({roomId, round, busy, canLeave, quote, leave, feedback}: {
+export function BattlePlayPage({roomId, round, busy, canLeave, quote, leave, feedback, exitRequest = 0}: {
   roomId: string; round: number; busy: boolean; canLeave: boolean; quote: () => Promise<LeavePenalty>;
   leave: (confirmedPenaltyPoints?: number) => Promise<void>; feedback: ReactNode;
+  exitRequest?: number;
 }) {
   const {requestLeave, confirmation, pending, status} =
     useBattleExitConfirm(roomId, round, busy, canLeave, quote, leave);
   const request = useRef(requestLeave);
   request.current = requestLeave;
+  const previousExit = useRef(exitRequest);
+  useEffect(() => {
+    if (previousExit.current === exitRequest) return;
+    previousExit.current = exitRequest;
+    request.current();
+  }, [exitRequest]);
   const [size, setSize] = useState(() => ({width: innerWidth, height: innerHeight}));
   useEffect(() => {
     let escapeHeld = false;

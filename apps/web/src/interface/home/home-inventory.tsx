@@ -1,3 +1,4 @@
+import {accountPageScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import {showGameMessage} from '../resources/game-message';
 import {imageBackgroundStyle} from '../../assets/image-artwork';
 import {useNavigationChoice, useNavigationValue} from '../../navigation/route';
@@ -116,7 +117,7 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
   const [busy, setBusy] = useState(false);
   const [resourceError, setResourceError] = useState<string>();
   const [status, setStatus] = useState('载入物品…');
-  const [scale, setScale] = useState(() => Math.min(innerWidth / 800, innerHeight / 600));
+  const [scale, setScale] = useState(() => accountPageScale());
   const [valuableActivation, setValuableActivation] = useState<{instanceId: number; sequence: number}>();
   const valuableActivationSequence = useRef(0);
 
@@ -124,10 +125,10 @@ function InventorySession({close, battle, page, changePage, onRolePage, valuable
     const element = dialog.current!;
     const previousFocus = document.activeElement;
     element.showModal();
-    const resize = () => setScale(Math.min(innerWidth / 800, innerHeight / 600));
-    window.addEventListener('resize', resize);
+    const resize = () => setScale(accountPageScale());
+    const unsubscribeViewport = subscribeGamePageViewport(resize);
     return () => {
-      window.removeEventListener('resize', resize);
+      unsubscribeViewport();
       if (element.open) element.close();
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };

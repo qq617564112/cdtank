@@ -7,6 +7,7 @@ import type {ChatEmoteSequence} from './chat-emote-animation';
 import {layoutChatRichText} from './chat-rich-text';
 import {parseChatSourceMarkup} from './chat-source-markup';
 import {ChatImageCatalog} from './chat-image-catalog';
+import {decodeImageRegion, imageRegion} from '../../assets/image-resources';
 import {applyChatEmoteColour} from './chat-emote-colour';
 
 /** Received emotions use source sequence providers; edit/picker imagery stays static. */
@@ -80,8 +81,12 @@ export class ChatEmotes {
         const sequence = this.sequences?.get(id), image = sequence?.definition.frames[0] ?? this.images.get(id);
         if (!image) {element.append(document.createTextNode(glyph)); continue;}
         const img = document.createElement('span'); img.setAttribute('role','img'); img.setAttribute('aria-label',glyph); img.dataset.chatEmote=String(id); img.draggable=false;
-        img.dataset.sourceAsset=image.asset; Object.assign(img.style,{display:'inline-block',width:`${image.width}px`,height:`${image.height}px`,...imageBackgroundStyle(`/${image.asset}`)});
+        Object.assign(img.style,{display:'inline-block',width:`${image.width}px`,height:`${image.height}px`});
         if (sequence) this.paint(img,sequence);
+        else {
+          img.dataset.sourceAsset=image.asset;
+          Object.assign(img.style,imageBackgroundStyle(`/${image.asset}`));
+        }
         element.append(img);
       }
     }
@@ -126,17 +131,33 @@ export class ChatEmotes {
   private renderRich(element: HTMLElement, text: string): void {
     const context=(this.canvas??=document.createElement('canvas')).getContext('2d');
     if (!context || !this.log) {element.textContent=text;return;}
+    const width=this.availableWidth();
+    if (width<=0) return;
     const style=getComputedStyle(this.log);
     context.font=`${style.fontSize} ${style.fontFamily}`;
     const measure=(value: string): number => context.measureText(value).width;
     const parsed=parseChatSourceMarkup(text,(set,name)=>Boolean(this.imageCatalog?.image(set,name)));
     element.dataset.chatMarkupStatus=parsed.status;
+    const missingImages = new Set(parsed.items.flatMap(item => {
+      const image = item.image && this.imageCatalog?.image(item.image.set, item.image.name);
+      return image && !imageRegion(`/${image.asset}`) ? [`/${image.asset}`] : [];
+    }));
+    if (missingImages.size) {
+      element.textContent = text;
+      const generation = this.loadGeneration;
+      void Promise.all([...missingImages].map(url => decodeImageRegion(url))).then(() => {
+        if (generation === this.loadGeneration && this.rows.get(element) === text && element.isConnected) {
+          this.render(element, text);
+        }
+      }).catch(() => {});
+      return;
+    }
     const tokens=parsed.items.map(item=>{
       const dimensions=item.image?this.imageCatalog?.image(item.image.set,item.image.name)
         :item.emoteId===undefined?undefined:this.sequences?.get(item.emoteId)?.definition.frames[0]??this.images.get(item.emoteId);
       return {...item,width:dimensions?.width??Math.fround(measure(item.text)),height:dimensions?.height??0};
     });
-    const width=this.availableWidth(), height=parseFloat(style.lineHeight)||16;
+    const height=parseFloat(style.lineHeight)||16;
     this.layoutWidth=width;
     const lines=parsed.status==='parse-error'?[]:layoutChatRichText(tokens,width,measure);
     element.style.position='relative'; element.style.height=`${lines.length*height}px`;
@@ -172,11 +193,14 @@ export class ChatEmotes {
         else {
           const sequence=this.sequences?.get(item.emoteId),image=sequence?.definition.frames[0]??this.images.get(item.emoteId)!;
           const img=document.createElement('span');img.setAttribute('role','img');img.setAttribute('aria-label',item.text);img.draggable=false;
-          img.dataset.chatEmote=String(item.emoteId);img.dataset.sourceAsset=image.asset;
-          Object.assign(img.style,imageBackgroundStyle(`/${image.asset}`));
+          img.dataset.chatEmote=String(item.emoteId);
           Object.assign(img.style,{position:'absolute',left:'1px',top:'0px',width:`${image.width-1}px`,height:`${image.height}px`});
           applyChatEmoteColour(img,colour,piece);
           if (sequence) this.paint(img,sequence);
+          else {
+            img.dataset.sourceAsset=image.asset;
+            Object.assign(img.style,imageBackgroundStyle(`/${image.asset}`));
+          }
           piece.append(img);
         }
         row.append(piece);

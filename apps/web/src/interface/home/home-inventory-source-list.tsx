@@ -1,5 +1,7 @@
 import {GameSelectionHighlight} from '../resources/game-selection-highlight';
+import {playButtonSound} from '../../audio/button-sound';
 import {useRef} from 'react';
+import {useTouchItemDescription} from '../resources/use-touch-item-description';
 import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
 import {sourceProps} from '../resources/source-ui-props';
 import {HomeInventoryScrollbar} from './home-inventory-scrollbar';
@@ -20,6 +22,7 @@ export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, 
   dismissDescription?(): void; described?: number;
 }) {
   const list = useRef<HTMLDivElement>(null);
+  const touchDescription = useTouchItemDescription(describe);
   const layout = new HomeSourceLayout(ui, 'myhome_playerpage.xml');
   const controlName = valuableRows ? 'lstPlayerValuable' : 'lstPlayerItem';
   const control = layout.control(controlName);
@@ -30,21 +33,24 @@ export function HomeInventorySourceList({ui, entries, selected, busy, itemRows, 
       onBlur={event => {if (!event.currentTarget.contains(event.relatedTarget)) dismissDescription?.();}}>
       {entries.map((entry, index) => {
         return <button key={entry.instanceId} type="button" role="option" draggable={!busy && !valuableRows} disabled={busy}
-          data-inventory-instance={entry.instanceId} aria-selected={selected === entry.instanceId}
+          data-inventory-instance={entry.instanceId} data-touch-double-click={activate ? '' : undefined}
+          aria-selected={selected === entry.instanceId}
           data-home-source-item-row={itemRows ? '' : undefined}
           data-home-source-weapon-row={!itemRows && !valuableRows ? '' : undefined}
           data-home-source-valuable-row={valuableRows ? '' : undefined}
           aria-pressed={selected === entry.instanceId}
           aria-describedby={described === entry.instanceId ? 'home-item-description' : undefined}
-          onMouseEnter={event => describe?.(entry, event.currentTarget)}
-          onFocus={event => describe?.(entry, event.currentTarget)}
+          {...touchDescription(entry)}
+          onPointerEnter={event => {if (event.pointerType !== 'touch') describe?.(entry, event.currentTarget);}}
+          onFocus={event => {if (event.currentTarget.matches(':focus-visible')) describe?.(entry, event.currentTarget);}}
+          onContextMenu={event => {event.preventDefault(); describe?.(entry, event.currentTarget);}}
           onClick={() => select(entry.instanceId)} onDoubleClick={activate ? () => activate(entry.instanceId) : undefined}
           onDragStart={valuableRows ? undefined : event => {
             dismissDescription?.();
             event.dataTransfer.setData('text/plain', String(entry.instanceId)); event.dataTransfer.effectAllowed = 'copy';
           }} onKeyDown={event => {
             if (event.key === 'Enter' && activate) {
-              event.preventDefault(); event.stopPropagation(); activate(entry.instanceId); return;
+              event.preventDefault(); event.stopPropagation(); playButtonSound(); activate(entry.instanceId); return;
             }
             const next = event.key === 'ArrowDown' ? index + 1 : event.key === 'ArrowUp' ? index - 1
               : event.key === 'Home' ? 0 : event.key === 'End' ? entries.length - 1 : undefined;

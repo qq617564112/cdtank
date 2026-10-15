@@ -1,4 +1,6 @@
 import {GameMessage} from '../resources/game-message';
+import {isMobileDevice} from '../../platform/device';
+import {sourceDialogScale, subscribeGamePageViewport} from '../../platform/page-viewport';
 import './player-search.css';
 import {useEffect, useRef, useState, type FormEvent, type KeyboardEvent} from 'react';
 import type {FriendRecord} from '../../../../shared/protocols/PtlFriends';
@@ -40,6 +42,12 @@ function PlayerSearchSession({query, onSelect, onClose}: PlayerSearchViewProps) 
   const [error, setError] = useState('');
   const [results, setResults] = useState<FriendRecord[] | null>(null);
   const [page, setPage] = useState(0);
+  const mobile = isMobileDevice();
+  const [scale, setScale] = useState(() => sourceDialogScale(520, 405));
+  useEffect(() => {
+    const resize = () => setScale(sourceDialogScale(520, 405));
+    return subscribeGamePageViewport(resize);
+  }, []);
   const count = results?.length ?? 0;
   const pages = Math.ceil(count / SEARCH_PAGE_SIZE);
   const visibleResults = results?.slice(page * SEARCH_PAGE_SIZE, (page + 1) * SEARCH_PAGE_SIZE) ?? [];
@@ -93,7 +101,8 @@ function PlayerSearchSession({query, onSelect, onClose}: PlayerSearchViewProps) 
     event.stopPropagation();
     if (event.key === 'Escape' && escapePending.current) {escapePending.current = false; close();}
   }
-  return <GameDialog ref={dialog} width={360} stageClassName="player-search-stage"
+  return <GameDialog ref={dialog} width={mobile ? 520 : 360} height={mobile ? 405 : undefined}
+    uiScale={mobile ? scale : undefined} stageClassName="player-search-stage"
     data-player-search="" aria-label="查找玩家" aria-busy={pending}
     onCancel={event => {
       event.preventDefault();

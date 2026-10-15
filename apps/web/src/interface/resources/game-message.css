@@ -14,8 +14,12 @@
 }
 
 .game-message-host::backdrop {
-  background: transparent;
-  pointer-events: none;
+  display: none;
+}
+
+.game-message-motion {
+  animation: game-message-flight var(--game-message-duration) linear both;
+  will-change: transform, opacity;
 }
 
 .game-message {
@@ -27,9 +31,6 @@
   min-height: 88px;
   padding: 18px 24px 18px 20px;
   color: #fffde0;
-  filter: drop-shadow(3px 5px 2px rgb(28 38 19 / 40%));
-  animation: game-message-flight var(--game-message-duration) linear both;
-  will-change: transform, opacity;
 }
 
 .game-message,
@@ -44,6 +45,7 @@
   width: 100%;
   height: 100%;
   z-index: -1;
+  filter: drop-shadow(3px 5px 2px rgb(28 38 19 / 40%));
 }
 
 .game-message-badge {
@@ -107,7 +109,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .game-message {
+  .game-message-motion {
     animation-name: game-message-fade;
   }
 }

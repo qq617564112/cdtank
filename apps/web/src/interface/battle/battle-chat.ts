@@ -35,7 +35,8 @@ export class BattleChat {
   private quickChats: QuickChatPreferences = {...DEFAULT_QUICK_CHAT_PREFERENCES};
   constructor(private readonly send: (text: string, channel: 0 | 1 | 2 | 3 | 4 | 5, targetName?: string) => Promise<void>,
     private readonly releaseKeys: () => void, readonly family: Family,
-    subscribeAccountContext: (listener: () => void) => () => void) {
+    subscribeAccountContext: (listener: () => void) => () => void,
+    private readonly onNotice?: (text: string) => void) {
     this.unsubscribeAccountContext = subscribeAccountContext(() => this.resetSession());
   }
 
@@ -143,8 +144,9 @@ export class BattleChat {
       pending: false, status: '', generation: this.state.generation + 1});
   }
   show(): void {this.update({visible: true});}
-  message(text: string): void {
+  message(text: string, notify = true): void {
     this.update({messages: [...this.state.messages, {id: ++this.nextMessage, text}].slice(-50)});
+    if (notify && this.state.sourceActive) this.onNotice?.(text);
     if (this.state.sourceActive && !this.state.editing) this.startNotice();
   }
   /** Confirmed-message frame: full opacity, then a short blur fade to hidden. */

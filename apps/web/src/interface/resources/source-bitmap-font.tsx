@@ -63,6 +63,10 @@ export function sourceBitmapFont(name?: string): SourceBitmapFont | undefined {
   return name ? fonts.get(name) : undefined;
 }
 
+export function sourceBitmapFontImages(): string[] {
+  return [...fonts.values()].flatMap(font => font.glyphs.map(glyph => `/${glyph.asset}`));
+}
+
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);

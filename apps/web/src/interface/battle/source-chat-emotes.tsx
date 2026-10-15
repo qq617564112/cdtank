@@ -3,6 +3,7 @@ import {emoteGlyph} from './chat-emote-text';
 import type {ChatSourceLayout} from './source-chat-layout';
 import {ChatEmoteButton} from '../resources/chat-emote-button';
 import {ImageArtwork} from '../resources/image-artwork';
+import {sourceUiAsset} from '../resources/source-ui-image';
 
 export function SourceChatEmotes({menuLayout, open, pending, composing, input, toggle, close, insert, releaseKeys}: {
   layout: ChatSourceLayout; menuLayout: ChatSourceLayout; open: boolean; pending: boolean;
@@ -30,7 +31,7 @@ export function SourceChatEmotes({menuLayout, open, pending, composing, input, t
       }} onKeyUp={event => event.stopPropagation()}>
       {Array.from({length: 30}, (_, index) => index + 1).map(id => {
         const name = String(id).padStart(3, '0');
-        const asset = menuLayout.picture(menuLayout.control(name).properties.Image)['data-source-asset'];
+        const asset = sourceUiAsset(menuLayout.ui, menuLayout.control(name).properties.Image).asset;
         const position = menuLayout.place(name, -Number(bounds.left), -Number(bounds.top));
         return <button key={id} type="button" data-chat-emote-choice={id} aria-label={`表情${name}`}
           style={position.style} role="menuitem" disabled={pending} onClick={() => {

@@ -4,11 +4,13 @@ import './lobby-source-page.css';
 import {useLayoutEffect, useRef, type ReactNode} from 'react';
 import {SourceImageScale} from '../resources/source-static-image';
 import {HomeSourceLayout} from '../resources/source-ui-layout';
-import {sourceProps, useSourceScale, useSourceUi} from './source-react';
+import {sourceProps, useSourceUi} from './source-react';
 import {lobbyBannerUrl} from '../resources/source-ui-resources';
 import {ImageArtwork} from '../resources/image-artwork';
 import {GameSurfacePanel} from '../resources/game-surface-panel';
 import {LOBBY_CHAT_INPUT_BOUNDS, LOBBY_MAIN_BOUNDS} from './lobby-source-geometry';
+import {isMobileDevice} from '../../platform/device';
+import {usePageLayout} from '../resources/use-page-layout';
 
 interface LobbySourcePageProps {
   visible: boolean;
@@ -25,7 +27,8 @@ interface LobbySourcePageProps {
 export function LobbySourcePage({visible, children, chatContent, playerContent, headerContent, status, room = false, roomName = ''}: LobbySourcePageProps) {
   const {ui, error, retry: retryResources} = useSourceUi(visible, ['default.xml', 'roomlist.xml', 'playerlist.xml', 'chat.xml']);
   const retry = useRef<HTMLButtonElement>(null);
-  const scale = useSourceScale(800, 600, 0, 0, 0, Infinity);
+  const mobile = isMobileDevice();
+  const scale = usePageLayout();
   useLayoutEffect(() => {
     if (visible && error && document.activeElement === document.body) retry.current?.focus();
   }, [visible, error]);
@@ -45,7 +48,7 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
     </section>}
     <div className="lobby-source-viewport" style={scale.viewport}>
       <div className="lobby-source-stage" data-lobby-stage="" style={scale.stage}>
-        <SourceImageScale value={scale.viewport.width / 800}>
+        <SourceImageScale value={scale.scale}>
           {ui && players && chat && <>
             {!room && <div className="lobby-source-main">
               <GameSurfacePanel {...sourceProps(ui, rooms!, 'roomlist.xml', 'ditu')} shape="rooms"
@@ -76,7 +79,7 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
                 style={{left: 610, top: 97}} aria-hidden="true"/>
             </div>
             <div className="lobby-source-main">
-              {!room && <>
+              {!room && !mobile && <>
                 <div {...sourceProps(ui, chat, 'chat.xml', 'paomadengditu')}
                   className="lobby-announcement" aria-hidden="true"/>
                 <div {...sourceProps(ui, chat, 'chat.xml', 'lt')}
@@ -87,6 +90,7 @@ export function LobbySourcePage({visible, children, chatContent, playerContent, 
                   shape="chat-input" className="lobby-chat-input-panel" aria-hidden="true"/>
                 <GameMessage data-lobby-status="" text={visible && !room ? status : ''}/>
               </>}
+              {!room && mobile && <GameMessage data-lobby-status="" text={visible ? status : ''}/>}
             </div>
           </>}
           <div className="lobby-source-main">{chatContent}{children}</div>

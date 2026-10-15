@@ -1,0 +1,489 @@
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop) {
+  width: var(--mobile-account-width) !important;
+  height: 405px !important;
+}
+
+html[data-mobile-device] :is(.home-inventory-stage, .home-roles-stage, .home-equipment-stage,
+  .shop-source-stage) {
+  margin: 0 auto;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+html[data-mobile-device] :is([data-home-close], [data-roles-close], [data-equipment-close],
+  [data-shop-close]) {
+  top: 4px !important;
+}
+
+html[data-mobile-device] .home-inventory-stage,
+html[data-mobile-device] .shop-source-stage:is([data-shop-active-page='Item'], [data-shop-active-page='Part']) {
+  width: 100%;
+}
+
+html[data-mobile-device] :is(.home-inventory-stage,
+  .shop-source-stage:is([data-shop-active-page='Item'], [data-shop-active-page='Part']))
+  > [data-source-control='youbiandaditu'] {
+  width: calc(100% - 220px) !important;
+}
+
+html[data-mobile-device] .home-inventory-stage > [data-home-close],
+html[data-mobile-device] .shop-source-stage:is([data-shop-active-page='Item'], [data-shop-active-page='Part'])
+  > [data-shop-close] {
+  left: auto !important;
+  right: 18px;
+  width: 44px !important;
+  height: 44px !important;
+}
+
+html[data-mobile-device] .shop-source-stage:is([data-shop-active-page='Item'], [data-shop-active-page='Part'])
+  > [data-source-control='heseditu'] {
+  width: calc(100% - 240px) !important;
+}
+
+html[data-mobile-device] .shop-source-stage:is([data-shop-active-page='Item'], [data-shop-active-page='Part'])
+  > :is(.shop-list-scroll-shell, .part-shop-list-scroll-shell)[data-source-control^='lstShop'] {
+  width: calc(100% - 240px) !important;
+}
+
+html[data-mobile-device] .home-inventory-stage .home-battle-summary-source {
+  width: calc(100% - 242px);
+}
+
+html[data-mobile-device] .home-inventory-stage :is(.home-title-summary-source, .home-award-summary-source) {
+  width: calc(100% - 242px);
+}
+
+html[data-mobile-device] .home-inventory-stage .home-summary-sheet {
+  width: 100%;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is(.home-font-text, .home-tank-stat-number, .home-tank-stat-label, .home-tank-stat-unit,
+  .source-feedback-text) {
+  font-size: 18px;
+  line-height: 22px;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  .home-font-text {
+  min-height: 20px;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is(.home-tank-description, .home-pet-owned-description, .pet-shop-description,
+  .tank-shop-description, [data-source-control='edtPetDesc'], [data-source-control='edtTankDesc']) {
+  font-size: 18px;
+  line-height: 25px;
+  -webkit-text-stroke-width: .4px;
+}
+
+html[data-mobile-device] :is(.home-inventory-list-scroll-shell, .home-owned-role-list-scroll-shell,
+  .home-equipment-list-scroll-shell, .shop-list-scroll-shell, .part-shop-list-scroll-shell,
+  .role-shop-list-scroll-shell, .mend-shop-list-scroll-shell) {
+  padding-right: 0;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is(.home-inventory-source-list, .home-owned-role-source-list, .home-equipment-source-list,
+  .shop-item-source-list, .role-shop-source-list, .part-shop-source-list, .mend-shop-list) {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  touch-action: pan-y;
+  padding-right: 0 !important;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is(.home-inventory-source-list, .home-owned-role-source-list, .home-equipment-source-list,
+  .shop-item-source-list, .role-shop-source-list, .part-shop-source-list, .mend-shop-list) > button {
+  width: calc(100% - 8px);
+  height: 72px;
+  min-height: 72px;
+  margin: 0;
+  background-position: left top;
+  background-size: 100% 68px;
+  font-size: 18px;
+  line-height: 22px;
+}
+
+html[data-mobile-device] #account-shop .shop-source-stage
+  :is(.shop-item-source-list, .part-shop-source-list, .role-shop-source-list,
+  .mend-shop-list)[role='listbox'] > button[role='option'] {
+  width: calc(100% - 8px);
+  height: 72px;
+  min-height: 72px;
+  line-height: 22px;
+}
+
+html[data-mobile-device] #account-shop .shop-source-stage
+  :is(.shop-item-source-list[data-shop-source-product-grid],
+  .part-shop-source-list[data-part-common-product-grid])[role='listbox'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 84px;
+  gap: 4px;
+}
+
+html[data-mobile-device] #account-shop .shop-source-stage
+  :is(.shop-item-source-list[data-shop-source-product-grid],
+  .part-shop-source-list[data-part-common-product-grid])[role='listbox'] > button[role='option'] {
+  width: 100%;
+  height: 84px;
+  min-height: 84px;
+  background-size: 100% 80px;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is(.home-item-row-icon, .home-owned-tank-row-icon, .home-owned-pet-row-icon,
+  .home-equipment-common-row-icon, .home-equipment-hat-mark-row-icon, .shop-item-row-icon,
+  .tank-shop-row-icon, .pet-shop-row-icon, .part-shop-owned-row-icon, .mend-part-row-icon) {
+  left: 6px;
+  top: 12px;
+  width: 40px;
+  height: 40px;
+  background-size: contain;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is(.home-item-row-name, .home-owned-tank-row-name, .home-owned-pet-row-name,
+  .home-equipment-common-row-name, .home-equipment-hat-mark-row-name, .shop-item-row-name,
+  .tank-shop-row-name, .pet-shop-row-name, .part-shop-owned-row-name, .mend-part-row-name) {
+  left: 52px;
+  top: 8px;
+  max-width: calc(100% - 56px);
+  font-size: 18px;
+  line-height: 24px;
+  text-overflow: ellipsis;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is(.home-item-row-type, .home-owned-tank-row-type, .home-owned-pet-row-type,
+  .shop-item-row-type, .tank-shop-row-secondary, .pet-shop-row-secondary,
+  .part-shop-owned-row-secondary, .home-equipment-common-row-kind) {
+  left: 52px;
+  top: 34px;
+  max-width: calc(100% - 56px);
+  font-size: 16px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+}
+
+html[data-mobile-device] :is(.home-owned-tank-row-days, .tank-shop-row-tertiary,
+  .part-shop-owned-row-tertiary, .home-equipment-common-row-days) {
+  left: auto;
+  right: 6px;
+  top: 54px;
+  font-size: 15px;
+  line-height: 18px;
+}
+
+html[data-mobile-device] :is(.home-item-row-quantity, .shop-item-row-quantity) {
+  right: auto;
+  left: 14px;
+  bottom: 6px;
+  font-size: 16px;
+  line-height: 18px;
+}
+
+html[data-mobile-device] :is(.shop-item-row-price, .part-shop-owned-row-fourth) {
+  left: 52px;
+  top: 54px;
+  max-width: calc(100% - 56px);
+  font-size: 16px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+}
+
+html[data-mobile-device] #account-shop .part-shop-owned-row-secondary {
+  top: 32px;
+  max-width: 60px;
+}
+
+html[data-mobile-device] #account-shop .part-shop-owned-row-tertiary {
+  top: 32px;
+  max-width: 64px;
+}
+
+html[data-mobile-device] #account-shop .part-shop-owned-row-fourth {
+  left: 6px;
+  top: 52px;
+  max-width: calc(100% - 12px);
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is(.home-inventory-source-list, .home-owned-role-source-list, .home-equipment-source-list,
+  .shop-item-source-list, .role-shop-source-list, .part-shop-source-list, .mend-shop-list)
+  .source-feedback-text {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+html[data-mobile-device] :is(.home-owned-tank-row-type, .home-owned-pet-row-type) {
+  max-width: 108px;
+}
+
+html[data-mobile-device] .shop-button-label {
+  font-size: 21px;
+  line-height: 25px;
+}
+
+html[data-mobile-device] .home-profile-label {
+  font-size: 19px;
+  letter-spacing: 0;
+}
+
+html[data-mobile-device] .home-stat-value {
+  font-size: 16px;
+}
+
+html[data-mobile-device] .home-tank-stat-row {
+  padding-right: 4px;
+  padding-left: 4px;
+}
+
+html[data-mobile-device] .home-tank-stat-content {
+  gap: 3px;
+}
+
+html[data-mobile-device] .home-tank-stat-label {
+  font-size: 16px !important;
+}
+
+html[data-mobile-device] .home-tank-stat-unit {
+  font-size: 14px !important;
+}
+
+html[data-mobile-device] .home-role-web-tools {
+  left: 12px !important;
+  top: 50px !important;
+  width: 192px !important;
+  max-height: 260px;
+  overflow: auto;
+  z-index: 5;
+  padding: 12px;
+  background: #243d35;
+  pointer-events: auto;
+}
+
+html[data-mobile-device] .home-role-web-tools:not(:has(button)) {
+  display: none !important;
+}
+
+html[data-mobile-device] .home-role-web-tools button {
+  min-height: 44px;
+  font-size: 18px;
+}
+
+html[data-mobile-device] .game-item-tooltip {
+  left: 212px !important;
+  top: 72px !important;
+  width: 400px;
+  height: 220px;
+  z-index: 6;
+}
+
+html[data-mobile-device] .game-item-tooltip-frame {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+html[data-mobile-device] .game-item-tooltip .game-item-tooltip-title {
+  left: 20px !important;
+  top: 18px !important;
+  width: 360px !important;
+  height: 30px !important;
+  font-size: 22px;
+}
+
+html[data-mobile-device] .game-item-tooltip .game-item-tooltip-description {
+  left: 20px !important;
+  top: 60px !important;
+  width: 360px !important;
+  height: 144px !important;
+  font-size: 20px;
+  line-height: 28px;
+  pointer-events: auto;
+  touch-action: pan-y;
+}
+
+html[data-mobile-device] #account-history {
+  width: calc(var(--game-page-width) - 24px);
+  height: calc(var(--game-page-height) - 16px);
+  max-height: none;
+  padding: 12px 16px;
+  font-size: 16px;
+}
+
+html[data-mobile-device] #account-history h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+html[data-mobile-device] .account-history-description {
+  margin: 2px 0 8px;
+}
+
+html[data-mobile-device] .account-history-scroll {
+  max-height: calc(var(--game-page-height) - 158px);
+  overflow: auto;
+  touch-action: pan-x pan-y;
+}
+
+html[data-mobile-device] #account-history :is(th, td) {
+  padding: 10px 12px;
+}
+
+html[data-mobile-device] #account-history nav {
+  margin: 8px 0 0;
+}
+
+html[data-mobile-device] #account-history > button {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+}
+
+html[data-mobile-device] :is(.history-intro-stage, .history-intro-source-page) {
+  width: var(--mobile-page-width);
+  height: 540px;
+}
+
+html[data-mobile-device] .history-intro-body {
+  left: 32px !important;
+  top: 118px !important;
+  width: calc(100% - 64px) !important;
+  height: 382px !important;
+  padding-right: 0 !important;
+  font-size: 26px;
+  line-height: 36px;
+  touch-action: pan-y;
+}
+
+html[data-mobile-device] .history-intro-source-page > [data-source-control='ditu'],
+html[data-mobile-device] .history-intro-source-page > [data-source-control='all'] {
+  width: 100% !important;
+  height: 540px !important;
+}
+
+html[data-mobile-device] .history-intro-source-page > [data-source-control='ditu2'] {
+  width: 100% !important;
+  height: 465px !important;
+}
+
+html[data-mobile-device] .history-intro-source-page > [data-source-control='luangan'] {
+  width: calc(100% - 70px) !important;
+}
+
+html[data-mobile-device] .history-intro-source-page > [role='group'] {
+  position: absolute;
+  left: 16px;
+  top: 8px;
+  display: flex;
+  width: calc(100% - 100px);
+  height: 102px;
+  gap: 12px;
+}
+
+html[data-mobile-device] .history-intro-source-page [data-history-intro-tab] {
+  position: relative;
+  left: auto !important;
+  top: 0 !important;
+  width: calc((100% - 36px) / 4) !important;
+  height: 102px !important;
+}
+
+html[data-mobile-device] .history-intro-source-page [data-history-intro-close] {
+  left: auto !important;
+  right: 12px;
+  top: 8px !important;
+  width: 54px !important;
+  height: 54px !important;
+}
+
+html[data-mobile-device] .history-intro-scrollbar {
+  display: none;
+}
+
+html[data-mobile-device] :is(#home-inventory, #home-roles, #home-equipment, #account-shop)
+  :is([data-source-control='txtMoney'], [data-source-control='txtCoin'],
+  [data-source-control='txtTech'], [data-source-control='txtOriginality']) {
+  left: 90px !important;
+  width: 102px !important;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+html[data-mobile-device] #home-tank-texture-selection {
+  max-height: 389px;
+  padding: 8px 16px;
+}
+
+html[data-mobile-device] #home-tank-texture-selection :is(p, output, [data-texture-part]) {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+html[data-mobile-device] #home-tank-texture-selection > button {
+  min-width: 120px;
+  min-height: 44px;
+  font-size: 20px;
+}
+
+html[data-mobile-device] .tank-shop-texture-source-picture {
+  display: none;
+}
+
+html[data-mobile-device] .shop-source-stage:has(.tank-shop-texture-component)
+  > .tank-shop-source-picture:not([data-source-control='heseditu'],
+    [data-source-control='ditukuang'], [data-source-control='shuliangditu'],
+    [data-source-control='jinqiantubiao'], [data-source-control='jinqian'],
+    [data-source-control='chuangyidiantubiao2'], [data-source-control='xingbi']) {
+  display: none;
+}
+
+html[data-mobile-device] .tank-shop-texture-component:has([data-texture-part='U']) {
+  --texture-row-top: 80px;
+}
+
+html[data-mobile-device] .tank-shop-texture-component:has([data-texture-part='M']) {
+  --texture-row-top: 176px;
+}
+
+html[data-mobile-device] .tank-shop-texture-component:has([data-texture-part='XY']) {
+  --texture-row-top: 272px;
+}
+
+html[data-mobile-device] .tank-shop-texture-component > [data-texture-part] {
+  left: 448px !important;
+  top: var(--texture-row-top) !important;
+  width: 148px !important;
+  height: 40px !important;
+  font-size: 18px;
+  line-height: 20px;
+  white-space: normal;
+}
+
+html[data-mobile-device] .tank-shop-texture-component > button {
+  top: calc(var(--texture-row-top) + 42px) !important;
+  width: 36px !important;
+  height: 36px !important;
+}
+
+html[data-mobile-device] .tank-shop-texture-component > [data-source-control^='btnDec'] {
+  left: 444px !important;
+}
+
+html[data-mobile-device] .tank-shop-texture-component > [data-source-control^='btnInc'] {
+  left: 566px !important;
+}
+
+html[data-mobile-device] .tank-shop-texture-component > span:not([data-texture-part]) {
+  left: 482px !important;
+  top: calc(var(--texture-row-top) + 42px) !important;
+  width: 84px !important;
+  height: 36px !important;
+  font-size: 16px;
+  line-height: 18px;
+  text-align: center;
+  white-space: normal;
+}

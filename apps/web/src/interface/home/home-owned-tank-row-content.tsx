@@ -1,8 +1,8 @@
 import {ImageArtwork} from '../resources/image-artwork';
 import {TankIconMark} from '../resources/tank-icon-mark';
 import {SourceFeedbackText} from '../resources/source-feedback-text';
-import {HomeSourceLayout, type HomeSourceUi} from '../resources/source-ui-layout';
-import {sourceProps} from '../resources/source-ui-props';
+import type {HomeSourceUi} from '../resources/source-ui-layout';
+import {sourceUiAsset} from '../resources/source-ui-image';
 import {sourceTankKind} from '../account/tank-shop-row-display';
 import {sourceOwnedTankDays} from './home-owned-tank-row-display';
 import {HomeRoleRowStatusBadge} from './home-role-row-status-badge';
@@ -13,16 +13,15 @@ export function HomeOwnedTankRowContent({ui, name, tankId, tankType, durationMin
   ui: HomeSourceUi; name: string; tankId?: number; tankType?: number; durationMinutes?: number;
   current?: boolean;
 }) {
-  const layout = new HomeSourceLayout(ui, 'myhome_panzerpage.xml');
-  const icon = tankId === undefined ? undefined : sourceProps(ui, layout, 'myhome_panzerpage.xml', 'lstTank',
+  const icon = tankId === undefined ? undefined : sourceUiAsset(ui,
     `set:tanke0 image:data\\ui\\tanke\\${String(tankId).padStart(3, '0')}.tga`);
   return <>
     <span className="home-owned-tank-row-icon" data-home-owned-tank-icon="" aria-hidden="true"
-      data-tank-icon-mark={icon?.['data-tank-icon-mark']}
-      data-source-asset={icon?.['data-source-asset']} style={{backgroundImage: 'none'}}>
-      {icon?.['data-source-asset'] && <ImageArtwork asset={`/${icon['data-source-asset']}`} fit="contain"
+      data-tank-icon-mark={icon?.tankMark}
+      data-source-asset={icon?.asset} style={{backgroundImage: 'none'}}>
+      {icon?.asset && <ImageArtwork asset={`/${icon.asset}`} fit="contain"
         style={{width: '100%', height: '100%'}} aria-hidden="true"/>}
-      {icon?.['data-tank-icon-mark'] && <TankIconMark mark={icon['data-tank-icon-mark']}/>}
+      {icon?.tankMark && <TankIconMark mark={icon.tankMark}/>}
     </span>
     {current && <HomeRoleRowStatusBadge ui={ui} status="current"/>}
     <span className="home-owned-tank-row-name" data-home-owned-tank-name="">

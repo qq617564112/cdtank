@@ -9,6 +9,8 @@ import {DialogButton} from '../resources/dialog-button';
 import {GameDialog, GameDialogTopbar, GameDialogTitle,
   GameDialogPanel, GameDialogFootbar} from '../resources/game-dialog';
 import {useSourceDialog, useSourceScale} from './source-react';
+import {isMobileDevice} from '../../platform/device';
+import {gamePageScale} from '../../platform/page-viewport';
 import type {RoomCreateDraft} from './room-create-draft';
 import {validateRoomCreateDraft, changeRoomCreateBound} from './room-create-draft';
 import {RoomCreateCard} from './room-create-card';
@@ -41,7 +43,9 @@ export function RoomCreateDialog({open, close, initialDraft, map, submit, editin
   const composing = useRef(false), escapePending = useRef(false);
   const nameRef = useRef<HTMLInputElement>(null), passwordRef = useRef<HTMLInputElement>(null);
   const dialog = useSourceDialog(open);
-  const scale = useSourceScale(800, 600, 0, 0, .25, Infinity).viewport.width / 800;
+  const desktopScale = useSourceScale(800, 600, 0, 0, .25, Infinity).viewport.width / 800;
+  const mobile = isMobileDevice();
+  const scale = mobile ? gamePageScale(720, 405) : desktopScale;
   const nameLimit = useRoomInputLimit(nameRef, ROOM_NAME_MAX_CODEPOINTS,
     value => setDraft(previous => ({...previous, roomName: value})));
   const passwordLimit = useRoomInputLimit(passwordRef, ROOM_PASSWORD_MAX_CODEPOINTS,
@@ -85,7 +89,7 @@ export function RoomCreateDialog({open, close, initialDraft, map, submit, editin
     <output className="room-player-value" aria-label={bound === 'minPlayers' ? '开局人数' : '房间容量'}>{draft[bound]}</output>
   </div>;
 
-  return <GameDialog ref={dialog} width={310} height={392} uiScale={scale}
+  return <GameDialog ref={dialog} width={mobile ? 720 : 310} height={mobile ? 405 : 392} uiScale={scale}
     stageClassName="room-create-stage" data-room-create-stage="" data-room-create-dialog="" data-room-edit-dialog={editing || undefined}
     aria-label={editing ? '编辑房间' : '创建房间'} aria-busy={pending}
     onCancel={event => {event.preventDefault(); if (!pending && !composing.current) close();}}
