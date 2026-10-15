@@ -27,6 +27,7 @@ import {mkdirSync} from 'node:fs';
 import {dirname} from 'node:path';
 import {serverRuntimeConfig} from './runtime/config';
 import {hostWeb} from './runtime/web';
+import {createRoomCpuHttpHandler} from './rooms/http-cpu';
 import {accountMatchHistory} from './settlement/history';
 import {registerGmSupportApi} from './support/gm-support-api';
 import {registerFamilyApi} from './social/family';
@@ -65,6 +66,8 @@ const server = new WsServer(serviceProto, {
 const sessionByConnection = new Map<string, {roomId: string; playerId: string}>();
 const transport = roomTransport(server, world, sessionByConnection);
 const {broadcastRoomState, broadcastEvent} = transport;
+const handleRoomCpuHttp = createRoomCpuHttpHandler(server, world, accountByConnection,
+  sessionByConnection, broadcastRoomState);
 const {ownedTank, roomTankId, bindAccountState} = accountBattleBinding(
   accounts, world, accountByConnection);
 
@@ -129,7 +132,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => {
   process.exit(0);
 });
 
-server.start().then(() => hostWeb(server, runtime.webRoot)).catch((error: unknown) => {
+server.start().then(() => hostWeb(server, runtime.webRoot, handleRoomCpuHttp)).catch((error: unknown) => {
   console.error(error);
   shutdown();
   process.exitCode = 1;

@@ -5,7 +5,8 @@ import serveStatic from 'serve-static';
 import type {WsServer} from 'tsrpc';
 import type {ServiceType} from '../../../shared/protocols/serviceProto';
 
-export function hostWeb(server: WsServer<ServiceType>, webRoot: string): void {
+export function hostWeb(server: WsServer<ServiceType>, webRoot: string,
+  handleApi: (request: IncomingMessage, response: ServerResponse) => boolean): void {
   const assetPrefix = resolve(webRoot, 'assets') + sep;
   const files = serveStatic(webRoot, {
     redirect: false,
@@ -27,6 +28,7 @@ export function hostWeb(server: WsServer<ServiceType>, webRoot: string): void {
   // TSRPC 3.4.21 keeps its HTTP listener private; attach after start() resolves.
   const listener = Reflect.get(server, '_httpServer') as Server;
   listener.on('request', (request, response) => {
+    if (handleApi(request, response)) return;
     const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
     if ((request.method === 'GET' || request.method === 'HEAD')
         && (/^\/(login|channels|lobby|closed|quick-start)\/?$/.test(pathname)

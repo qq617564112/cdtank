@@ -11,7 +11,7 @@ export function modeName(mode: number): string {
 /** Build the actual waiting room after resolving its source map. */
 export function createWaitingRoom(mode: number, mapId: number | undefined,
   allocateId: () => string, minPlayers?: number, maxPlayers?: number, friendlyFire = false,
-  timeLimitSeconds?: number): RoomState {
+  timeLimitSeconds?: number, battlefield?: RoomState['battlefield']): RoomState {
   const map = getMapConfig(mode, mapId);
   validateRoomTimeLimit(timeLimitSeconds);
   return {
@@ -22,7 +22,7 @@ export function createWaitingRoom(mode: number, mapId: number | undefined,
     timeLimitSeconds,
     map,
     ...selectPlayerLimits(map, minPlayers, maxPlayers),
-    battlefield: createRoomBattlefield(map.mapId),
+    battlefield: battlefield ?? createRoomBattlefield(map.mapId),
     players: new Map(),
     bullets: [],
     phase: 'WAITING',

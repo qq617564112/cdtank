@@ -11,14 +11,20 @@ export function registerRoomLeaveApi(server: WsServer<ServiceType>, world: World
   transport: ReturnType<typeof roomTransport>,
   accounts: AccountStore,
   accountByConnection: ReadonlyMap<string, string>): void {
-  let departures: Promise<void> = Promise.resolve();
+  const departures = new Map<string, Promise<void>>();
   const roomKeyPrefix = randomUUID();
   server.implementApi('Leave', async call => {
-    const departure = departures.then(async () => {
+    const roomId = sessions.get(call.conn.id)?.roomId;
+    if (!roomId) return call.error('请先加入房间', {code: 'NOT_JOINED'});
+    const previous = departures.get(roomId) ?? Promise.resolve();
+    const departure = previous.then(async () => {
       // Let battle timers run between synchronous settlement commits from different rooms.
       await new Promise<void>(resolve => setImmediate(resolve));
       const session = sessions.get(call.conn.id);
       if (!session) return call.error('请先加入房间', {code: 'NOT_JOINED'});
+      if (session.roomId !== roomId) {
+        return call.error('房间或局号已变化，请刷新后重试', {code: 'LEAVE_CONFLICT'});
+      }
       const snapshot = world.snapshot(session.roomId);
       if (call.req.roomId !== session.roomId || call.req.round !== snapshot?.match?.round
           || !snapshot.players.some(player => player.id === session.playerId)) {
@@ -50,7 +56,11 @@ export function registerRoomLeaveApi(server: WsServer<ServiceType>, world: World
       for (const event of events) transport.broadcastEvent(event);
       transport.broadcastRoomState(session.roomId);
     });
-    departures = departure.then(() => undefined, () => undefined);
+    const settled = departure.then(() => undefined, () => undefined);
+    departures.set(roomId, settled);
+    void settled.then(() => {
+      if (departures.get(roomId) === settled) departures.delete(roomId);
+    });
     await departure;
   });
 }

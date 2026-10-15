@@ -335,6 +335,7 @@ export class RoomProcesses implements RoomWorld {
   readonly rematch = this.forward('rematch');
   readonly exitPenaltyCount = this.forward('exitPenaltyCount');
   readonly playerInputSequence = this.forward('playerInputSequence');
+  readonly bindAccountState = this.forward('bindAccountState');
   readonly bindInventory = this.forward('bindInventory');
   readonly bindRoleSources = this.forward('bindRoleSources');
   readonly bindEquipmentProfile = this.forward('bindEquipmentProfile');

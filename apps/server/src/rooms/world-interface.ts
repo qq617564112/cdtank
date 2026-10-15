@@ -5,7 +5,7 @@ export type RoomCommand =
   | 'createAndJoin' | 'joinRoom' | 'manageCpu' | 'configureAutopilot'
   | 'ready' | 'resourcesLoaded' | 'changeTeam' | 'kickRoomPlayer' | 'editRoom'
   | 'rematch' | 'leave' | 'exitPenaltyCount' | 'pauseDisconnectedPlayer'
-  | 'restorePlayerConnection' | 'playerInputSequence' | 'bindInventory'
+  | 'restorePlayerConnection' | 'playerInputSequence' | 'bindAccountState' | 'bindInventory'
   | 'bindRoleSources' | 'bindEquipmentProfile' | 'bindTitle' | 'refreshAccountTitle'
   | 'inventory' | 'selectTank' | 'canConfigureInventory' | 'confirmKitbag'
   | 'updateInput' | 'useAction' | 'chat' | 'publishReceipts'

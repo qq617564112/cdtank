@@ -315,7 +315,10 @@ export class World {
     }
     const completedRound = found.room.result !== undefined;
     editWaitingRoom(found.room, request);
-    if (completedRound) found.room.round++;
+    if (completedRound) {
+      found.room.round++;
+      found.room.tick = 0;
+    }
     return found.room.round;
   }
 
@@ -479,6 +482,14 @@ export class World {
     const found = this.findPlayer(playerId);
     if (!found) throw new Error('角色不存在');
     return found.player.inputSequence;
+  }
+
+  bindAccountState(playerId: string, inventory: AccountInventory, sources: RoleOwnedSources,
+    profile: RoleProfilePayload | undefined, title: PlayerTitle | undefined): void {
+    this.bindInventory(playerId, inventory);
+    this.bindRoleSources(playerId, sources);
+    this.bindEquipmentProfile(playerId, profile);
+    this.bindTitle(playerId, title);
   }
 
   bindInventory(playerId: string, inventory: AccountInventory, cancelReady = false): void {

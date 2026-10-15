@@ -33,9 +33,9 @@ export default defineConfig({
     port: portFromEnvironment('CDTANK_WEB_PORT', 5173),
     proxy: {
       '/game': {
-        target: process.env.CDTANK_GAME_SERVER ?? 'ws://127.0.0.1:3001',
+        target: (process.env.CDTANK_GAME_SERVER ?? 'ws://127.0.0.1:3001').replace(/^ws/, 'http'),
         ws: true,
-        rewrite: () => '/',
+        rewrite: path => path.replace(/^\/game/, '') || '/',
       },
     },
   },

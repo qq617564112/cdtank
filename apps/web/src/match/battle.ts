@@ -1198,10 +1198,15 @@ export class Battle {
   }
 
   private async manageCpu(operation: 'ADD' | 'REMOVE', playerId?: string, team?: number): Promise<void> {
-    const round = this.roomFeed.snapshot?.match?.round;
-    if (round === undefined) throw new Error('请先加入房间');
-    await this.rooms.cpu({round, operation, playerId, team,
-      tankId: Number(document.querySelector<HTMLSelectElement>('#tank')?.value ?? 1)});
+    const snapshot = this.roomFeed.snapshot;
+    if (!snapshot?.match || !this.playerId) throw new Error('请先加入房间');
+    const round = snapshot.match.round;
+    const tankId = Number(document.querySelector<HTMLSelectElement>('#tank')?.value ?? 1);
+    if (operation === 'ADD') {
+      await this.rooms.addCpu(snapshot.roomId, {requesterPlayerId: this.playerId, round, tankId, team});
+    } else {
+      await this.rooms.cpu({round, operation, playerId, team, tankId});
+    }
   }
 
   private async configureCpuLoadout(playerId: string, loadout: CpuLoadoutItem[]): Promise<void> {

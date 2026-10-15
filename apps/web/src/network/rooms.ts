@@ -11,11 +11,13 @@ import type {ReqAutopilot} from '../../../shared/protocols/PtlAutopilot';
 import type {ReqRematch} from '../../../shared/protocols/PtlRematch';
 import type {LeavePenalty, ReqLeave, ResLeave} from '../../../shared/protocols/PtlLeave';
 import type {ReqRoomInvite} from '../../../shared/protocols/PtlRoomInvite';
+import type {ReqAddRoomCpu, ResAddRoomCpu, RoomCpuHttpError} from '../../../shared/http/room-cpu';
 
-/** Room requests on GameConnection's single authenticated transport. */
+/** HTTP CPU additions and room requests on the authenticated WebSocket. */
 export class RoomConnection {
   constructor(private readonly client: WsClient<ServiceType>,
-    private readonly ensureConnected: () => Promise<void>) {}
+    private readonly ensureConnected: () => Promise<void>,
+    private readonly accountToken: () => string | undefined) {}
 
   async chat(text: string, channel: 0 | 1 = 0): Promise<void> {
     const result = await this.client.callApi('RoomChat', {channel, text});
@@ -91,6 +93,32 @@ export class RoomConnection {
   async cpu(request: ReqCpu): Promise<void> {
     const result = await this.client.callApi('Cpu', request);
     if (!result.isSucc) throw new Error(result.err.message);
+  }
+
+  async addCpu(roomId: string, request: ReqAddRoomCpu): Promise<ResAddRoomCpu> {
+    await this.ensureConnected();
+    const token = this.accountToken();
+    if (!token) throw new Error('请先登录账户');
+    const response = await fetch(`/game/api/rooms/${encodeURIComponent(roomId)}/cpus`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
+      body: JSON.stringify(request),
+    });
+    const body = await response.text();
+    let result: Partial<ResAddRoomCpu & RoomCpuHttpError> | undefined;
+    try {
+      result = body ? JSON.parse(body) : undefined;
+    } catch {
+      throw new Error('新增机器人暂时无法确认，请查看房间状态后再操作');
+    }
+    if (!response.ok) {
+      throw new Error(typeof result?.error?.message === 'string'
+        ? result.error.message : `新增机器人请求失败（HTTP ${response.status}）`);
+    }
+    if (result?.round !== request.round || typeof result.playerId !== 'string' || !result.playerId) {
+      throw new Error('新增机器人暂时无法确认，请查看房间状态后再操作');
+    }
+    return {round: result.round, playerId: result.playerId};
   }
 
   async autopilot(request: ReqAutopilot): Promise<void> {

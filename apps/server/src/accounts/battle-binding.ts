@@ -25,10 +25,8 @@ export function accountBattleBinding(accounts: AccountStore, world: World,
     async bindAccountState(connectionId: string, playerId: string): Promise<void> {
       const accountId = accountByConnection.get(connectionId);
       if (accountId) {
-        await world.bindInventory(playerId, accounts.inventory(accountId));
-        await world.bindRoleSources(playerId, accounts.selectedRoleSources(accountId));
-        await world.bindEquipmentProfile(playerId, accounts.roleProfile(accountId));
-        await world.bindTitle(playerId, accounts.currentTitle(accountId));
+        await world.bindAccountState(playerId, accounts.inventory(accountId),
+          accounts.selectedRoleSources(accountId), accounts.roleProfile(accountId), accounts.currentTitle(accountId));
       }
     },
   };

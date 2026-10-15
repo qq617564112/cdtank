@@ -70,7 +70,7 @@ export class GameConnection {
     });
     this.tokenStore = options.tokenStore ?? localStorage;
     this.accounts = new AccountConnection(this.client, () => this.ensureConnected());
-    this.rooms = new RoomConnection(this.client, () => this.ensureConnected());
+    this.rooms = new RoomConnection(this.client, () => this.ensureConnected(), () => this.identity?.token);
     this.client.flows.postDisconnectFlow.push(input => {
       if (this.connectionReady === this.transportReady) this.connectionReady = undefined;
       this.transportReady = undefined;

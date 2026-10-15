@@ -27,7 +27,8 @@ export function editWaitingRoom(room: RoomState, request: ReqEditRoom): void {
   const name = request.roomName.replace(/[<>&\u0000-\u001f]/g, '').trim();
   const replacement = createWaitingRoom(request.mode, request.mapId, () => room.roomId,
     limits.minPlayers, limits.maxPlayers, request.friendlyFire,
-    request.timeLimitSeconds ?? room.timeLimitSeconds);
+    request.timeLimitSeconds ?? room.timeLimitSeconds,
+    room.startedAt === 0 && !room.result && room.map.mapId === map.mapId ? room.battlefield : undefined);
   let passwordSalt = room.passwordSalt, passwordHash = room.passwordHash;
   if (request.password !== undefined) {
     passwordSalt = request.password ? randomBytes(16) : undefined;
