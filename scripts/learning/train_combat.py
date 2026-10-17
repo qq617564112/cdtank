@@ -15,7 +15,7 @@ import torch
 from torch import nn
 from torch.distributions import Categorical
 from gpu_budget import GpuBudget
-from teacher import primitive_action, teach
+from teacher import primitive_action, teach, demonstration_loss
 
 
 SIZES = [3, 3, 3, 2, 9]
@@ -190,6 +190,7 @@ def main(args):
                       "algorithm": "recurrent PPO", "hiddenSize": 64,
                       "maskInputWidth": sum(SIZES), "trainingCourses": course_options(args),
                       "imitationWeight": args.imitation_weight,
+                      "imitationEventWeights": {"fire": 5, "consumable": 30, "other": 1},
                       "teacherBootstrapSteps": args.teacher_steps if not args.resume else 0}
             source = Path(__file__).resolve().parents[2] / "source.json"
             config["source"] = json.loads(source.read_text(encoding="utf-8")) if source.exists() else None
@@ -300,8 +301,7 @@ def main(args):
                                 divergences.append(((ratio - 1) - (new_logp - old_logp)).mean().detach())
                                 if args.imitation_weight:
                                     demonstrated = data["teacher"][ticks, env_indices]
-                                    imitation_losses.append(-sum(dist.log_prob(demonstrated[:, head]).mean()
-                                                                for head, dist in enumerate(ds)))
+                                    imitation_losses.append(demonstration_loss(ds, demonstrated))
                             actor_loss = torch.stack(actor_losses).mean()
                             critic_loss = torch.stack(critic_losses).mean()
                             entropy = torch.stack(entropies).mean()

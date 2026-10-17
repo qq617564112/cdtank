@@ -10,6 +10,17 @@ ITEM_FEATURES = 160
 ITEM_WIDTH = 13
 
 
+def demonstration_loss(distributions, chosen):
+    """Retain sparse firing and consumable decisions among neutral control ticks."""
+    import torch
+
+    weights = torch.ones_like(chosen, dtype=torch.float32)
+    weights[:, 3] = torch.where(chosen[:, 3] == 1, 5., 1.)
+    weights[:, 4] = torch.where(chosen[:, 4] >= 2, 30., 1.)
+    return -sum((dist.log_prob(chosen[:, head]) * weights[:, head]).mean()
+                for head, dist in enumerate(distributions))
+
+
 def primitive_action(frame, lesson):
     """Bootstrap isolated controls; these labels are scripted, never human."""
     observation = frame["observation"]
@@ -95,8 +106,7 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                 distributions, _, hidden = policy(observations, hidden, reset, masks)
                 actions = [primitive_action(result["frames"][0], result["lesson"]) for result in results]
                 chosen = torch.tensor(actions, device=device)
-                losses.append(-sum(dist.log_prob(chosen[:, head]).mean()
-                                   for head, dist in enumerate(distributions)))
+                losses.append(demonstration_loss(distributions, chosen))
                 student_probability = args.teacher_student_fraction * min(1, steps / max(1, args.teacher_steps))
                 predicted = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1).tolist()
                 executed = [student if random.random() < student_probability else demonstrated
