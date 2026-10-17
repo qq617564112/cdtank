@@ -277,6 +277,8 @@ def main(args):
     args.rehearsal_batch_sequences = getattr(args, "rehearsal_batch_sequences", 32)
     args.rehearsal_references = getattr(args, "rehearsal_references", None)
     args.rehearsal_reference_weight = getattr(args, "rehearsal_reference_weight", 10.)
+    args.policy_reference = getattr(args, "policy_reference", None)
+    args.policy_reference_weight = getattr(args, "policy_reference_weight", 1.)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     cache = output.parent.parent / 'cache'
@@ -312,6 +314,21 @@ def main(args):
             hidden_size = getattr(args, "hidden_size", None) or (initial["config"].get("hiddenSize", 64) if initial else 64)
             args.hidden_size = hidden_size
             policy = Policy(observations.shape[-1], budget, central_width, hidden_size).to(device)
+            reference = None
+            reference_source = None
+            if args.policy_reference:
+                saved_reference = torch.load(args.policy_reference, map_location=device)
+                reference_width = saved_reference["policy"]["encoder.weight"].shape[1]
+                if reference_width > observations.shape[-1]:
+                    raise ValueError("Policy reference observations must be available in the current simulation")
+                reference = Policy(reference_width, budget, saved_reference["config"].get("centralStateWidth", 0),
+                    saved_reference["config"].get("hiddenSize", 64)).to(device).eval()
+                reference.initialize(saved_reference["policy"])
+                reference.requires_grad_(False)
+                reference_source = {"path": args.policy_reference, "steps": saved_reference["steps"],
+                    "source": saved_reference["config"].get("source"), "observationWidth": reference_width,
+                    "hiddenSize": reference.hidden_size, "executionUsesPrivilegedState": False}
+                del saved_reference
             rehearsal = DemonstrationReplay(args.rehearsal, args.rehearsal_batch_sequences, device,
                 observations.shape[-1], results[0]["frames"][0]["schema"]) if args.rehearsal else None
             opponent_paths = getattr(args, "opponent_paths", None)
@@ -331,10 +348,10 @@ def main(args):
                 old_width = initial["policy"]["encoder.weight"].shape[1]
                 old_hidden = initial["config"].get("hiddenSize", 64)
                 if old_hidden != hidden_size:
-                    reference = Policy(old_width, budget, initial["config"].get("centralStateWidth", 0), old_hidden).to(device).eval()
-                    reference.initialize(initial["policy"])
+                    initial_actor = Policy(old_width, budget, initial["config"].get("centralStateWidth", 0), old_hidden).to(device).eval()
+                    initial_actor.initialize(initial["policy"])
                     with torch.no_grad():
-                        prior_ds, _, _ = reference(observations[:, :old_width], torch.zeros(agents, old_hidden, device=device),
+                        prior_ds, _, _ = initial_actor(observations[:, :old_width], torch.zeros(agents, old_hidden, device=device),
                                                    torch.ones(agents, device=device), masks)
                         expanded_ds, _, _ = policy(observations, torch.zeros(agents, hidden_size, device=device),
                                                    torch.ones(agents, device=device), masks)
@@ -344,7 +361,7 @@ def main(args):
                     initialization = {"previousHiddenSize": old_hidden, "hiddenSize": hidden_size,
                                       "actualResetActors": agents, "actionHeadMismatches": mismatches,
                                       "maximumLogitError": error}
-                    del reference, prior_ds, expanded_ds
+                    del initial_actor, prior_ds, expanded_ds
             optimizer = torch.optim.Adam([
                 {"params": [value for name, value in policy.named_parameters() if name != "mask_encoder.weight"]},
                 {"params": policy.mask_encoder.parameters()}], lr=args.learning_rate, eps=1e-5)
@@ -378,6 +395,7 @@ def main(args):
                       "parameters": sum(parameter.numel() for parameter in policy.parameters()),
                       "initialization": initialization,
                       "rehearsalSource": rehearsal.source if rehearsal else None,
+                      "policyReferenceSource": reference_source,
                       "initialCheckpoint": {"steps": initial["steps"],
                           "teacherProgress": initial["config"].get("teacherProgress"),
                           "source": initial["config"].get("source"),
@@ -425,6 +443,7 @@ def main(args):
                 observations, masks = tensors(results, device)
             hidden = torch.zeros(agents, hidden_size, device=device)
             opponent_hidden = torch.zeros(agents, opponents.hidden_size, device=device)
+            reference_hidden = torch.zeros(agents, reference.hidden_size, device=device) if reference else None
             reset = torch.ones(agents, device=device)
             episode_returns = [[0.0] * actors_per_world for _ in environments]
             completed = 0
@@ -436,6 +455,8 @@ def main(args):
                         storage["central"] = []
                     if args.imitation_weight:
                         storage["teacher"] = []
+                    if reference:
+                        storage["reference"] = []
                     episodes = []
                     policy.eval()
                     for _ in range(args.rollout):
@@ -444,6 +465,10 @@ def main(args):
                             actions = torch.stack([dist.sample() for dist in distributions], dim=-1)
                             opponent_hidden = opponents.act(results, observations, masks, reset, opponent_hidden, actions)
                             logp = sum(dist.log_prob(actions[:, head]) for head, dist in enumerate(distributions))
+                            if reference:
+                                targets, _, reference_hidden = reference(observations[:, :reference_width],
+                                    reference_hidden, reset, masks)
+                                storage["reference"].append(torch.cat([target.probs for target in targets], dim=-1))
                         for key, tensor in (("x", observations), ("masks", masks), ("hidden", hidden),
                                             ("reset", reset), ("actions", actions), ("logp", logp), ("value", value)):
                             storage[key].append(tensor)
@@ -507,6 +532,7 @@ def main(args):
                     rehearsal_losses = []
                     reference_losses = []
                     reference_mismatches = []
+                    policy_reference_losses = []
                     policy.train()
                     for _ in range(args.epochs):
                         random.shuffle(chunks)
@@ -531,6 +557,12 @@ def main(args):
                             loss = actor_loss + .5 * critic_loss - .005 * entropy
                             imitation_loss = demonstration_loss(ds, data["teacher"][ticks, env_indices]) if args.imitation_weight else loss.new_zeros(())
                             loss += args.imitation_weight * imitation_loss
+                            if reference:
+                                targets = data["reference"][ticks, env_indices].split(SIZES, dim=-1)
+                                policy_reference_loss = sum((target * (target.clamp_min(1e-9).log()
+                                    - distribution.logits)).sum(-1).mean() for target, distribution in zip(targets, ds))
+                                loss += args.policy_reference_weight * policy_reference_loss
+                                policy_reference_losses.append(policy_reference_loss.item())
                             if rehearsal:
                                 rehearsal_loss, reference_loss, mismatch = rehearsal.loss(policy,
                                     use_reference_actions=bool(args.rehearsal_references))
@@ -561,6 +593,7 @@ def main(args):
                            "rehearsalLossMean": float(np.mean(rehearsal_losses)) if rehearsal_losses else None,
                            "rehearsalReferenceKlMean": float(np.mean(reference_losses)) if reference_losses else None,
                            "rehearsalReferenceHeadMismatchRate": float(np.mean(reference_mismatches)) if reference_mismatches else None,
+                           "policyReferenceKlMean": float(np.mean(policy_reference_losses)) if policy_reference_losses else None,
                            "episodes": episodes, "rewardMean": data["reward"][:, trainable].mean().item()}
                     text = json.dumps(row)
                     print(text, flush=True)
@@ -637,6 +670,8 @@ if __name__ == "__main__":
     parser.add_argument("--rehearsal-batch-sequences", type=int, default=32)
     parser.add_argument("--rehearsal-references", help="JSON list of fixed teacher checkpoints, in rehearsal course order")
     parser.add_argument("--rehearsal-reference-weight", type=float, default=10.)
+    parser.add_argument("--policy-reference", help="Frozen actor that labels the current PPO world's full observation history")
+    parser.add_argument("--policy-reference-weight", type=float, default=1.)
     parser.add_argument("--items", type=json.loads, help="Override the lesson loadout with a JSON list of slot/itemTableId/quantity")
     args = parser.parse_args()
     args.opponent_paths = json.loads(Path(args.opponent_pool).read_text(encoding="utf-8-sig")) if args.opponent_pool else None
@@ -653,6 +688,8 @@ if __name__ == "__main__":
     if args.rehearsal and (args.rehearsal_batch_sequences < 1 or args.rehearsal_weight <= 0
                           or args.rehearsal_reference_weight <= 0):
         parser.error("Rehearsal needs a positive batch size and loss weight")
+    if args.policy_reference and args.policy_reference_weight <= 0:
+        parser.error("Policy reference loss weight must be positive")
     if min(args.teacher_replay_sequences, args.teacher_batch_sequences, args.teacher_epochs) < 1:
         parser.error("Teacher replay, batch size and epochs must be positive")
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
