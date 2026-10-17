@@ -6,7 +6,7 @@ param(
   [int]$MinibatchSequences=8,
   [ValidateSet(0,64,128,256)][int]$HiddenSize=0,
   [ValidateRange(10,90)][int]$GpuUtilizationLimit=80,
-  [string]$EnvironmentUrl='http://192.168.10.140:40101',
+  [string]$EnvironmentUrl='http://192.168.10.140:40106',
   [int]$MapId=7,
   [int]$AmmoId=2001,
   [ValidateRange(1,5)][int]$Mode=4,
