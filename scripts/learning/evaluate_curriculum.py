@@ -34,6 +34,7 @@ def main(args):
                 "environment_url": args.environment_url, "episodes": args.episodes,
                 "environments": args.environments, "stochastic": False,
                 "gpu_utilization_limit": args.gpu_utilization_limit, "seed": args.seed}
+            options["opponent_paths"] = config.get("opponentPaths")
             if args.without_items:
                 options["items"] = []
             summary = evaluate_policy(argparse.Namespace(**options))

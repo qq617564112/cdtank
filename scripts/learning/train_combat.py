@@ -72,13 +72,18 @@ class Environment:
                              "items": course["items"],
                              "lesson": course["lesson"], "level": level})
         result["lesson"] = course["lesson"]
+        paths = getattr(self.args, "opponent_paths", None)
+        self.opponent_index = random.Random(seed + 7919).randrange(len(paths)) if paths else None
+        result["opponentIndex"] = self.opponent_index
         if course["lesson"] == "items" and result["frames"][0]["schema"] < 4:
             raise RuntimeError("Item courses require the simulation server with observation schema 4")
         return result
 
     def step(self, action):
         actions = [action] if action and isinstance(action[0], (int, float)) else action
-        return self.command({"type": "step", "actions": actions})
+        result = self.command({"type": "step", "actions": actions})
+        result["opponentIndex"] = self.opponent_index
+        return result
 
     def close(self):
         self.connection.close()
@@ -144,6 +149,41 @@ def critic_tensors(results, device):
     return torch.tensor([state for result in results for state in result["criticStates"]], device=device)
 
 
+class OpponentPool:
+    """Frozen historical actors on team one, with independent recurrent state."""
+    def __init__(self, paths, width, budget, device):
+        self.policies = []
+        self.sources = []
+        for path in paths or []:
+            checkpoint = torch.load(path, map_location=device)
+            policy = Policy(width, budget, checkpoint.get("config", {}).get("centralStateWidth", 0)).to(device).eval()
+            policy.initialize(checkpoint["policy"])
+            policy.requires_grad_(False)
+            self.policies.append(policy)
+            self.sources.append({"path": path, "steps": checkpoint["steps"],
+                                 "source": checkpoint.get("config", {}).get("source"),
+                                 "simulationSource": checkpoint.get("config", {}).get("simulationSource")})
+
+    def act(self, results, observation, masks, reset, hidden, actions):
+        if not self.policies:
+            return hidden
+        for number, policy in enumerate(self.policies):
+            indices = []
+            offset = 0
+            for result in results:
+                if result["opponentIndex"] == number:
+                    indices.extend(offset + index for index, frame in enumerate(result["frames"])
+                                   if frame["metrics"]["team"] == 1)
+                offset += len(result["frames"])
+            if not indices:
+                continue
+            selected = torch.tensor(indices, device=observation.device)
+            distributions, _, state = policy(observation[selected], hidden[selected], reset[selected], masks[selected])
+            actions[selected] = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1)
+            hidden[selected] = state
+        return hidden
+
+
 def save_checkpoint(path, policy, optimizer, config, steps, update):
     temporary = path.with_suffix(".tmp")
     torch.save({"policy": policy.state_dict(), "optimizer": optimizer.state_dict(),
@@ -183,6 +223,15 @@ def main(args):
             central = critic_tensors(results, device) if centralized else None
             central_width = central.shape[-1] if centralized else 0
             policy = Policy(observations.shape[-1], budget, central_width).to(device)
+            opponent_paths = getattr(args, "opponent_paths", None)
+            opponents = OpponentPool(opponent_paths, observations.shape[-1], budget, device)
+            trainable = [index for index, frame in enumerate(frame for result in results for frame in result["frames"])
+                         if not opponent_paths or frame["metrics"]["team"] == 0]
+            trained_agents = len(trainable)
+            trained_per_world = trained_agents // args.environments
+            if opponent_paths and any(course["mode"] > 3 or course["controlled"] != course["players"]
+                                      or course["lesson"] != "combat" for course in course_options(args)):
+                raise ValueError("Historical opponents require all team-mode combat actors to be controlled")
             if args.prior:
                 policy.warm_start(args.prior)
             if args.weights:
@@ -210,6 +259,9 @@ def main(args):
                       "simulationHz": 20, "decisionHz": 10, "observationSchema": results[0]["frames"][0]["schema"],
                       "algorithm": "recurrent MAPPO" if centralized else "recurrent PPO", "hiddenSize": 64,
                       "actorsPerWorld": actors_per_world, "actorBatchSize": agents,
+                      "trainedActorsPerWorld": trained_per_world, "trainedActorBatchSize": trained_agents,
+                      "opponentPaths": opponent_paths,
+                      "opponentCheckpoints": opponents.sources,
                       "centralStateWidth": central_width,
                       "controlledRoster": results[0].get("actors"),
                       "maskInputWidth": sum(SIZES), "trainingCourses": course_options(args),
@@ -238,6 +290,7 @@ def main(args):
                 save_checkpoint(output / "teacher.pt", policy, optimizer, config, 0, 0)
                 observations, masks = tensors(results, device)
             hidden = torch.zeros(agents, 64, device=device)
+            opponent_hidden = torch.zeros_like(hidden)
             reset = torch.ones(agents, device=device)
             episode_returns = [[0.0] * actors_per_world for _ in environments]
             completed = 0
@@ -255,6 +308,7 @@ def main(args):
                         with torch.no_grad():
                             distributions, value, next_hidden = policy(observations, hidden, reset, masks, central)
                             actions = torch.stack([dist.sample() for dist in distributions], dim=-1)
+                            opponent_hidden = opponents.act(results, observations, masks, reset, opponent_hidden, actions)
                             logp = sum(dist.log_prob(actions[:, head]) for head, dist in enumerate(distributions))
                         for key, tensor in (("x", observations), ("masks", masks), ("hidden", hidden),
                                             ("reset", reset), ("actions", actions), ("logp", logp), ("value", value)):
@@ -296,7 +350,7 @@ def main(args):
                         central = critic_tensors(results, device) if centralized else None
                         hidden = next_hidden
                         reset = torch.tensor(next_reset, device=device)
-                        steps += agents
+                        steps += trained_agents
                     data = {key: torch.stack(values) for key, values in storage.items()}
                     with torch.no_grad():
                         _, next_value, _ = policy(observations, hidden, reset, masks, central)
@@ -309,8 +363,9 @@ def main(args):
                             advantages[tick] = gae
                             next_value = data["value"][tick]
                         returns = advantages + data["value"]
-                        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-                    chunks = [(env, start) for env in range(agents)
+                        trained_advantages = advantages[:, trainable]
+                        advantages = (advantages - trained_advantages.mean()) / (trained_advantages.std() + 1e-8)
+                    chunks = [(env, start) for env in trainable
                               for start in range(0, args.rollout, 32)]
                     losses = []
                     policy.train()
@@ -357,11 +412,12 @@ def main(args):
                     hidden = hidden.detach()
                     update += 1
                     row = {"update": update, "steps": steps, "seconds": time.monotonic() - started,
-                           "worldSteps": steps // actors_per_world, "actorsPerWorld": actors_per_world,
+                           "worldSteps": steps // trained_per_world, "actorsPerWorld": actors_per_world,
                            "actorBatchSize": agents,
+                           "trainedActorBatchSize": trained_agents,
                            "gpuPercent": budget.utilization, "gpuPausedSeconds": budget.paused_seconds,
                            "completedEpisodes": completed, "losses": np.mean(losses, axis=0).tolist(),
-                           "episodes": episodes, "rewardMean": data["reward"].mean().item()}
+                           "episodes": episodes, "rewardMean": data["reward"][:, trainable].mean().item()}
                     text = json.dumps(row)
                     print(text, flush=True)
                     log.write(text + "\n")
@@ -386,6 +442,7 @@ def main(args):
                 "environment_url": args.environment_url, "checkpoint": str(output / "latest.pt"),
                 "output": str(destination), "episodes": args.evaluation_episodes,
                 "environments": args.evaluation_environments, "stochastic": False,
+                "opponent_paths": opponent_paths,
                 "gpu_utilization_limit": args.gpu_utilization_limit, "seed": args.seed + 100000000}))
             evaluations.append({**course, "level": level, "output": str(destination),
                                 **summary})
@@ -412,6 +469,7 @@ if __name__ == "__main__":
     parser.add_argument("--players", type=int, default=2)
     parser.add_argument("--controlled", type=int, default=1)
     parser.add_argument("--centralized-critic", action="store_true")
+    parser.add_argument("--opponent-pool", help="JSON list of frozen historical checkpoint paths")
     parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat"], default="combat")
     parser.add_argument("--level", type=int, choices=range(4), default=1)
@@ -425,6 +483,9 @@ if __name__ == "__main__":
     parser.add_argument("--curriculum", help="JSON list of courses assigned evenly across environments")
     parser.add_argument("--items", type=json.loads, help="Override the lesson loadout with a JSON list of slot/itemTableId/quantity")
     args = parser.parse_args()
+    args.opponent_paths = json.loads(Path(args.opponent_pool).read_text(encoding="utf-8-sig")) if args.opponent_pool else None
+    if args.opponent_paths is not None and (not isinstance(args.opponent_paths, list) or not args.opponent_paths):
+        parser.error("The opponent pool must contain checkpoint paths")
     args.courses = json.loads(Path(args.curriculum).read_text(encoding="utf-8-sig")) if args.curriculum else None
     if args.courses is not None and (not isinstance(args.courses, list) or not args.courses
                                     or args.environments < len(args.courses)):

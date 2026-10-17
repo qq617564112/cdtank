@@ -17,6 +17,7 @@ param(
   [int]$TeacherSteps=0,
   [double]$ImitationWeight,
   [string]$Curriculum='',
+  [string]$OpponentPool='',
   [string]$Prior='D:/ai/cdtank/runs/motion-20261017-001/best.pt',
   [string]$Weights='',
   [string]$Resume=''
@@ -31,6 +32,7 @@ if ($CentralizedCritic) { $arguments+=' --centralized-critic' }
 if ($MixLevels) { $arguments+=' --mix-levels' }
 if ($TeacherSteps) { $arguments+=" --teacher-steps $TeacherSteps" }
 if ($Curriculum) { $arguments+=" --curriculum $Curriculum" }
+if ($OpponentPool) { $arguments+=" --opponent-pool $OpponentPool" }
 if ($PSBoundParameters.ContainsKey('ImitationWeight')) { $arguments+=" --imitation-weight $ImitationWeight" }
 if ($Resume) { $arguments+=" --resume $Resume" }
 elseif ($Weights) { $arguments+=" --weights $Weights" }
@@ -47,7 +49,7 @@ if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.Ret
   mode=$Mode;players=$Players;controlled=$Controlled;centralizedCritic=[bool]$CentralizedCritic;
   minibatchSequences=$MinibatchSequences;gpuUtilizationLimit=$GpuUtilizationLimit;
   teacherSteps=$TeacherSteps;imitationWeight=$(if($PSBoundParameters.ContainsKey('ImitationWeight')){$ImitationWeight}else{$null});
-  curriculum=$Curriculum;
+  curriculum=$Curriculum;opponentPool=$OpponentPool;
   prior=$Prior;weights=$Weights;resume=$Resume} |
   ConvertTo-Json | Set-Content -Encoding ascii "$root/runs/$RunName.launch.json"
 Write-Output ('TRAINING_LAUNCH_PID='+$created.ProcessId)

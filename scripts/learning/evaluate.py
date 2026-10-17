@@ -9,7 +9,7 @@ import random
 import numpy as np
 import torch
 
-from train_combat import Environment, Policy, tensors
+from train_combat import Environment, OpponentPool, Policy, tensors
 from gpu_budget import GpuBudget
 
 
@@ -47,6 +47,9 @@ def main(args):
             policy = Policy(config["observationWidth"], budget,
                             checkpoint.get("config", {}).get("centralStateWidth", 0)).cuda().eval()
             policy.initialize(checkpoint["policy"])
+            opponents = OpponentPool(getattr(args, "opponent_paths", None), config["observationWidth"], budget, "cuda")
+            config["opponentCheckpoints"] = opponents.sources
+            (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
             running = [episode_slot(env, number, result) for number, (env, result)
                        in enumerate(zip(environments, initial))]
             next_episode = count
@@ -54,12 +57,16 @@ def main(args):
                 while running:
                     observation, masks = tensors([slot["result"] for slot in running], "cuda")
                     hidden = torch.cat([slot["hidden"] for slot in running])
+                    opponent_hidden = torch.cat([slot["opponentHidden"] for slot in running])
                     reset = torch.tensor([value for slot in running for value in slot["reset"]], device="cuda")
                     with torch.no_grad():
                         distributions, _, hidden = policy(observation, hidden, reset, masks)
                         chosen = [dist.sample() if args.stochastic else dist.logits.argmax(dim=-1)
                                   for dist in distributions]
-                        actions = torch.stack(chosen, dim=-1).reshape(len(running), actors_per_world, 5).tolist()
+                        actions = torch.stack(chosen, dim=-1)
+                        opponent_hidden = opponents.act([slot["result"] for slot in running], observation, masks,
+                                                        reset, opponent_hidden, actions)
+                        actions = actions.reshape(len(running), actors_per_world, 5).tolist()
                     advanced = list(pool.map(lambda pair: pair[0]["environment"].step(pair[1]), zip(running, actions)))
                     remaining = []
                     for index, (slot, result, action) in enumerate(zip(running, advanced, actions)):
@@ -80,6 +87,8 @@ def main(args):
                                    "metrics": frames[0]["metrics"], "actorMetrics": [frame["metrics"] for frame in frames],
                                    "actorItemMetrics": result.get("actorItemMetrics"),
                                    "lessonMetrics": result.get("lessonMetrics"), "trajectory": slot["trajectory"]}
+                            row["trainedActorIndices"] = [actor for actor, frame in enumerate(frames)
+                                if not opponents.policies or frame["metrics"]["team"] == 0]
                             episodes.append(row)
                             log.write(json.dumps(row) + "\n")
                             log.flush()
@@ -91,13 +100,14 @@ def main(args):
                                 slot["environment"].close()
                         else:
                             slot.update(result=result, hidden=hidden[index * actors_per_world:(index + 1) * actors_per_world],
+                                        opponentHidden=opponent_hidden[index * actors_per_world:(index + 1) * actors_per_world],
                                         tick=tick + 1, reset=[float(frame["metrics"]["deaths"] != old["metrics"]["deaths"])
                                                              for frame, old in zip(frames, before)])
                             remaining.append(slot)
                     running = remaining
-        metrics = [metric for row in episodes for metric in row["actorMetrics"]]
-        item_metrics = [metric for row in episodes for metric in
-                        (row["actorItemMetrics"] or [row["lessonMetrics"]])]
+        metrics = [row["actorMetrics"][index] for row in episodes for index in row["trainedActorIndices"]]
+        item_metrics = [(row["actorItemMetrics"] or [row["lessonMetrics"]])[index]
+                        for row in episodes for index in row["trainedActorIndices"]]
         outcomes = [(row["outcomes"] or [None])[0] for row in episodes]
         summary = {"episodes": len(episodes), "actorsPerWorld": actors_per_world,
                    "successRate": float(np.mean([bool(row["success"]) for row in episodes])),
@@ -130,6 +140,7 @@ def episode_slot(environment, episode, result):
     actors = len(result["frames"])
     return {"environment": environment, "episode": episode, "result": result,
             "hidden": torch.zeros(actors, 64, device="cuda"), "reset": [1.] * actors, "tick": 0,
+            "opponentHidden": torch.zeros(actors, 64, device="cuda"),
             "returns": [0.] * actors, "trajectory": []}
 
 
@@ -147,12 +158,14 @@ if __name__ == "__main__":
     parser.add_argument("--map-id", type=int, default=7)
     parser.add_argument("--players", type=int, default=2)
     parser.add_argument("--controlled", type=int, default=1)
+    parser.add_argument("--opponent-pool")
     parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--items", type=json.loads, help="Use [] to measure the same policy without consumables")
     parser.add_argument("--seed", type=int, default=100000179)
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--gpu-utilization-limit", type=int, default=80)
     args = parser.parse_args()
+    args.opponent_paths = json.loads(Path(args.opponent_pool).read_text(encoding="utf-8-sig")) if args.opponent_pool else None
     if args.environments < 1 or args.episodes < 1:
         parser.error("Episodes and environments must be positive")
     main(args)
