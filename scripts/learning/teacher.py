@@ -154,6 +154,8 @@ class DemonstrationReplay:
                 teacher.initialize(saved["policy"])
                 self.reference_sources.append({"course": course, "path": paths[course],
                     "steps": saved["steps"], "source": saved["config"].get("source"),
+                    "observationWidth": width, "hiddenSize": teacher.hidden_size,
+                    "observationSchema": saved["config"]["observationSchema"],
                     "simulationSource": saved["config"].get("simulationSource")})
                 del saved
             else:
@@ -161,14 +163,19 @@ class DemonstrationReplay:
                 width = self.data["observation"].shape[-1]
                 self.reference_sources.append({"course": course, "initialActor": True})
             teacher.eval()
+            mismatches = 0
+            head_decisions = 0
             with torch.no_grad():
                 for start in range(0, len(group), self.batch_size):
                     indices = torch.tensor(group[start:start + self.batch_size], device=self.device)
                     hidden = torch.zeros(len(indices), teacher.hidden_size, device=self.device)
                     distributions, _, _ = teacher.sequence(self.data["observation"][:, indices, :width], hidden,
                         self.data["reset"][:, indices], self.data["masks"][:, indices])
-                    for target, distribution in zip(self.reference_probabilities, distributions):
+                    for head, (target, distribution) in enumerate(zip(self.reference_probabilities, distributions)):
                         target[:, indices] = distribution.probs
+                        mismatches += (distribution.logits.argmax(-1) != self.data["teacher"][:, indices, head]).sum().item()
+                        head_decisions += ticks * len(indices)
+            self.reference_sources[-1]["storedLabelHeadMismatchRate"] = mismatches / head_decisions
             if paths is not None:
                 del teacher
 
