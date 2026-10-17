@@ -82,6 +82,10 @@ D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/trainer/scripts/learning/train
 
 通过 SSH 持续运行时调用 `D:/ai/cdtank/trainer/scripts/learning/start-training.ps1 -RunName <新目录名> -Lesson navigation -Level 0 -Steps 30000`，`-EnvironmentUrl` 默认使用 `http://192.168.10.140:40101`。后续课程通过 `-Weights <前一课程检查点>` 继承全部策略参数并重置优化器和步数；同一课程中断后可用 `-Resume <检查点>` 继续优化器和累计步数，`Steps` 为累计目标。迁移模拟进程时从检查点开始新回合，保留优化器和累计步数。启动信息写入 `runs/<目录名>.launch.json`，标准输出和错误分别写入同目录名的 `.stdout.log`、`.stderr.log`；进程独立于 SSH 会话存活。
 
+`-Environments` 控制并行模拟世界数，`-MinibatchSequences` 控制每个 PPO 梯度批次包含多少条 32 步序列，分别对应 Python 的 `--environments` 和 `--minibatch-sequences`。扩大两种批量后，以相同课程的累计步数与耗时判断提速，冻结评估仍决定策略质量；较大的梯度批次会减少每个回合采集批次中的优化器更新次数。
+
+GPU 调度使用 NVML 读取整卡利用率与显存，`--gpu-utilization-limit`（启动脚本 `-GpuUtilizationLimit`）默认且最高为 90。训练、示范预热和冻结评估共享主机单调时钟的计算窗口，保留空闲时间；采样达到上限前 2 个百分点时停止提交 CUDA 工作，降至上限前 7 个百分点后恢复。`gpu.jsonl` 每秒记录整卡利用率、显存、冷却状态和累计暂停时间，PPO 指标同时记录 GPU 利用率。该限制通过软件调节提交时机，Windows 驱动不提供整卡利用率的硬件瞬时限幅，采样峰值仍需据实际记录调整并行度。
+
 `--mix-levels`（启动脚本的 `-MixLevels`）按每回合的独立种子，从 0 到指定 `level` 均匀选择课程，重放此前技能。射程接近和后撤通过 `--lesson range --level 1 --mix-levels` 在同一模型中训练；日志保留每个回合实际使用的级别。
 
 基础操作可用 `--teacher-steps`（`-TeacherSteps`）在 PPO 前预热。`teacher.py` 仅读取策略的局部观察和动作掩码，为原地转向、直达路点、固定车体瞄准和接近/后撤提供操作示范；它不参与之后的动作执行。示范由真实 World 连续推进，按 32 步序列监督学习，单独保存 `teacher.jsonl` 和 `teacher.pt`。标签来源为 `scripted primitive control`，不计为真人数据，预热步数与 PPO 步数分开记录。启用预热的运行在后续 PPO 中以 `--imitation-weight 0.1` 保留基础操作辅助损失，日志 `losses` 的第五项为该损失；将系数设为 0 可单独评估纯奖励优化。随后仍以冻结模型的独立种子评估判定效果。

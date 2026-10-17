@@ -16,6 +16,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.distributions import Categorical
+from gpu_budget import GpuBudget
 from teacher import primitive_action, teach
 
 
@@ -69,14 +70,17 @@ class Environment:
 
 
 class Policy(nn.Module):
-    def __init__(self, width):
+    def __init__(self, width, gpu_budget=None):
         super().__init__()
+        self.gpu_budget = gpu_budget
         self.encoder = nn.Linear(width, 64)
         self.memory = nn.GRUCell(64, 64)
         self.actor = nn.Linear(64, sum(SIZES))
         self.critic = nn.Linear(64, 1)
 
     def forward(self, observation, hidden, reset, masks):
+        if self.gpu_budget:
+            self.gpu_budget.wait()
         hidden = self.memory(torch.tanh(self.encoder(observation)), hidden * (1 - reset[:, None]))
         logits = self.actor(hidden).masked_fill(~masks, -1e9)
         distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
@@ -134,6 +138,7 @@ def main(args):
     if not torch.cuda.is_available():
         raise RuntimeError("CUDA is required")
     device = torch.device("cuda")
+    budget = GpuBudget(args.gpu_utilization_limit, output)
     environments = []
     try:
         for index in range(args.environments):
@@ -141,7 +146,7 @@ def main(args):
         with ThreadPoolExecutor(max_workers=args.environments) as pool:
             results = list(pool.map(lambda env: env.reset(), environments))
             observations, masks = tensors(results, device)
-            policy = Policy(observations.shape[-1]).to(device)
+            policy = Policy(observations.shape[-1], budget).to(device)
             if args.prior:
                 policy.warm_start(args.prior)
             if args.weights:
@@ -248,14 +253,15 @@ def main(args):
                     policy.train()
                     for _ in range(args.epochs):
                         random.shuffle(chunks)
-                        for offset in range(0, len(chunks), 8):
-                            selected = chunks[offset:offset + 8]
+                        for offset in range(0, len(chunks), args.minibatch_sequences):
+                            selected = chunks[offset:offset + args.minibatch_sequences]
                             states = torch.stack([data["hidden"][start, env] for env, start in selected])
+                            env_indices = torch.tensor([env for env, start in selected], device=device)
+                            starts = torch.tensor([start for env, start in selected], device=device)
                             actor_losses, critic_losses, entropies, divergences = [], [], [], []
                             imitation_losses = []
                             for relative in range(32):
-                                env_indices = torch.tensor([env for env, start in selected], device=device)
-                                ticks = torch.tensor([start + relative for env, start in selected], device=device)
+                                ticks = starts + relative
                                 ds, values, states = policy(data["x"][ticks, env_indices], states,
                                                            data["reset"][ticks, env_indices], data["masks"][ticks, env_indices])
                                 chosen = data["actions"][ticks, env_indices]
@@ -278,14 +284,17 @@ def main(args):
                             imitation_loss = torch.stack(imitation_losses).mean() if imitation_losses else loss.new_zeros(())
                             loss += args.imitation_weight * imitation_loss
                             optimizer.zero_grad()
+                            budget.wait()
                             loss.backward()
                             nn.utils.clip_grad_norm_(policy.parameters(), .5)
                             optimizer.step()
+                            budget.wait()
                             losses.append([actor_loss.item(), critic_loss.item(), entropy.item(),
                                            torch.stack(divergences).mean().item(), imitation_loss.item()])
                     hidden = hidden.detach()
                     update += 1
                     row = {"update": update, "steps": steps, "seconds": time.monotonic() - started,
+                           "gpuPercent": budget.utilization, "gpuPausedSeconds": budget.paused_seconds,
                            "completedEpisodes": completed, "losses": np.mean(losses, axis=0).tolist(),
                            "episodes": episodes, "rewardMean": data["reward"].mean().item()}
                     text = json.dumps(row)
@@ -299,6 +308,7 @@ def main(args):
     finally:
         for environment in environments:
             environment.close()
+        budget.close()
     evaluations = []
     levels = range(args.level + 1) if args.mix_levels else [args.level]
     for level in levels:
@@ -309,6 +319,7 @@ def main(args):
                         "--lesson", args.lesson, "--level", str(level), "--mode", str(args.mode),
                         "--map-id", str(args.map_id), "--players", str(args.players),
                         "--ammo-id", str(args.ammo_id), "--episodes", str(args.evaluation_episodes),
+                        "--gpu-utilization-limit", str(args.gpu_utilization_limit),
                         "--seed", str(args.seed + 100000000)], check=True)
         evaluations.append({"level": level, "output": str(destination),
                             **json.loads((destination / "result.json").read_text(encoding="utf-8"))})
@@ -327,6 +338,8 @@ if __name__ == "__main__":
     parser.add_argument("--environments", type=int, default=4)
     parser.add_argument("--rollout", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=4)
+    parser.add_argument("--minibatch-sequences", type=int, default=8)
+    parser.add_argument("--gpu-utilization-limit", type=int, default=90)
     parser.add_argument("--learning-rate", type=float, default=.00025)
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)
@@ -343,6 +356,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.rollout % 32:
         parser.error("--rollout must be a multiple of 32")
+    if args.minibatch_sequences < 1:
+        parser.error("--minibatch-sequences must be positive")
     if args.teacher_steps and args.lesson not in ("turning", "navigation", "aiming", "range"):
         parser.error("Primitive demonstrations support turning, navigation, aiming and range")
     if args.teacher_steps and (args.lesson == "navigation" and args.level > 2

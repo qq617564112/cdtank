@@ -9,6 +9,7 @@ import numpy as np
 import torch
 
 from train_combat import Environment, Policy, tensors
+from gpu_budget import GpuBudget
 
 
 def main(args):
@@ -21,6 +22,7 @@ def main(args):
     checkpoint = torch.load(args.checkpoint, map_location="cuda")
     (output / "config.json").write_text(json.dumps(vars(args), indent=2), encoding="utf-8")
     environment = Environment(args, 0)
+    budget = GpuBudget(args.gpu_utilization_limit, output)
     episodes = []
     try:
         first = environment.reset()
@@ -34,7 +36,7 @@ def main(args):
                   "observationSchema": first["frames"][0]["schema"],
                   "torch": torch.__version__, "device": torch.cuda.get_device_name(0)}
         (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
-        policy = Policy(len(first["frames"][0]["observation"])).cuda().eval()
+        policy = Policy(len(first["frames"][0]["observation"]), budget).cuda().eval()
         policy.initialize(checkpoint["policy"])
         with (output / "episodes.jsonl").open("x", encoding="utf-8") as log:
             for episode in range(args.episodes):
@@ -77,6 +79,7 @@ def main(args):
         print(json.dumps(summary), flush=True)
     finally:
         environment.close()
+        budget.close()
 
 
 if __name__ == "__main__":
@@ -94,4 +97,5 @@ if __name__ == "__main__":
     parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--seed", type=int, default=100000179)
     parser.add_argument("--stochastic", action="store_true")
+    parser.add_argument("--gpu-utilization-limit", type=int, default=90)
     main(parser.parse_args())

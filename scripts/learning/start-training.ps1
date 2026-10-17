@@ -3,6 +3,8 @@ param(
   [ValidateSet('turning','navigation','aiming','shooting','dodge','range','combat')][string]$Lesson='navigation',
   [int]$Steps=100000,
   [int]$Environments=4,
+  [int]$MinibatchSequences=8,
+  [ValidateRange(10,90)][int]$GpuUtilizationLimit=90,
   [string]$EnvironmentUrl='http://192.168.10.140:40101',
   [int]$MapId=7,
   [int]$AmmoId=2001,
@@ -19,7 +21,7 @@ $ErrorActionPreference='Stop'
 $root='D:/ai/cdtank'
 if (Test-Path "$root/runs/$RunName") { throw 'Use a new run directory' }
 $trainerRoot=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$arguments="$PSScriptRoot/train_combat.py --environment-url $EnvironmentUrl --output $root/runs/$RunName --steps $Steps --environments $Environments --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId"
+$arguments="$PSScriptRoot/train_combat.py --environment-url $EnvironmentUrl --output $root/runs/$RunName --steps $Steps --environments $Environments --minibatch-sequences $MinibatchSequences --gpu-utilization-limit $GpuUtilizationLimit --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId"
 if ($MixLevels) { $arguments+=' --mix-levels' }
 if ($TeacherSteps) { $arguments+=" --teacher-steps $TeacherSteps" }
 if ($PSBoundParameters.ContainsKey('ImitationWeight')) { $arguments+=" --imitation-weight $ImitationWeight" }
@@ -35,6 +37,7 @@ $created=Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments
 if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.ReturnValue) }
 @{processId=$created.ProcessId;run=$RunName;lesson=$Lesson;level=$Level;steps=$Steps;
   environments=$Environments;environmentUrl=$EnvironmentUrl;mapId=$MapId;ammoId=$AmmoId;mixLevels=[bool]$MixLevels;
+  minibatchSequences=$MinibatchSequences;gpuUtilizationLimit=$GpuUtilizationLimit;
   teacherSteps=$TeacherSteps;imitationWeight=$(if($PSBoundParameters.ContainsKey('ImitationWeight')){$ImitationWeight}else{$null});
   prior=$Prior;weights=$Weights;resume=$Resume} |
   ConvertTo-Json | Set-Content -Encoding ascii "$root/runs/$RunName.launch.json"

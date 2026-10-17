@@ -78,9 +78,11 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                 steps += len(environments)
             loss = torch.stack(losses).mean()
             optimizer.zero_grad()
+            policy.gpu_budget.wait()
             loss.backward()
             nn.utils.clip_grad_norm_(policy.parameters(), .5)
             optimizer.step()
+            policy.gpu_budget.wait()
             hidden = hidden.detach()
             row = {"steps": steps, "loss": loss.item(), "episodes": episodes,
                    "studentActionProbability": student_probability, "labelSource": "scripted primitive control"}
