@@ -84,7 +84,7 @@ D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/trainer/scripts/learning/train
 
 `-Environments` 控制并行模拟世界数，`-MinibatchSequences` 控制每个 PPO 梯度批次包含多少条 32 步序列，分别对应 Python 的 `--environments` 和 `--minibatch-sequences`。扩大两种批量后，以相同课程的累计步数与耗时判断提速，冻结评估仍决定策略质量；较大的梯度批次会减少每个回合采集批次中的优化器更新次数。
 
-GPU 调度使用 NVML 读取整卡利用率与显存，`--gpu-utilization-limit`（启动脚本 `-GpuUtilizationLimit`）默认且最高为 90。训练、示范预热和冻结评估共享主机单调时钟的计算窗口，保留空闲时间；采样达到上限前 2 个百分点时停止提交 CUDA 工作，降至上限前 7 个百分点后恢复。`gpu.jsonl` 每秒记录整卡利用率、显存、冷却状态和累计暂停时间，PPO 指标同时记录 GPU 利用率。该限制通过软件调节提交时机，Windows 驱动不提供整卡利用率的硬件瞬时限幅，采样峰值仍需据实际记录调整并行度。
+GPU 调度使用 NVML 读取整卡利用率与显存。用户要求整卡负载不超过 90%，`--gpu-utilization-limit`（启动脚本 `-GpuUtilizationLimit`）默认设为 80，为驱动采样和已提交计算保留余量，参数最高为 90。训练、示范预热和冻结评估共享主机单调时钟的计算窗口，保留空闲时间；采样达到内部阈值前 2 个百分点时停止提交 CUDA 工作，降至内部阈值前 7 个百分点后恢复。`gpu.jsonl` 每秒记录整卡利用率、显存、冷却状态和累计暂停时间，PPO 指标同时记录 GPU 利用率。该限制通过软件调节提交时机，Windows 驱动不提供整卡利用率的硬件瞬时限幅，采样峰值仍需据实际记录调整并行度。
 
 `--mix-levels`（启动脚本的 `-MixLevels`）按每回合的独立种子，从 0 到指定 `level` 均匀选择课程，重放此前技能。射程接近和后撤通过 `--lesson range --level 1 --mix-levels` 在同一模型中训练；日志保留每个回合实际使用的级别。
 

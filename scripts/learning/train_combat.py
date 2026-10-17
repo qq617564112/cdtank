@@ -339,7 +339,7 @@ if __name__ == "__main__":
     parser.add_argument("--rollout", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=4)
     parser.add_argument("--minibatch-sequences", type=int, default=8)
-    parser.add_argument("--gpu-utilization-limit", type=int, default=90)
+    parser.add_argument("--gpu-utilization-limit", type=int, default=80)
     parser.add_argument("--learning-rate", type=float, default=.00025)
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)

@@ -97,5 +97,5 @@ if __name__ == "__main__":
     parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--seed", type=int, default=100000179)
     parser.add_argument("--stochastic", action="store_true")
-    parser.add_argument("--gpu-utilization-limit", type=int, default=90)
+    parser.add_argument("--gpu-utilization-limit", type=int, default=80)
     main(parser.parse_args())

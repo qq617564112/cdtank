@@ -4,7 +4,7 @@ param(
   [int]$Steps=100000,
   [int]$Environments=4,
   [int]$MinibatchSequences=8,
-  [ValidateRange(10,90)][int]$GpuUtilizationLimit=90,
+  [ValidateRange(10,90)][int]$GpuUtilizationLimit=80,
   [string]$EnvironmentUrl='http://192.168.10.140:40101',
   [int]$MapId=7,
   [int]$AmmoId=2001,
