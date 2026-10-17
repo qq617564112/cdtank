@@ -16,6 +16,7 @@ from torch import nn
 from torch.distributions import Categorical
 from gpu_budget import GpuBudget
 from teacher import teach, demonstration_actions, demonstration_loss, DemonstrationReplay
+from human_style import HumanControlPrior
 
 
 SIZES = [3, 3, 3, 2, 9]
@@ -308,6 +309,8 @@ def main(args):
             if any(len(result["frames"]) != actors_per_world for result in results):
                 raise ValueError("Courses in one run must control the same number of actors")
             agents = args.environments * actors_per_world
+            human_style = HumanControlPrior(args.human_control_profile, environments, actors_per_world) \
+                if getattr(args, "human_control_profile", None) else None
             observations, masks = tensors(results, device)
             centralized = getattr(args, "centralized_critic", False)
             central = critic_tensors(results, device) if centralized else None
@@ -399,6 +402,7 @@ def main(args):
                       "initialization": initialization,
                       "rehearsalSource": rehearsal.source if rehearsal else None,
                       "policyReferenceSource": reference_source,
+                      "humanControlSource": human_style.source if human_style else None,
                       "initialCheckpoint": {"steps": initial["steps"],
                           "teacherProgress": initial["config"].get("teacherProgress"),
                           "source": initial["config"].get("source"),
@@ -460,6 +464,8 @@ def main(args):
                         storage["teacher"] = []
                     if reference:
                         storage["reference"] = []
+                    if human_style:
+                        storage["human_style_reward"] = []
                     episodes = []
                     policy.eval()
                     for _ in range(args.rollout):
@@ -486,6 +492,11 @@ def main(args):
                                             device=device, dtype=torch.float32)
                         reward = torch.tensor([reward for result in next_results for reward in result["rewards"]],
                                               device=device, dtype=torch.float32)
+                        if human_style:
+                            style_reward = torch.tensor(human_style.rewards(results, next_results, action_list), device=device)
+                            style_reward *= args.human_control_weight
+                            reward += style_reward
+                            storage["human_style_reward"].append(style_reward)
                         storage["reward"].append(reward)
                         storage["done"].append(done)
                         next_reset = []
@@ -597,6 +608,7 @@ def main(args):
                            "rehearsalReferenceKlMean": float(np.mean(reference_losses)) if reference_losses else None,
                            "rehearsalReferenceHeadMismatchRate": float(np.mean(reference_mismatches)) if reference_mismatches else None,
                            "policyReferenceKlMean": float(np.mean(policy_reference_losses)) if policy_reference_losses else None,
+                           "humanControlRewardMean": data["human_style_reward"][:, trainable].mean().item() if human_style else None,
                            "episodes": episodes, "rewardMean": data["reward"][:, trainable].mean().item()}
                     text = json.dumps(row)
                     print(text, flush=True)
@@ -675,6 +687,8 @@ if __name__ == "__main__":
     parser.add_argument("--rehearsal-reference-weight", type=float, default=10.)
     parser.add_argument("--policy-reference", help="Frozen actor that labels the current PPO world's full observation history")
     parser.add_argument("--policy-reference-weight", type=float, default=1.)
+    parser.add_argument("--human-control-profile", help="Fixed 500 ms human control transition profile")
+    parser.add_argument("--human-control-weight", type=float, default=.02)
     parser.add_argument("--items", type=json.loads, help="Override the lesson loadout with a JSON list of slot/itemTableId/quantity")
     args = parser.parse_args()
     args.opponent_paths = json.loads(Path(args.opponent_pool).read_text(encoding="utf-8-sig")) if args.opponent_pool else None
@@ -693,6 +707,8 @@ if __name__ == "__main__":
         parser.error("Rehearsal needs a positive batch size and loss weight")
     if args.policy_reference and args.policy_reference_weight <= 0:
         parser.error("Policy reference loss weight must be positive")
+    if args.human_control_profile and args.human_control_weight <= 0:
+        parser.error("Human control reward weight must be positive")
     if min(args.teacher_replay_sequences, args.teacher_batch_sequences, args.teacher_epochs) < 1:
         parser.error("Teacher replay, batch size and epochs must be positive")
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
