@@ -6,6 +6,8 @@ import random
 NEAREST_ENEMY = 24
 WEAPON_ENEMY = 136
 GOAL_DIRECTION = 157
+ITEM_FEATURES = 160
+ITEM_WIDTH = 13
 
 
 def primitive_action(frame, lesson):
@@ -33,6 +35,19 @@ def primitive_action(frame, lesson):
                 action[0] = 2
             elif ratio < .79:
                 action[0] = 0
+    elif lesson == "items":
+        if len(observation) < 266:
+            raise ValueError("Item demonstrations need observation schema 4")
+        if observation[159] > 0 and observation[158] > 0:
+            action[0] = 2
+        for slot in range(5, 9):
+            offset = ITEM_FEATURES + (slot - 2) * ITEM_WIDTH
+            healing = observation[offset + 1] and observation[offset + 10] >= .2 and observation[142]
+            protection = observation[offset + 6] and observation[NEAREST_ENEMY]
+            movement = observation[offset + 4] and observation[159] * 600 > 80
+            if frame["actionMasks"][4][slot] and (healing or protection or movement):
+                action[4] = slot
+                break
     else:
         raise ValueError("No primitive teacher for this lesson")
     for head, value in enumerate(action):

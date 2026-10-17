@@ -24,8 +24,8 @@ SIZES = [3, 3, 3, 2, 9]
 
 
 def course_options(args):
-    return [{key: course.get(key, getattr(args, key))
-             for key in ("lesson", "level", "mix_levels", "mode", "map_id", "players", "ammo_id")}
+    return [{key: course.get(key, getattr(args, key, None))
+             for key in ("lesson", "level", "mix_levels", "mode", "map_id", "players", "ammo_id", "items")}
             for course in getattr(args, "courses", None) or [{}]]
 
 
@@ -69,8 +69,11 @@ class Environment:
                              "mapId": course["map_id"], "players": course["players"],
                              "controlled": 1, "seconds": 60, "tankId": 1,
                              "ammoId": course["ammo_id"],
+                             "items": course["items"],
                              "lesson": course["lesson"], "level": level})
         result["lesson"] = course["lesson"]
+        if course["lesson"] == "items" and result["frames"][0]["schema"] < 4:
+            raise RuntimeError("Item courses require the simulation server with observation schema 4")
         return result
 
     def step(self, action):
@@ -177,9 +180,10 @@ def main(args):
                         prior_config.get("imitation_weight", 0) if prior_config.get("teacher_steps", 0) else 0)
                 else:
                     args.imitation_weight = .1 if args.teacher_steps else 0
-            if args.imitation_weight and any(course["lesson"] not in ("turning", "navigation", "aiming", "range")
+            if args.imitation_weight and any(course["lesson"] not in ("turning", "navigation", "aiming", "range", "items")
                     or course["lesson"] == "navigation" and course["level"] > 2
-                    or course["lesson"] == "range" and course["level"] > 1 for course in course_options(args)):
+                    or course["lesson"] == "range" and course["level"] > 1
+                    or course["lesson"] == "items" and course["level"] > 2 for course in course_options(args)):
                 raise ValueError("Auxiliary imitation requires a supported primitive lesson")
             config = {**vars(args), "torch": torch.__version__, "device": torch.cuda.get_device_name(0),
                       "observationWidth": observations.shape[-1], "actionSizes": SIZES,
@@ -337,14 +341,17 @@ def main(args):
         for level in levels:
             prefix = f"evaluation-course-{number}-" if args.courses else "evaluation-"
             destination = output / f"{prefix}level-{level}"
-            subprocess.run([sys.executable, str(Path(__file__).with_name("evaluate.py")),
+            command = [sys.executable, str(Path(__file__).with_name("evaluate.py")),
                             "--environment-url", args.environment_url,
                             "--checkpoint", str(output / "latest.pt"), "--output", str(destination),
                             "--lesson", course["lesson"], "--level", str(level), "--mode", str(course["mode"]),
                             "--map-id", str(course["map_id"]), "--players", str(course["players"]),
                             "--ammo-id", str(course["ammo_id"]), "--episodes", str(args.evaluation_episodes),
                             "--gpu-utilization-limit", str(args.gpu_utilization_limit),
-                            "--seed", str(args.seed + 100000000)], check=True)
+                            "--seed", str(args.seed + 100000000)]
+            if course["items"] is not None:
+                command += ["--items", json.dumps(course["items"])]
+            subprocess.run(command, check=True)
             evaluations.append({**course, "level": level, "output": str(destination),
                                 **json.loads((destination / "result.json").read_text(encoding="utf-8"))})
     result["evaluations"] = evaluations
@@ -369,7 +376,7 @@ if __name__ == "__main__":
     parser.add_argument("--map-id", type=int, default=7)
     parser.add_argument("--players", type=int, default=2)
     parser.add_argument("--ammo-id", type=int, default=2001)
-    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "combat"], default="combat")
+    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat"], default="combat")
     parser.add_argument("--level", type=int, choices=range(4), default=1)
     parser.add_argument("--mix-levels", action="store_true", help="Replay levels zero through the selected level")
     parser.add_argument("--seed", type=int, default=179)
@@ -378,6 +385,7 @@ if __name__ == "__main__":
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)
     parser.add_argument("--curriculum", help="JSON list of courses assigned evenly across environments")
+    parser.add_argument("--items", type=json.loads, help="Override the lesson loadout with a JSON list of slot/itemTableId/quantity")
     args = parser.parse_args()
     args.courses = json.loads(Path(args.curriculum).read_text(encoding="utf-8-sig")) if args.curriculum else None
     if args.courses is not None and (not isinstance(args.courses, list) or not args.courses
@@ -388,10 +396,11 @@ if __name__ == "__main__":
     if args.minibatch_sequences < 1:
         parser.error("--minibatch-sequences must be positive")
     for course in course_options(args):
-        if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "combat") or course["level"] not in range(4):
+        if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat") or course["level"] not in range(4):
             parser.error("Each course needs a supported lesson and level")
-        if args.teacher_steps and (course["lesson"] not in ("turning", "navigation", "aiming", "range")
+        if args.teacher_steps and (course["lesson"] not in ("turning", "navigation", "aiming", "range", "items")
                 or course["lesson"] == "navigation" and course["level"] > 2
-                or course["lesson"] == "range" and course["level"] > 1):
-            parser.error("Primitive demonstrations require turning, direct navigation, aiming or non-shooting range")
+                or course["lesson"] == "range" and course["level"] > 1
+                or course["lesson"] == "items" and course["level"] > 2):
+            parser.error("Primitive demonstrations require turning, direct navigation, aiming, non-shooting range or basic items")
     main(args)

@@ -74,6 +74,11 @@ def main(args):
                 log.flush()
         summary = {"episodes": len(episodes), "successRate": np.mean([bool(row["success"]) for row in episodes]),
                    "returnMean": np.mean([row["return"] for row in episodes]),
+                   "stepsMean": np.mean([row["steps"] for row in episodes]),
+                   "itemUsesMean": np.mean([row["lessonMetrics"].get("consumedItems", 0) for row in episodes]),
+                   "healedHpMean": np.mean([row["lessonMetrics"].get("healedHp", 0) for row in episodes]),
+                   "damageTakenMean": np.mean([row["metrics"]["damageTaken"] for row in episodes]),
+                   "finalHpMean": np.mean([row["metrics"]["hp"] for row in episodes]),
                    "checkpointSteps": checkpoint["steps"], "readyForGameplay": False}
         (output / "result.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
         print(json.dumps(summary), flush=True)
@@ -88,13 +93,14 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--episodes", type=int, default=32)
-    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "combat"], default="navigation")
+    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat"], default="navigation")
     parser.add_argument("--level", type=int, default=1)
     parser.add_argument("--mix-levels", action="store_true")
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)
     parser.add_argument("--players", type=int, default=2)
     parser.add_argument("--ammo-id", type=int, default=2001)
+    parser.add_argument("--items", type=json.loads, help="Use [] to measure the same policy without consumables")
     parser.add_argument("--seed", type=int, default=100000179)
     parser.add_argument("--stochastic", action="store_true")
     parser.add_argument("--gpu-utilization-limit", type=int, default=80)

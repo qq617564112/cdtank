@@ -3,6 +3,7 @@ import {gameContent} from '../../../shared/content/catalog';
 import {tankTurretYaw} from '../../../shared/combat/tank-turret';
 import {isRoleFireReady} from '../battle/roles/reload';
 import {queryShotTarget} from '../battle/shot-query';
+import {learningItemState} from './items';
 import type {RoomState} from '../rooms/state';
 import type {PlayerState} from '../battle/player-state';
 import type {MsgRoomEvent} from '../../../shared/protocols/MsgRoomEvent';
@@ -93,14 +94,12 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
   for (let mode = 1; mode <= 5; mode++) observation.push(Number(room.mode === mode));
   observation.push(Number(player.vip), maximumHp / 1000,
     Math.max(0, (room.timeLimitSeconds ?? room.map.timeLimit) - (now - room.startedAt) / 1000) / 600);
-  const itemMask = [true, player.alive];
+  const items = learningItemState(player, maximumHp, now);
   const hotkeys = player.combat.record?.arrays.get(0);
   for (let slot = 2; slot <= 8; slot++) {
     const instance = (hotkeys?.[slot - 2] ?? 0) >>> 0;
     const item = player.inventory.find(record => (record.instanceId >>> 0) === instance);
-    const available = !!item && item.ownedQuantity > 0 && item.battleQuantity > 0
-      && player.alive && player.combat.status === 2;
-    itemMask.push(available);
+    const available = items.mask[slot];
     observation.push(item ? item.itemTableId / 30000 : 0,
       item ? Math.min(1, item.battleQuantity / 20) : 0, Number(available));
   }
@@ -151,9 +150,10 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
   const goalLength = Math.hypot(...relativeGoal);
   observation.push(relativeGoal[0] / Math.max(.001, goalLength),
     relativeGoal[1] / Math.max(.001, goalLength), Math.min(4, goalLength));
-  return {schema: 3, observation, actionSizes: LEARNING_ACTION_SIZES,
+  observation.push(...items.features);
+  return {schema: 4, observation, actionSizes: LEARNING_ACTION_SIZES,
     actionMasks: [[true, true, true], [true, true, true], [true, true, true],
-      [true, fireReady], itemMask],
+      [true, fireReady], items.mask],
     memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths, observedAmmo},
     metrics: {hp: player.hp, kills: player.kills, deaths: player.deaths,
       damage: player.roundStats?.damage ?? 0, damageTaken: player.roundStats?.damageTaken ?? 0,
