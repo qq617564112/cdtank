@@ -7,8 +7,6 @@ import json
 import os
 from pathlib import Path
 import random
-import subprocess
-import sys
 import time
 from urllib.parse import urlsplit
 
@@ -60,8 +58,9 @@ class Environment:
             raise RuntimeError(f"Environment {self.number}: {result.get('error', response.status)}")
         return result
 
-    def reset(self):
-        seed = self.args.seed + self.number * 1000000 + self.episode
+    def reset(self, seed=None):
+        if seed is None:
+            seed = self.args.seed + self.number * 1000000 + self.episode
         self.episode += 1
         course = self.course
         level = random.Random(seed).randint(0, course["level"]) if course["mix_levels"] else course["level"]
@@ -336,24 +335,20 @@ def main(args):
             environment.close()
         budget.close()
     evaluations = []
+    from evaluate import main as evaluate_policy
+
     for number, course in enumerate(course_options(args)):
         levels = range(course["level"] + 1) if course["mix_levels"] else [course["level"]]
         for level in levels:
             prefix = f"evaluation-course-{number}-" if args.courses else "evaluation-"
             destination = output / f"{prefix}level-{level}"
-            command = [sys.executable, str(Path(__file__).with_name("evaluate.py")),
-                            "--environment-url", args.environment_url,
-                            "--checkpoint", str(output / "latest.pt"), "--output", str(destination),
-                            "--lesson", course["lesson"], "--level", str(level), "--mode", str(course["mode"]),
-                            "--map-id", str(course["map_id"]), "--players", str(course["players"]),
-                            "--ammo-id", str(course["ammo_id"]), "--episodes", str(args.evaluation_episodes),
-                            "--gpu-utilization-limit", str(args.gpu_utilization_limit),
-                            "--seed", str(args.seed + 100000000)]
-            if course["items"] is not None:
-                command += ["--items", json.dumps(course["items"])]
-            subprocess.run(command, check=True)
+            summary = evaluate_policy(argparse.Namespace(**{**course, "level": level, "mix_levels": False,
+                "environment_url": args.environment_url, "checkpoint": str(output / "latest.pt"),
+                "output": str(destination), "episodes": args.evaluation_episodes,
+                "environments": args.evaluation_environments, "stochastic": False,
+                "gpu_utilization_limit": args.gpu_utilization_limit, "seed": args.seed + 100000000}))
             evaluations.append({**course, "level": level, "output": str(destination),
-                                **json.loads((destination / "result.json").read_text(encoding="utf-8"))})
+                                **summary})
     result["evaluations"] = evaluations
     (output / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
@@ -381,6 +376,7 @@ if __name__ == "__main__":
     parser.add_argument("--mix-levels", action="store_true", help="Replay levels zero through the selected level")
     parser.add_argument("--seed", type=int, default=179)
     parser.add_argument("--evaluation-episodes", type=int, default=32)
+    parser.add_argument("--evaluation-environments", type=int, default=8)
     parser.add_argument("--teacher-steps", type=int, default=0)
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)
@@ -395,6 +391,8 @@ if __name__ == "__main__":
         parser.error("--rollout must be a multiple of 32")
     if args.minibatch_sequences < 1:
         parser.error("--minibatch-sequences must be positive")
+    if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
+        parser.error("Evaluation episodes and environments must be positive")
     for course in course_options(args):
         if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat") or course["level"] not in range(4):
             parser.error("Each course needs a supported lesson and level")
