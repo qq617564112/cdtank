@@ -1,5 +1,8 @@
 import {isHiddenFromOpponent} from '../../../shared/combat/optical-camouflage';
+import {gameContent} from '../../../shared/content/catalog';
+import {tankTurretYaw} from '../../../shared/combat/tank-turret';
 import {isRoleFireReady} from '../battle/roles/reload';
+import {queryShotTarget} from '../battle/shot-query';
 import type {RoomState} from '../rooms/state';
 import type {PlayerState} from '../battle/player-state';
 
@@ -11,6 +14,8 @@ export interface LearningMemory {
   z: number;
   at: number;
   deaths: number;
+  visibleShots?: Record<string, number>;
+  observedAmmo?: Record<string, number>;
 }
 
 export interface LearningGoal {x: number; z: number;}
@@ -39,7 +44,7 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
   };
   const origin = {x: player.x, y: player.y + 20, z: player.z};
   const distance = (point: {x: number; z: number}) => Math.hypot(point.x - player.x, point.z - player.z);
-  const visible = (point: {x: number; y: number; z: number}) => distance(point) <= 600
+  const visible = (point: {x: number; y: number; z: number}) => distance(point) <= 2500
     && !room.battlefield.firstSurfaceHit(origin, {...point, y: point.y + 20}, 0);
   for (let ray = 0; ray < 8; ray++) {
     const angle = yaw + ray * Math.PI / 4;
@@ -103,10 +108,48 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
   const fireReady = player.alive && !player.combat.pendingShot
     && isRoleFireReady(player.combat.getFlag(11) !== 0,
       (now - room.startedAt) / 1000, player.combat.nextAvailableSeconds);
-  return {schema: 1, observation, actionSizes: LEARNING_ACTION_SIZES,
+  const ammo = gameContent().items.get(player.combat.currentAmmoTableId)!;
+  const range = ammo.runtime.range! * (player.shotModifiers?.rangePercent ?? 100) / 100;
+  const instant = ammo.runtime.query === 'instant';
+  const penetrates = player.shotModifiers?.penetratesObstacles === true;
+  const turret = tankTurretYaw(player.tank.id, player);
+  const perceived = new Map([player, ...enemies, ...allies].map(peer => [peer.id, peer]));
+  const query = (angle: number) => queryShotTarget(player,
+    {x: Math.sin(angle), y: 0, z: Math.cos(angle)}, perceived, room.battlefield, 20,
+    instant ? room.sceneCrushes : undefined, instant,
+    {range, closestPlayer: instant || penetrates, ignoreObstruction: penetrates});
+  const selected = query(turret);
+  const observedAmmo = {...previous?.observedAmmo};
+  const visibleShots: Record<string, number> = {};
+  observation.push(range / 1000, ammo.runtime.projectileSpeed! / 1000, Number(instant), Number(penetrates),
+    Math.max(0, player.combat.nextAvailableSeconds - (now - room.startedAt) / 1000) / 5,
+    Math.min(1, player.combat.bulletCount / 20), ammo.runtime.muzzleForward! / 1000, Number(fireReady));
+  const inRange: boolean[] = [];
+  for (const peer of enemies) {
+    visibleShots[peer.id] = peer.roundStats?.shots ?? 0;
+    if (previous?.visibleShots?.[peer.id] !== undefined
+        && visibleShots[peer.id] > previous.visibleShots[peer.id]) observedAmmo[peer.id] = peer.combat.currentAmmoTableId;
+  }
+  for (let index = 0; index < 3; index++) {
+    const peer = enemies[index];
+    if (!peer) {observation.push(...Array<number>(7).fill(0)); continue;}
+    const bearing = Math.atan2(peer.x - player.x, peer.z - player.z);
+    const aimed = query(bearing);
+    const reachable = aimed.kind === 'PLAYER' && aimed.targetId === peer.id;
+    inRange.push(reachable);
+    const known = observedAmmo[peer.id] !== undefined;
+    const knownItem = known ? gameContent().items.get(observedAmmo[peer.id]) : undefined;
+    const modifier = knownItem && Object.values(knownItem.runtime.skillRoles)
+      .map(id => gameContent().skills.get(id)?.functions[0]).find(value => value?.type === 23);
+    const knownRange = (knownItem?.runtime.range ?? 0) * (modifier?.x ?? 100) / 100;
+    observation.push(distance(peer) / Math.max(1, range), Number(reachable),
+      Number(selected.kind === 'PLAYER' && selected.targetId === peer.id),
+      Math.sin(bearing - turret), Math.cos(bearing - turret), knownRange / 1000, Number(known));
+  }
+  return {schema: 2, observation, actionSizes: LEARNING_ACTION_SIZES,
     actionMasks: [[true, true, true], [true, true, true], [true, true, true],
       [true, fireReady], itemMask],
-    memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths},
+    memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths, visibleShots, observedAmmo},
     metrics: {hp: player.hp, kills: player.kills, deaths: player.deaths,
       damage: player.roundStats?.damage ?? 0, damageTaken: player.roundStats?.damageTaken ?? 0,
       shots: player.roundStats?.shots ?? 0, hits: player.roundStats?.hits ?? 0,
@@ -114,5 +157,8 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
       vipDamage: player.roundStats?.vipDamage ?? 0, team: player.team,
       teamLives: [...room.teamLives], teamScores: [...room.teamScores]},
     nearestEnemyDistance: enemies[0] ? distance(enemies[0]) : undefined,
+    weapon: {range, instant, projectileSpeed: ammo.runtime.projectileSpeed!,
+      penetrates, canReachEnemy: inRange.some(Boolean),
+      aimedAtEnemy: selected.kind === 'PLAYER' && enemies.some(peer => peer.id === selected.targetId)},
     alive: player.alive, phase: room.phase, result: room.result};
 }

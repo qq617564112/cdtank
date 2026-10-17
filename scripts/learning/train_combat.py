@@ -47,6 +47,7 @@ class Environment:
         return self.command({"type": "reset", "seed": seed, "mode": self.args.mode,
                              "mapId": self.args.map_id, "players": self.args.players,
                              "controlled": 1, "seconds": 60, "tankId": 1,
+                             "ammoId": self.args.ammo_id,
                              "lesson": self.args.lesson, "level": self.args.level})
 
     def step(self, action):
@@ -85,6 +86,16 @@ class Policy(nn.Module):
                 getattr(self.memory, name).copy_(prior[f"memory.{name}_l0"])
             self.actor.weight[:9].copy_(prior["actor.weight"])
             self.actor.bias[:9].copy_(prior["actor.bias"])
+
+    def initialize(self, state):
+        """Retain trained features while adding zero-initialized curriculum inputs."""
+        state = dict(state)
+        weight = state["encoder.weight"]
+        if weight.shape[1] < self.encoder.in_features:
+            expanded = torch.zeros_like(self.encoder.weight)
+            expanded[:, :weight.shape[1]] = weight
+            state["encoder.weight"] = expanded
+        self.load_state_dict(state)
 
 
 def tensors(results, device):
@@ -127,11 +138,11 @@ def main(args):
             if args.prior:
                 policy.warm_start(args.prior)
             if args.weights:
-                policy.load_state_dict(torch.load(args.weights, map_location=device)["policy"])
+                policy.initialize(torch.load(args.weights, map_location=device)["policy"])
             optimizer = torch.optim.Adam(policy.parameters(), lr=args.learning_rate, eps=1e-5)
             config = {**vars(args), "torch": torch.__version__, "device": torch.cuda.get_device_name(0),
                       "observationWidth": observations.shape[-1], "actionSizes": SIZES,
-                      "simulationHz": 20, "decisionHz": 10, "observationSchema": 1,
+                      "simulationHz": 20, "decisionHz": 10, "observationSchema": results[0]["frames"][0]["schema"],
                       "algorithm": "recurrent PPO", "hiddenSize": 64}
             source = Path(args.game) / "source.json"
             config["source"] = json.loads(source.read_text(encoding="utf-8")) if source.exists() else None
@@ -265,7 +276,8 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)
     parser.add_argument("--players", type=int, default=2)
-    parser.add_argument("--lesson", choices=["navigation", "shooting", "dodge", "combat"], default="combat")
+    parser.add_argument("--ammo-id", type=int, default=2001)
+    parser.add_argument("--lesson", choices=["navigation", "shooting", "dodge", "range", "combat"], default="combat")
     parser.add_argument("--level", type=int, choices=range(4), default=1)
     parser.add_argument("--seed", type=int, default=179)
     args = parser.parse_args()

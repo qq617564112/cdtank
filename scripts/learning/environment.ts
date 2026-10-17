@@ -13,11 +13,12 @@ interface ResetRequest {
   mode?: number;
   mapId?: number;
   tankId?: number;
+  ammoId?: number;
   players?: number;
   controlled?: number;
   seconds?: number;
   items?: {slot: number; itemTableId: number; quantity: number}[];
-  lesson?: 'navigation' | 'shooting' | 'dodge' | 'combat';
+  lesson?: 'navigation' | 'shooting' | 'dodge' | 'range' | 'combat';
   level?: number;
 }
 
@@ -41,6 +42,14 @@ let level = 1;
 let blocked = 0;
 let travelled = 0;
 let practiceIds: string[] = [];
+let rangeShots = 0;
+let outsideRangeShots = 0;
+let rangeTicks = 0;
+let rangeStreak = 0;
+
+function rangeError(distance: number, range: number): number {
+  return Math.max(0, .75 * range - distance, distance - .9 * range);
+}
 
 function alignment(frame: Frame): number {
   if (!goal) return 0;
@@ -82,6 +91,16 @@ function frames(): Frame[] {
       }
     }
   }
+  if (lesson === 'range') {
+    for (const frame of result) {
+      frame.actionMasks[4] = frame.actionMasks[4].map((_, index) => index === 0);
+      if (level < 2) {
+        frame.actionMasks[1] = [false, true, false];
+        frame.actionMasks[2] = [false, true, false];
+        frame.actionMasks[3][1] = false;
+      }
+    }
+  }
   memories = result.map(frame => frame.memory);
   return result;
 }
@@ -101,6 +120,10 @@ function reset(request: ResetRequest) {
   travelled = 0;
   initialDistance = 1;
   practiceIds = [];
+  rangeShots = 0;
+  outsideRangeShots = 0;
+  rangeTicks = 0;
+  rangeStreak = 0;
   const mapId = request.mapId ?? 7;
   const count = request.players ?? 2;
   const controlled = request.controlled ?? 1;
@@ -114,10 +137,13 @@ function reset(request: ResetRequest) {
     playerIds.push(world.joinRoom(roomId, `LEARNER-${index}`, `Learner ${index}`, request.tankId ?? 1).playerId);
   }
   const tank = content.tanks.get(request.tankId ?? 1)!;
+  const ammo = content.items.get(request.ammoId ?? 2001);
+  if (!ammo || ammo.kind !== 'ammo') throw new Error('Unknown practice ammunition');
   const pet = [...content.pets.values()][0];
   for (const id of playerIds) {
     world.bindRoleSources(id, newbornBattleSources(tank, pet));
-    const items = request.items ?? [];
+    const items = request.items ?? (ammo.runtime.defaultAmmo ? []
+      : [{slot: 2, itemTableId: ammo.id, quantity: ammo.battleUseMax}]);
     const hotkeys = Array<number>(7).fill(0);
     const records = items.map(item => {
       hotkeys[item.slot - 2] = item.slot;
@@ -144,7 +170,7 @@ function reset(request: ResetRequest) {
   world.step(50);
   for (const id of playerIds) {
     world.updateInput(id, {sequence: ++sequence, move: 0, turn: 0, aim: 0,
-      fire: false, useItem: 1, clientTime: clock});
+      fire: false, useItem: ammo.runtime.defaultAmmo ? 1 : 2, clientTime: clock});
   }
   memories = playerIds.map(() => undefined);
   previous = frames();
@@ -159,10 +185,12 @@ function reset(request: ResetRequest) {
     for (let attempt = 0; attempt < 128; attempt++) {
       const angle = learner.yaw + (Math.random() * 2 - 1) * (level === 0 ? .25 : Math.PI);
       const radius = 90 + Math.random() * (level === 0 ? 60 : 270);
-      const candidate = {x: learner.x + Math.sin(angle) * radius, y: learner.y,
-        z: learner.z + Math.cos(angle) * radius};
+      const x = learner.x + Math.sin(angle) * radius, z = learner.z + Math.cos(angle) * radius;
+      const y = field.navigation.groundHeightAt(x, z);
+      if (y === undefined) continue;
+      const candidate = {x, y, z};
       if (!navigation.canTraverse(learner, candidate)
-          || field.firstSurfaceHit({...learner, y: learner.y + 20}, {...candidate, y: candidate.y + 20}, 0)) continue;
+          || field.firstSurfaceHit({...learner, y: learner.y + 20}, {...candidate, y: y + 20}, 0)) continue;
       const facing = lesson === 'shooting' && level >= 2 ? angle + Math.PI / 2 : angle + Math.PI;
       if (!world.placeLearningActor(practiceIds[0], {...candidate, yaw: facing, hp: level === 0 ? 150 : 600})) continue;
       placed = world.placeLearningActor(playerIds[0], {...learner, hp: learner.maxHp});
@@ -171,6 +199,38 @@ function reset(request: ResetRequest) {
     if (!placed) throw new Error('No visible target lesson placement');
     memories = playerIds.map(() => undefined);
     previous = frames();
+  }
+  if (lesson === 'range') {
+    if (controlled !== 1 || practiceIds.length !== 1 || mode !== 4) {
+      throw new Error('Range lessons require one learner and one practice actor in mode 4');
+    }
+    const learner = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!;
+    const field = getBattlefield(mapId);
+    const navigation = createOriginalBotNavigation(field);
+    const range = previous[0].weapon.range;
+    let placed = false;
+    for (let attempt = 0; attempt < 256; attempt++) {
+      const start = attempt < 64 ? learner : field.spawns[attempt % field.spawns.length];
+      const angle = start.yaw + (Math.random() * 2 - 1) * Math.PI;
+      const fraction = level === 0 ? 1.05 + Math.random() * .15
+        : level === 1 ? .35 + Math.random() * .2 : .7 + Math.random() * .5;
+      const x = start.x + Math.sin(angle) * range * fraction;
+      const z = start.z + Math.cos(angle) * range * fraction;
+      const y = field.navigation.groundHeightAt(x, z);
+      if (y === undefined) continue;
+      const candidate = {x, y, z};
+      if (!navigation.canTraverse(start, candidate)
+          || field.firstSurfaceHit({...start, y: start.y + 20}, {...candidate, y: y + 20}, 0)) continue;
+      if (!world.placeLearningActor(playerIds[0], {...start, yaw: angle, hp: learner.maxHp})) continue;
+      if (!world.placeLearningActor(practiceIds[0], {...candidate, yaw: angle + Math.PI, hp: 150})) continue;
+      placed = true;
+      break;
+    }
+    if (!placed) throw new Error('No clear range lesson placement on this map');
+    memories = playerIds.map(() => undefined);
+    previous = frames();
+    const target = world.snapshot(roomId)!.players.find(player => player.id === practiceIds[0])!;
+    initialDistance = Math.hypot(target.x - previous[0].memory.x, target.z - previous[0].memory.z);
   }
   if (lesson === 'navigation') {
     const start = previous[0].memory;
@@ -206,7 +266,7 @@ function step(request: StepRequest) {
       turn: action[1] - 1, aim: action[2] - 1, fire: action[3] === 1,
       useItem: action[4], clientTime: clock});
   });
-  if (lesson === 'shooting' && level >= 2 || lesson === 'dodge') {
+  if (lesson === 'shooting' && level >= 2 || lesson === 'dodge' || lesson === 'range' && level === 3) {
     for (const id of practiceIds) {
       const actor = world.snapshot(roomId)!.players.find(player => player.id === id)!;
       const learner = previous[0].memory;
@@ -221,13 +281,25 @@ function step(request: StepRequest) {
   for (let tick = 0; tick < 2; tick++) {clock += 50; world.step(50);}
   const current = frames();
   decisions++;
+  const target = lesson === 'range' ? world.snapshot(roomId)!.players.find(player => player.id === practiceIds[0]) : undefined;
+  const targetDistance = target ? Math.hypot(target.x - current[0].memory.x, target.z - current[0].memory.z) : undefined;
+  const inBand = targetDistance !== undefined && rangeError(targetDistance, current[0].weapon.range) === 0;
+  if (inBand) rangeTicks++;
+  rangeStreak = inBand ? rangeStreak + 1 : 0;
+  const shots = current[0].metrics.shots - previous[0].metrics.shots;
+  if (lesson === 'range' && shots > 0) {
+    if (inBand) rangeShots += shots;
+    if (targetDistance !== undefined && targetDistance > current[0].weapon.range) outsideRangeShots += shots;
+  }
   const goalDistance = goal ? Math.hypot(current[0].memory.x - goal.x, current[0].memory.z - goal.z) : undefined;
   const success = lesson === 'navigation' ? goalDistance !== undefined && goalDistance < 20
     : lesson === 'shooting' ? current[0].metrics.kills > 0
+    : lesson === 'range' ? level < 2 ? rangeStreak >= 10 : current[0].metrics.kills > 0
     : lesson === 'dodge' ? decisions >= 150 && current[0].metrics.damageTaken === 0 : false;
   const done = current[0].phase === 'FINISHED'
     || lesson === 'navigation' && (success || decisions >= (level === 3 ? 300 : 150))
     || lesson === 'shooting' && (success || decisions >= 200)
+    || lesson === 'range' && (success || decisions >= 300)
     || lesson === 'dodge' && (current[0].metrics.deaths > 0 || decisions >= 150);
   const rewards = current.map((frame, index) => {
     const before = previous[index].metrics, after = frame.metrics;
@@ -255,6 +327,15 @@ function step(request: StepRequest) {
       if (success) reward += 2;
     }
     if (lesson === 'dodge') reward += .002 - .003 * (after.damageTaken - before.damageTaken);
+    if (lesson === 'range' && target && targetDistance !== undefined) {
+      const beforeDistance = Math.hypot(target.x - previous[index].memory.x, target.z - previous[index].memory.z);
+      reward += 4 * (rangeError(beforeDistance, frame.weapon.range)
+        - rangeError(targetDistance, frame.weapon.range)) / Math.max(1, frame.weapon.range) - .001;
+      if (inBand) reward += .01;
+      if (shots > 0 && targetDistance > frame.weapon.range) reward -= .03 * shots;
+      if (shots > 0 && inBand && frame.weapon.aimedAtEnemy) reward += .03 * shots;
+      if (success) reward += 2;
+    }
     if (goal) {
       const beforeDistance = Math.hypot(previous[index].memory.x - goal.x, previous[index].memory.z - goal.z);
       const afterDistance = Math.hypot(frame.memory.x - goal.x, frame.memory.z - goal.z);
@@ -271,7 +352,8 @@ function step(request: StepRequest) {
   });
   previous = current;
   return {type: 'step', seed, frames: current, rewards, done, lesson, level, success, goalDistance,
-    lessonMetrics: {initialDistance, goalDistance, travelled, blocked, decisions}};
+    lessonMetrics: {initialDistance, goalDistance, travelled, blocked, decisions,
+      targetDistance, weaponRange: current[0].weapon.range, rangeTicks, rangeStreak, rangeShots, outsideRangeShots}};
 }
 
 const lines = createInterface({input: process.stdin, crlfDelay: Infinity});

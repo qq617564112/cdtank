@@ -19,15 +19,16 @@ def main(args):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     checkpoint = torch.load(args.checkpoint, map_location="cuda")
-    policy = Policy(checkpoint["config"]["observationWidth"]).cuda().eval()
-    policy.load_state_dict(checkpoint["policy"])
     (output / "config.json").write_text(json.dumps(vars(args), indent=2), encoding="utf-8")
     environment = Environment(args, 0)
     episodes = []
     try:
+        first = environment.reset()
+        policy = Policy(len(first["frames"][0]["observation"])).cuda().eval()
+        policy.initialize(checkpoint["policy"])
         with (output / "episodes.jsonl").open("x", encoding="utf-8") as log:
             for episode in range(args.episodes):
-                result = environment.reset()
+                result = first if episode == 0 else environment.reset()
                 hidden = torch.zeros(1, 64, device="cuda")
                 reset = torch.ones(1, device="cuda")
                 total = 0
@@ -74,11 +75,12 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--episodes", type=int, default=32)
-    parser.add_argument("--lesson", choices=["navigation", "shooting", "dodge", "combat"], default="navigation")
+    parser.add_argument("--lesson", choices=["navigation", "shooting", "dodge", "range", "combat"], default="navigation")
     parser.add_argument("--level", type=int, default=1)
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)
     parser.add_argument("--players", type=int, default=2)
+    parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--seed", type=int, default=100000179)
     parser.add_argument("--stochastic", action="store_true")
     main(parser.parse_args())

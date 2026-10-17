@@ -18,7 +18,8 @@ export interface LearningPlacement {
 /** Initial conditions for offline lessons; subsequent actions use ordinary World inputs. */
 export function placeLearningActor(room: RoomState, player: PlayerState,
   placement: LearningPlacement, maximumHp: number): boolean {
-  const y = room.battlefield.navigation.validHeightAt(placement.x, placement.z);
+  if (!room.battlefield.navigation.isValidAt(placement.x, placement.z)) return false;
+  const y = room.battlefield.navigation.groundHeightAt(placement.x, placement.z);
   if (y === undefined) return false;
   const candidate = {...placement, id: player.id, alive: true, y, bodyYaw: placement.yaw};
   const forward = {x: Math.fround(Math.sin(placement.yaw)), y: 0, z: Math.fround(Math.cos(placement.yaw))};

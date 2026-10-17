@@ -1,8 +1,10 @@
 param(
   [Parameter(Mandatory=$true)][ValidatePattern('^[a-z0-9-]+$')][string]$RunName,
-  [ValidateSet('navigation','shooting','dodge','combat')][string]$Lesson='navigation',
+  [ValidateSet('navigation','shooting','dodge','range','combat')][string]$Lesson='navigation',
   [int]$Steps=100000,
   [int]$Environments=4,
+  [int]$MapId=7,
+  [int]$AmmoId=2001,
   [ValidateRange(0,3)][int]$Level=1,
   [string]$Prior='D:/ai/cdtank/runs/motion-20261017-001/best.pt',
   [string]$Weights='',
@@ -12,7 +14,7 @@ param(
 $ErrorActionPreference='Stop'
 $root='D:/ai/cdtank'
 if (Test-Path "$root/runs/$RunName") { throw 'Use a new run directory' }
-$arguments="$root/game/scripts/learning/train_combat.py --game $root/game --node $root/tools/node/node.exe --output $root/runs/$RunName --steps $Steps --environments $Environments --lesson $Lesson --level $Level"
+$arguments="$root/game/scripts/learning/train_combat.py --game $root/game --node $root/tools/node/node.exe --output $root/runs/$RunName --steps $Steps --environments $Environments --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId"
 if ($Resume) { $arguments+=" --resume $Resume" }
 elseif ($Weights) { $arguments+=" --weights $Weights" }
 elseif ($Prior) { $arguments+=" --prior $Prior" }
@@ -24,6 +26,6 @@ $created=Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments
 }
 if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.ReturnValue) }
 @{processId=$created.ProcessId;run=$RunName;lesson=$Lesson;level=$Level;steps=$Steps;
-  environments=$Environments;prior=$Prior;weights=$Weights;resume=$Resume} |
+  environments=$Environments;mapId=$MapId;ammoId=$AmmoId;prior=$Prior;weights=$Weights;resume=$Resume} |
   ConvertTo-Json | Set-Content -Encoding ascii "$root/runs/$RunName.launch.json"
 Write-Output ('TRAINING_LAUNCH_PID='+$created.ProcessId)
