@@ -24,6 +24,14 @@ def main(args):
     episodes = []
     try:
         first = environment.reset()
+        source = Path(args.game) / "source.json"
+        config = {**vars(args), "checkpointSteps": checkpoint["steps"],
+                  "checkpointSource": checkpoint.get("config", {}).get("source"),
+                  "simulationSource": json.loads(source.read_text(encoding="utf-8")) if source.exists() else None,
+                  "observationWidth": len(first["frames"][0]["observation"]),
+                  "observationSchema": first["frames"][0]["schema"],
+                  "torch": torch.__version__, "device": torch.cuda.get_device_name(0)}
+        (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
         policy = Policy(len(first["frames"][0]["observation"])).cuda().eval()
         policy.initialize(checkpoint["policy"])
         with (output / "episodes.jsonl").open("x", encoding="utf-8") as log:

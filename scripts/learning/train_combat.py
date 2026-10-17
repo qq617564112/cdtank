@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import random
 import subprocess
+import sys
 import time
 
 import numpy as np
@@ -261,6 +262,21 @@ def main(args):
     finally:
         for environment in environments:
             environment.close()
+    evaluations = []
+    levels = range(args.level + 1) if args.mix_levels else [args.level]
+    for level in levels:
+        destination = output / f"evaluation-level-{level}"
+        subprocess.run([sys.executable, str(Path(__file__).with_name("evaluate.py")),
+                        "--game", args.game, "--node", args.node,
+                        "--checkpoint", str(output / "latest.pt"), "--output", str(destination),
+                        "--lesson", args.lesson, "--level", str(level), "--mode", str(args.mode),
+                        "--map-id", str(args.map_id), "--players", str(args.players),
+                        "--ammo-id", str(args.ammo_id), "--episodes", str(args.evaluation_episodes),
+                        "--seed", str(args.seed + 100000000)], check=True)
+        evaluations.append({"level": level, "output": str(destination),
+                            **json.loads((destination / "result.json").read_text(encoding="utf-8"))})
+    result["evaluations"] = evaluations
+    (output / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":
@@ -284,6 +300,7 @@ if __name__ == "__main__":
     parser.add_argument("--level", type=int, choices=range(4), default=1)
     parser.add_argument("--mix-levels", action="store_true", help="Replay levels zero through the selected level")
     parser.add_argument("--seed", type=int, default=179)
+    parser.add_argument("--evaluation-episodes", type=int, default=32)
     args = parser.parse_args()
     if args.rollout % 32:
         parser.error("--rollout must be a multiple of 32")
