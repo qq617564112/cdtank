@@ -16,6 +16,9 @@ def main(args):
     output.mkdir(parents=True, exist_ok=False)
     args.native_policy = json.loads(Path(args.model).read_text(encoding="utf-8"))
     model = args.native_policy
+    courses = model.get("trainingCourses") or []
+    if args.items is None and len(courses) == 1:
+        args.items = courses[0].get("items")
     reference = Policy(model["observationWidth"], hidden_size=model["hiddenSize"]).eval()
     reference.load_state_dict({**reference.state_dict(),
         **{name: torch.tensor(value, dtype=torch.float32) for name, value in model["tensors"].items()}})
@@ -116,7 +119,8 @@ if __name__ == "__main__":
     parser.add_argument("--players", type=int, default=4)
     parser.add_argument("--controlled", type=int, default=2)
     parser.add_argument("--ammo-id", type=int, default=2001)
+    parser.add_argument("--items", type=json.loads, help="Override the single-course model's training loadout")
     parser.add_argument("--seed", type=int, default=100000179)
     options = parser.parse_args()
-    options.lesson, options.level, options.mix_levels, options.items = "combat", 1, False, None
+    options.lesson, options.level, options.mix_levels = "combat", 1, False
     main(options)
