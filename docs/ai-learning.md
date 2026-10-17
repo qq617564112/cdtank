@@ -89,7 +89,7 @@ World 的 `learnedCpuPolicy` 注入接口为指定 CPU 或托管角色返回策�
 
 `data/foundation-specialists-data-20261018-001/sequences.npz` 覆盖直达导航、绕障、瞄准、移动靶射击、躲避、普通弹射程、远程弹射程、治疗、无敌和加速十组技能，每组 32 条连续序列，共 40960 个真实世界步骤。标签来自冻结的学习模型。十组教师的 CPU 逐步动作与 GPU 序列重算动作分歧率均为 0；该指标只证明这份记录的执行一致性。脚本标签数据与学习教师本身允许不同，不能用同一指标解释。
 
-后续 PPO 使用 `--rehearsal-references <教师JSON列表>` 与 `--rehearsal-reference-weight` 保留各课程的教师动作分布，另用 `--rehearsal-weight` 保留控制标签。日志记录 `rehearsalReferenceKlMean` 和 `rehearsalReferenceHeadMismatchRate`。本地价值头读取分离梯度后的演员状态，其回归损失只更新价值头；集中价值网络独立使用全局输入。演员继续从策略、模仿和技能保留目标学习。冻结对局用于判断技能是否保留，较低 KL 本身不代表成功。
+后续 PPO 使用 `--rehearsal-references <教师JSON列表>` 与 `--rehearsal-reference-weight` 保留各课程的教师动作分布，另用 `--rehearsal-weight` 保留控制标签。显式指定冻结参考模型时，控制标签同样取该模型的最大概率动作；配置记录 `rehearsalControlLabelSource`。日志记录 `rehearsalReferenceKlMean` 和 `rehearsalReferenceHeadMismatchRate`。本地价值头读取分离梯度后的演员状态，其回归损失只更新价值头；集中价值网络独立使用全局输入。演员继续从策略、模仿和技能保留目标学习。冻结对局用于判断技能是否保留，较低 KL 本身不代表成功。
 
 射程专项 `range-fire-rehearsal-256-20261018-002/teacher.pt` 完成 80384 个纠正示范步骤，32 种子冻结目录为 `range-fire-teacher-frozen-20261018-002`。普通弹 0/1/2/3 级成功数为 32、26、31、31，远程弹四级均为 32。2/3 级的成功来自真实距离带内击毁。
 

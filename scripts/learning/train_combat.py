@@ -412,6 +412,7 @@ def main(args):
                     if args.rehearsal_references else None
                 rehearsal.prepare_references(policy, references)
                 config["rehearsalReferenceSources"] = rehearsal.reference_sources
+                config["rehearsalControlLabelSource"] = "frozen reference argmax" if references else rehearsal.source["labelSource"]
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
             save_checkpoint(output / "initial.pt", policy, optimizer, config, steps, update)
             if args.teacher_steps and not args.resume:
@@ -531,7 +532,8 @@ def main(args):
                             imitation_loss = demonstration_loss(ds, data["teacher"][ticks, env_indices]) if args.imitation_weight else loss.new_zeros(())
                             loss += args.imitation_weight * imitation_loss
                             if rehearsal:
-                                rehearsal_loss, reference_loss, mismatch = rehearsal.loss(policy)
+                                rehearsal_loss, reference_loss, mismatch = rehearsal.loss(policy,
+                                    use_reference_actions=bool(args.rehearsal_references))
                                 loss += args.rehearsal_weight * rehearsal_loss
                                 loss += args.rehearsal_reference_weight * reference_loss
                                 rehearsal_losses.append(rehearsal_loss.item())
