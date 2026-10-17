@@ -17,7 +17,7 @@ def primitive_action(frame, lesson):
         angle = math.atan2(lateral, forward)
         if abs(angle) > .06:
             action[1] = 2 if angle > 0 else 0
-        if lesson == "navigation" and abs(angle) < .15 and observation[159] * 600 > 15:
+        if lesson == "navigation" and abs(angle) <= .06 and observation[159] * 600 > 15:
             action[0] = 2
     elif lesson == "aiming":
         if observation[NEAREST_ENEMY]:
