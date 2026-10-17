@@ -7,7 +7,7 @@ param(
   [double]$LearningRate=0.00025,
   [ValidateSet(0,64,128,256)][int]$HiddenSize=0,
   [ValidateRange(10,90)][int]$GpuUtilizationLimit=80,
-  [string]$EnvironmentUrl='http://192.168.10.140:40106',
+  [string]$EnvironmentUrl='http://192.168.10.140:40109',
   [int]$MapId=7,
   [int]$TankId=1,
   [int]$AmmoId=2001,

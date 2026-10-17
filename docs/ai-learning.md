@@ -136,40 +136,41 @@ python3 scripts/learning/remote.py scripts/learning/setup.ps1
 
 数据导出支持将压缩流直接通过 SSH 交给远程 `receive.py`，无需在本地保存新增数据。`python3 scripts/learning/sync_trainer.py` 将已提交的训练脚本及文档流式传到 `D:/ai/cdtank/data/trainer-<提交前12位>.tar.gz`，解压至固定的 `D:/ai/cdtank/trainer/versions/<提交前12位>`，包内 `source.json` 记录训练端源码。`trainer/current.json` 记录最新固定目录；启动训练、评估和阶段队列时从该目录执行脚本，运行期间不更改其文件。179 的训练不再启动 Node 世界或加载场景资源；已有 `game/` 和历史模拟归档保留。
 
-本机模拟服务从固定提交的独立 detached worktree 运行，避免开发工作区更新后，新建世界与服务记录的源码提交不一致。当前模拟版本为 `18524d48b6bbb535f40a68de0cf0b551ec85289e`，目录为 `/workspace/worktrees/cdtank-simulation-18524d48b6bb`。该目录独立复制 `apps/server/resources`，通过 `node_modules` 链接复用本机已安装依赖。
+本机模拟服务从固定提交的独立 detached worktree 运行。当前模拟版本为 `328d491802a801eede3114703bbb6fef9e852dc5`，目录为 `/workspace/worktrees/cdtank-simulation-pool-40109`，使用六个共享资源的模拟进程。该目录独立复制 `apps/server/resources`，通过 `node_modules` 链接复用本机已安装依赖。
 
 准备并在固定目录启动服务：
 
 ```bash
-git worktree add --detach /workspace/worktrees/cdtank-simulation-18524d48b6bb 18524d48b6bbb535f40a68de0cf0b551ec85289e
-ln -s /workspace/cdtank/node_modules /workspace/worktrees/cdtank-simulation-18524d48b6bb/node_modules
-cp -a --reflink=auto /workspace/cdtank/apps/server/resources /workspace/worktrees/cdtank-simulation-18524d48b6bb/apps/server/resources
-cd /workspace/worktrees/cdtank-simulation-18524d48b6bb
-node scripts/learning/simulation-server.mjs --host 0.0.0.0 --port 40101
+git worktree add --detach /workspace/worktrees/cdtank-simulation-pool-40109 328d491802a801eede3114703bbb6fef9e852dc5
+ln -s /workspace/cdtank/node_modules /workspace/worktrees/cdtank-simulation-pool-40109/node_modules
+cp -a --reflink=auto /workspace/cdtank/apps/server/resources /workspace/worktrees/cdtank-simulation-pool-40109/apps/server/resources
+cd /workspace/worktrees/cdtank-simulation-pool-40109
+node scripts/learning/simulation-server.mjs --host 0.0.0.0 --port 40109 --workers 6
 ```
 
 准备命令只在首次创建目录时执行。当前服务以脱离终端的进程运行。更新模拟版本时准备新的固定提交目录，停止训练并保留检查点，再切换服务和恢复训练；正在运行的模拟目录保持不变。
 
-40101 位于已映射到当前开发容器的 40100–40200 范围。外部健康地址为 `http://192.168.10.140:40101/health`。同一轮训练和冻结评估的 `--environment-url` 使用对应版本的服务地址；配置分别记录训练端源码与模拟端源码、模拟 Node 版本。
+40109 位于已映射到当前开发容器的 40100–40200 范围。外部健康地址为 `http://192.168.10.140:40109/health`。同一轮训练和冻结评估的 `--environment-url` 使用对应版本的服务地址；配置分别记录训练端源码与模拟端源码、模拟 Node 版本。
 
-课程升级期间使用下列固定版本服务，分别保留其正在训练的世界。各自的 `/health` 报告源码提交和活跃世界数，所有端口均通过 `192.168.10.140` 访问：
+模拟服务版本记录如下，所有端口均通过 `192.168.10.140` 访问：
 
 | 端口 | 固定源码 | 观察 | 运行目录 |
 | --- | --- | --- | --- |
 | 40101 | `18524d48b6bb` | schema 3，160 维 | `/workspace/worktrees/cdtank-simulation-18524d48b6bb` |
 | 40102 | `605cb511fd41` | schema 4，266 维 | `/workspace/worktrees/cdtank-simulation-items-605cb511fd41` |
 | 40103 | `74a40e1c7172` | schema 5，290 维 | `/workspace/worktrees/cdtank-simulation-combat-74a40e1c7172` |
+| 40109 | `328d491802a8` | schema 6，305 维，六进程池 | `/workspace/worktrees/cdtank-simulation-pool-40109` |
 
-新道具训练指定 `-EnvironmentUrl http://192.168.10.140:40102`；移动靶、移动射击与分级躲避指定 `40103`。两处也使用独立复制的场景资源与本机依赖链接。
+新基础、道具、交战、团队和模式训练均使用 `-EnvironmentUrl http://192.168.10.140:40109`。旧版本服务和检查点保留各自的观察格式与模拟来源。
 
 远程命令示例：
 
 ```powershell
-D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/trainer/scripts/learning/train_motion.py --data D:/ai/cdtank/data/history-20261017.jsonl.gz --output D:/ai/cdtank/runs/motion-001
-D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/trainer/scripts/learning/train_combat.py --environment-url http://192.168.10.140:40101 --output D:/ai/cdtank/runs/navigation-001 --prior D:/ai/cdtank/runs/motion-20261017-001/best.pt --lesson navigation --steps 100000
+$trainer=(Get-Content D:/ai/cdtank/trainer/current.json -Raw|ConvertFrom-Json).path
+& D:/ai/cdtank/venv/Scripts/python.exe "$trainer/scripts/learning/train_combat.py" --environment-url http://192.168.10.140:40109 --output D:/ai/cdtank/runs/navigation-001 --prior D:/ai/cdtank/runs/motion-20261017-001/best.pt --lesson navigation --steps 100000 --gpu-utilization-limit 60
 ```
 
-通过 SSH 持续运行时调用 `D:/ai/cdtank/trainer/scripts/learning/start-training.ps1 -RunName <新目录名> -Lesson navigation -Level 0 -Steps 30000`，`-EnvironmentUrl` 默认使用 `http://192.168.10.140:40101`。后续课程通过 `-Weights <前一课程检查点>` 继承全部策略参数并重置优化器和步数；同一课程中断后可用 `-Resume <检查点>` 继续优化器和累计步数，`Steps` 为累计目标。迁移模拟进程时从检查点开始新回合，保留优化器和累计步数。启动信息写入 `runs/<目录名>.launch.json`，标准输出和错误分别写入同目录名的 `.stdout.log`、`.stderr.log`；进程独立于 SSH 会话存活。
+通过 SSH 持续运行时，解析同一个 `$trainer`，调用 `& "$trainer/scripts/learning/start-training.ps1" -RunName <新目录名> -Lesson navigation -Level 0 -Steps 30000`，`-EnvironmentUrl` 默认使用 `http://192.168.10.140:40109`。后续课程通过 `-Weights <前一课程检查点>` 继承全部策略参数并重置优化器和步数；同一课程中断后可用 `-Resume <检查点>` 继续优化器和累计步数，`Steps` 为累计目标。带集中价值网络的完整交战或团队检查点继续使用 `-CentralizedCritic`。迁移模拟进程时从检查点开始新回合，保留优化器和累计步数。启动信息写入 `runs/<目录名>.launch.json`，标准输出和错误分别写入同目录名的 `.stdout.log`、`.stderr.log`；进程独立于 SSH 会话存活。
 
 `-Environments` 控制并行模拟世界数，`-MinibatchSequences` 控制每个 PPO 梯度批次包含多少条 32 步序列，分别对应 Python 的 `--environments` 和 `--minibatch-sequences`。扩大两种批量后，以相同课程的累计步数与耗时判断提速，冻结评估仍决定策略质量；较大的梯度批次会减少每个回合采集批次中的优化器更新次数。
 

@@ -81,7 +81,7 @@ class Environment:
             request["nativePolicy"] = self.native_policy
         result = self.command(request)
         if "learnerTeam" in request and result.get("learnerTeam") != request["learnerTeam"]:
-            raise RuntimeError("Team rotation requires the current simulation service on port 40106")
+            raise RuntimeError("The simulation service must honor the requested learner team")
         result["lesson"] = course["lesson"]
         paths = getattr(self.args, "opponent_paths", None)
         self.opponent_index = random.Random(seed + 7919).randrange(len(paths)) if paths else None
