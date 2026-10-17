@@ -273,6 +273,9 @@ function step(request: StepRequest) {
   if (request.actions.length !== playerIds.length) throw new Error('Action count does not match actors');
   const events: WorldEvent[] = [];
   let rangeKillDelta = 0;
+  let rangeShotDelta = 0;
+  let outsideRangeShotDelta = 0;
+  let aimedRangeShotDelta = 0;
   request.actions.forEach((action, index) => {
     if (action.length !== 5 || action.some((value, head) => !Number.isInteger(value)
         || value < 0 || value >= previous[index].actionSizes[head])) throw new Error('Invalid action');
@@ -298,6 +301,20 @@ function step(request: StepRequest) {
     clock += 50;
     const advanced = world.step(50);
     events.push(...advanced.events);
+    if (lesson === 'range') {
+      const fired = advanced.events.filter(event => event.type === 'fire' && event.playerId === playerIds[0]);
+      if (fired.length) {
+        const target = world.snapshot(roomId)!.players.find(player => player.id === practiceIds[0])!;
+        for (const event of fired) {
+          const distance = Math.hypot(target.x - event.x, target.z - event.z);
+          if (rangeError(distance, lessonRange) === 0) {
+            rangeShotDelta++;
+            if (event.targetId === target.id) aimedRangeShotDelta++;
+          }
+          if (distance > lessonRange) outsideRangeShotDelta++;
+        }
+      }
+    }
     const kills = advanced.events.filter(event => event.type === 'destroy'
       && event.playerId === playerIds[0] && practiceIds.includes(event.targetId));
     if (lesson === 'range' && kills.length) {
@@ -307,6 +324,8 @@ function step(request: StepRequest) {
     }
   }
   rangeKills += rangeKillDelta;
+  rangeShots += rangeShotDelta;
+  outsideRangeShots += outsideRangeShotDelta;
   const current = frames(events);
   decisions++;
   const target = lesson === 'range' ? world.snapshot(roomId)!.players.find(player => player.id === practiceIds[0]) : undefined;
@@ -314,11 +333,6 @@ function step(request: StepRequest) {
   const inBand = targetDistance !== undefined && rangeError(targetDistance, lessonRange) === 0;
   if (inBand) rangeTicks++;
   rangeStreak = inBand ? rangeStreak + 1 : 0;
-  const shots = current[0].metrics.shots - previous[0].metrics.shots;
-  if (lesson === 'range' && shots > 0) {
-    if (inBand) rangeShots += shots;
-    if (targetDistance !== undefined && targetDistance > lessonRange) outsideRangeShots += shots;
-  }
   const goalDistance = goal ? Math.hypot(current[0].memory.x - goal.x, current[0].memory.z - goal.z) : undefined;
   const headingError = goal ? Math.acos(Math.max(-1, Math.min(1, headingCosine(current[0])))) : undefined;
   headingStreak = headingError !== undefined && headingError < .08 ? headingStreak + 1 : 0;
@@ -364,8 +378,8 @@ function step(request: StepRequest) {
       reward += 4 * (rangeError(beforeDistance, lessonRange)
         - rangeError(targetDistance, lessonRange)) / Math.max(1, lessonRange) - .001;
       if (inBand) reward += .01;
-      if (shots > 0 && targetDistance > lessonRange) reward -= .03 * shots;
-      if (shots > 0 && inBand && frame.weapon.aimedAtEnemy) reward += .03 * shots;
+      reward -= .03 * outsideRangeShotDelta;
+      reward += .03 * aimedRangeShotDelta;
       if (success) reward += 2;
     }
     if (goal && lesson === 'turning') {
