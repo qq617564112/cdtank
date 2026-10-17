@@ -70,7 +70,7 @@ D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_co
 
 基础操作可用 `--teacher-steps`（`-TeacherSteps`）在 PPO 前预热。`teacher.py` 仅读取策略的局部观察和动作掩码，为原地转向、直达路点、固定车体瞄准和接近/后撤提供操作示范；它不参与之后的动作执行。示范由真实 World 连续推进，按 32 步序列监督学习，单独保存 `teacher.jsonl` 和 `teacher.pt`。标签来源为 `scripted primitive control`，不计为真人数据，预热步数与 PPO 步数分开记录。启用预热的运行在后续 PPO 中以 `--imitation-weight 0.1` 保留基础操作辅助损失，日志 `losses` 的第五项为该损失；将系数设为 0 可单独评估纯奖励优化。随后仍以冻结模型的独立种子评估判定效果。
 
-预热与辅助模仿独立控制：`--resume` 跳过预热，并从检查点配置恢复有效的 `imitationWeight`，显式传入 `--imitation-weight` 可覆盖该系数。配置分别记录本次实际预热步数 `teacherBootstrapSteps` 和辅助模仿系数；只有预热、没有辅助损失的旧检查点继续使用纯 PPO。
+预热与辅助模仿独立控制：`--resume` 跳过预热，并从检查点配置恢复有效的 `imitationWeight`，显式传入 `--imitation-weight`（启动脚本的 `-ImitationWeight`）可覆盖该系数。配置分别记录本次实际预热步数 `teacherBootstrapSteps` 和辅助模仿系数；只有预热、没有辅助损失的旧检查点继续使用纯 PPO。
 
 `evaluate.py` 在不同于训练的种子上冻结模型执行完整练习，默认选择概率最高动作；`--stochastic` 评估采样策略。指定 `--checkpoint`、`--output`、`--lesson` 和 `--level`。输出 `episodes.jsonl` 保存实际动作、位置、观察、受阻与距离记录，`result.json` 记录到达/击毁/无伤比例和平均奖励。该评估用于选择课程与检查点。
 
