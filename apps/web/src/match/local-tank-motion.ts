@@ -147,7 +147,6 @@ export class LocalTankMotion {
     const grid = this.field.navigation, dt = roleMovementElapsed(seconds);
     if (!player?.alive || player.isAutopilot || !this.playing || !this.active || !initial || !movement || !grid || dt === 0) return;
     const tankType = movement.tankType as RoleMovementMathInput['tankType'];
-    const initialBodyYaw = this.bodyYaw;
     let steering: MobileTankSteeringResult | undefined;
     if (this.mobile && axes.direction) {
       const move = mobileTankDriveDirection(initial, axes.direction, this.cameraYaw, this.mobileDrive?.move);
@@ -217,30 +216,24 @@ export class LocalTankMotion {
         ground === undefined ? 0 : Math.max(0, ground - this.pose!.position.y), ground, this.verticalWorkspace);
       this.verticalState = vertical.state;
     }
-    const bodyTurn = Math.atan2(Math.sin(this.bodyYaw - initialBodyYaw), Math.cos(this.bodyYaw - initialBodyYaw));
-    this.advanceTurret(axes.aim, dt, bodyTurn);
+    this.advanceTurret(axes.aim, dt);
     this.moving = Math.hypot(this.pose!.position.x - initial.position.x, this.pose!.position.z - initial.position.z) > .0001;
   }
 
-  private advanceTurret(aimInput: number, dt: number, bodyTurn: number): void {
+  private advanceTurret(aimInput: number, dt: number): void {
     if (this.mobile && !hasFixedTurret(this.player!.tankId)) {
       const target = Math.max(-1, Math.min(1, aimInput));
       if (target === 0 || target * this.mobileAim < 0) this.mobileAim = 0;
       const step = dt / MOBILE_AIM_RAMP_SECONDS;
       this.mobileAim += Math.max(-step, Math.min(step, target - this.mobileAim));
-      const maximumTurn = this.player!.movement!.turn * dt;
-      // Blend world-heading compensation into manual turning within the PC-relative limit.
-      const desiredTurn = maximumTurn * this.mobileAim - bodyTurn * (1 - Math.abs(this.mobileAim));
-      const relativeTurn = Math.max(-maximumTurn, Math.min(maximumTurn, desiredTurn));
-      const angle = this.cameraYaw + bodyTurn + relativeTurn;
+      const angle = this.cameraYaw + this.player!.movement!.turn * this.mobileAim * dt;
       this.cameraYaw = Math.atan2(Math.sin(angle), Math.cos(angle));
       const aim = this.cameraYaw - this.yaw;
       this.aim = Math.atan2(Math.sin(aim), Math.cos(aim));
       return;
     }
     if (this.mobile) {
-      const angle = this.cameraYaw + (aimInput === 0 ? 0 : bodyTurn)
-        + this.player!.movement!.turn * aimInput * dt;
+      const angle = this.cameraYaw + this.player!.movement!.turn * aimInput * dt;
       this.cameraYaw = Math.atan2(Math.sin(angle), Math.cos(angle));
     }
     if (hasFixedTurret(this.player!.tankId)) {
