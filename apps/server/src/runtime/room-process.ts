@@ -3,6 +3,7 @@ import {callRoomService} from './room-services';
 import type {RoomInit, RoomMessage, RoomRequest, RoomStatePublication} from './room-protocol';
 import type {RoomCommand} from '../rooms/world-interface';
 import {CpuTraceRecorder} from './cpu-trace';
+import {loadCpuPolicies} from '../learning/load-policy';
 
 let world: World;
 let roomId: string;
@@ -60,6 +61,7 @@ process.on('message', (message: RoomInit | RoomRequest) => {
     roomId = message.roomId;
     process.title = `cdtank-room-${roomId}`;
     world = new World(Date.now, {...message.options,
+      learnedCpuPolicy: loadCpuPolicies(process.env.CDTANK_AI_MODELS),
       allocateRoomId: () => roomId,
       allocatePlayerId: () => callRoomService('allocatePlayerId'),
       resolveAccount: connectionId => identities.get(connectionId),

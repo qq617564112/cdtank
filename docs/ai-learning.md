@@ -71,6 +71,8 @@ schema 6 的局部观察为 305 维，在 schema 5 后追加自身队伍、固�
 
 World 的 `learnedCpuPolicy` 注入接口为指定 CPU 或托管角色返回策略；所有动作仍经过 `advanceActors → updateInput → acceptBattleInput` 的普通资格、序列、消耗和伤害路径。`evaluate_native.py` 将导出模型交给本机模拟，通过真实托管控制运行固定种子对局，179 只编排评估并用 PyTorch CPU 计算实际决策观察上的参考动作，记录动作分歧数与最大 logit 误差。运行端没有 CUDA、PyTorch 或集中状态依赖。
 
+房间进程通过 `CDTANK_AI_MODELS` 读取模式清单，结构为 `{"models":[{"mode":1,"model":"mode-1.json"}]}`，模型相对路径按清单目录解析。每个房间只加载一次，所列模式的 CPU 和托管角色使用对应本地模型，未配置模式继续使用现有控制器。启用前应完成该模型的原生冻结评估和对应人数、地图、战车及配给的实战评估。当前训练候选未配置到运行服务。
+
 ## 运行
 
 远程基础 Python 环境：
