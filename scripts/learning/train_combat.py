@@ -322,7 +322,8 @@ def main(args):
                         next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, action_list)))
                         done = torch.tensor([result["done"] for result in next_results for _ in result["frames"]],
                                             device=device, dtype=torch.float32)
-                        reward = torch.tensor([reward for result in next_results for reward in result["rewards"]], device=device)
+                        reward = torch.tensor([reward for result in next_results for reward in result["rewards"]],
+                                              device=device, dtype=torch.float32)
                         storage["reward"].append(reward)
                         storage["done"].append(done)
                         next_reset = []
