@@ -24,7 +24,7 @@ def main(args):
     results = []
     for number, course in enumerate(courses):
         defaults = {"lesson": "navigation", "level": 1, "mix_levels": False, "mode": 4,
-                    "map_id": 7, "players": 2, "controlled": 1, "ammo_id": 2001, "items": None}
+                    "map_id": 7, "tank_id": 1, "players": 2, "controlled": 1, "ammo_id": 2001, "items": None}
         course = {**defaults, **course}
         levels = range(course["level"] + 1) if course["mix_levels"] else [course["level"]]
         for level in levels:

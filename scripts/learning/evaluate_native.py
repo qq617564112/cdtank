@@ -116,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--environments", type=int, default=4)
     parser.add_argument("--mode", type=int, default=1)
     parser.add_argument("--map-id", type=int, default=7)
+    parser.add_argument("--tank-id", type=int, default=1)
     parser.add_argument("--players", type=int, default=4)
     parser.add_argument("--controlled", type=int, default=2)
     parser.add_argument("--ammo-id", type=int, default=2001)

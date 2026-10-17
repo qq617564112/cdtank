@@ -116,6 +116,8 @@ World 的 `learnedCpuPolicy` 注入接口为指定 CPU 或托管角色返回策�
 
 原生 CPU 对局与专项训练切换窗口 `gpu-native-and-specialists-20261018-001.json` 的 30 次采样平均 22.37%、峰值 43%，显存峰值 4452 MiB。
 
+训练课程 JSON 可用 `tank_id` 指定实际战车，命令行对应 `--tank-id`，PowerShell 启动参数为 `-TankId`。训练、普通冻结评估和原生 CPU 对局都将该 ID 传给 World；缺省为战车 1。课程配置记录地图、战车、弹药、角色数和配给，跨地图与战车的成绩按组合分别统计。
+
 ## 运行
 
 远程基础 Python 环境：

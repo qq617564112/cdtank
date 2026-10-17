@@ -23,9 +23,9 @@ SIZES = [3, 3, 3, 2, 9]
 
 
 def course_options(args):
-    defaults = {"controlled": 1}
+    defaults = {"controlled": 1, "tank_id": 1}
     return [{key: course.get(key, getattr(args, key, defaults.get(key)))
-             for key in ("lesson", "level", "mix_levels", "mode", "map_id", "players", "controlled", "ammo_id", "items")}
+             for key in ("lesson", "level", "mix_levels", "mode", "map_id", "tank_id", "players", "controlled", "ammo_id", "items")}
             for course in getattr(args, "courses", None) or [{}]]
 
 
@@ -69,7 +69,7 @@ class Environment:
         level = random.Random(seed).randint(0, course["level"]) if course["mix_levels"] else course["level"]
         request = {"type": "reset", "seed": seed, "mode": course["mode"],
                              "mapId": course["map_id"], "players": course["players"],
-                             "controlled": course["controlled"], "seconds": 60, "tankId": 1,
+                             "controlled": course["controlled"], "seconds": 60, "tankId": course["tank_id"],
                              "ammoId": course["ammo_id"],
                              "items": course["items"],
                              "lesson": course["lesson"], "level": level}
@@ -612,6 +612,7 @@ if __name__ == "__main__":
     parser.add_argument("--learning-rate", type=float, default=.00025)
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)
+    parser.add_argument("--tank-id", type=int, default=1)
     parser.add_argument("--players", type=int, default=2)
     parser.add_argument("--controlled", type=int, default=1)
     parser.add_argument("--centralized-critic", action="store_true")

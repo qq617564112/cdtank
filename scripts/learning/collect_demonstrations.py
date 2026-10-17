@@ -132,7 +132,8 @@ def main(args):
         if args.previous:
             with np.load(args.previous, allow_pickle=False) as archive:
                 prior = json.loads(str(archive["metadata"]))
-                if prior["courses"] != courses or prior["observationSchema"] != metadata["observationSchema"] \
+                prior_courses = [{"tank_id": 1, **course} for course in prior["courses"]]
+                if prior_courses != courses or prior["observationSchema"] != metadata["observationSchema"] \
                         or prior["sequence_length"] != args.sequence_length:
                     raise ValueError("Aggregate the same courses, observation schema and sequence length")
                 if prior["courseTeachers"] != paths:
@@ -171,6 +172,7 @@ if __name__ == "__main__":
     parser.add_argument("--mix-levels", action="store_true")
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)
+    parser.add_argument("--tank-id", type=int, default=1)
     parser.add_argument("--players", type=int, default=2)
     parser.add_argument("--controlled", type=int, default=1)
     parser.add_argument("--ammo-id", type=int, default=2001)
