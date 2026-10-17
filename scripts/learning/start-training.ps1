@@ -1,6 +1,6 @@
 param(
   [Parameter(Mandatory=$true)][ValidatePattern('^[a-z0-9-]+$')][string]$RunName,
-  [ValidateSet('navigation','shooting','dodge','range','combat')][string]$Lesson='navigation',
+  [ValidateSet('turning','navigation','aiming','shooting','dodge','range','combat')][string]$Lesson='navigation',
   [int]$Steps=100000,
   [int]$Environments=4,
   [int]$MapId=7,

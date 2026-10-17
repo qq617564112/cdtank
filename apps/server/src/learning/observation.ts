@@ -147,7 +147,11 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
       Number(selected.kind === 'PLAYER' && selected.targetId === peer.id),
       Math.sin(bearing - turret), Math.cos(bearing - turret), knownRange / 1000, Number(known));
   }
-  return {schema: 2, observation, actionSizes: LEARNING_ACTION_SIZES,
+  const relativeGoal = goal ? local(goal) : [0, 0];
+  const goalLength = Math.hypot(...relativeGoal);
+  observation.push(relativeGoal[0] / Math.max(.001, goalLength),
+    relativeGoal[1] / Math.max(.001, goalLength), Math.min(4, goalLength));
+  return {schema: 3, observation, actionSizes: LEARNING_ACTION_SIZES,
     actionMasks: [[true, true, true], [true, true, true], [true, true, true],
       [true, fireReady], itemMask],
     memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths, observedAmmo},

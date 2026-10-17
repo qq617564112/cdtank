@@ -5,6 +5,7 @@ import {newbornBattleSources} from '../../apps/shared/simulation/newborn-roles';
 import {getBattlefield} from '../../apps/server/src/battlefield';
 import {createOriginalBotNavigation} from '../../apps/server/src/battle/cpu/original-navigation';
 import {findBotPath} from '../../apps/server/src/battle/cpu/navigation';
+import {rangeLessonLanes} from './range-lanes';
 import type {LearningGoal, LearningMemory} from '../../apps/server/src/learning/observation';
 import type {WorldEvent} from '../../apps/server/src/world';
 
@@ -19,7 +20,7 @@ interface ResetRequest {
   controlled?: number;
   seconds?: number;
   items?: {slot: number; itemTableId: number; quantity: number}[];
-  lesson?: 'navigation' | 'shooting' | 'dodge' | 'range' | 'combat';
+  lesson?: 'turning' | 'navigation' | 'aiming' | 'shooting' | 'dodge' | 'range' | 'combat';
   level?: number;
 }
 
@@ -48,16 +49,17 @@ let outsideRangeShots = 0;
 let rangeTicks = 0;
 let rangeStreak = 0;
 let rangeKills = 0;
+let headingStreak = 0;
 
 function rangeError(distance: number, range: number): number {
   return Math.max(0, .75 * range - distance, distance - .9 * range);
 }
 
-function alignment(frame: Frame): number {
+function headingCosine(frame: Frame): number {
   if (!goal) return 0;
   const dx = goal.x - frame.memory.x, dz = goal.z - frame.memory.z;
   const distance = Math.hypot(dx, dz);
-  return Math.abs((dx * frame.observation[0] + dz * frame.observation[1]) / Math.max(1, distance));
+  return (dx * frame.observation[0] + dz * frame.observation[1]) / Math.max(1, distance);
 }
 
 function seededRandom(initial: number): () => number {
@@ -72,22 +74,26 @@ function seededRandom(initial: number): () => number {
 
 function frames(events: readonly WorldEvent[] = []): Frame[] {
   const result = playerIds.map((id, index) => world.learningFrame(id, memories[index], goal, events));
-  if (lesson === 'navigation') {
+  if (lesson === 'navigation' || lesson === 'turning') {
     for (const frame of result) {
       frame.actionMasks[2] = [false, true, false];
       if (level === 0) frame.actionMasks[1] = [false, true, false];
+      if (lesson === 'turning') {
+        frame.actionMasks[0] = [false, true, false];
+        frame.actionMasks[1] = [true, true, true];
+      }
       frame.actionMasks[3][1] = false;
       frame.actionMasks[4] = frame.actionMasks[4].map((_, index) => index === 0);
     }
   }
-  if (lesson === 'shooting' || lesson === 'dodge') {
+  if (lesson === 'aiming' || lesson === 'shooting' || lesson === 'dodge') {
     for (const frame of result) {
       frame.actionMasks[4] = frame.actionMasks[4].map((_, index) => index === 0);
       if (lesson === 'dodge') {
         frame.actionMasks[2] = [false, true, false];
         frame.actionMasks[3][1] = false;
       }
-      if (lesson === 'shooting' && level === 0) {
+      if (lesson === 'aiming' || lesson === 'shooting' && level === 0) {
         frame.actionMasks[0] = [false, true, false];
         frame.actionMasks[1] = [false, true, false];
       }
@@ -127,6 +133,7 @@ function reset(request: ResetRequest) {
   rangeTicks = 0;
   rangeStreak = 0;
   rangeKills = 0;
+  headingStreak = 0;
   const mapId = request.mapId ?? 7;
   const count = request.players ?? 2;
   const controlled = request.controlled ?? 1;
@@ -177,7 +184,7 @@ function reset(request: ResetRequest) {
   }
   memories = playerIds.map(() => undefined);
   previous = frames();
-  if (lesson === 'shooting' || lesson === 'dodge') {
+  if (lesson === 'aiming' || lesson === 'shooting' || lesson === 'dodge') {
     if (controlled !== 1 || practiceIds.length !== 1 || mode !== 4) {
       throw new Error('Target lessons require one learner and one practice actor in mode 4');
     }
@@ -186,7 +193,8 @@ function reset(request: ResetRequest) {
     const navigation = createOriginalBotNavigation(field);
     let placed = false;
     for (let attempt = 0; attempt < 128; attempt++) {
-      const angle = learner.yaw + (Math.random() * 2 - 1) * (level === 0 ? .25 : Math.PI);
+      const angle = learner.yaw + (Math.random() * 2 - 1)
+        * (lesson === 'aiming' ? [.25, .8, Math.PI, Math.PI][level] : level === 0 ? .25 : Math.PI);
       const radius = 90 + Math.random() * (level === 0 ? 60 : 270);
       const x = learner.x + Math.sin(angle) * radius, z = learner.z + Math.cos(angle) * radius;
       const y = field.navigation.groundHeightAt(x, z);
@@ -194,7 +202,8 @@ function reset(request: ResetRequest) {
       const candidate = {x, y, z};
       if (!navigation.canTraverse(learner, candidate)
           || field.firstSurfaceHit({...learner, y: learner.y + 20}, {...candidate, y: y + 20}, 0)) continue;
-      const facing = lesson === 'shooting' && level >= 2 ? angle + Math.PI / 2 : angle + Math.PI;
+      const moving = lesson === 'shooting' && level >= 2 || lesson === 'aiming' && level === 3;
+      const facing = moving ? angle + Math.PI / 2 : angle + Math.PI;
       if (!world.placeLearningActor(practiceIds[0], {...candidate, yaw: facing, hp: level === 0 ? 150 : 600})) continue;
       placed = world.placeLearningActor(playerIds[0], {...learner, hp: learner.maxHp});
       if (placed) break;
@@ -209,23 +218,14 @@ function reset(request: ResetRequest) {
     }
     const learner = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!;
     const field = getBattlefield(mapId);
-    const navigation = createOriginalBotNavigation(field);
     const range = previous[0].weapon.range;
+    const lanes = rangeLessonLanes(field, range, level);
+    const offset = Math.floor(Math.random() * lanes.length);
     let placed = false;
-    for (let attempt = 0; attempt < 256; attempt++) {
-      const start = attempt < 64 ? learner : field.spawns[attempt % field.spawns.length];
-      const angle = start.yaw + (Math.random() * 2 - 1) * Math.PI;
-      const fraction = level === 0 ? 1.05 + Math.random() * .15
-        : level === 1 ? .35 + Math.random() * .2 : .7 + Math.random() * .5;
-      const x = start.x + Math.sin(angle) * range * fraction;
-      const z = start.z + Math.cos(angle) * range * fraction;
-      const y = field.navigation.groundHeightAt(x, z);
-      if (y === undefined) continue;
-      const candidate = {x, y, z};
-      if (!navigation.canTraverse(start, candidate)
-          || field.firstSurfaceHit({...start, y: start.y + 20}, {...candidate, y: y + 20}, 0)) continue;
-      if (!world.placeLearningActor(playerIds[0], {...start, yaw: angle, hp: learner.maxHp})) continue;
-      if (!world.placeLearningActor(practiceIds[0], {...candidate, yaw: angle + Math.PI, hp: 150})) continue;
+    for (let attempt = 0; attempt < lanes.length; attempt++) {
+      const lane = lanes[(offset + attempt) % lanes.length];
+      if (!world.placeLearningActor(playerIds[0], {...lane.start, yaw: lane.yaw, hp: learner.maxHp})) continue;
+      if (!world.placeLearningActor(practiceIds[0], {...lane.target, yaw: lane.yaw + Math.PI, hp: 150})) continue;
       placed = true;
       break;
     }
@@ -235,18 +235,21 @@ function reset(request: ResetRequest) {
     const target = world.snapshot(roomId)!.players.find(player => player.id === practiceIds[0])!;
     initialDistance = Math.hypot(target.x - previous[0].memory.x, target.z - previous[0].memory.z);
   }
-  if (lesson === 'navigation') {
+  if (lesson === 'navigation' || lesson === 'turning') {
     const start = previous[0].memory;
     const field = getBattlefield(mapId);
     const navigation = createOriginalBotNavigation(field);
     const heading = Math.atan2(previous[0].observation[0], previous[0].observation[1]);
     for (let attempt = 0; attempt < 128; attempt++) {
-      const angle = heading + (Math.random() * 2 - 1) * [0.15, 0.8, Math.PI, Math.PI][level];
-      const radius = level === 3 ? 200 + Math.random() * 300 : 60 + Math.random() * [60, 100, 180][level];
+      const angle = heading + (Math.random() * 2 - 1)
+        * (lesson === 'turning' ? [.4, .8, Math.PI, Math.PI][level] : [0.15, 0.8, Math.PI, Math.PI][level]);
+      const radius = lesson === 'navigation' && level === 3 ? 200 + Math.random() * 300
+        : 60 + Math.random() * [60, 100, 180, 180][level];
       const candidate = {x: start.x + Math.sin(angle) * radius, y: start.y,
         z: start.z + Math.cos(angle) * radius};
       const direct = navigation.canTraverse(start, candidate);
-      if (level < 3 ? direct : !direct && findBotPath(field, start, candidate, navigation).length > 1) {
+      if (lesson === 'turning' || level < 3 ? direct
+          : !direct && findBotPath(field, start, candidate, navigation).length > 1) {
         goal = candidate;
         break;
       }
@@ -271,14 +274,16 @@ function step(request: StepRequest) {
       turn: action[1] - 1, aim: action[2] - 1, fire: action[3] === 1,
       useItem: action[4], clientTime: clock}));
   });
-  if (lesson === 'shooting' && level >= 2 || lesson === 'dodge' || lesson === 'range' && level === 3) {
+  if (lesson === 'shooting' && level >= 2 || lesson === 'aiming' && level === 3
+      || lesson === 'dodge' || lesson === 'range' && level === 3) {
     for (const id of practiceIds) {
       const actor = world.snapshot(roomId)!.players.find(player => player.id === id)!;
       const learner = previous[0].memory;
       const error = Math.atan2(Math.sin(Math.atan2(learner.x - actor.x, learner.z - actor.z) - actor.yaw - actor.aim),
         Math.cos(Math.atan2(learner.x - actor.x, learner.z - actor.z) - actor.yaw - actor.aim));
-      const shootsBack = lesson === 'dodge' || level === 3;
-      events.push(...world.updateInput(id, {sequence: ++sequence, move: lesson === 'shooting' ? (decisions % 30 < 15 ? 1 : -1) : 0,
+      const shootsBack = lesson === 'dodge' || (lesson === 'shooting' || lesson === 'range') && level === 3;
+      const moving = lesson === 'shooting' || lesson === 'aiming';
+      events.push(...world.updateInput(id, {sequence: ++sequence, move: moving ? (decisions % 30 < 15 ? 1 : -1) : 0,
         turn: 0, aim: shootsBack ? Math.sign(error) : 0,
         fire: shootsBack && Math.abs(error) < .1, useItem: 0, clientTime: clock}));
     }
@@ -310,13 +315,17 @@ function step(request: StepRequest) {
     if (targetDistance !== undefined && targetDistance > current[0].weapon.range) outsideRangeShots += shots;
   }
   const goalDistance = goal ? Math.hypot(current[0].memory.x - goal.x, current[0].memory.z - goal.z) : undefined;
+  const headingError = goal ? Math.acos(Math.max(-1, Math.min(1, headingCosine(current[0])))) : undefined;
+  headingStreak = headingError !== undefined && headingError < .08 ? headingStreak + 1 : 0;
   const success = lesson === 'navigation' ? goalDistance !== undefined && goalDistance < 20
-    : lesson === 'shooting' ? current[0].metrics.kills > 0
+    : lesson === 'turning' ? headingStreak >= 5
+    : lesson === 'shooting' || lesson === 'aiming' ? current[0].metrics.kills > 0
     : lesson === 'range' ? level < 2 ? rangeStreak >= 10 : rangeKills > 0
     : lesson === 'dodge' ? decisions >= 150 && current[0].metrics.damageTaken === 0 : false;
   const done = current[0].phase === 'FINISHED'
     || lesson === 'navigation' && (success || decisions >= (level === 3 ? 300 : 150))
-    || lesson === 'shooting' && (success || decisions >= 200)
+    || lesson === 'turning' && (success || decisions >= 100)
+    || (lesson === 'shooting' || lesson === 'aiming') && (success || decisions >= 200)
     || lesson === 'range' && (success || decisions >= 300)
     || lesson === 'dodge' && (current[0].metrics.deaths > 0 || decisions >= 150);
   const rewards = current.map((frame, index) => {
@@ -334,7 +343,7 @@ function step(request: StepRequest) {
     if (mode === 3) reward += .004 * (after.vipDamage - before.vipDamage);
     if (mode === 5) reward += after.objectives - before.objectives;
     if (request.actions[index][0] !== 1 && frame.alive && moved < .2) reward -= .002;
-    if (lesson === 'shooting') {
+    if (lesson === 'shooting' || lesson === 'aiming') {
       const aimPotential = (value: Frame) => {
         if (!value.observation[24]) return 0;
         const angle = Math.atan2(value.observation[25], value.observation[26]);
@@ -354,11 +363,15 @@ function step(request: StepRequest) {
       if (shots > 0 && inBand && frame.weapon.aimedAtEnemy) reward += .03 * shots;
       if (success) reward += 2;
     }
-    if (goal) {
+    if (goal && lesson === 'turning') {
+      reward += 2 * (headingCosine(frame) - headingCosine(previous[index])) - .001;
+      if (headingError !== undefined && headingError < .08) reward += .02;
+      if (success) reward += 2;
+    } else if (goal) {
       const beforeDistance = Math.hypot(previous[index].memory.x - goal.x, previous[index].memory.z - goal.z);
       const afterDistance = Math.hypot(frame.memory.x - goal.x, frame.memory.z - goal.z);
       reward += 4 * (beforeDistance - afterDistance) / initialDistance - .001;
-      reward += .25 * (alignment(frame) - alignment(previous[index]));
+      reward += .25 * (Math.abs(headingCosine(frame)) - Math.abs(headingCosine(previous[index])));
       if (success) reward += 2;
     }
     if (done) {
@@ -372,7 +385,7 @@ function step(request: StepRequest) {
   return {type: 'step', seed, frames: current, rewards, done, lesson, level, success, goalDistance,
     lessonMetrics: {initialDistance, goalDistance, travelled, blocked, decisions,
       targetDistance, weaponRange: current[0].weapon.range, rangeTicks, rangeStreak,
-      rangeShots, outsideRangeShots, rangeKills}};
+      rangeShots, outsideRangeShots, rangeKills, headingError, headingStreak}};
 }
 
 const lines = createInterface({input: process.stdin, crlfDelay: Infinity});

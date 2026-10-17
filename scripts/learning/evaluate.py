@@ -75,7 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--episodes", type=int, default=32)
-    parser.add_argument("--lesson", choices=["navigation", "shooting", "dodge", "range", "combat"], default="navigation")
+    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "combat"], default="navigation")
     parser.add_argument("--level", type=int, default=1)
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)

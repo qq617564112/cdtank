@@ -277,7 +277,7 @@ if __name__ == "__main__":
     parser.add_argument("--map-id", type=int, default=7)
     parser.add_argument("--players", type=int, default=2)
     parser.add_argument("--ammo-id", type=int, default=2001)
-    parser.add_argument("--lesson", choices=["navigation", "shooting", "dodge", "range", "combat"], default="combat")
+    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "combat"], default="combat")
     parser.add_argument("--level", type=int, choices=range(4), default=1)
     parser.add_argument("--seed", type=int, default=179)
     args = parser.parse_args()
