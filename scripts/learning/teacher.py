@@ -23,7 +23,7 @@ def demonstration_loss(distributions, chosen):
                 for head, dist in enumerate(distributions))
 
 
-def primitive_action(frame, lesson):
+def primitive_action(frame, lesson, level, decisions):
     """Bootstrap isolated controls; these labels are scripted, never human."""
     observation = frame["observation"]
     action = [1, 1, 1, 0, 0]
@@ -89,6 +89,10 @@ def primitive_action(frame, lesson):
         for slot in range(5, 9):
             offset = ITEM_FEATURES + (slot - 2) * ITEM_WIDTH
             healing = observation[offset + 1] and observation[offset + 10] >= .2 and observation[142]
+            if level == 0:
+                # The tank-1 lesson's critical hit is 212 HP; its second attack precedes tick 90.
+                healing = observation[offset + 1] and (decisions >= 90
+                    or frame["metrics"]["damageTaken"] > 0 and frame["metrics"]["hp"] <= 212)
             protection = observation[offset + 6] and observation[NEAREST_ENEMY]
             movement = observation[offset + 4] and observation[159] * 600 > 80
             if frame["actionMasks"][4][slot] and (healing or protection or movement):
@@ -107,7 +111,9 @@ def demonstration_actions(results, source):
         if any("expertActions" not in result or result["expertActions"] is None for result in results):
             raise RuntimeError("CPU demonstrations require the expert simulation service")
         return [action for result in results for action in result["expertActions"]]
-    return [primitive_action(frame, result["lesson"]) for result in results for frame in result["frames"]]
+    return [primitive_action(frame, result["lesson"], result["level"],
+                             result.get("lessonMetrics", {}).get("decisions", 0))
+            for result in results for frame in result["frames"]]
 
 
 class DemonstrationReplay:
