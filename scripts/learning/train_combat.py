@@ -550,6 +550,7 @@ def main(args):
                     log.write(text + "\n")
                     log.flush()
                     save_checkpoint(output / "latest.pt", policy, optimizer, config, steps, update)
+                save_checkpoint(output / "latest.pt", policy, optimizer, config, steps, update)
                 result = {"steps": steps, "updates": update, "seconds": time.monotonic() - started,
                           "completedEpisodes": completed, "readyForGameplay": False}
                 (output / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
