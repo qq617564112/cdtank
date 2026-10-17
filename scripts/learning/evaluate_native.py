@@ -61,10 +61,12 @@ def main(args):
                             decisions += 1
                             mismatches += int(expected != evidence["actions"])
                             row["hidden"][actor] = hidden
-                        if row["tick"] % 10 == 0 or result["done"]:
+                        if row["tick"] % 5 == 0 or result["done"]:
                             row["trajectory"].append({"tick": row["tick"], "actors": [
                                 {"position": frame["memory"], "metrics": frame["metrics"],
-                                 "actions": evidence["actions"] if evidence else None}
+                                 "actions": evidence["actions"] if evidence else None,
+                                 "decisionAt": evidence["at"] if evidence else None,
+                                 "decisionObservation": evidence["observation"] if evidence else None}
                                 for frame, evidence in zip(result["frames"], result["nativeDecisions"])]})
                         if result["done"]:
                             entry = {"episode": row["episode"], "seed": result["seed"], "steps": row["tick"],
@@ -85,6 +87,7 @@ def main(args):
                     running = remaining
         outcomes = [row["outcomes"][0] for row in episodes]
         metrics = [item for row in episodes for item in row["actorMetrics"]]
+        item_metrics = [item for row in episodes for item in row["actorItemMetrics"]]
         summary = {"episodes": len(episodes), "winRate": outcomes.count("WIN") / len(episodes),
                    "lossRate": outcomes.count("LOSE") / len(episodes), "drawRate": outcomes.count("DRAW") / len(episodes),
                    "unfinishedEpisodes": outcomes.count(None), "nativeDecisions": decisions,
@@ -92,9 +95,18 @@ def main(args):
                    "killsMean": float(np.mean([row["kills"] for row in metrics])),
                    "deathsMean": float(np.mean([row["deaths"] for row in metrics])),
                    "damageTakenMean": float(np.mean([row["damageTaken"] for row in metrics])),
+                   "shotsMean": float(np.mean([row["shots"] for row in metrics])),
+                   "hitsMean": float(np.mean([row["hits"] for row in metrics])),
+                   "objectiveDamageMean": float(np.mean([row["bunkerDamage"] for row in metrics])),
+                   "vipDamageMean": float(np.mean([row["vipDamage"] for row in metrics])),
+                   "objectivesMean": float(np.mean([row["objectives"] for row in metrics])),
+                   "itemUsesMean": float(np.mean([row["consumedItems"] for row in item_metrics])),
+                   "rejectedItemsMean": float(np.mean([row["rejectedItems"] for row in item_metrics])),
+                   "healedHpMean": float(np.mean([row["healedHp"] for row in item_metrics])),
                    "checkpointSteps": model["checkpoint"]["steps"], "readyForGameplay": False}
         (output / "result.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
         print(json.dumps(summary), flush=True)
+        return summary
     finally:
         for environment in environments:
             environment.close()
