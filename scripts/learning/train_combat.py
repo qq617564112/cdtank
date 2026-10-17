@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.distributions import Categorical
-from teacher import teach
+from teacher import primitive_action, teach
 
 
 SIZES = [3, 3, 3, 2, 9]
@@ -173,6 +173,8 @@ def main(args):
             with (output / "metrics.jsonl").open("x", encoding="utf-8") as log:
                 while steps < args.steps:
                     storage = {key: [] for key in ("x", "masks", "hidden", "reset", "actions", "logp", "value", "reward", "done")}
+                    if args.teacher_steps:
+                        storage["teacher"] = []
                     episodes = []
                     policy.eval()
                     for _ in range(args.rollout):
@@ -183,6 +185,9 @@ def main(args):
                         for key, tensor in (("x", observations), ("masks", masks), ("hidden", hidden),
                                             ("reset", reset), ("actions", actions), ("logp", logp), ("value", value)):
                             storage[key].append(tensor)
+                        if args.teacher_steps:
+                            storage["teacher"].append(torch.tensor(
+                                [primitive_action(result["frames"][0], args.lesson) for result in results], device=device))
                         action_list = actions.cpu().tolist()
                         next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, action_list)))
                         done = torch.tensor([result["done"] for result in next_results], device=device, dtype=torch.float32)
@@ -232,6 +237,7 @@ def main(args):
                             selected = chunks[offset:offset + 8]
                             states = torch.stack([data["hidden"][start, env] for env, start in selected])
                             actor_losses, critic_losses, entropies, divergences = [], [], [], []
+                            imitation_losses = []
                             for relative in range(32):
                                 env_indices = torch.tensor([env for env, start in selected], device=device)
                                 ticks = torch.tensor([start + relative for env, start in selected], device=device)
@@ -246,15 +252,22 @@ def main(args):
                                 critic_losses.append((values - returns[ticks, env_indices]).square().mean())
                                 entropies.append(sum(dist.entropy().mean() for dist in ds))
                                 divergences.append(((ratio - 1) - (new_logp - old_logp)).mean().detach())
+                                if args.teacher_steps:
+                                    demonstrated = data["teacher"][ticks, env_indices]
+                                    imitation_losses.append(-sum(dist.log_prob(demonstrated[:, head]).mean()
+                                                                for head, dist in enumerate(ds)))
                             actor_loss = torch.stack(actor_losses).mean()
                             critic_loss = torch.stack(critic_losses).mean()
                             entropy = torch.stack(entropies).mean()
                             loss = actor_loss + .5 * critic_loss - .005 * entropy
+                            imitation_loss = torch.stack(imitation_losses).mean() if imitation_losses else loss.new_zeros(())
+                            loss += args.imitation_weight * imitation_loss
                             optimizer.zero_grad()
                             loss.backward()
                             nn.utils.clip_grad_norm_(policy.parameters(), .5)
                             optimizer.step()
-                            losses.append([actor_loss.item(), critic_loss.item(), entropy.item(), torch.stack(divergences).mean().item()])
+                            losses.append([actor_loss.item(), critic_loss.item(), entropy.item(),
+                                           torch.stack(divergences).mean().item(), imitation_loss.item()])
                     hidden = hidden.detach()
                     update += 1
                     row = {"update": update, "steps": steps, "seconds": time.monotonic() - started,
@@ -311,6 +324,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=179)
     parser.add_argument("--evaluation-episodes", type=int, default=32)
     parser.add_argument("--teacher-steps", type=int, default=0)
+    parser.add_argument("--imitation-weight", type=float, default=.1)
     args = parser.parse_args()
     if args.rollout % 32:
         parser.error("--rollout must be a multiple of 32")
