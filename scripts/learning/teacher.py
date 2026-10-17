@@ -133,7 +133,9 @@ class DemonstrationReplay:
                        "courses": metadata["courses"], "sequences": metadata["sequences"],
                        "sequenceLength": metadata["sequence_length"], "labelSource": metadata["labelSource"],
                        "behaviorCheckpoint": metadata.get("behaviorCheckpoint"),
-                       "executionSource": metadata.get("executionSource")}
+                       "executionSource": metadata.get("executionSource"),
+                       "previousData": metadata.get("previousData"),
+                       "collectedSteps": metadata.get("collectedSteps", metadata["steps"])}
 
     def prepare_references(self, policy, paths=None):
         """Cache frozen teachers' probabilities over the same complete sequences."""

@@ -125,8 +125,26 @@ def main(args):
                     "sequences": len(course_ids), "steps": len(course_ids) * args.sequence_length}
         source = Path(__file__).resolve().parents[2] / "source.json"
         metadata["trainerSource"] = json.loads(source.read_text(encoding="utf-8")) if source.exists() else None
-        np.savez_compressed(output / "sequences.npz", **{key: np.concatenate(value, axis=1)
-                            for key, value in batches.items()}, course=np.asarray(course_ids),
+        metadata["collectedSteps"] = metadata["steps"]
+        metadata["collectedSequences"] = metadata["sequences"]
+        arrays = {key: np.concatenate(value, axis=1) for key, value in batches.items()}
+        course_ids = np.asarray(course_ids)
+        if args.previous:
+            with np.load(args.previous, allow_pickle=False) as archive:
+                prior = json.loads(str(archive["metadata"]))
+                if prior["courses"] != courses or prior["observationSchema"] != metadata["observationSchema"] \
+                        or prior["sequence_length"] != args.sequence_length:
+                    raise ValueError("Aggregate the same courses, observation schema and sequence length")
+                if prior["courseTeachers"] != paths:
+                    raise ValueError("Aggregate trajectories labeled by the same frozen specialists")
+                arrays = {key: np.concatenate((archive[key], values), axis=1) for key, values in arrays.items()}
+                course_ids = np.concatenate((archive["course"], course_ids))
+                metadata["previousData"] = {"path": args.previous, "steps": prior["steps"],
+                    "sequences": prior["sequences"], "trainerSource": prior["trainerSource"],
+                    "behaviorCheckpoint": prior.get("behaviorCheckpoint")}
+                metadata["sequences"] += prior["sequences"]
+                metadata["steps"] += prior["steps"]
+        np.savez_compressed(output / "sequences.npz", **arrays, course=course_ids,
                             metadata=np.asarray(json.dumps(metadata)))
         (output / "result.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
         print(json.dumps({"output": str(output), "steps": metadata["steps"],
@@ -143,6 +161,7 @@ if __name__ == "__main__":
     parser.add_argument("--curriculum", required=True)
     parser.add_argument("--teachers", help="JSON list of frozen local policy checkpoints in course order")
     parser.add_argument("--behavior", help="Frozen shared student executes while course teachers label its observations")
+    parser.add_argument("--previous", help="Aggregate earlier trajectories labeled by the same frozen course teachers")
     parser.add_argument("--environments", type=int, default=16)
     parser.add_argument("--sequences-per-course", type=int, default=64)
     parser.add_argument("--sequence-length", type=int, default=128)
