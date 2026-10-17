@@ -376,8 +376,10 @@ def main(args):
             steps = 0
             update = 0
             if checkpoint:
-                if checkpoint["config"].get("centralStateWidth", 0) != central_width or checkpoint["config"].get("hiddenSize", 64) != hidden_size:
-                    raise ValueError("Resume needs the same critic architecture; use --weights for a new stage")
+                if (checkpoint["policy"]["encoder.weight"].shape[1] != observations.shape[-1]
+                        or checkpoint["config"].get("centralStateWidth", 0) != central_width
+                        or checkpoint["config"].get("hiddenSize", 64) != hidden_size):
+                    raise ValueError("Resume needs the same observation width and critic architecture; use --weights for a new stage")
                 policy.initialize(checkpoint["policy"])
                 optimizer_state = checkpoint["optimizer"]
                 if len(optimizer_state["param_groups"]) == 1:
