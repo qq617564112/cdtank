@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 
-HEADS = ("move", "turn", "aim", "fire")
+HEADS = ("move", "turn", "aim")
 
 
 def direction(value):
@@ -34,8 +34,7 @@ def history_tracks(path):
                     counts["zeroSequenceFrames"] += tank["input"]["sequence"] == 0
                     key = (row["matchId"], row["session"], row["round"], tank["id"],
                            row["mode"], row["mapId"], tank["tankId"])
-                    action = [direction(tank["input"][head]) for head in HEADS[:3]]
-                    action.append(int(tank["input"]["fire"]))
+                    action = [direction(tank["input"][head]) for head in HEADS]
                     tracks[key].append((row["at"], tank["deaths"], active, action))
     if metadata is None or summary is None:
         raise ValueError("History export needs its metadata and final summary")
@@ -54,7 +53,7 @@ def native_tracks(directory):
                     action = frame["actions"]
                     active = action is not None and frame["metrics"]["hp"] > 0
                     key = (row["episode"], actor, config["mode"], config["map_id"], config.get("tank_id", 1))
-                    selected = [value - 1 for value in action[:3]] + [action[3]] if action else None
+                    selected = [value - 1 for value in action[:3]] if action else None
                     tracks[key].append((frame["position"]["at"], frame["metrics"]["deaths"], active, selected))
     return tracks, {"path": str(directory), "config": config,
                     "result": json.loads((directory / "result.json").read_text(encoding="utf-8-sig"))}
