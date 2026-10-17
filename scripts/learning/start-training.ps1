@@ -26,6 +26,8 @@ param(
   [string]$Rehearsal='',
   [double]$RehearsalWeight=3,
   [int]$RehearsalBatchSequences=32,
+  [string]$RehearsalReferences='',
+  [double]$RehearsalReferenceWeight=10,
   [string]$OpponentPool='',
   [string]$Prior='D:/ai/cdtank/runs/motion-20261017-001/best.pt',
   [string]$Weights='',
@@ -45,6 +47,8 @@ $arguments+=" --teacher-source $TeacherSource"
 $arguments+=" --teacher-replay-sequences $TeacherReplaySequences --teacher-batch-sequences $TeacherBatchSequences --teacher-epochs $TeacherEpochs"
 if ($Curriculum) { $arguments+=" --curriculum $Curriculum" }
 if ($Rehearsal) { $arguments+=" --rehearsal $Rehearsal --rehearsal-weight $RehearsalWeight --rehearsal-batch-sequences $RehearsalBatchSequences" }
+if ($RehearsalReferences) { $arguments+=" --rehearsal-references $RehearsalReferences" }
+if ($Rehearsal) { $arguments+=" --rehearsal-reference-weight $RehearsalReferenceWeight" }
 if ($OpponentPool) { $arguments+=" --opponent-pool $OpponentPool" }
 if ($PSBoundParameters.ContainsKey('ImitationWeight')) { $arguments+=" --imitation-weight $ImitationWeight" }
 if ($Resume) { $arguments+=" --resume $Resume" }
@@ -67,6 +71,7 @@ if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.Ret
   teacherReplaySequences=$TeacherReplaySequences;teacherBatchSequences=$TeacherBatchSequences;teacherEpochs=$TeacherEpochs;
   curriculum=$Curriculum;opponentPool=$OpponentPool;
   rehearsal=$Rehearsal;rehearsalWeight=$RehearsalWeight;rehearsalBatchSequences=$RehearsalBatchSequences;
+  rehearsalReferences=$RehearsalReferences;rehearsalReferenceWeight=$RehearsalReferenceWeight;
   prior=$Prior;weights=$Weights;resume=$Resume} |
   ConvertTo-Json | Set-Content -Encoding ascii "$root/runs/$RunName.launch.json"
 Write-Output ('TRAINING_LAUNCH_PID='+$created.ProcessId)

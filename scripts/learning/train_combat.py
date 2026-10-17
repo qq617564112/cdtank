@@ -275,6 +275,8 @@ def main(args):
     args.rehearsal = getattr(args, "rehearsal", None)
     args.rehearsal_weight = getattr(args, "rehearsal_weight", 3.)
     args.rehearsal_batch_sequences = getattr(args, "rehearsal_batch_sequences", 32)
+    args.rehearsal_references = getattr(args, "rehearsal_references", None)
+    args.rehearsal_reference_weight = getattr(args, "rehearsal_reference_weight", 10.)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     cache = output.parent.parent / 'cache'
@@ -404,6 +406,11 @@ def main(args):
                     optimizer_state["param_groups"].append(optimizer.state_dict()["param_groups"][1])
                 optimizer.load_state_dict(optimizer_state)
                 steps, update = checkpoint["steps"], checkpoint["update"]
+            if rehearsal:
+                references = json.loads(Path(args.rehearsal_references).read_text(encoding="utf-8-sig")) \
+                    if args.rehearsal_references else None
+                rehearsal.prepare_references(policy, references)
+                config["rehearsalReferenceSources"] = rehearsal.reference_sources
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
             save_checkpoint(output / "initial.pt", policy, optimizer, config, steps, update)
             if args.teacher_steps and not args.resume:
@@ -496,6 +503,8 @@ def main(args):
                               for start in range(0, args.rollout, 32)]
                     losses = []
                     rehearsal_losses = []
+                    reference_losses = []
+                    reference_mismatches = []
                     policy.train()
                     for _ in range(args.epochs):
                         random.shuffle(chunks)
@@ -521,9 +530,12 @@ def main(args):
                             imitation_loss = demonstration_loss(ds, data["teacher"][ticks, env_indices]) if args.imitation_weight else loss.new_zeros(())
                             loss += args.imitation_weight * imitation_loss
                             if rehearsal:
-                                rehearsal_loss = rehearsal.loss(policy)
+                                rehearsal_loss, reference_loss, mismatch = rehearsal.loss(policy)
                                 loss += args.rehearsal_weight * rehearsal_loss
+                                loss += args.rehearsal_reference_weight * reference_loss
                                 rehearsal_losses.append(rehearsal_loss.item())
+                                reference_losses.append(reference_loss.item())
+                                reference_mismatches.append(mismatch.item())
                             optimizer.zero_grad()
                             budget.wait()
                             loss.backward()
@@ -544,6 +556,8 @@ def main(args):
                            "gpuPercent": budget.utilization, "gpuPausedSeconds": budget.paused_seconds,
                            "completedEpisodes": completed, "losses": np.mean(losses, axis=0).tolist(),
                            "rehearsalLossMean": float(np.mean(rehearsal_losses)) if rehearsal_losses else None,
+                           "rehearsalReferenceKlMean": float(np.mean(reference_losses)) if reference_losses else None,
+                           "rehearsalReferenceHeadMismatchRate": float(np.mean(reference_mismatches)) if reference_mismatches else None,
                            "episodes": episodes, "rewardMean": data["reward"][:, trainable].mean().item()}
                     text = json.dumps(row)
                     print(text, flush=True)
@@ -617,6 +631,8 @@ if __name__ == "__main__":
     parser.add_argument("--rehearsal", help="Collected foundation sequences.npz for skill retention during PPO")
     parser.add_argument("--rehearsal-weight", type=float, default=3.)
     parser.add_argument("--rehearsal-batch-sequences", type=int, default=32)
+    parser.add_argument("--rehearsal-references", help="JSON list of fixed teacher checkpoints, in rehearsal course order")
+    parser.add_argument("--rehearsal-reference-weight", type=float, default=10.)
     parser.add_argument("--items", type=json.loads, help="Override the lesson loadout with a JSON list of slot/itemTableId/quantity")
     args = parser.parse_args()
     args.opponent_paths = json.loads(Path(args.opponent_pool).read_text(encoding="utf-8-sig")) if args.opponent_pool else None
@@ -630,7 +646,8 @@ if __name__ == "__main__":
         parser.error("--rollout must be a multiple of 32")
     if args.minibatch_sequences < 1:
         parser.error("--minibatch-sequences must be positive")
-    if args.rehearsal and (args.rehearsal_batch_sequences < 1 or args.rehearsal_weight <= 0):
+    if args.rehearsal and (args.rehearsal_batch_sequences < 1 or args.rehearsal_weight <= 0
+                          or args.rehearsal_reference_weight <= 0):
         parser.error("Rehearsal needs a positive batch size and loss weight")
     if min(args.teacher_replay_sequences, args.teacher_batch_sequences, args.teacher_epochs) < 1:
         parser.error("Teacher replay, batch size and epochs must be positive")

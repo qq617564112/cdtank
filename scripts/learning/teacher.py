@@ -133,6 +133,44 @@ class DemonstrationReplay:
                        "courses": metadata["courses"], "sequences": metadata["sequences"],
                        "sequenceLength": metadata["sequence_length"], "labelSource": metadata["labelSource"]}
 
+    def prepare_references(self, policy, paths=None):
+        """Cache frozen teachers' probabilities over the same complete sequences."""
+        import torch
+
+        if paths is not None and len(paths) != len(self.groups):
+            raise ValueError("Provide one fixed teacher checkpoint per rehearsal course")
+        ticks, sequences = self.data["reset"].shape
+        self.reference_probabilities = [torch.empty(ticks, sequences, size, device=self.device)
+                                        for size in (3, 3, 3, 2, 9)]
+        self.reference_sources = []
+        for course, group in enumerate(self.groups):
+            if paths is not None:
+                saved = torch.load(paths[course], map_location=self.device)
+                width = saved["policy"]["encoder.weight"].shape[1]
+                if width != self.data["observation"].shape[-1]:
+                    raise ValueError("Reference teachers must use the rehearsal observation width")
+                teacher = type(policy)(width, policy.gpu_budget, saved["config"].get("centralStateWidth", 0),
+                                       saved["config"].get("hiddenSize", 64)).to(self.device)
+                teacher.initialize(saved["policy"])
+                self.reference_sources.append({"course": course, "path": paths[course],
+                    "steps": saved["steps"], "source": saved["config"].get("source"),
+                    "simulationSource": saved["config"].get("simulationSource")})
+                del saved
+            else:
+                teacher = policy
+                self.reference_sources.append({"course": course, "initialActor": True})
+            teacher.eval()
+            with torch.no_grad():
+                for start in range(0, len(group), self.batch_size):
+                    indices = torch.tensor(group[start:start + self.batch_size], device=self.device)
+                    hidden = torch.zeros(len(indices), teacher.hidden_size, device=self.device)
+                    distributions, _, _ = teacher.sequence(self.data["observation"][:, indices], hidden,
+                        self.data["reset"][:, indices], self.data["masks"][:, indices])
+                    for target, distribution in zip(self.reference_probabilities, distributions):
+                        target[:, indices] = distribution.probs
+            if paths is not None:
+                del teacher
+
     def loss(self, policy):
         import torch
 
@@ -141,7 +179,15 @@ class DemonstrationReplay:
         data = {key: value[:, indices] for key, value in self.data.items()}
         hidden = torch.zeros(self.batch_size, policy.hidden_size, device=self.device)
         distributions, _, _ = policy.sequence(data["observation"], hidden, data["reset"], data["masks"])
-        return demonstration_loss(distributions, data["teacher"])
+        control_loss = demonstration_loss(distributions, data["teacher"])
+        reference_loss = control_loss.new_zeros(())
+        mismatches = []
+        for distribution, target in zip(distributions, self.reference_probabilities):
+            probabilities = target[:, indices]
+            reference_loss += (probabilities * (probabilities.clamp_min(1e-9).log()
+                                                - distribution.logits)).sum(-1).mean()
+            mismatches.append(distribution.logits.argmax(-1) != probabilities.argmax(-1))
+        return control_loss, reference_loss, torch.stack(mismatches).float().mean()
 
 
 def teach(policy, optimizer, environments, pool, results, args, device, output, tensors, checkpoint):
