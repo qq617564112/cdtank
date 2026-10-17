@@ -30,6 +30,7 @@ def main(args):
             prior=None, resume=None, weights=args.checkpoint, steps=args.steps,
             environments=args.environments, rollout=128, epochs=4,
             minibatch_sequences=args.minibatch_sequences, gpu_utilization_limit=args.gpu_utilization_limit,
+            hidden_size=args.hidden_size,
             learning_rate=.00025, ammo_id=2001, lesson="combat", level=1, mix_levels=False,
             seed=args.seed + 1000 * course["mode"], evaluation_episodes=args.evaluation_episodes,
             evaluation_environments=min(8, args.environments), teacher_steps=0,
@@ -52,6 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("--steps", type=int, default=300000)
     parser.add_argument("--environments", type=int, default=8)
     parser.add_argument("--minibatch-sequences", type=int, default=64)
+    parser.add_argument("--hidden-size", type=int, choices=(64, 128, 256), default=256)
     parser.add_argument("--evaluation-episodes", type=int, default=32)
     parser.add_argument("--gpu-utilization-limit", type=int, default=80)
     parser.add_argument("--seed", type=int, default=179)
