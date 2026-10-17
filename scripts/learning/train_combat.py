@@ -44,11 +44,12 @@ class Environment:
     def reset(self):
         seed = self.args.seed + self.number * 1000000 + self.episode
         self.episode += 1
+        level = random.Random(seed).randint(0, self.args.level) if self.args.mix_levels else self.args.level
         return self.command({"type": "reset", "seed": seed, "mode": self.args.mode,
                              "mapId": self.args.map_id, "players": self.args.players,
                              "controlled": 1, "seconds": 60, "tankId": 1,
                              "ammoId": self.args.ammo_id,
-                             "lesson": self.args.lesson, "level": self.args.level})
+                             "lesson": self.args.lesson, "level": level})
 
     def step(self, action):
         return self.command({"type": "step", "actions": [action]})
@@ -186,6 +187,8 @@ def main(args):
                             if result["done"]:
                                 completed += 1
                                 episodes.append({"return": episode_returns[index],
+                                                 "seed": result["seed"], "lesson": result["lesson"],
+                                                 "level": result["level"],
                                                  "success": result.get("success"),
                                                  "lessonMetrics": result.get("lessonMetrics"),
                                                  "metrics": result["frames"][0]["metrics"]})
@@ -279,6 +282,7 @@ if __name__ == "__main__":
     parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "combat"], default="combat")
     parser.add_argument("--level", type=int, choices=range(4), default=1)
+    parser.add_argument("--mix-levels", action="store_true", help="Replay levels zero through the selected level")
     parser.add_argument("--seed", type=int, default=179)
     args = parser.parse_args()
     if args.rollout % 32:

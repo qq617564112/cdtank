@@ -339,7 +339,7 @@ function step(request: StepRequest) {
   const success = lesson === 'navigation' ? goalDistance !== undefined && goalDistance < 20
     : lesson === 'turning' ? headingStreak >= 5
     : lesson === 'shooting' || lesson === 'aiming' ? current[0].metrics.kills > 0
-    : lesson === 'range' ? level < 2 ? rangeStreak >= 10 : rangeKills > 0
+    : lesson === 'range' ? level < 2 ? rangeStreak >= 50 : rangeKills > 0
     : lesson === 'dodge' ? decisions >= 150 && current[0].metrics.damageTaken === 0 : false;
   const done = current[0].phase === 'FINISHED'
     || lesson === 'navigation' && (success || decisions >= (level === 3 ? 300 : 150))
