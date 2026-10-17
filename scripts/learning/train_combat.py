@@ -316,4 +316,7 @@ if __name__ == "__main__":
         parser.error("--rollout must be a multiple of 32")
     if args.teacher_steps and args.lesson not in ("turning", "navigation", "aiming", "range"):
         parser.error("Primitive demonstrations support turning, navigation, aiming and range")
+    if args.teacher_steps and (args.lesson == "navigation" and args.level > 2
+                               or args.lesson == "range" and args.level > 1):
+        parser.error("Primitive demonstrations require direct navigation or non-shooting range levels")
     main(args)

@@ -2,27 +2,31 @@
 
 import math
 
+NEAREST_ENEMY = 24
+WEAPON_ENEMY = 136
+GOAL_DIRECTION = 157
+
 
 def primitive_action(frame, lesson):
     """Bootstrap isolated controls; these labels are scripted, never human."""
     observation = frame["observation"]
     action = [1, 1, 1, 0, 0]
     if lesson in ("turning", "navigation"):
-        lateral, forward = observation[157:159]
+        lateral, forward = observation[GOAL_DIRECTION:GOAL_DIRECTION + 2]
         angle = math.atan2(lateral, forward)
         if abs(angle) > .06:
             action[1] = 2 if angle > 0 else 0
         if lesson == "navigation" and abs(angle) < .15 and observation[159] * 600 > 15:
             action[0] = 2
     elif lesson == "aiming":
-        if observation[24]:
-            angle = math.atan2(observation[152], observation[153])
+        if observation[NEAREST_ENEMY]:
+            angle = math.atan2(observation[WEAPON_ENEMY + 3], observation[WEAPON_ENEMY + 4])
             if abs(angle) > .06:
                 action[2] = 2 if angle > 0 else 0
-            action[3] = int(abs(angle) < .1 and bool(observation[150]))
+            action[3] = int(abs(angle) < .1 and bool(observation[WEAPON_ENEMY + 2]))
     elif lesson == "range":
-        if observation[24]:
-            ratio = observation[149]
+        if observation[NEAREST_ENEMY]:
+            ratio = observation[WEAPON_ENEMY]
             if ratio > .86:
                 action[0] = 2
             elif ratio < .79:
