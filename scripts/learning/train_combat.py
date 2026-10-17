@@ -143,23 +143,33 @@ def main(args):
             if args.weights:
                 policy.initialize(torch.load(args.weights, map_location=device)["policy"])
             optimizer = torch.optim.Adam(policy.parameters(), lr=args.learning_rate, eps=1e-5)
+            checkpoint = torch.load(args.resume, map_location=device) if args.resume else None
+            if args.imitation_weight is None:
+                if checkpoint:
+                    prior_config = checkpoint["config"]
+                    args.imitation_weight = prior_config.get("imitationWeight",
+                        prior_config.get("imitation_weight", 0) if prior_config.get("teacher_steps", 0) else 0)
+                else:
+                    args.imitation_weight = .1 if args.teacher_steps else 0
+            if args.imitation_weight and (args.lesson not in ("turning", "navigation", "aiming", "range")
+                    or args.lesson == "navigation" and args.level > 2 or args.lesson == "range" and args.level > 1):
+                raise ValueError("Auxiliary imitation requires a supported primitive lesson")
             config = {**vars(args), "torch": torch.__version__, "device": torch.cuda.get_device_name(0),
                       "observationWidth": observations.shape[-1], "actionSizes": SIZES,
                       "simulationHz": 20, "decisionHz": 10, "observationSchema": results[0]["frames"][0]["schema"],
-                      "algorithm": "recurrent PPO", "hiddenSize": 64}
+                      "algorithm": "recurrent PPO", "hiddenSize": 64,
+                      "imitationWeight": args.imitation_weight,
+                      "teacherBootstrapSteps": args.teacher_steps if not args.resume else 0}
             source = Path(args.game) / "source.json"
             config["source"] = json.loads(source.read_text(encoding="utf-8")) if source.exists() else None
             steps = 0
             update = 0
-            if args.resume:
-                checkpoint = torch.load(args.resume, map_location=device)
+            if checkpoint:
                 policy.load_state_dict(checkpoint["policy"])
                 optimizer.load_state_dict(checkpoint["optimizer"])
                 steps, update = checkpoint["steps"], checkpoint["update"]
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
-            if args.teacher_steps:
-                if args.resume:
-                    raise ValueError("Use --weights to bootstrap; --resume retains an existing PPO run")
+            if args.teacher_steps and not args.resume:
                 teacher_optimizer = torch.optim.Adam(policy.parameters(), lr=.001)
                 results = teach(policy, teacher_optimizer, environments, pool, results,
                                 args, device, output, tensors)
@@ -173,7 +183,7 @@ def main(args):
             with (output / "metrics.jsonl").open("x", encoding="utf-8") as log:
                 while steps < args.steps:
                     storage = {key: [] for key in ("x", "masks", "hidden", "reset", "actions", "logp", "value", "reward", "done")}
-                    if args.teacher_steps:
+                    if args.imitation_weight:
                         storage["teacher"] = []
                     episodes = []
                     policy.eval()
@@ -185,7 +195,7 @@ def main(args):
                         for key, tensor in (("x", observations), ("masks", masks), ("hidden", hidden),
                                             ("reset", reset), ("actions", actions), ("logp", logp), ("value", value)):
                             storage[key].append(tensor)
-                        if args.teacher_steps:
+                        if args.imitation_weight:
                             storage["teacher"].append(torch.tensor(
                                 [primitive_action(result["frames"][0], args.lesson) for result in results], device=device))
                         action_list = actions.cpu().tolist()
@@ -252,7 +262,7 @@ def main(args):
                                 critic_losses.append((values - returns[ticks, env_indices]).square().mean())
                                 entropies.append(sum(dist.entropy().mean() for dist in ds))
                                 divergences.append(((ratio - 1) - (new_logp - old_logp)).mean().detach())
-                                if args.teacher_steps:
+                                if args.imitation_weight:
                                     demonstrated = data["teacher"][ticks, env_indices]
                                     imitation_losses.append(-sum(dist.log_prob(demonstrated[:, head]).mean()
                                                                 for head, dist in enumerate(ds)))
@@ -324,7 +334,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=179)
     parser.add_argument("--evaluation-episodes", type=int, default=32)
     parser.add_argument("--teacher-steps", type=int, default=0)
-    parser.add_argument("--imitation-weight", type=float, default=.1)
+    parser.add_argument("--imitation-weight", type=float)
     args = parser.parse_args()
     if args.rollout % 32:
         parser.error("--rollout must be a multiple of 32")
