@@ -38,6 +38,7 @@ import {roomChat} from './rooms/chat';
 import {canBindBattleSources, bindBattleInventory, bindOwnedBattleSources, bindBattleEquipment, selectBattleTank, confirmBattleKitbag} from './battle/preparation';
 import {baseTankMaxHp} from './battle/create-player';
 import {setBattleHealth} from './battle/health';
+import {placeLearningActor, type LearningPlacement} from './learning/scenario';
 import {initialTankVerticalState} from '../../shared/movement/tank-vertical';
 import {combatSkills, combatItemSkills} from './battle/catalog';
 import {selectRoleSkills} from './battle/roles/skills';
@@ -941,6 +942,14 @@ export class World {
     return observeLearning(found.room, found.player,
       found.player.vip ? Math.max(1, found.room.map.vipHp) : this.playerMaxHp(found.player),
       this.now(), previous, goal);
+  }
+
+  /** Set offline lesson initial conditions without changing battle advancement rules. */
+  placeLearningActor(playerId: string, placement: LearningPlacement): boolean {
+    const found = this.findPlayer(playerId);
+    if (!found) throw new Error('学习角色不存在');
+    return placeLearningActor(found.room, found.player, placement,
+      found.player.vip ? Math.max(1, found.room.map.vipHp) : this.playerMaxHp(found.player));
   }
 
   private createRoom(mode: number, mapId?: number, minPlayers?: number, maxPlayers?: number,

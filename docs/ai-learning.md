@@ -27,7 +27,11 @@
 
 `World.learningFrame()` 返回 128 维观察和动作掩码：自身状态与上一动作、局部 NAV 探针、可见敌人与队友、可见弹丸、公开模式目标、模式身份、库存槽位和练习路点。敌人经过距离、场景视线和隐身状态过滤。奖励统计与观察分开，策略不能读取它们。
 
-移动课程从真实出生点选择 60–180 单位内可直达的路点，关闭开火和道具动作，以距离进展、到达和受阻情况计奖励；到达或 15 秒结束一个练习。战斗课程使用正常 60 秒对局，以实际伤害、击毁、死亡和胜负计奖励，模式 2/3/5 分别加入堡垒伤害、VIP 伤害和目标摧毁数。
+移动课程按 `level` 分级：0 为朝向前方约 ±9°、60–120 单位的直行；1 为前方约 ±46°、60–160 单位的转向；2 为任意方向、60–240 单位的直达路点；3 为 200–500 单位内需绕障且存在 NAV 路径的目标。候选路径使用实际战车的 NAV 采样尺寸检查。移动课程关闭炮塔、开火和道具，直行课另关闭转向，以距离进展、对准、到达和受阻情况计奖励；到达或 15 秒结束练习，绕障限 30 秒。
+
+`shooting` 课程 0 级固定车体，练习瞄准与击毁 90–150 单位内的 150 HP 靶；1 级开放移动和转向，对付任意方向的满血静止靶；2 级对付往返移动靶，3 级对手同时瞄准还击。`dodge` 课程由练习对手瞄准射击，关闭学习者的炮塔、开火与道具，以存活及减少受伤计奖励。练习靶通过 `World.placeLearningActor()` 设置初始位置和 HP，检查地形及战车重叠，并清除初始出生保护；后续运动、子弹、装填和伤害均使用普通战斗入口。导航练习的成功定义为进入目标 20 单位内；射击为击毁目标；躲避为 15 秒未受伤。
+
+`combat` 课程使用正常 60 秒对局，以实际伤害、击毁、死亡和胜负计奖励，模式 2/3/5 分别加入堡垒伤害、VIP 伤害和目标摧毁数。
 
 `train_motion.py` 使用 64 维 GRU 和三个动作头。`train_combat.py` 扩展为 128 维观察、64 维 GRU、五个动作头和价值头，继承动作先验，以 recurrent PPO 训练。回合结束和死亡清理记忆；PPO 以 32 步序列优化，保存优化器、训练步数、配置和检查点。续训通过 `--resume` 加载参数及优化器，模拟从新种子回合开始。
 
@@ -39,7 +43,7 @@
 python3 scripts/learning/remote.py scripts/learning/setup.ps1
 ```
 
-数据导出支持将压缩流直接通过 SSH 交给远程 `receive.py`，无需在本地保存新增数据。模拟源码包包含 `apps/server/src`、`apps/shared`、训练脚本和服务器资源，存入远程 `data/` 后由 `runtime.ps1` 解压；依赖缓存也在 `D:/ai/cdtank/cache`。解压源码包后同步对应提交的训练脚本和观察模块。
+数据导出支持将压缩流直接通过 SSH 交给远程 `receive.py`，无需在本地保存新增数据。`sync_runtime.py --resources /workspace/cdtank/apps/server/resources` 将已提交的 `apps/server/src`、`apps/shared`、训练脚本、文档和现有服务器资源直接流式压缩至远程 `data/simulation-<提交前12位>.tar.gz`。包内 `source.json` 记录源码提交；`runtime.ps1 -Archive <远程包路径>` 解压同一版本的源码、脚本与资源。依赖缓存也在 `D:/ai/cdtank/cache`。
 
 远程命令示例：
 
@@ -48,7 +52,9 @@ D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_mo
 D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_combat.py --game D:/ai/cdtank/game --node D:/ai/cdtank/tools/node/node.exe --output D:/ai/cdtank/runs/navigation-001 --prior D:/ai/cdtank/runs/motion-20261017-001/best.pt --lesson navigation --steps 100000
 ```
 
-通过 SSH 持续运行时调用 `start-training.ps1 -RunName <新目录名> -Lesson navigation -Steps 100000`。启动信息写入 `runs/<目录名>.launch.json`，标准输出和错误分别写入同目录名的 `.stdout.log`、`.stderr.log`；进程独立于 SSH 会话存活。
+通过 SSH 持续运行时调用 `start-training.ps1 -RunName <新目录名> -Lesson navigation -Level 0 -Steps 30000`。后续课程通过 `-Weights <前一课程检查点>` 继承全部策略参数并重置优化器和步数；同一课程中断后可用 `-Resume <检查点>` 继续优化器和累计步数，`Steps` 为累计目标。启动信息写入 `runs/<目录名>.launch.json`，标准输出和错误分别写入同目录名的 `.stdout.log`、`.stderr.log`；进程独立于 SSH 会话存活。
+
+`evaluate.py` 在不同于训练的种子上冻结模型执行完整练习，默认选择概率最高动作；`--stochastic` 评估采样策略。指定 `--checkpoint`、`--output`、`--lesson` 和 `--level`。输出 `episodes.jsonl` 保存实际动作、位置、观察、受阻与距离记录，`result.json` 记录到达/击毁/无伤比例和平均奖励。该评估用于选择课程与检查点。
 
 每次运行使用新目录。`config.json` 保存数据划分、软件版本和超参数；`metrics.jsonl` 保存训练指标；`latest.pt` 用于续训，动作预训练另保存 `best.pt` 和 `result.json`。训练完成不代表满足接入条件。
 
@@ -58,8 +64,10 @@ D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_co
 - [x] 数据库结算与历史轨迹关联，排除 CPU 和托管。
 - [x] 动作先验预训练，按比赛划分验证集并与保持上一动作比较。
 - [x] 真实 World、固定时钟、局部观察及 recurrent PPO 训练入口。
-- [ ] 基础移动课程达到稳定路点到达率，扩展到绕障和脱困。
-- [ ] 静止靶、移动靶、对射、躲避和完整 1v1 战斗课程。
+- [x] 直行课程及独立种子评估。
+- [ ] 转向与任意方向路点达到稳定到达率，扩展到绕障和脱困。
+- [x] 静止靶、移动靶、躲避课程和冻结策略评估入口。
+- [ ] 瞄准击杀、移动靶、对射、躲避和完整 1v1 达到接入所需水平。
 - [ ] 按输入发生时刻记录高频观察、人工输入及控制来源。
 - [ ] 道具逐类解锁，观察加入效果状态和使用资格。
 - [ ] 2v2、3v3 团队训练，集中价值网络与本地执行策略。
@@ -73,6 +81,10 @@ D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_co
 
 首轮动作先验在 GPU 上完成 100 epoch，最佳验证交叉熵为 0.73356。验证集 549 条连续动作中，移动、转向和炮塔操作准确率分别约 69.2%、77.2%、67.4%；保持上一动作基线为 69.2%、74.5%、63.6%。这是粗采样动作预测结果，不代表交战或对人胜率。
 
-首轮 100000 步导航训练运行目录为 `D:/ai/cdtank/runs/navigation-20261017-002`，使用四个模拟进程，检查点随每次 PPO 更新保存。后续课程须依据训练结果推进。
+直行课程检查点 `runs/navigation-forward-20261017-001/forward-candidate.pt` 在 8192 步后，于 32 个独立种子的练习中到达率为 100%，平均回报 5.1935。评估目录为 `runs/navigation-forward-evaluation-20261017-001`。此结果仅覆盖地图 7、战车 1 的前方短距离路点。
+
+静止靶瞄准课程 `runs/shooting-20261017-002/shooting-candidate.pt` 在 16896 步后，于 32 个独立种子的练习中击毁 31 个目标（96.875%），平均回报 2.9178。评估目录为 `runs/shooting-evaluation-20261017-001`。此结果覆盖固定车体、正前方小角度的 150 HP 靶。
+
+转向课程运行目录为 `runs/navigation-turn-20261017-001`，使用四个模拟进程和直行课程检查点开始训练。检查点随每次 PPO 更新保存，后续课程依据冻结策略的评估结果推进。
 
 当前课程尚未证明跨机器完全确定的回放、复杂绕障、道具价值、团队配合和五模式能力。历史数据规模较小且人工操作来源未确认。未运行单元测试、浏览器验收、构建或类型检查；训练运行和训练集验证指标记录各自的实际范围。
