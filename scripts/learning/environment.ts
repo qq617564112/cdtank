@@ -64,6 +64,8 @@ export function createLearningEnvironment(environmentId: string) {
   let lessonMaximumHp = 1;
   let lessonInitialHp = 1;
   let lessonFoodHealing = 0;
+  let bestHpWithoutFood = 0;
+  let bestHpWithFood = 0;
   let consumedItems = 0;
   let rejectedItems = 0;
   let healedHp = 0;
@@ -371,6 +373,8 @@ export function createLearningEnvironment(environmentId: string) {
       const skill = content.skills.get(food.runtime.skillRoles.primary)!;
       lessonFoodHealing = calculateFoodHealing(skill.attributes.HP, previous[0].foodHealingRate);
     }
+    bestHpWithoutFood = lessonInitialHp;
+    bestHpWithFood = Math.min(lessonMaximumHp, lessonInitialHp + lessonFoodHealing);
     const central = world.learningCentralState(roomId, playerIds);
     teamMetrics = central.teamMetrics;
     actorItemMetrics = playerIds.map(() => ({consumedItems: 0, rejectedItems: 0, healedHp: 0}));
@@ -475,8 +479,16 @@ export function createLearningEnvironment(environmentId: string) {
     const goalDistance = goal ? Math.hypot(current[0].memory.x - goal.x, current[0].memory.z - goal.z) : undefined;
     const headingError = goal ? Math.acos(Math.max(-1, Math.min(1, headingCosine(current[0])))) : undefined;
     headingStreak = headingError !== undefined && headingError < .08 ? headingStreak + 1 : 0;
-    const achievableFinalHp = Math.max(0, Math.min(lessonMaximumHp,
-      lessonInitialHp + lessonFoodHealing - current[0].metrics.damageTaken));
+    if (lesson === 'items' && level === 0) {
+      const damage = current[0].metrics.damageTaken - previous[0].metrics.damageTaken;
+      bestHpWithoutFood = Math.max(0, bestHpWithoutFood - damage);
+      bestHpWithFood = Math.max(0, bestHpWithFood - damage);
+      if (bestHpWithoutFood > 0) {
+        bestHpWithFood = Math.max(bestHpWithFood,
+          Math.min(lessonMaximumHp, bestHpWithoutFood + lessonFoodHealing));
+      }
+    }
+    const achievableFinalHp = bestHpWithFood;
     const healingGoalHp = Math.min(.75 * lessonMaximumHp, achievableFinalHp);
     const success = lesson === 'navigation' ? goalDistance !== undefined && goalDistance < 20
       : lesson === 'turning' ? headingStreak >= 5
