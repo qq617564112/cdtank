@@ -14,6 +14,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.distributions import Categorical
+from torch.nn.utils.rnn import PackedSequence, pack_sequence, pad_packed_sequence
 from gpu_budget import GpuBudget
 from teacher import primitive_action, teach, demonstration_loss
 
@@ -120,6 +121,34 @@ class Policy(nn.Module):
         distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
         value = self.central_critic(central_state) if self.central_critic is not None and central_state is not None else self.critic(hidden)
         return distributions, value.squeeze(-1), hidden
+
+    def sequence(self, observation, hidden, reset, masks, central_state=None):
+        """Batch truncated trajectories, splitting each actor at its memory resets."""
+        if self.gpu_budget:
+            self.gpu_budget.wait()
+        features = torch.tanh(self.encoder(observation) + self.mask_encoder(masks.to(observation.dtype)))
+        ticks, actors = reset.shape
+        reset_rows = reset.detach().cpu().bool().tolist()
+        segments = []
+        for actor in range(actors):
+            boundaries = [0] + [tick for tick in range(1, ticks) if reset_rows[tick][actor]] + [ticks]
+            segments.extend((end - start, actor, start, end) for start, end in zip(boundaries, boundaries[1:]))
+        segments.sort(key=lambda entry: entry[0], reverse=True)
+        packed = pack_sequence([features[start:end, actor] for _, actor, start, end in segments], enforce_sorted=True)
+        initial = torch.stack([hidden[actor] * (1 - reset[0, actor]) if start == 0 else torch.zeros_like(hidden[actor])
+                               for _, actor, start, _ in segments]).unsqueeze(0)
+        # PyTorch 2.3's packed GRU operator uses the GRUCell parameter layout.
+        weights = [self.memory.weight_ih, self.memory.weight_hh, self.memory.bias_ih, self.memory.bias_hh]
+        output, _ = torch._VF.gru(packed.data, packed.batch_sizes, initial, weights, True, 1, 0., self.training, False)
+        padded, _ = pad_packed_sequence(PackedSequence(output, packed.batch_sizes))
+        values = torch.cat([padded[:length, index] for index, (length, _, _, _) in enumerate(segments)])
+        positions = torch.tensor([tick * actors + actor for _, actor, start, end in segments
+                                  for tick in range(start, end)], device=features.device)
+        states = values.new_zeros(ticks * actors, self.hidden_size).index_copy(0, positions, values).reshape(ticks, actors, self.hidden_size)
+        logits = self.actor(states).masked_fill(~masks, -1e9)
+        distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
+        value = self.central_critic(central_state) if self.central_critic is not None and central_state is not None else self.critic(states)
+        return distributions, value.squeeze(-1), states[-1]
 
     def warm_start(self, filename):
         if self.hidden_size != 64:
@@ -320,6 +349,7 @@ def main(args):
                       "observationWidth": observations.shape[-1], "actionSizes": SIZES,
                       "simulationHz": 20, "decisionHz": 10, "observationSchema": results[0]["frames"][0]["schema"],
                       "algorithm": "recurrent MAPPO" if centralized else "recurrent PPO", "hiddenSize": hidden_size,
+                      "sequenceBackend": "PyTorch 2.3 packed GRU with actor reset segments",
                       "actorsPerWorld": actors_per_world, "actorBatchSize": agents,
                       "trainedActorsPerWorld": trained_per_world, "trainedActorBatchSize": trained_agents,
                       "opponentPaths": opponent_paths,
@@ -354,7 +384,9 @@ def main(args):
             if args.teacher_steps and not args.resume:
                 teacher_optimizer = torch.optim.Adam(policy.parameters(), lr=.001)
                 results = teach(policy, teacher_optimizer, environments, pool, results,
-                                args, device, output, tensors)
+                                args, device, output, tensors,
+                                lambda progressed: save_checkpoint(output / "teacher-latest.pt", policy, optimizer,
+                                    {**config, "teacherProgress": progressed}, 0, 0))
                 save_checkpoint(output / "teacher.pt", policy, optimizer, config, 0, 0)
                 observations, masks = tensors(results, device)
             hidden = torch.zeros(agents, hidden_size, device=device)
@@ -446,30 +478,21 @@ def main(args):
                             states = torch.stack([data["hidden"][start, env] for env, start in selected])
                             env_indices = torch.tensor([env for env, start in selected], device=device)
                             starts = torch.tensor([start for env, start in selected], device=device)
-                            actor_losses, critic_losses, entropies, divergences = [], [], [], []
-                            imitation_losses = []
-                            for relative in range(32):
-                                ticks = starts + relative
-                                ds, values, states = policy(data["x"][ticks, env_indices], states,
-                                    data["reset"][ticks, env_indices], data["masks"][ticks, env_indices],
-                                    data["central"][ticks, env_indices] if centralized else None)
-                                chosen = data["actions"][ticks, env_indices]
-                                new_logp = sum(dist.log_prob(chosen[:, head]) for head, dist in enumerate(ds))
-                                old_logp = data["logp"][ticks, env_indices]
-                                ratio = (new_logp - old_logp).exp()
-                                advantage = advantages[ticks, env_indices]
-                                actor_losses.append(-torch.minimum(ratio * advantage, ratio.clamp(.8, 1.2) * advantage).mean())
-                                critic_losses.append((values - returns[ticks, env_indices]).square().mean())
-                                entropies.append(sum(dist.entropy().mean() for dist in ds))
-                                divergences.append(((ratio - 1) - (new_logp - old_logp)).mean().detach())
-                                if args.imitation_weight:
-                                    demonstrated = data["teacher"][ticks, env_indices]
-                                    imitation_losses.append(demonstration_loss(ds, demonstrated))
-                            actor_loss = torch.stack(actor_losses).mean()
-                            critic_loss = torch.stack(critic_losses).mean()
-                            entropy = torch.stack(entropies).mean()
+                            ticks = starts[None, :] + torch.arange(32, device=device)[:, None]
+                            ds, values, states = policy.sequence(data["x"][ticks, env_indices], states,
+                                data["reset"][ticks, env_indices], data["masks"][ticks, env_indices],
+                                data["central"][ticks, env_indices] if centralized else None)
+                            chosen = data["actions"][ticks, env_indices]
+                            new_logp = sum(dist.log_prob(chosen[..., head]) for head, dist in enumerate(ds))
+                            old_logp = data["logp"][ticks, env_indices]
+                            ratio = (new_logp - old_logp).exp()
+                            advantage = advantages[ticks, env_indices]
+                            actor_loss = -torch.minimum(ratio * advantage, ratio.clamp(.8, 1.2) * advantage).mean()
+                            critic_loss = (values - returns[ticks, env_indices]).square().mean()
+                            entropy = sum(dist.entropy().mean() for dist in ds)
+                            divergence = ((ratio - 1) - (new_logp - old_logp)).mean().detach()
                             loss = actor_loss + .5 * critic_loss - .005 * entropy
-                            imitation_loss = torch.stack(imitation_losses).mean() if imitation_losses else loss.new_zeros(())
+                            imitation_loss = demonstration_loss(ds, data["teacher"][ticks, env_indices]) if args.imitation_weight else loss.new_zeros(())
                             loss += args.imitation_weight * imitation_loss
                             optimizer.zero_grad()
                             budget.wait()
@@ -478,7 +501,7 @@ def main(args):
                             optimizer.step()
                             budget.wait()
                             losses.append([actor_loss.item(), critic_loss.item(), entropy.item(),
-                                           torch.stack(divergences).mean().item(), imitation_loss.item()])
+                                           divergence.item(), imitation_loss.item()])
                     hidden = hidden.detach()
                     update += 1
                     row = {"update": update, "steps": steps, "seconds": time.monotonic() - started,

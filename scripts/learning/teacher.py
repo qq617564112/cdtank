@@ -15,10 +15,10 @@ def demonstration_loss(distributions, chosen):
     import torch
 
     weights = torch.ones_like(chosen, dtype=torch.float32)
-    weights[:, 0] = torch.where(chosen[:, 0] != 1, 3., 1.)
-    weights[:, 3] = torch.where(chosen[:, 3] == 1, 5., 1.)
-    weights[:, 4] = torch.where(chosen[:, 4] >= 2, 30., 1.)
-    return -sum((dist.log_prob(chosen[:, head]) * weights[:, head]).mean()
+    weights[..., 0] = torch.where(chosen[..., 0] != 1, 3., 1.)
+    weights[..., 3] = torch.where(chosen[..., 3] == 1, 5., 1.)
+    weights[..., 4] = torch.where(chosen[..., 4] >= 2, 30., 1.)
+    return -sum((dist.log_prob(chosen[..., head]) * weights[..., head]).mean()
                 for head, dist in enumerate(distributions))
 
 
@@ -96,7 +96,7 @@ def primitive_action(frame, lesson):
     return action
 
 
-def teach(policy, optimizer, environments, pool, results, args, device, output, tensors):
+def teach(policy, optimizer, environments, pool, results, args, device, output, tensors, checkpoint):
     """Imitate contiguous real-world expert rollouts before reward optimization."""
     import json
     import torch
@@ -105,18 +105,24 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
     hidden = torch.zeros(len(environments), policy.hidden_size, device=device)
     reset = torch.ones(len(environments), device=device)
     steps = 0
+    last_saved = 0
     episodes = []
     with (output / "teacher.jsonl").open("x", encoding="utf-8") as log:
         while steps < args.teacher_steps:
-            losses = []
+            initial_hidden = hidden.detach()
+            storage = {key: [] for key in ("observation", "masks", "reset", "teacher", "predicted")}
             for _ in range(32):
                 observations, masks = tensors(results, device)
-                distributions, _, hidden = policy(observations, hidden, reset, masks)
+                with torch.no_grad():
+                    distributions, _, hidden = policy(observations, hidden, reset, masks)
                 actions = [primitive_action(result["frames"][0], result["lesson"]) for result in results]
                 chosen = torch.tensor(actions, device=device)
-                losses.append(demonstration_loss(distributions, chosen))
                 student_probability = args.teacher_student_fraction * min(1, steps / max(1, args.teacher_steps))
-                predicted = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1).tolist()
+                predicted_tensor = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1)
+                for key, value in (("observation", observations), ("masks", masks), ("reset", reset),
+                                   ("teacher", chosen), ("predicted", predicted_tensor)):
+                    storage[key].append(value)
+                predicted = predicted_tensor.tolist()
                 executed = [student if random.random() < student_probability else demonstrated
                             for student, demonstrated in zip(predicted, actions)]
                 next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, executed)))
@@ -131,17 +137,30 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                 results = next_results
                 reset = torch.tensor(resets, device=device)
                 steps += len(environments)
-            loss = torch.stack(losses).mean()
+            data = {key: torch.stack(value) for key, value in storage.items()}
+            distributions, _, sequence_hidden = policy.sequence(data["observation"], initial_hidden,
+                                                                data["reset"], data["masks"])
+            predicted_sequence = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1)
+            sequence_mismatches = (predicted_sequence != data["predicted"]).sum().item()
+            hidden_error = (sequence_hidden - hidden).abs().max().item()
+            loss = demonstration_loss(distributions, data["teacher"])
             optimizer.zero_grad()
             policy.gpu_budget.wait()
             loss.backward()
             nn.utils.clip_grad_norm_(policy.parameters(), .5)
             optimizer.step()
             policy.gpu_budget.wait()
-            hidden = hidden.detach()
+            hidden = sequence_hidden.detach()
             row = {"steps": steps, "loss": loss.item(), "episodes": episodes,
+                   "sequenceActionHeadMismatches": sequence_mismatches, "sequenceHiddenMaximumError": hidden_error,
+                   "gpuMemoryAllocatedMiB": torch.cuda.memory_allocated() / 1048576,
+                   "gpuMemoryReservedMiB": torch.cuda.memory_reserved() / 1048576,
                    "studentActionProbability": student_probability, "labelSource": "scripted primitive control"}
             log.write(json.dumps(row) + "\n")
             log.flush()
             episodes = []
+            if steps - last_saved >= 4096:
+                checkpoint(steps)
+                last_saved = steps
+    checkpoint(steps)
     return results
