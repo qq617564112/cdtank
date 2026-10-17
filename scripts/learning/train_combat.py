@@ -16,7 +16,7 @@ from torch import nn
 from torch.distributions import Categorical
 from torch.nn.utils.rnn import PackedSequence, pack_sequence, pad_packed_sequence
 from gpu_budget import GpuBudget
-from teacher import teach, demonstration_actions, demonstration_loss
+from teacher import teach, demonstration_actions, demonstration_loss, DemonstrationReplay
 
 
 SIZES = [3, 3, 3, 2, 9]
@@ -272,6 +272,9 @@ def main(args):
     args.teacher_replay_sequences = getattr(args, "teacher_replay_sequences", 4096)
     args.teacher_batch_sequences = getattr(args, "teacher_batch_sequences", 256)
     args.teacher_epochs = getattr(args, "teacher_epochs", 2)
+    args.rehearsal = getattr(args, "rehearsal", None)
+    args.rehearsal_weight = getattr(args, "rehearsal_weight", 3.)
+    args.rehearsal_batch_sequences = getattr(args, "rehearsal_batch_sequences", 32)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     cache = output.parent.parent / 'cache'
@@ -307,6 +310,8 @@ def main(args):
             hidden_size = getattr(args, "hidden_size", None) or (initial["config"].get("hiddenSize", 64) if initial else 64)
             args.hidden_size = hidden_size
             policy = Policy(observations.shape[-1], budget, central_width, hidden_size).to(device)
+            rehearsal = DemonstrationReplay(args.rehearsal, args.rehearsal_batch_sequences, device,
+                observations.shape[-1], results[0]["frames"][0]["schema"]) if args.rehearsal else None
             opponent_paths = getattr(args, "opponent_paths", None)
             opponents = OpponentPool(opponent_paths, observations.shape[-1], budget, device)
             trainable = [index for index, frame in enumerate(frame for result in results for frame in result["frames"])
@@ -370,6 +375,7 @@ def main(args):
                       "centralStateWidth": central_width,
                       "parameters": sum(parameter.numel() for parameter in policy.parameters()),
                       "initialization": initialization,
+                      "rehearsalSource": rehearsal.source if rehearsal else None,
                       "initialCheckpoint": {"steps": initial["steps"],
                           "teacherProgress": initial["config"].get("teacherProgress"),
                           "source": initial["config"].get("source"),
@@ -490,6 +496,7 @@ def main(args):
                     chunks = [(env, start) for env in trainable
                               for start in range(0, args.rollout, 32)]
                     losses = []
+                    rehearsal_losses = []
                     policy.train()
                     for _ in range(args.epochs):
                         random.shuffle(chunks)
@@ -514,6 +521,10 @@ def main(args):
                             loss = actor_loss + .5 * critic_loss - .005 * entropy
                             imitation_loss = demonstration_loss(ds, data["teacher"][ticks, env_indices]) if args.imitation_weight else loss.new_zeros(())
                             loss += args.imitation_weight * imitation_loss
+                            if rehearsal:
+                                rehearsal_loss = rehearsal.loss(policy)
+                                loss += args.rehearsal_weight * rehearsal_loss
+                                rehearsal_losses.append(rehearsal_loss.item())
                             optimizer.zero_grad()
                             budget.wait()
                             loss.backward()
@@ -533,6 +544,7 @@ def main(args):
                            "trainedActorBatchSize": trained_agents,
                            "gpuPercent": budget.utilization, "gpuPausedSeconds": budget.paused_seconds,
                            "completedEpisodes": completed, "losses": np.mean(losses, axis=0).tolist(),
+                           "rehearsalLossMean": float(np.mean(rehearsal_losses)) if rehearsal_losses else None,
                            "episodes": episodes, "rewardMean": data["reward"][:, trainable].mean().item()}
                     text = json.dumps(row)
                     print(text, flush=True)
@@ -602,6 +614,9 @@ if __name__ == "__main__":
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)
     parser.add_argument("--curriculum", help="JSON list of courses assigned evenly across environments")
+    parser.add_argument("--rehearsal", help="Collected foundation sequences.npz for skill retention during PPO")
+    parser.add_argument("--rehearsal-weight", type=float, default=3.)
+    parser.add_argument("--rehearsal-batch-sequences", type=int, default=32)
     parser.add_argument("--items", type=json.loads, help="Override the lesson loadout with a JSON list of slot/itemTableId/quantity")
     args = parser.parse_args()
     args.opponent_paths = json.loads(Path(args.opponent_pool).read_text(encoding="utf-8-sig")) if args.opponent_pool else None
@@ -615,6 +630,8 @@ if __name__ == "__main__":
         parser.error("--rollout must be a multiple of 32")
     if args.minibatch_sequences < 1:
         parser.error("--minibatch-sequences must be positive")
+    if args.rehearsal and (args.rehearsal_batch_sequences < 1 or args.rehearsal_weight <= 0):
+        parser.error("Rehearsal needs a positive batch size and loss weight")
     if min(args.teacher_replay_sequences, args.teacher_batch_sequences, args.teacher_epochs) < 1:
         parser.error("Teacher replay, batch size and epochs must be positive")
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:

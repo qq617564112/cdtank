@@ -105,6 +105,40 @@ def demonstration_actions(results, source):
     return [primitive_action(frame, result["lesson"]) for result in results for frame in result["frames"]]
 
 
+class DemonstrationReplay:
+    """Rehearse complete control sequences, sampling each foundation course equally."""
+
+    def __init__(self, filename, batch_size, device, width, schema):
+        import json
+        import numpy as np
+        import torch
+
+        with np.load(filename, allow_pickle=False) as archive:
+            metadata = json.loads(str(archive["metadata"]))
+            if metadata["observationSchema"] != schema or archive["observation"].shape[-1] != width:
+                raise ValueError("Rehearsal observations must match the current simulation schema")
+            self.data = {key: torch.as_tensor(archive[key], device=device)
+                         for key in ("observation", "masks", "reset", "teacher")}
+            self.groups = [np.flatnonzero(archive["course"] == course).tolist()
+                           for course in np.unique(archive["course"])]
+        self.batch_size = batch_size
+        self.device = device
+        self.source = {"path": filename, "trainerSource": metadata["trainerSource"],
+                       "simulationSource": metadata["simulationSource"],
+                       "courses": metadata["courses"], "sequences": metadata["sequences"],
+                       "sequenceLength": metadata["sequence_length"], "labelSource": metadata["labelSource"]}
+
+    def loss(self, policy):
+        import torch
+
+        selected = [random.choice(self.groups[index % len(self.groups)]) for index in range(self.batch_size)]
+        indices = torch.tensor(selected, device=self.device)
+        data = {key: value[:, indices] for key, value in self.data.items()}
+        hidden = torch.zeros(self.batch_size, policy.hidden_size, device=self.device)
+        distributions, _, _ = policy.sequence(data["observation"], hidden, data["reset"], data["masks"])
+        return demonstration_loss(distributions, data["teacher"])
+
+
 def teach(policy, optimizer, environments, pool, results, args, device, output, tensors, checkpoint):
     """Imitate contiguous real-world expert rollouts before reward optimization."""
     import json
