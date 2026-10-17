@@ -206,5 +206,6 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
     weapon: {ammoId: ammo.id, range, instant, projectileSpeed: ammo.runtime.projectileSpeed!,
       penetrates, canReachEnemy: inRange.some(Boolean),
       aimedAtEnemy: selected.kind === 'PLAYER' && enemies.some(peer => peer.id === selected.targetId)},
+    foodHealingRate: player.attributesReady ? player.combat.roleFloatFields.get(0x8c) ?? 0 : 0,
     alive: player.alive, phase: room.phase, result: room.result};
 }

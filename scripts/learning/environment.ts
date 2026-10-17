@@ -9,6 +9,7 @@ import {findBotPath} from '../../apps/server/src/battle/cpu/navigation';
 import {rangeLessonLanes} from './range-lanes';
 import {LearnedCpuPolicy} from '../../apps/server/src/learning/cpu-policy';
 import {LearningCombatExpert} from '../../apps/server/src/learning/expert';
+import {calculateFoodHealing} from '../../apps/server/src/battle/roles/food-healing';
 import type {SerializedActorPolicy} from '../../apps/server/src/learning/policy';
 import type {LearningGoal, LearningMemory} from '../../apps/server/src/learning/observation';
 import type {WorldEvent} from '../../apps/server/src/world';
@@ -61,6 +62,8 @@ export function createLearningEnvironment(environmentId: string) {
   let lessonRange = 0;
   let lessonAmmoId = 2001;
   let lessonMaximumHp = 1;
+  let lessonInitialHp = 1;
+  let lessonFoodHealing = 0;
   let consumedItems = 0;
   let rejectedItems = 0;
   let healedHp = 0;
@@ -174,6 +177,7 @@ export function createLearningEnvironment(environmentId: string) {
     headingStreak = 0;
     lessonRange = 0;
     lessonAmmoId = request.ammoId ?? 2001;
+    lessonFoodHealing = 0;
     consumedItems = 0;
     rejectedItems = 0;
     healedHp = 0;
@@ -361,6 +365,12 @@ export function createLearningEnvironment(environmentId: string) {
       initialDistance = Math.hypot(start.x - goal.x, start.z - goal.z);
       previous = frames();
     }
+    lessonInitialHp = previous[0].metrics.hp;
+    if (lesson === 'items' && level === 0) {
+      const food = content.items.get(2)!;
+      const skill = content.skills.get(food.runtime.skillRoles.primary)!;
+      lessonFoodHealing = calculateFoodHealing(skill.attributes.HP, previous[0].foodHealingRate);
+    }
     const central = world.learningCentralState(roomId, playerIds);
     teamMetrics = central.teamMetrics;
     actorItemMetrics = playerIds.map(() => ({consumedItems: 0, rejectedItems: 0, healedHp: 0}));
@@ -465,13 +475,16 @@ export function createLearningEnvironment(environmentId: string) {
     const goalDistance = goal ? Math.hypot(current[0].memory.x - goal.x, current[0].memory.z - goal.z) : undefined;
     const headingError = goal ? Math.acos(Math.max(-1, Math.min(1, headingCosine(current[0])))) : undefined;
     headingStreak = headingError !== undefined && headingError < .08 ? headingStreak + 1 : 0;
+    const achievableFinalHp = Math.max(0, Math.min(lessonMaximumHp,
+      lessonInitialHp + lessonFoodHealing - current[0].metrics.damageTaken));
+    const healingGoalHp = Math.min(.75 * lessonMaximumHp, achievableFinalHp);
     const success = lesson === 'navigation' ? goalDistance !== undefined && goalDistance < 20
       : lesson === 'turning' ? headingStreak >= 5
       : lesson === 'shooting' || lesson === 'aiming' ? current[0].metrics.kills > 0
       : lesson === 'range' ? level < 2 ? rangeStreak >= 50 : rangeKills > 0
       : lesson === 'dodge' ? decisions >= 150 && current[0].metrics.damageTaken === 0
       : lesson === 'items' ? current[0].alive && (level === 0
-        ? decisions >= 150 && current[0].metrics.hp >= .75 * lessonMaximumHp
+        ? decisions >= 150 && current[0].metrics.hp >= healingGoalHp
         : level === 1 ? decisions >= 150 && current[0].metrics.damageTaken === 0
         : level === 2 ? goalDistance !== undefined && goalDistance < 20 : current[0].metrics.kills > 0)
       : current[0].result?.players.find(player => player.id === playerIds[0])?.outcome === 'WIN';
@@ -567,7 +580,9 @@ export function createLearningEnvironment(environmentId: string) {
         targetDistance, weaponRange: lesson === 'range' ? lessonRange : current[0].weapon.range,
         currentWeaponRange: current[0].weapon.range, rangeTicks, rangeStreak,
         rangeShots, outsideRangeShots, rangeKills, headingError, headingStreak,
-        consumedItems, rejectedItems, healedHp, finalHp: current[0].metrics.hp}};
+        consumedItems, rejectedItems, healedHp, finalHp: current[0].metrics.hp,
+        ...(lesson === 'items' && level === 0 ? {initialHp: lessonInitialHp,
+          foodHealingCapacity: lessonFoodHealing, achievableFinalHp, healingGoalHp} : {})}};
   }
 
   let random = seededRandom(0);
