@@ -95,7 +95,7 @@ def main(args):
         checkpoint=str(output / "latest.pt"), output=str(output / "evaluation"), curriculum=None,
         episodes=args.evaluation_episodes, environments=args.evaluation_environments,
         gpu_utilization_limit=args.gpu_utilization_limit, seed=args.seed + 100000000,
-        without_items=False))
+        without_items=False, device="cpu"))
     result["evaluations"] = json.loads((output / "evaluation" / "result.json").read_text())["evaluations"]
     (output / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 

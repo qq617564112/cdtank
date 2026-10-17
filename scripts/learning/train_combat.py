@@ -635,6 +635,7 @@ def main(args):
                 "environment_url": args.environment_url, "checkpoint": str(output / "latest.pt"),
                 "output": str(destination), "episodes": args.evaluation_episodes,
                 "environments": args.evaluation_environments, "stochastic": False,
+                "device": "cpu",
                 "opponent_paths": opponent_paths,
                 "gpu_utilization_limit": args.gpu_utilization_limit, "seed": args.seed + 100000000}))
             evaluations.append({**course, "level": level, "output": str(destination),
