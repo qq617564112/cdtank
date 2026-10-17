@@ -334,6 +334,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=179)
     parser.add_argument("--evaluation-episodes", type=int, default=32)
     parser.add_argument("--teacher-steps", type=int, default=0)
+    parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)
     args = parser.parse_args()
     if args.rollout % 32:

@@ -72,6 +72,8 @@ D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_co
 
 预热与辅助模仿独立控制：`--resume` 跳过预热，并从检查点配置恢复有效的 `imitationWeight`，显式传入 `--imitation-weight`（启动脚本的 `-ImitationWeight`）可覆盖该系数。配置分别记录本次实际预热步数 `teacherBootstrapSteps` 和辅助模仿系数；只有预热、没有辅助损失的旧检查点继续使用纯 PPO。
 
+示范预热逐渐混入学习策略的贪心动作，概率从 0 增长到 `--teacher-student-fraction 0.75`。这些动作产生的真实状态继续由基础控制器标注，学习策略在自己过早停车、瞄准偏移等状态上获得纠正示范；日志记录实际混合概率。后续 PPO 执行策略自身采样的动作。
+
 `evaluate.py` 在不同于训练的种子上冻结模型执行完整练习，默认选择概率最高动作；`--stochastic` 评估采样策略。指定 `--checkpoint`、`--output`、`--lesson` 和 `--level`。输出 `episodes.jsonl` 保存实际动作、位置、观察、受阻与距离记录，`result.json` 记录到达/击毁/无伤比例和平均奖励。该评估用于选择课程与检查点。
 
 PPO 完成训练后关闭训练世界，自动在 `evaluation-level-<级别>` 中完成 32 个独立种子的冻结评估；混合课程逐级评估。`--evaluation-episodes` 调整每级评估局数。评估配置记录检查点所属源码、实际评估源码、观察版本和设备，结果汇入运行目录的 `result.json`。已有运行使用其启动时的训练入口，需要单独调用评估脚本。

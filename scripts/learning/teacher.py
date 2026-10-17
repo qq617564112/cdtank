@@ -1,6 +1,7 @@
 """Primitive control demonstrations from the learner's public observation."""
 
 import math
+import random
 
 NEAREST_ENEMY = 24
 WEAPON_ENEMY = 136
@@ -59,7 +60,11 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                 chosen = torch.tensor(actions, device=device)
                 losses.append(-sum(dist.log_prob(chosen[:, head]).mean()
                                    for head, dist in enumerate(distributions)))
-                next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, actions)))
+                student_probability = args.teacher_student_fraction * min(1, steps / max(1, args.teacher_steps))
+                predicted = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1).tolist()
+                executed = [student if random.random() < student_probability else demonstrated
+                            for student, demonstrated in zip(predicted, actions)]
+                next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, executed)))
                 resets = []
                 for index, result in enumerate(next_results):
                     died = result["frames"][0]["metrics"]["deaths"] != results[index]["frames"][0]["metrics"]["deaths"]
@@ -77,7 +82,8 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
             nn.utils.clip_grad_norm_(policy.parameters(), .5)
             optimizer.step()
             hidden = hidden.detach()
-            row = {"steps": steps, "loss": loss.item(), "episodes": episodes, "labelSource": "scripted primitive control"}
+            row = {"steps": steps, "loss": loss.item(), "episodes": episodes,
+                   "studentActionProbability": student_probability, "labelSource": "scripted primitive control"}
             log.write(json.dumps(row) + "\n")
             log.flush()
             episodes = []
