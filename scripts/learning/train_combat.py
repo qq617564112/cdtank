@@ -2,6 +2,7 @@
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+import http.client
 import json
 import os
 from pathlib import Path
@@ -9,6 +10,7 @@ import random
 import subprocess
 import sys
 import time
+from urllib.parse import urlsplit
 
 import numpy as np
 import torch
@@ -25,22 +27,28 @@ class Environment:
         self.number = number
         self.episode = 0
         self.args = args
-        self.process = subprocess.Popen(
-            [args.node, "--import", "tsx", "scripts/learning/environment.ts"],
-            cwd=args.game, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=open(Path(args.output) / f"environment-{number}.log", "w", encoding="utf-8"),
-            text=True, encoding="utf-8", bufsize=1,
-        )
+        endpoint = urlsplit(args.environment_url)
+        if endpoint.scheme != "http" or not endpoint.hostname:
+            raise ValueError("Use the simulation server's http://host:port address")
+        self.connection = http.client.HTTPConnection(endpoint.hostname, endpoint.port or 80, timeout=120)
+        try:
+            self.connection.request("GET", "/health")
+            response = self.connection.getresponse()
+            health = json.loads(response.read())
+            if response.status != 200 or health.get("service") != "cdtank-learning" or health.get("protocol") != 1:
+                raise RuntimeError("Endpoint is not a compatible learning simulation")
+            self.source = health["source"]
+        except BaseException:
+            self.connection.close()
+            raise
 
     def command(self, request):
-        self.process.stdin.write(json.dumps(request) + "\n")
-        self.process.stdin.flush()
-        line = self.process.stdout.readline()
-        if not line:
-            raise RuntimeError(f"Environment {self.number} exited: {self.process.poll()}")
-        result = json.loads(line)
-        if result["type"] == "error":
-            raise RuntimeError(result["error"])
+        self.connection.request("POST", "/environment", body=json.dumps(request),
+                                headers={"Content-Type": "application/json"})
+        response = self.connection.getresponse()
+        result = json.loads(response.read())
+        if response.status != 200 or result.get("type") == "error":
+            raise RuntimeError(f"Environment {self.number}: {result.get('error', response.status)}")
         return result
 
     def reset(self):
@@ -57,12 +65,7 @@ class Environment:
         return self.command({"type": "step", "actions": [action]})
 
     def close(self):
-        self.process.stdin.close()
-        try:
-            self.process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            self.process.terminate()
-            self.process.wait()
+        self.connection.close()
 
 
 class Policy(nn.Module):
@@ -133,7 +136,8 @@ def main(args):
     device = torch.device("cuda")
     environments = []
     try:
-        environments = [Environment(args, index) for index in range(args.environments)]
+        for index in range(args.environments):
+            environments.append(Environment(args, index))
         with ThreadPoolExecutor(max_workers=args.environments) as pool:
             results = list(pool.map(lambda env: env.reset(), environments))
             observations, masks = tensors(results, device)
@@ -160,8 +164,9 @@ def main(args):
                       "algorithm": "recurrent PPO", "hiddenSize": 64,
                       "imitationWeight": args.imitation_weight,
                       "teacherBootstrapSteps": args.teacher_steps if not args.resume else 0}
-            source = Path(args.game) / "source.json"
+            source = Path(__file__).resolve().parents[2] / "source.json"
             config["source"] = json.loads(source.read_text(encoding="utf-8")) if source.exists() else None
+            config["simulationSource"] = environments[0].source
             steps = 0
             update = 0
             if checkpoint:
@@ -299,7 +304,7 @@ def main(args):
     for level in levels:
         destination = output / f"evaluation-level-{level}"
         subprocess.run([sys.executable, str(Path(__file__).with_name("evaluate.py")),
-                        "--game", args.game, "--node", args.node,
+                        "--environment-url", args.environment_url,
                         "--checkpoint", str(output / "latest.pt"), "--output", str(destination),
                         "--lesson", args.lesson, "--level", str(level), "--mode", str(args.mode),
                         "--map-id", str(args.map_id), "--players", str(args.players),
@@ -313,8 +318,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--game", required=True)
-    parser.add_argument("--node", required=True)
+    parser.add_argument("--environment-url", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--prior")
     parser.add_argument("--resume")

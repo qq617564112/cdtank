@@ -1,6 +1,6 @@
 # AI 训练
 
-训练主机为 `192.168.10.179`，GPU 为 RTX 2080 Ti（计算能力 7.5，驱动报告 22528 MiB 显存）。数据、模拟源码、依赖、缓存、训练日志和模型全部保存在 `D:/ai/cdtank`。Python 使用该目录的虚拟环境，复用主机已有的 PyTorch 2.3.1+cu118；Node 使用该目录的便携版 22.15.0。
+训练主机为 `192.168.10.179`，GPU 为 RTX 2080 Ti（计算能力 7.5，驱动报告 22528 MiB 显存）。游戏模拟在当前开发虚拟机运行，通过 `http://192.168.10.140:40101` 提供服务；训练主机仅执行 CUDA 模型训练和评估。历史数据、训练依赖与缓存、训练日志和模型全部保存在 `D:/ai/cdtank`。Python 使用该目录的虚拟环境，复用主机已有的 PyTorch 2.3.1+cu118。
 
 ## 数据来源
 
@@ -14,9 +14,9 @@
 
 ## 模拟与模型接口
 
-`scripts/learning/environment.ts` 在独立 Node 进程中创建真实 `World`，注入固定时钟和按种子生成的 `Math.random`。模拟每次推进 50ms，模型每 100ms 提交一次普通 `MsgPlayerInput`。训练进程不连接账户库，不写线上库存或战绩。
+`scripts/learning/simulation-server.mjs` 在开发虚拟机监听 `0.0.0.0:40101`。每个训练连接拥有独立 Node 模拟进程，连接关闭时销毁对应进程。`environment.ts` 创建真实 `World`，注入固定时钟和按种子生成的 `Math.random`。模拟每次推进 50ms，模型每 100ms 模拟时间提交一次普通 `MsgPlayerInput`，按请求推进，无需等待真实时间。训练进程不连接账户库，不写线上库存或战绩。
 
-输入和输出逐行使用 JSON：
+`GET /health` 返回服务、协议版本、源码提交、Node 版本及活跃世界数。训练端为每个世界保持一个 HTTP 连接，向 `POST /environment` 发送一个重置或动作 JSON，收到对应结果后才发送下一个请求；同一连接不能并发提交两个动作。请求与环境内部的逐行 JSON 内容相同：
 
 ```json
 {"type":"reset","seed":179,"mode":4,"mapId":7,"players":2,"controlled":1,"lesson":"navigation"}
@@ -49,22 +49,30 @@
 
 ## 运行
 
-远程基础环境：
+远程基础 Python 环境：
 
 ```bash
 python3 scripts/learning/remote.py scripts/learning/setup.ps1
 ```
 
-数据导出支持将压缩流直接通过 SSH 交给远程 `receive.py`，无需在本地保存新增数据。`sync_runtime.py --resources /workspace/cdtank/apps/server/resources` 将已提交的 `apps/server/src`、`apps/shared`、训练脚本、文档和现有服务器资源直接流式压缩至远程 `data/simulation-<提交前12位>.tar.gz`。包内 `source.json` 记录源码提交；`runtime.ps1 -Archive <远程包路径>` 解压同一版本的源码、脚本与资源。依赖缓存也在 `D:/ai/cdtank/cache`。
+数据导出支持将压缩流直接通过 SSH 交给远程 `receive.py`，无需在本地保存新增数据。`python3 scripts/learning/sync_trainer.py` 将已提交的训练脚本及文档流式传到 `D:/ai/cdtank/data/trainer-<提交前12位>.tar.gz`，解压至 `D:/ai/cdtank/trainer`，包内 `source.json` 记录训练端源码。179 的训练不再启动 Node 世界或加载场景资源；已有 `game/` 和历史模拟归档保留。
+
+本机模拟服务使用仓库现有依赖与 `apps/server/resources`：
+
+```bash
+node scripts/learning/simulation-server.mjs --host 0.0.0.0 --port 40101
+```
+
+40101 位于已映射到当前开发容器的 40100–40200 范围。外部健康地址为 `http://192.168.10.140:40101/health`。所有训练和冻结评估的 `--environment-url` 使用同一服务地址；配置分别记录训练端源码与模拟端源码、模拟 Node 版本。
 
 远程命令示例：
 
 ```powershell
-D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_motion.py --data D:/ai/cdtank/data/history-20261017.jsonl.gz --output D:/ai/cdtank/runs/motion-001
-D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_combat.py --game D:/ai/cdtank/game --node D:/ai/cdtank/tools/node/node.exe --output D:/ai/cdtank/runs/navigation-001 --prior D:/ai/cdtank/runs/motion-20261017-001/best.pt --lesson navigation --steps 100000
+D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/trainer/scripts/learning/train_motion.py --data D:/ai/cdtank/data/history-20261017.jsonl.gz --output D:/ai/cdtank/runs/motion-001
+D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/trainer/scripts/learning/train_combat.py --environment-url http://192.168.10.140:40101 --output D:/ai/cdtank/runs/navigation-001 --prior D:/ai/cdtank/runs/motion-20261017-001/best.pt --lesson navigation --steps 100000
 ```
 
-通过 SSH 持续运行时调用 `start-training.ps1 -RunName <新目录名> -Lesson navigation -Level 0 -Steps 30000`。后续课程通过 `-Weights <前一课程检查点>` 继承全部策略参数并重置优化器和步数；同一课程中断后可用 `-Resume <检查点>` 继续优化器和累计步数，`Steps` 为累计目标。启动信息写入 `runs/<目录名>.launch.json`，标准输出和错误分别写入同目录名的 `.stdout.log`、`.stderr.log`；进程独立于 SSH 会话存活。
+通过 SSH 持续运行时调用 `D:/ai/cdtank/trainer/scripts/learning/start-training.ps1 -RunName <新目录名> -Lesson navigation -Level 0 -Steps 30000`，`-EnvironmentUrl` 默认使用 `http://192.168.10.140:40101`。后续课程通过 `-Weights <前一课程检查点>` 继承全部策略参数并重置优化器和步数；同一课程中断后可用 `-Resume <检查点>` 继续优化器和累计步数，`Steps` 为累计目标。迁移模拟进程时从检查点开始新回合，保留优化器和累计步数。启动信息写入 `runs/<目录名>.launch.json`，标准输出和错误分别写入同目录名的 `.stdout.log`、`.stderr.log`；进程独立于 SSH 会话存活。
 
 `--mix-levels`（启动脚本的 `-MixLevels`）按每回合的独立种子，从 0 到指定 `level` 均匀选择课程，重放此前技能。射程接近和后撤通过 `--lesson range --level 1 --mix-levels` 在同一模型中训练；日志保留每个回合实际使用的级别。
 

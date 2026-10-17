@@ -24,10 +24,12 @@ def main(args):
     episodes = []
     try:
         first = environment.reset()
-        source = Path(args.game) / "source.json"
+        source = Path(__file__).resolve().parents[2] / "source.json"
         config = {**vars(args), "checkpointSteps": checkpoint["steps"],
                   "checkpointSource": checkpoint.get("config", {}).get("source"),
-                  "simulationSource": json.loads(source.read_text(encoding="utf-8")) if source.exists() else None,
+                  "checkpointSimulationSource": checkpoint.get("config", {}).get("simulationSource"),
+                  "trainerSource": json.loads(source.read_text(encoding="utf-8")) if source.exists() else None,
+                  "simulationSource": environment.source,
                   "observationWidth": len(first["frames"][0]["observation"]),
                   "observationSchema": first["frames"][0]["schema"],
                   "torch": torch.__version__, "device": torch.cuda.get_device_name(0)}
@@ -79,8 +81,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--game", required=True)
-    parser.add_argument("--node", required=True)
+    parser.add_argument("--environment-url", required=True)
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--episodes", type=int, default=32)

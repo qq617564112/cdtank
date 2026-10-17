@@ -3,6 +3,7 @@ param(
   [ValidateSet('turning','navigation','aiming','shooting','dodge','range','combat')][string]$Lesson='navigation',
   [int]$Steps=100000,
   [int]$Environments=4,
+  [string]$EnvironmentUrl='http://192.168.10.140:40101',
   [int]$MapId=7,
   [int]$AmmoId=2001,
   [ValidateRange(0,3)][int]$Level=1,
@@ -17,7 +18,8 @@ param(
 $ErrorActionPreference='Stop'
 $root='D:/ai/cdtank'
 if (Test-Path "$root/runs/$RunName") { throw 'Use a new run directory' }
-$arguments="$root/game/scripts/learning/train_combat.py --game $root/game --node $root/tools/node/node.exe --output $root/runs/$RunName --steps $Steps --environments $Environments --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId"
+$trainerRoot=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$arguments="$PSScriptRoot/train_combat.py --environment-url $EnvironmentUrl --output $root/runs/$RunName --steps $Steps --environments $Environments --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId"
 if ($MixLevels) { $arguments+=' --mix-levels' }
 if ($TeacherSteps) { $arguments+=" --teacher-steps $TeacherSteps" }
 if ($PSBoundParameters.ContainsKey('ImitationWeight')) { $arguments+=" --imitation-weight $ImitationWeight" }
@@ -28,11 +30,11 @@ $command="cmd.exe /d /c $root/venv/Scripts/python.exe $arguments > $root/runs/$R
 # WMI creates a process outside the SSH session's terminating Windows job.
 $created=Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
   CommandLine=$command
-  CurrentDirectory="$root/game"
+  CurrentDirectory=$trainerRoot
 }
 if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.ReturnValue) }
 @{processId=$created.ProcessId;run=$RunName;lesson=$Lesson;level=$Level;steps=$Steps;
-  environments=$Environments;mapId=$MapId;ammoId=$AmmoId;mixLevels=[bool]$MixLevels;
+  environments=$Environments;environmentUrl=$EnvironmentUrl;mapId=$MapId;ammoId=$AmmoId;mixLevels=[bool]$MixLevels;
   teacherSteps=$TeacherSteps;imitationWeight=$(if($PSBoundParameters.ContainsKey('ImitationWeight')){$ImitationWeight}else{$null});
   prior=$Prior;weights=$Weights;resume=$Resume} |
   ConvertTo-Json | Set-Content -Encoding ascii "$root/runs/$RunName.launch.json"
