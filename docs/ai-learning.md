@@ -113,6 +113,10 @@ PPO 完成训练后关闭训练世界，自动在 `evaluation-level-<级别>` �
 
 普通弹的接近和后撤检查点 `runs/range-hold-approach-20261017-001/hold-candidate.pt`、`runs/range-hold-retreat-20261017-001/hold-candidate.pt` 均在 30208 步后，于地图 1 的 32 个独立种子中达到连续 1 秒处于距离带。接近轨迹始终向前行驶，该结果只证明进入并短暂穿过距离带；当前连续 5 秒保持条件尚待重新训练与评估。评估目录分别为 `runs/range-hold-approach-evaluation-20261017-001`、`runs/range-hold-retreat-evaluation-20261017-001`。
 
+五秒距离保持的首轮检查点为 `runs/range-bootstrap-20261017-002/teacher.pt`，经过 20032 个脚本示范步骤。地图 1 的普通弹接近在 32 个独立种子中成功 31 次（96.875%），后撤成功 19 次（59.375%）；评估目录分别为 `runs/range-bootstrap-approach-evaluation-20261017-001`、`runs/range-bootstrap-retreat-evaluation-20261017-001`。它还未达到稳定的双向距离控制，后续运行使用纠正示范和辅助模仿继续优化。
+
+相同示范步数下，`runs/turning-bootstrap-20261017-002/teacher.pt` 的任意方向原地转向在地图 7 的 32 个独立种子中成功 20 次（62.5%）；`runs/aiming-bootstrap-20261017-002/teacher.pt` 的固定车体、任意方向 600 HP 靶击毁成功 28 次（87.5%）。评估目录为 `runs/turning-bootstrap-evaluation-20261017-001`、`runs/aiming-bootstrap-evaluation-20261017-001`。这些是基础操作模型，尚未证明移动射击和完整交战能力。
+
 当前课程尚未证明跨机器完全确定的回放、复杂绕障、道具价值、团队配合和五模式能力。历史数据规模较小且人工操作来源未确认。未运行单元测试、浏览器验收、构建或类型检查；训练运行和训练集验证指标记录各自的实际范围。
 
 人类风格需要在基础技能稳定后单独评估：从确认的人工输入采集观察到操作的延迟、连贯转向、瞄准修正、交火距离和道具时机，作为模仿约束；再比较学习策略与人工样本的行为分布和对局表现。目前的 500ms 历史记录不足以确定反应时与瞄准节奏。现有感知为局部距离与视线过滤，尚未复现玩家相机视野；其后的拟人化训练需要同时处理视野、反应延迟和操作误差。
