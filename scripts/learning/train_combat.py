@@ -105,6 +105,7 @@ class Policy(nn.Module):
         self.hidden_size = hidden_size
         self.encoder = nn.Linear(width, hidden_size)
         self.memory = nn.GRUCell(hidden_size, hidden_size)
+        self._memory_flattened = False
         self.actor = nn.Linear(hidden_size, sum(SIZES))
         self.critic = nn.Linear(hidden_size, 1)
         self.mask_encoder = nn.Linear(sum(SIZES), hidden_size, bias=False)
@@ -139,6 +140,10 @@ class Policy(nn.Module):
                                for _, actor, start, _ in segments]).unsqueeze(0)
         # PyTorch 2.3's packed GRU operator uses the GRUCell parameter layout.
         weights = [self.memory.weight_ih, self.memory.weight_hh, self.memory.bias_ih, self.memory.bias_hh]
+        if observation.is_cuda and not self._memory_flattened:
+            with torch.no_grad():
+                torch._cudnn_rnn_flatten_weight(weights, 4, self.hidden_size, 3, self.hidden_size, 0, 1, False, False)
+            self._memory_flattened = True
         output, _ = torch._VF.gru(packed.data, packed.batch_sizes, initial, weights, True, 1, 0., self.training, False)
         padded, _ = pad_packed_sequence(PackedSequence(output, packed.batch_sizes))
         values = torch.cat([padded[:length, index] for index, (length, _, _, _) in enumerate(segments)])
