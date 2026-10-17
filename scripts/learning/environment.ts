@@ -97,6 +97,13 @@ export function createLearningEnvironment(environmentId: string) {
     return (dx * frame.observation[0] + dz * frame.observation[1]) / Math.max(1, distance);
   }
 
+  function castleApproach(frame: Frame): number {
+    const distances = [84, 90].filter(offset => frame.observation[offset]
+      && !frame.observation[offset + 4] && !frame.observation[offset + 5])
+      .map(offset => Math.hypot(frame.observation[offset + 1], frame.observation[offset + 2]) * 600);
+    return distances.length ? Math.max(0, Math.min(...distances) / frame.weapon.range - .72) : 0;
+  }
+
   function seededRandom(initial: number): () => number {
     let state = initial >>> 0;
     return () => {
@@ -567,6 +574,10 @@ export function createLearningEnvironment(environmentId: string) {
         - .001 * (after.damageTaken - before.damageTaken)
         + (lesson === 'range' ? rangeKillDelta : after.kills - before.kills) - (after.deaths - before.deaths);
       if (mode === 2) reward += .004 * (after.bunkerDamage - before.bunkerDamage);
+      if (mode === 2 && (lesson === 'combat' || lesson === 'siege' && level === 2)
+          && frame.alive && after.deaths === before.deaths) {
+        reward += .5 * (castleApproach(previous[index]) - castleApproach(frame));
+      }
       if (mode === 3) reward += .004 * (after.vipDamage - before.vipDamage);
       if (mode === 5) reward += after.objectives - before.objectives;
       if (lesson === 'combat' && mode <= 3) {
