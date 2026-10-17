@@ -5,6 +5,7 @@ import {isRoleFireReady} from '../battle/roles/reload';
 import {queryShotTarget} from '../battle/shot-query';
 import type {RoomState} from '../rooms/state';
 import type {PlayerState} from '../battle/player-state';
+import type {MsgRoomEvent} from '../../../shared/protocols/MsgRoomEvent';
 
 export const LEARNING_ACTION_SIZES = [3, 3, 3, 2, 9] as const;
 
@@ -14,7 +15,6 @@ export interface LearningMemory {
   z: number;
   at: number;
   deaths: number;
-  visibleShots?: Record<string, number>;
   observedAmmo?: Record<string, number>;
 }
 
@@ -22,7 +22,7 @@ export interface LearningGoal {x: number; z: number;}
 
 /** Actor observations contain local perceptions; reward statistics stay separate. */
 export function observeLearning(room: RoomState, player: PlayerState, maximumHp: number,
-  now: number, previous?: LearningMemory, goal?: LearningGoal) {
+  now: number, previous?: LearningMemory, goal?: LearningGoal, events: readonly MsgRoomEvent[] = []) {
   const yaw = player.yaw;
   const sine = Math.sin(yaw), cosine = Math.cos(yaw);
   const body = player.bodyYaw ?? yaw;
@@ -120,15 +120,16 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
     {range, closestPlayer: instant || penetrates, ignoreObstruction: penetrates});
   const selected = query(turret);
   const observedAmmo = {...previous?.observedAmmo};
-  const visibleShots: Record<string, number> = {};
   observation.push(range / 1000, ammo.runtime.projectileSpeed! / 1000, Number(instant), Number(penetrates),
     Math.max(0, player.combat.nextAvailableSeconds - (now - room.startedAt) / 1000) / 5,
     Math.min(1, player.combat.bulletCount / 20), ammo.runtime.muzzleForward! / 1000, Number(fireReady));
   const inRange: boolean[] = [];
-  for (const peer of enemies) {
-    visibleShots[peer.id] = peer.roundStats?.shots ?? 0;
-    if (previous?.visibleShots?.[peer.id] !== undefined
-        && visibleShots[peer.id] > previous.visibleShots[peer.id]) observedAmmo[peer.id] = peer.combat.currentAmmoTableId;
+  for (const event of events) {
+    if (event.type === 'fire' && event.roomId === room.roomId && event.skillId !== undefined
+        && enemies.some(peer => peer.id === event.playerId) && visible(event)
+        && gameContent().items.get(event.skillId)?.kind === 'ammo') {
+      observedAmmo[event.playerId] = event.skillId;
+    }
   }
   for (let index = 0; index < 3; index++) {
     const peer = enemies[index];
@@ -149,7 +150,7 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
   return {schema: 2, observation, actionSizes: LEARNING_ACTION_SIZES,
     actionMasks: [[true, true, true], [true, true, true], [true, true, true],
       [true, fireReady], itemMask],
-    memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths, visibleShots, observedAmmo},
+    memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths, observedAmmo},
     metrics: {hp: player.hp, kills: player.kills, deaths: player.deaths,
       damage: player.roundStats?.damage ?? 0, damageTaken: player.roundStats?.damageTaken ?? 0,
       shots: player.roundStats?.shots ?? 0, hits: player.roundStats?.hits ?? 0,

@@ -936,12 +936,13 @@ export class World {
   }
 
   /** Read-only local perception for offline learning, using the actual room geometry. */
-  learningFrame(playerId: string, previous?: LearningMemory, goal?: LearningGoal) {
+  learningFrame(playerId: string, previous?: LearningMemory, goal?: LearningGoal,
+    events: readonly WorldEvent[] = []) {
     const found = this.findPlayer(playerId);
     if (!found) throw new Error('学习角色不存在');
     return observeLearning(found.room, found.player,
       found.player.vip ? Math.max(1, found.room.map.vipHp) : this.playerMaxHp(found.player),
-      this.now(), previous, goal);
+      this.now(), previous, goal, events);
   }
 
   /** Set offline lesson initial conditions without changing battle advancement rules. */

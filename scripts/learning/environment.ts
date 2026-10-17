@@ -6,6 +6,7 @@ import {getBattlefield} from '../../apps/server/src/battlefield';
 import {createOriginalBotNavigation} from '../../apps/server/src/battle/cpu/original-navigation';
 import {findBotPath} from '../../apps/server/src/battle/cpu/navigation';
 import type {LearningGoal, LearningMemory} from '../../apps/server/src/learning/observation';
+import type {WorldEvent} from '../../apps/server/src/world';
 
 interface ResetRequest {
   type: 'reset';
@@ -46,6 +47,7 @@ let rangeShots = 0;
 let outsideRangeShots = 0;
 let rangeTicks = 0;
 let rangeStreak = 0;
+let rangeKills = 0;
 
 function rangeError(distance: number, range: number): number {
   return Math.max(0, .75 * range - distance, distance - .9 * range);
@@ -68,8 +70,8 @@ function seededRandom(initial: number): () => number {
   };
 }
 
-function frames(): Frame[] {
-  const result = playerIds.map((id, index) => world.learningFrame(id, memories[index], goal));
+function frames(events: readonly WorldEvent[] = []): Frame[] {
+  const result = playerIds.map((id, index) => world.learningFrame(id, memories[index], goal, events));
   if (lesson === 'navigation') {
     for (const frame of result) {
       frame.actionMasks[2] = [false, true, false];
@@ -124,6 +126,7 @@ function reset(request: ResetRequest) {
   outsideRangeShots = 0;
   rangeTicks = 0;
   rangeStreak = 0;
+  rangeKills = 0;
   const mapId = request.mapId ?? 7;
   const count = request.players ?? 2;
   const controlled = request.controlled ?? 1;
@@ -259,12 +262,14 @@ function reset(request: ResetRequest) {
 function step(request: StepRequest) {
   if (!world) throw new Error('Reset the environment first');
   if (request.actions.length !== playerIds.length) throw new Error('Action count does not match actors');
+  const events: WorldEvent[] = [];
+  let rangeKillDelta = 0;
   request.actions.forEach((action, index) => {
     if (action.length !== 5 || action.some((value, head) => !Number.isInteger(value)
         || value < 0 || value >= previous[index].actionSizes[head])) throw new Error('Invalid action');
-    world.updateInput(playerIds[index], {sequence: ++sequence, move: action[0] - 1,
+    events.push(...world.updateInput(playerIds[index], {sequence: ++sequence, move: action[0] - 1,
       turn: action[1] - 1, aim: action[2] - 1, fire: action[3] === 1,
-      useItem: action[4], clientTime: clock});
+      useItem: action[4], clientTime: clock}));
   });
   if (lesson === 'shooting' && level >= 2 || lesson === 'dodge' || lesson === 'range' && level === 3) {
     for (const id of practiceIds) {
@@ -273,13 +278,26 @@ function step(request: StepRequest) {
       const error = Math.atan2(Math.sin(Math.atan2(learner.x - actor.x, learner.z - actor.z) - actor.yaw - actor.aim),
         Math.cos(Math.atan2(learner.x - actor.x, learner.z - actor.z) - actor.yaw - actor.aim));
       const shootsBack = lesson === 'dodge' || level === 3;
-      world.updateInput(id, {sequence: ++sequence, move: lesson === 'shooting' ? (decisions % 30 < 15 ? 1 : -1) : 0,
+      events.push(...world.updateInput(id, {sequence: ++sequence, move: lesson === 'shooting' ? (decisions % 30 < 15 ? 1 : -1) : 0,
         turn: 0, aim: shootsBack ? Math.sign(error) : 0,
-        fire: shootsBack && Math.abs(error) < .1, useItem: 0, clientTime: clock});
+        fire: shootsBack && Math.abs(error) < .1, useItem: 0, clientTime: clock}));
     }
   }
-  for (let tick = 0; tick < 2; tick++) {clock += 50; world.step(50);}
-  const current = frames();
+  for (let tick = 0; tick < 2; tick++) {
+    clock += 50;
+    const advanced = world.step(50);
+    events.push(...advanced.events);
+    const kills = advanced.events.filter(event => event.type === 'destroy'
+      && event.playerId === playerIds[0] && practiceIds.includes(event.targetId));
+    if (lesson === 'range' && kills.length) {
+      const learner = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!;
+      const range = world.learningFrame(playerIds[0]).weapon.range;
+      rangeKillDelta += kills.filter(event => rangeError(
+        Math.hypot(event.x - learner.x, event.z - learner.z), range) === 0).length;
+    }
+  }
+  rangeKills += rangeKillDelta;
+  const current = frames(events);
   decisions++;
   const target = lesson === 'range' ? world.snapshot(roomId)!.players.find(player => player.id === practiceIds[0]) : undefined;
   const targetDistance = target ? Math.hypot(target.x - current[0].memory.x, target.z - current[0].memory.z) : undefined;
@@ -294,7 +312,7 @@ function step(request: StepRequest) {
   const goalDistance = goal ? Math.hypot(current[0].memory.x - goal.x, current[0].memory.z - goal.z) : undefined;
   const success = lesson === 'navigation' ? goalDistance !== undefined && goalDistance < 20
     : lesson === 'shooting' ? current[0].metrics.kills > 0
-    : lesson === 'range' ? level < 2 ? rangeStreak >= 10 : current[0].metrics.kills > 0
+    : lesson === 'range' ? level < 2 ? rangeStreak >= 10 : rangeKills > 0
     : lesson === 'dodge' ? decisions >= 150 && current[0].metrics.damageTaken === 0 : false;
   const done = current[0].phase === 'FINISHED'
     || lesson === 'navigation' && (success || decisions >= (level === 3 ? 300 : 150))
@@ -311,7 +329,7 @@ function step(request: StepRequest) {
     }
     let reward = .002 * (after.damage - before.damage)
       - .001 * (after.damageTaken - before.damageTaken)
-      + (after.kills - before.kills) - (after.deaths - before.deaths);
+      + (lesson === 'range' ? rangeKillDelta : after.kills - before.kills) - (after.deaths - before.deaths);
     if (mode === 2) reward += .004 * (after.bunkerDamage - before.bunkerDamage);
     if (mode === 3) reward += .004 * (after.vipDamage - before.vipDamage);
     if (mode === 5) reward += after.objectives - before.objectives;
@@ -353,7 +371,8 @@ function step(request: StepRequest) {
   previous = current;
   return {type: 'step', seed, frames: current, rewards, done, lesson, level, success, goalDistance,
     lessonMetrics: {initialDistance, goalDistance, travelled, blocked, decisions,
-      targetDistance, weaponRange: current[0].weapon.range, rangeTicks, rangeStreak, rangeShots, outsideRangeShots}};
+      targetDistance, weaponRange: current[0].weapon.range, rangeTicks, rangeStreak,
+      rangeShots, outsideRangeShots, rangeKills}};
 }
 
 const lines = createInterface({input: process.stdin, crlfDelay: Infinity});
