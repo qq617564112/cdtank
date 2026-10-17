@@ -160,7 +160,7 @@ export function createLearningEnvironment(environmentId: string) {
         frame.actionMasks[3][1] = false;
       }
     }
-    if (lesson === 'siege' && level < 3) {
+    if (lesson === 'siege') {
       for (const frame of result) {
         frame.actionMasks[4] = frame.actionMasks[4].map((_, index) => index === 0);
         if (level < 2) {
@@ -212,7 +212,9 @@ export function createLearningEnvironment(environmentId: string) {
       throw new Error('Learning requires two to six players and a valid controlled count');
     }
     if (lesson !== 'combat' && controlled !== 1) throw new Error('Primitive lessons control one actor');
-    if (lesson === 'siege' && mode !== 2) throw new Error('Siege lessons require mode 2');
+    if (lesson === 'siege' && (mode !== 2 || level > 2)) {
+      throw new Error('Siege lessons require mode 2 and levels zero through two');
+    }
     if (mode <= 3 && controlled !== count && controlled > Math.ceil(count / 2)) {
       throw new Error('Team learning controls one side or the entire roster');
     }
@@ -240,7 +242,7 @@ export function createLearningEnvironment(environmentId: string) {
         const id = world.joinRoom(roomId, `LEARNER-${index}`, `Learner ${index}`, request.tankId ?? 1).playerId;
         if (singleTeam) world.changeTeam(id, 1, learnerTeam);
         playerIds.push(id);
-      } else if (lesson !== 'combat' && !(lesson === 'siege' && level === 3)) {
+      } else if (lesson !== 'combat') {
         const idle = world.joinRoom(roomId, `IDLE-${seat}`, `Idle ${seat}`, request.tankId ?? 1);
         stationaryIds.push(idle.playerId);
         practiceIds.push(idle.playerId);
@@ -284,7 +286,7 @@ export function createLearningEnvironment(environmentId: string) {
     memories = playerIds.map(() => undefined);
     previous = frames();
     lessonMaximumHp = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!.maxHp;
-    if (lesson === 'siege' && level < 3) {
+    if (lesson === 'siege') {
       const learner = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!;
       const source = getSceneCastles(mapId).find(castle => castle.affiliation === 2 - learner.team);
       if (!source) throw new Error('Siege lesson requires an enemy Castle');
