@@ -270,7 +270,7 @@ def main(args):
                       "controlledRoster": results[0].get("actors"),
                       "maskInputWidth": sum(SIZES), "trainingCourses": course_options(args),
                       "imitationWeight": args.imitation_weight,
-                      "imitationEventWeights": {"fire": 5, "consumable": 30, "other": 1},
+                      "imitationEventWeights": {"movement": 3, "fire": 5, "consumable": 30, "other": 1},
                       "teacherBootstrapSteps": args.teacher_steps if not args.resume else 0}
             source = Path(__file__).resolve().parents[2] / "source.json"
             config["source"] = json.loads(source.read_text(encoding="utf-8")) if source.exists() else None

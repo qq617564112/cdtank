@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from train_combat import Environment, Policy, SIZES
+from train_combat import Environment, Policy
 
 
 def main(args):

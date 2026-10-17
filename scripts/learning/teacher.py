@@ -15,6 +15,7 @@ def demonstration_loss(distributions, chosen):
     import torch
 
     weights = torch.ones_like(chosen, dtype=torch.float32)
+    weights[:, 0] = torch.where(chosen[:, 0] != 1, 3., 1.)
     weights[:, 3] = torch.where(chosen[:, 3] == 1, 5., 1.)
     weights[:, 4] = torch.where(chosen[:, 4] >= 2, 30., 1.)
     return -sum((dist.log_prob(chosen[:, head]) * weights[:, head]).mean()
@@ -47,6 +48,13 @@ def primitive_action(frame, lesson):
                     action[0] = 2
                 elif observation[WEAPON_ENEMY] < .2 and observation[20] > .25:
                     action[0] = 0
+        elif lesson == "shooting":
+            probes = observation[282:290] if len(observation) >= 290 else observation[16:24]
+            direction = max(range(8), key=lambda index: probes[index] - .1 * min(index, 8 - index))
+            if probes[0] > .25:
+                action[0] = 2
+            else:
+                action[1] = 2 if direction <= 4 else 0
     elif lesson == "dodge":
         if observation[NEAREST_ENEMY]:
             bearing = math.atan2(observation[25], observation[26])
