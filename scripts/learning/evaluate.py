@@ -157,7 +157,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True)
     parser.add_argument("--episodes", type=int, default=32)
     parser.add_argument("--environments", type=int, default=8)
-    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat"], default="navigation")
+    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "combat"], default="navigation")
     parser.add_argument("--level", type=int, default=1)
     parser.add_argument("--mix-levels", action="store_true")
     parser.add_argument("--mode", type=int, default=4)
