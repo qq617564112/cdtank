@@ -22,7 +22,7 @@ def main(args):
     reference = Policy(model["observationWidth"], hidden_size=model["hiddenSize"]).eval()
     reference.load_state_dict({**reference.state_dict(),
         **{name: torch.tensor(value, dtype=torch.float32) for name, value in model["tensors"].items()}})
-    torch.set_num_threads(2)
+    torch.set_num_threads(1)
     environments = []
     episodes = []
     decisions, mismatches, maximum_error = 0, 0, 0.

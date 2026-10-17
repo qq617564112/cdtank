@@ -59,7 +59,7 @@ def main(args):
     if paths is not None:
         if len(paths) != len(courses):
             raise ValueError("Provide one frozen teacher per collection course")
-        torch.set_num_threads(2)
+        torch.set_num_threads(1)
         for index in range(args.environments):
             path = paths[index % len(courses)]
             if path not in teacher_groups:
