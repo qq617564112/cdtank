@@ -4,6 +4,7 @@ param(
   [int]$Steps=100000,
   [int]$Environments=4,
   [int]$MinibatchSequences=8,
+  [double]$LearningRate=0.00025,
   [ValidateSet(0,64,128,256)][int]$HiddenSize=0,
   [ValidateRange(10,90)][int]$GpuUtilizationLimit=80,
   [string]$EnvironmentUrl='http://192.168.10.140:40106',
@@ -35,7 +36,7 @@ $ErrorActionPreference='Stop'
 $root='D:/ai/cdtank'
 if (Test-Path "$root/runs/$RunName") { throw 'Use a new run directory' }
 $trainerRoot=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$arguments="$PSScriptRoot/train_combat.py --environment-url $EnvironmentUrl --output $root/runs/$RunName --steps $Steps --environments $Environments --minibatch-sequences $MinibatchSequences --gpu-utilization-limit $GpuUtilizationLimit --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId --mode $Mode --players $Players --controlled $Controlled"
+$arguments="$PSScriptRoot/train_combat.py --environment-url $EnvironmentUrl --output $root/runs/$RunName --steps $Steps --environments $Environments --minibatch-sequences $MinibatchSequences --learning-rate $LearningRate --gpu-utilization-limit $GpuUtilizationLimit --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId --mode $Mode --players $Players --controlled $Controlled"
 if ($CentralizedCritic) { $arguments+=' --centralized-critic' }
 if ($HiddenSize) { $arguments+=" --hidden-size $HiddenSize" }
 if ($MixLevels) { $arguments+=' --mix-levels' }
@@ -59,7 +60,7 @@ if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.Ret
 @{processId=$created.ProcessId;run=$RunName;lesson=$Lesson;level=$Level;steps=$Steps;
   environments=$Environments;environmentUrl=$EnvironmentUrl;mapId=$MapId;ammoId=$AmmoId;mixLevels=[bool]$MixLevels;
   mode=$Mode;players=$Players;controlled=$Controlled;centralizedCritic=[bool]$CentralizedCritic;
-  minibatchSequences=$MinibatchSequences;gpuUtilizationLimit=$GpuUtilizationLimit;
+  minibatchSequences=$MinibatchSequences;learningRate=$LearningRate;gpuUtilizationLimit=$GpuUtilizationLimit;
   hiddenSize=$HiddenSize;
   teacherSteps=$TeacherSteps;imitationWeight=$(if($PSBoundParameters.ContainsKey('ImitationWeight')){$ImitationWeight}else{$null});
   teacherSource=$TeacherSource;
