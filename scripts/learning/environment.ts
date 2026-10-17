@@ -7,6 +7,7 @@ import {createOriginalBotNavigation} from '../../apps/server/src/battle/cpu/orig
 import {findBotPath} from '../../apps/server/src/battle/cpu/navigation';
 import {rangeLessonLanes} from './range-lanes';
 import {LearnedCpuPolicy} from '../../apps/server/src/learning/cpu-policy';
+import {LearningCombatExpert} from '../../apps/server/src/learning/expert';
 import type {SerializedActorPolicy} from '../../apps/server/src/learning/policy';
 import type {LearningGoal, LearningMemory} from '../../apps/server/src/learning/observation';
 import type {WorldEvent} from '../../apps/server/src/world';
@@ -26,6 +27,7 @@ interface ResetRequest {
   lesson?: 'turning' | 'navigation' | 'aiming' | 'shooting' | 'dodge' | 'range' | 'items' | 'combat';
   level?: number;
   nativePolicy?: SerializedActorPolicy;
+  expert?: boolean;
 }
 
 interface StepRequest {type: 'step'; actions: number[][];}
@@ -64,6 +66,17 @@ let practiceBearing = new Map<string, number>();
 let teamMetrics: ReturnType<World['learningCentralState']>['teamMetrics'];
 let actorItemMetrics: {consumedItems: number; rejectedItems: number; healedHp: number}[] = [];
 let nativePolicy: LearnedCpuPolicy | undefined;
+let expert: LearningCombatExpert | undefined;
+
+function expertActions(current: Frame[]) {
+  if (!expert) return undefined;
+  return playerIds.map((id, index) => {
+    const input = world.learningExpertInput(id, expert!);
+    return [input.move + 1, input.turn + 1, input.aim + 1, Number(input.fire), input.useItem ?? 0]
+      .map((value, head) => current[index].actionMasks[head][value] ? value
+        : head < 3 ? 1 : 0);
+  });
+}
 
 function rangeError(distance: number, range: number): number {
   return Math.max(0, .75 * range - distance, distance - .9 * range);
@@ -178,6 +191,10 @@ function reset(request: ResetRequest) {
     throw new Error('Team learning controls one side or the entire roster');
   }
   if (request.nativePolicy && lesson !== 'combat') throw new Error('Native CPU evaluation requires ordinary combat');
+  if (request.expert && (lesson !== 'combat' || request.nativePolicy)) {
+    throw new Error('CPU demonstrations require ordinary externally controlled combat');
+  }
+  expert = request.expert ? new LearningCombatExpert() : undefined;
   nativePolicy = request.nativePolicy ? new LearnedCpuPolicy(request.nativePolicy) : undefined;
   world = new World(() => clock, {allocateRoomId: () => 'LEARNING',
     learnedCpuPolicy: nativePolicy ? (_mode, id) => playerIds.includes(id) ? nativePolicy : undefined : undefined});
@@ -347,6 +364,8 @@ function reset(request: ResetRequest) {
   actorItemMetrics = playerIds.map(() => ({consumedItems: 0, rejectedItems: 0, healedHp: 0}));
   if (nativePolicy) for (const id of playerIds) world.configureAutopilot(id, 1, true);
   return {type: 'reset', seed, mode, mapId, lesson, level, frames: previous, learnerTeam,
+    expertActions: expertActions(previous),
+    expertSource: expert ? 'scripted HIGH CPU with navigation and team context' : undefined,
     criticStates: central.criticStates,
     actors: world.snapshot(roomId)!.players.map(player => ({id: player.id, team: player.team,
       learned: playerIds.includes(player.id), cpu: !!player.isCpu})),
@@ -536,6 +555,7 @@ function step(request: StepRequest) {
   teamMetrics = central.teamMetrics;
   previous = current;
   return {type: 'step', seed, frames: current, criticStates: central.criticStates,
+    expertActions: expertActions(current),
     nativeExecution: !!nativePolicy,
     nativeDecisions: nativePolicy ? playerIds.map(id => world.learningCpuDecision(id)) : undefined,
     rewards, done, lesson, level, success, goalDistance,

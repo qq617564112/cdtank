@@ -96,14 +96,24 @@ def primitive_action(frame, lesson):
     return action
 
 
+def demonstration_actions(results, source):
+    if source == "cpu":
+        if any("expertActions" not in result or result["expertActions"] is None for result in results):
+            raise RuntimeError("CPU demonstrations require the expert simulation service")
+        return [action for result in results for action in result["expertActions"]]
+    return [primitive_action(frame, result["lesson"]) for result in results for frame in result["frames"]]
+
+
 def teach(policy, optimizer, environments, pool, results, args, device, output, tensors, checkpoint):
     """Imitate contiguous real-world expert rollouts before reward optimization."""
     import json
     import torch
     from torch import nn
 
-    hidden = torch.zeros(len(environments), policy.hidden_size, device=device)
-    reset = torch.ones(len(environments), device=device)
+    actors_per_world = len(results[0]["frames"])
+    agents = len(environments) * actors_per_world
+    hidden = torch.zeros(agents, policy.hidden_size, device=device)
+    reset = torch.ones(agents, device=device)
     steps = 0
     last_saved = 0
     episodes = []
@@ -115,7 +125,7 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                 observations, masks = tensors(results, device)
                 with torch.no_grad():
                     distributions, _, hidden = policy(observations, hidden, reset, masks)
-                actions = [primitive_action(result["frames"][0], result["lesson"]) for result in results]
+                actions = demonstration_actions(results, args.teacher_source)
                 chosen = torch.tensor(actions, device=device)
                 student_probability = args.teacher_student_fraction * min(1, steps / max(1, args.teacher_steps))
                 predicted_tensor = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1)
@@ -125,18 +135,23 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                 predicted = predicted_tensor.tolist()
                 executed = [student if random.random() < student_probability else demonstrated
                             for student, demonstrated in zip(predicted, actions)]
-                next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, executed)))
+                world_actions = [executed[index * actors_per_world:(index + 1) * actors_per_world]
+                                 for index in range(len(environments))]
+                next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, world_actions)))
                 resets = []
                 for index, result in enumerate(next_results):
-                    died = result["frames"][0]["metrics"]["deaths"] != results[index]["frames"][0]["metrics"]["deaths"]
-                    resets.append(float(result["done"] or died))
+                    for actor, frame in enumerate(result["frames"]):
+                        died = frame["metrics"]["deaths"] != results[index]["frames"][actor]["metrics"]["deaths"]
+                        resets.append(float(result["done"] or died))
                     if result["done"]:
                         episodes.append({"seed": result["seed"], "lesson": result["lesson"], "level": result["level"],
-                                         "success": result["success"], "lessonMetrics": result["lessonMetrics"]})
+                                         "success": result["success"], "lessonMetrics": result["lessonMetrics"],
+                                         "actorMetrics": [frame["metrics"] for frame in result["frames"]],
+                                         "outcomes": result.get("outcomes")})
                         next_results[index] = environments[index].reset()
                 results = next_results
                 reset = torch.tensor(resets, device=device)
-                steps += len(environments)
+                steps += agents
             data = {key: torch.stack(value) for key, value in storage.items()}
             distributions, _, sequence_hidden = policy.sequence(data["observation"], initial_hidden,
                                                                 data["reset"], data["masks"])
@@ -155,7 +170,9 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                    "sequenceActionHeadMismatches": sequence_mismatches, "sequenceHiddenMaximumError": hidden_error,
                    "gpuMemoryAllocatedMiB": torch.cuda.memory_allocated() / 1048576,
                    "gpuMemoryReservedMiB": torch.cuda.memory_reserved() / 1048576,
-                   "studentActionProbability": student_probability, "labelSource": "scripted primitive control"}
+                   "studentActionProbability": student_probability,
+                   "labelSource": "scripted HIGH CPU with navigation and team context" if args.teacher_source == "cpu"
+                       else "scripted primitive control"}
             log.write(json.dumps(row) + "\n")
             log.flush()
             episodes = []

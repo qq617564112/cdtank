@@ -16,7 +16,7 @@ from torch import nn
 from torch.distributions import Categorical
 from torch.nn.utils.rnn import PackedSequence, pack_sequence, pad_packed_sequence
 from gpu_budget import GpuBudget
-from teacher import primitive_action, teach, demonstration_loss
+from teacher import teach, demonstration_actions, demonstration_loss
 
 
 SIZES = [3, 3, 3, 2, 9]
@@ -75,6 +75,8 @@ class Environment:
                              "lesson": course["lesson"], "level": level}
         if course["lesson"] == "combat" and course["mode"] <= 3 and course["controlled"] < course["players"]:
             request["learnerTeam"] = random.Random(seed + 104729).randrange(2)
+        if getattr(self.args, "teacher_source", "primitive") == "cpu" and (self.args.teacher_steps or self.args.imitation_weight):
+            request["expert"] = True
         if self.native_policy:
             request["nativePolicy"] = self.native_policy
         result = self.command(request)
@@ -266,6 +268,7 @@ def save_checkpoint(path, policy, optimizer, config, steps, update):
 
 
 def main(args):
+    args.teacher_source = getattr(args, "teacher_source", "primitive")
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     cache = output.parent.parent / 'cache'
@@ -343,12 +346,14 @@ def main(args):
                         prior_config.get("imitation_weight", 0) if prior_config.get("teacher_steps", 0) else 0)
                 else:
                     args.imitation_weight = .1 if args.teacher_steps else 0
-            if args.imitation_weight and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
+            if args.teacher_source == "cpu" and any(course["lesson"] != "combat" for course in course_options(args)):
+                raise ValueError("CPU demonstrations require ordinary combat courses")
+            if args.imitation_weight and args.teacher_source == "primitive" and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
                     or course["lesson"] == "navigation" and course["level"] > 2
                     or course["lesson"] == "range" and course["level"] > 1
                     or course["lesson"] == "items" and course["level"] > 2 for course in course_options(args)):
                 raise ValueError("Auxiliary imitation requires a supported primitive lesson")
-            if actors_per_world > 1 and (args.teacher_steps or args.imitation_weight):
+            if actors_per_world > 1 and args.teacher_source == "primitive" and (args.teacher_steps or args.imitation_weight):
                 raise ValueError("Primitive imitation supports one controlled actor per world")
             config = {**vars(args), "torch": torch.__version__, "device": torch.cuda.get_device_name(0),
                       "observationWidth": observations.shape[-1], "actionSizes": SIZES,
@@ -368,6 +373,10 @@ def main(args):
                       "controlledRoster": results[0].get("actors"),
                       "maskInputWidth": sum(SIZES), "trainingCourses": course_options(args),
                       "imitationWeight": args.imitation_weight,
+                      "demonstrationSource": "scripted HIGH CPU with navigation and team context" if args.teacher_source == "cpu"
+                          else "scripted primitive control",
+                      "actorUsesPrivilegedState": False,
+                      "demonstrationUsesPrivilegedState": args.teacher_source == "cpu",
                       "imitationEventWeights": {"movement": 3, "fire": 5, "consumable": 30, "other": 1},
                       "teacherBootstrapSteps": args.teacher_steps if not args.resume else 0}
             source = Path(__file__).resolve().parents[2] / "source.json"
@@ -424,7 +433,7 @@ def main(args):
                             storage["central"].append(central)
                         if args.imitation_weight:
                             storage["teacher"].append(torch.tensor(
-                                [primitive_action(result["frames"][0], result["lesson"]) for result in results], device=device))
+                                demonstration_actions(results, args.teacher_source), device=device))
                         action_list = actions.reshape(args.environments, actors_per_world, len(SIZES)).cpu().tolist()
                         next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, action_list)))
                         done = torch.tensor([result["done"] for result in next_results for _ in result["frames"]],
@@ -582,6 +591,7 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation-episodes", type=int, default=32)
     parser.add_argument("--evaluation-environments", type=int, default=8)
     parser.add_argument("--teacher-steps", type=int, default=0)
+    parser.add_argument("--teacher-source", choices=("primitive", "cpu"), default="primitive")
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)
     parser.add_argument("--curriculum", help="JSON list of courses assigned evenly across environments")
@@ -605,7 +615,7 @@ if __name__ == "__main__":
             parser.error("Each course needs one to six controlled actors within the room size")
         if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat") or course["level"] not in range(4):
             parser.error("Each course needs a supported lesson and level")
-        if args.teacher_steps and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
+        if args.teacher_steps and args.teacher_source == "primitive" and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
                 or course["lesson"] == "navigation" and course["level"] > 2
                 or course["lesson"] == "range" and course["level"] > 1
                 or course["lesson"] == "items" and course["level"] > 2):

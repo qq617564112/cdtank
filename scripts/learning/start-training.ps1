@@ -16,6 +16,7 @@ param(
   [ValidateRange(0,3)][int]$Level=1,
   [switch]$MixLevels,
   [int]$TeacherSteps=0,
+  [ValidateSet('primitive','cpu')][string]$TeacherSource='primitive',
   [double]$ImitationWeight,
   [string]$Curriculum='',
   [string]$OpponentPool='',
@@ -33,6 +34,7 @@ if ($CentralizedCritic) { $arguments+=' --centralized-critic' }
 if ($HiddenSize) { $arguments+=" --hidden-size $HiddenSize" }
 if ($MixLevels) { $arguments+=' --mix-levels' }
 if ($TeacherSteps) { $arguments+=" --teacher-steps $TeacherSteps" }
+$arguments+=" --teacher-source $TeacherSource"
 if ($Curriculum) { $arguments+=" --curriculum $Curriculum" }
 if ($OpponentPool) { $arguments+=" --opponent-pool $OpponentPool" }
 if ($PSBoundParameters.ContainsKey('ImitationWeight')) { $arguments+=" --imitation-weight $ImitationWeight" }
@@ -52,6 +54,7 @@ if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.Ret
   minibatchSequences=$MinibatchSequences;gpuUtilizationLimit=$GpuUtilizationLimit;
   hiddenSize=$HiddenSize;
   teacherSteps=$TeacherSteps;imitationWeight=$(if($PSBoundParameters.ContainsKey('ImitationWeight')){$ImitationWeight}else{$null});
+  teacherSource=$TeacherSource;
   curriculum=$Curriculum;opponentPool=$OpponentPool;
   prior=$Prior;weights=$Weights;resume=$Resume} |
   ConvertTo-Json | Set-Content -Encoding ascii "$root/runs/$RunName.launch.json"

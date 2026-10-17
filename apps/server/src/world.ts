@@ -2,6 +2,7 @@ import {itemHitHandler, gameContent} from '../../shared/content/catalog';
 import {collectCpuTrace} from './battle/cpu/trace';
 import {observeLearning, type LearningGoal, type LearningMemory} from './learning/observation';
 import {centralLearningState} from './learning/central-state';
+import type {LearningCombatExpert} from './learning/expert';
 import type {LearnedCpuPolicy} from './learning/cpu-policy';
 import {defaultAmmoId} from '../../shared/content/catalog';
 import {confirmAcceptedAmmoSelection} from './battle/items/ammo-confirmation';
@@ -961,6 +962,14 @@ export class World {
   learningCpuDecision(playerId: string) {
     const found = this.findPlayer(playerId);
     return found && this.options.learnedCpuPolicy?.(found.room.mode, playerId)?.decision(found.player);
+  }
+
+  /** Offline teacher labels; actor observations remain local and separate. */
+  learningExpertInput(playerId: string, expert: LearningCombatExpert) {
+    const found = this.findPlayer(playerId);
+    if (!found) throw new Error('学习角色不存在');
+    return expert.input(found.room, found.player,
+      found.player.vip ? Math.max(1, found.room.map.vipHp) : this.playerMaxHp(found.player), this.now());
   }
 
   /** Set offline lesson initial conditions without changing battle advancement rules. */
