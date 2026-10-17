@@ -94,14 +94,15 @@ class Environment:
 
 
 class Policy(nn.Module):
-    def __init__(self, width, gpu_budget=None, central_width=0):
+    def __init__(self, width, gpu_budget=None, central_width=0, hidden_size=64):
         super().__init__()
         self.gpu_budget = gpu_budget
-        self.encoder = nn.Linear(width, 64)
-        self.memory = nn.GRUCell(64, 64)
-        self.actor = nn.Linear(64, sum(SIZES))
-        self.critic = nn.Linear(64, 1)
-        self.mask_encoder = nn.Linear(sum(SIZES), 64, bias=False)
+        self.hidden_size = hidden_size
+        self.encoder = nn.Linear(width, hidden_size)
+        self.memory = nn.GRUCell(hidden_size, hidden_size)
+        self.actor = nn.Linear(hidden_size, sum(SIZES))
+        self.critic = nn.Linear(hidden_size, 1)
+        self.mask_encoder = nn.Linear(sum(SIZES), hidden_size, bias=False)
         nn.init.zeros_(self.mask_encoder.weight)
         self.central_critic = nn.Sequential(nn.Linear(central_width, 128), nn.Tanh(),
             nn.Linear(128, 64), nn.Tanh(), nn.Linear(64, 1)) if central_width else None
@@ -117,6 +118,11 @@ class Policy(nn.Module):
         return distributions, value.squeeze(-1), hidden
 
     def warm_start(self, filename):
+        if self.hidden_size != 64:
+            prior_policy = Policy(self.encoder.in_features)
+            prior_policy.warm_start(filename)
+            self.initialize(prior_policy.state_dict())
+            return
         prior = torch.load(filename, map_location="cpu")["policy"]
         with torch.no_grad():
             self.encoder.weight[:, :16].copy_(prior["encoder.0.weight"])
@@ -128,14 +134,38 @@ class Policy(nn.Module):
             self.actor.bias[:9].copy_(prior["actor.bias"])
 
     def initialize(self, state):
-        """Retain trained features while adding zero-initialized curriculum inputs."""
+        """Preserve prior actor outputs while expanding inputs or recurrent capacity."""
         state = dict(state)
         weight = state["encoder.weight"]
-        if weight.shape[1] < self.encoder.in_features:
-            expanded = torch.zeros_like(self.encoder.weight)
-            expanded[:, :weight.shape[1]] = weight
+        old_hidden, old_width = weight.shape
+        if old_hidden > self.hidden_size or old_width > self.encoder.in_features:
+            raise ValueError("Policy initialization cannot shrink trained dimensions")
+        if old_hidden != self.hidden_size or old_width != self.encoder.in_features:
+            expanded = self.encoder.weight.detach().clone()
+            expanded[:old_hidden].zero_()
+            expanded[:old_hidden, :old_width] = weight
             state["encoder.weight"] = expanded
         state.setdefault("mask_encoder.weight", torch.zeros_like(self.mask_encoder.weight))
+        if old_hidden < self.hidden_size:
+            for name in ("encoder.bias", "mask_encoder.weight"):
+                expanded = self.state_dict()[name].clone()
+                expanded[:old_hidden] = state[name][:old_hidden]
+                state[name] = expanded
+            for suffix in ("weight_ih", "weight_hh", "bias_ih", "bias_hh"):
+                name = f"memory.{suffix}"
+                expanded = self.state_dict()[name].clone()
+                for gate in range(3):
+                    start, before = gate * self.hidden_size, gate * old_hidden
+                    if suffix.startswith("weight"):
+                        expanded[start:start + old_hidden].zero_()
+                        expanded[start:start + old_hidden, :old_hidden] = state[name][before:before + old_hidden]
+                    else:
+                        expanded[start:start + old_hidden] = state[name][before:before + old_hidden]
+                state[name] = expanded
+            for name in ("actor.weight", "critic.weight"):
+                expanded = torch.zeros_like(self.state_dict()[name])
+                expanded[:, :old_hidden] = state[name]
+                state[name] = expanded
         for name, value in self.state_dict().items():
             if name.startswith("central_critic."):
                 state.setdefault(name, value)
@@ -160,13 +190,15 @@ class OpponentPool:
         self.sources = []
         for path in paths or []:
             checkpoint = torch.load(path, map_location=device)
-            policy = Policy(width, budget, checkpoint.get("config", {}).get("centralStateWidth", 0)).to(device).eval()
+            policy = Policy(width, budget, checkpoint.get("config", {}).get("centralStateWidth", 0),
+                            checkpoint.get("config", {}).get("hiddenSize", 64)).to(device).eval()
             policy.initialize(checkpoint["policy"])
             policy.requires_grad_(False)
             self.policies.append(policy)
             self.sources.append({"path": path, "steps": checkpoint["steps"],
                                  "source": checkpoint.get("config", {}).get("source"),
                                  "simulationSource": checkpoint.get("config", {}).get("simulationSource")})
+        self.hidden_size = max((policy.hidden_size for policy in self.policies), default=64)
 
     def act(self, results, observation, masks, reset, hidden, actions):
         if not self.policies:
@@ -182,9 +214,9 @@ class OpponentPool:
             if not indices:
                 continue
             selected = torch.tensor(indices, device=observation.device)
-            distributions, _, state = policy(observation[selected], hidden[selected], reset[selected], masks[selected])
+            distributions, _, state = policy(observation[selected], hidden[selected, :policy.hidden_size], reset[selected], masks[selected])
             actions[selected] = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1)
-            hidden[selected] = state
+            hidden[selected, :policy.hidden_size] = state
         return hidden
 
 
@@ -226,7 +258,11 @@ def main(args):
             centralized = getattr(args, "centralized_critic", False)
             central = critic_tensors(results, device) if centralized else None
             central_width = central.shape[-1] if centralized else 0
-            policy = Policy(observations.shape[-1], budget, central_width).to(device)
+            initial_path = args.resume or args.weights
+            initial = torch.load(initial_path, map_location=device) if initial_path else None
+            hidden_size = getattr(args, "hidden_size", None) or (initial["config"].get("hiddenSize", 64) if initial else 64)
+            args.hidden_size = hidden_size
+            policy = Policy(observations.shape[-1], budget, central_width, hidden_size).to(device)
             opponent_paths = getattr(args, "opponent_paths", None)
             opponents = OpponentPool(opponent_paths, observations.shape[-1], budget, device)
             trainable = [index for index, frame in enumerate(frame for result in results for frame in result["frames"])
@@ -238,12 +274,30 @@ def main(args):
                 raise ValueError("Historical opponents require all team-mode combat actors to be controlled")
             if args.prior:
                 policy.warm_start(args.prior)
+            initialization = None
             if args.weights:
-                policy.initialize(torch.load(args.weights, map_location=device)["policy"])
+                policy.initialize(initial["policy"])
+                old_width = initial["policy"]["encoder.weight"].shape[1]
+                old_hidden = initial["config"].get("hiddenSize", 64)
+                if old_hidden != hidden_size:
+                    reference = Policy(old_width, budget, initial["config"].get("centralStateWidth", 0), old_hidden).to(device).eval()
+                    reference.initialize(initial["policy"])
+                    with torch.no_grad():
+                        prior_ds, _, _ = reference(observations[:, :old_width], torch.zeros(agents, old_hidden, device=device),
+                                                   torch.ones(agents, device=device), masks)
+                        expanded_ds, _, _ = policy(observations, torch.zeros(agents, hidden_size, device=device),
+                                                   torch.ones(agents, device=device), masks)
+                        mismatches = sum((old.logits.argmax(-1) != new.logits.argmax(-1)).sum().item()
+                                         for old, new in zip(prior_ds, expanded_ds))
+                        error = max((old.logits - new.logits).abs().max().item() for old, new in zip(prior_ds, expanded_ds))
+                    initialization = {"previousHiddenSize": old_hidden, "hiddenSize": hidden_size,
+                                      "actualResetActors": agents, "actionHeadMismatches": mismatches,
+                                      "maximumLogitError": error}
+                    del reference, prior_ds, expanded_ds
             optimizer = torch.optim.Adam([
                 {"params": [value for name, value in policy.named_parameters() if name != "mask_encoder.weight"]},
                 {"params": policy.mask_encoder.parameters()}], lr=args.learning_rate, eps=1e-5)
-            checkpoint = torch.load(args.resume, map_location=device) if args.resume else None
+            checkpoint = initial if args.resume else None
             if args.imitation_weight is None:
                 if checkpoint:
                     prior_config = checkpoint["config"]
@@ -261,12 +315,14 @@ def main(args):
             config = {**vars(args), "torch": torch.__version__, "device": torch.cuda.get_device_name(0),
                       "observationWidth": observations.shape[-1], "actionSizes": SIZES,
                       "simulationHz": 20, "decisionHz": 10, "observationSchema": results[0]["frames"][0]["schema"],
-                      "algorithm": "recurrent MAPPO" if centralized else "recurrent PPO", "hiddenSize": 64,
+                      "algorithm": "recurrent MAPPO" if centralized else "recurrent PPO", "hiddenSize": hidden_size,
                       "actorsPerWorld": actors_per_world, "actorBatchSize": agents,
                       "trainedActorsPerWorld": trained_per_world, "trainedActorBatchSize": trained_agents,
                       "opponentPaths": opponent_paths,
                       "opponentCheckpoints": opponents.sources,
                       "centralStateWidth": central_width,
+                      "parameters": sum(parameter.numel() for parameter in policy.parameters()),
+                      "initialization": initialization,
                       "controlledRoster": results[0].get("actors"),
                       "maskInputWidth": sum(SIZES), "trainingCourses": course_options(args),
                       "imitationWeight": args.imitation_weight,
@@ -278,7 +334,7 @@ def main(args):
             steps = 0
             update = 0
             if checkpoint:
-                if checkpoint["config"].get("centralStateWidth", 0) != central_width:
+                if checkpoint["config"].get("centralStateWidth", 0) != central_width or checkpoint["config"].get("hiddenSize", 64) != hidden_size:
                     raise ValueError("Resume needs the same critic architecture; use --weights for a new stage")
                 policy.initialize(checkpoint["policy"])
                 optimizer_state = checkpoint["optimizer"]
@@ -293,8 +349,8 @@ def main(args):
                                 args, device, output, tensors)
                 save_checkpoint(output / "teacher.pt", policy, optimizer, config, 0, 0)
                 observations, masks = tensors(results, device)
-            hidden = torch.zeros(agents, 64, device=device)
-            opponent_hidden = torch.zeros_like(hidden)
+            hidden = torch.zeros(agents, hidden_size, device=device)
+            opponent_hidden = torch.zeros(agents, opponents.hidden_size, device=device)
             reset = torch.ones(agents, device=device)
             episode_returns = [[0.0] * actors_per_world for _ in environments]
             completed = 0
@@ -417,6 +473,9 @@ def main(args):
                     hidden = hidden.detach()
                     update += 1
                     row = {"update": update, "steps": steps, "seconds": time.monotonic() - started,
+                           "gpuMemoryAllocatedMiB": torch.cuda.memory_allocated() / 1048576,
+                           "gpuMemoryReservedMiB": torch.cuda.memory_reserved() / 1048576,
+                           "gpuPeakMemoryAllocatedMiB": torch.cuda.max_memory_allocated() / 1048576,
                            "worldSteps": steps // trained_per_world, "actorsPerWorld": actors_per_world,
                            "actorBatchSize": agents,
                            "trainedActorBatchSize": trained_agents,
@@ -467,6 +526,7 @@ if __name__ == "__main__":
     parser.add_argument("--rollout", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=4)
     parser.add_argument("--minibatch-sequences", type=int, default=8)
+    parser.add_argument("--hidden-size", type=int, choices=(64, 128, 256))
     parser.add_argument("--gpu-utilization-limit", type=int, default=80)
     parser.add_argument("--learning-rate", type=float, default=.00025)
     parser.add_argument("--mode", type=int, default=4)

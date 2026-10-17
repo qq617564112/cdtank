@@ -17,15 +17,16 @@ export class RecurrentActor {
   private readonly weights: Record<string, Float32Array> = {};
 
   constructor(readonly model: SerializedActorPolicy) {
-    if (model.format !== 'cdtank-recurrent-actor-v1' || model.hiddenSize !== 64
+    if (model.format !== 'cdtank-recurrent-actor-v1' || ![64, 128, 256].includes(model.hiddenSize)
         || model.decisionMs !== 100 || model.observationSchema !== 6 || model.observationWidth !== 305
         || model.actionSizes.join() !== LEARNING_ACTION_SIZES.join()) {
       throw new Error('Unsupported learned actor format');
     }
     this.width = model.observationWidth;
-    const dimensions: Record<string, number> = {'encoder.weight': 64 * this.width, 'encoder.bias': 64,
-      'mask_encoder.weight': 64 * 20, 'memory.weight_ih': 192 * 64, 'memory.weight_hh': 192 * 64,
-      'memory.bias_ih': 192, 'memory.bias_hh': 192, 'actor.weight': 20 * 64, 'actor.bias': 20};
+    const size = model.hiddenSize;
+    const dimensions: Record<string, number> = {'encoder.weight': size * this.width, 'encoder.bias': size,
+      'mask_encoder.weight': size * 20, 'memory.weight_ih': 3 * size * size, 'memory.weight_hh': 3 * size * size,
+      'memory.bias_ih': 3 * size, 'memory.bias_hh': 3 * size, 'actor.weight': 20 * size, 'actor.bias': 20};
     for (const [name, size] of Object.entries(dimensions)) {
       const values = model.tensors[name]?.flat();
       if (!values || values.length !== size || values.some(value => !Number.isFinite(value))) {
@@ -48,29 +49,30 @@ export class RecurrentActor {
   }
 
   decide(observation: readonly number[], masks: readonly (readonly boolean[])[], hidden: Float32Array) {
-    if (observation.length !== this.width || hidden.length !== 64) throw new Error('Learned input dimensions differ');
-    const features = this.linear(observation, 'encoder', 64);
+    const size = this.model.hiddenSize;
+    if (observation.length !== this.width || hidden.length !== size) throw new Error('Learned input dimensions differ');
+    const features = this.linear(observation, 'encoder', size);
     const mask = masks.flat().map(Number);
-    const qualification = this.linear(mask, 'mask_encoder', 64, false);
-    for (let index = 0; index < 64; index++) features[index] = Math.tanh(features[index] + qualification[index]);
+    const qualification = this.linear(mask, 'mask_encoder', size, false);
+    for (let index = 0; index < size; index++) features[index] = Math.tanh(features[index] + qualification[index]);
     const gates = (name: string, input: Float32Array) => {
-      const output = new Float32Array(192);
+      const output = new Float32Array(3 * size);
       const weights = this.weights[`memory.weight_${name}`];
       const biases = this.weights[`memory.bias_${name}`];
-      for (let row = 0; row < 192; row++) {
+      for (let row = 0; row < 3 * size; row++) {
         let value = biases[row];
-        for (let column = 0; column < 64; column++) value += weights[row * 64 + column] * input[column];
+        for (let column = 0; column < size; column++) value += weights[row * size + column] * input[column];
         output[row] = value;
       }
       return output;
     };
     const inputGates = gates('ih', features), hiddenGates = gates('hh', hidden);
-    const next = new Float32Array(64);
+    const next = new Float32Array(size);
     const sigmoid = (value: number) => 1 / (1 + Math.exp(-value));
-    for (let index = 0; index < 64; index++) {
+    for (let index = 0; index < size; index++) {
       const reset = sigmoid(inputGates[index] + hiddenGates[index]);
-      const update = sigmoid(inputGates[64 + index] + hiddenGates[64 + index]);
-      const candidate = Math.tanh(inputGates[128 + index] + reset * hiddenGates[128 + index]);
+      const update = sigmoid(inputGates[size + index] + hiddenGates[size + index]);
+      const candidate = Math.tanh(inputGates[2 * size + index] + reset * hiddenGates[2 * size + index]);
       next[index] = (1 - update) * candidate + update * hidden[index];
     }
     const logits = this.linear(next, 'actor', 20);

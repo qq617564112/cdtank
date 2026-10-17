@@ -45,12 +45,13 @@ def main(args):
                       "torch": torch.__version__, "device": torch.cuda.get_device_name(0)}
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
             policy = Policy(config["observationWidth"], budget,
-                            checkpoint.get("config", {}).get("centralStateWidth", 0)).cuda().eval()
+                            checkpoint.get("config", {}).get("centralStateWidth", 0),
+                            checkpoint.get("config", {}).get("hiddenSize", 64)).cuda().eval()
             policy.initialize(checkpoint["policy"])
             opponents = OpponentPool(getattr(args, "opponent_paths", None), config["observationWidth"], budget, "cuda")
             config["opponentCheckpoints"] = opponents.sources
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
-            running = [episode_slot(env, number, result) for number, (env, result)
+            running = [episode_slot(env, number, result, policy.hidden_size, opponents.hidden_size) for number, (env, result)
                        in enumerate(zip(environments, initial))]
             next_episode = count
             with (output / "episodes.jsonl").open("x", encoding="utf-8") as log:
@@ -94,7 +95,8 @@ def main(args):
                             log.flush()
                             if next_episode < args.episodes:
                                 reset_result = slot["environment"].reset(args.seed + next_episode)
-                                remaining.append(episode_slot(slot["environment"], next_episode, reset_result))
+                                remaining.append(episode_slot(slot["environment"], next_episode, reset_result,
+                                                              policy.hidden_size, opponents.hidden_size))
                                 next_episode += 1
                             else:
                                 slot["environment"].close()
@@ -136,11 +138,11 @@ def main(args):
         budget.close()
 
 
-def episode_slot(environment, episode, result):
+def episode_slot(environment, episode, result, hidden_size, opponent_hidden_size):
     actors = len(result["frames"])
     return {"environment": environment, "episode": episode, "result": result,
-            "hidden": torch.zeros(actors, 64, device="cuda"), "reset": [1.] * actors, "tick": 0,
-            "opponentHidden": torch.zeros(actors, 64, device="cuda"),
+            "hidden": torch.zeros(actors, hidden_size, device="cuda"), "reset": [1.] * actors, "tick": 0,
+            "opponentHidden": torch.zeros(actors, opponent_hidden_size, device="cuda"),
             "returns": [0.] * actors, "trajectory": []}
 
 

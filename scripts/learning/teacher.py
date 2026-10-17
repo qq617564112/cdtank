@@ -102,7 +102,7 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
     import torch
     from torch import nn
 
-    hidden = torch.zeros(len(environments), 64, device=device)
+    hidden = torch.zeros(len(environments), policy.hidden_size, device=device)
     reset = torch.ones(len(environments), device=device)
     steps = 0
     episodes = []

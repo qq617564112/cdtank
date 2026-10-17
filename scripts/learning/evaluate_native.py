@@ -16,7 +16,7 @@ def main(args):
     output.mkdir(parents=True, exist_ok=False)
     args.native_policy = json.loads(Path(args.model).read_text(encoding="utf-8"))
     model = args.native_policy
-    reference = Policy(model["observationWidth"]).eval()
+    reference = Policy(model["observationWidth"], hidden_size=model["hiddenSize"]).eval()
     reference.load_state_dict({**reference.state_dict(),
         **{name: torch.tensor(value, dtype=torch.float32) for name, value in model["tensors"].items()}})
     torch.set_num_threads(2)
@@ -33,7 +33,7 @@ def main(args):
         (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
         with ThreadPoolExecutor(max_workers=count) as pool:
             initial = list(pool.map(lambda index: environments[index].reset(args.seed + index), range(count)))
-            running = [slot(environments[index], index, result) for index, result in enumerate(initial)]
+            running = [slot(environments[index], index, result, reference.hidden_size) for index, result in enumerate(initial)]
             next_episode = count
             with (output / "episodes.jsonl").open("x", encoding="utf-8") as stream:
                 while running:
@@ -73,7 +73,7 @@ def main(args):
                             stream.flush()
                             if next_episode < args.episodes:
                                 remaining.append(slot(row["environment"], next_episode,
-                                                      row["environment"].reset(args.seed + next_episode)))
+                                                      row["environment"].reset(args.seed + next_episode), reference.hidden_size))
                                 next_episode += 1
                             else:
                                 row["environment"].close()
@@ -97,10 +97,10 @@ def main(args):
             environment.close()
 
 
-def slot(environment, episode, result):
+def slot(environment, episode, result, hidden_size):
     actors = len(result["frames"])
     return {"environment": environment, "episode": episode, "tick": 0, "returns": [0.] * actors,
-            "hidden": [torch.zeros(1, 64) for _ in range(actors)], "lastDecision": [None] * actors,
+            "hidden": [torch.zeros(1, hidden_size) for _ in range(actors)], "lastDecision": [None] * actors,
             "trajectory": []}
 
 

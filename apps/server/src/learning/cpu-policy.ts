@@ -28,7 +28,7 @@ export class LearnedCpuPolicy {
     let state = this.states.get(player);
     if (!state || state.round !== room.round || state.deaths !== player.deaths) {
       state = {round: room.round, deaths: player.deaths, nextDecision: 0,
-        hidden: new Float32Array(64), pendingEvents: [], action: [1, 1, 1, 0, 0]};
+        hidden: new Float32Array(this.actor.model.hiddenSize), pendingEvents: [], action: [1, 1, 1, 0, 0]};
       this.states.set(player, state);
     }
     state.pendingEvents.push(...events);
