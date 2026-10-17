@@ -343,6 +343,7 @@ def main(args):
                 optimizer.load_state_dict(optimizer_state)
                 steps, update = checkpoint["steps"], checkpoint["update"]
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
+            save_checkpoint(output / "initial.pt", policy, optimizer, config, steps, update)
             if args.teacher_steps and not args.resume:
                 teacher_optimizer = torch.optim.Adam(policy.parameters(), lr=.001)
                 results = teach(policy, teacher_optimizer, environments, pool, results,
