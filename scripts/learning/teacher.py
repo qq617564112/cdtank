@@ -11,12 +11,13 @@ ITEM_FEATURES = 160
 ITEM_WIDTH = 13
 
 
-def demonstration_loss(distributions, chosen):
+def demonstration_loss(distributions, chosen, direction_weight=1.):
     """Retain sparse firing and consumable decisions among neutral control ticks."""
     import torch
 
     weights = torch.ones_like(chosen, dtype=torch.float32)
     weights[..., 0] = torch.where(chosen[..., 0] != 1, 3., 1.)
+    weights[..., 1:3] = torch.where(chosen[..., 1:3] != 1, direction_weight, 1.)
     weights[..., 3] = torch.where(chosen[..., 3] == 1, 5., 1.)
     weights[..., 4] = torch.where(chosen[..., 4] >= 2, 30., 1.)
     return -sum((dist.log_prob(chosen[..., head]) * weights[..., head]).mean()
@@ -298,7 +299,7 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
             for _ in range(args.teacher_epochs):
                 distributions, _, _ = policy.sequence(batch_data["observation"], batch_hidden,
                     batch_data["reset"], batch_data["masks"])
-                loss = demonstration_loss(distributions, batch_data["teacher"])
+                loss = demonstration_loss(distributions, batch_data["teacher"], args.direction_label_weight)
                 optimizer.zero_grad()
                 policy.gpu_budget.wait()
                 loss.backward()
@@ -306,9 +307,18 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                 optimizer.step()
                 policy.gpu_budget.wait()
                 losses.append(loss.item())
+            direction_labels = batch_data["teacher"][..., 1:3]
+            active_directions = direction_labels != 1
+            direction_predictions = torch.stack([distributions[head].logits.argmax(-1) for head in (1, 2)], dim=-1)
+            direction_counts = active_directions.sum(dim=(0, 1)).tolist()
+            direction_matches = ((direction_predictions == direction_labels) & active_directions).sum(dim=(0, 1)).tolist()
             row = {"steps": steps, "loss": sum(losses) / len(losses), "episodes": episodes,
                    "replaySequences": len(replay_actors), "batchSequences": len(selected),
                    "optimizationEpochs": args.teacher_epochs,
+                   "directionLabelWeight": args.direction_label_weight,
+                   "activeDirectionExamples": direction_counts,
+                   "activeDirectionAccuracy": [matched / count if count else None
+                                               for matched, count in zip(direction_matches, direction_counts)],
                    "sequenceActionHeadMismatches": sequence_mismatches, "sequenceHiddenMaximumError": hidden_error,
                    "gpuMemoryAllocatedMiB": torch.cuda.memory_allocated() / 1048576,
                    "gpuMemoryReservedMiB": torch.cuda.memory_reserved() / 1048576,
