@@ -75,7 +75,7 @@ schema 6 的局部观察为 305 维，在 schema 5 后追加自身队伍、固�
 python3 scripts/learning/remote.py scripts/learning/setup.ps1
 ```
 
-数据导出支持将压缩流直接通过 SSH 交给远程 `receive.py`，无需在本地保存新增数据。`python3 scripts/learning/sync_trainer.py` 将已提交的训练脚本及文档流式传到 `D:/ai/cdtank/data/trainer-<提交前12位>.tar.gz`，解压至 `D:/ai/cdtank/trainer`，包内 `source.json` 记录训练端源码。179 的训练不再启动 Node 世界或加载场景资源；已有 `game/` 和历史模拟归档保留。
+数据导出支持将压缩流直接通过 SSH 交给远程 `receive.py`，无需在本地保存新增数据。`python3 scripts/learning/sync_trainer.py` 将已提交的训练脚本及文档流式传到 `D:/ai/cdtank/data/trainer-<提交前12位>.tar.gz`，解压至固定的 `D:/ai/cdtank/trainer/versions/<提交前12位>`，包内 `source.json` 记录训练端源码。`trainer/current.json` 记录最新固定目录；启动训练、评估和阶段队列时从该目录执行脚本，运行期间不更改其文件。179 的训练不再启动 Node 世界或加载场景资源；已有 `game/` 和历史模拟归档保留。
 
 本机模拟服务从固定提交的独立 detached worktree 运行，避免开发工作区更新后，新建世界与服务记录的源码提交不一致。当前模拟版本为 `18524d48b6bbb535f40a68de0cf0b551ec85289e`，目录为 `/workspace/worktrees/cdtank-simulation-18524d48b6bb`。该目录独立复制 `apps/server/resources`，通过 `node_modules` 链接复用本机已安装依赖。
 
@@ -205,6 +205,8 @@ schema 3 的首轮组合技能中，`navigation-obstacle-20261018-001/latest.pt`
 历史对手运行 `team-pool-2v2-20261018-002` 使用四个世界，每个世界四名模型角色，仅优化队伍 0 的两名角色。对手池固定于 `data/opponents-20261018-001/`，包含 20480 步团队模型和 153600 步移动射击模型；每局按种子选择冻结对手。团队候选的 32 个独立种子冻结对局保存在 `team-2v2-frozen-20261018-001`。`modes-specialists-20261018-001` 已排队等待 3v3 的训练与冻结评估完成，随后按模式 1–5 分别训练 300000 角色步，并各评估 32 局。所有路径均位于远程 `D:/ai/cdtank`；团队与模式候选的实际水平以冻结结算为准。
 
 加入历史对手和冻结对局后的另一次 30 次整卡采样，平均利用率为 49.8%、峰值为 80%，显存峰值 2973 MiB；记录为 `runs/gpu-team-pool-20261018-001.json`。同次运行快照中，2v2、3v3 与历史对手训练分别累计 55296、64512、11264 个角色步骤，179 的本任务 Node 模拟进程数仍为 0。不同采样窗口各自记录。
+
+`evaluate_completed.py` 依次等候候选运行写入训练结果，再在同一个 CUDA 进程按课程和独立种子完成冻结评估。候选列表记录运行目录与对应模拟服务，评估配置分别保存实际检查点及执行源码。
 
 ## 后续训练顺序
 

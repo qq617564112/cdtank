@@ -14,6 +14,7 @@ def main(args):
     repository = Path(__file__).resolve().parents[2]
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip()
     destination = f"D:/ai/cdtank/data/trainer-{commit[:12]}.tar.gz"
+    trainer = f"D:/ai/cdtank/trainer/versions/{commit[:12]}"
     source = subprocess.Popen(["git", "archive", commit, "scripts/learning", "docs/ai-learning.md"],
                               cwd=repository, stdout=subprocess.PIPE)
     receiver = subprocess.Popen(["ssh", "-o", "BatchMode=yes", args.host,
@@ -34,11 +35,14 @@ def main(args):
         if receiver.wait() != 0:
             raise RuntimeError("Trainer transfer failed")
         subprocess.run([sys.executable, str(Path(__file__).with_name("remote.py")), "-", "--host", args.host],
-                       input=f"""New-Item -ItemType Directory -Force 'D:/ai/cdtank/trainer' | Out-Null
-tar -xzf '{destination}' -C 'D:/ai/cdtank/trainer'
-if ($LASTEXITCODE -ne 0) {{ throw 'Trainer extraction failed' }}
+                       input=f"""New-Item -ItemType Directory -Force '{trainer}' | Out-Null
+if (-not (Test-Path '{trainer}/source.json')) {{
+  tar -xzf '{destination}' -C '{trainer}'
+  if ($LASTEXITCODE -ne 0) {{ throw 'Trainer extraction failed' }}
+}}
+@{{commit='{commit}';path='{trainer}'}} | ConvertTo-Json | Set-Content -Encoding ascii 'D:/ai/cdtank/trainer/current.json'
 """, text=True, check=True)
-        print(json.dumps({"commit": commit, "archive": destination, "trainer": "D:/ai/cdtank/trainer"}))
+        print(json.dumps({"commit": commit, "archive": destination, "trainer": trainer}))
     finally:
         source.stdout.close()
         if source.poll() is None:
