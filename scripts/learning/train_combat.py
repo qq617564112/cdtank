@@ -269,6 +269,9 @@ def save_checkpoint(path, policy, optimizer, config, steps, update):
 
 def main(args):
     args.teacher_source = getattr(args, "teacher_source", "primitive")
+    args.teacher_replay_sequences = getattr(args, "teacher_replay_sequences", 4096)
+    args.teacher_batch_sequences = getattr(args, "teacher_batch_sequences", 512)
+    args.teacher_epochs = getattr(args, "teacher_epochs", 2)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     cache = output.parent.parent / 'cache'
@@ -368,6 +371,7 @@ def main(args):
                       "parameters": sum(parameter.numel() for parameter in policy.parameters()),
                       "initialization": initialization,
                       "initialCheckpoint": {"steps": initial["steps"],
+                          "teacherProgress": initial["config"].get("teacherProgress"),
                           "source": initial["config"].get("source"),
                           "simulationSource": initial["config"].get("simulationSource")} if initial else None,
                       "controlledRoster": results[0].get("actors"),
@@ -592,6 +596,9 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation-environments", type=int, default=8)
     parser.add_argument("--teacher-steps", type=int, default=0)
     parser.add_argument("--teacher-source", choices=("primitive", "cpu"), default="primitive")
+    parser.add_argument("--teacher-replay-sequences", type=int, default=4096)
+    parser.add_argument("--teacher-batch-sequences", type=int, default=512)
+    parser.add_argument("--teacher-epochs", type=int, default=2)
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)
     parser.add_argument("--curriculum", help="JSON list of courses assigned evenly across environments")
@@ -608,6 +615,8 @@ if __name__ == "__main__":
         parser.error("--rollout must be a multiple of 32")
     if args.minibatch_sequences < 1:
         parser.error("--minibatch-sequences must be positive")
+    if min(args.teacher_replay_sequences, args.teacher_batch_sequences, args.teacher_epochs) < 1:
+        parser.error("Teacher replay, batch size and epochs must be positive")
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
         parser.error("Evaluation episodes and environments must be positive")
     for course in course_options(args):

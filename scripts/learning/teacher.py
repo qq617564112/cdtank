@@ -2,6 +2,7 @@
 
 import math
 import random
+from collections import deque
 
 NEAREST_ENEMY = 24
 WEAPON_ENEMY = 136
@@ -117,6 +118,7 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
     steps = 0
     last_saved = 0
     episodes = []
+    replay = deque(maxlen=max(1, args.teacher_replay_sequences // agents))
     with (output / "teacher.jsonl").open("x", encoding="utf-8") as log:
         while steps < args.teacher_steps:
             initial_hidden = hidden.detach()
@@ -153,20 +155,35 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                 reset = torch.tensor(resets, device=device)
                 steps += agents
             data = {key: torch.stack(value) for key, value in storage.items()}
-            distributions, _, sequence_hidden = policy.sequence(data["observation"], initial_hidden,
-                                                                data["reset"], data["masks"])
-            predicted_sequence = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1)
-            sequence_mismatches = (predicted_sequence != data["predicted"]).sum().item()
-            hidden_error = (sequence_hidden - hidden).abs().max().item()
-            loss = demonstration_loss(distributions, data["teacher"])
-            optimizer.zero_grad()
-            policy.gpu_budget.wait()
-            loss.backward()
-            nn.utils.clip_grad_norm_(policy.parameters(), .5)
-            optimizer.step()
-            policy.gpu_budget.wait()
+            with torch.no_grad():
+                distributions, _, sequence_hidden = policy.sequence(data["observation"], initial_hidden,
+                                                                    data["reset"], data["masks"])
+                predicted_sequence = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1)
+                sequence_mismatches = (predicted_sequence != data["predicted"]).sum().item()
+                hidden_error = (sequence_hidden - hidden).abs().max().item()
             hidden = sequence_hidden.detach()
-            row = {"steps": steps, "loss": loss.item(), "episodes": episodes,
+            del distributions, predicted_sequence, sequence_hidden
+            replay.append((initial_hidden, {key: data[key] for key in ("observation", "masks", "reset", "teacher")}))
+            replay_actors = [(batch, actor) for batch in replay for actor in range(agents)]
+            selected = random.sample(replay_actors, min(args.teacher_batch_sequences, len(replay_actors)))
+            batch_hidden = torch.stack([batch[0][actor] for batch, actor in selected])
+            batch_data = {key: torch.stack([batch[1][key][:, actor] for batch, actor in selected], dim=1)
+                          for key in ("observation", "masks", "reset", "teacher")}
+            losses = []
+            for _ in range(args.teacher_epochs):
+                distributions, _, _ = policy.sequence(batch_data["observation"], batch_hidden,
+                    batch_data["reset"], batch_data["masks"])
+                loss = demonstration_loss(distributions, batch_data["teacher"])
+                optimizer.zero_grad()
+                policy.gpu_budget.wait()
+                loss.backward()
+                nn.utils.clip_grad_norm_(policy.parameters(), .5)
+                optimizer.step()
+                policy.gpu_budget.wait()
+                losses.append(loss.item())
+            row = {"steps": steps, "loss": sum(losses) / len(losses), "episodes": episodes,
+                   "replaySequences": len(replay_actors), "batchSequences": len(selected),
+                   "optimizationEpochs": args.teacher_epochs,
                    "sequenceActionHeadMismatches": sequence_mismatches, "sequenceHiddenMaximumError": hidden_error,
                    "gpuMemoryAllocatedMiB": torch.cuda.memory_allocated() / 1048576,
                    "gpuMemoryReservedMiB": torch.cuda.memory_reserved() / 1048576,
