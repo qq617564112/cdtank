@@ -68,6 +68,7 @@ export function advanceActors<Player extends CombatActor>(room: {
   respawn(player: Player): void;
   maxHp(player: Player): number;
   input(playerId: string, input: MsgPlayerInput, autonomous: boolean): MsgRoomEvent[];
+  learnedInput?(player: Player): MsgPlayerInput | undefined;
   allocateBulletId(): string;
   allocateShotId(): string;
   staticObjects?(player: Player, proposed: RoleObb): Iterable<RoleStaticCollider>;
@@ -119,7 +120,10 @@ export function advanceActors<Player extends CombatActor>(room: {
       continue;
     }
     const controller = player.cpu ?? player.autopilot;
-    if (controller) {
+    const learnedInput = controller ? handlers.learnedInput?.(player) : undefined;
+    if (learnedInput) {
+      events.push(...handlers.input(player.id, learnedInput, !!player.autopilot));
+    } else if (controller) {
       const parameters = originalMovementParameters(player);
       events.push(...handlers.input(player.id, controller.input({...player,
         maxHp: handlers.maxHp(player),

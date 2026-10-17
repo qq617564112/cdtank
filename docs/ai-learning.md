@@ -67,6 +67,10 @@ schema 6 的局部观察为 305 维，在 schema 5 后追加自身队伍、固�
 
 `train_modes.py` 从同一团队检查点初始化五个独立候选模型，每个模式分别优化全部参数和保存检查点。模式 1/2/3 使用两名学习队友与两名 CPU，地图分别为 7/2/7；模式 4/5 是四人个人战，地图分别为 7/20。每名学习者配一份食品、无敌、加速和攻击饮料，各模式分别完成固定种子冻结对局后写入模型清单。`run-mode-stages.ps1` 等前一团队运行完成训练及冻结评估，再顺序启动这五项训练；等待和运行状态、依赖评估及错误写入 D 盘的 `runs/<名称>.schedule.json`。这些输出均为训练候选，`readyForGameplay` 保持 false。
 
+`export_policy.py` 在 179 将固定检查点导出为 `cdtank-recurrent-actor-v1` JSON，只含编码器、动作资格编码、64 维 GRUCell 和五个动作头；价值网络不进入运行模型。旧观察输入的新增列置零，导出统一为 schema 6。`learning/policy.ts` 用原生 CPU 数组执行同一门控公式，`LearnedCpuPolicy` 按每角色 100ms 决策，独立保存记忆，死亡或新回合重置。道具只在决策时产生一次按键请求，其余输入保持到下次决策。
+
+World 的 `learnedCpuPolicy` 注入接口为指定 CPU 或托管角色返回策略；所有动作仍经过 `advanceActors → updateInput → acceptBattleInput` 的普通资格、序列、消耗和伤害路径。`evaluate_native.py` 将导出模型交给本机模拟，通过真实托管控制运行固定种子对局，179 只编排评估并用 PyTorch CPU 计算实际决策观察上的参考动作，记录动作分歧数与最大 logit 误差。运行端没有 CUDA、PyTorch 或集中状态依赖。
+
 ## 运行
 
 远程基础 Python 环境：

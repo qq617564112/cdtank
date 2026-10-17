@@ -33,6 +33,7 @@ class Environment:
         self.number = number
         self.episode = 0
         self.args = args
+        self.native_policy = getattr(args, "native_policy", None)
         courses = course_options(args)
         self.course = courses[number % len(courses)]
         endpoint = urlsplit(args.environment_url)
@@ -65,12 +66,15 @@ class Environment:
         self.episode += 1
         course = self.course
         level = random.Random(seed).randint(0, course["level"]) if course["mix_levels"] else course["level"]
-        result = self.command({"type": "reset", "seed": seed, "mode": course["mode"],
+        request = {"type": "reset", "seed": seed, "mode": course["mode"],
                              "mapId": course["map_id"], "players": course["players"],
                              "controlled": course["controlled"], "seconds": 60, "tankId": 1,
                              "ammoId": course["ammo_id"],
                              "items": course["items"],
-                             "lesson": course["lesson"], "level": level})
+                             "lesson": course["lesson"], "level": level}
+        if self.native_policy:
+            request["nativePolicy"] = self.native_policy
+        result = self.command(request)
         result["lesson"] = course["lesson"]
         paths = getattr(self.args, "opponent_paths", None)
         self.opponent_index = random.Random(seed + 7919).randrange(len(paths)) if paths else None

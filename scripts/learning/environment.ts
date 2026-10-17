@@ -6,6 +6,8 @@ import {getBattlefield} from '../../apps/server/src/battlefield';
 import {createOriginalBotNavigation} from '../../apps/server/src/battle/cpu/original-navigation';
 import {findBotPath} from '../../apps/server/src/battle/cpu/navigation';
 import {rangeLessonLanes} from './range-lanes';
+import {LearnedCpuPolicy} from '../../apps/server/src/learning/cpu-policy';
+import type {SerializedActorPolicy} from '../../apps/server/src/learning/policy';
 import type {LearningGoal, LearningMemory} from '../../apps/server/src/learning/observation';
 import type {WorldEvent} from '../../apps/server/src/world';
 
@@ -22,6 +24,7 @@ interface ResetRequest {
   items?: {slot: number; itemTableId: number; quantity: number}[];
   lesson?: 'turning' | 'navigation' | 'aiming' | 'shooting' | 'dodge' | 'range' | 'items' | 'combat';
   level?: number;
+  nativePolicy?: SerializedActorPolicy;
 }
 
 interface StepRequest {type: 'step'; actions: number[][];}
@@ -59,6 +62,7 @@ let healedHp = 0;
 let practiceBearing = new Map<string, number>();
 let teamMetrics: ReturnType<World['learningCentralState']>['teamMetrics'];
 let actorItemMetrics: {consumedItems: number; rejectedItems: number; healedHp: number}[] = [];
+let nativePolicy: LearnedCpuPolicy | undefined;
 
 function rangeError(distance: number, range: number): number {
   return Math.max(0, .75 * range - distance, distance - .9 * range);
@@ -169,7 +173,10 @@ function reset(request: ResetRequest) {
   if (mode <= 3 && controlled !== count && controlled > Math.ceil(count / 2)) {
     throw new Error('Team learning controls one side or the entire roster');
   }
-  world = new World(() => clock, {allocateRoomId: () => 'LEARNING'});
+  if (request.nativePolicy && lesson !== 'combat') throw new Error('Native CPU evaluation requires ordinary combat');
+  nativePolicy = request.nativePolicy ? new LearnedCpuPolicy(request.nativePolicy) : undefined;
+  world = new World(() => clock, {allocateRoomId: () => 'LEARNING',
+    learnedCpuPolicy: nativePolicy ? (_mode, id) => playerIds.includes(id) ? nativePolicy : undefined : undefined});
   const joined = world.createAndJoin('LEARNER-0', mode, requestedMapId, '学习', 'Learner 0',
     request.tankId ?? 1, '', count, count, false, request.seconds ?? 60);
   const mapId = joined.mapId;
@@ -330,6 +337,7 @@ function reset(request: ResetRequest) {
   const central = world.learningCentralState(roomId, playerIds);
   teamMetrics = central.teamMetrics;
   actorItemMetrics = playerIds.map(() => ({consumedItems: 0, rejectedItems: 0, healedHp: 0}));
+  if (nativePolicy) for (const id of playerIds) world.configureAutopilot(id, 1, true);
   return {type: 'reset', seed, mode, mapId, lesson, level, frames: previous,
     criticStates: central.criticStates,
     actors: world.snapshot(roomId)!.players.map(player => ({id: player.id, team: player.team,
@@ -520,6 +528,8 @@ function step(request: StepRequest) {
   teamMetrics = central.teamMetrics;
   previous = current;
   return {type: 'step', seed, frames: current, criticStates: central.criticStates,
+    nativeExecution: !!nativePolicy,
+    nativeDecisions: nativePolicy ? playerIds.map(id => world.learningCpuDecision(id)) : undefined,
     rewards, done, lesson, level, success, goalDistance,
     outcomes: playerIds.map(id => current[0].result?.players.find(player => player.id === id)?.outcome ?? null),
     actorItemMetrics, teamMetrics,

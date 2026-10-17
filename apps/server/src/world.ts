@@ -2,6 +2,7 @@ import {itemHitHandler, gameContent} from '../../shared/content/catalog';
 import {collectCpuTrace} from './battle/cpu/trace';
 import {observeLearning, type LearningGoal, type LearningMemory} from './learning/observation';
 import {centralLearningState} from './learning/central-state';
+import type {LearnedCpuPolicy} from './learning/cpu-policy';
 import {defaultAmmoId} from '../../shared/content/catalog';
 import {confirmAcceptedAmmoSelection} from './battle/items/ammo-confirmation';
 import {resetTrapFireRestraint} from './battle/items/trap-fire-restraint';
@@ -161,11 +162,13 @@ export class World {
   private readonly lastGroundItemActionSequence = new Map<string, number>();
   /** Live participants refreshed by a committed ground write, awaiting their inventoryChanged event. */
   private readonly pendingInventoryChanged = new Set<string>();
+  private readonly learnedEvents = new WeakMap<RoomState, readonly WorldEvent[]>();
 
   constructor(private readonly now: () => number = Date.now,
               private readonly options: {timeLimitSeconds?: number; minPlayers?: number;
                 allocateRoomId?: () => string;
                 allocatePlayerId?: () => string;
+                learnedCpuPolicy?: (mode: number, playerId: string) => LearnedCpuPolicy | undefined;
                 onInventoryRecord?: (accountId: string, record: InventoryWireRecord) => void;
                 consumeItem?: (playerId: string, instanceId: number, expectedOwned: number, itemTableId: number) => boolean;
                 acquireOwnedItem?: (accountId: string, context: GroundItemAcquireContext) =>
@@ -911,7 +914,9 @@ export class World {
             // The first active tick only advances by the time elapsed since the
             // battle clock started, never by the preceding intro.
             const activeDeltaMs = Math.max(0, Math.min(deltaMs, now - room.startedAt));
+            const firstEvent = events.length;
             this.simulateRoom(room, activeDeltaMs / 1000, now, events);
+            if (this.options.learnedCpuPolicy) this.learnedEvents.set(room, events.slice(firstEvent));
           }
         }
       }
@@ -951,6 +956,11 @@ export class World {
     const room = this.rooms.get(roomId);
     if (!room) throw new Error('学习房间不存在');
     return centralLearningState(room, playerIds, this.now());
+  }
+
+  learningCpuDecision(playerId: string) {
+    const found = this.findPlayer(playerId);
+    return found && this.options.learnedCpuPolicy?.(found.room.mode, playerId)?.decision(found.player);
   }
 
   /** Set offline lesson initial conditions without changing battle advancement rules. */
@@ -1109,7 +1119,18 @@ export class World {
       });
       return shotCausedDamage(events, impactFirstEvent, owner.id, target.id);
     };
+    const learnedInputs = new Map<string, MsgPlayerInput>();
+    if (this.options.learnedCpuPolicy) {
+      for (const player of room.players.values()) {
+        if (!player.alive || !player.cpu && !player.autopilot) continue;
+        const policy = this.options.learnedCpuPolicy(room.mode, player.id);
+        if (policy) learnedInputs.set(player.id, policy.input(room, player,
+          player.vip ? Math.max(1, room.map.vipHp) : this.playerMaxHp(player), now,
+          this.learnedEvents.get(room) ?? []));
+      }
+    }
     advanceActors(room, dt, now, BODY_RADIUS, MOVE_SCALE, events, {
+      learnedInput: player => learnedInputs.get(player.id),
       respawn: player => {
         const spawn = findBattleRespawn(room.battlefield, player, room.players.values(), room.mode);
         if (!spawn) return;
