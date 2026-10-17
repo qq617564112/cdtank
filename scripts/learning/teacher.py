@@ -22,12 +22,33 @@ def primitive_action(frame, lesson):
         can_turn = any(frame["actionMasks"][1][index] for index in (0, 2))
         if lesson == "navigation" and (abs(angle) <= .06 or not can_turn and forward > 0) and observation[159] * 600 > 15:
             action[0] = 2
-    elif lesson == "aiming":
+    elif lesson in ("aiming", "shooting"):
         if observation[NEAREST_ENEMY]:
             angle = math.atan2(observation[WEAPON_ENEMY + 3], observation[WEAPON_ENEMY + 4])
             if abs(angle) > .06:
                 action[2] = 2 if angle > 0 else 0
             action[3] = int(abs(angle) < .1 and bool(observation[WEAPON_ENEMY + 2]))
+            if lesson == "shooting":
+                body_angle = math.atan2(observation[25], observation[26])
+                if abs(body_angle) > .12:
+                    action[1] = 2 if body_angle > 0 else 0
+                elif observation[WEAPON_ENEMY] > .6 and observation[16] > .25:
+                    action[0] = 2
+                elif observation[WEAPON_ENEMY] < .2 and observation[20] > .25:
+                    action[0] = 0
+    elif lesson == "dodge":
+        if observation[NEAREST_ENEMY]:
+            bearing = math.atan2(observation[25], observation[26])
+            options = [math.atan2(math.sin(bearing + side * math.pi / 2),
+                                  math.cos(bearing + side * math.pi / 2)) for side in (-1, 1)]
+            probes = observation[282:290] if len(observation) >= 290 else observation[16:24]
+            heading = max(options, key=lambda value: probes[round(value / (math.pi / 4)) % 8] - .15 * abs(value))
+            if abs(heading) > .12:
+                action[1] = 2 if heading > 0 else 0
+            if abs(heading) < .35 and probes[0] > .25:
+                action[0] = 2
+            elif probes[4] > .25 and probes[0] <= .25:
+                action[0] = 0
     elif lesson == "range":
         if observation[NEAREST_ENEMY]:
             ratio = observation[WEAPON_ENEMY]

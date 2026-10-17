@@ -179,7 +179,7 @@ def main(args):
                         prior_config.get("imitation_weight", 0) if prior_config.get("teacher_steps", 0) else 0)
                 else:
                     args.imitation_weight = .1 if args.teacher_steps else 0
-            if args.imitation_weight and any(course["lesson"] not in ("turning", "navigation", "aiming", "range", "items")
+            if args.imitation_weight and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
                     or course["lesson"] == "navigation" and course["level"] > 2
                     or course["lesson"] == "range" and course["level"] > 1
                     or course["lesson"] == "items" and course["level"] > 2 for course in course_options(args)):
@@ -396,9 +396,9 @@ if __name__ == "__main__":
     for course in course_options(args):
         if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat") or course["level"] not in range(4):
             parser.error("Each course needs a supported lesson and level")
-        if args.teacher_steps and (course["lesson"] not in ("turning", "navigation", "aiming", "range", "items")
+        if args.teacher_steps and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
                 or course["lesson"] == "navigation" and course["level"] > 2
                 or course["lesson"] == "range" and course["level"] > 1
                 or course["lesson"] == "items" and course["level"] > 2):
-            parser.error("Primitive demonstrations require turning, direct navigation, aiming, non-shooting range or basic items")
+            parser.error("Primitive demonstrations require supported basic movement, shooting, dodge, range or item courses")
     main(args)

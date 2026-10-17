@@ -4,6 +4,8 @@ import {tankTurretYaw} from '../../../shared/combat/tank-turret';
 import {isRoleFireReady} from '../battle/roles/reload';
 import {queryShotTarget} from '../battle/shot-query';
 import {learningItemState} from './items';
+import {originalMovementParameters, ORIGINAL_MOVEMENT_DIMENSIONS} from '../battle/movement';
+import {sampleRoleNavigationFailure} from '../battle/roles/movement-navigation';
 import type {RoomState} from '../rooms/state';
 import type {PlayerState} from '../battle/player-state';
 import type {MsgRoomEvent} from '../../../shared/protocols/MsgRoomEvent';
@@ -17,6 +19,7 @@ export interface LearningMemory {
   at: number;
   deaths: number;
   observedAmmo?: Record<string, number>;
+  observedPeers?: Record<string, {x: number; z: number; at: number}>;
 }
 
 export interface LearningGoal {x: number; z: number;}
@@ -151,10 +154,39 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
   observation.push(relativeGoal[0] / Math.max(.001, goalLength),
     relativeGoal[1] / Math.max(.001, goalLength), Math.min(4, goalLength));
   observation.push(...items.features);
-  return {schema: 4, observation, actionSizes: LEARNING_ACTION_SIZES,
+  const observedPeers: NonNullable<LearningMemory['observedPeers']> = {};
+  for (let index = 0; index < 3; index++) {
+    const peer = enemies[index];
+    if (!peer) {observation.push(0, 0, 0, 0); continue;}
+    const turretHeading = tankTurretYaw(peer.tank.id, peer) - yaw;
+    const before = previous?.observedPeers?.[peer.id];
+    const velocityScale = before && now > before.at && now - before.at <= 500 ? 1000 / (now - before.at) : 0;
+    const vx = before ? (peer.x - before.x) * velocityScale : 0;
+    const vz = before ? (peer.z - before.z) * velocityScale : 0;
+    observation.push(Math.sin(turretHeading), Math.cos(turretHeading),
+      (vx * cosine - vz * sine) / 1000, (vx * sine + vz * cosine) / 1000);
+    observedPeers[peer.id] = {x: peer.x, z: peer.z, at: now};
+  }
+  const movement = originalMovementParameters(player);
+  observation.push((movement?.speed ?? 0) / 1000, (movement?.turn ?? 0) / 10,
+    ORIGINAL_MOVEMENT_DIMENSIONS.width / 100, ORIGINAL_MOVEMENT_DIMENSIONS.depth / 100);
+  for (let ray = 0; ray < 8; ray++) {
+    const angle = yaw + ray * Math.PI / 4;
+    const forward = {x: Math.sin(angle), y: 0, z: Math.cos(angle)};
+    let clear = 0;
+    for (let step = 1; step <= 8; step++) {
+      const point = {x: player.x + forward.x * step * 20, y: player.y,
+        z: player.z + forward.z * step * 20};
+      if (sampleRoleNavigationFailure(room.battlefield.navigation, point, forward, 1,
+          ORIGINAL_MOVEMENT_DIMENSIONS.width, ORIGINAL_MOVEMENT_DIMENSIONS.depth) !== undefined) break;
+      clear = step / 8;
+    }
+    observation.push(clear);
+  }
+  return {schema: 5, observation, actionSizes: LEARNING_ACTION_SIZES,
     actionMasks: [[true, true, true], [true, true, true], [true, true, true],
       [true, fireReady], items.mask],
-    memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths, observedAmmo},
+    memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths, observedAmmo, observedPeers},
     metrics: {hp: player.hp, kills: player.kills, deaths: player.deaths,
       damage: player.roundStats?.damage ?? 0, damageTaken: player.roundStats?.damageTaken ?? 0,
       shots: player.roundStats?.shots ?? 0, hits: player.roundStats?.hits ?? 0,

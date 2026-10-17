@@ -56,6 +56,7 @@ let lessonMaximumHp = 1;
 let consumedItems = 0;
 let rejectedItems = 0;
 let healedHp = 0;
+let practiceBearing = new Map<string, number>();
 
 function rangeError(distance: number, range: number): number {
   return Math.max(0, .75 * range - distance, distance - .9 * range);
@@ -154,6 +155,7 @@ function reset(request: ResetRequest) {
   consumedItems = 0;
   rejectedItems = 0;
   healedHp = 0;
+  practiceBearing = new Map();
   const mapId = request.mapId ?? 7;
   const count = request.players ?? 2;
   const controlled = request.controlled ?? 1;
@@ -221,7 +223,8 @@ function reset(request: ResetRequest) {
     for (let attempt = 0; attempt < 128; attempt++) {
       const angle = learner.yaw + (Math.random() * 2 - 1)
         * (lesson === 'aiming' ? [.25, .8, Math.PI, Math.PI][level] : level === 0 ? .25 : Math.PI);
-      const radius = 90 + Math.random() * (level === 0 ? 60 : 270);
+      const radius = lesson === 'dodge' ? [400, 300, 200, 90][level] + Math.random() * [200, 200, 150, 270][level]
+        : 90 + Math.random() * (level === 0 ? 60 : 270);
       const x = learner.x + Math.sin(angle) * radius, z = learner.z + Math.cos(angle) * radius;
       const y = field.navigation.groundHeightAt(x, z);
       if (y === undefined) continue;
@@ -334,13 +337,17 @@ function step(request: StepRequest) {
     for (const id of practiceIds) {
       const actor = world.snapshot(roomId)!.players.find(player => player.id === id)!;
       const learner = previous[0].memory;
-      const error = Math.atan2(Math.sin(Math.atan2(learner.x - actor.x, learner.z - actor.z) - actor.yaw - actor.aim),
-        Math.cos(Math.atan2(learner.x - actor.x, learner.z - actor.z) - actor.yaw - actor.aim));
+      const reactionTicks = lesson === 'dodge' ? [10, 5, 2, 1][level] : 1;
+      if (decisions % reactionTicks === 0 || !practiceBearing.has(id)) {
+        practiceBearing.set(id, Math.atan2(learner.x - actor.x, learner.z - actor.z));
+      }
+      const bearing = practiceBearing.get(id)!;
+      const error = Math.atan2(Math.sin(bearing - actor.yaw - actor.aim), Math.cos(bearing - actor.yaw - actor.aim));
       const shootsBack = lesson === 'dodge' || (lesson === 'shooting' || lesson === 'range') && level === 3
         || lesson === 'items';
       const moving = lesson === 'shooting' || lesson === 'aiming' || lesson === 'items' && level === 3;
-      const fireWindow = lesson !== 'items' || level === 3
-        || (level === 0 ? [30, 80] : [50, 80]).includes(decisions);
+      const fireWindow = lesson === 'dodge' ? decisions >= [15, 10, 5, 0][level]
+        : lesson !== 'items' || level === 3 || (level === 0 ? [30, 80] : [50, 80]).includes(decisions);
       events.push(...world.updateInput(id, {sequence: ++sequence, move: moving ? (decisions % 30 < 15 ? 1 : -1) : 0,
         turn: 0, aim: shootsBack ? Math.sign(error) : 0,
         fire: shootsBack && fireWindow && Math.abs(error) < .1, useItem: 0, clientTime: clock}));
