@@ -132,6 +132,7 @@ class DemonstrationReplay:
                        "simulationSource": metadata["simulationSource"],
                        "courses": metadata["courses"], "sequences": metadata["sequences"],
                        "sequenceLength": metadata["sequence_length"], "labelSource": metadata["labelSource"],
+                       "courseTeachers": metadata.get("courseTeachers"),
                        "behaviorCheckpoint": metadata.get("behaviorCheckpoint"),
                        "executionSource": metadata.get("executionSource"),
                        "previousData": metadata.get("previousData"),
@@ -182,8 +183,10 @@ class DemonstrationReplay:
             self.reference_sources[-1]["storedLabelHeadMismatchRate"] = mismatches / head_decisions
             if paths is not None:
                 del teacher
+        self.reference_actions = torch.stack([probabilities.argmax(-1)
+                                               for probabilities in self.reference_probabilities], dim=-1)
 
-    def loss(self, policy):
+    def loss(self, policy, use_reference_actions=False):
         import torch
 
         selected = [random.choice(self.groups[index % len(self.groups)]) for index in range(self.batch_size)]
@@ -191,7 +194,8 @@ class DemonstrationReplay:
         data = {key: value[:, indices] for key, value in self.data.items()}
         hidden = torch.zeros(self.batch_size, policy.hidden_size, device=self.device)
         distributions, _, _ = policy.sequence(data["observation"], hidden, data["reset"], data["masks"])
-        control_loss = demonstration_loss(distributions, data["teacher"])
+        labels = self.reference_actions[:, indices] if use_reference_actions else data["teacher"]
+        control_loss = demonstration_loss(distributions, labels)
         reference_loss = control_loss.new_zeros(())
         mismatches = []
         for distribution, target in zip(distributions, self.reference_probabilities):

@@ -42,6 +42,7 @@ def main(args):
         optimizer = torch.optim.Adam(policy.parameters(), lr=args.learning_rate, eps=1e-5)
         source = Path(__file__).resolve().parents[2] / "source.json"
         config = {**vars(args), "algorithm": "multi-teacher recurrent behavior distillation",
+                  "controlLabelSource": "frozen reference argmax",
                   "source": json.loads(source.read_text(encoding="utf-8")) if source.exists() else None,
                   "simulationSource": replay.source["simulationSource"],
                   "rehearsalSource": replay.source, "rehearsalReferenceSources": replay.reference_sources,
@@ -61,7 +62,7 @@ def main(args):
         policy.train()
         with (output / "metrics.jsonl").open("x", encoding="utf-8") as log:
             for update in range(1, args.updates + 1):
-                control_loss, reference_loss, mismatch = replay.loss(policy)
+                control_loss, reference_loss, mismatch = replay.loss(policy, use_reference_actions=True)
                 loss = args.control_weight * control_loss + reference_loss
                 optimizer.zero_grad()
                 budget.wait()
