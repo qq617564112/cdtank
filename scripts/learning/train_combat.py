@@ -14,6 +14,7 @@ import numpy as np
 import torch
 from torch import nn
 from torch.distributions import Categorical
+from teacher import teach
 
 
 SIZES = [3, 3, 3, 2, 9]
@@ -156,6 +157,14 @@ def main(args):
                 optimizer.load_state_dict(checkpoint["optimizer"])
                 steps, update = checkpoint["steps"], checkpoint["update"]
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
+            if args.teacher_steps:
+                if args.resume:
+                    raise ValueError("Use --weights to bootstrap; --resume retains an existing PPO run")
+                teacher_optimizer = torch.optim.Adam(policy.parameters(), lr=.001)
+                results = teach(policy, teacher_optimizer, environments, pool, results,
+                                args, device, output, tensors)
+                save_checkpoint(output / "teacher.pt", policy, optimizer, config, 0, 0)
+                observations, masks = tensors(results, device)
             hidden = torch.zeros(args.environments, 64, device=device)
             reset = torch.ones(args.environments, device=device)
             episode_returns = [0.0] * args.environments
@@ -301,7 +310,10 @@ if __name__ == "__main__":
     parser.add_argument("--mix-levels", action="store_true", help="Replay levels zero through the selected level")
     parser.add_argument("--seed", type=int, default=179)
     parser.add_argument("--evaluation-episodes", type=int, default=32)
+    parser.add_argument("--teacher-steps", type=int, default=0)
     args = parser.parse_args()
     if args.rollout % 32:
         parser.error("--rollout must be a multiple of 32")
+    if args.teacher_steps and args.lesson not in ("turning", "navigation", "aiming", "range"):
+        parser.error("Primitive demonstrations support turning, navigation, aiming and range")
     main(args)

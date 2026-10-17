@@ -7,6 +7,7 @@ param(
   [int]$AmmoId=2001,
   [ValidateRange(0,3)][int]$Level=1,
   [switch]$MixLevels,
+  [int]$TeacherSteps=0,
   [string]$Prior='D:/ai/cdtank/runs/motion-20261017-001/best.pt',
   [string]$Weights='',
   [string]$Resume=''
@@ -17,6 +18,7 @@ $root='D:/ai/cdtank'
 if (Test-Path "$root/runs/$RunName") { throw 'Use a new run directory' }
 $arguments="$root/game/scripts/learning/train_combat.py --game $root/game --node $root/tools/node/node.exe --output $root/runs/$RunName --steps $Steps --environments $Environments --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId"
 if ($MixLevels) { $arguments+=' --mix-levels' }
+if ($TeacherSteps) { $arguments+=" --teacher-steps $TeacherSteps" }
 if ($Resume) { $arguments+=" --resume $Resume" }
 elseif ($Weights) { $arguments+=" --weights $Weights" }
 elseif ($Prior) { $arguments+=" --prior $Prior" }
@@ -28,6 +30,7 @@ $created=Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments
 }
 if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.ReturnValue) }
 @{processId=$created.ProcessId;run=$RunName;lesson=$Lesson;level=$Level;steps=$Steps;
-  environments=$Environments;mapId=$MapId;ammoId=$AmmoId;mixLevels=[bool]$MixLevels;prior=$Prior;weights=$Weights;resume=$Resume} |
+  environments=$Environments;mapId=$MapId;ammoId=$AmmoId;mixLevels=[bool]$MixLevels;
+  teacherSteps=$TeacherSteps;prior=$Prior;weights=$Weights;resume=$Resume} |
   ConvertTo-Json | Set-Content -Encoding ascii "$root/runs/$RunName.launch.json"
 Write-Output ('TRAINING_LAUNCH_PID='+$created.ProcessId)

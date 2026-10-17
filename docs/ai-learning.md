@@ -68,6 +68,8 @@ D:/ai/cdtank/venv/Scripts/python.exe D:/ai/cdtank/game/scripts/learning/train_co
 
 `--mix-levels`（启动脚本的 `-MixLevels`）按每回合的独立种子，从 0 到指定 `level` 均匀选择课程，重放此前技能。射程接近和后撤通过 `--lesson range --level 1 --mix-levels` 在同一模型中训练；日志保留每个回合实际使用的级别。
 
+基础操作可用 `--teacher-steps`（`-TeacherSteps`）在 PPO 前预热。`teacher.py` 仅读取策略的局部观察和动作掩码，为原地转向、直达路点、固定车体瞄准和接近/后撤提供操作示范；它不参与之后的动作执行。示范由真实 World 连续推进，按 32 步序列监督学习，单独保存 `teacher.jsonl` 和 `teacher.pt`。标签来源为 `scripted primitive control`，不计为真人数据，预热步数与 PPO 步数分开记录。随后仍以冻结模型的独立种子评估判定效果。
+
 `evaluate.py` 在不同于训练的种子上冻结模型执行完整练习，默认选择概率最高动作；`--stochastic` 评估采样策略。指定 `--checkpoint`、`--output`、`--lesson` 和 `--level`。输出 `episodes.jsonl` 保存实际动作、位置、观察、受阻与距离记录，`result.json` 记录到达/击毁/无伤比例和平均奖励。该评估用于选择课程与检查点。
 
 PPO 完成训练后关闭训练世界，自动在 `evaluation-level-<级别>` 中完成 32 个独立种子的冻结评估；混合课程逐级评估。`--evaluation-episodes` 调整每级评估局数。评估配置记录检查点所属源码、实际评估源码、观察版本和设备，结果汇入运行目录的 `result.json`。已有运行使用其启动时的训练入口，需要单独调用评估脚本。
