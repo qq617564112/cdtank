@@ -81,6 +81,24 @@ def primitive_action(frame, lesson, level, decisions):
                 action[2] = 2 if angle > 0 else 0
             action[3] = int(.79 <= ratio <= .86 and abs(angle) < .1
                             and bool(observation[WEAPON_ENEMY + 2]))
+    elif lesson == "siege":
+        targets = [offset for offset in (84, 90)
+                   if observation[offset] and not observation[offset + 4] and not observation[offset + 5]]
+        if targets:
+            offset = targets[0]
+            lateral, forward = observation[offset + 1:offset + 3]
+            bearing = math.atan2(lateral, forward)
+            turret = math.atan2(observation[4], observation[5])
+            angle = math.atan2(math.sin(bearing - turret), math.cos(bearing - turret))
+            ratio = math.hypot(lateral, forward) * 600 / max(1, observation[128] * 1000)
+            if abs(angle) > .04:
+                action[2] = 2 if angle > 0 else 0
+            if level >= 2:
+                if abs(bearing) > .08:
+                    action[1] = 2 if bearing > 0 else 0
+                elif ratio > .72:
+                    action[0] = 2
+            action[3] = int(ratio < .9 and abs(angle) < .07)
     elif lesson == "items":
         if len(observation) < 266:
             raise ValueError("Item demonstrations need observation schema 4")

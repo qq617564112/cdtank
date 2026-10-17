@@ -72,7 +72,7 @@ class Environment:
                              "ammoId": course["ammo_id"],
                              "items": course["items"],
                              "lesson": course["lesson"], "level": level}
-        if course["lesson"] == "combat" and course["mode"] <= 3 and course["controlled"] < course["players"]:
+        if course["lesson"] in ("combat", "siege") and course["mode"] <= 3 and course["controlled"] < course["players"]:
             request["learnerTeam"] = random.Random(seed + 104729).randrange(2)
         if getattr(self.args, "teacher_source", "primitive") == "cpu" and (self.args.teacher_steps or self.args.imitation_weight):
             request["expert"] = True
@@ -654,7 +654,7 @@ if __name__ == "__main__":
     parser.add_argument("--centralized-critic", action="store_true")
     parser.add_argument("--opponent-pool", help="JSON list of frozen historical checkpoint paths")
     parser.add_argument("--ammo-id", type=int, default=2001)
-    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat"], default="combat")
+    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "combat"], default="combat")
     parser.add_argument("--level", type=int, choices=range(4), default=1)
     parser.add_argument("--mix-levels", action="store_true", help="Replay levels zero through the selected level")
     parser.add_argument("--seed", type=int, default=179)
@@ -700,10 +700,10 @@ if __name__ == "__main__":
     for course in course_options(args):
         if not 1 <= course["controlled"] <= course["players"] <= 6:
             parser.error("Each course needs one to six controlled actors within the room size")
-        if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat") or course["level"] not in range(4):
+        if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "combat") or course["level"] not in range(4):
             parser.error("Each course needs a supported lesson and level")
-        if args.teacher_steps and args.teacher_source == "primitive" and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
+        if args.teacher_steps and args.teacher_source == "primitive" and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege")
                 or course["lesson"] == "navigation" and course["level"] > 2
-                or course["lesson"] == "items" and course["level"] > 2):
+                or course["lesson"] in ("items", "siege") and course["level"] > 2):
             parser.error("Primitive demonstrations require supported basic movement, shooting, dodge, range or item courses")
     main(args)
