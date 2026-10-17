@@ -183,7 +183,16 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
     }
     observation.push(clear);
   }
-  return {schema: 5, observation, actionSizes: LEARNING_ACTION_SIZES,
+  const roster = [...room.players.values()];
+  observation.push(Number(player.team === 0), Number(player.team === 1));
+  for (let index = 0; index < 6; index++) observation.push(Number(roster[index]?.id === player.id));
+  observation.push((room.teamLives[player.team] ?? 0) / Math.max(1, room.map.tankLimit),
+    (room.teamLives[1 - player.team] ?? 0) / Math.max(1, room.map.tankLimit),
+    (room.teamScores[player.team] ?? 0) / 10000, (room.teamScores[1 - player.team] ?? 0) / 10000,
+    roster.filter(peer => peer.alive && room.mode <= 3 && peer.team === player.team).length / 3,
+    roster.filter(peer => peer.alive && peer.id !== player.id
+      && (room.mode >= 4 || peer.team !== player.team)).length / 3, Number(!!room.friendlyFire));
+  return {schema: 6, observation, actionSizes: LEARNING_ACTION_SIZES,
     actionMasks: [[true, true, true], [true, true, true], [true, true, true],
       [true, fireReady], items.mask],
     memory: {x: player.x, y: player.y, z: player.z, at: now, deaths: player.deaths, observedAmmo, observedPeers},

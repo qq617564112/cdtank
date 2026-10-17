@@ -22,8 +22,9 @@ SIZES = [3, 3, 3, 2, 9]
 
 
 def course_options(args):
-    return [{key: course.get(key, getattr(args, key, None))
-             for key in ("lesson", "level", "mix_levels", "mode", "map_id", "players", "ammo_id", "items")}
+    defaults = {"controlled": 1}
+    return [{key: course.get(key, getattr(args, key, defaults.get(key)))
+             for key in ("lesson", "level", "mix_levels", "mode", "map_id", "players", "controlled", "ammo_id", "items")}
             for course in getattr(args, "courses", None) or [{}]]
 
 
@@ -66,7 +67,7 @@ class Environment:
         level = random.Random(seed).randint(0, course["level"]) if course["mix_levels"] else course["level"]
         result = self.command({"type": "reset", "seed": seed, "mode": course["mode"],
                              "mapId": course["map_id"], "players": course["players"],
-                             "controlled": 1, "seconds": 60, "tankId": 1,
+                             "controlled": course["controlled"], "seconds": 60, "tankId": 1,
                              "ammoId": course["ammo_id"],
                              "items": course["items"],
                              "lesson": course["lesson"], "level": level})
@@ -76,14 +77,15 @@ class Environment:
         return result
 
     def step(self, action):
-        return self.command({"type": "step", "actions": [action]})
+        actions = [action] if action and isinstance(action[0], (int, float)) else action
+        return self.command({"type": "step", "actions": actions})
 
     def close(self):
         self.connection.close()
 
 
 class Policy(nn.Module):
-    def __init__(self, width, gpu_budget=None):
+    def __init__(self, width, gpu_budget=None, central_width=0):
         super().__init__()
         self.gpu_budget = gpu_budget
         self.encoder = nn.Linear(width, 64)
@@ -92,15 +94,18 @@ class Policy(nn.Module):
         self.critic = nn.Linear(64, 1)
         self.mask_encoder = nn.Linear(sum(SIZES), 64, bias=False)
         nn.init.zeros_(self.mask_encoder.weight)
+        self.central_critic = nn.Sequential(nn.Linear(central_width, 128), nn.Tanh(),
+            nn.Linear(128, 64), nn.Tanh(), nn.Linear(64, 1)) if central_width else None
 
-    def forward(self, observation, hidden, reset, masks):
+    def forward(self, observation, hidden, reset, masks, central_state=None):
         if self.gpu_budget:
             self.gpu_budget.wait()
         features = self.encoder(observation) + self.mask_encoder(masks.to(observation.dtype))
         hidden = self.memory(torch.tanh(features), hidden * (1 - reset[:, None]))
         logits = self.actor(hidden).masked_fill(~masks, -1e9)
         distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
-        return distributions, self.critic(hidden).squeeze(-1), hidden
+        value = self.central_critic(central_state) if self.central_critic is not None and central_state is not None else self.critic(hidden)
+        return distributions, value.squeeze(-1), hidden
 
     def warm_start(self, filename):
         prior = torch.load(filename, map_location="cpu")["policy"]
@@ -122,14 +127,21 @@ class Policy(nn.Module):
             expanded[:, :weight.shape[1]] = weight
             state["encoder.weight"] = expanded
         state.setdefault("mask_encoder.weight", torch.zeros_like(self.mask_encoder.weight))
+        for name, value in self.state_dict().items():
+            if name.startswith("central_critic."):
+                state.setdefault(name, value)
         self.load_state_dict(state)
 
 
 def tensors(results, device):
-    frames = [result["frames"][0] for result in results]
+    frames = [frame for result in results for frame in result["frames"]]
     observations = torch.tensor([frame["observation"] for frame in frames], device=device)
     masks = torch.tensor([sum(frame["actionMasks"], []) for frame in frames], dtype=torch.bool, device=device)
     return observations, masks
+
+
+def critic_tensors(results, device):
+    return torch.tensor([state for result in results for state in result["criticStates"]], device=device)
 
 
 def save_checkpoint(path, policy, optimizer, config, steps, update):
@@ -162,8 +174,15 @@ def main(args):
             environments.append(Environment(args, index))
         with ThreadPoolExecutor(max_workers=args.environments) as pool:
             results = list(pool.map(lambda env: env.reset(), environments))
+            actors_per_world = len(results[0]["frames"])
+            if any(len(result["frames"]) != actors_per_world for result in results):
+                raise ValueError("Courses in one run must control the same number of actors")
+            agents = args.environments * actors_per_world
             observations, masks = tensors(results, device)
-            policy = Policy(observations.shape[-1], budget).to(device)
+            centralized = getattr(args, "centralized_critic", False)
+            central = critic_tensors(results, device) if centralized else None
+            central_width = central.shape[-1] if centralized else 0
+            policy = Policy(observations.shape[-1], budget, central_width).to(device)
             if args.prior:
                 policy.warm_start(args.prior)
             if args.weights:
@@ -184,10 +203,15 @@ def main(args):
                     or course["lesson"] == "range" and course["level"] > 1
                     or course["lesson"] == "items" and course["level"] > 2 for course in course_options(args)):
                 raise ValueError("Auxiliary imitation requires a supported primitive lesson")
+            if actors_per_world > 1 and (args.teacher_steps or args.imitation_weight):
+                raise ValueError("Primitive imitation supports one controlled actor per world")
             config = {**vars(args), "torch": torch.__version__, "device": torch.cuda.get_device_name(0),
                       "observationWidth": observations.shape[-1], "actionSizes": SIZES,
                       "simulationHz": 20, "decisionHz": 10, "observationSchema": results[0]["frames"][0]["schema"],
-                      "algorithm": "recurrent PPO", "hiddenSize": 64,
+                      "algorithm": "recurrent MAPPO" if centralized else "recurrent PPO", "hiddenSize": 64,
+                      "actorsPerWorld": actors_per_world, "actorBatchSize": agents,
+                      "centralStateWidth": central_width,
+                      "controlledRoster": results[0].get("actors"),
                       "maskInputWidth": sum(SIZES), "trainingCourses": course_options(args),
                       "imitationWeight": args.imitation_weight,
                       "imitationEventWeights": {"fire": 5, "consumable": 30, "other": 1},
@@ -198,6 +222,8 @@ def main(args):
             steps = 0
             update = 0
             if checkpoint:
+                if checkpoint["config"].get("centralStateWidth", 0) != central_width:
+                    raise ValueError("Resume needs the same critic architecture; use --weights for a new stage")
                 policy.initialize(checkpoint["policy"])
                 optimizer_state = checkpoint["optimizer"]
                 if len(optimizer_state["param_groups"]) == 1:
@@ -211,60 +237,71 @@ def main(args):
                                 args, device, output, tensors)
                 save_checkpoint(output / "teacher.pt", policy, optimizer, config, 0, 0)
                 observations, masks = tensors(results, device)
-            hidden = torch.zeros(args.environments, 64, device=device)
-            reset = torch.ones(args.environments, device=device)
-            episode_returns = [0.0] * args.environments
+            hidden = torch.zeros(agents, 64, device=device)
+            reset = torch.ones(agents, device=device)
+            episode_returns = [[0.0] * actors_per_world for _ in environments]
             completed = 0
             started = time.monotonic()
             with (output / "metrics.jsonl").open("x", encoding="utf-8") as log:
                 while steps < args.steps:
                     storage = {key: [] for key in ("x", "masks", "hidden", "reset", "actions", "logp", "value", "reward", "done")}
+                    if centralized:
+                        storage["central"] = []
                     if args.imitation_weight:
                         storage["teacher"] = []
                     episodes = []
                     policy.eval()
                     for _ in range(args.rollout):
                         with torch.no_grad():
-                            distributions, value, next_hidden = policy(observations, hidden, reset, masks)
+                            distributions, value, next_hidden = policy(observations, hidden, reset, masks, central)
                             actions = torch.stack([dist.sample() for dist in distributions], dim=-1)
                             logp = sum(dist.log_prob(actions[:, head]) for head, dist in enumerate(distributions))
                         for key, tensor in (("x", observations), ("masks", masks), ("hidden", hidden),
                                             ("reset", reset), ("actions", actions), ("logp", logp), ("value", value)):
                             storage[key].append(tensor)
+                        if centralized:
+                            storage["central"].append(central)
                         if args.imitation_weight:
                             storage["teacher"].append(torch.tensor(
                                 [primitive_action(result["frames"][0], result["lesson"]) for result in results], device=device))
-                        action_list = actions.cpu().tolist()
+                        action_list = actions.reshape(args.environments, actors_per_world, len(SIZES)).cpu().tolist()
                         next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, action_list)))
-                        done = torch.tensor([result["done"] for result in next_results], device=device, dtype=torch.float32)
-                        reward = torch.tensor([result["rewards"][0] for result in next_results], device=device)
+                        done = torch.tensor([result["done"] for result in next_results for _ in result["frames"]],
+                                            device=device, dtype=torch.float32)
+                        reward = torch.tensor([reward for result in next_results for reward in result["rewards"]], device=device)
                         storage["reward"].append(reward)
                         storage["done"].append(done)
                         next_reset = []
                         for index, result in enumerate(next_results):
-                            episode_returns[index] += result["rewards"][0]
-                            died = result["frames"][0]["metrics"]["deaths"] != results[index]["frames"][0]["metrics"]["deaths"]
-                            next_reset.append(float(result["done"] or died))
+                            for actor, frame in enumerate(result["frames"]):
+                                episode_returns[index][actor] += result["rewards"][actor]
+                                died = frame["metrics"]["deaths"] != results[index]["frames"][actor]["metrics"]["deaths"]
+                                next_reset.append(float(result["done"] or died))
                             if result["done"]:
                                 completed += 1
-                                episodes.append({"return": episode_returns[index],
+                                episodes.append({"return": float(np.mean(episode_returns[index])),
+                                                 "actorReturns": episode_returns[index],
                                                  "seed": result["seed"], "lesson": result["lesson"],
                                                  "level": result["level"],
                                                  "success": result.get("success"),
                                                  "lessonMetrics": result.get("lessonMetrics"),
-                                                 "metrics": result["frames"][0]["metrics"]})
-                                episode_returns[index] = 0
+                                                 "metrics": result["frames"][0]["metrics"],
+                                                 "actorMetrics": [frame["metrics"] for frame in result["frames"]],
+                                                 "actorItemMetrics": result.get("actorItemMetrics"),
+                                                 "outcomes": result.get("outcomes")})
+                                episode_returns[index] = [0.0] * actors_per_world
                                 next_results[index] = environments[index].reset()
                         results = next_results
                         observations, masks = tensors(results, device)
+                        central = critic_tensors(results, device) if centralized else None
                         hidden = next_hidden
                         reset = torch.tensor(next_reset, device=device)
-                        steps += args.environments
+                        steps += agents
                     data = {key: torch.stack(values) for key, values in storage.items()}
                     with torch.no_grad():
-                        _, next_value, _ = policy(observations, hidden, reset, masks)
+                        _, next_value, _ = policy(observations, hidden, reset, masks, central)
                         advantages = torch.zeros_like(data["reward"])
-                        gae = torch.zeros(args.environments, device=device)
+                        gae = torch.zeros(agents, device=device)
                         for tick in reversed(range(args.rollout)):
                             continuation = 1 - data["done"][tick]
                             delta = data["reward"][tick] + .995 * next_value * continuation - data["value"][tick]
@@ -273,7 +310,7 @@ def main(args):
                             next_value = data["value"][tick]
                         returns = advantages + data["value"]
                         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-                    chunks = [(env, start) for env in range(args.environments)
+                    chunks = [(env, start) for env in range(agents)
                               for start in range(0, args.rollout, 32)]
                     losses = []
                     policy.train()
@@ -289,7 +326,8 @@ def main(args):
                             for relative in range(32):
                                 ticks = starts + relative
                                 ds, values, states = policy(data["x"][ticks, env_indices], states,
-                                                           data["reset"][ticks, env_indices], data["masks"][ticks, env_indices])
+                                    data["reset"][ticks, env_indices], data["masks"][ticks, env_indices],
+                                    data["central"][ticks, env_indices] if centralized else None)
                                 chosen = data["actions"][ticks, env_indices]
                                 new_logp = sum(dist.log_prob(chosen[:, head]) for head, dist in enumerate(ds))
                                 old_logp = data["logp"][ticks, env_indices]
@@ -319,6 +357,8 @@ def main(args):
                     hidden = hidden.detach()
                     update += 1
                     row = {"update": update, "steps": steps, "seconds": time.monotonic() - started,
+                           "worldSteps": steps // actors_per_world, "actorsPerWorld": actors_per_world,
+                           "actorBatchSize": agents,
                            "gpuPercent": budget.utilization, "gpuPausedSeconds": budget.paused_seconds,
                            "completedEpisodes": completed, "losses": np.mean(losses, axis=0).tolist(),
                            "episodes": episodes, "rewardMean": data["reward"].mean().item()}
@@ -370,6 +410,8 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)
     parser.add_argument("--players", type=int, default=2)
+    parser.add_argument("--controlled", type=int, default=1)
+    parser.add_argument("--centralized-critic", action="store_true")
     parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat"], default="combat")
     parser.add_argument("--level", type=int, choices=range(4), default=1)
@@ -394,6 +436,8 @@ if __name__ == "__main__":
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
         parser.error("Evaluation episodes and environments must be positive")
     for course in course_options(args):
+        if not 1 <= course["controlled"] <= course["players"] <= 6:
+            parser.error("Each course needs one to six controlled actors within the room size")
         if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "combat") or course["level"] not in range(4):
             parser.error("Each course needs a supported lesson and level")
         if args.teacher_steps and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")

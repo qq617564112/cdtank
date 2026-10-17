@@ -57,6 +57,8 @@ let consumedItems = 0;
 let rejectedItems = 0;
 let healedHp = 0;
 let practiceBearing = new Map<string, number>();
+let teamMetrics: ReturnType<World['learningCentralState']>['teamMetrics'];
+let actorItemMetrics: {consumedItems: number; rejectedItems: number; healedHp: number}[] = [];
 
 function rangeError(distance: number, range: number): number {
   return Math.max(0, .75 * range - distance, distance - .9 * range);
@@ -156,18 +158,38 @@ function reset(request: ResetRequest) {
   rejectedItems = 0;
   healedHp = 0;
   practiceBearing = new Map();
-  const mapId = request.mapId ?? 7;
+  const requestedMapId = request.mapId ?? 7;
   const count = request.players ?? 2;
   const controlled = request.controlled ?? 1;
-  if (controlled < 1 || controlled > count) throw new Error('Invalid controlled player count');
+  if (!Number.isInteger(count) || count < 2 || count > 6
+      || !Number.isInteger(controlled) || controlled < 1 || controlled > count) {
+    throw new Error('Learning requires two to six players and a valid controlled count');
+  }
+  if (lesson !== 'combat' && controlled !== 1) throw new Error('Primitive lessons control one actor');
+  if (mode <= 3 && controlled !== count && controlled > Math.ceil(count / 2)) {
+    throw new Error('Team learning controls one side or the entire roster');
+  }
   world = new World(() => clock, {allocateRoomId: () => 'LEARNING'});
-  const joined = world.createAndJoin('LEARNER-0', mode, mapId, '学习', 'Learner 0',
-    request.tankId ?? 1, '', 2, count, false, request.seconds ?? 60);
+  const joined = world.createAndJoin('LEARNER-0', mode, requestedMapId, '学习', 'Learner 0',
+    request.tankId ?? 1, '', count, count, false, request.seconds ?? 60);
+  const mapId = joined.mapId;
   roomId = joined.roomId;
   playerIds = [joined.playerId];
-  for (let index = 1; index < controlled; index++) {
-    playerIds.push(world.joinRoom(roomId, `LEARNER-${index}`, `Learner ${index}`, request.tankId ?? 1).playerId);
+  const stationaryIds: string[] = [];
+  for (let seat = 1; seat < count; seat++) {
+    // Alternating admission keeps a complete learned side together without team swaps.
+    const learned = playerIds.length < controlled
+      && (mode > 3 || controlled === count || seat % 2 === 0);
+    if (learned) {
+      const index = playerIds.length;
+      playerIds.push(world.joinRoom(roomId, `LEARNER-${index}`, `Learner ${index}`, request.tankId ?? 1).playerId);
+    } else if (lesson !== 'combat') {
+      const idle = world.joinRoom(roomId, `IDLE-${seat}`, `Idle ${seat}`, request.tankId ?? 1);
+      stationaryIds.push(idle.playerId);
+      practiceIds.push(idle.playerId);
+    } else world.manageCpu(joined.playerId, 1, 'ADD', request.tankId ?? 1);
   }
+  if (playerIds.length !== controlled) throw new Error('Learning roster did not fill controlled seats');
   const tank = content.tanks.get(request.tankId ?? 1)!;
   const ammo = content.items.get(request.ammoId ?? 2001);
   if (!ammo || ammo.kind !== 'ammo') throw new Error('Unknown practice ammunition');
@@ -190,15 +212,7 @@ function reset(request: ResetRequest) {
     });
     world.bindInventory(id, {hotkeys, records});
   }
-  const stationaryIds: string[] = [];
-  for (let index = controlled; index < count; index++) {
-    if (lesson !== 'combat') {
-      const idle = world.joinRoom(roomId, `IDLE-${index}`, `Idle ${index}`, request.tankId ?? 1);
-      stationaryIds.push(idle.playerId);
-      practiceIds.push(idle.playerId);
-      world.bindRoleSources(idle.playerId, newbornBattleSources(tank, pet));
-    } else world.manageCpu(joined.playerId, 1, 'ADD', request.tankId ?? 1);
-  }
+  for (const id of stationaryIds) world.bindRoleSources(id, newbornBattleSources(tank, pet));
   for (const id of [...playerIds, ...stationaryIds]) world.ready(id, 1);
   for (const id of [...playerIds, ...stationaryIds]) world.resourcesLoaded(id, 1);
   const snapshot = world.snapshot(roomId)!;
@@ -313,7 +327,13 @@ function reset(request: ResetRequest) {
     initialDistance = Math.hypot(start.x - goal.x, start.z - goal.z);
     previous = frames();
   }
-  return {type: 'reset', seed, mode, mapId, level, frames: previous,
+  const central = world.learningCentralState(roomId, playerIds);
+  teamMetrics = central.teamMetrics;
+  actorItemMetrics = playerIds.map(() => ({consumedItems: 0, rejectedItems: 0, healedHp: 0}));
+  return {type: 'reset', seed, mode, mapId, lesson, level, frames: previous,
+    criticStates: central.criticStates,
+    actors: world.snapshot(roomId)!.players.map(player => ({id: player.id, team: player.team,
+      learned: playerIds.includes(player.id), cpu: !!player.isCpu})),
     rewards: playerIds.map(() => 0), done: false, initialDistance};
 }
 
@@ -383,7 +403,16 @@ function step(request: StepRequest) {
   rangeShots += rangeShotDelta;
   outsideRangeShots += outsideRangeShotDelta;
   const current = frames(events);
+  const central = world.learningCentralState(roomId, playerIds);
   decisions++;
+  for (let index = 0; index < playerIds.length; index++) {
+    const uses = events.filter(event => event.type === 'itemUsed' && event.playerId === playerIds[index]);
+    actorItemMetrics[index].consumedItems += uses.length;
+    actorItemMetrics[index].rejectedItems += events.filter(event => event.type === 'itemRejected'
+      && event.playerId === playerIds[index]).length;
+    actorItemMetrics[index].healedHp += uses.reduce((total, event) => total +
+      (event.skillId !== undefined && content.skills.get(event.skillId)?.functions[0]?.type === 2 ? event.value : 0), 0);
+  }
   const usedItems = events.filter(event => event.type === 'itemUsed' && event.playerId === playerIds[0]);
   const healingDelta = usedItems.reduce((total, event) => total +
     (event.skillId !== undefined && content.skills.get(event.skillId)?.functions[0]?.type === 2 ? event.value : 0), 0);
@@ -407,7 +436,8 @@ function step(request: StepRequest) {
     : lesson === 'items' ? current[0].alive && (level === 0
       ? decisions >= 150 && current[0].metrics.hp >= .75 * lessonMaximumHp
       : level === 1 ? decisions >= 150 && current[0].metrics.damageTaken === 0
-      : level === 2 ? goalDistance !== undefined && goalDistance < 20 : current[0].metrics.kills > 0) : false;
+      : level === 2 ? goalDistance !== undefined && goalDistance < 20 : current[0].metrics.kills > 0)
+    : current[0].result?.players.find(player => player.id === playerIds[0])?.outcome === 'WIN';
   const done = current[0].phase === 'FINISHED'
     || lesson === 'navigation' && (success || decisions >= (level === 3 ? 300 : 150))
     || lesson === 'turning' && (success || decisions >= 100)
@@ -429,6 +459,20 @@ function step(request: StepRequest) {
     if (mode === 2) reward += .004 * (after.bunkerDamage - before.bunkerDamage);
     if (mode === 3) reward += .004 * (after.vipDamage - before.vipDamage);
     if (mode === 5) reward += after.objectives - before.objectives;
+    if (lesson === 'combat' && mode <= 3) {
+      const team = after.team;
+      const oldTeam = teamMetrics[team], newTeam = central.teamMetrics[team];
+      let shared = .002 * (newTeam.damage - oldTeam.damage)
+        - .001 * (newTeam.damageTaken - oldTeam.damageTaken)
+        + newTeam.kills - oldTeam.kills - (newTeam.deaths - oldTeam.deaths);
+      if (mode === 2) shared += .004 * (newTeam.bunkerDamage - oldTeam.bunkerDamage);
+      if (mode === 3) shared += .004 * (newTeam.vipDamage - oldTeam.vipDamage);
+      reward = .25 * reward + .75 * shared;
+    }
+    if (lesson === 'combat') {
+      reward -= .02 * events.filter(event => event.type === 'itemUsed' && event.playerId === playerIds[index]).length;
+      reward -= .01 * events.filter(event => event.type === 'itemRejected' && event.playerId === playerIds[index]).length;
+    }
     if (request.actions[index][0] !== 1 && frame.alive && moved < .2) reward -= .002;
     if (lesson === 'shooting' || lesson === 'aiming') {
       const aimPotential = (value: Frame) => {
@@ -473,8 +517,12 @@ function step(request: StepRequest) {
     }
     return reward;
   });
+  teamMetrics = central.teamMetrics;
   previous = current;
-  return {type: 'step', seed, frames: current, rewards, done, lesson, level, success, goalDistance,
+  return {type: 'step', seed, frames: current, criticStates: central.criticStates,
+    rewards, done, lesson, level, success, goalDistance,
+    outcomes: playerIds.map(id => current[0].result?.players.find(player => player.id === id)?.outcome ?? null),
+    actorItemMetrics, teamMetrics,
     lessonMetrics: {initialDistance, goalDistance, travelled, blocked, decisions,
       targetDistance, weaponRange: lesson === 'range' ? lessonRange : current[0].weapon.range,
       currentWeaponRange: current[0].weapon.range, rangeTicks, rangeStreak,

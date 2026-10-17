@@ -1,4 +1,4 @@
-"""Measure frozen policies on separate curriculum seeds and save actual rollouts."""
+"""Measure frozen local policies on separate seeds and save every learned actor."""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -31,6 +31,7 @@ def main(args):
             environments.append(Environment(args, number))
         with ThreadPoolExecutor(max_workers=count) as pool:
             initial = list(pool.map(lambda number: environments[number].reset(args.seed + number), range(count)))
+            actors_per_world = len(initial[0]["frames"])
             source = Path(__file__).resolve().parents[2] / "source.json"
             config = {**vars(args), "checkpointSteps": checkpoint["steps"],
                       "checkpointSource": checkpoint.get("config", {}).get("source"),
@@ -39,9 +40,12 @@ def main(args):
                       "simulationSource": environments[0].source,
                       "observationWidth": len(initial[0]["frames"][0]["observation"]),
                       "observationSchema": initial[0]["frames"][0]["schema"],
+                      "actorsPerWorld": actors_per_world, "controlledRoster": initial[0].get("actors"),
+                      "executionUsesPrivilegedState": False,
                       "torch": torch.__version__, "device": torch.cuda.get_device_name(0)}
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
-            policy = Policy(config["observationWidth"], budget).cuda().eval()
+            policy = Policy(config["observationWidth"], budget,
+                            checkpoint.get("config", {}).get("centralStateWidth", 0)).cuda().eval()
             policy.initialize(checkpoint["policy"])
             running = [episode_slot(env, number, result) for number, (env, result)
                        in enumerate(zip(environments, initial))]
@@ -49,30 +53,33 @@ def main(args):
             with (output / "episodes.jsonl").open("x", encoding="utf-8") as log:
                 while running:
                     observation, masks = tensors([slot["result"] for slot in running], "cuda")
-                    hidden = torch.stack([slot["hidden"] for slot in running])
-                    reset = torch.tensor([slot["reset"] for slot in running], device="cuda")
+                    hidden = torch.cat([slot["hidden"] for slot in running])
+                    reset = torch.tensor([value for slot in running for value in slot["reset"]], device="cuda")
                     with torch.no_grad():
                         distributions, _, hidden = policy(observation, hidden, reset, masks)
                         chosen = [dist.sample() if args.stochastic else dist.logits.argmax(dim=-1)
                                   for dist in distributions]
-                        actions = torch.stack(chosen, dim=-1).tolist()
+                        actions = torch.stack(chosen, dim=-1).reshape(len(running), actors_per_world, 5).tolist()
                     advanced = list(pool.map(lambda pair: pair[0]["environment"].step(pair[1]), zip(running, actions)))
                     remaining = []
                     for index, (slot, result, action) in enumerate(zip(running, advanced, actions)):
-                        before = slot["result"]["frames"][0]
-                        frame = result["frames"][0]
+                        before = slot["result"]["frames"]
+                        frames = result["frames"]
                         tick = slot["tick"]
-                        slot["return"] += result["rewards"][0]
+                        slot["returns"] = [total + reward for total, reward in zip(slot["returns"], result["rewards"])]
                         if tick % 10 == 0 or result["done"]:
-                            slot["trajectory"].append({"tick": tick, "action": action,
-                                "position": frame["memory"], "goalDistance": result.get("goalDistance"),
-                                "observation": frame["observation"]})
+                            actors = [{"action": selected, "position": frame["memory"],
+                                       "observation": frame["observation"]} for frame, selected in zip(frames, action)]
+                            slot["trajectory"].append({"tick": tick, "goalDistance": result.get("goalDistance"),
+                                **actors[0], "actors": actors})
                         if result["done"] or tick >= 999:
                             row = {"episode": slot["episode"], "seed": result["seed"], "steps": tick + 1,
                                    "lesson": result["lesson"], "level": result["level"],
-                                   "return": slot["return"], "success": result.get("success"),
-                                   "metrics": frame["metrics"], "lessonMetrics": result.get("lessonMetrics"),
-                                   "trajectory": slot["trajectory"]}
+                                   "return": float(np.mean(slot["returns"])), "actorReturns": slot["returns"],
+                                   "success": result.get("success"), "outcomes": result.get("outcomes"),
+                                   "metrics": frames[0]["metrics"], "actorMetrics": [frame["metrics"] for frame in frames],
+                                   "actorItemMetrics": result.get("actorItemMetrics"),
+                                   "lessonMetrics": result.get("lessonMetrics"), "trajectory": slot["trajectory"]}
                             episodes.append(row)
                             log.write(json.dumps(row) + "\n")
                             log.flush()
@@ -83,17 +90,32 @@ def main(args):
                             else:
                                 slot["environment"].close()
                         else:
-                            slot.update(result=result, hidden=hidden[index], tick=tick + 1,
-                                        reset=float(frame["metrics"]["deaths"] != before["metrics"]["deaths"]))
+                            slot.update(result=result, hidden=hidden[index * actors_per_world:(index + 1) * actors_per_world],
+                                        tick=tick + 1, reset=[float(frame["metrics"]["deaths"] != old["metrics"]["deaths"])
+                                                             for frame, old in zip(frames, before)])
                             remaining.append(slot)
                     running = remaining
-        summary = {"episodes": len(episodes), "successRate": np.mean([bool(row["success"]) for row in episodes]),
-                   "returnMean": np.mean([row["return"] for row in episodes]),
-                   "stepsMean": np.mean([row["steps"] for row in episodes]),
-                   "itemUsesMean": np.mean([row["lessonMetrics"].get("consumedItems", 0) for row in episodes]),
-                   "healedHpMean": np.mean([row["lessonMetrics"].get("healedHp", 0) for row in episodes]),
-                   "damageTakenMean": np.mean([row["metrics"]["damageTaken"] for row in episodes]),
-                   "finalHpMean": np.mean([row["metrics"]["hp"] for row in episodes]),
+        metrics = [metric for row in episodes for metric in row["actorMetrics"]]
+        item_metrics = [metric for row in episodes for metric in
+                        (row["actorItemMetrics"] or [row["lessonMetrics"]])]
+        outcomes = [(row["outcomes"] or [None])[0] for row in episodes]
+        summary = {"episodes": len(episodes), "actorsPerWorld": actors_per_world,
+                   "successRate": float(np.mean([bool(row["success"]) for row in episodes])),
+                   "winRate": outcomes.count("WIN") / len(episodes),
+                   "lossRate": outcomes.count("LOSE") / len(episodes),
+                   "drawRate": outcomes.count("DRAW") / len(episodes),
+                   "unfinishedEpisodes": outcomes.count(None),
+                   "returnMean": float(np.mean([row["return"] for row in episodes])),
+                   "stepsMean": float(np.mean([row["steps"] for row in episodes])),
+                   "itemUsesMean": float(np.mean([row.get("consumedItems", 0) for row in item_metrics])),
+                   "healedHpMean": float(np.mean([row.get("healedHp", 0) for row in item_metrics])),
+                   "damageTakenMean": float(np.mean([row["damageTaken"] for row in metrics])),
+                   "finalHpMean": float(np.mean([row["hp"] for row in metrics])),
+                   "killsMean": float(np.mean([row["kills"] for row in metrics])),
+                   "deathsMean": float(np.mean([row["deaths"] for row in metrics])),
+                   "objectiveDamageMean": float(np.mean([row["bunkerDamage"] for row in metrics])),
+                   "vipDamageMean": float(np.mean([row["vipDamage"] for row in metrics])),
+                   "objectivesMean": float(np.mean([row["objectives"] for row in metrics])),
                    "checkpointSteps": checkpoint["steps"], "readyForGameplay": False}
         (output / "result.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
         print(json.dumps(summary), flush=True)
@@ -105,9 +127,10 @@ def main(args):
 
 
 def episode_slot(environment, episode, result):
+    actors = len(result["frames"])
     return {"environment": environment, "episode": episode, "result": result,
-            "hidden": torch.zeros(64, device="cuda"), "reset": 1., "tick": 0,
-            "return": 0., "trajectory": []}
+            "hidden": torch.zeros(actors, 64, device="cuda"), "reset": [1.] * actors, "tick": 0,
+            "returns": [0.] * actors, "trajectory": []}
 
 
 if __name__ == "__main__":
@@ -123,6 +146,7 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=int, default=4)
     parser.add_argument("--map-id", type=int, default=7)
     parser.add_argument("--players", type=int, default=2)
+    parser.add_argument("--controlled", type=int, default=1)
     parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--items", type=json.loads, help="Use [] to measure the same policy without consumables")
     parser.add_argument("--seed", type=int, default=100000179)

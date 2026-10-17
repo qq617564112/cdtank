@@ -1,6 +1,7 @@
 import {itemHitHandler, gameContent} from '../../shared/content/catalog';
 import {collectCpuTrace} from './battle/cpu/trace';
 import {observeLearning, type LearningGoal, type LearningMemory} from './learning/observation';
+import {centralLearningState} from './learning/central-state';
 import {defaultAmmoId} from '../../shared/content/catalog';
 import {confirmAcceptedAmmoSelection} from './battle/items/ammo-confirmation';
 import {resetTrapFireRestraint} from './battle/items/trap-fire-restraint';
@@ -943,6 +944,13 @@ export class World {
     return observeLearning(found.room, found.player,
       found.player.vip ? Math.max(1, found.room.map.vipHp) : this.playerMaxHp(found.player),
       this.now(), previous, goal, events);
+  }
+
+  /** Privileged offline value-network state, separate from local actor perception. */
+  learningCentralState(roomId: string, playerIds: readonly string[]) {
+    const room = this.rooms.get(roomId);
+    if (!room) throw new Error('学习房间不存在');
+    return centralLearningState(room, playerIds, this.now());
   }
 
   /** Set offline lesson initial conditions without changing battle advancement rules. */
