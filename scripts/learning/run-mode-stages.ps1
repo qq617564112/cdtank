@@ -6,7 +6,7 @@ param(
   [int]$Environments=8,
   [int]$MinibatchSequences=64,
   [int]$TeacherSteps=80000,
-  [int]$TeacherBatchSequences=1024,
+  [int]$TeacherBatchSequences=256,
   [ValidateRange(10,90)][int]$GpuUtilizationLimit=75,
   [ValidateSet(64,128,256)][int]$HiddenSize=256
 )

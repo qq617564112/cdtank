@@ -31,10 +31,11 @@ class GpuBudget:
         self.cooling = False
         self.utilization = 0
         self.paused_seconds = 0
+        self.drained_seconds = 0
         self.log = (output / "gpu.jsonl").open("x", encoding="utf-8")
         # All processes on this host use the same monotonic-clock windows.
         self.window = .1
-        self.duty = (limit - 6) / 100
+        self.duty = max(.01, (limit - 12) / 100)
 
     @staticmethod
     def check(result):
@@ -44,6 +45,16 @@ class GpuBudget:
     def wait(self):
         import torch
 
+        before = time.monotonic()
+        torch.cuda.synchronize()
+        drained = time.monotonic() - before
+        self.drained_seconds += drained
+        # A long recurrent kernel can finish beyond its submission window.
+        # Account for that work before admitting the next CUDA operation.
+        if drained > self.window * (1 - self.duty):
+            before = time.monotonic()
+            time.sleep(drained * (1 - self.duty) / self.duty)
+            self.paused_seconds += time.monotonic() - before
         while True:
             now = time.monotonic()
             if now >= self.next_sample:
@@ -60,7 +71,8 @@ class GpuBudget:
                     self.log.write(json.dumps({"time": time.time(), "gpuPercent": self.utilization,
                         "memoryMiB": memory.used / 1048576, "totalMemoryMiB": memory.total / 1048576,
                         "limitPercent": self.limit, "submissionDutyPercent": self.duty * 100,
-                        "cooling": self.cooling, "pausedSeconds": self.paused_seconds}) + "\n")
+                        "cooling": self.cooling, "pausedSeconds": self.paused_seconds,
+                        "cudaDrainSeconds": self.drained_seconds}) + "\n")
                     self.log.flush()
                     self.next_log = now + 1
             phase = now % self.window

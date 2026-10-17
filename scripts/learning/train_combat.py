@@ -270,7 +270,7 @@ def save_checkpoint(path, policy, optimizer, config, steps, update):
 def main(args):
     args.teacher_source = getattr(args, "teacher_source", "primitive")
     args.teacher_replay_sequences = getattr(args, "teacher_replay_sequences", 4096)
-    args.teacher_batch_sequences = getattr(args, "teacher_batch_sequences", 512)
+    args.teacher_batch_sequences = getattr(args, "teacher_batch_sequences", 256)
     args.teacher_epochs = getattr(args, "teacher_epochs", 2)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
@@ -597,7 +597,7 @@ if __name__ == "__main__":
     parser.add_argument("--teacher-steps", type=int, default=0)
     parser.add_argument("--teacher-source", choices=("primitive", "cpu"), default="primitive")
     parser.add_argument("--teacher-replay-sequences", type=int, default=4096)
-    parser.add_argument("--teacher-batch-sequences", type=int, default=512)
+    parser.add_argument("--teacher-batch-sequences", type=int, default=256)
     parser.add_argument("--teacher-epochs", type=int, default=2)
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)

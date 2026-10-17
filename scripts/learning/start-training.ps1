@@ -18,7 +18,7 @@ param(
   [int]$TeacherSteps=0,
   [ValidateSet('primitive','cpu')][string]$TeacherSource='primitive',
   [int]$TeacherReplaySequences=4096,
-  [int]$TeacherBatchSequences=512,
+  [int]$TeacherBatchSequences=256,
   [int]$TeacherEpochs=2,
   [double]$ImitationWeight,
   [string]$Curriculum='',

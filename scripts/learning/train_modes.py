@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument("--hidden-size", type=int, choices=(64, 128, 256), default=256)
     parser.add_argument("--evaluation-episodes", type=int, default=32)
     parser.add_argument("--teacher-steps", type=int, default=80000)
-    parser.add_argument("--teacher-batch-sequences", type=int, default=1024)
+    parser.add_argument("--teacher-batch-sequences", type=int, default=256)
     parser.add_argument("--gpu-utilization-limit", type=int, default=80)
     parser.add_argument("--seed", type=int, default=179)
     main(parser.parse_args())
