@@ -33,8 +33,10 @@ def main(args):
             hidden_size=args.hidden_size,
             learning_rate=.00025, ammo_id=2001, lesson="combat", level=1, mix_levels=False,
             seed=args.seed + 1000 * course["mode"], evaluation_episodes=args.evaluation_episodes,
-            evaluation_environments=min(8, args.environments), teacher_steps=0,
-            teacher_student_fraction=.75, imitation_weight=0., curriculum=None, courses=None,
+            evaluation_environments=min(8, args.environments), teacher_steps=args.teacher_steps,
+            teacher_source="cpu", teacher_replay_sequences=4096,
+            teacher_batch_sequences=args.teacher_batch_sequences, teacher_epochs=2,
+            teacher_student_fraction=.75, imitation_weight=.5, curriculum=None, courses=None,
             items=loadout, centralized_critic=True, opponent_pool=None, opponent_paths=None, **course)
         train_policy(options)
         result = json.loads((destination / "result.json").read_text(encoding="utf-8"))
@@ -55,6 +57,8 @@ if __name__ == "__main__":
     parser.add_argument("--minibatch-sequences", type=int, default=64)
     parser.add_argument("--hidden-size", type=int, choices=(64, 128, 256), default=256)
     parser.add_argument("--evaluation-episodes", type=int, default=32)
+    parser.add_argument("--teacher-steps", type=int, default=80000)
+    parser.add_argument("--teacher-batch-sequences", type=int, default=1024)
     parser.add_argument("--gpu-utilization-limit", type=int, default=80)
     parser.add_argument("--seed", type=int, default=179)
     main(parser.parse_args())
