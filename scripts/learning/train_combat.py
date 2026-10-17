@@ -276,6 +276,7 @@ def main(args):
     args.teacher_replay_sequences = getattr(args, "teacher_replay_sequences", 4096)
     args.teacher_batch_sequences = getattr(args, "teacher_batch_sequences", 256)
     args.teacher_epochs = getattr(args, "teacher_epochs", 2)
+    args.direction_label_weight = getattr(args, "direction_label_weight", 1.)
     args.rehearsal = getattr(args, "rehearsal", None)
     args.rehearsal_weight = getattr(args, "rehearsal_weight", 3.)
     args.rehearsal_batch_sequences = getattr(args, "rehearsal_batch_sequences", 32)
@@ -569,7 +570,8 @@ def main(args):
                             entropy = sum(dist.entropy().mean() for dist in ds)
                             divergence = ((ratio - 1) - (new_logp - old_logp)).mean().detach()
                             loss = actor_loss + .5 * critic_loss - .005 * entropy
-                            imitation_loss = demonstration_loss(ds, data["teacher"][ticks, env_indices]) if args.imitation_weight else loss.new_zeros(())
+                            imitation_loss = demonstration_loss(ds, data["teacher"][ticks, env_indices],
+                                args.direction_label_weight) if args.imitation_weight else loss.new_zeros(())
                             loss += args.imitation_weight * imitation_loss
                             if reference:
                                 targets = data["reference"][ticks, env_indices].split(SIZES, dim=-1)
@@ -678,6 +680,8 @@ if __name__ == "__main__":
     parser.add_argument("--teacher-replay-sequences", type=int, default=4096)
     parser.add_argument("--teacher-batch-sequences", type=int, default=256)
     parser.add_argument("--teacher-epochs", type=int, default=2)
+    parser.add_argument("--direction-label-weight", type=float, default=1.,
+                        help="Weight active body and turret turn labels during online imitation")
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)
     parser.add_argument("--curriculum", help="JSON list of courses assigned evenly across environments")
@@ -712,6 +716,8 @@ if __name__ == "__main__":
         parser.error("Human control reward weight must be positive")
     if min(args.teacher_replay_sequences, args.teacher_batch_sequences, args.teacher_epochs) < 1:
         parser.error("Teacher replay, batch size and epochs must be positive")
+    if args.direction_label_weight <= 0:
+        parser.error("Direction label weight must be positive")
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
         parser.error("Evaluation episodes and environments must be positive")
     for course in course_options(args):
