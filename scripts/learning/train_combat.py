@@ -14,7 +14,6 @@ import numpy as np
 import torch
 from torch import nn
 from torch.distributions import Categorical
-from torch.nn.utils.rnn import PackedSequence, pack_sequence, pad_packed_sequence
 from gpu_budget import GpuBudget
 from teacher import teach, demonstration_actions, demonstration_loss, DemonstrationReplay
 
@@ -137,21 +136,25 @@ class Policy(nn.Module):
             boundaries = [0] + [tick for tick in range(1, ticks) if reset_rows[tick][actor]] + [ticks]
             segments.extend((end - start, actor, start, end) for start, end in zip(boundaries, boundaries[1:]))
         segments.sort(key=lambda entry: entry[0], reverse=True)
-        packed = pack_sequence([features[start:end, actor] for _, actor, start, end in segments], enforce_sorted=True)
-        initial = torch.stack([hidden[actor] * (1 - reset[0, actor]) if start == 0 else torch.zeros_like(hidden[actor])
-                               for _, actor, start, _ in segments]).unsqueeze(0)
+        lengths, actor_indices, starts, _ = np.asarray(segments, dtype=np.int64).T
+        offsets = np.arange(lengths[0], dtype=np.int64)[:, None]
+        active = offsets < lengths[None, :]
+        positions = torch.as_tensor(((starts[None, :] + offsets) * actors
+                                     + actor_indices[None, :])[active], device=features.device)
+        batch_sizes = torch.from_numpy(active.sum(axis=1, dtype=np.int64))
+        packed_features = features.reshape(-1, self.hidden_size).index_select(0, positions)
+        selected_actors = torch.as_tensor(actor_indices.copy(), device=hidden.device)
+        keep_initial = torch.tensor([start == 0 and not reset_rows[0][actor]
+                                     for _, actor, start, _ in segments], device=hidden.device, dtype=hidden.dtype)
+        initial = (hidden.index_select(0, selected_actors) * keep_initial[:, None]).unsqueeze(0)
         # PyTorch 2.3's packed GRU operator uses the GRUCell parameter layout.
         weights = [self.memory.weight_ih, self.memory.weight_hh, self.memory.bias_ih, self.memory.bias_hh]
         if observation.is_cuda and not self._memory_flattened:
             with torch.no_grad():
                 torch._cudnn_rnn_flatten_weight(weights, 4, self.hidden_size, 3, self.hidden_size, 0, 1, False, False)
             self._memory_flattened = True
-        output, _ = torch._VF.gru(packed.data, packed.batch_sizes, initial, weights, True, 1, 0., self.training, False)
-        padded, _ = pad_packed_sequence(PackedSequence(output, packed.batch_sizes))
-        values = torch.cat([padded[:length, index] for index, (length, _, _, _) in enumerate(segments)])
-        positions = torch.tensor([tick * actors + actor for _, actor, start, end in segments
-                                  for tick in range(start, end)], device=features.device)
-        states = values.new_zeros(ticks * actors, self.hidden_size).index_copy(0, positions, values).reshape(ticks, actors, self.hidden_size)
+        output, _ = torch._VF.gru(packed_features, batch_sizes, initial, weights, True, 1, 0., self.training, False)
+        states = output.new_zeros(ticks * actors, self.hidden_size).index_copy(0, positions, output).reshape(ticks, actors, self.hidden_size)
         logits = self.actor(states).masked_fill(~masks, -1e9)
         distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
         value = self.central_critic(central_state) if self.central_critic is not None and central_state is not None else self.critic(states.detach())
