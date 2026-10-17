@@ -276,6 +276,7 @@ def main(args):
     args.teacher_replay_sequences = getattr(args, "teacher_replay_sequences", 4096)
     args.teacher_batch_sequences = getattr(args, "teacher_batch_sequences", 256)
     args.teacher_epochs = getattr(args, "teacher_epochs", 2)
+    args.teacher_learning_rate = getattr(args, "teacher_learning_rate", .001)
     args.direction_label_weight = getattr(args, "direction_label_weight", 1.)
     args.rehearsal = getattr(args, "rehearsal", None)
     args.rehearsal_weight = getattr(args, "rehearsal_weight", 3.)
@@ -442,7 +443,7 @@ def main(args):
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
             save_checkpoint(output / "initial.pt", policy, optimizer, config, steps, update)
             if args.teacher_steps and not args.resume:
-                teacher_optimizer = torch.optim.Adam(policy.parameters(), lr=.001)
+                teacher_optimizer = torch.optim.Adam(policy.parameters(), lr=args.teacher_learning_rate)
                 results = teach(policy, teacher_optimizer, environments, pool, results,
                                 args, device, output, tensors,
                                 lambda progressed: save_checkpoint(output / "teacher-latest.pt", policy, optimizer,
@@ -680,6 +681,7 @@ if __name__ == "__main__":
     parser.add_argument("--teacher-replay-sequences", type=int, default=4096)
     parser.add_argument("--teacher-batch-sequences", type=int, default=256)
     parser.add_argument("--teacher-epochs", type=int, default=2)
+    parser.add_argument("--teacher-learning-rate", type=float, default=.001)
     parser.add_argument("--direction-label-weight", type=float, default=1.,
                         help="Weight active body and turret turn labels during online imitation")
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
@@ -718,6 +720,8 @@ if __name__ == "__main__":
         parser.error("Teacher replay, batch size and epochs must be positive")
     if args.direction_label_weight <= 0:
         parser.error("Direction label weight must be positive")
+    if args.teacher_learning_rate <= 0:
+        parser.error("Teacher learning rate must be positive")
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
         parser.error("Evaluation episodes and environments must be positive")
     for course in course_options(args):
