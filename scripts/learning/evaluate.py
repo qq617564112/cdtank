@@ -16,11 +16,11 @@ from gpu_budget import GpuBudget
 def main(args):
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
-    torch.set_num_threads(2)
+    device = torch.device(getattr(args, "device", "cuda"))
+    torch.set_num_threads(1 if device.type == "cpu" else 2)
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    device = torch.device(getattr(args, "device", "cuda"))
     checkpoint = torch.load(args.checkpoint, map_location=device)
     (output / "config.json").write_text(json.dumps(vars(args), indent=2), encoding="utf-8")
     budget = GpuBudget(args.gpu_utilization_limit, output) if device.type == "cuda" else None
