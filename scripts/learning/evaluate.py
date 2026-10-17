@@ -86,6 +86,7 @@ def main(args):
                                    "return": float(np.mean(slot["returns"])), "actorReturns": slot["returns"],
                                    "success": result.get("success"), "outcomes": result.get("outcomes"),
                                    "metrics": frames[0]["metrics"], "actorMetrics": [frame["metrics"] for frame in frames],
+                                   "learnedTeam": frames[0]["metrics"]["team"],
                                    "actorItemMetrics": result.get("actorItemMetrics"),
                                    "lessonMetrics": result.get("lessonMetrics"), "trajectory": slot["trajectory"]}
                             row["trainedActorIndices"] = [actor for actor, frame in enumerate(frames)

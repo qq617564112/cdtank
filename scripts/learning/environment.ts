@@ -20,6 +20,7 @@ interface ResetRequest {
   ammoId?: number;
   players?: number;
   controlled?: number;
+  learnerTeam?: number;
   seconds?: number;
   items?: {slot: number; itemTableId: number; quantity: number}[];
   lesson?: 'turning' | 'navigation' | 'aiming' | 'shooting' | 'dodge' | 'range' | 'items' | 'combat';
@@ -165,6 +166,9 @@ function reset(request: ResetRequest) {
   const requestedMapId = request.mapId ?? 7;
   const count = request.players ?? 2;
   const controlled = request.controlled ?? 1;
+  const learnerTeam = request.learnerTeam ?? 0;
+  if (learnerTeam !== 0 && learnerTeam !== 1) throw new Error('Learning team must be zero or one');
+  const singleTeam = mode <= 3 && controlled < count;
   if (!Number.isInteger(count) || count < 2 || count > 6
       || !Number.isInteger(controlled) || controlled < 1 || controlled > count) {
     throw new Error('Learning requires two to six players and a valid controlled count');
@@ -182,19 +186,23 @@ function reset(request: ResetRequest) {
   const mapId = joined.mapId;
   roomId = joined.roomId;
   playerIds = [joined.playerId];
+  if (singleTeam) world.changeTeam(joined.playerId, 1, learnerTeam);
   const stationaryIds: string[] = [];
   for (let seat = 1; seat < count; seat++) {
-    // Alternating admission keeps a complete learned side together without team swaps.
+    // Fill each side in turn so ordinary team-capacity rules hold throughout admission.
     const learned = playerIds.length < controlled
       && (mode > 3 || controlled === count || seat % 2 === 0);
     if (learned) {
       const index = playerIds.length;
-      playerIds.push(world.joinRoom(roomId, `LEARNER-${index}`, `Learner ${index}`, request.tankId ?? 1).playerId);
+      const id = world.joinRoom(roomId, `LEARNER-${index}`, `Learner ${index}`, request.tankId ?? 1).playerId;
+      if (singleTeam) world.changeTeam(id, 1, learnerTeam);
+      playerIds.push(id);
     } else if (lesson !== 'combat') {
       const idle = world.joinRoom(roomId, `IDLE-${seat}`, `Idle ${seat}`, request.tankId ?? 1);
       stationaryIds.push(idle.playerId);
       practiceIds.push(idle.playerId);
-    } else world.manageCpu(joined.playerId, 1, 'ADD', request.tankId ?? 1);
+    } else world.manageCpu(joined.playerId, 1, 'ADD', request.tankId ?? 1,
+      undefined, undefined, singleTeam ? 1 - learnerTeam : undefined);
   }
   if (playerIds.length !== controlled) throw new Error('Learning roster did not fill controlled seats');
   const tank = content.tanks.get(request.tankId ?? 1)!;
@@ -338,7 +346,7 @@ function reset(request: ResetRequest) {
   teamMetrics = central.teamMetrics;
   actorItemMetrics = playerIds.map(() => ({consumedItems: 0, rejectedItems: 0, healedHp: 0}));
   if (nativePolicy) for (const id of playerIds) world.configureAutopilot(id, 1, true);
-  return {type: 'reset', seed, mode, mapId, lesson, level, frames: previous,
+  return {type: 'reset', seed, mode, mapId, lesson, level, frames: previous, learnerTeam,
     criticStates: central.criticStates,
     actors: world.snapshot(roomId)!.players.map(player => ({id: player.id, team: player.team,
       learned: playerIds.includes(player.id), cpu: !!player.isCpu})),

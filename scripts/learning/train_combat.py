@@ -72,6 +72,8 @@ class Environment:
                              "ammoId": course["ammo_id"],
                              "items": course["items"],
                              "lesson": course["lesson"], "level": level}
+        if course["lesson"] == "combat" and course["mode"] <= 3 and course["controlled"] < course["players"]:
+            request["learnerTeam"] = random.Random(seed + 104729).randrange(2)
         if self.native_policy:
             request["nativePolicy"] = self.native_policy
         result = self.command(request)
@@ -404,6 +406,7 @@ def main(args):
                                                  "metrics": result["frames"][0]["metrics"],
                                                  "actorMetrics": [frame["metrics"] for frame in result["frames"]],
                                                  "actorItemMetrics": result.get("actorItemMetrics"),
+                                                 "learnedTeam": result["frames"][0]["metrics"]["team"],
                                                  "outcomes": result.get("outcomes")})
                                 episode_returns[index] = [0.0] * actors_per_world
                                 next_results[index] = environments[index].reset()
