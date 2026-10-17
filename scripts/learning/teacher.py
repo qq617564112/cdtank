@@ -17,7 +17,8 @@ def primitive_action(frame, lesson):
         angle = math.atan2(lateral, forward)
         if abs(angle) > .06:
             action[1] = 2 if angle > 0 else 0
-        if lesson == "navigation" and abs(angle) <= .06 and observation[159] * 600 > 15:
+        can_turn = any(frame["actionMasks"][1][index] for index in (0, 2))
+        if lesson == "navigation" and (abs(angle) <= .06 or not can_turn and forward > 0) and observation[159] * 600 > 15:
             action[0] = 2
     elif lesson == "aiming":
         if observation[NEAREST_ENEMY]:
@@ -56,7 +57,7 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
             for _ in range(32):
                 observations, masks = tensors(results, device)
                 distributions, _, hidden = policy(observations, hidden, reset, masks)
-                actions = [primitive_action(result["frames"][0], args.lesson) for result in results]
+                actions = [primitive_action(result["frames"][0], result["lesson"]) for result in results]
                 chosen = torch.tensor(actions, device=device)
                 losses.append(-sum(dist.log_prob(chosen[:, head]).mean()
                                    for head, dist in enumerate(distributions)))
@@ -70,7 +71,7 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                     died = result["frames"][0]["metrics"]["deaths"] != results[index]["frames"][0]["metrics"]["deaths"]
                     resets.append(float(result["done"] or died))
                     if result["done"]:
-                        episodes.append({"seed": result["seed"], "level": result["level"],
+                        episodes.append({"seed": result["seed"], "lesson": result["lesson"], "level": result["level"],
                                          "success": result["success"], "lessonMetrics": result["lessonMetrics"]})
                         next_results[index] = environments[index].reset()
                 results = next_results

@@ -12,6 +12,7 @@ param(
   [switch]$MixLevels,
   [int]$TeacherSteps=0,
   [double]$ImitationWeight,
+  [string]$Curriculum='',
   [string]$Prior='D:/ai/cdtank/runs/motion-20261017-001/best.pt',
   [string]$Weights='',
   [string]$Resume=''
@@ -24,6 +25,7 @@ $trainerRoot=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $arguments="$PSScriptRoot/train_combat.py --environment-url $EnvironmentUrl --output $root/runs/$RunName --steps $Steps --environments $Environments --minibatch-sequences $MinibatchSequences --gpu-utilization-limit $GpuUtilizationLimit --lesson $Lesson --level $Level --map-id $MapId --ammo-id $AmmoId"
 if ($MixLevels) { $arguments+=' --mix-levels' }
 if ($TeacherSteps) { $arguments+=" --teacher-steps $TeacherSteps" }
+if ($Curriculum) { $arguments+=" --curriculum $Curriculum" }
 if ($PSBoundParameters.ContainsKey('ImitationWeight')) { $arguments+=" --imitation-weight $ImitationWeight" }
 if ($Resume) { $arguments+=" --resume $Resume" }
 elseif ($Weights) { $arguments+=" --weights $Weights" }
@@ -39,6 +41,7 @@ if ($created.ReturnValue -ne 0) { throw ('Training launch failed: '+$created.Ret
   environments=$Environments;environmentUrl=$EnvironmentUrl;mapId=$MapId;ammoId=$AmmoId;mixLevels=[bool]$MixLevels;
   minibatchSequences=$MinibatchSequences;gpuUtilizationLimit=$GpuUtilizationLimit;
   teacherSteps=$TeacherSteps;imitationWeight=$(if($PSBoundParameters.ContainsKey('ImitationWeight')){$ImitationWeight}else{$null});
+  curriculum=$Curriculum;
   prior=$Prior;weights=$Weights;resume=$Resume} |
   ConvertTo-Json | Set-Content -Encoding ascii "$root/runs/$RunName.launch.json"
 Write-Output ('TRAINING_LAUNCH_PID='+$created.ProcessId)

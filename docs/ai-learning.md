@@ -92,6 +92,19 @@ GPU 调度使用 NVML 读取整卡利用率与显存。用户要求整卡负载�
 
 预热与辅助模仿独立控制：`--resume` 跳过预热，并从检查点配置恢复有效的 `imitationWeight`，显式传入 `--imitation-weight`（启动脚本的 `-ImitationWeight`）可覆盖该系数。配置分别记录本次实际预热步数 `teacherBootstrapSteps` 和辅助模仿系数；只有预热、没有辅助损失的旧检查点继续使用纯 PPO。
 
+策略将 20 个动作资格位经独立线性层加入观察编码，使同一方位的路点在允许转向与禁止转向时可以选择不同动作。旧检查点的该层以零初始化，保留原策略输出；续训同时保留既有优化器状态，为新增参数建立优化器组。直行示范在转向不可用时直接向前方路点行驶。
+
+`--curriculum <JSON路径>`（启动脚本 `-Curriculum`）在同一个策略中重放不同基础技能。JSON 为课程数组，可覆盖 `lesson`、`level`、`mix_levels`、`mode`、`map_id`、`players`、`ammo_id`；未指定字段沿用命令行参数。各世界按编号循环分配课程，每门至少有一个世界；示范与辅助损失按各世界实际课程取标签。完成训练后，在 `evaluation-course-<序号>-level-<级别>` 中逐课逐级冻结评估，分别记录地图、弹药和结果。示例：
+
+```json
+[
+  {"lesson":"navigation","level":2,"mix_levels":true,"map_id":7},
+  {"lesson":"aiming","level":2,"mix_levels":true,"map_id":7},
+  {"lesson":"range","level":1,"mix_levels":true,"map_id":1,"ammo_id":2001},
+  {"lesson":"range","level":1,"mix_levels":true,"map_id":2,"ammo_id":2023}
+]
+```
+
 示范预热逐渐混入学习策略的贪心动作，概率从 0 增长到 `--teacher-student-fraction 0.75`。这些动作产生的真实状态继续由基础控制器标注，学习策略在自己过早停车、瞄准偏移等状态上获得纠正示范；日志记录实际混合概率。后续 PPO 执行策略自身采样的动作。
 
 `evaluate.py` 在不同于训练的种子上冻结模型执行完整练习，默认选择概率最高动作；`--stochastic` 评估采样策略。指定 `--checkpoint`、`--output`、`--lesson` 和 `--level`。输出 `episodes.jsonl` 保存实际动作、位置、观察、受阻与距离记录，`result.json` 记录到达/击毁/无伤比例和平均奖励。该评估用于选择课程与检查点。
@@ -138,6 +151,8 @@ PPO 完成训练后关闭训练世界，自动在 `evaluation-level-<级别>` �
 相同示范步数下，`runs/turning-bootstrap-20261017-002/teacher.pt` 的任意方向原地转向在地图 7 的 32 个独立种子中成功 20 次（62.5%）；`runs/aiming-bootstrap-20261017-002/teacher.pt` 的固定车体、任意方向 600 HP 靶击毁成功 28 次（87.5%）。评估目录为 `runs/turning-bootstrap-evaluation-20261017-001`、`runs/aiming-bootstrap-evaluation-20261017-001`。这些是基础操作模型，尚未证明移动射击和完整交战能力。
 
 瞄准运行 `aiming-bootstrap-20261017-002/latest.pt` 完成 30208 个 PPO 步骤后，每级 32 个独立种子的冻结评估中，0/1/2 级分别击毁 32、21、23 个目标。任意方向静止靶成绩低于该运行的示范预热检查点，后续瞄准训练需要保留基础操作辅助约束，并继续以冻结评估选择模型。
+
+远程弹运行 `range-long-network-20261018-004/latest.pt` 完成 100096 个累计 PPO 步骤，接近和后撤五秒保持分别通过 32/32 个独立种子。`navigation-network-20261018-004/latest.pt` 完成 101632 个累计步骤，前方转向与任意方向直达路点均通过 32/32，禁止转向的直行课为 18/32。普通弹运行 `range-network-20261018-004/latest.pt` 的接近保持为 0/32；轨迹显示它在距离带两侧往返，未持续停车五秒。各项独立记录，远程弹结果不能代表普通弹已经掌握距离保持。
 
 当前课程尚未证明跨机器完全确定的回放、复杂绕障、道具价值、团队配合和五模式能力。历史数据规模较小且人工操作来源未确认。未运行单元测试、浏览器验收、构建或类型检查；训练运行和训练集验证指标记录各自的实际范围。
 

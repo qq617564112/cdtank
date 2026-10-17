@@ -23,11 +23,19 @@ from teacher import primitive_action, teach
 SIZES = [3, 3, 3, 2, 9]
 
 
+def course_options(args):
+    return [{key: course.get(key, getattr(args, key))
+             for key in ("lesson", "level", "mix_levels", "mode", "map_id", "players", "ammo_id")}
+            for course in getattr(args, "courses", None) or [{}]]
+
+
 class Environment:
     def __init__(self, args, number):
         self.number = number
         self.episode = 0
         self.args = args
+        courses = course_options(args)
+        self.course = courses[number % len(courses)]
         endpoint = urlsplit(args.environment_url)
         if endpoint.scheme != "http" or not endpoint.hostname:
             raise ValueError("Use the simulation server's http://host:port address")
@@ -55,12 +63,15 @@ class Environment:
     def reset(self):
         seed = self.args.seed + self.number * 1000000 + self.episode
         self.episode += 1
-        level = random.Random(seed).randint(0, self.args.level) if self.args.mix_levels else self.args.level
-        return self.command({"type": "reset", "seed": seed, "mode": self.args.mode,
-                             "mapId": self.args.map_id, "players": self.args.players,
+        course = self.course
+        level = random.Random(seed).randint(0, course["level"]) if course["mix_levels"] else course["level"]
+        result = self.command({"type": "reset", "seed": seed, "mode": course["mode"],
+                             "mapId": course["map_id"], "players": course["players"],
                              "controlled": 1, "seconds": 60, "tankId": 1,
-                             "ammoId": self.args.ammo_id,
-                             "lesson": self.args.lesson, "level": level})
+                             "ammoId": course["ammo_id"],
+                             "lesson": course["lesson"], "level": level})
+        result["lesson"] = course["lesson"]
+        return result
 
     def step(self, action):
         return self.command({"type": "step", "actions": [action]})
@@ -77,11 +88,14 @@ class Policy(nn.Module):
         self.memory = nn.GRUCell(64, 64)
         self.actor = nn.Linear(64, sum(SIZES))
         self.critic = nn.Linear(64, 1)
+        self.mask_encoder = nn.Linear(sum(SIZES), 64, bias=False)
+        nn.init.zeros_(self.mask_encoder.weight)
 
     def forward(self, observation, hidden, reset, masks):
         if self.gpu_budget:
             self.gpu_budget.wait()
-        hidden = self.memory(torch.tanh(self.encoder(observation)), hidden * (1 - reset[:, None]))
+        features = self.encoder(observation) + self.mask_encoder(masks.to(observation.dtype))
+        hidden = self.memory(torch.tanh(features), hidden * (1 - reset[:, None]))
         logits = self.actor(hidden).masked_fill(~masks, -1e9)
         distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
         return distributions, self.critic(hidden).squeeze(-1), hidden
@@ -105,6 +119,7 @@ class Policy(nn.Module):
             expanded = torch.zeros_like(self.encoder.weight)
             expanded[:, :weight.shape[1]] = weight
             state["encoder.weight"] = expanded
+        state.setdefault("mask_encoder.weight", torch.zeros_like(self.mask_encoder.weight))
         self.load_state_dict(state)
 
 
@@ -151,7 +166,9 @@ def main(args):
                 policy.warm_start(args.prior)
             if args.weights:
                 policy.initialize(torch.load(args.weights, map_location=device)["policy"])
-            optimizer = torch.optim.Adam(policy.parameters(), lr=args.learning_rate, eps=1e-5)
+            optimizer = torch.optim.Adam([
+                {"params": [value for name, value in policy.named_parameters() if name != "mask_encoder.weight"]},
+                {"params": policy.mask_encoder.parameters()}], lr=args.learning_rate, eps=1e-5)
             checkpoint = torch.load(args.resume, map_location=device) if args.resume else None
             if args.imitation_weight is None:
                 if checkpoint:
@@ -160,13 +177,15 @@ def main(args):
                         prior_config.get("imitation_weight", 0) if prior_config.get("teacher_steps", 0) else 0)
                 else:
                     args.imitation_weight = .1 if args.teacher_steps else 0
-            if args.imitation_weight and (args.lesson not in ("turning", "navigation", "aiming", "range")
-                    or args.lesson == "navigation" and args.level > 2 or args.lesson == "range" and args.level > 1):
+            if args.imitation_weight and any(course["lesson"] not in ("turning", "navigation", "aiming", "range")
+                    or course["lesson"] == "navigation" and course["level"] > 2
+                    or course["lesson"] == "range" and course["level"] > 1 for course in course_options(args)):
                 raise ValueError("Auxiliary imitation requires a supported primitive lesson")
             config = {**vars(args), "torch": torch.__version__, "device": torch.cuda.get_device_name(0),
                       "observationWidth": observations.shape[-1], "actionSizes": SIZES,
                       "simulationHz": 20, "decisionHz": 10, "observationSchema": results[0]["frames"][0]["schema"],
                       "algorithm": "recurrent PPO", "hiddenSize": 64,
+                      "maskInputWidth": sum(SIZES), "trainingCourses": course_options(args),
                       "imitationWeight": args.imitation_weight,
                       "teacherBootstrapSteps": args.teacher_steps if not args.resume else 0}
             source = Path(__file__).resolve().parents[2] / "source.json"
@@ -175,8 +194,11 @@ def main(args):
             steps = 0
             update = 0
             if checkpoint:
-                policy.load_state_dict(checkpoint["policy"])
-                optimizer.load_state_dict(checkpoint["optimizer"])
+                policy.initialize(checkpoint["policy"])
+                optimizer_state = checkpoint["optimizer"]
+                if len(optimizer_state["param_groups"]) == 1:
+                    optimizer_state["param_groups"].append(optimizer.state_dict()["param_groups"][1])
+                optimizer.load_state_dict(optimizer_state)
                 steps, update = checkpoint["steps"], checkpoint["update"]
             (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
             if args.teacher_steps and not args.resume:
@@ -207,7 +229,7 @@ def main(args):
                             storage[key].append(tensor)
                         if args.imitation_weight:
                             storage["teacher"].append(torch.tensor(
-                                [primitive_action(result["frames"][0], args.lesson) for result in results], device=device))
+                                [primitive_action(result["frames"][0], result["lesson"]) for result in results], device=device))
                         action_list = actions.cpu().tolist()
                         next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, action_list)))
                         done = torch.tensor([result["done"] for result in next_results], device=device, dtype=torch.float32)
@@ -310,19 +332,21 @@ def main(args):
             environment.close()
         budget.close()
     evaluations = []
-    levels = range(args.level + 1) if args.mix_levels else [args.level]
-    for level in levels:
-        destination = output / f"evaluation-level-{level}"
-        subprocess.run([sys.executable, str(Path(__file__).with_name("evaluate.py")),
-                        "--environment-url", args.environment_url,
-                        "--checkpoint", str(output / "latest.pt"), "--output", str(destination),
-                        "--lesson", args.lesson, "--level", str(level), "--mode", str(args.mode),
-                        "--map-id", str(args.map_id), "--players", str(args.players),
-                        "--ammo-id", str(args.ammo_id), "--episodes", str(args.evaluation_episodes),
-                        "--gpu-utilization-limit", str(args.gpu_utilization_limit),
-                        "--seed", str(args.seed + 100000000)], check=True)
-        evaluations.append({"level": level, "output": str(destination),
-                            **json.loads((destination / "result.json").read_text(encoding="utf-8"))})
+    for number, course in enumerate(course_options(args)):
+        levels = range(course["level"] + 1) if course["mix_levels"] else [course["level"]]
+        for level in levels:
+            prefix = f"evaluation-course-{number}-" if args.courses else "evaluation-"
+            destination = output / f"{prefix}level-{level}"
+            subprocess.run([sys.executable, str(Path(__file__).with_name("evaluate.py")),
+                            "--environment-url", args.environment_url,
+                            "--checkpoint", str(output / "latest.pt"), "--output", str(destination),
+                            "--lesson", course["lesson"], "--level", str(level), "--mode", str(course["mode"]),
+                            "--map-id", str(course["map_id"]), "--players", str(course["players"]),
+                            "--ammo-id", str(course["ammo_id"]), "--episodes", str(args.evaluation_episodes),
+                            "--gpu-utilization-limit", str(args.gpu_utilization_limit),
+                            "--seed", str(args.seed + 100000000)], check=True)
+            evaluations.append({**course, "level": level, "output": str(destination),
+                                **json.loads((destination / "result.json").read_text(encoding="utf-8"))})
     result["evaluations"] = evaluations
     (output / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
 
@@ -353,14 +377,21 @@ if __name__ == "__main__":
     parser.add_argument("--teacher-steps", type=int, default=0)
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
     parser.add_argument("--imitation-weight", type=float)
+    parser.add_argument("--curriculum", help="JSON list of courses assigned evenly across environments")
     args = parser.parse_args()
+    args.courses = json.loads(Path(args.curriculum).read_text(encoding="utf-8-sig")) if args.curriculum else None
+    if args.courses is not None and (not isinstance(args.courses, list) or not args.courses
+                                    or args.environments < len(args.courses)):
+        parser.error("The curriculum needs at least one environment per course")
     if args.rollout % 32:
         parser.error("--rollout must be a multiple of 32")
     if args.minibatch_sequences < 1:
         parser.error("--minibatch-sequences must be positive")
-    if args.teacher_steps and args.lesson not in ("turning", "navigation", "aiming", "range"):
-        parser.error("Primitive demonstrations support turning, navigation, aiming and range")
-    if args.teacher_steps and (args.lesson == "navigation" and args.level > 2
-                               or args.lesson == "range" and args.level > 1):
-        parser.error("Primitive demonstrations require direct navigation or non-shooting range levels")
+    for course in course_options(args):
+        if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "combat") or course["level"] not in range(4):
+            parser.error("Each course needs a supported lesson and level")
+        if args.teacher_steps and (course["lesson"] not in ("turning", "navigation", "aiming", "range")
+                or course["lesson"] == "navigation" and course["level"] > 2
+                or course["lesson"] == "range" and course["level"] > 1):
+            parser.error("Primitive demonstrations require turning, direct navigation, aiming or non-shooting range")
     main(args)
