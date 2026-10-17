@@ -1,4 +1,4 @@
-"""Measure the scripted combat demonstrator through ordinary simulation inputs."""
+"""Measure scripted demonstrations through ordinary simulation inputs."""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -6,15 +6,16 @@ import json
 from pathlib import Path
 
 from train_combat import Environment
+from teacher import demonstration_actions
 
 
 def main(args):
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
-    args.lesson = "combat"
-    args.level = 1
+    args.lesson = getattr(args, "lesson", "combat")
+    args.level = getattr(args, "level", 1)
     args.mix_levels = False
-    args.teacher_source = "cpu"
+    args.teacher_source = getattr(args, "teacher_source", "cpu")
     args.teacher_steps = 1
     args.imitation_weight = 0
     environments = []
@@ -23,8 +24,9 @@ def main(args):
         for number in range(min(args.environments, args.episodes)):
             environments.append(Environment(args, number))
         config = {**vars(args), "simulationSource": environments[0].source,
-                  "labelSource": "scripted HIGH CPU with navigation and team context",
-                  "demonstrationUsesPrivilegedState": True}
+                  "labelSource": "scripted HIGH CPU with navigation and team context"
+                      if args.teacher_source == "cpu" else "scripted primitive control",
+                  "demonstrationUsesPrivilegedState": args.teacher_source == "cpu"}
         source = Path(__file__).resolve().parents[2] / "source.json"
         config["trainerSource"] = json.loads(source.read_text(encoding="utf-8")) if source.exists() else None
         (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
@@ -36,9 +38,7 @@ def main(args):
             next_episode = len(environments)
             with (output / "episodes.jsonl").open("x", encoding="utf-8") as log:
                 while slots:
-                    actions = [slot["result"]["expertActions"] for slot in slots]
-                    if any(action is None for action in actions):
-                        raise RuntimeError("Simulation does not provide CPU demonstrations")
+                    actions = [demonstration_actions([slot["result"]], args.teacher_source) for slot in slots]
                     for slot, action in zip(slots, actions):
                         if slot["tick"] % 10 == 0:
                             slot["trajectory"].append({"tick": slot["tick"], "actors": [
@@ -52,6 +52,8 @@ def main(args):
                         if result["done"]:
                             row = {"episode": slot["episode"], "seed": result["seed"], "steps": slot["tick"],
                                    "outcomes": result["outcomes"],
+                                   "lesson": result["lesson"], "level": result["level"],
+                                   "success": result["success"], "lessonMetrics": result["lessonMetrics"],
                                    "actorMetrics": [frame["metrics"] for frame in result["frames"]],
                                    "actorItemMetrics": result["actorItemMetrics"], "trajectory": slot["trajectory"]}
                             episodes.append(row)
@@ -73,6 +75,10 @@ def main(args):
         metrics = [metric for row in episodes for metric in row["actorMetrics"]]
         items = [metric for row in episodes for metric in row["actorItemMetrics"]]
         summary = {"episodes": len(episodes), "winRate": outcomes.count("WIN") / len(episodes),
+                   "successRate": sum(bool(row["success"]) for row in episodes) / len(episodes),
+                   "stepsMean": sum(row["steps"] for row in episodes) / len(episodes),
+                   "rangeKillsMean": sum(row["lessonMetrics"].get("rangeKills", 0) for row in episodes) / len(episodes),
+                   "damageTakenMean": sum(metric["damageTaken"] for metric in metrics) / len(metrics),
                    "lossRate": outcomes.count("LOSE") / len(episodes), "drawRate": outcomes.count("DRAW") / len(episodes),
                    "unfinishedEpisodes": outcomes.count(None), "labelSource": config["labelSource"],
                    "killsMean": sum(metric["kills"] for metric in metrics) / len(metrics),
@@ -93,6 +99,9 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--environment-url", required=True)
+    parser.add_argument("--teacher-source", choices=("primitive", "cpu"), default="cpu")
+    parser.add_argument("--lesson", default="combat")
+    parser.add_argument("--level", type=int, default=1)
     parser.add_argument("--output", required=True)
     parser.add_argument("--mode", type=int, choices=range(1, 6), default=4)
     parser.add_argument("--map-id", type=int, default=7)

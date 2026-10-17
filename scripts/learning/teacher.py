@@ -76,6 +76,11 @@ def primitive_action(frame, lesson):
                 action[0] = 2
             elif ratio < .79:
                 action[0] = 0
+            angle = math.atan2(observation[WEAPON_ENEMY + 3], observation[WEAPON_ENEMY + 4])
+            if abs(angle) > .06:
+                action[2] = 2 if angle > 0 else 0
+            action[3] = int(.79 <= ratio <= .86 and abs(angle) < .1
+                            and bool(observation[WEAPON_ENEMY + 2]))
     elif lesson == "items":
         if len(observation) < 266:
             raise ValueError("Item demonstrations need observation schema 4")
