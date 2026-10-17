@@ -1,5 +1,6 @@
 import {itemHitHandler, gameContent} from '../../shared/content/catalog';
 import {collectCpuTrace} from './battle/cpu/trace';
+import {observeLearning, type LearningGoal, type LearningMemory} from './learning/observation';
 import {defaultAmmoId} from '../../shared/content/catalog';
 import {confirmAcceptedAmmoSelection} from './battle/items/ammo-confirmation';
 import {resetTrapFireRestraint} from './battle/items/trap-fire-restraint';
@@ -931,6 +932,15 @@ export class World {
     if (!room || room.phase !== 'PLAYING' || now < room.startedAt
         || ![...room.players.values()].some(player => player.cpu || player.autopilot)) return undefined;
     return collectCpuTrace(room, now);
+  }
+
+  /** Read-only local perception for offline learning, using the actual room geometry. */
+  learningFrame(playerId: string, previous?: LearningMemory, goal?: LearningGoal) {
+    const found = this.findPlayer(playerId);
+    if (!found) throw new Error('学习角色不存在');
+    return observeLearning(found.room, found.player,
+      found.player.vip ? Math.max(1, found.room.map.vipHp) : this.playerMaxHp(found.player),
+      this.now(), previous, goal);
   }
 
   private createRoom(mode: number, mapId?: number, minPlayers?: number, maxPlayers?: number,

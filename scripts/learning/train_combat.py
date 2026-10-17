@@ -1,0 +1,267 @@
+"""Train a recurrent PPO policy against the authoritative headless World."""
+
+import argparse
+from concurrent.futures import ThreadPoolExecutor
+import json
+import os
+from pathlib import Path
+import random
+import subprocess
+import time
+
+import numpy as np
+import torch
+from torch import nn
+from torch.distributions import Categorical
+
+
+SIZES = [3, 3, 3, 2, 9]
+
+
+class Environment:
+    def __init__(self, args, number):
+        self.number = number
+        self.episode = 0
+        self.args = args
+        self.process = subprocess.Popen(
+            [args.node, "--import", "tsx", "scripts/learning/environment.ts"],
+            cwd=args.game, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=open(Path(args.output) / f"environment-{number}.log", "w", encoding="utf-8"),
+            text=True, encoding="utf-8", bufsize=1,
+        )
+
+    def command(self, request):
+        self.process.stdin.write(json.dumps(request) + "\n")
+        self.process.stdin.flush()
+        line = self.process.stdout.readline()
+        if not line:
+            raise RuntimeError(f"Environment {self.number} exited: {self.process.poll()}")
+        result = json.loads(line)
+        if result["type"] == "error":
+            raise RuntimeError(result["error"])
+        return result
+
+    def reset(self):
+        seed = self.args.seed + self.number * 1000000 + self.episode
+        self.episode += 1
+        return self.command({"type": "reset", "seed": seed, "mode": self.args.mode,
+                             "mapId": self.args.map_id, "players": self.args.players,
+                             "controlled": 1, "seconds": 60, "tankId": 1,
+                             "lesson": self.args.lesson})
+
+    def step(self, action):
+        return self.command({"type": "step", "actions": [action]})
+
+    def close(self):
+        self.process.stdin.close()
+        try:
+            self.process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            self.process.terminate()
+            self.process.wait()
+
+
+class Policy(nn.Module):
+    def __init__(self, width):
+        super().__init__()
+        self.encoder = nn.Linear(width, 64)
+        self.memory = nn.GRUCell(64, 64)
+        self.actor = nn.Linear(64, sum(SIZES))
+        self.critic = nn.Linear(64, 1)
+
+    def forward(self, observation, hidden, reset, masks):
+        hidden = self.memory(torch.tanh(self.encoder(observation)), hidden * (1 - reset[:, None]))
+        logits = self.actor(hidden).masked_fill(~masks, -1e9)
+        distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
+        return distributions, self.critic(hidden).squeeze(-1), hidden
+
+    def warm_start(self, filename):
+        prior = torch.load(filename, map_location="cpu")["policy"]
+        with torch.no_grad():
+            self.encoder.weight[:, :16].copy_(prior["encoder.0.weight"])
+            self.encoder.weight[:, 16:].mul_(.1)
+            self.encoder.bias.copy_(prior["encoder.0.bias"])
+            for name in ("weight_ih", "weight_hh", "bias_ih", "bias_hh"):
+                getattr(self.memory, name).copy_(prior[f"memory.{name}_l0"])
+            self.actor.weight[:9].copy_(prior["actor.weight"])
+            self.actor.bias[:9].copy_(prior["actor.bias"])
+
+
+def tensors(results, device):
+    frames = [result["frames"][0] for result in results]
+    observations = torch.tensor([frame["observation"] for frame in frames], device=device)
+    masks = torch.tensor([sum(frame["actionMasks"], []) for frame in frames], dtype=torch.bool, device=device)
+    return observations, masks
+
+
+def save_checkpoint(path, policy, optimizer, config, steps, update):
+    temporary = path.with_suffix(".tmp")
+    torch.save({"policy": policy.state_dict(), "optimizer": optimizer.state_dict(),
+                "config": config, "steps": steps, "update": update}, temporary)
+    temporary.replace(path)
+
+
+def main(args):
+    output = Path(args.output)
+    output.mkdir(parents=True, exist_ok=False)
+    cache = output.parent.parent / 'cache'
+    cache.mkdir(exist_ok=True)
+    os.environ['TEMP'] = str(cache)
+    os.environ['TMP'] = str(cache)
+    os.environ['TORCH_HOME'] = str(cache / 'torch')
+    os.environ['XDG_CACHE_HOME'] = str(cache)
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.set_num_threads(2)
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA is required")
+    device = torch.device("cuda")
+    environments = []
+    try:
+        environments = [Environment(args, index) for index in range(args.environments)]
+        with ThreadPoolExecutor(max_workers=args.environments) as pool:
+            results = list(pool.map(lambda env: env.reset(), environments))
+            observations, masks = tensors(results, device)
+            policy = Policy(observations.shape[-1]).to(device)
+            if args.prior:
+                policy.warm_start(args.prior)
+            optimizer = torch.optim.Adam(policy.parameters(), lr=args.learning_rate, eps=1e-5)
+            config = {**vars(args), "torch": torch.__version__, "device": torch.cuda.get_device_name(0),
+                      "observationWidth": observations.shape[-1], "actionSizes": SIZES,
+                      "simulationHz": 20, "decisionHz": 10, "observationSchema": 1,
+                      "algorithm": "recurrent PPO", "hiddenSize": 64}
+            steps = 0
+            update = 0
+            if args.resume:
+                checkpoint = torch.load(args.resume, map_location=device)
+                policy.load_state_dict(checkpoint["policy"])
+                optimizer.load_state_dict(checkpoint["optimizer"])
+                steps, update = checkpoint["steps"], checkpoint["update"]
+            (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
+            hidden = torch.zeros(args.environments, 64, device=device)
+            reset = torch.ones(args.environments, device=device)
+            episode_returns = [0.0] * args.environments
+            completed = 0
+            started = time.monotonic()
+            with (output / "metrics.jsonl").open("x", encoding="utf-8") as log:
+                while steps < args.steps:
+                    storage = {key: [] for key in ("x", "masks", "hidden", "reset", "actions", "logp", "value", "reward", "done")}
+                    episodes = []
+                    policy.eval()
+                    for _ in range(args.rollout):
+                        with torch.no_grad():
+                            distributions, value, next_hidden = policy(observations, hidden, reset, masks)
+                            actions = torch.stack([dist.sample() for dist in distributions], dim=-1)
+                            logp = sum(dist.log_prob(actions[:, head]) for head, dist in enumerate(distributions))
+                        for key, tensor in (("x", observations), ("masks", masks), ("hidden", hidden),
+                                            ("reset", reset), ("actions", actions), ("logp", logp), ("value", value)):
+                            storage[key].append(tensor)
+                        action_list = actions.cpu().tolist()
+                        next_results = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, action_list)))
+                        done = torch.tensor([result["done"] for result in next_results], device=device, dtype=torch.float32)
+                        reward = torch.tensor([result["rewards"][0] for result in next_results], device=device)
+                        storage["reward"].append(reward)
+                        storage["done"].append(done)
+                        next_reset = []
+                        for index, result in enumerate(next_results):
+                            episode_returns[index] += result["rewards"][0]
+                            died = result["frames"][0]["metrics"]["deaths"] != results[index]["frames"][0]["metrics"]["deaths"]
+                            next_reset.append(float(result["done"] or died))
+                            if result["done"]:
+                                completed += 1
+                                episodes.append({"return": episode_returns[index],
+                                                 "success": result.get("success"),
+                                                 "metrics": result["frames"][0]["metrics"]})
+                                episode_returns[index] = 0
+                                next_results[index] = environments[index].reset()
+                        results = next_results
+                        observations, masks = tensors(results, device)
+                        hidden = next_hidden
+                        reset = torch.tensor(next_reset, device=device)
+                        steps += args.environments
+                    data = {key: torch.stack(values) for key, values in storage.items()}
+                    with torch.no_grad():
+                        _, next_value, _ = policy(observations, hidden, reset, masks)
+                        advantages = torch.zeros_like(data["reward"])
+                        gae = torch.zeros(args.environments, device=device)
+                        for tick in reversed(range(args.rollout)):
+                            continuation = 1 - data["done"][tick]
+                            delta = data["reward"][tick] + .995 * next_value * continuation - data["value"][tick]
+                            gae = delta + .995 * .95 * continuation * gae
+                            advantages[tick] = gae
+                            next_value = data["value"][tick]
+                        returns = advantages + data["value"]
+                        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+                    chunks = [(env, start) for env in range(args.environments)
+                              for start in range(0, args.rollout, 32)]
+                    losses = []
+                    policy.train()
+                    for _ in range(args.epochs):
+                        random.shuffle(chunks)
+                        for offset in range(0, len(chunks), 8):
+                            selected = chunks[offset:offset + 8]
+                            states = torch.stack([data["hidden"][start, env] for env, start in selected])
+                            actor_losses, critic_losses, entropies, divergences = [], [], [], []
+                            for relative in range(32):
+                                env_indices = torch.tensor([env for env, start in selected], device=device)
+                                ticks = torch.tensor([start + relative for env, start in selected], device=device)
+                                ds, values, states = policy(data["x"][ticks, env_indices], states,
+                                                           data["reset"][ticks, env_indices], data["masks"][ticks, env_indices])
+                                chosen = data["actions"][ticks, env_indices]
+                                new_logp = sum(dist.log_prob(chosen[:, head]) for head, dist in enumerate(ds))
+                                old_logp = data["logp"][ticks, env_indices]
+                                ratio = (new_logp - old_logp).exp()
+                                advantage = advantages[ticks, env_indices]
+                                actor_losses.append(-torch.minimum(ratio * advantage, ratio.clamp(.8, 1.2) * advantage).mean())
+                                critic_losses.append((values - returns[ticks, env_indices]).square().mean())
+                                entropies.append(sum(dist.entropy().mean() for dist in ds))
+                                divergences.append(((ratio - 1) - (new_logp - old_logp)).mean().detach())
+                            actor_loss = torch.stack(actor_losses).mean()
+                            critic_loss = torch.stack(critic_losses).mean()
+                            entropy = torch.stack(entropies).mean()
+                            loss = actor_loss + .5 * critic_loss - .005 * entropy
+                            optimizer.zero_grad()
+                            loss.backward()
+                            nn.utils.clip_grad_norm_(policy.parameters(), .5)
+                            optimizer.step()
+                            losses.append([actor_loss.item(), critic_loss.item(), entropy.item(), torch.stack(divergences).mean().item()])
+                    hidden = hidden.detach()
+                    update += 1
+                    row = {"update": update, "steps": steps, "seconds": time.monotonic() - started,
+                           "completedEpisodes": completed, "losses": np.mean(losses, axis=0).tolist(),
+                           "episodes": episodes, "rewardMean": data["reward"].mean().item()}
+                    text = json.dumps(row)
+                    print(text, flush=True)
+                    log.write(text + "\n")
+                    log.flush()
+                    save_checkpoint(output / "latest.pt", policy, optimizer, config, steps, update)
+                result = {"steps": steps, "updates": update, "seconds": time.monotonic() - started,
+                          "completedEpisodes": completed, "readyForGameplay": False}
+                (output / "result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    finally:
+        for environment in environments:
+            environment.close()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--game", required=True)
+    parser.add_argument("--node", required=True)
+    parser.add_argument("--output", required=True)
+    parser.add_argument("--prior")
+    parser.add_argument("--resume")
+    parser.add_argument("--steps", type=int, default=1000000)
+    parser.add_argument("--environments", type=int, default=4)
+    parser.add_argument("--rollout", type=int, default=128)
+    parser.add_argument("--epochs", type=int, default=4)
+    parser.add_argument("--learning-rate", type=float, default=.00025)
+    parser.add_argument("--mode", type=int, default=4)
+    parser.add_argument("--map-id", type=int, default=7)
+    parser.add_argument("--players", type=int, default=2)
+    parser.add_argument("--lesson", choices=["navigation", "combat"], default="combat")
+    parser.add_argument("--seed", type=int, default=179)
+    args = parser.parse_args()
+    if args.rollout % 32:
+        parser.error("--rollout must be a multiple of 32")
+    main(args)
