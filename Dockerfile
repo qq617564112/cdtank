@@ -7,14 +7,13 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.json ./
 COPY apps/ apps/
-COPY scripts/build-server.mjs scripts/package-release.mjs scripts/account-snapshot.mjs scripts/export-scene-collision.ts scripts/
+COPY scripts/build-server.mjs scripts/package-release.mjs scripts/account-snapshot.mjs scripts/
 COPY deployment/ deployment/
 COPY --from=assets /apps/web/public/ apps/web/public/
 COPY --from=assets /apps/server/resources/ apps/server/resources/
 COPY deployment/assets/ui/fonts/xiangjiao-brush.ttf apps/web/public/assets/ui/fonts/xiangjiao-brush.ttf
 COPY deployment/assets/ui/fonts/Silkscreen-Regular.ttf apps/web/public/assets/ui/fonts/Silkscreen-Regular.ttf
-RUN npm run assets:collision \
-    && npm exec -- vite build --config apps/web/vite.config.ts \
+RUN npm exec -- vite build --config apps/web/vite.config.ts \
     && npm run build:server \
     && node scripts/package-release.mjs /release
 

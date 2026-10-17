@@ -24,7 +24,7 @@ git push forgejo HEAD:main
 3. 构建应用镜像，通过 `--build-arg CDTANK_ASSETS_IMAGE=cdtank-assets:<提交 SHA>` 指定本次资源镜像。
 4. 通过 Compose 更新服务，等待 HTTP 健康检查通过。
 
-资源下载或导入失败时流水线停止，只有镜像构建成功才进入部署。构建容器使用 Node.js 24.16，安装锁定依赖，构建 Web 与服务端，再组装独立发行目录。资源包含 UI 图集、独立图片、模型贴图、涂鸦小地图和双画质战斗资源；构建阶段注入 `deployment/assets/ui/fonts/xiangjiao-brush.ttf` 与 `Silkscreen-Regular.ttf`，并生成碰撞资产。runner 需要 Node.js 22 或更高版本、Bash、GNU `install` 与 tar，并能访问 GitHub Releases、npm 和 Docker 镜像源。
+资源下载或导入失败时流水线停止，只有镜像构建成功才进入部署。构建容器使用 Node.js 24.16，安装锁定依赖，构建 Web 与服务端，再组装独立发行目录。资源包含 UI 图集、独立图片、模型贴图、涂鸦小地图和双画质战斗资源；构建阶段注入 `deployment/assets/ui/fonts/xiangjiao-brush.ttf` 与 `Silkscreen-Regular.ttf`，直接复用 Release 中预烘焙的碰撞和移动数据。runner 需要 Node.js 22 或更高版本、Bash、GNU `install` 与 tar，并能访问 GitHub Releases、npm 和 Docker 镜像源。
 
 ## 运行资源与 runner
 
