@@ -643,7 +643,6 @@ if __name__ == "__main__":
             parser.error("Each course needs a supported lesson and level")
         if args.teacher_steps and args.teacher_source == "primitive" and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
                 or course["lesson"] == "navigation" and course["level"] > 2
-                or course["lesson"] == "range" and course["level"] > 1
                 or course["lesson"] == "items" and course["level"] > 2):
             parser.error("Primitive demonstrations require supported basic movement, shooting, dodge, range or item courses")
     main(args)
