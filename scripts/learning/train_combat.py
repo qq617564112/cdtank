@@ -378,9 +378,9 @@ def main(args):
                     args.imitation_weight = .1 if args.teacher_steps else 0
             if args.teacher_source == "cpu" and any(course["lesson"] != "combat" for course in course_options(args)):
                 raise ValueError("CPU demonstrations require ordinary combat courses")
-            if args.imitation_weight and args.teacher_source == "primitive" and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items")
+            if args.imitation_weight and args.teacher_source == "primitive" and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege")
                     or course["lesson"] == "navigation" and course["level"] > 2
-                    or course["lesson"] == "items" and course["level"] > 2 for course in course_options(args)):
+                    or course["lesson"] in ("items", "siege") and course["level"] > 2 for course in course_options(args)):
                 raise ValueError("Auxiliary imitation requires a supported primitive lesson")
             if actors_per_world > 1 and args.teacher_source == "primitive" and (args.teacher_steps or args.imitation_weight):
                 raise ValueError("Primitive imitation supports one controlled actor per world")
