@@ -18,7 +18,8 @@ def main(args):
                {"slot": 8, "itemTableId": 4, "quantity": 1}]
     courses = [{"mode": mode, "map_id": map_id, "players": 4,
                 "controlled": 2 if mode <= 3 else 1}
-               for mode, map_id in ((1, 7), (2, 2), (3, 7), (4, 7), (5, 20))]
+               for mode, map_id in ((1, 7), (2, 2), (3, 7), (4, 7), (5, 20))
+               if mode in args.modes]
     plan = {**vars(args), "courses": courses, "loadout": loadout,
             "strategy": "independent mode parameters initialized from one common team checkpoint",
             "readyForGameplay": False}
@@ -77,6 +78,8 @@ if __name__ == "__main__":
     parser.add_argument("--previous-run", help="Inherit completed modes and continue saved work in a new run directory")
     parser.add_argument("--output", required=True)
     parser.add_argument("--steps", type=int, default=300000)
+    parser.add_argument("--modes", type=int, nargs="+", choices=range(1, 6), default=[1, 2, 3, 4, 5],
+                        help="Select independent modes for separately scheduled training processes")
     parser.add_argument("--environments", type=int, default=8)
     parser.add_argument("--minibatch-sequences", type=int, default=64)
     parser.add_argument("--hidden-size", type=int, choices=(64, 128, 256), default=256)
