@@ -12,6 +12,19 @@ from teacher import demonstration_actions
 from train_combat import Environment, Policy, course_options
 
 
+def load_frozen_policy(path):
+    saved = torch.load(path, map_location="cpu")
+    config = saved["config"]
+    width = saved["policy"]["encoder.weight"].shape[1]
+    policy = Policy(width, None, config.get("centralStateWidth", 0), config.get("hiddenSize", 64)).eval()
+    policy.initialize(saved["policy"])
+    source = {"path": path, "steps": saved["steps"], "source": config.get("source"),
+        "offlineUpdates": config.get("offlineUpdates", 0),
+        "observationWidth": width, "hiddenSize": policy.hidden_size,
+        "observationSchema": config["observationSchema"], "execution": "PyTorch CPU"}
+    return {"policy": policy, "width": width, "indices": []}, source
+
+
 def frozen_actions(groups, frames, reset):
     actions = [None] * len(frames)
     with torch.no_grad():
@@ -40,6 +53,8 @@ def main(args):
         raise ValueError("Sequence count must fill complete collection rounds")
     teacher_groups = {}
     teacher_sources = []
+    behavior_groups = {}
+    behavior_source = None
     paths = json.loads(Path(args.teachers).read_text(encoding="utf-8-sig")) if args.teachers else None
     if paths is not None:
         if len(paths) != len(courses):
@@ -48,17 +63,13 @@ def main(args):
         for index in range(args.environments):
             path = paths[index % len(courses)]
             if path not in teacher_groups:
-                saved = torch.load(path, map_location="cpu")
-                config = saved["config"]
-                width = saved["policy"]["encoder.weight"].shape[1]
-                policy = Policy(width, None, config.get("centralStateWidth", 0), config.get("hiddenSize", 64)).eval()
-                policy.initialize(saved["policy"])
-                teacher_groups[path] = {"policy": policy, "width": width, "indices": []}
-                teacher_sources.append({"path": path, "steps": saved["steps"], "source": config.get("source"),
-                    "observationWidth": width, "hiddenSize": policy.hidden_size,
-                    "observationSchema": config["observationSchema"], "execution": "PyTorch CPU"})
-                del saved
+                teacher_groups[path], source = load_frozen_policy(path)
+                teacher_sources.append(source)
             teacher_groups[path]["indices"].append(index)
+    if args.behavior:
+        behavior, behavior_source = load_frozen_policy(args.behavior)
+        behavior["indices"] = list(range(args.environments))
+        behavior_groups[args.behavior] = behavior
     environments = []
     batches = {key: [] for key in ("observation", "masks", "reset", "teacher")}
     course_ids = []
@@ -71,7 +82,7 @@ def main(args):
                     results = list(pool.map(lambda env: env.reset(), environments))
                     episode_seeds.extend(result["seed"] for result in results)
                     reset = np.ones(args.environments, dtype=np.float32)
-                    for group in teacher_groups.values():
+                    for group in (*teacher_groups.values(), *behavior_groups.values()):
                         group["hidden"] = torch.zeros(len(group["indices"]), group["policy"].hidden_size)
                     storage = {key: [] for key in batches}
                     for _ in range(args.sequence_length):
@@ -80,11 +91,12 @@ def main(args):
                             raise ValueError("Foundation rehearsal controls one actor per world")
                         actions = frozen_actions(teacher_groups, frames, reset) if teacher_groups \
                             else demonstration_actions(results, "primitive")
+                        executed = frozen_actions(behavior_groups, frames, reset) if behavior_groups else actions
                         storage["observation"].append([frame["observation"] for frame in frames])
                         storage["masks"].append([sum(frame["actionMasks"], []) for frame in frames])
                         storage["reset"].append(reset)
                         storage["teacher"].append(actions)
-                        advanced = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, actions)))
+                        advanced = list(pool.map(lambda pair: pair[0].step(pair[1]), zip(environments, executed)))
                         reset = np.zeros(args.environments, dtype=np.float32)
                         for index, result in enumerate(advanced):
                             died = result["frames"][0]["metrics"]["deaths"] != frames[index]["metrics"]["deaths"]
@@ -106,6 +118,8 @@ def main(args):
         metadata = {**vars(args), "courses": courses,
                     "labelSource": "frozen learned local policies" if teacher_groups else "scripted primitive control",
                     "courseTeachers": paths, "teacherCheckpoints": teacher_sources,
+                    "behaviorCheckpoint": behavior_source,
+                    "executionSource": "shared student policy" if behavior_groups else "course teacher",
                     "simulationSource": environments[0].source, "episodeSeeds": episode_seeds,
                     "observationSchema": results[0]["frames"][0]["schema"],
                     "sequences": len(course_ids), "steps": len(course_ids) * args.sequence_length}
@@ -128,6 +142,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True)
     parser.add_argument("--curriculum", required=True)
     parser.add_argument("--teachers", help="JSON list of frozen local policy checkpoints in course order")
+    parser.add_argument("--behavior", help="Frozen shared student executes while course teachers label its observations")
     parser.add_argument("--environments", type=int, default=16)
     parser.add_argument("--sequences-per-course", type=int, default=64)
     parser.add_argument("--sequence-length", type=int, default=128)
@@ -141,4 +156,7 @@ if __name__ == "__main__":
     parser.add_argument("--controlled", type=int, default=1)
     parser.add_argument("--ammo-id", type=int, default=2001)
     parser.add_argument("--items", type=json.loads)
-    main(parser.parse_args())
+    options = parser.parse_args()
+    if options.behavior and not options.teachers:
+        parser.error("Student execution requires frozen course teachers")
+    main(options)

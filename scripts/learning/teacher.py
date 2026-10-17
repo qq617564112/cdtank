@@ -131,7 +131,9 @@ class DemonstrationReplay:
         self.source = {"path": filename, "trainerSource": metadata["trainerSource"],
                        "simulationSource": metadata["simulationSource"],
                        "courses": metadata["courses"], "sequences": metadata["sequences"],
-                       "sequenceLength": metadata["sequence_length"], "labelSource": metadata["labelSource"]}
+                       "sequenceLength": metadata["sequence_length"], "labelSource": metadata["labelSource"],
+                       "behaviorCheckpoint": metadata.get("behaviorCheckpoint"),
+                       "executionSource": metadata.get("executionSource")}
 
     def prepare_references(self, policy, paths=None):
         """Cache frozen teachers' probabilities over the same complete sequences."""

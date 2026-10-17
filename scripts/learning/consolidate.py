@@ -51,6 +51,7 @@ def main(args):
                   "actorUsesPrivilegedState": False, "newWorldSteps": 0,
                   "recordedWorldSteps": replay.source["sequences"] * replay.source["sequenceLength"],
                   "initialCheckpoint": {"path": args.weights, "steps": initial["steps"],
+                                        "offlineUpdates": initial["config"].get("offlineUpdates", 0),
                                         "source": initial["config"].get("source")},
                   "torch": torch.__version__, "device": torch.cuda.get_device_name(0)}
         del initial
