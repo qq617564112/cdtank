@@ -109,10 +109,6 @@ PPO 完成训练后关闭训练世界，自动在 `evaluation-level-<级别>` �
 
 静止靶瞄准课程 `runs/shooting-20261017-002/shooting-candidate.pt` 在 16896 步后，于 32 个独立种子的练习中击毁 31 个目标（96.875%），平均回报 2.9178。评估目录为 `runs/shooting-evaluation-20261017-001`。此结果覆盖固定车体、正前方小角度的 150 HP 靶。
 
-移动转向课程 `runs/navigation-turn-20261017-001` 完成 60416 步后，在 8 个独立种子的贪心诊断中到达率为 0；轨迹出现重复前后摆动。开放车体的静止靶课程 `runs/shooting-full-20261017-001` 同样完成 60416 步，末尾 52 个练习没有击毁。后续通过原地转向和固定车体的宽角度瞄准课程分别学习这两项技能，再推进组合课程。
-
-普通弹的接近和后撤检查点 `runs/range-hold-approach-20261017-001/hold-candidate.pt`、`runs/range-hold-retreat-20261017-001/hold-candidate.pt` 均在 30208 步后，于地图 1 的 32 个独立种子中达到连续 1 秒处于距离带。接近轨迹始终向前行驶，该结果只证明进入并短暂穿过距离带；当前连续 5 秒保持条件尚待重新训练与评估。评估目录分别为 `runs/range-hold-approach-evaluation-20261017-001`、`runs/range-hold-retreat-evaluation-20261017-001`。
-
 五秒距离保持的首轮检查点为 `runs/range-bootstrap-20261017-002/teacher.pt`，经过 20032 个脚本示范步骤。地图 1 的普通弹接近在 32 个独立种子中成功 31 次（96.875%），后撤成功 19 次（59.375%）；评估目录分别为 `runs/range-bootstrap-approach-evaluation-20261017-001`、`runs/range-bootstrap-retreat-evaluation-20261017-001`。它还未达到稳定的双向距离控制，后续运行使用纠正示范和辅助模仿继续优化。
 
 相同示范步数下，`runs/turning-bootstrap-20261017-002/teacher.pt` 的任意方向原地转向在地图 7 的 32 个独立种子中成功 20 次（62.5%）；`runs/aiming-bootstrap-20261017-002/teacher.pt` 的固定车体、任意方向 600 HP 靶击毁成功 28 次（87.5%）。评估目录为 `runs/turning-bootstrap-evaluation-20261017-001`、`runs/aiming-bootstrap-evaluation-20261017-001`。这些是基础操作模型，尚未证明移动射击和完整交战能力。
