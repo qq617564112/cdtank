@@ -18,13 +18,16 @@ export class LearningCombatExpert {
     }
     if (!player.alive) return {move: 0, turn: 0, aim: 0, fire: false, useItem: 0};
     const parameters = originalMovementParameters(player);
-    return state.controller.input({...player, maxHp: maximumHp,
+    return state.controller.input({...player, cpu: state.controller, maxHp: maximumHp,
       movementReady: parameters !== undefined,
       fireReady: !player.combat.pendingShot && isRoleFireReady(player.combat.getFlag(11) !== 0,
         (now - room.startedAt) / 1000, player.combat.nextAvailableSeconds),
       movement: parameters ? {...parameters, navigation: createOriginalBotNavigation(room.battlefield),
         predict: createBattleMovementPredictor(player, room.battlefield, room.players.values(), .1)} : undefined},
-    [...room.players.values()], room.objectives, room.battlefield, room.mode, now, .1,
+    [...room.players.values()].map(actor => {
+      const teammate = this.controllers.get(actor);
+      return teammate ? {...actor, cpu: teammate.controller} : actor;
+    }), room.objectives, room.battlefield, room.mode, now, .1,
     {mode: room.mode, team: player.team, initialLives: room.map.tankLimit, lives: room.teamLives}, room);
   }
 }
