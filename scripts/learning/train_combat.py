@@ -122,7 +122,7 @@ class Policy(nn.Module):
         hidden = self.memory(torch.tanh(features), hidden * (1 - reset[:, None]))
         logits = self.actor(hidden).masked_fill(~masks, -1e9)
         distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
-        value = self.central_critic(central_state) if self.central_critic is not None and central_state is not None else self.critic(hidden)
+        value = self.central_critic(central_state) if self.central_critic is not None and central_state is not None else self.critic(hidden.detach())
         return distributions, value.squeeze(-1), hidden
 
     def sequence(self, observation, hidden, reset, masks, central_state=None):
@@ -154,7 +154,7 @@ class Policy(nn.Module):
         states = values.new_zeros(ticks * actors, self.hidden_size).index_copy(0, positions, values).reshape(ticks, actors, self.hidden_size)
         logits = self.actor(states).masked_fill(~masks, -1e9)
         distributions = [Categorical(logits=part) for part in logits.split(SIZES, dim=-1)]
-        value = self.central_critic(central_state) if self.central_critic is not None and central_state is not None else self.critic(states)
+        value = self.central_critic(central_state) if self.central_critic is not None and central_state is not None else self.critic(states.detach())
         return distributions, value.squeeze(-1), states[-1]
 
     def warm_start(self, filename):
@@ -374,6 +374,7 @@ def main(args):
                       "opponentPaths": opponent_paths,
                       "opponentCheckpoints": opponents.sources,
                       "centralStateWidth": central_width,
+                      "localCriticInput": "detached actor state",
                       "parameters": sum(parameter.numel() for parameter in policy.parameters()),
                       "initialization": initialization,
                       "rehearsalSource": rehearsal.source if rehearsal else None,

@@ -147,8 +147,8 @@ class DemonstrationReplay:
             if paths is not None:
                 saved = torch.load(paths[course], map_location=self.device)
                 width = saved["policy"]["encoder.weight"].shape[1]
-                if width != self.data["observation"].shape[-1]:
-                    raise ValueError("Reference teachers must use the rehearsal observation width")
+                if width > self.data["observation"].shape[-1]:
+                    raise ValueError("Reference teacher inputs must be present in the rehearsal observations")
                 teacher = type(policy)(width, policy.gpu_budget, saved["config"].get("centralStateWidth", 0),
                                        saved["config"].get("hiddenSize", 64)).to(self.device)
                 teacher.initialize(saved["policy"])
@@ -158,13 +158,14 @@ class DemonstrationReplay:
                 del saved
             else:
                 teacher = policy
+                width = self.data["observation"].shape[-1]
                 self.reference_sources.append({"course": course, "initialActor": True})
             teacher.eval()
             with torch.no_grad():
                 for start in range(0, len(group), self.batch_size):
                     indices = torch.tensor(group[start:start + self.batch_size], device=self.device)
                     hidden = torch.zeros(len(indices), teacher.hidden_size, device=self.device)
-                    distributions, _, _ = teacher.sequence(self.data["observation"][:, indices], hidden,
+                    distributions, _, _ = teacher.sequence(self.data["observation"][:, indices, :width], hidden,
                         self.data["reset"][:, indices], self.data["masks"][:, indices])
                     for target, distribution in zip(self.reference_probabilities, distributions):
                         target[:, indices] = distribution.probs
