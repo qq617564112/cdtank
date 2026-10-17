@@ -162,7 +162,7 @@ export function observeLearning(room: RoomState, player: PlayerState, maximumHp:
       vipDamage: player.roundStats?.vipDamage ?? 0, team: player.team,
       teamLives: [...room.teamLives], teamScores: [...room.teamScores]},
     nearestEnemyDistance: enemies[0] ? distance(enemies[0]) : undefined,
-    weapon: {range, instant, projectileSpeed: ammo.runtime.projectileSpeed!,
+    weapon: {ammoId: ammo.id, range, instant, projectileSpeed: ammo.runtime.projectileSpeed!,
       penetrates, canReachEnemy: inRange.some(Boolean),
       aimedAtEnemy: selected.kind === 'PLAYER' && enemies.some(peer => peer.id === selected.targetId)},
     alive: player.alive, phase: room.phase, result: room.result};

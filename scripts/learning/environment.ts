@@ -50,6 +50,8 @@ let rangeTicks = 0;
 let rangeStreak = 0;
 let rangeKills = 0;
 let headingStreak = 0;
+let lessonRange = 0;
+let lessonAmmoId = 2001;
 
 function rangeError(distance: number, range: number): number {
   return Math.max(0, .75 * range - distance, distance - .9 * range);
@@ -102,6 +104,7 @@ function frames(events: readonly WorldEvent[] = []): Frame[] {
   if (lesson === 'range') {
     for (const frame of result) {
       frame.actionMasks[4] = frame.actionMasks[4].map((_, index) => index === 0);
+      if (frame.weapon.ammoId !== lessonAmmoId) frame.actionMasks[3][1] = false;
       if (level < 2) {
         frame.actionMasks[1] = [false, true, false];
         frame.actionMasks[2] = [false, true, false];
@@ -134,6 +137,8 @@ function reset(request: ResetRequest) {
   rangeStreak = 0;
   rangeKills = 0;
   headingStreak = 0;
+  lessonRange = 0;
+  lessonAmmoId = request.ammoId ?? 2001;
   const mapId = request.mapId ?? 7;
   const count = request.players ?? 2;
   const controlled = request.controlled ?? 1;
@@ -219,6 +224,7 @@ function reset(request: ResetRequest) {
     const learner = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!;
     const field = getBattlefield(mapId);
     const range = previous[0].weapon.range;
+    lessonRange = range;
     const lanes = rangeLessonLanes(field, range, level);
     const offset = Math.floor(Math.random() * lanes.length);
     let placed = false;
@@ -296,9 +302,8 @@ function step(request: StepRequest) {
       && event.playerId === playerIds[0] && practiceIds.includes(event.targetId));
     if (lesson === 'range' && kills.length) {
       const learner = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!;
-      const range = world.learningFrame(playerIds[0]).weapon.range;
       rangeKillDelta += kills.filter(event => rangeError(
-        Math.hypot(event.x - learner.x, event.z - learner.z), range) === 0).length;
+        Math.hypot(event.x - learner.x, event.z - learner.z), lessonRange) === 0).length;
     }
   }
   rangeKills += rangeKillDelta;
@@ -306,13 +311,13 @@ function step(request: StepRequest) {
   decisions++;
   const target = lesson === 'range' ? world.snapshot(roomId)!.players.find(player => player.id === practiceIds[0]) : undefined;
   const targetDistance = target ? Math.hypot(target.x - current[0].memory.x, target.z - current[0].memory.z) : undefined;
-  const inBand = targetDistance !== undefined && rangeError(targetDistance, current[0].weapon.range) === 0;
+  const inBand = targetDistance !== undefined && rangeError(targetDistance, lessonRange) === 0;
   if (inBand) rangeTicks++;
   rangeStreak = inBand ? rangeStreak + 1 : 0;
   const shots = current[0].metrics.shots - previous[0].metrics.shots;
   if (lesson === 'range' && shots > 0) {
     if (inBand) rangeShots += shots;
-    if (targetDistance !== undefined && targetDistance > current[0].weapon.range) outsideRangeShots += shots;
+    if (targetDistance !== undefined && targetDistance > lessonRange) outsideRangeShots += shots;
   }
   const goalDistance = goal ? Math.hypot(current[0].memory.x - goal.x, current[0].memory.z - goal.z) : undefined;
   const headingError = goal ? Math.acos(Math.max(-1, Math.min(1, headingCosine(current[0])))) : undefined;
@@ -356,10 +361,10 @@ function step(request: StepRequest) {
     if (lesson === 'dodge') reward += .002 - .003 * (after.damageTaken - before.damageTaken);
     if (lesson === 'range' && target && targetDistance !== undefined) {
       const beforeDistance = Math.hypot(target.x - previous[index].memory.x, target.z - previous[index].memory.z);
-      reward += 4 * (rangeError(beforeDistance, frame.weapon.range)
-        - rangeError(targetDistance, frame.weapon.range)) / Math.max(1, frame.weapon.range) - .001;
+      reward += 4 * (rangeError(beforeDistance, lessonRange)
+        - rangeError(targetDistance, lessonRange)) / Math.max(1, lessonRange) - .001;
       if (inBand) reward += .01;
-      if (shots > 0 && targetDistance > frame.weapon.range) reward -= .03 * shots;
+      if (shots > 0 && targetDistance > lessonRange) reward -= .03 * shots;
       if (shots > 0 && inBand && frame.weapon.aimedAtEnemy) reward += .03 * shots;
       if (success) reward += 2;
     }
@@ -384,7 +389,8 @@ function step(request: StepRequest) {
   previous = current;
   return {type: 'step', seed, frames: current, rewards, done, lesson, level, success, goalDistance,
     lessonMetrics: {initialDistance, goalDistance, travelled, blocked, decisions,
-      targetDistance, weaponRange: current[0].weapon.range, rangeTicks, rangeStreak,
+      targetDistance, weaponRange: lesson === 'range' ? lessonRange : current[0].weapon.range,
+      currentWeaponRange: current[0].weapon.range, rangeTicks, rangeStreak,
       rangeShots, outsideRangeShots, rangeKills, headingError, headingStreak}};
 }
 
