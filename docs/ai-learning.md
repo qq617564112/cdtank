@@ -57,11 +57,19 @@ python3 scripts/learning/remote.py scripts/learning/setup.ps1
 
 数据导出支持将压缩流直接通过 SSH 交给远程 `receive.py`，无需在本地保存新增数据。`python3 scripts/learning/sync_trainer.py` 将已提交的训练脚本及文档流式传到 `D:/ai/cdtank/data/trainer-<提交前12位>.tar.gz`，解压至 `D:/ai/cdtank/trainer`，包内 `source.json` 记录训练端源码。179 的训练不再启动 Node 世界或加载场景资源；已有 `game/` 和历史模拟归档保留。
 
-本机模拟服务使用仓库现有依赖与 `apps/server/resources`：
+本机模拟服务从固定提交的独立 detached worktree 运行，避免开发工作区更新后，新建世界与服务记录的源码提交不一致。当前模拟版本为 `18524d48b6bbb535f40a68de0cf0b551ec85289e`，目录为 `/workspace/worktrees/cdtank-simulation-18524d48b6bb`。该目录独立复制 `apps/server/resources`，通过 `node_modules` 链接复用本机已安装依赖。
+
+准备并在固定目录启动服务：
 
 ```bash
+git worktree add --detach /workspace/worktrees/cdtank-simulation-18524d48b6bb 18524d48b6bbb535f40a68de0cf0b551ec85289e
+ln -s /workspace/cdtank/node_modules /workspace/worktrees/cdtank-simulation-18524d48b6bb/node_modules
+cp -a --reflink=auto /workspace/cdtank/apps/server/resources /workspace/worktrees/cdtank-simulation-18524d48b6bb/apps/server/resources
+cd /workspace/worktrees/cdtank-simulation-18524d48b6bb
 node scripts/learning/simulation-server.mjs --host 0.0.0.0 --port 40101
 ```
+
+准备命令只在首次创建目录时执行。当前服务以脱离终端的进程运行。更新模拟版本时准备新的固定提交目录，停止训练并保留检查点，再切换服务和恢复训练；正在运行的模拟目录保持不变。
 
 40101 位于已映射到当前开发容器的 40100–40200 范围。外部健康地址为 `http://192.168.10.140:40101/health`。所有训练和冻结评估的 `--environment-url` 使用同一服务地址；配置分别记录训练端源码与模拟端源码、模拟 Node 版本。
 
@@ -111,6 +119,8 @@ PPO 完成训练后关闭训练世界，自动在 `evaluation-level-<级别>` �
 
 ## 当前结果与限制
 
+模拟迁移后，普通弹射程、远程弹射程与导航分别在 `range-network-20261018-001`、`range-long-network-20261018-001`、`navigation-network-20261018-001` 从原检查点恢复，保留优化器和累计 PPO 步数，每项使用 4 个本机世界。首次运行记录中，三项步数分别从 22272 增至 23296、25344 增至 26368、24320 增至 25344；本机健康接口报告 12 个世界，179 的本任务 Node 模拟进程数为 0，RTX 2080 Ti 的瞬时利用率为 80%、显存使用为 1446 MiB。配置与检查点继续写入 `D:/ai/cdtank/runs`，迁移记录为 `runs/simulation-migration-20261018-001.json`。这些记录证明训练已通过网络继续推进，不代表课程通过。
+
 首轮动作先验在 GPU 上完成 100 epoch，最佳验证交叉熵为 0.73356。验证集 549 条连续动作中，移动、转向和炮塔操作准确率分别约 69.2%、77.2%、67.4%；保持上一动作基线为 69.2%、74.5%、63.6%。这是粗采样动作预测结果，不代表交战或对人胜率。
 
 直行课程检查点 `runs/navigation-forward-20261017-001/forward-candidate.pt` 在 8192 步后，于 32 个独立种子的练习中到达率为 100%，平均回报 5.1935。评估目录为 `runs/navigation-forward-evaluation-20261017-001`。此结果仅覆盖地图 7、战车 1 的前方短距离路点。
@@ -120,6 +130,8 @@ PPO 完成训练后关闭训练世界，自动在 `evaluation-level-<级别>` �
 五秒距离保持的首轮检查点为 `runs/range-bootstrap-20261017-002/teacher.pt`，经过 20032 个脚本示范步骤。地图 1 的普通弹接近在 32 个独立种子中成功 31 次（96.875%），后撤成功 19 次（59.375%）；评估目录分别为 `runs/range-bootstrap-approach-evaluation-20261017-001`、`runs/range-bootstrap-retreat-evaluation-20261017-001`。它还未达到稳定的双向距离控制，后续运行使用纠正示范和辅助模仿继续优化。
 
 相同示范步数下，`runs/turning-bootstrap-20261017-002/teacher.pt` 的任意方向原地转向在地图 7 的 32 个独立种子中成功 20 次（62.5%）；`runs/aiming-bootstrap-20261017-002/teacher.pt` 的固定车体、任意方向 600 HP 靶击毁成功 28 次（87.5%）。评估目录为 `runs/turning-bootstrap-evaluation-20261017-001`、`runs/aiming-bootstrap-evaluation-20261017-001`。这些是基础操作模型，尚未证明移动射击和完整交战能力。
+
+瞄准运行 `aiming-bootstrap-20261017-002/latest.pt` 完成 30208 个 PPO 步骤后，每级 32 个独立种子的冻结评估中，0/1/2 级分别击毁 32、21、23 个目标。任意方向静止靶成绩低于该运行的示范预热检查点，后续瞄准训练需要保留基础操作辅助约束，并继续以冻结评估选择模型。
 
 当前课程尚未证明跨机器完全确定的回放、复杂绕障、道具价值、团队配合和五模式能力。历史数据规模较小且人工操作来源未确认。未运行单元测试、浏览器验收、构建或类型检查；训练运行和训练集验证指标记录各自的实际范围。
 
