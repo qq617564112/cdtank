@@ -150,6 +150,10 @@ World 的 `learnedCpuPolicy` 注入接口为指定 CPU 或托管角色返回策�
 
 `evaluate_native_curriculum.py --model <导出的演员 JSON> --curriculum <课程 JSON>` 在同一训练端 CPU 进程中，按课程运行普通托管对局。课程指定模式、地图、战车、人数、学习者数和可选配给；未指定配给时继承单课程模型的训练配给。每组保存实际配置、完整结算、动作一致性和胜负，另存堡垒伤害、VIP 伤害、目标摧毁数、射击/命中及实际道具消耗/恢复。轨迹每 500ms 保存一次本地决策观察、决策时间、动作和位置，供射程控制与操作节奏分析。
 
+`native-modes-and-generalization-20261018-001` 在独立模式学习者降至最多一个、宿主机空闲物理内存达到 1.5 GiB 后，使用固定训练端 `006667a5b81a` 执行模式 3/4 的原生对局、团队六组泛化对局，以及模式 5/2 的原生对局；每组均为 32 个种子。团队课程包含地图 7 的 3v3、地图 1/2 的 2v2、战车 51/3 和相同种子的无道具对照，清单为 `data/team-native-generalization-curriculum-20261018-001.json`。该队列只读取训练完成后的固定模型，保存全部对局结果。
+
+冻结策略评估的 `evaluate.py`、`evaluate_curriculum.py` 支持 `--device cpu`，以训练端 CPU 推理并继续请求本机 World；默认 CUDA 路径保持不变。CPU 路径记录实际设备，不创建 CUDA 上下文，供较小专项模型的配对对照使用。
+
 ## 运行
 
 远程基础 Python 环境：

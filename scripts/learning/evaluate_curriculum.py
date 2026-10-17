@@ -33,7 +33,8 @@ def main(args):
                 "checkpoint": args.checkpoint, "output": str(destination),
                 "environment_url": args.environment_url, "episodes": args.episodes,
                 "environments": args.environments, "stochastic": False,
-                "gpu_utilization_limit": args.gpu_utilization_limit, "seed": args.seed}
+                "gpu_utilization_limit": args.gpu_utilization_limit, "seed": args.seed,
+                "device": getattr(args, "device", "cuda")}
             options["opponent_paths"] = config.get("opponentPaths")
             if args.without_items:
                 options["items"] = []
@@ -55,6 +56,7 @@ if __name__ == "__main__":
     parser.add_argument("--gpu-utilization-limit", type=int, default=80)
     parser.add_argument("--seed", type=int, default=100000179)
     parser.add_argument("--without-items", action="store_true")
+    parser.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
     options = parser.parse_args()
     if options.episodes < 1 or options.environments < 1:
         parser.error("Episodes and environments must be positive")
