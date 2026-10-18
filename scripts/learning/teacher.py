@@ -82,9 +82,10 @@ def primitive_action(frame, lesson, level, decisions):
                 action[2] = 2 if angle > 0 else 0
             action[3] = int(.79 <= ratio <= .86 and abs(angle) < .1
                             and bool(observation[WEAPON_ENEMY + 2]))
-    elif lesson == "siege":
+    elif lesson in ("siege", "destruction"):
         targets = [offset for offset in (84, 90)
-                   if observation[offset] and not observation[offset + 4] and not observation[offset + 5]]
+                   if observation[offset] and (observation[offset + 5] if lesson == "destruction"
+                       else not observation[offset + 4] and not observation[offset + 5])]
         if targets:
             offset = targets[0]
             lateral, forward = observation[offset + 1:offset + 3]

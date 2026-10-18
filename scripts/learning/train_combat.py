@@ -383,9 +383,9 @@ def main(args):
                     args.imitation_weight = .1 if args.teacher_steps else 0
             if args.teacher_source == "cpu" and any(course["lesson"] != "combat" for course in course_options(args)):
                 raise ValueError("CPU demonstrations require ordinary combat courses")
-            if args.imitation_weight and args.teacher_source == "primitive" and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege")
+            if args.imitation_weight and args.teacher_source == "primitive" and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "destruction")
                     or course["lesson"] == "navigation" and course["level"] > 2
-                    or course["lesson"] in ("items", "siege") and course["level"] > 2 for course in course_options(args)):
+                    or course["lesson"] in ("items", "siege", "destruction") and course["level"] > 2 for course in course_options(args)):
                 raise ValueError("Auxiliary imitation requires a supported primitive lesson")
             if actors_per_world > 1 and args.teacher_source == "primitive" and (args.teacher_steps or args.imitation_weight):
                 raise ValueError("Primitive imitation supports one controlled actor per world")
@@ -670,7 +670,7 @@ if __name__ == "__main__":
     parser.add_argument("--centralized-critic", action="store_true")
     parser.add_argument("--opponent-pool", help="JSON list of frozen historical checkpoint paths")
     parser.add_argument("--ammo-id", type=int, default=2001)
-    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "combat"], default="combat")
+    parser.add_argument("--lesson", choices=["turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "destruction", "combat"], default="combat")
     parser.add_argument("--level", type=int, choices=range(4), default=1)
     parser.add_argument("--mix-levels", action="store_true", help="Replay levels zero through the selected level")
     parser.add_argument("--seed", type=int, default=179)
@@ -727,10 +727,10 @@ if __name__ == "__main__":
     for course in course_options(args):
         if not 1 <= course["controlled"] <= course["players"] <= 6:
             parser.error("Each course needs one to six controlled actors within the room size")
-        if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "combat") or course["level"] not in range(4):
+        if course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "destruction", "combat") or course["level"] not in range(4):
             parser.error("Each course needs a supported lesson and level")
-        if args.teacher_steps and args.teacher_source == "primitive" and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege")
+        if args.teacher_steps and args.teacher_source == "primitive" and (course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "destruction")
                 or course["lesson"] == "navigation" and course["level"] > 2
-                or course["lesson"] in ("items", "siege") and course["level"] > 2):
+                or course["lesson"] in ("items", "siege", "destruction") and course["level"] > 2):
             parser.error("Primitive demonstrations require supported basic movement, shooting, dodge, range or item courses")
     main(args)

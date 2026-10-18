@@ -4,7 +4,7 @@ import {World} from '../../apps/server/src/world';
 import {content} from '../../apps/server/src/content';
 import {newbornBattleSources} from '../../apps/shared/simulation/newborn-roles';
 import {getBattlefield, segmentBox} from '../../apps/server/src/battlefield';
-import {getSceneCastles} from '../../apps/server/src/scene-objects';
+import {getSceneBreakables, getSceneCastles} from '../../apps/server/src/scene-objects';
 import {createOriginalBotNavigation} from '../../apps/server/src/battle/cpu/original-navigation';
 import {findBotPath} from '../../apps/server/src/battle/cpu/navigation';
 import {rangeLessonLanes} from './range-lanes';
@@ -27,7 +27,7 @@ export interface ResetRequest {
   learnerTeam?: number;
   seconds?: number;
   items?: {slot: number; itemTableId: number; quantity: number}[];
-  lesson?: 'turning' | 'navigation' | 'aiming' | 'shooting' | 'dodge' | 'range' | 'items' | 'siege' | 'combat';
+  lesson?: 'turning' | 'navigation' | 'aiming' | 'shooting' | 'dodge' | 'range' | 'items' | 'siege' | 'destruction' | 'combat';
   level?: number;
   nativePolicy?: SerializedActorPolicy;
   expert?: boolean;
@@ -160,7 +160,7 @@ export function createLearningEnvironment(environmentId: string) {
         frame.actionMasks[3][1] = false;
       }
     }
-    if (lesson === 'siege') {
+    if (lesson === 'siege' || lesson === 'destruction') {
       for (const frame of result) {
         frame.actionMasks[4] = frame.actionMasks[4].map((_, index) => index === 0);
         if (level < 2) {
@@ -214,6 +214,9 @@ export function createLearningEnvironment(environmentId: string) {
     if (lesson !== 'combat' && controlled !== 1) throw new Error('Primitive lessons control one actor');
     if (lesson === 'siege' && (mode !== 2 || level > 2)) {
       throw new Error('Siege lessons require mode 2 and levels zero through two');
+    }
+    if (lesson === 'destruction' && (mode !== 5 || level > 2)) {
+      throw new Error('Destruction lessons require mode 5 and levels zero through two');
     }
     if (mode <= 3 && controlled !== count && controlled > Math.ceil(count / 2)) {
       throw new Error('Team learning controls one side or the entire roster');
@@ -286,19 +289,24 @@ export function createLearningEnvironment(environmentId: string) {
     memories = playerIds.map(() => undefined);
     previous = frames();
     lessonMaximumHp = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!.maxHp;
-    if (lesson === 'siege') {
+    if (lesson === 'siege' || lesson === 'destruction') {
       const learner = world.snapshot(roomId)!.players.find(player => player.id === playerIds[0])!;
-      const source = getSceneCastles(mapId).find(castle => castle.affiliation === 2 - learner.team);
-      if (!source) throw new Error('Siege lesson requires an enemy Castle');
+      const sources = lesson === 'siege'
+        ? getSceneCastles(mapId).filter(castle => castle.affiliation === 2 - learner.team)
+        : getSceneBreakables(mapId);
+      if (!sources.length) throw new Error('Objective lesson requires source scene targets');
       const field = getBattlefield(mapId);
       const navigation = createOriginalBotNavigation(field);
       const range = previous[0].weapon.range;
-      const target = {x: source.matrix[12], z: source.matrix[14]};
       let placed = false;
       for (let attempt = 0; attempt < 512; attempt++) {
+        const source = sources.length === 1 ? sources[0] : sources[Math.floor(Math.random() * sources.length)];
+        const target = {x: source.matrix[12], z: source.matrix[14]};
         const angle = Math.random() * 2 * Math.PI;
         const radius = range * (level === 2 ? 1.05 + .2 * Math.random() : .55 + .2 * Math.random());
         const x = target.x + Math.sin(angle) * radius, z = target.z + Math.cos(angle) * radius;
+        if (lesson === 'destruction' && sources.some(other => other.id !== source.id
+            && Math.hypot(other.matrix[12] - x, other.matrix[14] - z) < radius)) continue;
         const y = field.navigation.groundHeightAt(x, z);
         if (y === undefined) continue;
         const bearing = Math.atan2(target.x - x, target.z - z);
@@ -319,7 +327,7 @@ export function createLearningEnvironment(environmentId: string) {
         initialDistance = radius;
         break;
       }
-      if (!placed) throw new Error('No clear enemy Castle firing approach');
+      if (!placed) throw new Error('No clear source objective firing approach');
       memories = playerIds.map(() => undefined);
       previous = frames();
     }
@@ -552,6 +560,7 @@ export function createLearningEnvironment(environmentId: string) {
       : lesson === 'shooting' || lesson === 'aiming' ? current[0].metrics.kills > 0
       : lesson === 'range' ? level < 2 ? rangeStreak >= 50 : rangeKills > 0
       : lesson === 'dodge' ? decisions >= 150 && current[0].metrics.damageTaken === 0
+      : lesson === 'destruction' ? current[0].metrics.objectives > 0
       : lesson === 'items' ? current[0].alive && (level === 0
         ? decisions >= 150 && current[0].metrics.hp >= healingGoalHp
         : level === 1 ? decisions >= 150 && current[0].metrics.damageTaken === 0
@@ -563,6 +572,7 @@ export function createLearningEnvironment(environmentId: string) {
       || (lesson === 'shooting' || lesson === 'aiming') && (success || decisions >= 200)
       || lesson === 'range' && (success || decisions >= 300)
       || lesson === 'dodge' && (current[0].metrics.deaths > 0 || decisions >= 150)
+      || lesson === 'destruction' && (success || current[0].metrics.deaths > 0 || decisions >= 300)
       || lesson === 'items' && (success || current[0].metrics.deaths > 0 || decisions >= (level === 2 ? 100 : level === 3 ? 300 : 150));
     const rewards = current.map((frame, index) => {
       const before = previous[index].metrics, after = frame.metrics;
