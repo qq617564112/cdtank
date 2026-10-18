@@ -44,6 +44,8 @@ def main(args):
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=False)
     args.courses = json.loads(Path(args.curriculum).read_text(encoding="utf-8-sig"))
+    if any(course.get("weight", 1) != 1 for course in args.courses):
+        raise ValueError("Foundation collection requires equally weighted courses")
     args.teacher_source = "primitive"
     courses = course_options(args)
     if args.environments % len(courses):

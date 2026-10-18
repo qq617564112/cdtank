@@ -36,7 +36,9 @@ class Environment:
         self.args = args
         self.native_policy = getattr(args, "native_policy", None)
         courses = course_options(args)
-        self.course = courses[number % len(courses)]
+        weights = [course.get("weight", 1) for course in getattr(args, "courses", None) or [{}]]
+        allocations = [course for course, weight in zip(courses, weights) for _ in range(weight)]
+        self.course = allocations[number % len(allocations)]
         endpoint = urlsplit(args.environment_url)
         if endpoint.scheme != "http" or not endpoint.hostname:
             raise ValueError("Use the simulation server's http://host:port address")
@@ -730,6 +732,9 @@ if __name__ == "__main__":
         parser.error("Student execution probabilities must be between zero and one")
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
         parser.error("Evaluation episodes and environments must be positive")
+    for course in args.courses or [{}]:
+        if not isinstance(course.get("weight", 1), int) or course.get("weight", 1) < 1:
+            parser.error("Curriculum course weights must be positive integers")
     for course in course_options(args):
         if not 1 <= course["controlled"] <= course["players"] <= 6:
             parser.error("Each course needs one to six controlled actors within the room size")
