@@ -76,7 +76,8 @@ export class LearningSiegeExpert extends LearningCombatExpert {
     }
     const navigation = createOriginalBotNavigation(field);
     const predict = createBattleMovementPredictor(player, field, room.players.values(), .1);
-    if (!firingLine(field, player, bearing, source, range)) {
+    if (Math.hypot(target.x - player.x, target.z - player.z) > .82 * range
+        || !firingLine(field, player, bearing, source, range)) {
       if (!route.path.length && !route.planner && route.candidates.length) {
         route.planner = new BotPathPlanner(field, player, route.candidates.shift()!, navigation);
       }
