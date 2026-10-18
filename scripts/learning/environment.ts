@@ -303,14 +303,17 @@ export function createLearningEnvironment(environmentId: string) {
         const source = sources.length === 1 ? sources[0] : sources[Math.floor(Math.random() * sources.length)];
         const target = {x: source.matrix[12], z: source.matrix[14]};
         const angle = Math.random() * 2 * Math.PI;
-        const radius = range * (level === 2 ? 1.05 + .2 * Math.random() : .55 + .2 * Math.random());
+        const radius = lesson === 'destruction'
+          ? Math.min(.65 * range, 100 + 100 * Math.random()) + (level === 2 ? 180 : 0)
+          : range * (level === 2 ? 1.05 + .2 * Math.random() : .55 + .2 * Math.random());
         const x = target.x + Math.sin(angle) * radius, z = target.z + Math.cos(angle) * radius;
         if (lesson === 'destruction' && sources.some(other => other.id !== source.id
             && Math.hypot(other.matrix[12] - x, other.matrix[14] - z) < radius)) continue;
         const y = field.navigation.groundHeightAt(x, z);
         if (y === undefined) continue;
         const bearing = Math.atan2(target.x - x, target.z - z);
-        const approachRadius = level === 2 ? .65 * range : radius;
+        const approachRadius = level === 2
+          ? Math.min(.65 * range, lesson === 'destruction' ? 140 : Infinity) : radius;
         const approach = {x: target.x + Math.sin(angle) * approachRadius, y,
           z: target.z + Math.cos(angle) * approachRadius};
         if (level === 2 && !navigation.canTraverse({x, y, z}, approach)) continue;

@@ -93,12 +93,13 @@ def primitive_action(frame, lesson, level, decisions):
             turret = math.atan2(observation[4], observation[5])
             angle = math.atan2(math.sin(bearing - turret), math.cos(bearing - turret))
             ratio = math.hypot(lateral, forward) * 600 / max(1, observation[128] * 1000)
+            approach_ratio = min(.72, 180 / max(1, observation[128] * 1000)) if lesson == "destruction" else .72
             if abs(angle) > .04:
                 action[2] = 2 if angle > 0 else 0
             if level >= 2:
                 if abs(bearing) > .08:
                     action[1] = 2 if bearing > 0 else 0
-                elif ratio > .72:
+                elif ratio > approach_ratio:
                     action[0] = 2
             action[3] = int(ratio < .9 and abs(angle) < .07)
     elif lesson == "items":
