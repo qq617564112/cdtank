@@ -7,7 +7,7 @@ import {createOriginalBotNavigation} from '../battle/cpu/original-navigation';
 import {BotPathPlanner} from '../battle/cpu/navigation';
 import {healingHotkey} from '../battle/cpu/items';
 import {createBattleMovementPredictor} from '../battle/dynamic-movement';
-import {originalMovementParameters} from '../battle/movement';
+import {originalMovementParameters, ORIGINAL_MOVEMENT_DIMENSIONS} from '../battle/movement';
 import {roleMovementElapsed} from '../battle/roles/movement-time';
 import type {PlayerState} from '../battle/player-state';
 import type {RoomState} from '../rooms/state';
@@ -74,10 +74,16 @@ export class LearningSiegeExpert extends LearningCombatExpert {
       route = {target: target.id, deaths: player.deaths, candidates, path: []};
       this.routes.set(player, route);
     }
-    const navigation = createOriginalBotNavigation(field);
+    // A route bend needs room for the real rectangular hull to pivot in place.
+    const pivotDiameter = Math.hypot(ORIGINAL_MOVEMENT_DIMENSIONS.width, ORIGINAL_MOVEMENT_DIMENSIONS.depth);
+    const navigation = createOriginalBotNavigation(field, {width: pivotDiameter, depth: pivotDiameter});
     const predict = createBattleMovementPredictor(player, field, room.players.values(), .1);
     if (Math.hypot(target.x - player.x, target.z - player.z) > .82 * range
         || !firingLine(field, player, bearing, source, range)) {
+      if (route.path.length && !navigation.canTraverse(player, route.path[0])) {
+        route.planner = new BotPathPlanner(field, player, route.path[route.path.length - 1], navigation);
+        route.path = [];
+      }
       if (!route.path.length && !route.planner && route.candidates.length) {
         route.planner = new BotPathPlanner(field, player, route.candidates.shift()!, navigation);
       }
