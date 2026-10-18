@@ -256,7 +256,9 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                     distributions, _, hidden = policy(observations, hidden, reset, masks)
                 actions = demonstration_actions(results, args.teacher_source)
                 chosen = torch.tensor(actions, device=device)
-                student_probability = args.teacher_student_fraction * min(1, steps / max(1, args.teacher_steps))
+                progress = min(1, steps / max(1, args.teacher_steps))
+                student_probability = args.teacher_student_start_fraction + progress * (
+                    args.teacher_student_fraction - args.teacher_student_start_fraction)
                 predicted_tensor = torch.stack([dist.logits.argmax(dim=-1) for dist in distributions], dim=-1)
                 for key, value in (("observation", observations), ("masks", masks), ("reset", reset),
                                    ("teacher", chosen), ("predicted", predicted_tensor)):

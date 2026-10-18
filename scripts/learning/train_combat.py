@@ -277,6 +277,7 @@ def main(args):
     args.teacher_batch_sequences = getattr(args, "teacher_batch_sequences", 256)
     args.teacher_epochs = getattr(args, "teacher_epochs", 2)
     args.teacher_learning_rate = getattr(args, "teacher_learning_rate", .001)
+    args.teacher_student_start_fraction = getattr(args, "teacher_student_start_fraction", 0.)
     args.direction_label_weight = getattr(args, "direction_label_weight", 1.)
     args.rehearsal = getattr(args, "rehearsal", None)
     args.rehearsal_weight = getattr(args, "rehearsal_weight", 3.)
@@ -685,6 +686,8 @@ if __name__ == "__main__":
     parser.add_argument("--direction-label-weight", type=float, default=1.,
                         help="Weight active body and turret turn labels during online imitation")
     parser.add_argument("--teacher-student-fraction", type=float, default=.75)
+    parser.add_argument("--teacher-student-start-fraction", type=float, default=0.,
+                        help="Initial student execution probability; use 1 for student-only correction rollouts")
     parser.add_argument("--imitation-weight", type=float)
     parser.add_argument("--curriculum", help="JSON list of courses assigned evenly across environments")
     parser.add_argument("--rehearsal", help="Collected foundation sequences.npz for skill retention during PPO")
@@ -722,6 +725,9 @@ if __name__ == "__main__":
         parser.error("Direction label weight must be positive")
     if args.teacher_learning_rate <= 0:
         parser.error("Teacher learning rate must be positive")
+    if not all(0 <= fraction <= 1 for fraction in (
+            args.teacher_student_start_fraction, args.teacher_student_fraction)):
+        parser.error("Student execution probabilities must be between zero and one")
     if args.evaluation_environments < 1 or args.evaluation_episodes < 1:
         parser.error("Evaluation episodes and environments must be positive")
     for course in course_options(args):
