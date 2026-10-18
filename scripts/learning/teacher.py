@@ -11,6 +11,12 @@ ITEM_FEATURES = 160
 ITEM_WIDTH = 13
 
 
+def demonstration_label(source):
+    return {"primitive": "scripted primitive control",
+            "cpu": "scripted HIGH CPU with navigation and team context",
+            "siege": "scripted castle route with source NAV and movement previews"}[source]
+
+
 def demonstration_loss(distributions, chosen, direction_weight=1.):
     """Retain sparse firing and consumable decisions among neutral control ticks."""
     import torch
@@ -128,7 +134,7 @@ def primitive_action(frame, lesson, level, decisions):
 
 
 def demonstration_actions(results, source):
-    if source == "cpu":
+    if source in ("cpu", "siege"):
         if any("expertActions" not in result or result["expertActions"] is None for result in results):
             raise RuntimeError("CPU demonstrations require the expert simulation service")
         return [action for result in results for action in result["expertActions"]]
@@ -327,8 +333,7 @@ def teach(policy, optimizer, environments, pool, results, args, device, output, 
                    "gpuMemoryAllocatedMiB": torch.cuda.memory_allocated() / 1048576,
                    "gpuMemoryReservedMiB": torch.cuda.memory_reserved() / 1048576,
                    "studentActionProbability": student_probability,
-                   "labelSource": "scripted HIGH CPU with navigation and team context" if args.teacher_source == "cpu"
-                       else "scripted primitive control"}
+                   "labelSource": demonstration_label(args.teacher_source)}
             log.write(json.dumps(row) + "\n")
             log.flush()
             episodes = []

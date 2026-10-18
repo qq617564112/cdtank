@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from train_combat import Environment
-from teacher import demonstration_actions
+from teacher import demonstration_actions, demonstration_label
 
 
 def main(args):
@@ -24,9 +24,8 @@ def main(args):
         for number in range(min(args.environments, args.episodes)):
             environments.append(Environment(args, number))
         config = {**vars(args), "simulationSource": environments[0].source,
-                  "labelSource": "scripted HIGH CPU with navigation and team context"
-                      if args.teacher_source == "cpu" else "scripted primitive control",
-                  "demonstrationUsesPrivilegedState": args.teacher_source == "cpu"}
+                  "labelSource": demonstration_label(args.teacher_source),
+                  "demonstrationUsesPrivilegedState": args.teacher_source != "primitive"}
         source = Path(__file__).resolve().parents[2] / "source.json"
         config["trainerSource"] = json.loads(source.read_text(encoding="utf-8")) if source.exists() else None
         (output / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
@@ -99,7 +98,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--environment-url", required=True)
-    parser.add_argument("--teacher-source", choices=("primitive", "cpu"), default="cpu")
+    parser.add_argument("--teacher-source", choices=("primitive", "cpu", "siege"), default="cpu")
     parser.add_argument("--lesson", default="combat")
     parser.add_argument("--level", type=int, default=1)
     parser.add_argument("--output", required=True)

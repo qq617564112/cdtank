@@ -10,6 +10,7 @@ import {findBotPath} from '../../apps/server/src/battle/cpu/navigation';
 import {rangeLessonLanes} from './range-lanes';
 import {LearnedCpuPolicy} from '../../apps/server/src/learning/cpu-policy';
 import {LearningCombatExpert} from '../../apps/server/src/learning/expert';
+import {LearningSiegeExpert} from '../../apps/server/src/learning/siege-expert';
 import {calculateFoodHealing} from '../../apps/server/src/battle/roles/food-healing';
 import type {SerializedActorPolicy} from '../../apps/server/src/learning/policy';
 import type {LearningGoal, LearningMemory} from '../../apps/server/src/learning/observation';
@@ -30,7 +31,7 @@ export interface ResetRequest {
   lesson?: 'turning' | 'navigation' | 'aiming' | 'shooting' | 'dodge' | 'range' | 'items' | 'siege' | 'destruction' | 'combat';
   level?: number;
   nativePolicy?: SerializedActorPolicy;
-  expert?: boolean;
+  expert?: boolean | 'siege';
 }
 
 export interface StepRequest {type: 'step'; actions: number[][];}
@@ -225,7 +226,9 @@ export function createLearningEnvironment(environmentId: string) {
     if (request.expert && (lesson !== 'combat' || request.nativePolicy)) {
       throw new Error('CPU demonstrations require ordinary externally controlled combat');
     }
-    expert = request.expert ? new LearningCombatExpert() : undefined;
+    if (request.expert === 'siege' && mode !== 2) throw new Error('Siege route demonstrations require mode 2');
+    expert = request.expert === 'siege' ? new LearningSiegeExpert()
+      : request.expert ? new LearningCombatExpert() : undefined;
     nativePolicy = request.nativePolicy ? new LearnedCpuPolicy(request.nativePolicy) : undefined;
     world = new World(() => clock, {allocateRoomId: () => environmentId,
       learnedCpuPolicy: nativePolicy ? (_mode, id) => playerIds.includes(id) ? nativePolicy : undefined : undefined});

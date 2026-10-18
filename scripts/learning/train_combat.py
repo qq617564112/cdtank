@@ -15,7 +15,7 @@ import torch
 from torch import nn
 from torch.distributions import Categorical
 from gpu_budget import GpuBudget
-from teacher import teach, demonstration_actions, demonstration_loss, DemonstrationReplay
+from teacher import teach, demonstration_actions, demonstration_loss, demonstration_label, DemonstrationReplay
 from human_style import HumanControlPrior
 
 
@@ -77,8 +77,9 @@ class Environment:
                              "lesson": course["lesson"], "level": level}
         if course["lesson"] in ("combat", "siege") and course["mode"] <= 3 and course["controlled"] < course["players"]:
             request["learnerTeam"] = random.Random(seed + 104729).randrange(2)
-        if getattr(self.args, "teacher_source", "primitive") == "cpu" and (self.args.teacher_steps or self.args.imitation_weight):
-            request["expert"] = True
+        source = getattr(self.args, "teacher_source", "primitive")
+        if source in ("cpu", "siege") and (self.args.teacher_steps or self.args.imitation_weight):
+            request["expert"] = True if source == "cpu" else "siege"
         if self.native_policy:
             request["nativePolicy"] = self.native_policy
         result = self.command(request)
@@ -384,8 +385,10 @@ def main(args):
                         prior_config.get("imitation_weight", 0) if prior_config.get("teacher_steps", 0) else 0)
                 else:
                     args.imitation_weight = .1 if args.teacher_steps else 0
-            if args.teacher_source == "cpu" and any(course["lesson"] != "combat" for course in course_options(args)):
+            if args.teacher_source in ("cpu", "siege") and any(course["lesson"] != "combat" for course in course_options(args)):
                 raise ValueError("CPU demonstrations require ordinary combat courses")
+            if args.teacher_source == "siege" and any(course["mode"] != 2 for course in course_options(args)):
+                raise ValueError("Siege route demonstrations require mode 2")
             if args.imitation_weight and args.teacher_source == "primitive" and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "destruction")
                     or course["lesson"] == "navigation" and course["level"] > 2
                     or course["lesson"] in ("items", "siege", "destruction") and course["level"] > 2 for course in course_options(args)):
@@ -415,10 +418,9 @@ def main(args):
                       "controlledRoster": results[0].get("actors"),
                       "maskInputWidth": sum(SIZES), "trainingCourses": course_options(args),
                       "imitationWeight": args.imitation_weight,
-                      "demonstrationSource": "scripted HIGH CPU with navigation and team context" if args.teacher_source == "cpu"
-                          else "scripted primitive control",
+                      "demonstrationSource": demonstration_label(args.teacher_source),
                       "actorUsesPrivilegedState": False,
-                      "demonstrationUsesPrivilegedState": args.teacher_source == "cpu",
+                      "demonstrationUsesPrivilegedState": args.teacher_source != "primitive",
                       "imitationEventWeights": {"movement": 3, "fire": 5, "consumable": 30, "other": 1},
                       "teacherBootstrapSteps": args.teacher_steps if not args.resume else 0}
             source = Path(__file__).resolve().parents[2] / "source.json"
@@ -680,7 +682,7 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation-episodes", type=int, default=32)
     parser.add_argument("--evaluation-environments", type=int, default=8)
     parser.add_argument("--teacher-steps", type=int, default=0)
-    parser.add_argument("--teacher-source", choices=("primitive", "cpu"), default="primitive")
+    parser.add_argument("--teacher-source", choices=("primitive", "cpu", "siege"), default="primitive")
     parser.add_argument("--teacher-replay-sequences", type=int, default=4096)
     parser.add_argument("--teacher-batch-sequences", type=int, default=256)
     parser.add_argument("--teacher-epochs", type=int, default=2)
