@@ -11,6 +11,8 @@ import {LoginArtwork} from './login-artwork';
 import {SourceConfirmView} from '../dialogs/source-confirm-view';
 import {ResourcePackLoading} from './resource-pack-loading';
 import {isMobileDevice} from '../../platform/device';
+import {desktopClient} from '../../platform/desktop';
+import {LocalRechargeDialog} from './local-recharge-dialog';
 
 export interface LoginSourceViewProps {
   busy: boolean;
@@ -32,7 +34,10 @@ export function LoginSourceView(props: LoginSourceViewProps) {
   const [account, setAccount] = useState(props.savedAccount), [password, setPassword] = useState('');
   const [confirmResources, setConfirmResources] = useState(false);
   const [loadingResources, setLoadingResources] = useState(false);
-  const mobile = isMobileDevice();
+  const [recharging, setRecharging] = useState(false);
+  const desktop = desktopClient();
+  const canRecharge = desktop?.initialState.mode === 'local';
+  const canLoadResources = !isMobileDevice() && !desktop;
   const finishLoadingResources = useCallback(() => setLoadingResources(false), []);
   const accountInput = useRef<HTMLInputElement>(null), passwordInput = useRef<HTMLInputElement>(null);
   const composing = useRef(false);
@@ -45,7 +50,7 @@ export function LoginSourceView(props: LoginSourceViewProps) {
     if (!canLogin || composing.current) return;
     props.onLogin(account, password);
   };
-  if (loadingResources) return <ResourcePackLoading onComplete={finishLoadingResources}/>;
+  if (canLoadResources && loadingResources) return <ResourcePackLoading onComplete={finishLoadingResources}/>;
   return <><SourceEntrySheet page="login" ui={ui} error={error} busy={props.busy} status={props.status}>
     {ui && layout && <form className="source-entry-form" onSubmit={event => {event.preventDefault(); login();}}
       onCompositionStartCapture={() => {composing.current = true;}}
@@ -85,10 +90,10 @@ export function LoginSourceView(props: LoginSourceViewProps) {
         <img src={imageResourceUrl('/ui/login/wood-home.png')} alt="" aria-hidden="true" draggable={false}/>
         <span>项目主页</span>
       </a>
-      {!mobile && <button type="button" className="login-wood-button login-wood-resources"
-        disabled={props.busy} onClick={() => setConfirmResources(true)}>
+      {(canLoadResources || canRecharge) && <button type="button" className="login-wood-button login-wood-resources"
+        disabled={props.busy} onClick={() => {if (canRecharge) setRecharging(true); else setConfirmResources(true);}}>
         <img src={imageResourceUrl('/ui/login/wood-currency.png')} alt="" aria-hidden="true" draggable={false}/>
-        <span>加载资源包</span>
+        <span>{canRecharge ? '充值' : '加载资源包'}</span>
       </button>}
       <button type="button" className="login-wood-button login-wood-settings"
         disabled={props.busy} onClick={props.onSettings}>
@@ -108,7 +113,8 @@ export function LoginSourceView(props: LoginSourceViewProps) {
         target="_blank" rel="noopener noreferrer">源码公开，仅供非商业研究，禁止商用</a></p>
     </footer>
   </SourceEntrySheet>
-    {!mobile && confirmResources && <SourceConfirmView label="加载资源包" binding="web-resource-pack"
+    {canRecharge && recharging && <LocalRechargeDialog savedAccount={props.savedAccount} close={() => setRecharging(false)}/>}
+    {canLoadResources && confirmResources && <SourceConfirmView label="加载资源包" binding="web-resource-pack"
       message={`将一次性加载并缓存所有游戏静态资源。\n资源包约 ${(getResourcePackBytes() / 1_000_000_000).toFixed(1)} GB，确认后进入加载界面。`}
       pending={false} disabled={props.busy} status="" cancel={() => setConfirmResources(false)}
       confirm={() => {setConfirmResources(false); setLoadingResources(true);}}/>}

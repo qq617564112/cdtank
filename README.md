@@ -115,6 +115,8 @@ npm run dev
 
 ## 服务部署与 HTTPS
 
+Windows 桌面客户端支持本地开服及通过 IP 连接远程服务器，远程模式使用随包素材，局域网联机无需证书。运行和打包方式见 [Electron 桌面客户端](docs/desktop-client.md)。
+
 ### Docker 部署
 
 在包含配套 `apps/web/public/` 和 `apps/server/resources/` 的源码目录执行：

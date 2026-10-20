@@ -1,0 +1,60 @@
+.local-recharge-dialog .game-dialog-title {
+  top: 7px;
+  color: #fff794;
+  font-size: 28px;
+  -webkit-text-stroke: 2px #17214b;
+}
+
+.local-recharge-form {
+  display: grid;
+  grid-template-columns: 108px 300px;
+  grid-template-rows: 24px repeat(3, 38px) minmax(44px, 1fr);
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 18px 30px;
+  color: #fff794;
+  font-size: 20px;
+}
+
+.local-recharge-form p {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 18px;
+}
+
+.local-recharge-form > label {
+  grid-column: 1;
+}
+
+.local-recharge-form > .cartoon-input {
+  position: relative;
+  grid-column: 2;
+}
+
+.local-recharge-form .cartoon-input-value {
+  height: calc(100% - 12px);
+  font-family: sans-serif !important;
+  font-size: 18px;
+  line-height: 26px;
+}
+
+.local-recharge-form .local-recharge-status {
+  min-height: 44px;
+  color: #fff;
+  font-size: 17px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.local-recharge-status[data-failed='true'] {
+  color: #ffe4aa;
+}
+
+.local-recharge-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 36px;
+}

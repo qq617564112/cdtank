@@ -29,12 +29,39 @@ def course_options(args):
             for course in getattr(args, "courses", None) or [{}]]
 
 
+def validate_teacher_source(args):
+    source = getattr(args, "teacher_source", "primitive")
+    courses = course_options(args)
+    if source in ("cpu", "siege") and any(course["lesson"] != "combat" for course in courses):
+        raise ValueError("World expert demonstrations require ordinary combat courses")
+    if source == "cpu" and any(course["mode"] not in (1, 4) for course in courses):
+        raise ValueError("Original CPU demonstrations are supported only for team and melee modes (1, 4)")
+    if source == "siege" and any(course["mode"] != 2 for course in courses):
+        raise ValueError("Siege route demonstrations require mode 2")
+
+
+def validate_opponent_courses(args):
+    if getattr(args, "opponent_paths", None) and any(course["controlled"] != course["players"]
+            or course["lesson"] != "combat" for course in course_options(args)):
+        raise ValueError("Historical opponents require all ordinary combat actors to be controlled")
+
+
+def learner_indices(result, has_opponents):
+    if not has_opponents:
+        return list(range(len(result["frames"])))
+    if result["mode"] >= 4:
+        return [0]
+    return [index for index, frame in enumerate(result["frames"]) if frame["metrics"]["team"] == 0]
+
+
 class Environment:
     def __init__(self, args, number):
         self.number = number
         self.episode = 0
         self.args = args
         self.native_policy = getattr(args, "native_policy", None)
+        validate_teacher_source(args)
+        validate_opponent_courses(args)
         courses = course_options(args)
         weights = [course.get("weight", 1) for course in getattr(args, "courses", None) or [{}]]
         allocations = [course for course, weight in zip(courses, weights) for _ in range(weight)]
@@ -96,6 +123,7 @@ class Environment:
     def step(self, action):
         actions = [action] if action and isinstance(action[0], (int, float)) else action
         result = self.command({"type": "step", "actions": actions})
+        result["mode"] = self.course["mode"]
         result["opponentIndex"] = self.opponent_index
         return result
 
@@ -231,7 +259,7 @@ def critic_tensors(results, device):
 
 
 class OpponentPool:
-    """Frozen historical actors on team one, with independent recurrent state."""
+    """Frozen actors control the opposing team or the other individual seats."""
     def __init__(self, paths, width, budget, device):
         self.policies = []
         self.sources = []
@@ -255,8 +283,9 @@ class OpponentPool:
             offset = 0
             for result in results:
                 if result["opponentIndex"] == number:
-                    indices.extend(offset + index for index, frame in enumerate(result["frames"])
-                                   if frame["metrics"]["team"] == 1)
+                    learners = set(learner_indices(result, True))
+                    indices.extend(offset + index for index in range(len(result["frames"]))
+                                   if index not in learners)
                 offset += len(result["frames"])
             if not indices:
                 continue
@@ -345,13 +374,10 @@ def main(args):
                 observations.shape[-1], results[0]["frames"][0]["schema"]) if args.rehearsal else None
             opponent_paths = getattr(args, "opponent_paths", None)
             opponents = OpponentPool(opponent_paths, observations.shape[-1], budget, device)
-            trainable = [index for index, frame in enumerate(frame for result in results for frame in result["frames"])
-                         if not opponent_paths or frame["metrics"]["team"] == 0]
+            trainable = [world * actors_per_world + actor for world, result in enumerate(results)
+                         for actor in learner_indices(result, bool(opponent_paths))]
             trained_agents = len(trainable)
             trained_per_world = trained_agents // args.environments
-            if opponent_paths and any(course["mode"] > 3 or course["controlled"] != course["players"]
-                                      or course["lesson"] != "combat" for course in course_options(args)):
-                raise ValueError("Historical opponents require all team-mode combat actors to be controlled")
             if args.prior:
                 policy.warm_start(args.prior)
             initialization = None
@@ -385,10 +411,6 @@ def main(args):
                         prior_config.get("imitation_weight", 0) if prior_config.get("teacher_steps", 0) else 0)
                 else:
                     args.imitation_weight = .1 if args.teacher_steps else 0
-            if args.teacher_source in ("cpu", "siege") and any(course["lesson"] != "combat" for course in course_options(args)):
-                raise ValueError("CPU demonstrations require ordinary combat courses")
-            if args.teacher_source == "siege" and any(course["mode"] != 2 for course in course_options(args)):
-                raise ValueError("Siege route demonstrations require mode 2")
             if args.imitation_weight and args.teacher_source == "primitive" and any(course["lesson"] not in ("turning", "navigation", "aiming", "shooting", "dodge", "range", "items", "siege", "destruction")
                     or course["lesson"] == "navigation" and course["level"] > 2
                     or course["lesson"] in ("items", "siege", "destruction") and course["level"] > 2 for course in course_options(args)):
@@ -404,6 +426,7 @@ def main(args):
                       "trainedActorsPerWorld": trained_per_world, "trainedActorBatchSize": trained_agents,
                       "opponentPaths": opponent_paths,
                       "opponentCheckpoints": opponents.sources,
+                      "opponentAssignment": "team one in team modes; seats one onward in individual modes" if opponent_paths else None,
                       "centralStateWidth": central_width,
                       "localCriticInput": "detached actor state",
                       "parameters": sum(parameter.numel() for parameter in policy.parameters()),

@@ -37,6 +37,7 @@ export class BotRecovery {
   private replans = 0;
   private lastReason?: RecoveryReason;
   private nextReportAt = 0;
+  private alignment?: {waypoint: Point; direction: number; error: number; progressedAt: number};
 
   get stalledSeconds(): number {
     return this.tracking ? Math.max(0, this.observedAt - this.progressAt) / 1000 : 0;
@@ -59,6 +60,7 @@ export class BotRecovery {
   private replan(reason: RecoveryReason, now: number): void {
     this.held = undefined;
     this.attempt = undefined;
+    this.routeOrigin = undefined;
     this.retryAt = now + 2500;
     this.pendingReplan = reason;
     this.lastReason = reason;
@@ -77,6 +79,7 @@ export class BotRecovery {
     this.lastReason = undefined;
     this.visits = [];
     this.nextReportAt = 0;
+    this.alignment = undefined;
   }
 
   observe(actor: BotActor, now: number): void {
@@ -116,20 +119,37 @@ export class BotRecovery {
     const crowded = teammates.filter(other => Math.abs(other.y - actor.y) < 24
       && Math.hypot(other.x - actor.x, other.z - actor.z) < 96);
     let aligning = false;
+    let turned = false;
     if (waypoint && actor.movement && input.move === 0 && input.turn !== 0) {
       const bearing = Math.atan2(waypoint.x - actor.x, waypoint.z - actor.z);
       const offset = context.travelDirection < 0 ? Math.PI : 0;
       const next = actor.movement.predict(input);
-      aligning = Math.abs(turnDelta(next.yaw + offset, bearing))
-        < Math.abs(turnDelta(actor.yaw + offset, bearing)) - .000001;
-    }
+      const error = Math.abs(turnDelta(actor.yaw + offset, bearing));
+      const same = this.alignment && this.alignment.direction === context.travelDirection
+        && Math.hypot(waypoint.x - this.alignment.waypoint.x,
+          waypoint.z - this.alignment.waypoint.z) < 7;
+      if (!this.alignment) {
+        this.alignment = {waypoint: {...waypoint}, direction: context.travelDirection,
+          error, progressedAt: now};
+      } else if (!same) {
+        Object.assign(this.alignment, {waypoint: {...waypoint}, direction: context.travelDirection, error});
+      } else if (error < this.alignment.error - .035) {
+        this.alignment.error = error;
+        this.alignment.progressedAt = now;
+        turned = true;
+      }
+      aligning = Math.abs(turnDelta(next.yaw + offset, bearing)) < error - .000001
+        && now - this.alignment.progressedAt < 750;
+    } else if (input.move !== 0 || !needsMovement) this.alignment = undefined;
+    // A held escape ends when driving is no longer requested and the nearby
+    // lane is clear, so aiming or waiting for broken geometry can finish.
     const tracking = !actor.roleDisguise
-      && (this.active || needsMovement || crowded.length > 0 || input.move !== 0);
+      && (needsMovement || crowded.length > 0 || input.move !== 0);
     if (context.pursuing && tracking) {
       if (!this.routeOrigin || Math.hypot(actor.x - this.routeOrigin.x, actor.z - this.routeOrigin.z) >= 96) {
         this.routeOrigin = {x: actor.x, y: actor.y, z: actor.z};
         this.routeProgressAt = now;
-      } else if (aligning) this.routeProgressAt = now;
+      } else if (turned) this.routeProgressAt = now;
       else if (now - this.routeProgressAt >= 8000 && now >= this.retryAt && !this.pendingReplan) {
         this.replan('LOCAL_LOOP', now);
       }
@@ -208,14 +228,17 @@ export class BotRecovery {
         chosen = command; bestRelief = relief; bestProgress = progress;
       }
     }
-    if (!chosen || bestRelief <= .01 && bestProgress < 0) {
+    // After repeated physical stalls, a legal step away from the goal can
+    // release a corner that cannot be approached from the current pose.
+    if (!chosen || bestRelief <= .01 && bestProgress < 0 && this.stalledSeconds < 3) {
       const bearing = Math.atan2(direction.x, direction.z);
-      let bestTurn = 0;
+      const offset = context.travelDirection < 0 ? Math.PI : 0;
+      let bestTurn = -Infinity;
       for (const turn of [1, -1]) {
         const next = predict({move: 0, turn});
         if (Math.abs(turnDelta(actor.yaw, next.yaw)) <= .000001) continue;
-        const progress = Math.abs(turnDelta(actor.yaw, bearing))
-          - Math.abs(turnDelta(next.yaw, bearing));
+        const progress = Math.abs(turnDelta(actor.yaw + offset, bearing))
+          - Math.abs(turnDelta(next.yaw + offset, bearing));
         if (progress > bestTurn) {chosen = {move: 0, turn}; bestTurn = progress;}
       }
     }

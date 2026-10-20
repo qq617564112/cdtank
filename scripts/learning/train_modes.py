@@ -22,14 +22,22 @@ def main(args):
                if mode in args.modes]
     plan = {**vars(args), "courses": courses, "loadout": loadout,
             "strategy": "independent mode parameters initialized from one common team checkpoint",
+            "originalCpuTeacherModes": [1, 4],
+            "objectiveModeEvaluation": "original CPU opponents are practice only",
             "readyForGameplay": False}
     (output / "config.json").write_text(json.dumps(plan, indent=2), encoding="utf-8")
     models = []
     for course in courses:
+        cpu_teacher = course["mode"] in (1, 4)
         previous = Path(args.previous_run) / f"mode-{course['mode']}" if getattr(args, "previous_run", None) else None
         previous_result = json.loads((previous / "result.json").read_text(encoding="utf-8")) \
             if previous and (previous / "result.json").exists() else None
-        if previous_result and previous_result.get("evaluations"):
+        previous_config = json.loads((previous / "config.json").read_text(encoding="utf-8")) \
+            if previous and (previous / "config.json").exists() else None
+        previous_allowed = cpu_teacher or previous_config is not None and not (
+            previous_config.get("teacher_source") == "cpu" and
+            (previous_config.get("teacher_steps", 0) or previous_config.get("imitationWeight", 0)))
+        if previous_allowed and previous_result and previous_result.get("evaluations"):
             models.append({**course, "checkpoint": str(previous / "latest.pt"),
                            "steps": previous_result["steps"], "evaluations": previous_result["evaluations"]})
             continue
@@ -43,17 +51,17 @@ def main(args):
             hidden_size=args.hidden_size,
             learning_rate=.00025, ammo_id=2001, lesson="combat", level=1, mix_levels=False,
             seed=args.seed + 1000 * course["mode"], evaluation_episodes=args.evaluation_episodes,
-            evaluation_environments=min(8, args.environments), teacher_steps=args.teacher_steps if course["mode"] != 2 else 0,
-            teacher_source="cpu", teacher_replay_sequences=4096,
+            evaluation_environments=min(8, args.environments), teacher_steps=args.teacher_steps if cpu_teacher else 0,
+            teacher_source="cpu" if cpu_teacher else "primitive", teacher_replay_sequences=4096,
             teacher_batch_sequences=args.teacher_batch_sequences, teacher_epochs=2,
-            teacher_student_fraction=.75, imitation_weight=.5 if course["mode"] != 2 else 0,
+            teacher_student_fraction=.75, imitation_weight=.5 if cpu_teacher else 0,
             curriculum=None, courses=None,
             items=loadout, centralized_critic=True, opponent_pool=None, opponent_paths=None, **course)
-        if previous and (previous / "latest.pt").exists():
+        if previous_allowed and previous and (previous / "latest.pt").exists():
             options.resume = str(previous / "latest.pt")
             options.weights = None
             options.teacher_steps = 0
-        elif previous and course["mode"] != 2:
+        elif previous_allowed and previous and options.teacher_steps:
             if (previous / "teacher.pt").exists():
                 options.weights = str(previous / "teacher.pt")
                 options.teacher_steps = 0

@@ -5,19 +5,20 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 
-from train_combat import Environment
+from train_combat import Environment, validate_teacher_source
 from teacher import demonstration_actions, demonstration_label
 
 
 def main(args):
-    output = Path(args.output)
-    output.mkdir(parents=True, exist_ok=False)
     args.lesson = getattr(args, "lesson", "combat")
     args.level = getattr(args, "level", 1)
     args.mix_levels = False
     args.teacher_source = getattr(args, "teacher_source", "cpu")
     args.teacher_steps = 1
     args.imitation_weight = 0
+    validate_teacher_source(args)
+    output = Path(args.output)
+    output.mkdir(parents=True, exist_ok=False)
     environments = []
     episodes = []
     try:

@@ -203,6 +203,10 @@
   padding-right: 10px;
 }
 
+.login-wood-home + .login-wood-settings {
+  top: 367px;
+}
+
 .login-wood-intro {
   right: calc(-16px - var(--login-side-offset));
   top: 332px;

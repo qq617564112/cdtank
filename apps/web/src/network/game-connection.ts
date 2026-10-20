@@ -4,6 +4,7 @@ import {AccountConnection, type AccountContext} from './accounts';
 import {RoomConnection} from './rooms';
 import type {ReqAccount, ResAccount} from '../../../shared/protocols/PtlAccount';
 import type {ResChannel} from '../../../shared/protocols/PtlChannel';
+import {connectionTokenKey, gameServerWebSocketUrl} from './connection-preferences';
 
 interface GameConnectionOptions {
   client?: WsClient<ServiceType>;
@@ -21,6 +22,7 @@ export class GameConnection {
   readonly accounts: AccountConnection;
   readonly rooms: RoomConnection;
   private readonly tokenStore: Pick<Storage, 'getItem' | 'setItem'>;
+  private readonly tokenKey: string;
   private disconnection: Promise<void> = Promise.resolve();
   private disconnecting = false;
   private connectionReady?: Promise<void>;
@@ -31,7 +33,7 @@ export class GameConnection {
   private accountContextValue: AccountContext = {generation: 0};
   private readonly accountContextListeners = new Set<() => void>();
 
-  get hasSavedIdentity(): boolean {return !!this.tokenStore.getItem('cdtank-account-token');}
+  get hasSavedIdentity(): boolean {return !!this.tokenStore.getItem(this.tokenKey);}
   get accountContext(): AccountContext {return this.accountContextValue;}
   /** Round-trip time of the latest WebSocket heartbeat on this connection. */
   get ping(): ConnectionPing {
@@ -47,7 +49,7 @@ export class GameConnection {
   async authenticate(credentials?: ReqAccount['credentials']): Promise<ResAccount> {
     await this.disconnect();
     const request: ReqAccount = {token: credentials?.operation === 'LOGIN' ? undefined
-      : this.tokenStore.getItem('cdtank-account-token') ?? undefined, credentials};
+      : this.tokenStore.getItem(this.tokenKey) ?? undefined, credentials};
     const ready: Promise<void> = this.connectAccount(() => ready, request).catch(error => {
       if (this.connectionReady === ready) this.connectionReady = undefined;
       throw error;
@@ -66,10 +68,11 @@ export class GameConnection {
 
   constructor(options: GameConnectionOptions = {}) {
     this.client = options.client ?? new WsClient(serviceProto, {
-      server: `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/game`,
+      server: gameServerWebSocketUrl(),
       logger: undefined, heartbeat: {interval: 5000, timeout: 10000},
     });
     this.tokenStore = options.tokenStore ?? localStorage;
+    this.tokenKey = connectionTokenKey();
     this.accounts = new AccountConnection(this.client, () => this.ensureConnected());
     this.rooms = new RoomConnection(this.client, () => this.ensureConnected(), () => this.identity?.token);
     this.client.flows.postDisconnectFlow.push(input => {
@@ -102,12 +105,12 @@ export class GameConnection {
     if (this.connectionReady !== readiness()) throw new Error('连接已取消，请重试');
     if (!connection.isSucc) throw new Error(connection.errMsg);
     const account = await this.client.callApi('Account', request ?? {
-      token: this.tokenStore.getItem('cdtank-account-token') ?? undefined,
+      token: this.tokenStore.getItem(this.tokenKey) ?? undefined,
     });
     if (this.connectionReady !== readiness()) throw new Error('连接已取消，请重试');
     if (!account.isSucc) throw new Error(account.err.message);
     if (this.training) await this.publishTrainingPresence(true);
-    this.tokenStore.setItem('cdtank-account-token', account.res.token);
+    this.tokenStore.setItem(this.tokenKey, account.res.token);
     this.publishAccountContext(account.res);
   }
 

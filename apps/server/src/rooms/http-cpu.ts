@@ -93,6 +93,14 @@ export function createRoomCpuHttpHandler(server: WsServer<ServiceType>, world: R
     const pathname = (request.url ?? '/').split('?')[0];
     const match = /^\/+(?:game\/)?api\/rooms\/([^/]+)\/cpus$/.exec(pathname);
     if (!match) return false;
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204);
+      response.end();
+      return true;
+    }
     if (request.method !== 'POST') {
       response.setHeader('Allow', 'POST');
       sendJson(response, 405, {error: {code: 'METHOD_NOT_ALLOWED', message: '请使用POST添加CPU'}});

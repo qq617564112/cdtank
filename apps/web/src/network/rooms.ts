@@ -12,6 +12,7 @@ import type {ReqRematch} from '../../../shared/protocols/PtlRematch';
 import type {LeavePenalty, ReqLeave, ResLeave} from '../../../shared/protocols/PtlLeave';
 import type {ReqRoomInvite} from '../../../shared/protocols/PtlRoomInvite';
 import type {ReqAddRoomCpu, ResAddRoomCpu, RoomCpuHttpError} from '../../../shared/http/room-cpu';
+import {gameServerHttpUrl} from './connection-preferences';
 
 /** HTTP CPU additions and room requests on the authenticated WebSocket. */
 export class RoomConnection {
@@ -99,7 +100,7 @@ export class RoomConnection {
     await this.ensureConnected();
     const token = this.accountToken();
     if (!token) throw new Error('请先登录账户');
-    const response = await fetch(`/game/api/rooms/${encodeURIComponent(roomId)}/cpus`, {
+    const response = await fetch(gameServerHttpUrl(`/game/api/rooms/${encodeURIComponent(roomId)}/cpus`), {
       method: 'POST',
       headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
       body: JSON.stringify(request),

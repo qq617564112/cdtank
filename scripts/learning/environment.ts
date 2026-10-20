@@ -227,6 +227,9 @@ export function createLearningEnvironment(environmentId: string) {
       throw new Error('CPU demonstrations require ordinary externally controlled combat');
     }
     if (request.expert === 'siege' && mode !== 2) throw new Error('Siege route demonstrations require mode 2');
+    if (request.expert === true && mode !== 1 && mode !== 4) {
+      throw new Error('Original CPU demonstrations require team or melee mode');
+    }
     expert = request.expert === 'siege' ? new LearningSiegeExpert()
       : request.expert ? new LearningCombatExpert() : undefined;
     nativePolicy = request.nativePolicy ? new LearnedCpuPolicy(request.nativePolicy) : undefined;
@@ -452,7 +455,8 @@ export function createLearningEnvironment(environmentId: string) {
     if (nativePolicy) for (const id of playerIds) world.configureAutopilot(id, 1, true);
     return {type: 'reset', seed, mode, mapId, lesson, level, frames: previous, learnerTeam,
       expertActions: expertActions(previous),
-      expertSource: expert ? 'scripted HIGH CPU with navigation and team context' : undefined,
+      expertSource: request.expert === 'siege' ? 'scripted castle route with source NAV and movement previews'
+        : expert ? 'scripted HIGH CPU with navigation and team context' : undefined,
       criticStates: central.criticStates,
       actors: world.snapshot(roomId)!.players.map(player => ({id: player.id, team: player.team,
         learned: playerIds.includes(player.id), cpu: !!player.isCpu})),

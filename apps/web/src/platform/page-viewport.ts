@@ -13,7 +13,7 @@ function gameViewportBounds() {
     height: isMobileDevice() ? root.clientHeight : innerHeight, left: 0, top: 0};
 }
 
-/** Pages use the safe landscape area, from 16:9 through 21:9. */
+/** Desktop pages fill the window; mobile pages use a safe 16:9 through 21:9 area. */
 export function gamePageBounds() {
   const viewport = gameViewportBounds();
   const style = getComputedStyle(document.documentElement);
@@ -21,6 +21,8 @@ export function gamePageBounds() {
   const left = inset('left'), right = inset('right'), top = inset('top'), bottom = inset('bottom');
   const availableWidth = Math.max(1, viewport.width - left - right);
   const availableHeight = Math.max(1, viewport.height - top - bottom);
+  if (!isMobileDevice()) return {width: availableWidth, height: availableHeight,
+    left: viewport.left + left, top: viewport.top + top};
   const width = Math.min(availableWidth, availableHeight * 21 / 9);
   const height = Math.min(availableHeight, width * 9 / 16);
   return {width, height, left: viewport.left + left + (availableWidth - width) / 2,

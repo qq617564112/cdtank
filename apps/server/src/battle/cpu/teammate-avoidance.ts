@@ -81,7 +81,10 @@ export function teammateAvoidancePoint(actor: BotActor, route: Point | undefined
   teammates: readonly BotActor[], actors: readonly BotActor[],
   direction: number, reach: (start: Point, end: Point) => Point,
   canShoot?: (position: Point) => boolean,
-  canApproach?: (position: Point) => boolean): Point | undefined {
+  canApproach?: (position: Point) => 'MOVE' | 'TURN' | undefined,
+  previousPosition?: Point): Point | undefined {
+  const crowded = teammates.some(other => Math.abs(other.y - actor.y) < 24
+    && Math.hypot(other.x - actor.x, other.z - actor.z) < TEAMMATE_SPACING);
   const yieldingTo = teammates.filter(other => Math.abs(other.y - actor.y) < 24
     && Math.hypot(other.x - actor.x, other.z - actor.z) < TEAMMATE_SPACING
     && (!hasPriority(actor, other) || (other.cpu ?? other.autopilot)?.teammateNeedsRoom))
@@ -98,21 +101,31 @@ export function teammateAvoidancePoint(actor: BotActor, route: Point | undefined
       direction * Math.PI * .75, -direction * Math.PI * .75, Math.PI];
   let fallback: Point | undefined;
   let partial: Point | undefined;
+  let turning: Point | undefined;
   for (const length of [96, 144, 192, 48, 24]) {
     for (const offset of offsets) {
       const desired = {x: actor.x + Math.sin(bearing + offset) * length, y: actor.y,
         z: actor.z + Math.cos(bearing + offset) * length};
       const reached = reach(actor, desired);
       if (Math.hypot(reached.x - actor.x, reached.z - actor.z) < 12
-          || !tankRouteClear(actor, reached, actors)
-          || canApproach && !canApproach(reached)) continue;
+          || !crowded && previousPosition && Math.hypot(reached.x - previousPosition.x,
+            reached.z - previousPosition.z) < 36
+          || !tankRouteClear(actor, reached, actors)) continue;
+      const approach = canApproach?.(reached);
+      if (canApproach && !approach) continue;
       if (!teammateWaypointClear(actor, reached, teammates)) {
-        if (teammateEscapeClear(actor, reached, teammates)) partial ??= reached;
+        if (teammateEscapeClear(actor, reached, teammates)) {
+          if (approach === 'TURN') turning ??= reached;
+          else partial ??= reached;
+        }
         continue;
       }
+      // Clear the occupied lane immediately when another legal candidate can
+      // translate; a slow stationary alignment remains the final alternative.
+      if (approach === 'TURN') {turning ??= reached; continue;}
       if (yieldingTo || !canShoot || canShoot(reached)) return reached;
       fallback ??= reached;
     }
   }
-  return fallback ?? partial;
+  return fallback ?? partial ?? turning;
 }

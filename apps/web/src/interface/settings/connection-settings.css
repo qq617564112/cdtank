@@ -1,0 +1,144 @@
+.settings-source-stage > .settings-connection-tabs {
+  left: 330px;
+  top: 39px;
+  z-index: 2;
+  display: flex;
+  gap: 12px;
+}
+
+.settings-connection-tabs > .game-button {
+  width: 128px !important;
+  height: 34px !important;
+  --cartoon-label-size: 16px;
+}
+
+[data-connection-tab='true'] .settings-source-stage > .settings-source-panel {
+  display: none;
+}
+
+.settings-source-stage > .settings-connection {
+  left: 72px;
+  top: 98px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  width: 650px;
+  height: 436px;
+  padding: 16px;
+  overflow: auto;
+  color: #fff794;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.settings-connection h3,
+.settings-connection p {
+  margin: 0;
+}
+
+.settings-connection h3 {
+  font-size: 22px;
+}
+
+.settings-connection-modes {
+  display: flex;
+  gap: 32px;
+}
+
+.settings-connection-modes .settings-option {
+  position: relative;
+  width: 130px;
+  height: 32px;
+}
+
+.settings-connection .cartoon-input {
+  position: relative;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.settings-connection .game-button {
+  width: 128px !important;
+  flex-shrink: 0;
+}
+
+.settings-connection-tabs > [aria-pressed='true'] {
+  --cartoon-button-face: #e3a13b;
+  --cartoon-label-fill: #fff794;
+}
+
+.settings-connection .cartoon-input-value {
+  height: calc(100% - 12px);
+  font-family: sans-serif !important;
+  font-size: 16px;
+  line-height: 30px;
+}
+
+.settings-connection-addresses {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.settings-connection-addresses input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #f0c784;
+  border-radius: 8px;
+  background: #742c21;
+  color: #fff;
+  font-family: sans-serif !important;
+  font-size: 17px;
+}
+
+.settings-connection-status {
+  min-height: 26px;
+  color: #fff;
+}
+
+.settings-connection .settings-connection-save {
+  margin-top: auto;
+  font-size: 15px;
+}
+
+html[data-mobile-device] .settings-source-stage > .settings-connection-tabs {
+  left: 256px;
+  top: 48px;
+}
+
+html[data-mobile-device] .settings-connection-tabs > .game-button {
+  width: 192px !important;
+  height: 54px !important;
+  --cartoon-label-size: 26px;
+}
+
+html[data-mobile-device] .settings-source-stage > .settings-connection {
+  left: 40px;
+  top: 116px;
+  width: calc(100% - 80px);
+  height: 336px;
+  font-size: 22px;
+}
+
+html[data-mobile-device] .settings-connection-modes .settings-option {
+  width: 200px;
+  height: 44px;
+}
+
+html[data-mobile-device] .mobile-settings-tabs.mobile-settings-subtabs {
+  left: 48px;
+  top: 66px;
+  gap: 8px;
+}
+
+html[data-mobile-device] .mobile-settings-subtabs > .game-button {
+  width: 96px !important;
+  height: 38px !important;
+  --cartoon-label-size: 18px;
+}
+
+html[data-mobile-device] [data-mobile-settings-tab='keys'] .settings-connection .settings-option {
+  display: block;
+}

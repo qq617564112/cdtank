@@ -206,7 +206,8 @@ function GamePages({battle,canvas,hud,settings,loadingScreen,validation=false}: 
       onEnter={login.enter} onBack={login.back}/>}
     {login.phase === 'closed' && <main className="game-closed-page" aria-label="已退出游戏"><button type="button" onClick={login.reopen}>返回登录</button></main>}
     <HistoryIntroSourceView open={historyIntroOpen} close={()=>setHistoryIntroOpen(false)}/>
-    <SettingsSourceView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings} onKeysSaved={setKeyBindings}/>
+    <SettingsSourceView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings}
+      onKeysSaved={setKeyBindings} allowConnectionChange/>
     </>}
     {!restoringSession && (validation || login.phase === 'lobby') && <>
     <LobbyView battle={battle} canvas={canvas} hud={hud} validation={validation} artworkReady={!battleActive && pageArtwork.ready}
@@ -254,7 +255,8 @@ function GamePages({battle,canvas,hud,settings,loadingScreen,validation=false}: 
     {validation && <HistoryIntroSourceView open={historyIntroOpen} close={()=>setHistoryIntroOpen(false)}/>}
     <KeySettingsView battle={battle} open={keysOpen} close={closeKeys} initial={settings.keys} onSaved={setKeyBindings}/>
     {validation ? <QuickChatSettingsView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings.quickChat}/>
-      : <SettingsSourceView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings} onKeysSaved={setKeyBindings}/>}
+      : <SettingsSourceView battle={battle} open={quickChatOpen} close={closeQuickChat} initial={settings}
+        onKeysSaved={setKeyBindings} allowConnectionChange={!battle.inRoom}/>}
     </>}
     </>}
   </>;

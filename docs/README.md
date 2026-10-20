@@ -30,6 +30,7 @@
 | --- | --- |
 | 项目介绍、运行步骤和操作 | [根目录 README](../README.md) |
 | 工程职责、命令和环境变量 | [开发指南](development.md) |
+| Windows 桌面客户端、本地开服和局域网联机 | [Electron 客户端](desktop-client.md) |
 | CPU 脱困、目标保持与逐车轨迹分析 | [CPU 轨迹](cpu-trajectories.md) |
 | 页面、弹窗和刷新恢复 | [路由与会话恢复](navigation.md) |
 | 显示选项、默认值与保存行为 | [显示设置](display-settings.md) |

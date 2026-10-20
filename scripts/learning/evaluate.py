@@ -9,7 +9,7 @@ import random
 import numpy as np
 import torch
 
-from train_combat import Environment, OpponentPool, Policy, tensors
+from train_combat import Environment, OpponentPool, Policy, learner_indices, tensors
 from gpu_budget import GpuBudget
 
 
@@ -83,16 +83,17 @@ def main(args):
                             slot["trajectory"].append({"tick": tick, "goalDistance": result.get("goalDistance"),
                                 **actors[0], "actors": actors})
                         if result["done"] or tick >= 999:
+                            trained_indices = learner_indices(result, bool(opponents.policies))
                             row = {"episode": slot["episode"], "seed": result["seed"], "steps": tick + 1,
                                    "lesson": result["lesson"], "level": result["level"],
-                                   "return": float(np.mean(slot["returns"])), "actorReturns": slot["returns"],
+                                   "return": float(np.mean([slot["returns"][actor] for actor in trained_indices])),
+                                   "actorReturns": slot["returns"],
                                    "success": result.get("success"), "outcomes": result.get("outcomes"),
                                    "metrics": frames[0]["metrics"], "actorMetrics": [frame["metrics"] for frame in frames],
                                    "learnedTeam": frames[0]["metrics"]["team"],
                                    "actorItemMetrics": result.get("actorItemMetrics"),
                                    "lessonMetrics": result.get("lessonMetrics"), "trajectory": slot["trajectory"]}
-                            row["trainedActorIndices"] = [actor for actor, frame in enumerate(frames)
-                                if not opponents.policies or frame["metrics"]["team"] == 0]
+                            row["trainedActorIndices"] = trained_indices
                             episodes.append(row)
                             log.write(json.dumps(row) + "\n")
                             log.flush()
@@ -113,7 +114,7 @@ def main(args):
         metrics = [row["actorMetrics"][index] for row in episodes for index in row["trainedActorIndices"]]
         item_metrics = [(row["actorItemMetrics"] or [row["lessonMetrics"]])[index]
                         for row in episodes for index in row["trainedActorIndices"]]
-        outcomes = [(row["outcomes"] or [None])[0] for row in episodes]
+        outcomes = [(row["outcomes"] or [None] * actors_per_world)[row["trainedActorIndices"][0]] for row in episodes]
         summary = {"episodes": len(episodes), "actorsPerWorld": actors_per_world,
                    "successRate": float(np.mean([bool(row["success"]) for row in episodes])),
                    "winRate": outcomes.count("WIN") / len(episodes),

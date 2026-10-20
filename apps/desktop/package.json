@@ -1,0 +1,39 @@
+{
+  "name": "cdtank-desktop",
+  "version": "1.0.4",
+  "description": "猫狗大作战桌面客户端",
+  "private": true,
+  "main": "bundle/main.cjs",
+  "author": "CDTank contributors",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "serve-static": "2.2.1",
+    "ws": "7.5.13"
+  },
+  "devDependencies": {
+    "@types/ws": "7.4.7",
+    "electron": "44.9.0",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2"
+  },
+  "build": {
+    "appId": "fun.cloyd.cdtank",
+    "productName": "CDTank",
+    "asar": true,
+    "npmRebuild": false,
+    "directories": {
+      "output": "../../dist/desktop-packages"
+    },
+    "files": ["bundle/*.cjs", "package.json"],
+    "extraResources": [{
+      "from": "../../dist/desktop/runtime",
+      "to": "runtime"
+    }],
+    "win": {
+      "target": [{"target": "zip", "arch": ["x64"]}],
+      "icon": "../web/public/assets/ui/images/app-icons/client-icon-512.png",
+      "signExecutable": false,
+      "artifactName": "cdtank-desktop-${version}-win-${arch}.${ext}"
+    }
+  }
+}

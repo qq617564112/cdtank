@@ -16,6 +16,7 @@ import {WsServer} from 'tsrpc';
 import {serviceProto, type ServiceType} from '../../shared/protocols/serviceProto';
 import {RoomProcesses} from './runtime/room-processes';
 import {AccountStore} from './account-store';
+import {registerDesktopCurrency} from './runtime/desktop-currency';
 import {registerAccountApis} from './accounts/api';
 import {registerRoomApis} from './rooms/api';
 import {registerRoomLeaveApi} from './rooms/leave';
@@ -38,6 +39,7 @@ const runtime = serverRuntimeConfig();
 const accountPath = runtime.accountPath;
 mkdirSync(dirname(accountPath), {recursive: true});
 const accounts = new AccountStore(accountPath);
+registerDesktopCurrency(accounts);
 const accountByConnection = new Map<string, string>();
 const history = accountMatchHistory(accounts, accountByConnection,
   error => console.error('Match history save pending; retrying', error),

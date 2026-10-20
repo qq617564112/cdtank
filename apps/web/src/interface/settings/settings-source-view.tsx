@@ -29,6 +29,10 @@ import {GameButton} from '../resources/game-button';
 import {DEFAULT_BATTLE_ARTWORK_QUALITY, getBattleArtworkQuality, writeBattleArtworkQuality,
   type BattleArtworkQuality} from './battle-artwork-preferences';
 import {isMobileDevice} from '../../platform/device';
+import {ConnectionSettings} from './connection-settings';
+import {normalizeConnectionPreferences, readConnectionPreferences,
+  saveConnectionPreferences} from '../../network/connection-preferences';
+import type {ConnectionPreferences} from '../../../../shared/contracts/connection';
 
 export interface SettingsSourceViewProps {
   open: boolean;
@@ -36,6 +40,7 @@ export interface SettingsSourceViewProps {
   battle: Pick<Battle, 'getKeyBindings' | 'setKeyBindings' | 'setMusicVolume' | 'setSoundVolume'>;
   initial: InitialSettings;
   onKeysSaved: (bindings: KeyBindings) => void;
+  allowConnectionChange?: boolean;
 }
 const KEY_ROWS = [
   ['forward', '前进'], ['backward', '后退'],
@@ -53,13 +58,17 @@ export function SettingsSourceView({open, ...props}: SettingsSourceViewProps) {
   return open ? <SettingsSession {...props} /> : null;
 }
 
-function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSourceViewProps, 'open'>) {
+function SettingsSession({battle, initial, close, onKeysSaved, allowConnectionChange = false}:
+  Omit<SettingsSourceViewProps, 'open'>) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [ui, setUi] = useState<HomeSourceUi | undefined>(() => cachedSourceUi([SETTINGS_LAYOUT]));
   const [resourceError, setResourceError] = useState<string>();
   const [resourceAttempt, setResourceAttempt] = useState(0);
   const [scale, setScale] = useState(() => fullPageScale());
   const [mobileTab, setMobileTab] = useState<'display' | 'keys'>('display');
+  const [connectionTab, setConnectionTab] = useState(false);
+  const [connection, setConnection] = useState(readConnectionPreferences);
+  const savedConnection = useRef(connection);
   const [bindings, setBindings] = useState(() => cloneKeyBindings(battle.getKeyBindings()));
   const [audio, setAudio] = useState<AudioPreferences>(() => readAudioPreferences(localStorage, initial.audio.preferences).preferences);
   const [brightness, setBrightness] = useState(getBrightness);
@@ -192,6 +201,11 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
 
   async function save(origin: HTMLButtonElement) {
     if (displayPending) return;
+    let nextConnection: ConnectionPreferences | undefined;
+    if (allowConnectionChange) {
+      try {nextConnection = normalizeConnectionPreferences(connection);}
+      catch (error) {setStatus(error instanceof Error ? error.message : String(error)); return;}
+    }
     const keys = validateKeyBindings(bindings);
     const displayPreferences = validateDisplayPreferences(display);
     if (!keys) {setStatus('键位无效。'); return;}
@@ -231,6 +245,18 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
     const artworkSaved = writeBattleArtworkQuality(localStorage, artworkQuality);
     if (!artworkSaved) {
       setStatus('显示设置已保存，战斗素材设置未保存，请重试。'); return;
+    }
+    const connectionChanged = nextConnection && (nextConnection.mode !== savedConnection.current.mode
+      || nextConnection.serverUrl !== savedConnection.current.serverUrl);
+    if (connectionChanged) {
+      setDisplayPending(true);
+      try {await saveConnectionPreferences(nextConnection);}
+      catch (error) {
+        setStatus(error instanceof Error ? error.message : String(error));
+        return;
+      } finally {setDisplayPending(false);}
+      window.location.assign('/login');
+      return;
     }
     if (antialiasChanged || artworkQuality !== getBattleArtworkQuality()) {
       window.location.reload();
@@ -274,7 +300,7 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
   return <GameDialog ref={dialog} id="source-settings" width={isMobileDevice() ? MOBILE_PAGE.width : 800}
     height={isMobileDevice() ? MOBILE_PAGE.height : 599} stageClassName="settings-source-stage"
     aria-label="系统设置" aria-busy={!ui && !resourceError} data-settings-source-page="" uiScale={scale}
-    data-mobile-settings-tab={mobileTab}
+    data-mobile-settings-tab={mobileTab} data-connection-tab={connectionTab}
     onCompositionStart={() => {composing.current = true;}}
     onCompositionEnd={() => {composing.current = false;}}
     onCancel={event => {event.preventDefault(); if (!composing.current && !displayPending) close();}}
@@ -300,7 +326,16 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
             <SettingsSourceButton ui={ui} source="btnCancel" offsetX={-76} offsetY={-548}
               aria-label="取消设置" data-settings-cancel="" disabled={displayPending} onClick={close} />
           </>} />
-        {isMobileDevice() && <nav className="mobile-settings-tabs" aria-label="设置分类">
+        {allowConnectionChange && <nav className="settings-connection-tabs" aria-label="设置分类">
+          <GameButton disabled={displayPending} aria-pressed={!connectionTab}
+            onClick={() => setConnectionTab(false)}>游戏设置</GameButton>
+          <GameButton disabled={displayPending} aria-pressed={connectionTab}
+            onClick={() => {setCapture(undefined); current.current.capture = undefined; setConnectionTab(true);}}>连接设置</GameButton>
+        </nav>}
+        {connectionTab && <ConnectionSettings value={connection} onChange={setConnection} disabled={displayPending}
+          onTestingChange={setDisplayPending}/>}
+        {!connectionTab && <>
+        {isMobileDevice() && <nav className={`mobile-settings-tabs ${allowConnectionChange ? 'mobile-settings-subtabs' : ''}`} aria-label="游戏设置分类">
           <GameButton aria-pressed={mobileTab === 'display'} onClick={() => setMobileTab('display')}>画面与声音</GameButton>
           <GameButton aria-pressed={mobileTab === 'keys'} onClick={() => setMobileTab('keys')}>键位设置</GameButton>
         </nav>}
@@ -405,6 +440,7 @@ function SettingsSession({battle, initial, close, onKeysSaved}: Omit<SettingsSou
                 setStatus(`${label}只切换战斗模型与特效贴图，确认后重新载入客户端。`);
               }}>{label}</SettingsChoice>)}
         </div>
+        </>}
       </>}
       {ui && <GameMessage data-settings-status="" text={status}/>}
       {!ui && <SettingsResourceFeedback error={resourceError} close={close}

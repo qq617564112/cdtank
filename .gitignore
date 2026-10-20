@@ -10,6 +10,7 @@
 node_modules/
 dist/
 /output/
+/apps/desktop/bundle/
 /tmp/
 __pycache__/
 *.py[cod]

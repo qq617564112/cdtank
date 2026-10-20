@@ -1,4 +1,6 @@
 import {mkdirSync} from 'node:fs';
+import {creditLocalCurrency} from './accounts/local-currency';
+import type {LocalCurrencyBalance, LocalCurrencyCredit} from '../../shared/contracts/local-currency';
 import {dirname} from 'node:path';
 import {AccountStackItemSale} from './accounts/stack-item-sale';
 import {AccountCredentials} from './accounts/credentials';
@@ -179,6 +181,10 @@ export class AccountStore {
   }
 
   authenticate(request: ReqAccount): ResAccount {return this.credentials.authenticate(request);}
+
+  creditLocalCurrency(credit: LocalCurrencyCredit): LocalCurrencyBalance {
+    return creditLocalCurrency(this.database, credit);
+  }
 
   family(accountId: string): {id: string; name: string} | undefined {
     return this.families.family(accountId);

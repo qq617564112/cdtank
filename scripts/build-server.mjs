@@ -15,5 +15,5 @@ cpSync(resolve(workspace, 'apps/shared/content/definitions'),
   resolve(output, 'shared/content/definitions'), {recursive: true});
 writeFileSync(resolve(output, 'package.json'), JSON.stringify({private: true, type: 'commonjs',
   scripts: {start: 'node server/src/index.js'},
-  dependencies: {compression: '1.8.2', 'serve-static': '2.2.1', tsrpc: '3.4.21'}}, null, 2) + '\n');
+  dependencies: {compression: '1.8.2', mistreevous: '4.3.1', 'serve-static': '2.2.1', tsrpc: '3.4.21'}}, null, 2) + '\n');
 console.log('Server built: dist/server/server/src/index.js');

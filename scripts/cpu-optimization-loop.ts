@@ -86,7 +86,8 @@ async function sourceFiles(directory: string, prefix = ''): Promise<string[]> {
   return files.sort();
 }
 
-async function collectTrace(match: CompletedMatch): Promise<CpuTraceRecord[]> {
+async function collectTrace(match: CompletedMatch): Promise<
+  {records: CpuTraceRecord[]} | {reason: string}> {
   const groups = new Map<string, CpuTraceRecord[]>();
   const files = (await readdir(traceDirectory)).filter(name =>
     name === `${match.roomId}.ndjson` || name.startsWith(`${match.roomId}.ndjson.`));
@@ -107,12 +108,15 @@ async function collectTrace(match: CompletedMatch): Promise<CpuTraceRecord[]> {
   }
   const selected = [...groups.values()].sort((a, b) =>
     Math.max(...b.map(row => row.at)) - Math.max(...a.map(row => row.at)))[0];
-  if (!selected) throw new Error(`No trace for completed match ${match.key}`);
+  if (!selected) return {reason: 'No retained trace for this completed match'};
   const unique = [...new Map(selected.map(row => [row.tick, row])).values()].sort((a, b) => a.at - b.at);
   if (match.endedAt - unique.at(-1)!.at > 3000) {
-    throw new Error(`Trace does not reach match completion: ${match.key}`);
+    return {reason: 'Retained trace ends more than 3 seconds before completion'};
   }
-  return unique;
+  if (unique[0].at - unique[0].startedAt > 3000) {
+    return {reason: 'Retained trace misses more than the first 3 seconds'};
+  }
+  return {records: unique};
 }
 
 async function analyze(traceFile: string, analysisFile: string): Promise<void> {
@@ -151,7 +155,13 @@ async function wait(state: LoopState): Promise<void> {
             || state.skipped.some(item => item.key === match.key)) continue;
         // Settlement precedes the recorder's ordinary two-second asynchronous flush.
         await delay(Math.max(0, match.endedAt + 2500 - Date.now()));
-        const records = await collectTrace(match);
+        const trace = await collectTrace(match);
+        if ('reason' in trace) {
+          state.skipped.push({key: match.key, reason: trace.reason});
+          await save(state);
+          continue;
+        }
+        const {records} = trace;
         if (!records.some(record => record.tanks.some(tank => tank.control !== 'HUMAN'))) {
           state.skipped.push({key: match.key, reason: 'No CPU or autopilot participant'});
           await save(state);

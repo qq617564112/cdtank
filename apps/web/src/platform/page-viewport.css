@@ -7,12 +7,19 @@
   --game-viewport-height: 100dvh;
   --game-viewport-left: 0px;
   --game-viewport-top: 0px;
+  --game-page-width: 100vw;
+  --game-page-height: 100dvh;
+  --game-page-left: 0px;
+  --game-page-top: 0px;
+  --mobile-page-width: 960px;
+  --mobile-account-width: 720px;
+}
+
+html[data-mobile-device] {
   --game-page-width: min(100vw, 233.333333vh);
   --game-page-height: min(100vh, 56.25vw);
   --game-page-left: calc((100vw - var(--game-page-width)) / 2);
   --game-page-top: calc((100vh - var(--game-page-height)) / 2);
-  --mobile-page-width: 960px;
-  --mobile-account-width: 720px;
 }
 
 html body {

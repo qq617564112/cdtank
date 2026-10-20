@@ -5,6 +5,10 @@ import {navigateGame, readGameRoute, useGameRoute} from '../../navigation/route'
 import {readLoginSession, saveLoginSession} from '../../navigation/session';
 import {readQuickStart} from '../../navigation/quick-start';
 import {useChannelPing} from './use-channel-ping';
+import {connectionStorageKey} from '../../network/connection-preferences';
+
+const LOGIN_ACCOUNT_KEY = connectionStorageKey('cdtank-login-account');
+const SAVE_ACCOUNT_KEY = connectionStorageKey('cdtank-login-save-account');
 
 /** React owns page transitions; Battle keeps the single authenticated connection. */
 export function useLoginNavigation(battle: Battle, validation: boolean) {
@@ -14,8 +18,8 @@ export function useLoginNavigation(battle: Battle, validation: boolean) {
   const [restoring, setRestoring] = useState(() => !validation && battle.hasSavedIdentity && !!readLoginSession()
     && location.pathname.replace(/\/$/, '') !== '/login' && route.page !== 'closed');
   const [busy, setBusy] = useState(restoring), [status, setStatus] = useState('');
-  const [savedAccount, setSavedAccount] = useState(() => localStorage.getItem('cdtank-login-account') ?? '');
-  const [saveAccount, setSaveAccount] = useState(() => localStorage.getItem('cdtank-login-save-account') === 'true');
+  const [savedAccount, setSavedAccount] = useState(() => localStorage.getItem(LOGIN_ACCOUNT_KEY) ?? '');
+  const [saveAccount, setSaveAccount] = useState(() => localStorage.getItem(SAVE_ACCOUNT_KEY) === 'true');
   const [channels, setChannels] = useState<ResChannel['channels']>([]);
   const [selectedId, setSelectedId] = useState('');
   const operating = useRef(false);
@@ -85,8 +89,8 @@ export function useLoginNavigation(battle: Battle, validation: boolean) {
       const identity = await battle.authenticate(restore || (!register && !name && !password) ? undefined
         : {operation: register ? 'REGISTER' : 'LOGIN', account: name, password});
       const remembered = saveAccount ? identity.accountName ?? '' : '';
-      localStorage.setItem('cdtank-login-account', remembered);
-      localStorage.setItem('cdtank-login-save-account', String(saveAccount));
+      localStorage.setItem(LOGIN_ACCOUNT_KEY, remembered);
+      localStorage.setItem(SAVE_ACCOUNT_KEY, String(saveAccount));
       setSavedAccount(remembered);
       saveLoginSession({accountId: identity.accountId});
       // Authentication success remains usable when a directory request needs a retry.

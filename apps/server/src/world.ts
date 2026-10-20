@@ -101,7 +101,9 @@ import type {
   MapOption,
 } from '../../shared/protocols';
 import type {ObjectiveSnapshot, PlayerTitle, SceneObjectSnapshot} from '../../shared/protocols/MsgRoomSnapshot';
-import {MAPS, type TankConfig} from './config';
+import {MAPS, TANKS, type TankConfig} from './config';
+import {BotController} from './battle/cpu/controller';
+import {assignRandomCpuRoles} from './rooms/cpu-roles';
 import type {InventoryWireRecord} from '../../shared/protocols/PtlInventory';
 import type {AccountInventory} from './account-store';
 import type {BattleRoleSources} from './battle-role-sources';
@@ -250,6 +252,24 @@ export class World {
     }
     return manageRoomCpu(found.room, found.player, operation, tankId, cpuId,
       () => this.insertPlayer(found.room, `CPU:${this.nextPlayerId}`, `CPU ${this.nextPlayerId}`, tankId), loadout, team);
+  }
+
+  /** Start an unattended match with the ordinary CPU roster and battle rules. */
+  createCpuRoom(mode: number, mapId: number, roomName: string, players = 12,
+    timeLimitSeconds = 300): JoinResult {
+    const joined = this.createAndJoin(`CPU-HOST:${this.nextRoomId}`, mode, mapId,
+      roomName, 'CPU host', TANKS[0].id, '', undefined, players, false, timeLimitSeconds);
+    for (let index = 1; index < players; index++) {
+      this.manageCpu(joined.playerId, 1, 'ADD', TANKS[0].id);
+    }
+    const room = this.rooms.get(joined.roomId)!;
+    const host = room.players.get(joined.playerId)!;
+    host.cpu = new BotController();
+    assignRandomCpuRoles(room, host);
+    readyCpus(room);
+    this.ready(joined.playerId, 1);
+    this.resourcesLoaded(joined.playerId, 1);
+    return joined;
   }
 
   /** AI controls the same owned participant through ordinary inputs. */
@@ -1314,6 +1334,9 @@ export class World {
     const firstEvent = events.length;
     const outcome = damagePlayer(room, owner, target, damage, this.now, events, selector, ammoItemId,
       incidence, shotId);
+    if (target.alive && target.hp < hpBefore && owner.id !== target.id && !this.isAlly(room, owner, target)) {
+      (target.cpu ?? target.autopilot)?.noticeDamage(owner.id, this.now());
+    }
     target.petBattle?.hit(owner, hpBefore, this.now(), events);
     if (skillId !== undefined) {
       for (const notice of events.slice(firstEvent)) if (notice.type === 'hit') notice.skillId = skillId;
@@ -1331,6 +1354,9 @@ export class World {
     const wasAlive = target.alive;
     const hpBefore = target.hp;
     const outcome = damagePlayerDirectly(room, owner, target, damage, now, skillId, events);
+    if (target.alive && target.hp < hpBefore && owner.id !== target.id && !this.isAlly(room, owner, target)) {
+      (target.cpu ?? target.autopilot)?.noticeDamage(owner.id, now);
+    }
     target.petBattle?.hit(owner, hpBefore, now, events);
     if (wasAlive && !target.alive) this.commitPlayerDeath(room, target, owner.id, outcome, events);
   }

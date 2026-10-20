@@ -136,7 +136,7 @@ def primitive_action(frame, lesson, level, decisions):
 def demonstration_actions(results, source):
     if source in ("cpu", "siege"):
         if any("expertActions" not in result or result["expertActions"] is None for result in results):
-            raise RuntimeError("CPU demonstrations require the expert simulation service")
+            raise RuntimeError("World expert demonstrations require the expert simulation service")
         return [action for result in results for action in result["expertActions"]]
     return [primitive_action(frame, result["lesson"], result["level"],
                              result.get("lessonMetrics", {}).get("decisions", 0))

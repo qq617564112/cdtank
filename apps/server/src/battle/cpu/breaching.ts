@@ -26,13 +26,18 @@ export class BotBreachPlanner {
   private revision = -1;
   private startedAt = 0;
   private nextSearchAt = 0;
+  private nextLocalSearchAt = 0;
   private breach?: BotBreach;
+  private localSelections = 0;
 
-  get waypoint(): Point | undefined {return this.breach?.path[0];}
+  get waypoint(): Point | undefined {
+    return this.breach && this.breach.object.hp > 0 ? this.breach.path[0] : undefined;
+  }
 
   get working(): boolean {return !!(this.planner || this.requestedGoal || this.breach);}
 
   get searching(): boolean {return this.planner !== undefined;}
+  get localSelectionCount(): number {return this.localSelections;}
 
   request(goal: Point): void {
     if (!this.planner && !this.breach) this.requestedGoal ??= {...goal};
@@ -54,7 +59,8 @@ export class BotBreachPlanner {
   }
 
   advance(actor: BotActor, pursuit: (Point & {id: string}) | undefined,
-    objects: readonly BreakableSnapshot[], field: Battlefield, now: number): BotBreach | undefined {
+    objects: readonly BreakableSnapshot[], field: Battlefield, now: number,
+    stalledSeconds = 0): BotBreach | undefined {
     const pursuitId = pursuit?.id;
     if (this.pursuitId !== pursuitId || this.revision !== field.navigationRevision) {
       this.reset();
@@ -62,6 +68,24 @@ export class BotBreachPlanner {
       this.revision = field.navigationRevision;
     }
     if (!pursuit) return undefined;
+    if (stalledSeconds >= 6 && now >= this.nextLocalSearchAt && actor.movement
+        && (!this.breach || this.breach.path.length > 0)) {
+      this.nextLocalSearchAt = now + 2500;
+      const trapped = [-1, 1].every(move => [-1, 0, 1].every(turn => {
+        const next = actor.movement!.predict({sequence: 0, clientTime: now,
+          move, turn, aim: 0, fire: false, useItem: 0});
+        return horizontalDistance(actor, next) <= .01;
+      }));
+      if (trapped) {
+        const local = localBreach(actor, objects, field);
+        if (local) {
+          this.localSelections++;
+          this.breach = local;
+          this.planner = undefined;
+          this.requestedGoal = undefined;
+        }
+      }
+    }
     if (this.breach) {
       const object = objects.find(other => other.id === this.breach!.object.id);
       if (!object) {this.breach = undefined; return undefined;}
@@ -111,6 +135,24 @@ export class BotBreachPlanner {
     if (path?.length) this.breach = firstBreach(actor, path, objects, field);
     return this.breach;
   }
+}
+
+function localBreach(actor: BotActor, objects: readonly BreakableSnapshot[],
+  field: Battlefield): BotBreach | undefined {
+  const sources = getSceneBreakables(Number(field.source.id));
+  const contact = {...actor, y: actor.y + 20};
+  const candidates = objects.flatMap(object => {
+    if (object.hp <= 0 || object.id.startsWith('CASTLE:')
+        || !field.navigation.hasBlocker(object.id)
+          && !field.navigation.hasBlocker(`SCN:${object.sourcePlacementId}`)) return [];
+    const source = sources.find(value => value.id === object.sourcePlacementId);
+    return source && segmentBox(contact, contact, source, 60) !== undefined ? [{object, source}] : [];
+  }).sort((a, b) => horizontalDistance(actor, a.object) - horizontalDistance(actor, b.object));
+  for (const {object, source} of candidates) {
+    const aim = firingPoint(actor, object, source, field);
+    if (aim) return {object, source, aim, path: []};
+  }
+  return undefined;
 }
 
 function firstBreach(actor: BotActor, path: readonly Point[],
