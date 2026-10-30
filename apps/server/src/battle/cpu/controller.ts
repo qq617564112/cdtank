@@ -23,11 +23,12 @@ import {isHiddenFromOpponent} from '../../../../shared/combat/optical-camouflage
 import {hasFixedTurret, tankTurretYaw} from '../../../../shared/combat/tank-turret';
 import {petInjectionHotkey, finiteAmmoHotkey, healingHotkey, treasureHotkey, defenseDrinkHotkey, attackDrinkHotkey, speedDrinkHotkey, invincibilityHotkey, opticalCamouflageHotkey, roleDisguiseHotkey, turnDrinkHotkey, teamLifeHotkey, airstrikeHotkey, type TeamLifeContext} from './items';
 import {trapPlacementHotkey, trapSweepHotkey} from './traps';
-import {BOT_BEHAVIORS, randomBotDelay, type BotSkill} from './behavior';
+import {BOT_BEHAVIORS, randomBotDelay, randomBotGaussian, type BotSkill} from './behavior';
 import {tankRouteClear, teammateAvoidancePoint, teammateEscapeClear, teammateInWay, teammateWaypointClear} from './teammate-avoidance';
 import {TacticalPlanner, type TacticalIntent} from './tactical';
 import {BotBreachPlanner} from './breaching';
 import {BotRecovery} from './recovery';
+import {ARRIVAL_RADIUS, DrivePlanner, probe, type DriveRequest} from './driving';
 
 export interface BotActor extends Point {
   id: string;
@@ -35,7 +36,9 @@ export interface BotActor extends Point {
   yaw: number;
   bodyYaw?: number;
   aim: number;
-  movement?: {speed: number; turn: number; navigation: BotNavigationPolicy; predict(input: MsgPlayerInput): Point & {yaw: number; bodyYaw?: number}};
+  movement?: {speed: number; turn: number; navigation: BotNavigationPolicy;
+    predict(input: MsgPlayerInput): Point & {yaw: number; bodyYaw?: number};
+    rollout(input: MsgPlayerInput, steps: number, elapsed: number): (Point & {yaw: number; bodyYaw?: number})[]};
   alive: boolean;
   deaths?: number;
   vip: boolean;
@@ -87,26 +90,24 @@ export class BotController {
   private combatWaypoint?: Point;
   private previousCombatPosition?: {point: Point; until: number};
   private retreatThreatId?: string;
+  private nextRetreatPlan = 0;
+  private targetSeenAt = Number.NEGATIVE_INFINITY;
   private combatDirection = 1;
   private nextCombatMove = 0;
   private avoidancePoint?: Point;
   private previousYieldPosition?: {point: Point; until: number};
   private nextTeammateMove = 0;
-  private steeringMove: -1 | 1 = 1;
-  private reverseCruise?: {from: number; origin: Point};
-  private forwardCruise?: {turn: number; forward: boolean; stoppedSeconds: number; until: number};
-  private nextForwardCruise = 0;
   private observedDeaths?: number;
-  private forwardCruiseStarts = 0;
-  private forwardCruiseCompletions = 0;
-  private forwardCruiseAborts = 0;
   private recentDamage?: {attackerId: string; at: number};
   private readonly failedApproaches = new Map<string, number>();
   private readonly unavailableUntil = new Map<string, number>();
   private reaction?: {targetId: string; readyAt: number; lastSeenAt: number; triggerAt?: number};
+  private aimError?: {targetId: string; offset: number; at: number};
   private readonly tactical = new TacticalPlanner();
   private readonly breaching = new BotBreachPlanner();
   private readonly recovery = new BotRecovery();
+  private readonly drive = new DrivePlanner();
+  private traceNow = 0;
   private traceIntent?: TacticalIntent;
   private traceVisible = false;
   private traceAttackId?: string;
@@ -121,6 +122,16 @@ export class BotController {
   /** Keep round skill through respawns while discarding an old firing confirmation. */
   resetReaction(): void {
     this.reaction = undefined;
+    this.aimError = undefined;
+  }
+
+  /** A newly engaged tank is first aimed slightly off; the error settles while tracking. */
+  private aimOffset(targetId: string, now: number, scale = 1): number {
+    const behavior = BOT_BEHAVIORS[this.skill];
+    if (this.aimError?.targetId !== targetId || scale !== 1) {
+      this.aimError = {targetId, offset: randomBotGaussian() * behavior.aimError * scale, at: now};
+    }
+    return this.aimError.offset * Math.exp(-(now - this.aimError.at) / 1000 / behavior.aimSettleSeconds);
   }
 
   noticeDamage(attackerId: string, now: number): void {
@@ -176,14 +187,11 @@ export class BotController {
   traceState() {
     const point = (value: Point | undefined) => value
       ? {x: value.x, y: value.y, z: value.z} : undefined;
-    return {policyRevision: 34, skill: this.skill, intent: this.traceIntent,
+    return {policyRevision: 35, skill: this.skill, intent: this.traceIntent,
       driveSource: this.traceDriveSource, targetId: this.targetId,
-      travelDirection: this.steeringMove,
-      aligningForward: !!this.forwardCruise,
-      forwardCruiseStarts: this.forwardCruiseStarts,
-      forwardCruiseCompletions: this.forwardCruiseCompletions,
-      forwardCruiseAborts: this.forwardCruiseAborts,
-      forwardCruiseStoppedSeconds: this.forwardCruise?.stoppedSeconds,
+      travelDirection: this.drive.travelDirection,
+      reverseSeconds: this.drive.reverseSeconds(this.traceNow),
+      driveStuckSeconds: this.drive.stuckSeconds(this.traceNow),
       recentDamage: this.recentDamage,
       attackId: this.traceAttackId, targetVisible: this.traceVisible,
       movementReady: this.traceMovementReady, targetChanges: this.targetChanges,
@@ -191,7 +199,7 @@ export class BotController {
       driveReversals: this.driveReversals, searching: !!this.planner,
       breachSearching: this.breaching.searching, breachWorking: this.breaching.working,
       localBreachSelections: this.breaching.localSelectionCount,
-      recovering: this.recovery.active, stalledSeconds: this.recovery.stalledSeconds,
+      recovering: this.drive.stuckSeconds(this.traceNow) >= 1.5, stalledSeconds: this.recovery.stalledSeconds,
       recoveryReplans: this.recovery.replanCount, recoveryReason: this.recovery.replanReason,
       routeStalledSeconds: this.recovery.routeStalledSeconds,
       blockedSeconds: this.blockedMovementSeconds, pathLength: this.path.length,
@@ -233,6 +241,7 @@ export class BotController {
     const input: MsgPlayerInput = {sequence: ++this.sequence, move: 0, turn: 0, aim: 0,
       fire: false, useItem: this.sequence === 1 ? 1 : 0, clientTime: now};
     this.traceDriveSource = 'IDLE';
+    this.traceNow = now;
     const parameters = actor.movement ?? defaultMovementParameters(actor.tank);
     const spacing = combatSpacing(actor);
     const behavior = BOT_BEHAVIORS[this.skill];
@@ -257,10 +266,7 @@ export class BotController {
       this.retreatThreatId = undefined;
       this.avoidancePoint = undefined; this.nextTeammateMove = 0;
       this.previousYieldPosition = undefined;
-      this.steeringMove = 1;
-      this.reverseCruise = undefined;
-      if (this.forwardCruise) this.forwardCruiseAborts++;
-      this.forwardCruise = undefined; this.nextForwardCruise = 0;
+      this.drive.reset();
       this.recentDamage = undefined;
       this.breaching.reset();
       this.recovery.reset();
@@ -275,9 +281,11 @@ export class BotController {
       && other.id !== actor.id && other.team === actor.team) : [];
     this.recovery.observe(actor, now);
     if (actor.combat?.getFlag?.(9) === 0) {
+      // A trap that forbids translation is not a blocked route; restart progress afterwards.
       this.previousPosition = undefined;
       this.requestedMovement = false;
       this.blockedMovementSeconds = 0;
+      this.drive.idle();
     }
     const recoveryReplan = this.recovery.takeReplan();
     // Minimap contacts are global. Distance limits below apply to firing, not acquisition.
@@ -357,7 +365,7 @@ export class BotController {
         && now - this.targetSelectedAt >= 2500 && now >= this.nextTargetReview) {
       this.nextTargetReview = now + 1500;
       const working = this.planner || this.path.length || this.escapePoint || this.combatWaypoint
-        || this.avoidancePoint || this.recovery.active || this.breaching.working
+        || this.avoidancePoint || this.drive.stuckSeconds(now) >= 1.5 || this.breaching.working
         || mode === 5 && !claimed.has(current.id);
       const nearer = distance(preferred) + 160 < distance(current)
         && distance(preferred) < distance(current) * .7;
@@ -372,16 +380,12 @@ export class BotController {
       }
     }
     if (this.targetId !== target?.id) {
-      if (this.forwardCruise) {
-        this.forwardCruise = undefined;
-        this.forwardCruiseAborts++;
-        this.nextForwardCruise = now + 6000;
-      }
       this.targetChanges++;
       this.targetSelectedAt = now;
       this.nextTargetReview = now + 2500;
       this.targetChangeReason = targetReason;
       this.targetId = target?.id; this.path = []; this.goal = undefined;
+      this.targetSeenAt = Number.NEGATIVE_INFINITY;
       this.planner = undefined; this.nextPlan = 0;
       this.observedTargetHp = undefined; this.ineffectiveFireSeconds = 0;
       this.repositionDestroy = false;
@@ -431,7 +435,7 @@ export class BotController {
       if (!keepSearch) {
         this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
         this.escapePoint = recoveryExit(actor, target, teammates, actors, reach,
-          this.recovery.replanCount, this.steeringMove, input, dt, this.escapePoint);
+          this.recovery.replanCount, this.drive.travelDirection, input, this.escapePoint);
         this.escapeOrigin = this.escapePoint ? {x: actor.x, y: actor.y, z: actor.z} : undefined;
       }
       this.combatWaypoint = undefined; this.avoidancePoint = undefined;
@@ -455,6 +459,7 @@ export class BotController {
     this.traceAttackId = breach?.object.id ?? target?.id;
     this.traceMovementReady = actor.movementReady === true;
     let retreating = false;
+    let request: DriveRequest | undefined;
     const finishInput = (): MsgPlayerInput => {
       const attackTarget = breach?.aim ?? target;
       const attackId = breach?.object.id ?? target?.id;
@@ -462,10 +467,8 @@ export class BotController {
       if (breach) {
         this.traceDriveSource = 'BREACH';
         input.move = 0; input.turn = 0; input.fire = false;
-        const waypoint = breach.object.hp > 0 ? breach.path[0] : undefined;
-        if (waypoint) {
-          steerToward(actor, input, waypoint, dt, this.steeringMove);
-        }
+        request = breach.object.hp > 0 && breach.path.length
+          ? {mode: 'BREACH', route: breach.path, face: fixedTurret ? undefined : breach.aim} : undefined;
       }
       const finishItems = (): MsgPlayerInput => {
         if (actor.roleDisguise) input.fire = false;
@@ -514,28 +517,25 @@ export class BotController {
             !objectiveTarget);
         }
         const move = Math.sign(input.move);
-        if (move < 0) this.reverseCruise ??= {from: now, origin: {x: actor.x, y: actor.y, z: actor.z}};
-        else if (move > 0) this.reverseCruise = undefined;
         if (move !== 0) {
           if (this.traceMove !== 0 && move !== this.traceMove) this.driveReversals++;
           this.traceMove = move;
         }
         return input;
       };
-      const heading = actor.yaw + input.turn * parameters.turn * dt;
       const passingRoute = this.breaching.waypoint ?? this.combatWaypoint ?? this.path[0] ?? this.escapePoint
-        ?? (input.move !== 0 ? {x: actor.x + Math.sin(heading) * Math.sign(input.move) * 144,
-          y: actor.y, z: actor.z + Math.cos(heading) * Math.sign(input.move) * 144}
-          : this.planner ? this.goal : undefined);
+        ?? request?.route[0] ?? (this.planner ? this.goal : undefined);
       if (this.avoidancePoint) {
         const reached = reach(actor, this.avoidancePoint);
         const passing = teammates.some(other => Math.abs(other.y - actor.y) < 24
           && distance(other) < 144) || teammateInWay(actor, passingRoute, teammates);
-        if (distance(this.avoidancePoint) < 7 || !passing) {
+        if (distance(this.avoidancePoint) < ARRIVAL_RADIUS || !passing) {
           this.avoidancePoint = undefined;
-          // Rejoin from the passing position rather than return to the crowded lane.
+          // Rejoin from the passing position rather than return to the crowded lane,
+          // and drive on for a moment before considering another pass.
           this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
-          input.move = 0; input.turn = 0;
+          this.nextTeammateMove = now + 1200;
+          request = undefined;
         } else if (Math.hypot(reached.x - this.avoidancePoint.x, reached.z - this.avoidancePoint.z) >= .01
             || !teammateEscapeClear(actor, this.avoidancePoint, teammates)
             || !tankRouteClear(actor, this.avoidancePoint, actors)) this.avoidancePoint = undefined;
@@ -549,15 +549,8 @@ export class BotController {
               const bearing = Math.atan2(attackTarget.x - point.x, attackTarget.z - point.z);
               return attackSource ? canShootSource(point, bearing, attackSource, field, actors, actor.id)
                 : canShoot(point, bearing);
-            } : undefined, actor.movement ? point => {
-              const command = {...input};
-              steerToward(actor, command, point, dt, this.steeringMove);
-              avoidBlockedArc(actor, command, point);
-              const predicted = actor.movement!.predict(command);
-              if (Math.hypot(predicted.x - actor.x, predicted.z - actor.z) > .01) return 'MOVE';
-              if (Math.abs(angle(predicted.yaw - actor.yaw)) > .000001) return 'TURN';
-              return undefined;
-            } : undefined, this.previousYieldPosition && now < this.previousYieldPosition.until
+            } : undefined, actor.movement ? point => probe(actor, point, input) : undefined,
+            this.previousYieldPosition && now < this.previousYieldPosition.until
               ? this.previousYieldPosition.point : undefined);
           if (this.avoidancePoint) {
             this.previousYieldPosition = {point: {x: actor.x, y: actor.y, z: actor.z}, until: now + 4000};
@@ -567,129 +560,29 @@ export class BotController {
       }
       if (this.avoidancePoint) {
         this.traceDriveSource = 'TEAMMATE_YIELD';
-        steerToward(actor, input, this.avoidancePoint, dt, this.steeringMove);
+        request = {mode: 'YIELD', route: [this.avoidancePoint],
+          face: targetVisible && !fixedTurret ? attackTarget : undefined};
       }
-      const route = this.path[0] ?? (this.planner ? this.goal : undefined);
-      const safeCruise = this.traceDriveSource === 'PATH' && !!route && !targetVisible
-        && !breach && !this.escapePoint && !this.avoidancePoint && !this.recovery.active
-        && enemies.every(enemy => distance(enemy) > 400)
-        && teammates.every(other => Math.abs(other.y - actor.y) >= 24 || distance(other) >= 144);
-      if (!safeCruise && this.forwardCruise) {
-        this.forwardCruise = undefined;
-        this.forwardCruiseAborts++;
-        this.nextForwardCruise = now + 6000;
-      }
-      let cruisingForward = false;
-      if (safeCruise && route && (this.forwardCruise || now >= this.nextForwardCruise
-          && this.reverseCruise && now - this.reverseCruise.from >= 6000
-          && distance(this.reverseCruise.origin) >= 240)) {
-        const remaining = this.path.length ? this.path : [reach(actor, route)];
-        let previous: Point = actor;
-        let remainingDistance = 0;
-        for (const point of remaining) {
-          remainingDistance += Math.hypot(point.x - previous.x, point.z - previous.z);
-          previous = point;
-        }
-        // Join a reachable point farther along the route before turning, so a
-        // short bend does not keep a long journey in reverse indefinitely.
-        let waypoint = remaining[0];
-        let skip = 0;
-        for (let index = 1; index < Math.min(remaining.length, 5); index++) {
-          const point = remaining[index];
-          const reached = reach(actor, point);
-          if (Math.hypot(reached.x - point.x, reached.z - point.z) >= .01) break;
-          waypoint = point; skip = index;
-          if (distance(point) >= Math.max(240, parameters.speed * 6)) break;
-        }
-        const error = angle(Math.atan2(waypoint.x - actor.x, waypoint.z - actor.z) - actor.yaw);
-        const turnSeconds = Math.abs(error) / Math.max(parameters.turn, .001);
-        if (!this.forwardCruise && (input.move < 0 || input.move === 0 && this.steeringMove === -1)
-            && remainingDistance >= Math.max(240, parameters.speed * turnSeconds)) {
-          this.forwardCruise = {turn: Math.sign(error), forward: false,
-            stoppedSeconds: 0, until: now + (turnSeconds * 1.5 + 1) * 1000};
-          this.forwardCruiseStarts++;
-        }
-        const cruise = this.forwardCruise;
-        if (cruise) {
-          if (skip) this.path.splice(0, skip);
-          if (Math.abs(error) < .35) {
-            this.steeringMove = 1;
-            this.reverseCruise = undefined;
-            this.forwardCruise = undefined;
-            this.forwardCruiseCompletions++;
-            steerToward(actor, input, waypoint, dt, 1);
-          } else if (now >= cruise.until || cruise.stoppedSeconds >= 3) {
-            this.forwardCruise = undefined;
-            this.forwardCruiseAborts++;
-            this.nextForwardCruise = now + 6000;
-          } else {
-            // Keep the turn side stable near 180 degrees. Reverse through the
-            // first arc, then continue forward once the nose faces the route.
-            if (Math.abs(error) < Math.PI * .75) cruise.turn = Math.sign(error);
-            if (Math.abs(error) < Math.PI / 2) cruise.forward = true;
-            const move = cruise.forward ? 1 : -1;
-            const command = {...input, move, turn: cruise.turn * move};
-            const predicted = actor.movement?.predict(command);
-            const nextError = predicted ? Math.abs(angle(Math.atan2(waypoint.x - predicted.x,
-              waypoint.z - predicted.z) - predicted.yaw)) : Infinity;
-            const progressing = predicted && Math.hypot(predicted.x - actor.x, predicted.z - actor.z) > .01
-              && Math.hypot(waypoint.x - predicted.x, waypoint.z - predicted.z) <= distance(waypoint) + .01
-              && nextError < Math.abs(error) - .000001;
-            if (progressing) {
-              input.move = command.move; input.turn = command.turn;
-              cruise.stoppedSeconds = 0;
-            } else {
-              input.move = 0; input.turn = cruise.turn;
-              cruise.stoppedSeconds += dt;
-            }
-            this.traceDriveSource = 'CRUISE_TURN';
-            cruisingForward = true;
-          }
-        }
-      }
-      // Commit direction after breach and yielding have selected the actual
-      // waypoint; a discarded pursuit command must not change reverse hysteresis.
-      if (input.move !== 0) this.steeringMove = input.move > 0 ? 1 : -1;
+      if (request) this.drive.drive(actor, request, actors, now, input);
+      else this.drive.idle();
       const movementWaypoint = this.avoidancePoint ?? this.breaching.waypoint
         ?? this.combatWaypoint ?? this.path[0] ?? this.escapePoint;
-      if (!cruisingForward) avoidBlockedArc(actor, input, movementWaypoint);
-      const recovering = this.recovery.apply(actor, teammates, input, movementWaypoint ?? this.goal ?? target,
-        retreating || !!movementWaypoint || Math.abs(input.move) > .1
-          || !!target && !targetVisible && !breach,
-        now, {mapId: field.source.id, targetId: target?.id, actors,
-          searching: !!this.planner || this.breaching.searching, pathLength: this.path.length,
-          travelDirection: this.steeringMove,
-          pursuing: retreating || !!movementWaypoint
-            || !!target && !targetVisible && !breach});
-      if (recovering) {
-        this.traceDriveSource = 'RECOVERY';
-        if (input.move !== 0) this.steeringMove = input.move > 0 ? 1 : -1;
-      }
-      this.requestedMovement = Math.abs(input.move) > .1;
+      const pursuing = retreating || !!movementWaypoint || !!target && !targetVisible && !breach;
+      this.recovery.track(actor, pursuing || Math.abs(input.move) > .1, pursuing, now);
+      // A blocked route counts as requested movement so the blocked-exit search still runs.
+      this.requestedMovement = Math.abs(input.move) > .1 || !!request && this.drive.waiting;
       if (!attackTarget || !attackId || (breach && breach.object.hp <= 0)) {
         this.resetReaction();
         return finishItems();
       }
-      if (!recovering && !fixedTurret && targetVisible && this.traceDriveSource === 'COMBAT_POSITION'
-          && input.move === 0 && input.turn !== 0 && actor.movement) {
-        const bearing = Math.atan2(attackTarget.x - actor.x, attackTarget.z - actor.z);
-        const error = Math.abs(angle(bearing - tankTurretYaw(actor.tank.id, actor)));
-        const next = actor.movement.predict(input);
-        const nextError = Math.abs(angle(bearing - tankTurretYaw(actor.tank.id,
-          {yaw: next.yaw, bodyYaw: next.bodyYaw, aim: actor.aim})));
-        if (error > Math.max(aimTolerance, aimStep * 2) && nextError > error + .000001) {
-          input.turn = 0;
-          this.traceDriveSource = 'AIM_ALIGN';
-        }
-      }
-      if (!recovering && fixedTurret && (breach || input.fire) && input.move === 0 && !this.path.length && !this.planner
+      if (fixedTurret && (breach || input.fire) && input.move === 0 && !this.path.length && !this.planner
           && !this.escapePoint && !this.combatWaypoint && !this.avoidancePoint && !this.repositionDestroy) {
         const bearing = Math.atan2(attackTarget.x - actor.x, attackTarget.z - actor.z);
         const error = angle(bearing - (actor.bodyYaw ?? actor.yaw));
         input.turn = Math.abs(error) < aimTolerance ? 0
           : Math.max(-1, Math.min(1, error / (parameters.turn * Math.max(dt, .001))));
       }
-      if (!recovering && !fixedTurret && input.move === 0 && input.turn === 0
+      if (!fixedTurret && input.move === 0 && input.turn === 0
           && !movementWaypoint && !this.planner && actor.movement
           && (targetVisible || breach && breach.object.hp > 0)) {
         const bearing = Math.atan2(attackTarget.x - actor.x, attackTarget.z - actor.z);
@@ -726,14 +619,16 @@ export class BotController {
         visible = canShoot(position, bearing);
       }
       const reacted = this.observeTarget(attackId, visible, now);
-      const error = angle(bearing - tankTurretYaw(actor.tank.id, {yaw, bodyYaw, aim: actor.aim}));
+      // Obstructions and objectives are aimed exactly; tanks carry the settling aim error.
+      const aimBearing = bearing + (breach || attackSource ? 0 : this.aimOffset(attackId, now));
+      const error = angle(aimBearing - tankTurretYaw(actor.tank.id, {yaw, bodyYaw, aim: actor.aim}));
       input.aim = reacted && aimStep > 0 ? Math.max(-1, Math.min(1, error / aimStep)) : 0;
       const shotAngle = tankTurretYaw(actor.tank.id, {yaw, bodyYaw, aim: actor.aim}) + input.aim * aimStep;
       const shotDistance = Math.hypot(attackTarget.x - position.x, attackTarget.z - position.z);
       const shotEnd = {x: position.x + Math.sin(shotAngle) * shotDistance, y: position.y + 20,
         z: position.z + Math.cos(shotAngle) * shotDistance};
       const friendly = teammates.some(other => blocksShot(position, shotEnd, other));
-      const aiming = reacted && !actor.roleDisguise && Math.abs(angle(bearing - shotAngle)) < aimTolerance;
+      const aiming = reacted && !actor.roleDisguise && Math.abs(angle(aimBearing - shotAngle)) < aimTolerance;
       let clearShot = visible;
       if (breach && aiming) {
         const shot = queryShotTarget({...position, id: actor.id},
@@ -742,6 +637,8 @@ export class BotController {
       }
       input.fire = this.confirmShot(aiming,
         reacted && clearShot && !actor.roleDisguise && actor.fireReady === true && !friendly, now);
+      // Recoil and the next reload leave a smaller error to correct before the following shot.
+      if (input.fire && !breach && !attackSource) this.aimOffset(attackId, now, .6);
       if (mode === 5 && !breach && aiming && !this.repositionDestroy && !this.escapePoint) {
         this.ineffectiveFireSeconds += dt;
       }
@@ -751,7 +648,7 @@ export class BotController {
       : teammateWaypointClear(actor, this.goal, teammates))) {
       this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
     }
-    if (this.escapePoint && (distance(this.escapePoint) < 7
+    if (this.escapePoint && (distance(this.escapePoint) < ARRIVAL_RADIUS
         || this.escapeOrigin && distance(this.escapeOrigin) >= 96)) {
       this.escapePoint = undefined; this.escapeOrigin = undefined;
       this.goal = undefined; this.path = []; this.planner = undefined; this.nextPlan = 0;
@@ -762,19 +659,23 @@ export class BotController {
     } else this.blockedMovementSeconds = 0;
     this.previousPosition = {x: actor.x, y: actor.y, z: actor.z};
     this.requestedMovement = false;
+    // A route the hull cannot follow, e.g. a gap that only admits an aligned
+    // hull, shows as no route progress while the tank still shuffles about.
+    const blocked = this.blockedMovementSeconds >= 2 || this.drive.stuckSeconds(now) >= 3;
     if (tacticalIntent === 'BREACH' && breach) {
-      if (this.blockedMovementSeconds >= 2 && (breach.path.length || this.avoidancePoint)) {
+      if (blocked && (breach.path.length || this.avoidancePoint)) {
         if (breach.path.length && target) this.breaching.retry(target);
         this.avoidancePoint = undefined; this.nextTeammateMove = 0;
         this.combatDirection *= -1;
         this.blockedMovementSeconds = 0;
+        this.drive.idle();
       }
       this.path = []; this.goal = undefined; this.planner = undefined; this.nextPlan = 0;
       this.escapePoint = undefined; this.combatWaypoint = undefined;
       this.repositionDestroy = false;
       return finishInput();
     }
-    if (this.blockedMovementSeconds >= 2 && (target || teammates.length)
+    if (blocked && (target || teammates.length)
         && (!this.planner || this.path.length)) {
       // A traversable route can still be blocked when steering clips a corner.
       // Retry another approach using observed movement, without bypassing collision.
@@ -786,6 +687,7 @@ export class BotController {
       this.combatDirection *= -1;
       this.repositionDestroy = mode === 5;
       this.blockedMovementSeconds = 0;
+      this.drive.idle();
       const escapes: Point[] = [];
       for (let step = 0; step < 16; step++) {
         const bearing = step * Math.PI / 8;
@@ -818,20 +720,23 @@ export class BotController {
         && distance(enemy) < spacing.preferred && Math.abs(enemy.y - actor.y) < 18);
       const danger = threats.find(enemy => distance(enemy) < spacing.minimum);
       const threat = withdrawing ?? danger;
+      const previousThreat = this.retreatThreatId;
       if (this.retreatThreatId && !threat) this.combatWaypoint = undefined;
       this.retreatThreatId = threat?.id;
       if (withdrawing && !threats.includes(withdrawing)) threats.push(withdrawing);
       if (threat) {
-        const bearing = Math.atan2(actor.x - threat.x, actor.z - threat.z);
-        this.combatWaypoint = {x: actor.x + Math.sin(bearing) * 144, y: actor.y,
-          z: actor.z + Math.cos(bearing) * 144};
-        const retreat = combatRetreat(actor, threats, input, field, dt, this.combatDirection,
-          this.steeringMove, this.combatWaypoint);
+        // Keep one withdrawal point for a while: a point that follows the hull never gets closer.
+        if (!this.combatWaypoint || previousThreat !== threat.id || now >= this.nextRetreatPlan
+            || distance(this.combatWaypoint) < ARRIVAL_RADIUS * 2) {
+          this.combatWaypoint = retreatPoint(actor, threats, reach);
+          this.nextRetreatPlan = now + 1500;
+        }
         retreating = true;
         this.traceDriveSource = 'RETREAT';
         this.path = []; this.goal = undefined; this.planner = undefined;
-        this.steeringMove = retreat.travelDirection;
-        input.move = retreat.move; input.turn = retreat.turn;
+        // Back away while the turret keeps covering the threat.
+        request = {mode: 'RETREAT', route: [this.combatWaypoint], threats,
+          face: fixedTurret ? undefined : threat};
         return finishInput();
       }
     }
@@ -845,6 +750,7 @@ export class BotController {
       friendly = teammates.some(other => blocksShot(origin, end, other));
       const visible = (source ? canShootSource(actor, bearing, source, field, actors, actor.id) : !wall && distance(target) < 700)
         && (source || Math.abs(actor.y - target.y) < 18);
+      if (visible) this.targetSeenAt = now;
       input.fire = !actor.roleDisguise && visible && (fixedTurret || Math.abs(error) < .06) && !friendly;
       // Rebuilt VIP survival: create aiming time using ordinary collision-tested
       // movement rather than parking within an enemy's firing range while hurt.
@@ -858,7 +764,7 @@ export class BotController {
           return finishInput();
         }
       }
-      if (this.repositionDestroy && this.goal && !this.planner && distance(this.goal) < 7) {
+      if (this.repositionDestroy && this.goal && !this.planner && distance(this.goal) < ARRIVAL_RADIUS) {
         this.repositionDestroy = false;
       }
       const changingDestroyPosition = (mode === 5 && this.repositionDestroy)
@@ -881,22 +787,24 @@ export class BotController {
       }
       // Finish an existing positioning move across small range fluctuations.
       // Re-entering combat uses the closer boundary once that move is released.
-      const mobileCombat = !objectiveTarget && visible
+      // A sight line that flickers past cover keeps the current combat move for a moment.
+      const engaged = visible || !!this.combatWaypoint && now - this.targetSeenAt < 1200;
+      const mobileCombat = !objectiveTarget && engaged
         && distance(target) < engagementDistance + (this.combatWaypoint ? 80 : 0);
       if (!this.escapePoint && !this.repositionDestroy && (friendly || mobileCombat)) {
-        if (this.combatWaypoint && (distance(this.combatWaypoint) < 7
+        if (this.combatWaypoint && (distance(this.combatWaypoint) < ARRIVAL_RADIUS
             || !teammateWaypointClear(actor, this.combatWaypoint, teammates)
             || !tankRouteClear(actor, this.combatWaypoint, actors)
             || !objectiveTarget && Math.abs(Math.hypot(target.x - this.combatWaypoint.x,
               target.z - this.combatWaypoint.z) - spacing.preferred) > 80
             || !canShoot(this.combatWaypoint, Math.atan2(target.x - this.combatWaypoint.x,
               target.z - this.combatWaypoint.z)))) this.combatWaypoint = undefined;
-        if (!this.combatWaypoint && now >= this.nextCombatMove) {
+        if (!this.combatWaypoint && now >= this.nextCombatMove && (visible || friendly)) {
           this.combatWaypoint = combatMovementPoint(actor, target, actors, teammates, field,
             this.combatDirection, fixedTurret && !friendly,
             objectiveTarget ? {minimum: 160, preferred: 280} : spacing, reach, canShoot,
             this.previousCombatPosition && now < this.previousCombatPosition.until
-              ? this.previousCombatPosition.point : undefined);
+              ? this.previousCombatPosition.point : undefined, this.drive.travelDirection);
           this.nextCombatMove = now + randomBotDelay(behavior.movementMs);
           if (this.combatWaypoint) {
             this.previousCombatPosition = {point: {x: actor.x, y: actor.y, z: actor.z}, until: now + 4000};
@@ -907,8 +815,9 @@ export class BotController {
         if (this.combatWaypoint) {
           this.traceDriveSource = 'COMBAT_POSITION';
           this.path = []; this.goal = undefined; this.planner = undefined;
-          steerToward(actor, input, this.combatWaypoint, dt, this.steeringMove);
-          this.requestedMovement = Math.abs(input.move) > .1;
+          const face = target;
+          request = {mode: 'COMBAT', route: [this.combatWaypoint], face,
+            canShoot: point => canShoot(point, Math.atan2(face.x - point.x, face.z - point.z))};
           return finishInput();
         }
       } else this.combatWaypoint = undefined;
@@ -1000,13 +909,20 @@ export class BotController {
         this.breaching.request(goal);
       }
     }
-    while (this.path.length && distance(this.path[0]) < 7) {
+    // The drive planner pursues a point ahead along the route. Drop a bend once it
+    // is near or already passed and the following point is directly reachable,
+    // as players cut a corner as soon as the next stretch opens up.
+    while (this.path.length) {
+      const first = this.path[0];
       const next = this.path[1];
-      if (next) {
-        const reached = reach(actor, next);
-        // Near a bend, dropping the waypoint can cut across a collision corner.
-        if (Math.hypot(reached.x - next.x, reached.z - next.z) >= .01) break;
+      if (!next) {
+        if (distance(first) < ARRIVAL_RADIUS) this.path.shift();
+        break;
       }
+      const passed = (actor.x - first.x) * (next.x - first.x) + (actor.z - first.z) * (next.z - first.z) > 0;
+      if (distance(first) >= Math.max(36, parameters.speed * .6) && !passed) break;
+      const reached = reach(actor, next);
+      if (Math.hypot(reached.x - next.x, reached.z - next.z) >= .01) break;
       this.path.shift();
     }
     let waypoint = this.path[0];
@@ -1014,18 +930,21 @@ export class BotController {
       // A pending full route need not keep the tank at its old search origin.
       // Follow only the prefix accepted by the authoritative collision sweep.
       const reached = reach(actor, this.goal);
-      if (distance(reached) >= 7) waypoint = reached;
+      if (distance(reached) >= ARRIVAL_RADIUS) waypoint = reached;
     }
     if (!waypoint) {
       if (friendly && target && !this.planner) {
         this.failedApproaches.set(target.id, failed + 1);
         this.goal = undefined; this.nextPlan = now;
       }
+      // While the route is still being searched, face its destination as a player would.
+      if (this.planner && this.goal) request = {mode: 'TRAVEL', route: [this.goal], turnOnly: true};
       return finishInput();
     }
     this.traceDriveSource = this.escapePoint ? 'ESCAPE' : 'PATH';
-    steerToward(actor, input, waypoint, dt, this.steeringMove);
-    this.requestedMovement = Math.abs(input.move) > .1;
+    request = {mode: this.escapePoint ? 'ESCAPE' : 'TRAVEL',
+      route: waypoint === this.path[0] ? this.path : [waypoint],
+      face: targetVisible && !fixedTurret ? target : undefined};
     return finishInput();
   }
 }
@@ -1033,7 +952,7 @@ export class BotController {
 /** Leave the failed turning area before resuming pursuit; vary repeated exits. */
 function recoveryExit(actor: BotActor, target: Point | undefined, teammates: readonly BotActor[],
   actors: readonly BotActor[], reach: (start: Point, end: Point) => Point, attempt: number,
-  travelDirection: -1 | 1, input: MsgPlayerInput, dt: number, previousExit?: Point): Point | undefined {
+  travelDirection: -1 | 1, input: MsgPlayerInput, previousExit?: Point): Point | undefined {
   const bearing = target ? Math.atan2(target.x - actor.x, target.z - actor.z) : actor.yaw;
   const heading = actor.yaw + (travelDirection < 0 ? Math.PI : 0);
   // A short straight exit can release a corner before a slow hull could turn
@@ -1053,13 +972,9 @@ function recoveryExit(actor: BotActor, target: Point | undefined, teammates: rea
       if (Math.hypot(reached.x - desired.x, reached.z - desired.z) >= .01
           || !teammateEscapeClear(actor, reached, teammates)
           || !tankRouteClear(actor, reached, actors)) continue;
-      if (!actor.movement) return reached;
-      const command = {...input};
-      steerToward(actor, command, reached, dt, travelDirection);
-      avoidBlockedArc(actor, command, reached);
-      const preview = actor.movement.predict(command);
-      if (Math.hypot(preview.x - actor.x, preview.z - actor.z) > .01) return reached;
-      if (Math.abs(angle(preview.yaw - actor.yaw)) > .000001) turningExit ??= reached;
+      const approach = probe(actor, reached, input);
+      if (approach === 'MOVE') return reached;
+      if (approach === 'TURN') turningExit ??= reached;
     }
   }
   return turningExit;
@@ -1074,34 +989,24 @@ function combatSpacing(actor: BotActor): {minimum: number; preferred: number} {
   return {minimum: 220, preferred: 300};
 }
 
-/** Retreat through ordinary movement previews while keeping the turret available. */
-function combatRetreat(actor: BotActor, threats: readonly BotActor[], input: MsgPlayerInput,
-  field: Battlefield, dt: number, direction: number, previousMove: -1 | 1,
-  waypoint: Point): {move: number; turn: number; travelDirection: -1 | 1} {
-  const nearest = (point: Point) => Math.min(...threats.map(enemy =>
-    Math.hypot(enemy.x - point.x, enemy.z - point.z)));
-  const separation = nearest(actor);
-  const parameters = actor.movement ?? defaultMovementParameters(actor.tank);
-  const elapsed = roleMovementElapsed(dt);
-  for (const move of [previousMove, -previousMove]) {
-    for (const turn of [0, direction, -direction]) {
-      const command = {...input, move, turn};
-      const yaw = actor.yaw + turn * parameters.turn * elapsed;
-      const candidate = actor.movement?.predict(command) ?? field.move(actor, {
-        x: actor.x + Math.sin(yaw) * move * parameters.speed * elapsed, y: actor.y,
-        z: actor.z + Math.cos(yaw) * move * parameters.speed * elapsed,
-      }, 20);
-      if (nearest(candidate) > separation + .05) {
-        return {move, turn, travelDirection: move > 0 ? 1 : -1};
-      }
-    }
+/** The reachable point farthest from the threats among directions away from the nearest one. */
+function retreatPoint(actor: BotActor, threats: readonly BotActor[],
+  reach: (start: Point, end: Point) => Point): Point {
+  const nearest = threats.reduce((best, threat) => Math.hypot(threat.x - actor.x, threat.z - actor.z)
+    < Math.hypot(best.x - actor.x, best.z - actor.z) ? threat : best);
+  const away = Math.atan2(actor.x - nearest.x, actor.z - nearest.z);
+  const separation = (point: Point) => Math.min(...threats.map(threat =>
+    Math.hypot(threat.x - point.x, threat.z - point.z)));
+  let best: Point | undefined;
+  let bestSeparation = -Infinity;
+  for (const offset of [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2]) {
+    const reached = reach(actor, {x: actor.x + Math.sin(away + offset) * 160, y: actor.y,
+      z: actor.z + Math.cos(away + offset) * 160});
+    if (Math.hypot(reached.x - actor.x, reached.z - actor.z) < 48) continue;
+    const value = separation(reached);
+    if (value > bestSeparation) {best = reached; bestSeparation = value;}
   }
-  // A blocked withdrawal must not resume pursuit on the same tick. Face an
-  // exit first; recovery uses this same outward waypoint if turning is blocked.
-  const command = {...input};
-  steerToward(actor, command, waypoint, dt, previousMove);
-  return {move: 0, turn: command.turn * (actor.movement ? Math.sign(command.move) : 1),
-    travelDirection: command.move > 0 ? 1 : -1};
+  return best ?? {x: actor.x + Math.sin(away) * 144, y: actor.y, z: actor.z + Math.cos(away) * 144};
 }
 
 /** Traversable combat moves preserve firing angles and the engagement distance. */
@@ -1110,10 +1015,35 @@ function combatMovementPoint(actor: BotActor, target: Point, actors: readonly Bo
   spacing: {minimum: number; preferred: number},
   reach: (start: Point, end: Point) => Point,
   canShoot: (position: Point, heading: number) => boolean,
-  previousPosition?: Point): Point | undefined {
+  previousPosition?: Point, travelDirection: -1 | 1 = 1): Point | undefined {
   const bearing = Math.atan2(target.x - actor.x, target.z - actor.z);
   const distance = Math.hypot(target.x - actor.x, target.z - actor.z);
   const radius = spacing.preferred;
+  const usable = (desired: Point): Point | undefined => {
+    if (previousPosition && Math.hypot(desired.x - previousPosition.x,
+      desired.z - previousPosition.z) < 36) return undefined;
+    const cell = field.navigation.sample(desired.x, desired.z);
+    if (!cell?.valid) return undefined;
+    desired.y = cell.height;
+    const reached = reach(actor, desired);
+    if (Math.hypot(reached.x - desired.x, reached.z - desired.z) >= .01) return undefined;
+    if (!teammateWaypointClear(actor, reached, teammates) || !tankRouteClear(actor, reached, actors)) return undefined;
+    return canShoot(reached, Math.atan2(target.x - reached.x, target.z - reached.z)) ? reached : undefined;
+  };
+  if (!fixedTurret) {
+    // A rotating turret keeps aiming while the hull shuttles along its own axis,
+    // which a slow hull manages without first turning toward a sideways point.
+    for (const length of [96, 160]) {
+      for (const sign of [travelDirection, -travelDirection]) {
+        const desired = {x: actor.x + Math.sin(actor.yaw) * sign * length, y: actor.y,
+          z: actor.z + Math.cos(actor.yaw) * sign * length};
+        const range = Math.hypot(target.x - desired.x, target.z - desired.z);
+        if (range < spacing.minimum || range > spacing.preferred + 80) continue;
+        const reached = usable(desired);
+        if (reached) return reached;
+      }
+    }
+  }
   const offsets = fixedTurret
     ? distance < spacing.minimum ? [Math.PI] : distance > spacing.preferred + 20 ? [0] : []
     : [direction * Math.PI / 2, -direction * Math.PI / 2,
@@ -1125,73 +1055,11 @@ function combatMovementPoint(actor: BotActor, target: Point, actors: readonly Bo
         : distance - Math.sqrt(radius * radius - lateral * lateral);
       const desired = {x: actor.x + Math.sin(bearing) * forward + Math.cos(bearing) * lateral,
         y: actor.y, z: actor.z + Math.cos(bearing) * forward - Math.sin(bearing) * lateral};
-      if (previousPosition && Math.hypot(desired.x - previousPosition.x,
-        desired.z - previousPosition.z) < 36) continue;
-      const cell = field.navigation.sample(desired.x, desired.z);
-      if (!cell?.valid) continue;
-      desired.y = cell.height;
-      const reached = reach(actor, desired);
-      if (Math.hypot(reached.x - desired.x, reached.z - desired.z) >= .01) continue;
-      if (!teammateWaypointClear(actor, reached, teammates) || !tankRouteClear(actor, reached, actors)) continue;
-      const heading = Math.atan2(target.x - reached.x, target.z - reached.z);
-      if (canShoot(reached, heading)) return reached;
+      const reached = usable(desired);
+      if (reached) return reached;
     }
   }
   return undefined;
-}
-
-function steerToward(actor: BotActor, input: MsgPlayerInput, waypoint: Point,
-  dt: number, previousMove: -1 | 1): void {
-  const parameters = actor.movement ?? defaultMovementParameters(actor.tank);
-  const distance = Math.hypot(waypoint.x - actor.x, waypoint.z - actor.z);
-  const headingError = angle(Math.atan2(waypoint.x - actor.x, waypoint.z - actor.z) - actor.yaw);
-  // Every route can be driven in reverse while the turret tracks independently.
-  // Keep the current direction around 90° rather than flipping on each tick.
-  const error = Math.abs(headingError);
-  const move: -1 | 1 = previousMove === -1
-    ? (error < Math.PI * .4 ? 1 : -1)
-    : (error > Math.PI * .6 ? -1 : 1);
-  let turn = headingError;
-  if (move < 0) turn = angle(turn + Math.PI);
-  // Reverse arc commands turn the heading opposite to the input turn axis.
-  input.turn = (actor.movement ? move : 1)
-    * Math.max(-1, Math.min(1, turn / (parameters.turn * Math.max(dt, .001))));
-  // Native commands are discrete: analog fractions do not reduce turn speed.
-  // Choose the nearest heading rather than alternating full turns forever.
-  if (actor.movement && Math.abs(turn) < actor.movement.turn * dt * .5) input.turn = 0;
-  // Commands 5–8 are the authoritative move+turn arcs. Keep both axes in the
-  // input and let the normal movement predictor reject or downgrade a blocked
-  // arc; guessing with a straight or reverse retry caused visible oscillation.
-  input.move = distance > .01 ? move * Math.min(1, distance / (parameters.speed * Math.max(dt, .001))) : 0;
-}
-
-/** Keep usable arcs; a rejected arc can still leave room for a stationary turn. */
-function avoidBlockedArc(actor: BotActor, input: MsgPlayerInput, waypoint?: Point): void {
-  if (!actor.movement || input.move === 0) return;
-  const predicted = actor.movement.predict(input);
-  const moving = Math.hypot(predicted.x - actor.x, predicted.z - actor.z) > .01;
-  const approaching = !waypoint || Math.hypot(waypoint.x - predicted.x, waypoint.z - predicted.z)
-    <= Math.hypot(waypoint.x - actor.x, waypoint.z - actor.z) + .01;
-  const direction = input.move < 0 ? Math.PI : 0;
-  const error = waypoint ? Math.abs(angle(Math.atan2(waypoint.x - actor.x,
-    waypoint.z - actor.z) - actor.yaw - direction)) : 0;
-  const nextError = waypoint ? Math.abs(angle(Math.atan2(waypoint.x - predicted.x,
-    waypoint.z - predicted.z) - predicted.yaw - direction)) : 0;
-  // A short waypoint can lie inside the native turning circle. A tangential
-  // arc barely shortens distance while carrying the nose away from the point.
-  const converging = !waypoint || input.turn === 0 || nextError < error - .000001;
-  if (moving && approaching && converging) return;
-  if (input.turn !== 0) {
-    const stationaryTurn = input.turn * Math.sign(input.move);
-    const turn = actor.movement.predict({...input, move: 0, turn: stationaryTurn});
-    if (Math.abs(angle(turn.yaw - actor.yaw)) > .000001) {
-      input.move = 0; input.turn = stationaryTurn;
-      return;
-    }
-  }
-  if (!moving) {
-    input.move = 0; input.turn = 0;
-  }
 }
 
 function angle(value: number): number {return Math.atan2(Math.sin(value), Math.cos(value));}

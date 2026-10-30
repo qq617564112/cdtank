@@ -1,6 +1,6 @@
 import {BotController} from '../battle/cpu/controller';
 import {createOriginalBotNavigation} from '../battle/cpu/original-navigation';
-import {createBattleMovementPredictor} from '../battle/dynamic-movement';
+import {createBattleMovementPredictor, createBattleMovementRollout} from '../battle/dynamic-movement';
 import {originalMovementParameters} from '../battle/movement';
 import {isRoleFireReady} from '../battle/roles/reload';
 import type {PlayerState} from '../battle/player-state';
@@ -23,7 +23,8 @@ export class LearningCombatExpert {
       fireReady: !player.combat.pendingShot && isRoleFireReady(player.combat.getFlag(11) !== 0,
         (now - room.startedAt) / 1000, player.combat.nextAvailableSeconds),
       movement: parameters ? {...parameters, navigation: createOriginalBotNavigation(room.battlefield),
-        predict: createBattleMovementPredictor(player, room.battlefield, room.players.values(), .1)} : undefined},
+        predict: createBattleMovementPredictor(player, room.battlefield, room.players.values(), .1),
+        rollout: createBattleMovementRollout(player, room.battlefield, room.players.values())} : undefined},
     [...room.players.values()].map(actor => {
       const teammate = this.controllers.get(actor);
       return teammate ? {...actor, cpu: teammate.controller} : actor;

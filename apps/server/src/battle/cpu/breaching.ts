@@ -6,6 +6,7 @@ import {queryShotTarget} from '../shot-query';
 import type {BotActor} from './controller';
 import {BotPathPlanner} from './navigation';
 import {createOriginalBotNavigation} from './original-navigation';
+import {ARRIVAL_RADIUS} from './driving';
 
 type BreakableSnapshot = SceneObjectSnapshot | ObjectiveSnapshot;
 
@@ -97,7 +98,7 @@ export class BotBreachPlanner {
       // Broken geometry remains authoritative during its ordinary fade. Replan
       // when collision release changes the field revision, rather than ramming it.
       this.breach = {...this.breach, object};
-      while (this.breach.path.length && horizontalDistance(actor, this.breach.path[0]) < 7) {
+      while (this.breach.path.length && horizontalDistance(actor, this.breach.path[0]) < ARRIVAL_RADIUS) {
         const next = this.breach.path[1];
         if (next) {
           const reached = actor.movement

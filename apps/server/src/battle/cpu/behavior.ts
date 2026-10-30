@@ -5,12 +5,19 @@ interface BotBehavior {
   readonly triggerMs: readonly [number, number];
   readonly movementMs: readonly [number, number];
   readonly aimTolerance: number;
+  /** Standard deviation of the first aim at a newly engaged tank, in radians. */
+  readonly aimError: number;
+  /** Seconds for that aim error to settle to about a third. */
+  readonly aimSettleSeconds: number;
 }
 
 export const BOT_BEHAVIORS: Readonly<Record<BotSkill, BotBehavior>> = {
-  HIGH: {reactionMs: [160, 320], triggerMs: [80, 170], movementMs: [250, 550], aimTolerance: .035},
-  MEDIUM: {reactionMs: [280, 550], triggerMs: [130, 280], movementMs: [600, 1100], aimTolerance: .045},
-  LOW: {reactionMs: [450, 950], triggerMs: [220, 480], movementMs: [900, 1700], aimTolerance: .055},
+  HIGH: {reactionMs: [160, 320], triggerMs: [80, 170], movementMs: [250, 550], aimTolerance: .035,
+    aimError: .03, aimSettleSeconds: .4},
+  MEDIUM: {reactionMs: [280, 550], triggerMs: [130, 280], movementMs: [600, 1100], aimTolerance: .045,
+    aimError: .05, aimSettleSeconds: .6},
+  LOW: {reactionMs: [450, 950], triggerMs: [220, 480], movementMs: [900, 1700], aimTolerance: .055,
+    aimError: .08, aimSettleSeconds: .9},
 };
 
 /** Two or more CPUs always include both levels; odd rounds randomize the extra level. */
@@ -27,4 +34,9 @@ export function randomBotSkills(count: number): BotSkill[] {
 
 export function randomBotDelay(range: readonly [number, number]): number {
   return range[0] + Math.random() * (range[1] - range[0]);
+}
+
+/** Standard normal sample for aim errors. */
+export function randomBotGaussian(): number {
+  return Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
 }

@@ -5,6 +5,7 @@ import {BotController, type BotActor} from '../apps/server/src/battle/cpu/contro
 import {findBotPath} from '../apps/server/src/battle/cpu/navigation';
 import {createOriginalBotNavigation} from '../apps/server/src/battle/cpu/original-navigation';
 import {originalMovementParameters, predictBattleMovement} from '../apps/server/src/battle/movement';
+import {createBattleMovementRollout} from '../apps/server/src/battle/dynamic-movement';
 import type {MsgPlayerInput, ObjectiveSnapshot} from '../apps/shared/protocols';
 
 const source: {rows: {tankId: number; part: number; base: Record<string, number>;
@@ -41,7 +42,8 @@ function fixture(mapId: number) {
       predict(input: MsgPlayerInput) {
         const predicted = predictBattleMovement(player, input, room.battlefield, .05)!;
         return {...predicted.pose.position, yaw: predicted.yaw};
-      }}};
+      },
+      rollout: createBattleMovementRollout(player, room.battlefield, room.players.values())}};
   }
   function step(input: MsgPlayerInput): number {
     const predicted = predictBattleMovement(player, input, room.battlefield, .05)!;

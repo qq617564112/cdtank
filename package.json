@@ -43,6 +43,7 @@
     "ai:analyze": "tsx scripts/analyze-cpu-traces.ts",
     "ai:loop": "tsx scripts/cpu-optimization-loop.ts",
     "ai:arena": "tsx scripts/cpu-arena.ts",
+    "ai:drive-eval": "tsx scripts/cpu-drive-eval.ts",
     "test:network": "tsx tests/network-integration.cts",
     "test:match": "tsx tests/match-rules.cts",
     "test:rooms": "tsx tests/room-creation.cts",

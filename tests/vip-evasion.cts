@@ -11,7 +11,11 @@ const actor: BotActor = {id: 'king', team: 0, x: 0, y: 0, z: 0, yaw: -Math.PI / 
       const yaw = actor.yaw + input.turn * .05;
       return {x: actor.x + Math.sin(yaw) * input.move * 7.5, y: 0,
         z: actor.z + Math.cos(yaw) * input.move * 7.5, yaw};
-    }}};
+    }, rollout: (input, steps, elapsed) => Array.from({length: steps}, (_, index) => {
+      const yaw = actor.yaw + input.turn * elapsed * (index + 1);
+      const travel = input.move * 150 * elapsed * (index + 1);
+      return {x: actor.x + Math.sin(yaw) * travel, y: 0, z: actor.z + Math.cos(yaw) * travel, yaw};
+    })}};
 const enemy: BotActor = {id: 'enemy', team: 1, x: 180, y: 0, z: 0, yaw: 0, aim: 0,
   alive: true, vip: true, tank: {speed: 25, turn: 1}};
 const field = {navigationRevision: 0, firstSurfaceHit: () => undefined,
@@ -22,7 +26,8 @@ assert.notEqual(input.turn, 0, 'King turns the body while creating aiming time')
 const destination = actor.movement!.predict(input);
 assert(Math.hypot(destination.x - enemy.x, destination.z - enemy.z) > 180);
 assert.equal(input.fire, false);
-const stationary = {...actor, movement: {...actor.movement!, predict: () => ({x: 0, y: 0, z: 0, yaw: actor.yaw})}};
+const stationary = {...actor, movement: {...actor.movement!, predict: () => ({x: 0, y: 0, z: 0, yaw: actor.yaw}),
+  rollout: (_input: unknown, steps: number) => Array.from({length: steps}, () => ({x: 0, y: 0, z: 0, yaw: actor.yaw}))}};
 const blocked = new BotController().input(stationary, [stationary, enemy], [], field, 3, 100000, .05);
 assert.equal(blocked.move, 0, 'The evasion policy cannot bypass blocked movement');
 for (const candidate of [{...actor, vip: false}, {...actor, hp: 200}]) {

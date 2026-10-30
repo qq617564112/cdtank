@@ -1,6 +1,7 @@
 import type {MsgPlayerInput, MsgRoomEvent, ObjectiveSnapshot, SceneObjectSnapshot} from '../../../shared/protocols';
 import {originalMovementParameters, commitBattleMovement, battleMovementPose, type BattleMovementState} from './movement';
-import {createBattleMovementCollider, createBattleMovementPredictor, predictControlledBattleMovement} from './dynamic-movement';
+import {createBattleMovementCollider, createBattleMovementPredictor, createBattleMovementRollout,
+  predictControlledBattleMovement} from './dynamic-movement';
 import type {RoleMovementMathInput} from './roles/movement-math';
 import {createOriginalBotNavigation} from './cpu/original-navigation';
 import type {RoleAttributeState} from './roles/attribute-state';
@@ -134,6 +135,7 @@ export function advanceActors<Player extends CombatActor>(room: {
           ...parameters,
           navigation: createOriginalBotNavigation(room.battlefield),
           predict: createBattleMovementPredictor(player, room.battlefield, room.players.values(), dt),
+          rollout: createBattleMovementRollout(player, room.battlefield, room.players.values()),
         } : undefined}, [...room.players.values()], room.objectives,
         room.battlefield, room.mode, now, dt, {mode: room.mode, team: player.team,
           initialLives: room.map.tankLimit, lives: room.teamLives}, room), !!player.autopilot));

@@ -1,6 +1,6 @@
 import type {MsgPlayerInput} from '../../../shared/protocols';
 import type {Battlefield} from '../battlefield';
-import {battleMovementPose, originalMovementParameters, predictBattleMovement,
+import {battleMovementPose, commitBattleMovement, originalMovementParameters, predictBattleMovement,
   type MovingParticipant, type BattleMovementResult} from './movement';
 import {isBattleMovementAllowed, roleMovementCommand} from './roles/movement-permission';
 import {createRoleObbFromPose, predictRoleMovementObb} from './roles/movement-obb-prediction';
@@ -67,6 +67,29 @@ export function createBattleMovementPredictor(player: DynamicMovingParticipant, 
     if (!turns) {turns = new Map(); previews.set(input.move, turns);}
     turns.set(input.turn, preview);
     return preview;
+  };
+}
+
+/** CPU look-ahead holds one command for several steps against the current bodies. */
+export function createBattleMovementRollout(player: DynamicMovingParticipant, field: Battlefield,
+  others: Iterable<DynamicMovingParticipant>): (input: MsgPlayerInput, steps: number, elapsed: number) => MovementPreview[] {
+  let context: MovementCollisionContext | undefined;
+  return (input, steps, elapsed) => {
+    context ??= {players: [...others].filter(other => other.alive)};
+    const ghost: DynamicMovingParticipant = {...player};
+    const poses: MovementPreview[] = [];
+    for (let step = 0; step < steps; step++) {
+      const state = predictControlledMovement(ghost, input, field, elapsed, context);
+      const preview = {...state.pose.position, yaw: state.yaw, bodyYaw: state.bodyYaw};
+      poses.push(preview);
+      // A refused step leaves the pose unchanged; later steps would repeat it.
+      if (state.command === 0) {
+        while (poses.length < steps) poses.push(preview);
+        break;
+      }
+      commitBattleMovement(ghost, state);
+    }
+    return poses;
   };
 }
 
