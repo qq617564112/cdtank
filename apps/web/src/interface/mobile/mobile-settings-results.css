@@ -179,7 +179,7 @@ html[data-mobile-device] [data-settings-display-setting='silhouette'] {
   top: 296px !important;
 }
 
-html[data-mobile-device] [data-settings-display-setting='msaa4x'] {
+html[data-mobile-device] [data-settings-display-setting='antialias'] {
   top: 350px !important;
 }
 

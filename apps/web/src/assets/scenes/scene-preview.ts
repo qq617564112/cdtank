@@ -362,6 +362,7 @@ export class ScenePreview {
       }
     }
     report(0.7, '正在实例化场景对象…');
+    const staticRoots: TransformNode[] = [];
     let completedPlacements = 0;
     const reportPlacement = (): void => {
       completedPlacements++;
@@ -451,6 +452,7 @@ export class ScenePreview {
       root.scaling.copyFrom(scale);
       root.position.set(-placement.position[0], placement.position[1], placement.position[2]);
       root.rotationQuaternion = new Quaternion(rotation.x, -rotation.y, -rotation.z, rotation.w);
+      if (placement.className !== 'SYcScnObjPlant' && !instance.animationGroups.length) staticRoots.push(root);
       if (placement.className === 'SYcScnObjPlant') {
         this.plants?.register(placement.id, root);
         this.registerPlant(placement.id, root, Boolean(placement.enabled));
@@ -509,6 +511,12 @@ export class ScenePreview {
     }
     orderSceneModels(this.scene);
     terrain.rootNodes.forEach(node => {node.setEnabled(true);});
+    // Terrain and unanimated placements never move; frames skip their transform checks.
+    for (const mesh of terrain.meshes) mesh.freezeWorldMatrix();
+    for (const root of staticRoots) {
+      root.freezeWorldMatrix();
+      for (const node of root.getDescendants(false)) if (node instanceof TransformNode) node.freezeWorldMatrix();
+    }
     const shadows = sceneShadowLight(this.scene);
     if (shadows) {
       shadows.setTerrain(id, terrain.meshes);

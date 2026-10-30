@@ -76,7 +76,6 @@ function SettingsSession({battle, initial, close, onKeysSaved, allowConnectionCh
   const [contrast, setContrast] = useState(getContrast);
   const [display, setDisplay] = useState<DisplayPreferences>(() => ({...getDisplayPreferences()}));
   const savedSettings = useRef({audio, brightness, saturation, contrast, display});
-  const initialMsaa4x = useRef(display.msaa4x);
   const [artworkQuality, setArtworkQuality] = useState<BattleArtworkQuality>(getBattleArtworkQuality);
   const [capture, setCapture] = useState<Capture>();
   const composing = useRef(false), escapePending = useRef(false);
@@ -167,8 +166,7 @@ function SettingsSession({battle, initial, close, onKeysSaved, allowConnectionCh
 
   function changeDisplay(preferences: DisplayPreferences) {
     setDisplay(preferences);
-    // MSAA changes require a client reload after confirmation.
-    applyDisplayPreferences({...preferences, msaa4x: getDisplayPreferences().msaa4x});
+    applyDisplayPreferences(preferences);
     setStatus('');
   }
 
@@ -241,7 +239,6 @@ function SettingsSession({battle, initial, close, onKeysSaved, allowConnectionCh
     }
     savedSettings.current.display = displayPreferences;
     applyDisplayPreferences(displayPreferences);
-    const antialiasChanged = displayPreferences.msaa4x !== initialMsaa4x.current;
     const artworkSaved = writeBattleArtworkQuality(localStorage, artworkQuality);
     if (!artworkSaved) {
       setStatus('显示设置已保存，战斗素材设置未保存，请重试。'); return;
@@ -258,7 +255,7 @@ function SettingsSession({battle, initial, close, onKeysSaved, allowConnectionCh
       window.location.assign('/login');
       return;
     }
-    if (antialiasChanged || artworkQuality !== getBattleArtworkQuality()) {
+    if (artworkQuality !== getBattleArtworkQuality()) {
       window.location.reload();
       return;
     }
@@ -420,9 +417,9 @@ function SettingsSession({battle, initial, close, onKeysSaved, allowConnectionCh
           onClick={() => changeDisplay({...display, silhouette: !display.silhouette})}>卡通描边</SettingsChoice>
         <SettingsChoice {...props('chkSilhouette', -24)} kind="checkbox"
           disabled={displayPending}
-          data-settings-display-setting="msaa4x" aria-label="抗锯齿" checked={display.msaa4x}
-          title="4× MSAA，点击确定后重新载入客户端"
-          onClick={() => setDisplay(value => ({...value, msaa4x: !value.msaa4x}))}>抗锯齿</SettingsChoice>
+          data-settings-display-setting="antialias" aria-label="抗锯齿" checked={display.antialias}
+          title="战斗画面使用 FXAA 平滑边缘，实时预览，点击确定保存"
+          onClick={() => changeDisplay({...display, antialias: !display.antialias})}>抗锯齿</SettingsChoice>
         <SettingsChoice {...props('chkSilhouette', 1)} kind="checkbox"
           disabled={displayPending}
           data-settings-display-setting="motionBlur" aria-label="动态模糊" checked={display.motionBlur}

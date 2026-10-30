@@ -4,6 +4,8 @@ import {GeometryBufferRenderer} from '@babylonjs/core/Rendering/geometryBufferRe
 import {battleMotionBlurFragment} from './battle-motion-blur-shader';
 
 const clearPlayers = new WeakMap<Scene, TransformNode>();
+/** Velocity and the player mask cover half the world resolution on each axis. */
+const VELOCITY_SCALE = .5;
 ShaderStore.ShadersStoreWGSL.battleMotionBlurPixelShader = battleMotionBlurFragment;
 
 /** Keep every action and cosmetic under the local tank root clear through effect rebuilds. */
@@ -45,7 +47,7 @@ export class BattleMotionBlur {
 
   constructor(private readonly scene: Scene, private readonly camera: ArcRotateCamera,
     private readonly renderScale: number) {
-    this.velocity = new BattleVelocityBuffer(scene, renderScale, Constants.TEXTUREFORMAT_DEPTH16, {
+    this.velocity = new BattleVelocityBuffer(scene, renderScale * VELOCITY_SCALE, Constants.TEXTUREFORMAT_DEPTH16, {
       [GeometryBufferRenderer.VELOCITY_LINEAR_TEXTURE_TYPE]: {
         textureType: Constants.TEXTURETYPE_HALF_FLOAT, textureFormat: Constants.TEXTUREFORMAT_RG,
         samplingMode: Texture.NEAREST_SAMPLINGMODE,
@@ -93,8 +95,8 @@ export class BattleMotionBlur {
 
   resize(): void {
     const engine = this.scene.getEngine();
-    const width = Math.max(1, Math.floor(engine.getRenderWidth() * this.renderScale));
-    const height = Math.max(1, Math.floor(engine.getRenderHeight() * this.renderScale));
+    const width = Math.max(1, Math.floor(engine.getRenderWidth() * this.renderScale * VELOCITY_SCALE));
+    const height = Math.max(1, Math.floor(engine.getRenderHeight() * this.renderScale * VELOCITY_SCALE));
     const buffer = this.velocity.getGBuffer();
     const size = buffer.getSize();
     if (size.width !== width || size.height !== height) buffer.resize({width, height});

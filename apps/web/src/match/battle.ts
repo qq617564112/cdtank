@@ -19,6 +19,7 @@ import type {ReqPetShop} from '../../../shared/protocols/PtlPetShop';
 import type {CpuLoadoutItem} from '../../../shared/protocols/PtlCpu';
 import {configureBattleCamera} from '../render/battle-camera';
 import {BattlePlayers} from '../render/battle-players';
+import {setDynamicResolutionActive} from '../render/dynamic-resolution';
 import {battleUiLayer} from '../render/battle-ui-layer';
 import {battleInfoText} from '../interface/battle/battle-info-messages';
 import {battleMinimapUrl} from '../assets/maps/minimaps';
@@ -1477,6 +1478,8 @@ export class Battle {
     const listener = cameraSpatialPose(this.camera);
     this.sound.listener(listener.position, listener.forward, listener.up);
     const snapshot = this.roomFeed.snapshot;
+    setDynamicResolutionActive(this.scene, this.active && !!snapshot && this.isConnected && !this.reconnecting
+      && this.mapLoaded && this.loadedRound === snapshot.match?.round && snapshot.phase === 'PLAYING');
     if (!this.active || !snapshot || !this.isConnected || this.reconnecting) {
       this.projectiles.clear();
       return;

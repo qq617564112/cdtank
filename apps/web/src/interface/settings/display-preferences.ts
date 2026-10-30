@@ -4,7 +4,7 @@ export type RenderResolutionScale = typeof RENDER_RESOLUTION_SCALES[number];
 export interface DisplayPreferences {
   renderScale: RenderResolutionScale;
   silhouette: boolean;
-  msaa4x: boolean;
+  antialias: boolean;
   motionBlur: boolean;
   showFps: boolean;
 }
@@ -12,7 +12,7 @@ export interface DisplayPreferences {
 export const DEFAULT_DISPLAY_PREFERENCES: Readonly<DisplayPreferences> = Object.freeze({
   renderScale: 1,
   silhouette: true,
-  msaa4x: false,
+  antialias: false,
   motionBlur: false,
   showFps: false,
 });
@@ -31,14 +31,15 @@ export function validateDisplayPreferences(value: unknown): DisplayPreferences |
   const fields = value as Record<string, unknown>;
   if (typeof fields.silhouette !== 'boolean') return undefined;
   const renderScale = fields.renderScale === undefined ? (fields.highPrecision === false ? .5 : 1) : fields.renderScale;
-  const msaa4x = fields.msaa4x === undefined ? false : fields.msaa4x;
+  // Saved 4× MSAA choices carry over to the post-process anti-aliasing switch.
+  const antialias = fields.antialias ?? fields.msaa4x ?? false;
   const motionBlur = fields.motionBlur === undefined ? false : fields.motionBlur;
   const showFps = fields.showFps === undefined ? false : fields.showFps;
   if (!RENDER_RESOLUTION_SCALES.some(scale => scale === renderScale)
-    || typeof msaa4x !== 'boolean' || typeof motionBlur !== 'boolean'
+    || typeof antialias !== 'boolean' || typeof motionBlur !== 'boolean'
     || typeof showFps !== 'boolean') return undefined;
   return {renderScale: renderScale as RenderResolutionScale, silhouette: fields.silhouette,
-    msaa4x, motionBlur, showFps};
+    antialias, motionBlur, showFps};
 }
 
 export function readDisplayPreferences(storage: Pick<Storage, 'getItem'>):

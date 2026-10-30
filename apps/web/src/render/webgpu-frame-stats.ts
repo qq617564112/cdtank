@@ -6,7 +6,7 @@ import './fps-display.css';
 
 /** Frame counters and the FPS readout share a one-second sample. */
 export function webGpuFrameStats(canvas: HTMLCanvasElement, scene: Scene, engine: WebGPUEngine,
-  worldPass: () => PostProcess | undefined) {
+  worldPass: () => PostProcess | undefined, worldScale: () => number) {
   const fpsDisplay = document.createElement('output');
   fpsDisplay.className = 'game-fps';
   fpsDisplay.dataset.gameFps = '';
@@ -79,6 +79,7 @@ export function webGpuFrameStats(canvas: HTMLCanvasElement, scene: Scene, engine
     canvas.dataset.renderCpuMs = (cpuTime / frames).toFixed(2);
     canvas.dataset.drawCalls = (drawCalls / frames).toFixed(0);
     canvas.dataset.activeTriangles = String(scene.getActiveIndices() / 3);
+    canvas.dataset.worldScale = String(worldScale());
     const gpu = engine.enableGPUTimingMeasurements ? engine.gpuTimeInFrameForMainPass?.counter : undefined;
     canvas.dataset.gpuMainPassMs = gpu?.count ? (gpu.current / 1e6).toFixed(2) : 'unavailable';
     const worldTarget = worldPass()?.inputTexture as WebGPURenderTargetWrapper | undefined;
@@ -102,7 +103,7 @@ export function webGpuFrameStats(canvas: HTMLCanvasElement, scene: Scene, engine
         + ` | GPU3D: ${gpuMs}ms | GPUout: ${outputGpuMs}ms | P95: ${p95 === undefined ? '—' : p95.toFixed(1)}ms`
         + `\nUpdate: ${phase(updateTime)} | Mesh: ${phase(meshTime)} | Draw: ${phase(drawTime)}`
         + ` | UI: ${phase(uiTime)} | Other: ${phase(otherTime)} | Gap: ${canvas.dataset.frameGapMs}`
-        + ` | DC: ${canvas.dataset.drawCalls}`;
+        + ` | DC: ${canvas.dataset.drawCalls} | Res: ${worldScale().toFixed(2)}×`;
       const music = document.querySelector<HTMLAudioElement>('audio[data-source-audio="battle-music"]');
       if (music) {
         const state = music.dataset.state === 'playing' && music.paused ? 'paused' : music.dataset.state;

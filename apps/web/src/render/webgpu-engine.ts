@@ -14,12 +14,13 @@ import twgslWasm from '@babylonjs/core/assets/twgsl/twgsl.wasm?url';
 const BIND_GROUP_CACHE_LIMIT = 4096;
 
 /** All viewports require WebGPU and load shader compilers from the application. */
-export async function createWebGpuEngine(canvas: HTMLCanvasElement, transparent = false): Promise<ResourceWebGpuEngine> {
+export async function createWebGpuEngine(canvas: HTMLCanvasElement, transparent = false,
+  antialias = getDisplayPreferences().antialias): Promise<ResourceWebGpuEngine> {
   if (!('gpu' in navigator)) {
     throw new Error('当前浏览器无法使用 WebGPU，请使用支持 WebGPU 的浏览器，并通过 HTTPS 或 localhost 打开游戏。');
   }
   const engine = new ResourceWebGpuEngine(canvas, {
-    antialias: getDisplayPreferences().msaa4x, stencil: true, adaptToDeviceRatio: !isMobileDevice(),
+    antialias, stencil: true, adaptToDeviceRatio: !isMobileDevice(),
     premultipliedAlpha: transparent, powerPreference: 'high-performance',
     deviceDescriptor: {requiredFeatures: ['timestamp-query', 'float32-filterable']},
     glslangOptions: {jsPath: glslangScript, wasmPath: glslangWasm},
