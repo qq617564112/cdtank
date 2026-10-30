@@ -1,6 +1,6 @@
 # 文档索引与当前状态
 
-当前版本为 **1.0.3**，提供 WebGPU 浏览器客户端、独立房间进程、持久账户、手绘界面和怀旧／HD 两套战斗素材。1.0.1 及以后采用程序包与 public 资产包分开发布、Node 安装器自动安装并启动的流程；命令见[发布与安装](github-publication.md)，发布历史见[更新日志](../CHANGELOG.md)。
+当前版本为 **1.0.5**，提供 WebGPU 浏览器客户端、独立房间进程、持久账户、手绘界面和怀旧／HD 两套战斗素材。1.0.1 及以后采用程序包与 public 资产包分开发布、Node 安装器自动安装并启动的流程；命令见[发布与安装](github-publication.md)，发布历史见[更新日志](../CHANGELOG.md)。
 
 ## 当前版本的主要变化
 
@@ -17,7 +17,7 @@
 | HUD 更新 | 按显示数据订阅，装填与道具冷却更新原节点，头像及静态图案复用 | [HUD 渲染](hud-react-performance.md) |
 | 加载 | UI 预加载，模型和声音按需缓存；电脑登录页可选全资源预下载，入场前准备动态道具与掉落物 | [资源加载](resource-loading.md) |
 | 入场进度 | 地图配置、模型解析、地形和场景实例化进度汇入战斗加载界面 | [更新日志](../CHANGELOG.md) |
-| 显示 | 电脑与移动端怀旧／HD 选择、移动端 HD 采用怀旧尺寸与全局横屏；五档渲染分辨率、4× MSAA、卡通描边、FPS、亮度／饱和度／对比度 | [显示设置](display-settings.md) |
+| 显示 | 电脑与移动端怀旧／HD 选择、移动端 HD 采用怀旧尺寸与全局横屏；五档渲染分辨率与动态分辨率、FXAA 抗锯齿、卡通描边、FPS、亮度／饱和度／对比度 | [显示设置](display-settings.md) |
 | 场景光照 | 电脑按地图配置方向光和实时软阴影；移动端关闭实时阴影并降低特效密度 | [场景光照与阴影](recovery/ground-contact-shadows.md) · [显示设置](display-settings.md) |
 | 会话 | URL 记录页面与弹窗，刷新恢复账户、频道和原房间；房主退出后转交权限 | [路由与恢复](navigation.md) |
 | 部署 | 正式资源迁入 apps 目录，Forgejo Actions 构建 Docker 镜像，持久卷保存账户 | [自动部署](../deployment/forgejo.md) |
@@ -31,7 +31,7 @@
 | 项目介绍、运行步骤和操作 | [根目录 README](../README.md) |
 | 工程职责、命令和环境变量 | [开发指南](development.md) |
 | Windows 桌面客户端、本地开服和局域网联机 | [Electron 客户端](desktop-client.md) |
-| CPU 脱困、目标保持与逐车轨迹分析 | [CPU 轨迹](cpu-trajectories.md) |
+| CPU 驾驶规划、脱困、目标保持、逐车轨迹分析与加速评测 | [CPU 轨迹](cpu-trajectories.md) |
 | 页面、弹窗和刷新恢复 | [路由与会话恢复](navigation.md) |
 | 显示选项、默认值与保存行为 | [显示设置](display-settings.md) |
 | 手机与平板的页面布局、16:9 至 21:9 比例及触摸操作 | [移动端页面 UI](mobile-pages-ui.md) · [移动端战斗 UI](mobile-battle-ui.md) |

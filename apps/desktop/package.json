@@ -1,6 +1,6 @@
 {
   "name": "cdtank-desktop",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "猫狗大作战桌面客户端",
   "private": true,
   "main": "bundle/main.cjs",
