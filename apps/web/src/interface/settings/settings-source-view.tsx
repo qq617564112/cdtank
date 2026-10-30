@@ -243,9 +243,8 @@ function SettingsSession({battle, initial, close, onKeysSaved, allowConnectionCh
     if (!artworkSaved) {
       setStatus('显示设置已保存，战斗素材设置未保存，请重试。'); return;
     }
-    const connectionChanged = nextConnection && (nextConnection.mode !== savedConnection.current.mode
-      || nextConnection.serverUrl !== savedConnection.current.serverUrl);
-    if (connectionChanged) {
+    if (nextConnection && (nextConnection.mode !== savedConnection.current.mode
+      || nextConnection.serverUrl !== savedConnection.current.serverUrl)) {
       setDisplayPending(true);
       try {await saveConnectionPreferences(nextConnection);}
       catch (error) {
